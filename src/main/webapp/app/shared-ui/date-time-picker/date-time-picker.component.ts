@@ -94,6 +94,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
     // keepInvalid). Without this flag the `unchanged` guard in updateField would swallow the
     // re-emission when the user corrects the input back to the previously held date.
     private needsParentSync = false;
+    // A parseable date the range rejected, kept so a bound that later moves to include it can accept the entry
+    // instead of making the user retype it. Undefined whenever the field holds anything else, in particular
+    // unparseable text, which must never be resurrected as a date.
+    private rejectedEntry?: dayjs.Dayjs;
     // Set by onPickerKeydown when Ctrl/Cmd+V is detected; cleared in onPickerPaste.
     // Avoids relying on PrimeNG's picker.isKeydown, which is set by ANY keydown (arrow, Home/End…)
     // and would remain stale-true when a context-menu paste follows a non-paste keydown.
@@ -199,13 +203,22 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
     }
 
     /**
-     * Recomputes range validity for the currently held value against the given bounds.
+     * Recomputes range validity against the given bounds.
      *
-     * Does nothing while {@link needsParentSync} is set: the field then displays raw text (unparseable, or a date
-     * the range rejected) that `value()` does not represent, so recomputing from `value()` would clear an error
-     * the user can still see on screen. The next edit runs the full check anyway.
+     * Two states can be on screen when a bound moves, and they are not the same:
+     * - a date the range rejected ({@link rejectedEntry}). It is a perfectly good date, so a bound that moves to
+     *   include it makes the entry acceptable and it is committed, exactly as if the user had typed it now.
+     * - unparseable text. `value()` does not represent what the field shows, so nothing can be recomputed from it
+     *   and the error stands until the next edit.
      */
     private revalidateAgainstBounds(min?: dayjs.Dayjs, max?: dayjs.Dayjs) {
+        const rejected = this.rejectedEntry;
+        if (rejected) {
+            if (this.isWithinRange(rejected, min, max)) {
+                this.acceptRejectedEntry(rejected);
+            }
+            return;
+        }
         const current = this.value();
         if (this.needsParentSync || current == undefined) {
             return;
@@ -215,6 +228,22 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
         if (parsed.isValid()) {
             this.setInputValid(this.isWithinRange(parsed, min, max));
         }
+    }
+
+    /**
+     * Commits an entry the range had rejected, now that a bound moved to include it.
+     *
+     * The parent model still holds the `undefined` written when the entry was rejected, so it has to be handed the
+     * date as well: leaving the control valid while the model is empty is the very hole this validator closes.
+     */
+    private acceptRejectedEntry(entry: dayjs.Dayjs) {
+        this.rejectedEntry = undefined;
+        this.needsParentSync = false;
+        this.value.set(entry.toDate());
+        this.dateInputValue.set(entry.toISOString());
+        this.setInputValid(true);
+        this.onChange?.(entry);
+        this.valueChanged();
     }
 
     /**
@@ -240,6 +269,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
             this.updateSignals();
             return;
         }
+        // The parent replaced what the field held, so a rejected entry from before is stale and must not be
+        // accepted later by a moving bound.
+        this.rejectedEntry = undefined;
         this.value.set(next);
         this.updateSignals();
         this.reflectValueInPicker(next);
@@ -334,6 +366,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
                 this.setInputValid(false);
                 this.dateInputValue.set(newValue.toISOString());
                 this.needsParentSync = true;
+                // Remember the date itself: it is valid in every respect except the current range, so a bound
+                // that later moves to include it can accept the entry instead of making the user retype it.
+                this.rejectedEntry = parsed;
                 this.onChange?.(undefined);
                 this.valueChanged();
                 return;
@@ -342,6 +377,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
             // Always refresh validity (this also recovers from a previous unparseable entry).
             this.setInputValid(true);
             this.dateInputValue.set(newValue.toISOString());
+            this.rejectedEntry = undefined;
 
             // Only propagate when the instant actually changed. Re-setting the bound `value` signal
             // with an equal date would feed an infinite change-detection loop (NG0103) when the form
@@ -360,6 +396,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
             this.setInputValid(true);
             this.dateInputValue.set('');
             this.needsParentSync = false;
+            this.rejectedEntry = undefined;
             if (currentValue != undefined) {
                 this.value.set(null);
                 this.onChange?.(undefined);
@@ -373,6 +410,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
             this.setInputValid(false);
             this.dateInputValue.set(String(newValue));
             this.needsParentSync = true;
+            // The typed text replaced whatever the range had rejected, so there is no entry left to accept.
+            this.rejectedEntry = undefined;
             this.onChange?.(undefined);
         }
         this.valueChanged();
@@ -445,6 +484,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
             this.setInputValid(false);
             this.dateInputValue.set(raw);
             this.needsParentSync = true;
+            // The text is not a full date, so there is nothing a moving bound could accept.
+            this.rejectedEntry = undefined;
             this.onChange?.(undefined);
             this.valueChanged();
         }

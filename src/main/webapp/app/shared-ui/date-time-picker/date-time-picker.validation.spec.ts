@@ -155,6 +155,63 @@ describe('date-time-picker reports unparseable input to its form control', () =>
             expect(host.form.valid).toBe(true);
         });
 
+        // A date the range rejected is a good date in every other respect, so a bound that moves to include it
+        // should accept the entry rather than make the user retype it (Claudia-Anthropica on #13472).
+        it('accepts a typed date the range had rejected once a bound moves to include it', () => {
+            const typed = max.add(3, 'day');
+            picker.updateField(typed.toDate());
+            fixture.detectChanges();
+            expect(host.form.valid).toBe(false);
+            expect(host.form.controls.softDueDate.value).toBeUndefined();
+
+            host.max.set(typed.add(1, 'day'));
+            fixture.detectChanges();
+
+            expect(host.form.valid).toBe(true);
+            // Going valid is not enough: the model held undefined from the rejection, so the date has to be
+            // handed over as well or the form would submit an empty date - the bug this validator exists for.
+            expect(host.form.controls.softDueDate.value?.toISOString()).toBe(typed.toISOString());
+        });
+
+        it('keeps the rejection while the bound still excludes the typed date', () => {
+            const typed = max.add(10, 'day');
+            picker.updateField(typed.toDate());
+            fixture.detectChanges();
+
+            host.max.set(typed.subtract(1, 'day'));
+            fixture.detectChanges();
+
+            expect(host.form.controls.softDueDate.errors).toEqual({ invalidDate: true });
+            expect(host.form.controls.softDueDate.value).toBeUndefined();
+        });
+
+        it('does not resurrect a rejected date after unparseable text replaced it', () => {
+            picker.updateField(max.add(3, 'day').toDate());
+            fixture.detectChanges();
+            picker.updateField('asdasd');
+            fixture.detectChanges();
+
+            host.max.set(max.add(1, 'year'));
+            fixture.detectChanges();
+
+            expect(host.form.valid).toBe(false);
+            expect(host.form.controls.softDueDate.value).toBeUndefined();
+        });
+
+        it('does not resurrect a rejected date after the parent wrote a new value', () => {
+            picker.updateField(max.add(3, 'day').toDate());
+            fixture.detectChanges();
+            const written = min.add(2, 'day');
+            host.form.controls.softDueDate.setValue(written);
+            fixture.detectChanges();
+
+            host.max.set(max.add(1, 'year'));
+            fixture.detectChanges();
+
+            expect(host.form.valid).toBe(true);
+            expect(host.form.controls.softDueDate.value?.toISOString()).toBe(written.toISOString());
+        });
+
         it('keeps unparseable text and its error when a bound moves', () => {
             // The field holds a date, then the user types junk over it. `value()` still holds the old, in-range
             // date while the input shows the raw text, so a bound change must not recompute validity from it
