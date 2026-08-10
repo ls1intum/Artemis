@@ -13,22 +13,48 @@ const DEFAULT_EXAM_DASHBOARD_TIMEOUT = 120000; // 120 seconds
 const DEFAULT_RELOAD_RENDER_TIMEOUT = 30000; // 30 seconds
 
 /**
+ * Reads a timeout from the environment, falling back to the default unless the value is a clean positive integer
+ * number of milliseconds.
+ * <p>
+ * `parseInt` is too permissive for configuration that decides how long a test waits: it accepts a partial string like
+ * `30000ms`, yields `NaN` for anything unparseable, and happily returns negatives. Any of those would silently
+ * override a documented budget with a nonsensical one, and the resulting failure would look like a flaky test rather
+ * than a misconfigured variable. So an invalid value is reported and ignored rather than used.
+ *
+ * @param variableName name of the environment variable to read
+ * @param fallback default timeout in ms, used when the variable is unset or invalid
+ */
+function readTimeoutMs(variableName: string, fallback: number): number {
+    const raw = process.env[variableName];
+    if (raw === undefined || raw.trim() === '') {
+        return fallback;
+    }
+    const parsed = Number(raw);
+    if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+        // eslint-disable-next-line no-console
+        console.warn(`[timeouts] Ignoring ${variableName}="${raw}": expected a positive integer number of milliseconds. Falling back to ${fallback}ms.`);
+        return fallback;
+    }
+    return parsed;
+}
+
+/**
  * Timeout for waiting for build results to appear in the UI (e.g., commit history).
  * Environment variable: BUILD_RESULT_TIMEOUT_MS
  */
-export const BUILD_RESULT_TIMEOUT = parseInt(process.env.BUILD_RESULT_TIMEOUT_MS || String(DEFAULT_BUILD_RESULT_TIMEOUT), 10);
+export const BUILD_RESULT_TIMEOUT = readTimeoutMs('BUILD_RESULT_TIMEOUT_MS', DEFAULT_BUILD_RESULT_TIMEOUT);
 
 /**
  * Timeout for waiting for a build to finish (polling API).
  * Environment variable: BUILD_FINISH_TIMEOUT_MS
  */
-export const BUILD_FINISH_TIMEOUT = parseInt(process.env.BUILD_FINISH_TIMEOUT_MS || String(DEFAULT_BUILD_FINISH_TIMEOUT), 10);
+export const BUILD_FINISH_TIMEOUT = readTimeoutMs('BUILD_FINISH_TIMEOUT_MS', DEFAULT_BUILD_FINISH_TIMEOUT);
 
 /**
  * Timeout for waiting for exam assessment dashboard to load.
  * Environment variable: EXAM_DASHBOARD_TIMEOUT_MS
  */
-export const EXAM_DASHBOARD_TIMEOUT = parseInt(process.env.EXAM_DASHBOARD_TIMEOUT_MS || String(DEFAULT_EXAM_DASHBOARD_TIMEOUT), 10);
+export const EXAM_DASHBOARD_TIMEOUT = readTimeoutMs('EXAM_DASHBOARD_TIMEOUT_MS', DEFAULT_EXAM_DASHBOARD_TIMEOUT);
 
 /**
  * Timeout for the first assertion after a full `page.reload()`.
@@ -42,7 +68,7 @@ export const EXAM_DASHBOARD_TIMEOUT = parseInt(process.env.EXAM_DASHBOARD_TIMEOU
  *
  * Environment variable: RELOAD_RENDER_TIMEOUT_MS
  */
-export const RELOAD_RENDER_TIMEOUT = parseInt(process.env.RELOAD_RENDER_TIMEOUT_MS || String(DEFAULT_RELOAD_RENDER_TIMEOUT), 10);
+export const RELOAD_RENDER_TIMEOUT = readTimeoutMs('RELOAD_RENDER_TIMEOUT_MS', DEFAULT_RELOAD_RENDER_TIMEOUT);
 
 /**
  * Interval between polling attempts (shared across all polling operations).
