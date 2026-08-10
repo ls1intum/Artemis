@@ -1,10 +1,9 @@
-<div
-    class="flex w-full items-stretch overflow-x-hidden pr-2 h-[calc(100vh_-_var(--sidebar-header-footer-combined-height,105px)_-_15px_-_var(--system-notification-height,0px))]"
-    data-testid="admin-layout"
->
+<!-- Height mirrors the `shell-content-height` mixin the course shells use: everything between the sticky navbar
+     and the footer, minus one grey divider, so the content ends exactly one divider above the footer. -->
+<div class="admin-layout flex w-full items-stretch overflow-x-hidden pr-divider" data-testid="admin-layout">
     <aside
-        class="module-bg sticky top-0 h-full flex-none overflow-x-hidden overflow-y-auto rounded-lg transition-[width] duration-200 ease-in-out max-[960px]:w-[64px] print:hidden"
-        [class]="isNavbarCollapsed() ? 'w-[64px]' : 'w-[220px]'"
+        class="module-bg sticky top-0 h-full flex-none overflow-x-hidden overflow-y-auto rounded-lg transition-[width] duration-200 ease-in-out max-[960px]:w-(--sidebar-nav-width-collapsed) print:hidden"
+        [class]="isNavbarCollapsed() ? 'w-(--sidebar-nav-width-collapsed)' : 'w-(--sidebar-nav-width)'"
         data-testid="admin-sidebar-column"
     >
         <jhi-admin-sidebar
@@ -21,7 +20,7 @@
         />
     </aside>
 
-    <div class="ms-2 flex min-w-0 flex-auto flex-col overflow-hidden print:ms-0 print:w-full" data-testid="admin-content-column">
+    <div class="ms-divider flex min-w-0 flex-auto flex-col overflow-hidden print:ms-0 print:w-full" data-testid="admin-content-column">
         <jhi-admin-title-bar />
         <div class="admin-body module-bg flex-1 overflow-y-auto rounded-lg p-3" data-testid="admin-body">
             <router-outlet />

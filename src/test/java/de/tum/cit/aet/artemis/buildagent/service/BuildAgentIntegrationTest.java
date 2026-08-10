@@ -89,6 +89,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Autowired
     private BuildAgentInformationService buildAgentInformationService;
 
+    @Autowired
+    private BuildJobManagementService buildJobManagementService;
+
     @BeforeAll
     void init() {
         processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
@@ -113,6 +116,10 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             resumeBuildAgentTopic.publish(buildAgentShortName);
             await().atMost(10, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
         }
+        // Ensure no build job from a previous test is still executing on the shared executor. A straggler
+        // completing mid-test (e.g. a retry-then-succeed job) would otherwise reset shared counters such as
+        // consecutiveBuildJobFailures, causing this test's own failure counting to silently under-count.
+        await().atMost(30, TimeUnit.SECONDS).until(() -> buildJobManagementService.getRunningBuildJobIds().isEmpty());
     }
 
     /**
@@ -142,6 +149,10 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.clear();
         processingJobs.clear();
         resultQueue.clear();
+
+        // Wait for this test's own in-flight jobs to finish executing before the next test's @BeforeEach runs,
+        // for the same reason as the wait in clearQueues() above.
+        await().atMost(30, TimeUnit.SECONDS).until(() -> buildJobManagementService.getRunningBuildJobIds().isEmpty());
     }
 
     @Test

@@ -1,0 +1,66 @@
+<div class="tum:relative tum:inline-flex tum:w-full">
+    <button
+        #trigger
+        type="button"
+        [id]="inputId()"
+        [class]="triggerClasses()"
+        [disabled]="isDisabled()"
+        [attr.name]="name()"
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-autocomplete="none"
+        [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
+        [attr.aria-controls]="isOpen() ? listboxId : null"
+        [attr.aria-activedescendant]="isOpen() ? activeOptionId() : null"
+        [attr.aria-label]="ariaLabel()"
+        (click)="toggle()"
+        (keydown)="onTriggerKeydown($event)"
+    >
+        <span class="tum:flex-1 tum:truncate" [class]="!hasSelection() ? 'tum:text-muted' : ''">{{ displayLabel() }}</span>
+    </button>
+    <span class="tum:pointer-events-none tum:absolute tum:inset-y-0 tum:end-0 tum:flex tum:w-10 tum:items-center tum:justify-center tum:text-muted">
+        <fa-icon [icon]="faChevronDown" />
+    </span>
+
+    @if (showClearButton()) {
+        <button
+            type="button"
+            class="tum:absolute tum:inset-y-0 tum:end-10 tum:flex tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted tum:hover:text-text-hover"
+            (click)="clear($event)"
+            [attr.aria-label]="clearAriaLabel() ?? ('tumUi.select.clear' | tumUiTranslate)"
+        >
+            <fa-icon [icon]="faXmark" />
+        </button>
+    }
+</div>
+
+<ng-template #panel>
+    <div class="tum-ui-select-panel tum:box-border tum:w-full tum:rounded-md tum:border tum:border-border tum:bg-overlay-background tum:text-text tum:shadow-md">
+        <ul
+            [id]="listboxId"
+            role="listbox"
+            [attr.aria-label]="ariaLabel()"
+            class="tum:m-0 tum:flex tum:max-h-60 tum:list-none tum:flex-col tum:gap-0.5 tum:overflow-y-auto tum:p-1 tum:outline-none"
+        >
+            @for (option of options(); track $index; let i = $index) {
+                <li
+                    [id]="optionId(i)"
+                    role="option"
+                    [attr.aria-selected]="isSelected(option) ? 'true' : 'false'"
+                    [class]="optionClasses(option, i)"
+                    (click)="selectOption(option)"
+                    (mouseenter)="setActive(i)"
+                >
+                    <span class="tum:flex-1 tum:truncate">{{ label(option) }}</span>
+                    @if (isSelected(option)) {
+                        <fa-icon [icon]="faCheck" class="tum:ms-2 tum:shrink-0" />
+                    }
+                </li>
+            } @empty {
+                <li role="option" aria-selected="false" aria-disabled="true" class="tum:px-3 tum:py-2 tum:text-muted">
+                    {{ emptyMessage() ?? ('tumUi.select.empty' | tumUiTranslate) }}
+                </li>
+            }
+        </ul>
+    </div>
+</ng-template>
