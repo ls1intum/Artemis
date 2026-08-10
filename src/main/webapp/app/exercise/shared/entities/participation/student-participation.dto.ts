@@ -111,7 +111,7 @@ export function fromStudentParticipationDTO(dto: StudentParticipationDTO): Stude
     participation.submissionCount = dto.submissionCount;
     participation.participantName = dto.participantName;
     participation.participantIdentifier = dto.participantIdentifier;
-    participation.student = dto.student ? Object.assign(new User(), dto.student) : undefined;
+    participation.student = dto.student ? fromUserPublicInfoDTO(dto.student) : undefined;
     participation.team = dto.team ? fromParticipationTeamDTO(dto.team) : undefined;
     participation.exercise = dto.exercise ? fromParticipationExerciseContextDTO(dto.exercise) : undefined;
 
@@ -135,7 +135,7 @@ function fromParticipationTeamDTO(dto: ParticipationTeamDTO): Team {
     team.name = dto.name;
     team.shortName = dto.shortName;
     team.image = dto.image;
-    team.students = dto.students?.map((student) => Object.assign(new User(), student));
+    team.students = dto.students?.map(fromUserPublicInfoDTO);
     return team;
 }
 
@@ -150,7 +150,7 @@ function fromParticipationExerciseContextDTO(dto: ParticipationExerciseContextDT
     exercise.dueDate = convertDateStringFromServer(dto.dueDate);
     exercise.assessmentDueDate = convertDateStringFromServer(dto.assessmentDueDate);
     exercise.maxPoints = dto.maxPoints;
-    exercise.course = dto.course ? Object.assign(new Course(), dto.course) : undefined;
+    exercise.course = dto.course ? fromCourseContextDTO(dto.course) : undefined;
     exercise.exerciseGroup = dto.exerciseGroup ? fromExerciseGroupDTO(dto.exerciseGroup, exercise.course) : undefined;
     return exercise;
 }
@@ -160,8 +160,29 @@ function fromExerciseGroupDTO(dto: NonNullable<ParticipationExerciseContextDTO['
     exerciseGroup.id = dto.id;
     exerciseGroup.exam = new Exam();
     exerciseGroup.exam.id = dto.exam.id;
-    exerciseGroup.exam.course = course ?? Object.assign(new Course(), dto.exam.course);
+    exerciseGroup.exam.course = course ?? fromCourseContextDTO(dto.exam.course);
     return exerciseGroup;
+}
+
+function fromUserPublicInfoDTO(dto: UserPublicInfoDTO): User {
+    const user = new User();
+    user.id = dto.id;
+    user.login = dto.login;
+    user.name = dto.name;
+    user.firstName = dto.firstName;
+    user.lastName = dto.lastName;
+    user.email = dto.email;
+    user.imageUrl = dto.imageUrl;
+    return user;
+}
+
+function fromCourseContextDTO(dto: Partial<ParticipationCourseContextDTO> & { id: number }): Course {
+    const course = new Course();
+    course.id = dto.id;
+    course.title = dto.title;
+    course.shortName = dto.shortName;
+    course.accuracyOfScores = dto.accuracyOfScores;
+    return course;
 }
 
 function fromParticipationSubmissionDTO(dto: ParticipationSubmissionDTO): Submission {

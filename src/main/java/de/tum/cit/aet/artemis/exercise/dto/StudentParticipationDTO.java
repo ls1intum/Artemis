@@ -63,7 +63,18 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the participation response, or {@code null} when the input is {@code null}
      */
     public static @Nullable StudentParticipationDTO of(@Nullable StudentParticipation participation, boolean includeStudent) {
-        return participation != null ? of(participation, includeStudent, true, false) : null;
+        return participation != null ? of(participation, includeStudent, true, false, true) : null;
+    }
+
+    /**
+     * Maps a participation without participant-derived programming repository details.
+     *
+     * @param participation  the participation to map
+     * @param includeStudent whether initialized participant information should be included
+     * @return the participation response, or {@code null} when the input is {@code null}
+     */
+    public static @Nullable StudentParticipationDTO ofWithoutProgrammingDetails(@Nullable StudentParticipation participation, boolean includeStudent) {
+        return participation != null ? of(participation, includeStudent, true, false, false) : null;
     }
 
     /**
@@ -73,7 +84,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the participation response
      */
     public static StudentParticipationDTO ofAfterStart(StudentParticipation participation) {
-        return of(participation, true, true, true);
+        return of(participation, true, true, true, true);
     }
 
     /**
@@ -83,7 +94,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the participation response
      */
     public static StudentParticipationDTO ofAfterResume(ProgrammingExerciseStudentParticipation participation) {
-        return of(participation, false, true, true);
+        return of(participation, false, true, true, true);
     }
 
     /**
@@ -93,7 +104,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the polling response
      */
     public static StudentParticipationDTO ofWithLatestResult(StudentParticipation participation) {
-        return of(participation, false, false, true);
+        return of(participation, false, false, true, true);
     }
 
     /**
@@ -103,7 +114,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the current-user participation response
      */
     public static StudentParticipationDTO ofForCurrentUser(StudentParticipation participation) {
-        return of(participation, true, true, false);
+        return of(participation, true, true, false, true);
     }
 
     /**
@@ -113,7 +124,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the lean update response
      */
     public static StudentParticipationDTO ofAfterUpdate(StudentParticipation participation) {
-        return of(participation, false, false, false);
+        return of(participation, false, false, false, true);
     }
 
     /**
@@ -123,10 +134,11 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the lean cleanup response
      */
     public static StudentParticipationDTO ofAfterBuildPlanCleanup(ProgrammingExerciseStudentParticipation participation) {
-        return of(participation, false, false, false);
+        return of(participation, false, false, false, true);
     }
 
-    private static StudentParticipationDTO of(StudentParticipation participation, boolean includeParticipant, boolean includeExercise, boolean includeSubmissions) {
+    private static StudentParticipationDTO of(StudentParticipation participation, boolean includeParticipant, boolean includeExercise, boolean includeSubmissions,
+            boolean includeProgrammingDetails) {
         UserPublicInfoDTO studentDTO = null;
         ParticipationTeamDTO teamDTO = null;
         if (includeParticipant) {
@@ -153,7 +165,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
         String repositoryUri = null;
         String buildPlanId = null;
         String branch = null;
-        if (participation instanceof ProgrammingExerciseStudentParticipation programmingParticipation) {
+        if (includeProgrammingDetails && participation instanceof ProgrammingExerciseStudentParticipation programmingParticipation) {
             repositoryUri = programmingParticipation.getRepositoryUri();
             buildPlanId = programmingParticipation.getBuildPlanId();
             branch = programmingParticipation.getBranch();
