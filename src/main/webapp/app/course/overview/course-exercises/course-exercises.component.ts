@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
@@ -346,7 +347,11 @@ export class CourseExercisesComponent {
         if (!course || !updatedCourseExercises || updatedCourseExercises === course.exercises) {
             return;
         }
-        this._course.set({ ...course, exercises: updatedCourseExercises });
+        // A different object has to be set: a signal only notifies when the reference changes. The exercise objects
+        // themselves are carried over by the assignment below, so live updates keep reaching what the cards render.
+        const updatedCourse = deepClone(course);
+        updatedCourse.exercises = updatedCourseExercises;
+        this._course.set(updatedCourse);
     }
 
     private updateExercisesWithParticipation(exercises: Exercise[] | undefined, changedParticipation: StudentParticipation): Exercise[] | undefined {
