@@ -95,7 +95,10 @@ kill_tree() {
     kill "$pid" 2>/dev/null || true
 }
 
-# Free a port if a leftover process holds it. Mirrors run-e2e-tests-local-fast.sh:92-117.
+# How long to wait for a killed process to release its listening socket before giving up.
+PORT_RELEASE_TIMEOUT="${PORT_RELEASE_TIMEOUT:-30}"
+
+# Free a port if a leftover process holds it. Mirrors run-e2e-tests-local-fast.sh.
 check_port_available() {
     local port=$1
     local service_name=$2
@@ -109,14 +112,24 @@ check_port_available() {
             echo "  Killing PID $pid..."
             kill_tree "$pid"
         done
-        sleep 2
-        listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+        # Poll for the port to be released instead of sleeping a fixed 2s and checking once. A JVM
+        # shutting down can hold its listening socket noticeably longer than that, and the single
+        # check then aborts the whole run over a port that frees a moment later.
+        local waited=0
+        while [ "$waited" -lt "$PORT_RELEASE_TIMEOUT" ]; do
+            listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+            if [ -z "$listeners" ]; then
+                break
+            fi
+            sleep 1
+            waited=$((waited + 1))
+        done
         if [ -n "$listeners" ]; then
-            echo -e "${RED}ERROR: Port ${port} is still in use after killing processes.${NC}"
+            echo -e "${RED}ERROR: Port ${port} is still in use ${PORT_RELEASE_TIMEOUT}s after killing processes.${NC}"
             echo "$listeners"
             exit 1
         fi
-        echo -e "${GREEN}Port ${port} is now free.${NC}"
+        echo -e "${GREEN}Port ${port} is now free (released after ${waited}s).${NC}"
     fi
 }
 
