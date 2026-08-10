@@ -5,6 +5,7 @@ import { CalendarMobileOverviewComponent } from './calendar-mobile-overview.comp
 import { CalendarMobileMonthPresentationComponent } from 'app/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
 import { CalendarMobileDayPresentationComponent } from 'app/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { CalendarViewStateService } from 'app/calendar/shared/service/calendar-view-state.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -68,6 +69,8 @@ describe('CalendarMobileOverviewComponent', () => {
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
+                // Normally provided by the calendar container, which holds the displayed period across a resize.
+                CalendarViewStateService,
             ],
         }).compileComponents();
 

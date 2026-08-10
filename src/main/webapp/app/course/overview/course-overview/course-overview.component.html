@@ -32,7 +32,13 @@
             >
                 @if (course()) {
                     @if (showCourseTitleBar()) {
-                        <jhi-course-title-bar [pageTitle]="pageTitle()" [isExamStarted]="isExamStarted()" />
+                        <jhi-course-title-bar [pageTitle]="pageTitle()" [isExamStarted]="isExamStarted()">
+                            <!-- Pages that expose a `controlConfiguration` render their controls here, so the legacy
+                                 mechanism lands in the title bar like `titleBarActions` does, instead of above the page. -->
+                            @if (!hasSidebar()) {
+                                <ng-container #controlsViewContainer />
+                            }
+                        </jhi-course-title-bar>
                     }
 
                     <!-- cdkScrollable registers the container with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187) -->
@@ -40,14 +46,11 @@
                         class="course-body-container"
                         [ngClass]="{
                             'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar(),
-                            'mx-2': !isExamStarted(),
+                            'shell-divider-x': !isExamStarted(),
                         }"
                         [class.no-header-bar-height]="!hasSidebar() && !showCourseTitleBar()"
                         cdkScrollable
                     >
-                        @if (!hasSidebar()) {
-                            <ng-container class="d-flex ms-auto" #controlsViewContainer />
-                        }
                         <!-- Check for !isLTI to render the router outlet only once and avoid side effects on route updates. -->
                         @if (!isShownViaLti()) {
                             <ng-template *ngTemplateOutlet="routerOutlet" />
