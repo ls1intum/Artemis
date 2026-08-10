@@ -126,6 +126,52 @@ describe('date-time-picker reports unparseable input to its form control', () =>
             expect(host.form.valid).toBe(true);
         });
 
+        // The bounds routinely bind or move after a value is in the field (an exercise form takes the due
+        // date's [min] from the release date the user is still editing), and neither updateField nor
+        // updateSignals runs for a bound change on its own.
+        it('turns invalid when a bound moves past a value that was valid when written', () => {
+            const value = min.add(5, 'day');
+            host.form.controls.softDueDate.setValue(value);
+            fixture.detectChanges();
+            expect(host.form.valid).toBe(true);
+
+            host.min.set(value.add(1, 'day'));
+            fixture.detectChanges();
+
+            expect(host.form.controls.softDueDate.errors).toEqual({ invalidDate: true });
+            expect(host.form.valid).toBe(false);
+        });
+
+        it('turns valid again when the bound moves back off the value', () => {
+            const value = min.add(5, 'day');
+            host.form.controls.softDueDate.setValue(value);
+            host.max.set(value.subtract(1, 'day'));
+            fixture.detectChanges();
+            expect(host.form.valid).toBe(false);
+
+            host.max.set(value.add(1, 'day'));
+            fixture.detectChanges();
+
+            expect(host.form.valid).toBe(true);
+        });
+
+        it('keeps unparseable text and its error when a bound moves', () => {
+            // The field holds a date, then the user types junk over it. `value()` still holds the old, in-range
+            // date while the input shows the raw text, so a bound change must not recompute validity from it
+            // and clear an error the user can still see.
+            host.form.controls.softDueDate.setValue(min.add(5, 'day'));
+            fixture.detectChanges();
+            picker.updateField('asdasd');
+            fixture.detectChanges();
+            expect(host.form.valid).toBe(false);
+
+            host.max.set(max.add(1, 'year'));
+            fixture.detectChanges();
+
+            expect(host.form.controls.softDueDate.errors).toEqual({ invalidDate: true });
+            expect(host.form.valid).toBe(false);
+        });
+
         it('recovers when a later write brings the value back inside the range', () => {
             host.form.controls.softDueDate.setValue(max.add(1, 'day'));
             fixture.detectChanges();

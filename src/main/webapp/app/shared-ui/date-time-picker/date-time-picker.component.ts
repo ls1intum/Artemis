@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, computed, forwardRef, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, computed, effect, forwardRef, input, output, signal, untracked, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { faClock, faGlobe, faLock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -184,6 +184,41 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
     }
 
     /**
+     * Rechecks the held value whenever a bound binds or moves.
+     *
+     * The bounds routinely arrive or change after a value is already in the field: an exercise form feeds the
+     * due-date picker's `[min]` from the release date the user is still editing. {@link validate} reports the
+     * cached {@link isInputValid}, and neither {@link updateField} nor {@link updateSignals} runs when only a
+     * bound changes, so without this the control would keep reporting a date the range no longer allows as valid.
+     */
+    private readonly revalidateOnBoundsChange = effect(() => {
+        const min = this.min();
+        const max = this.max();
+        // The recheck reads `value()` and writes `isInputValid`; keep those out of this effect's dependencies,
+        // which are exactly the two bounds.
+        untracked(() => this.revalidateAgainstBounds(min, max));
+    });
+
+    /**
+     * Recomputes range validity for the currently held value against the given bounds.
+     *
+     * Does nothing while {@link needsParentSync} is set: the field then displays raw text (unparseable, or a date
+     * the range rejected) that `value()` does not represent, so recomputing from `value()` would clear an error
+     * the user can still see on screen. The next edit runs the full check anyway.
+     */
+    private revalidateAgainstBounds(min?: dayjs.Dayjs, max?: dayjs.Dayjs) {
+        const current = this.value();
+        if (this.needsParentSync || current == undefined) {
+            return;
+        }
+        const parsed = dayjs(current);
+        // An unparseable held value is already flagged; moving a bound does not change that.
+        if (parsed.isValid()) {
+            this.setInputValid(this.isWithinRange(parsed, min, max));
+        }
+    }
+
+    /**
      * Emits the value change from component.
      */
     valueChanged() {
@@ -267,11 +302,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
      * bound is accepted, which matches the calendar popup, where the bound days stay selectable.
      *
      * Shared by the typing path ({@link updateField}) and the programmatic one ({@link updateSignals}), so a
-     * date the user is not allowed to type cannot slip in through `setValue` / `patchValue` either.
+     * date the user is not allowed to type cannot slip in through `setValue` / `patchValue` either. The bounds
+     * are parameters so {@link revalidateOnBoundsChange} can pass the values its effect depends on.
      */
-    private isWithinRange(parsed: dayjs.Dayjs): boolean {
-        const min = this.min();
-        const max = this.max();
+    private isWithinRange(parsed: dayjs.Dayjs, min = this.min(), max = this.max()): boolean {
         return !(min && parsed.isBefore(min)) && !(max && parsed.isAfter(max));
     }
 
