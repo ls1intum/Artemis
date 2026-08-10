@@ -52,16 +52,26 @@
                             <tum-ui-tag class="sgi-item__points" [severity]="pointsSeverity(instruction.credits)" [value]="pointsLabel(instruction.credits)" />
                             <div class="sgi-item__control">
                                 @if (selectable()) {
-                                    <div class="sgi-item__usage-progress">
-                                        <span class="sgi-item__usage-counter">{{ useCount }} / {{ usageLimit > 0 ? usageLimit : '∞' }}</span>
-                                        <tum-ui-progress-bar
-                                            class="sgi-item__usage-bar"
-                                            [value]="instructionUsageProgress(instruction)"
-                                            [severity]="instructionUsageSeverity(instruction)"
-                                            [showValue]="false"
-                                            [ariaLabel]="usageTooltip"
-                                            [tumUiTooltip]="usageTooltip"
-                                        />
+                                    <div class="sgi-item__usage-stepper" role="group" [attr.aria-label]="usageTooltip">
+                                        <button
+                                            type="button"
+                                            class="sgi-item__usage-step"
+                                            [disabled]="!canDecrementApplication(instruction)"
+                                            [attr.aria-label]="'artemisApp.exercise.decreaseInstructionUsage' | artemisTranslate"
+                                            (click)="decrementApplication($event, instruction)"
+                                        >
+                                            <fa-icon [icon]="faMinus" />
+                                        </button>
+                                        <span class="sgi-item__usage-counter" [tumUiTooltip]="usageTooltip"> {{ useCount }} / {{ usageLimit > 0 ? usageLimit : '∞' }} </span>
+                                        <button
+                                            type="button"
+                                            class="sgi-item__usage-step"
+                                            [disabled]="!canIncrementApplication(instruction)"
+                                            [attr.aria-label]="'artemisApp.exercise.increaseInstructionUsage' | artemisTranslate"
+                                            (click)="incrementApplication($event, instruction)"
+                                        >
+                                            <fa-icon [icon]="faPlus" />
+                                        </button>
                                     </div>
                                     <span
                                         [tumUiTooltip]="

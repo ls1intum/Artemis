@@ -228,6 +228,13 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
         this.appendFeedback(feedback);
     }
 
+    unapplyOneInstruction(instruction: GradingInstruction): void {
+        const feedbackToRemove = this.unreferencedFeedback.findLast((feedback) => feedback.gradingInstruction?.id === instruction.id);
+        if (feedbackToRemove) {
+            this.deleteFeedback(feedbackToRemove);
+        }
+    }
+
     unapplyInstruction(instruction: GradingInstruction): void {
         const feedbacksToRemove = this.unreferencedFeedback.filter((feedback) => feedback.gradingInstruction?.id === instruction.id);
         feedbacksToRemove.forEach((feedback) => this.deleteFeedback(feedback));

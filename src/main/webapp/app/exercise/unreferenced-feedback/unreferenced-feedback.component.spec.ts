@@ -217,6 +217,22 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.appliedInstructionCounts()).toEqual(new Map([[2, 1]]));
         });
 
+        it('should remove only one feedback of the instruction when one application is taken back', () => {
+            comp.applyInstruction(documentationInstruction);
+            comp.applyInstruction(documentationInstruction);
+            comp.applyInstruction(cameraInstruction);
+
+            comp.unapplyOneInstruction(documentationInstruction);
+
+            expect(comp.unreferencedFeedback).toHaveLength(2);
+            expect(comp.appliedInstructionCounts()).toEqual(
+                new Map([
+                    [1, 1],
+                    [2, 1],
+                ]),
+            );
+        });
+
         it('should group the feedback by criterion, with uncategorized feedback last', () => {
             comp.applyInstruction(cameraInstruction);
             comp.applyInstruction(documentationInstruction);

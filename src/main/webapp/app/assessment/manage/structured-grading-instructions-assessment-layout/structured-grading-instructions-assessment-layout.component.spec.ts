@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiCheckboxComponent, TumUiProgressBarComponent } from '@tumaet/ui-angular';
+import { TumUiCheckboxComponent } from '@tumaet/ui-angular';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
@@ -137,6 +137,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
                 appliedInstructionCounts: appliedCounts,
                 removableInstructionIds: computed(() => new Set([...appliedIds()].filter((id) => !notRemovableIds().has(id)))),
                 applyInstruction: vi.fn(),
+                unapplyOneInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
             };
             TestBed.inject(GradingInstructionSelectionService).register(host);
@@ -168,20 +169,18 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             fixture.detectChanges();
         }
 
-        it('should render a checkbox and usage progress', () => {
+        it('should render a checkbox and usage stepper', () => {
             expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
-            expect(fixture.debugElement.query(By.directive(TumUiProgressBarComponent))).not.toBeNull();
+            expect(fixture.nativeElement.querySelectorAll('.sgi-item__usage-step')).toHaveLength(2);
             expect(fixture.debugElement.query(By.css('jhi-help-icon'))).toBeNull();
             expect(fixture.nativeElement.querySelector('.sgi-item__usage-counter')?.textContent?.trim()).toBe('0 / ∞');
         });
 
-        it('should update the usage counter, progress, and severity from linked feedback', () => {
+        it('should update the usage counter from linked feedback', () => {
             instruction.usageCount = 2;
             setApplicationCount(2);
 
             expect(comp.instructionUseCount(instruction)).toBe(2);
-            expect(comp.instructionUsageProgress(instruction)).toBe(100);
-            expect(comp.instructionUsageSeverity(instruction)).toBe('danger');
             expect(fixture.nativeElement.querySelector('.sgi-item__usage-counter')?.textContent?.trim()).toBe('2 / 2');
         });
 
@@ -312,6 +311,36 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(openDeleteDialogSpy).not.toHaveBeenCalled();
             expect(host.unapplyInstruction).not.toHaveBeenCalled();
             expect(host.applyInstruction).not.toHaveBeenCalled();
+        });
+
+        it('should increment and decrement the application count from the usage stepper', () => {
+            instruction.usageCount = 2;
+            setApplicationCount(1);
+
+            const [decrementButton, incrementButton] = fixture.nativeElement.querySelectorAll('.sgi-item__usage-step') as HTMLButtonElement[];
+            expect(decrementButton.disabled).toBe(false);
+            expect(incrementButton.disabled).toBe(false);
+
+            incrementButton.click();
+            expect(host.applyInstruction).toHaveBeenCalledWith(instruction);
+
+            decrementButton.click();
+            expect(host.unapplyOneInstruction).toHaveBeenCalledWith(instruction);
+        });
+
+        it('should disable the usage stepper at the empty and exhausted bounds', () => {
+            instruction.usageCount = 2;
+
+            expect(comp.canDecrementApplication(instruction)).toBe(false);
+            expect(comp.canIncrementApplication(instruction)).toBe(true);
+
+            setApplicationCount(2);
+            expect(comp.canDecrementApplication(instruction)).toBe(true);
+            expect(comp.canIncrementApplication(instruction)).toBe(false);
+
+            notRemovableIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+            expect(comp.canDecrementApplication(instruction)).toBe(false);
         });
     });
 

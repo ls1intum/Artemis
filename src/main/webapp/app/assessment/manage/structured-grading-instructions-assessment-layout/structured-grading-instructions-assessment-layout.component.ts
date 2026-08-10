@@ -1,22 +1,14 @@
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Component, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import {
-    TumUiButtonComponent,
-    TumUiCheckboxComponent,
-    TumUiMessageComponent,
-    TumUiProgressBarComponent,
-    TumUiProgressBarSeverity,
-    TumUiTagComponent,
-    TumUiTagSeverity,
-    TumUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiMessageComponent, TumUiTagComponent, TumUiTagSeverity, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { pointsLabel, pointsSeverity } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
@@ -38,11 +30,11 @@ export interface SortedGradingCriterion {
         ExpandableSectionComponent,
         HelpIconComponent,
         MarkdownDirective,
+        FaIconComponent,
         TumUiCheckboxComponent,
         TumUiTagComponent,
         TumUiButtonComponent,
         TumUiMessageComponent,
-        TumUiProgressBarComponent,
         TumUiTooltipDirective,
         ArtemisTranslatePipe,
     ],
@@ -56,6 +48,8 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     readonly allowDrop = signal<boolean>(undefined!);
     // Icons
     faInfoCircle = faInfoCircle;
+    faMinus = faMinus;
+    faPlus = faPlus;
 
     readonly expandableSections = viewChildren(ExpandableSectionComponent);
 
@@ -152,6 +146,34 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         });
     }
 
+    /** One more application, while a finite usage limit (if any) still has room. */
+    incrementApplication(event: Event, instruction: GradingInstruction): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.canIncrementApplication(instruction)) {
+            return;
+        }
+        this.selectionService.addApplication(instruction);
+    }
+
+    /** One fewer application owned by the feedback list. Referenced-only applications stay put. */
+    decrementApplication(event: Event, instruction: GradingInstruction): void {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!this.canDecrementApplication(instruction)) {
+            return;
+        }
+        this.selectionService.removeOneApplication(instruction);
+    }
+
+    canIncrementApplication(instruction: GradingInstruction): boolean {
+        return this.isDraggable(instruction);
+    }
+
+    canDecrementApplication(instruction: GradingInstruction): boolean {
+        return this.selectionService.isRemovable(instruction);
+    }
+
     /** Tag severity of an instruction's point pill (green awarded / red deducted / neutral zero). */
     pointsSeverity(credits: number): TumUiTagSeverity {
         return pointsSeverity(credits);
@@ -165,18 +187,6 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     /** Number of feedback entries currently linked to this instruction in the open assessment. */
     instructionUseCount(instruction: GradingInstruction): number {
         return this.selectionService.applicationCount(instruction);
-    }
-
-    /** Percentage of the configured usage limit consumed by this assessment. */
-    instructionUsageProgress(instruction: GradingInstruction): number {
-        const limit = instruction.usageCount ?? 0;
-        return limit > 0 ? (this.instructionUseCount(instruction) / limit) * 100 : 0;
-    }
-
-    /** Reaching the configured limit is called out without making normal progress feel like an error. */
-    instructionUsageSeverity(instruction: GradingInstruction): TumUiProgressBarSeverity {
-        const limit = instruction.usageCount ?? 0;
-        return limit > 0 && this.instructionUseCount(instruction) >= limit ? 'danger' : 'primary';
     }
 
     /**

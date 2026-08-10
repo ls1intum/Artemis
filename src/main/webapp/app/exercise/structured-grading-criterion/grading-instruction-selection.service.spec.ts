@@ -16,6 +16,7 @@ describe('GradingInstructionSelectionService', () => {
             appliedInstructionCounts: signal<ReadonlyMap<number, number>>(new Map([[1, 1]])),
             removableInstructionIds: signal<ReadonlySet<number>>(new Set([1])),
             applyInstruction: vi.fn(),
+            unapplyOneInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),
         };
     });
@@ -34,6 +35,7 @@ describe('GradingInstructionSelectionService', () => {
             appliedInstructionCounts: signal<ReadonlyMap<number, number>>(new Map([[1, 2]])),
             removableInstructionIds: signal<ReadonlySet<number>>(new Set()),
             applyInstruction: vi.fn(),
+            unapplyOneInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),
         });
 
@@ -66,6 +68,16 @@ describe('GradingInstructionSelectionService', () => {
         expect(host.unapplyInstruction).toHaveBeenCalledWith(instruction);
     });
 
+    it('should delegate single application changes to the host', () => {
+        service.register(host);
+
+        service.addApplication(instruction);
+        expect(host.applyInstruction).toHaveBeenCalledWith(instruction);
+
+        service.removeOneApplication(instruction);
+        expect(host.unapplyOneInstruction).toHaveBeenCalledWith(instruction);
+    });
+
     it('should ignore toggles while no host is registered', () => {
         service.setApplied(instruction, true);
 
@@ -78,6 +90,7 @@ describe('GradingInstructionSelectionService', () => {
             appliedInstructionCounts: signal<ReadonlyMap<number, number>>(new Map()),
             removableInstructionIds: signal<ReadonlySet<number>>(new Set()),
             applyInstruction: vi.fn(),
+            unapplyOneInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),
         };
         service.register(host);

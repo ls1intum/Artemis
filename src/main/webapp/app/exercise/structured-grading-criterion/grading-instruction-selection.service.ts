@@ -20,6 +20,9 @@ export interface GradingInstructionSelectionHost {
     /** Adds one feedback linked to the given instruction. */
     applyInstruction(instruction: GradingInstruction): void;
 
+    /** Removes one feedback linked to the given instruction (owned by this host). */
+    unapplyOneInstruction(instruction: GradingInstruction): void;
+
     /** Removes every feedback linked to the given instruction. */
     unapplyInstruction(instruction: GradingInstruction): void;
 }
@@ -91,5 +94,15 @@ export class GradingInstructionSelectionService {
         } else {
             host.unapplyInstruction(instruction);
         }
+    }
+
+    /** Adds one more application of the instruction in the registered feedback list. */
+    addApplication(instruction: GradingInstruction): void {
+        this.host()?.applyInstruction(instruction);
+    }
+
+    /** Removes one application of the instruction owned by the registered feedback list. */
+    removeOneApplication(instruction: GradingInstruction): void {
+        this.host()?.unapplyOneInstruction(instruction);
     }
 }
