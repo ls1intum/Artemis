@@ -24,10 +24,10 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 public record ExerciseForCourseOverviewDTO(ExerciseType type, Long id, String title, Double maxPoints, @Nullable Double bonusPoints, @Nullable ZonedDateTime releaseDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, AssessmentType assessmentType,
         @Nullable DifficultyLevel difficulty, ExerciseMode mode, IncludedInOverallScore includedInOverallScore, @Nullable Boolean presentationScoreEnabled,
-        boolean allowFeedbackRequests, @Nullable Boolean allowOnlineEditor, @Nullable Boolean allowOfflineIde, @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate,
-        @Nullable Long variantGroupId, @Nullable String variantGroupTitle, @Nullable Double variantGroupMaxPoints, @Nullable ZonedDateTime variantGroupReleaseDate,
-        @Nullable ZonedDateTime variantGroupStartDate, @Nullable ZonedDateTime variantGroupDueDate, @Nullable ZonedDateTime variantGroupAssessmentDueDate,
-        @Nullable ZonedDateTime variantGroupExampleSolutionPublicationDate) {
+        boolean allowFeedbackRequests, @Nullable Boolean allowOnlineEditor, @Nullable Boolean allowOfflineIde, @Nullable Boolean staticCodeAnalysisEnabled,
+        @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, @Nullable Long variantGroupId, @Nullable String variantGroupTitle,
+        @Nullable Double variantGroupMaxPoints, @Nullable ZonedDateTime variantGroupReleaseDate, @Nullable ZonedDateTime variantGroupStartDate,
+        @Nullable ZonedDateTime variantGroupDueDate, @Nullable ZonedDateTime variantGroupAssessmentDueDate, @Nullable ZonedDateTime variantGroupExampleSolutionPublicationDate) {
 
     /**
      * JPQL constructor accepting the entity class produced by Hibernate's {@code TYPE(...)} function.
@@ -35,15 +35,15 @@ public record ExerciseForCourseOverviewDTO(ExerciseType type, Long id, String ti
     public ExerciseForCourseOverviewDTO(Class<? extends Exercise> type, Long id, String title, Double maxPoints, @Nullable Double bonusPoints, @Nullable ZonedDateTime releaseDate,
             @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, AssessmentType assessmentType,
             @Nullable DifficultyLevel difficulty, ExerciseMode mode, IncludedInOverallScore includedInOverallScore, @Nullable Boolean presentationScoreEnabled,
-            boolean allowFeedbackRequests, @Nullable Boolean allowOnlineEditor, @Nullable Boolean allowOfflineIde,
+            boolean allowFeedbackRequests, @Nullable Boolean allowOnlineEditor, @Nullable Boolean allowOfflineIde, @Nullable Boolean staticCodeAnalysisEnabled,
             @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, @Nullable Long variantGroupId, @Nullable String variantGroupTitle,
             @Nullable Double variantGroupMaxPoints, @Nullable ZonedDateTime variantGroupReleaseDate, @Nullable ZonedDateTime variantGroupStartDate,
             @Nullable ZonedDateTime variantGroupDueDate, @Nullable ZonedDateTime variantGroupAssessmentDueDate,
             @Nullable ZonedDateTime variantGroupExampleSolutionPublicationDate) {
         this(ExerciseType.getExerciseTypeFromClass(type), id, title, maxPoints, bonusPoints, releaseDate, startDate, dueDate, assessmentDueDate, assessmentType, difficulty, mode,
-                includedInOverallScore, presentationScoreEnabled, allowFeedbackRequests, allowOnlineEditor, allowOfflineIde, buildAndTestStudentSubmissionsAfterDueDate,
-                variantGroupId, variantGroupTitle, variantGroupMaxPoints, variantGroupReleaseDate, variantGroupStartDate, variantGroupDueDate, variantGroupAssessmentDueDate,
-                variantGroupExampleSolutionPublicationDate);
+                includedInOverallScore, presentationScoreEnabled, allowFeedbackRequests, allowOnlineEditor, allowOfflineIde, staticCodeAnalysisEnabled,
+                buildAndTestStudentSubmissionsAfterDueDate, variantGroupId, variantGroupTitle, variantGroupMaxPoints, variantGroupReleaseDate, variantGroupStartDate,
+                variantGroupDueDate, variantGroupAssessmentDueDate, variantGroupExampleSolutionPublicationDate);
     }
 
     /**
@@ -58,8 +58,8 @@ public record ExerciseForCourseOverviewDTO(ExerciseType type, Long id, String ti
         Boolean quizEnded = type == ExerciseType.QUIZ ? dueDate != null && calculationTime.isAfter(dueDate) : null;
         Set<QuizBatchOverviewDTO> quizBatches = quizBatchStarted ? Set.of(QuizBatchOverviewDTO.STARTED) : Set.of();
         return new ExerciseOverviewDTO(type, id, title, maxPoints, bonusPoints, releaseDate, startDate, dueDate, assessmentDueDate, assessmentType, difficulty, mode, teamMode,
-                includedInOverallScore, categories, presentationScoreEnabled, allowFeedbackRequests, allowOnlineEditor, allowOfflineIde, quizEnded, quizBatches,
-                studentAssignedTeamId, teamMode, variantGroup, studentParticipations);
+                includedInOverallScore, categories, presentationScoreEnabled, allowFeedbackRequests, allowOnlineEditor, allowOfflineIde, staticCodeAnalysisEnabled, quizEnded,
+                quizBatches, studentAssignedTeamId, teamMode, variantGroup, studentParticipations);
     }
 
     /**

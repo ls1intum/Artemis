@@ -423,11 +423,11 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         // Everything the overview renders must be here...
         assertThat(body).as("the exercise fields the overview renders").contains("\"title\":", "\"dueDate\":", "\"maxPoints\":", "\"difficulty\":", "\"categories\":",
                 "\"includedInOverallScore\":", "\"assessmentDueDate\":", "\"studentParticipations\":", "\"allowFeedbackRequests\":", "\"allowOnlineEditor\":",
-                "\"allowOfflineIde\":");
+                "\"allowOfflineIde\":", "\"staticCodeAnalysisEnabled\":");
         // ...and the long tail it never reads must not be, especially the programming configuration
         assertThat(body).as("fields no overview consumer reads").doesNotContain("\"projectKey\":", "\"packageName\":", "\"programmingLanguage\":", "\"projectType\":",
-                "\"shortName\":", "\"buildAndTestStudentSubmissionsAfterDueDate\":", "\"staticCodeAnalysisEnabled\":", "\"allowOnlineIde\":", "\"showTestNamesToStudents\":",
-                "\"testCasesChanged\":", "\"secondCorrectionEnabled\":", "\"gradingInstructionFeedbackUsed\":");
+                "\"shortName\":", "\"buildAndTestStudentSubmissionsAfterDueDate\":", "\"allowOnlineIde\":", "\"showTestNamesToStudents\":", "\"testCasesChanged\":",
+                "\"secondCorrectionEnabled\":", "\"gradingInstructionFeedbackUsed\":");
         // Results carry no feedbacks: only the scores export and the assessment views need them, and they load their own
         assertThat(body).as("results must not carry their feedbacks").doesNotContain("\"feedbacks\":");
         log.info("exercises-for-overview response size: {} bytes for {} exercises", payloadSizeBytes, CONTENT_PER_TYPE);

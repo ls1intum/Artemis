@@ -44,7 +44,9 @@ export class LearningPathInstructorPageComponent {
     private async loadCourse(courseId: number): Promise<void> {
         try {
             this.isLoading.set(true);
-            const courseBody = await lastValueFrom(this.courseManagementService.findOneForDashboard(courseId));
+            // Only the course record is read here, so the plain course endpoint is enough; the dashboard variant would
+            // additionally load the instructor's exercises, participations and results for nothing.
+            const courseBody = await lastValueFrom(this.courseManagementService.find(courseId));
             this.course.set(courseBody.body!);
         } catch (error) {
             onError(this.alertService, error);

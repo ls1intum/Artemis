@@ -45,6 +45,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  * @param allowFeedbackRequests         whether the student may request automatic feedback from the exercise card
  * @param allowOnlineEditor             whether a programming exercise can be opened in the online editor
  * @param allowOfflineIde               whether a programming exercise can be cloned and worked on locally
+ * @param staticCodeAnalysisEnabled     whether a programming exercise reports static code analysis issues, which gates the code-issue counter
+ *                                          shown on the exercise header
  * @param quizEnded                     whether a quiz has ended, used by its action and result status
  * @param quizBatches                   a single started marker when the requesting student's relevant batch has begun
  * @param studentAssignedTeamId         the team the user belongs to, for team exercises
@@ -57,8 +59,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 public record ExerciseOverviewDTO(ExerciseType type, Long id, String title, Double maxPoints, Double bonusPoints, ZonedDateTime releaseDate, ZonedDateTime startDate,
         ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, AssessmentType assessmentType, DifficultyLevel difficulty, ExerciseMode mode, boolean teamMode,
         IncludedInOverallScore includedInOverallScore, Set<String> categories, Boolean presentationScoreEnabled, boolean allowFeedbackRequests, Boolean allowOnlineEditor,
-        Boolean allowOfflineIde, Boolean quizEnded, Set<QuizBatchOverviewDTO> quizBatches, Long studentAssignedTeamId, boolean studentAssignedTeamIdComputed,
-        ExerciseVariantGroupReferenceDTO exerciseVariantGroup, Set<ParticipationOverviewDTO> studentParticipations) {
+        Boolean allowOfflineIde, Boolean staticCodeAnalysisEnabled, Boolean quizEnded, Set<QuizBatchOverviewDTO> quizBatches, Long studentAssignedTeamId,
+        boolean studentAssignedTeamIdComputed, ExerciseVariantGroupReferenceDTO exerciseVariantGroup, Set<ParticipationOverviewDTO> studentParticipations) {
 
     /**
      * Projects an exercise, together with the user's participations, for the course overview.
@@ -75,7 +77,8 @@ public record ExerciseOverviewDTO(ExerciseType type, Long id, String title, Doub
                 exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getAssessmentType(), exercise.getDifficulty(),
                 exercise.getMode(), exercise.isTeamMode(), exercise.getIncludedInOverallScore(), exercise.getCategories(), exercise.getPresentationScoreEnabled(),
                 exercise.getAllowFeedbackRequests(), programmingExercise == null ? null : programmingExercise.isAllowOnlineEditor(),
-                programmingExercise == null ? null : programmingExercise.isAllowOfflineIde(), quizExercise == null ? null : quizExercise.isQuizEnded(), quizBatches,
+                programmingExercise == null ? null : programmingExercise.isAllowOfflineIde(),
+                programmingExercise == null ? null : programmingExercise.isStaticCodeAnalysisEnabled(), quizExercise == null ? null : quizExercise.isQuizEnded(), quizBatches,
                 exercise.getStudentAssignedTeamId(), exercise.isStudentAssignedTeamIdComputed(), ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()),
                 ParticipationOverviewDTO.of(exercise.getStudentParticipations()));
     }

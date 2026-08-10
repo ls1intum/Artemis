@@ -331,6 +331,18 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
         courseTestService.testGetCourseForEnrollmentAccessDenied();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseAccessStateReportsAccessForEnrolledStudent() throws Exception {
+        courseTestService.testGetCourseAccessStateReportsAccessForEnrolledStudent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseAccessStateReportsNoAccessWithoutEnrollment() throws Exception {
+        courseTestService.testGetCourseAccessStateReportsNoAccessWithoutEnrollment();
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = OTHER_PREFIX + "custom1", roles = { "USER", "TA", "EDITOR", "INSTRUCTOR" })
     @ValueSource(booleans = { true, false })

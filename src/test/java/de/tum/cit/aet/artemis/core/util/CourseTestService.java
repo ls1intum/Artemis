@@ -123,6 +123,7 @@ import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestReposit
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.dto.CourseAccessStateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseCreateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
@@ -1347,6 +1348,22 @@ public class CourseTestService {
         // remove student from course so that they are not already enrolled (UCR-based unenrollment)
         unenrollStudent1FromAllCourses();
         request.get("/api/course/courses/" + course.getId() + "/for-enrollment", HttpStatus.OK, Course.class);
+    }
+
+    // Test
+    public void testGetCourseAccessStateReportsAccessForEnrolledStudent() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        var accessState = request.get("/api/course/courses/" + course.getId() + "/access-state", HttpStatus.OK, CourseAccessStateDTO.class);
+        assertThat(accessState.hasAccess()).isTrue();
+    }
+
+    // Test
+    public void testGetCourseAccessStateReportsNoAccessWithoutEnrollment() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        unenrollStudent1FromAllCourses();
+        // Not being enrolled is the answer, not an error: the enrollment page asks precisely because it expects it.
+        var accessState = request.get("/api/course/courses/" + course.getId() + "/access-state", HttpStatus.OK, CourseAccessStateDTO.class);
+        assertThat(accessState.hasAccess()).isFalse();
     }
 
     // Test

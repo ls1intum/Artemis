@@ -997,7 +997,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 result.score,
                 result.rated,
                 result.successful,
-                result.assessmentType)
+                result.assessmentType,
+                result.codeIssueCount)
             FROM StudentParticipation participation
                 LEFT JOIN participation.submissions submission
                 LEFT JOIN submission.results result
@@ -1174,7 +1175,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 result.score,
                 result.rated,
                 result.successful,
-                result.assessmentType)
+                result.assessmentType,
+                result.codeIssueCount)
             FROM StudentParticipation participation
                 JOIN participation.team.students student
                 LEFT JOIN participation.submissions submission

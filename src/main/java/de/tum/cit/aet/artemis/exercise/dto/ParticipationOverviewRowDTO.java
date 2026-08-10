@@ -29,7 +29,7 @@ public record ParticipationOverviewRowDTO(long exerciseId, long participationId,
         @Nullable ZonedDateTime initializationDate, @Nullable Boolean testRun, @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore,
         @Nullable String repositoryUri, @Nullable Long submissionId, @Nullable ZonedDateTime submissionDate, @Nullable Boolean submitted, @Nullable SubmissionType submissionType,
         @Nullable String submissionExerciseType, @Nullable Long resultId, @Nullable ZonedDateTime resultCompletionDate, @Nullable Double resultScore, @Nullable Boolean resultRated,
-        @Nullable Boolean resultSuccessful, @Nullable AssessmentType resultAssessmentType) {
+        @Nullable Boolean resultSuccessful, @Nullable AssessmentType resultAssessmentType, @Nullable Integer resultCodeIssueCount) {
 
     /**
      * JPQL constructor accepting the entity classes produced by Hibernate's {@code TYPE(...)} function.
@@ -39,10 +39,10 @@ public record ParticipationOverviewRowDTO(long exerciseId, long participationId,
             @Nullable String repositoryUri, @Nullable Long submissionId, @Nullable ZonedDateTime submissionDate, @Nullable Boolean submitted,
             @Nullable SubmissionType submissionType, @Nullable Class<? extends Submission> submissionExerciseType, @Nullable Long resultId,
             @Nullable ZonedDateTime resultCompletionDate, @Nullable Double resultScore, @Nullable Boolean resultRated, @Nullable Boolean resultSuccessful,
-            @Nullable AssessmentType resultAssessmentType) {
+            @Nullable AssessmentType resultAssessmentType, @Nullable Integer resultCodeIssueCount) {
         this(exerciseId, participationId, participationTypeName(participationType), initializationState, initializationDate, testRun, individualDueDate, presentationScore,
                 repositoryUri, submissionId, submissionDate, submitted, submissionType, submissionTypeName(submissionExerciseType), resultId, resultCompletionDate, resultScore,
-                resultRated, resultSuccessful, resultAssessmentType);
+                resultRated, resultSuccessful, resultAssessmentType, resultCodeIssueCount);
     }
 
     public boolean isTestRun() {
@@ -50,7 +50,8 @@ public record ParticipationOverviewRowDTO(long exerciseId, long participationId,
     }
 
     public @Nullable ResultOverviewDTO toResultOverviewDTO() {
-        return resultId == null ? null : new ResultOverviewDTO(resultId, resultCompletionDate, resultScore, resultRated, resultSuccessful, resultAssessmentType);
+        return resultId == null ? null
+                : new ResultOverviewDTO(resultId, resultCompletionDate, resultScore, resultRated, resultSuccessful, resultAssessmentType, resultCodeIssueCount);
     }
 
     public @Nullable SubmissionOverviewDTO toSubmissionOverviewDTO(List<ResultOverviewDTO> results) {

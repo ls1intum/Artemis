@@ -21,6 +21,7 @@ import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course
 import { CourseForDashboardDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
+import { CourseAccessStateDTO } from 'app/course/shared/entities/course-access-state-dto';
 import { CourseForOverviewDTO } from 'app/course/shared/entities/course-for-overview-dto';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -248,6 +249,19 @@ export class CourseManagementService implements OnDestroy {
                 return res;
             }),
         );
+    }
+
+    /**
+     * Asks whether the current user already has access to a course.
+     *
+     * The cheapest question the server can answer about a course: one indexed existence check, no entity loading, and a
+     * single boolean back. A user without access gets `false` rather than an error, so the enrollment page can ask
+     * without provoking a global error alert for the case it exists to handle.
+     *
+     * @param courseId the course to check
+     */
+    hasAccessToCourse(courseId: number): Observable<boolean> {
+        return this.http.get<CourseAccessStateDTO>(`${this.resourceUrl}/${courseId}/access-state`).pipe(map((state) => state.hasAccess));
     }
 
     /**

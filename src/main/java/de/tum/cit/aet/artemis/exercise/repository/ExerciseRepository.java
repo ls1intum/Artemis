@@ -86,6 +86,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 exercise.allowFeedbackRequests,
                 programmingExercise.allowOnlineEditor,
                 programmingExercise.allowOfflineIde,
+                programmingExercise.staticCodeAnalysisEnabled,
                 programmingExercise.buildAndTestStudentSubmissionsAfterDueDate,
                 variantGroup.id,
                 variantGroup.title,

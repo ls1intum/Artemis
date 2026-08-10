@@ -19,9 +19,11 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
  * @param rated          whether the result counts towards the score
  * @param successful     whether the result is considered successful
  * @param assessmentType how the result was produced, which decides the badge style
+ * @param codeIssueCount how many static code analysis issues the result reported, shown on programming exercises with
+ *                           static code analysis enabled
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ResultOverviewDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, Boolean successful, AssessmentType assessmentType) {
+public record ResultOverviewDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, Boolean successful, AssessmentType assessmentType, Integer codeIssueCount) {
 
     /**
      * Projects a result for the course overview.
@@ -30,6 +32,7 @@ public record ResultOverviewDTO(Long id, ZonedDateTime completionDate, Double sc
      * @return the projected result
      */
     public static ResultOverviewDTO of(Result result) {
-        return new ResultOverviewDTO(result.getId(), result.getCompletionDate(), result.getScore(), result.isRated(), result.isSuccessful(), result.getAssessmentType());
+        return new ResultOverviewDTO(result.getId(), result.getCompletionDate(), result.getScore(), result.isRated(), result.isSuccessful(), result.getAssessmentType(),
+                result.getCodeIssueCount());
     }
 }
