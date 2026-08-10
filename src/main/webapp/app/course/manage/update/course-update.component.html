@@ -373,7 +373,12 @@
                     </div>
                 </jhi-feature-overlay>
                 <div class="mb-4 flex items-center gap-2">
-                    <tum-ui-checkbox inputId="field_presentationAssessmentsEnabled" name="presentationAssessmentsEnabled" formControlName="presentationAssessmentsEnabled" />
+                    <tum-ui-checkbox
+                        class="scale-75 origin-center"
+                        inputId="field_presentationAssessmentsEnabled"
+                        name="presentationAssessmentsEnabled"
+                        formControlName="presentationAssessmentsEnabled"
+                    />
                     <label jhiTranslate="artemisApp.course.presentationAssessments.label" for="field_presentationAssessmentsEnabled"></label>
                     <fa-icon
                         [icon]="faQuestionCircle"

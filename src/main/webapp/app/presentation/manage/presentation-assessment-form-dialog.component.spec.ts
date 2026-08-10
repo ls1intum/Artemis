@@ -64,6 +64,16 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         expect(savedSpy).not.toHaveBeenCalled();
     });
 
+    it('should reject invalid date picker input', () => {
+        const savedSpy = vi.fn();
+        component.saved.subscribe(savedSpy);
+        Object.defineProperty(component, 'datePicker', { value: () => ({ dateInput: { valid: false } }), configurable: true });
+
+        component.save();
+
+        expect(savedSpy).not.toHaveBeenCalled();
+    });
+
     it('should update the student section title when the title changes', () => {
         component.editForm.controls.title.setValue('Live title');
 

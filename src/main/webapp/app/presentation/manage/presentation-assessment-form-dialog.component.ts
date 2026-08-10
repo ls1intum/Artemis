@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
@@ -55,6 +55,7 @@ export class PresentationAssessmentFormDialogComponent {
     private readonly formBuilder = inject(FormBuilder);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly datePicker = viewChild(FormDateTimePickerComponent);
 
     readonly courseId = input.required<number>();
     readonly course = input<Course>();
@@ -122,7 +123,7 @@ export class PresentationAssessmentFormDialogComponent {
     }
 
     save(): void {
-        if (this.editForm.invalid) {
+        if (this.editForm.invalid || this.datePicker()?.dateInput.valid === false) {
             this.editForm.markAllAsTouched();
             return;
         }
