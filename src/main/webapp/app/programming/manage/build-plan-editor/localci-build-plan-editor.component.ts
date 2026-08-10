@@ -149,12 +149,18 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (response) => {
+                    if (this.programmingExercise()?.id !== resolvedExercise.id) {
+                        return;
+                    }
                     const exercise = response.body!;
                     exercise.buildConfig = resolvedExercise.buildConfig;
                     this.programmingExercise.set(exercise);
                     this.loadingResults.set(false);
                 },
                 error: (error) => {
+                    if (this.programmingExercise()?.id !== resolvedExercise.id) {
+                        return;
+                    }
                     // the editor stays usable with the resolved exercise; only the live build status is unavailable
                     this.loadingResults.set(false);
                     onError(this.alertService, error);

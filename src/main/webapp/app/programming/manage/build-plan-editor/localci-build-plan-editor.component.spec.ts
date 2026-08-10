@@ -131,6 +131,43 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.loadingResults()).toBe(false);
     });
 
+    it('should ignore a stale participation response once a different exercise is active', () => {
+        const phasesB: BuildPhase[] = [{ name: 'build', script: 'echo build', condition: 'ALWAYS', forceRun: false, resultPaths: [] }];
+        const exerciseA = {
+            id: 7,
+            buildConfig: { buildPlanConfiguration: JSON.stringify({ phases, dockerImage: 'image-a' }), timeoutSeconds: 60 },
+        } as unknown as ProgrammingExercise;
+        const exerciseB = {
+            id: 8,
+            buildConfig: { buildPlanConfiguration: JSON.stringify({ phases: phasesB, dockerImage: 'image-b' }), timeoutSeconds: 120 },
+        } as unknown as ProgrammingExercise;
+
+        // exercise A's participation lookup is deferred so it can resolve after B has become active; B's resolves at once
+        const participationResponseA = new Subject<HttpResponse<ProgrammingExercise>>();
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
+            .mockReturnValueOnce(participationResponseA.asObservable())
+            .mockReturnValueOnce(of(new HttpResponse<ProgrammingExercise>({ body: { id: 8 } as ProgrammingExercise })));
+
+        // drive both exercises through the same component instance, mimicking a same-route navigation
+        const routeData = new Subject<{ exercise: ProgrammingExercise }>();
+        activatedRoute.data = routeData.asObservable();
+        comp.ngOnInit();
+
+        routeData.next({ exercise: exerciseA });
+        routeData.next({ exercise: exerciseB });
+
+        // B is active with B's editing state before A's lookup returns
+        expect(comp.programmingExercise()?.id).toBe(8);
+        expect(comp.phases()).toEqual(phasesB);
+
+        // A's participation response arrives late; it must not replace the active exercise
+        participationResponseA.next(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise }));
+        participationResponseA.complete();
+
+        expect(comp.programmingExercise()?.id).toBe(8);
+        expect(comp.phases()).toEqual(phasesB);
+    });
+
     it('should keep the editor usable and surface an alert when loading the participations fails', () => {
         const exercise = { id: 7, buildConfig: { buildPlanConfiguration, timeoutSeconds: 90 } } as unknown as ProgrammingExercise;
         activatedRoute.data = of({ exercise });
