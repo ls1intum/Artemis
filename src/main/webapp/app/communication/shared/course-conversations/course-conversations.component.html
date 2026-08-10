@@ -15,7 +15,7 @@
             </div>
         }
         @if (isCodeOfConductAccepted() && isServiceSetUp() && currentCourse) {
-            <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between communication-layout-row">
                 <div class="communication-content-sidebar" [class.sidebar-collapsed]="isCollapsed()" [class.is-not-in-active-conversation]="!activeConversation()">
                     <jhi-sidebar
                         (onSelectConversation)="onConversationSelected($event)"
@@ -49,7 +49,7 @@
                         (onSelectionChange)="onSelectionChange($event)"
                         (onClearSearch)="onClearSearchAndRestorePrevious()"
                     />
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between communication-message-row">
                         @if (!activeConversation() && isCodeOfConductPresented()) {
                             <div class="col pe-0 flex-grow-1">
                                 <jhi-course-conversations-code-of-conduct [course]="currentCourse" />
