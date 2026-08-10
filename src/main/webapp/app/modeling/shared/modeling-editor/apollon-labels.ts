@@ -41,6 +41,11 @@ export function createApollonLabels(translator: ApollonLabelTranslator): Partial
     if (hasString(translationTree, 'assessmentFor')) {
         labels.assessmentFor = (type) => translate(translator, 'assessmentFor', { type });
     }
+    if (hasString(translationTree, 'scrollLockHint')) {
+        // Apollon hands us the platform's zoom key already rendered as a cap
+        // ('⌘' or 'Ctrl'), so the sentence can put it wherever German wants it.
+        labels.scrollLockHint = (modifier) => translate(translator, 'scrollLockHint', { modifier });
+    }
     if (isRecord(translationTree.nodeTypes) && hasString(translationTree, 'node')) {
         labels.nodeTypeLabel = (nodeType) => {
             if (!nodeType) {

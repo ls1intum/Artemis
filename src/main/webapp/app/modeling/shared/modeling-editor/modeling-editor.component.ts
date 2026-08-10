@@ -15,17 +15,8 @@ import {
     untracked,
     viewChild,
 } from '@angular/core';
-import { ApollonEditor, ApollonMode, type CollaborationUser, SVG, UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import {
-    faAlignLeft,
-    faCheck,
-    faChevronDown,
-    faChevronUp,
-    faCircleNotch,
-    faDownLeftAndUpRightToCenter,
-    faTimes,
-    faUpRightAndDownLeftFromCenter,
-} from '@fortawesome/free-solid-svg-icons';
+import { ApollonEditor, ApollonMode, type CollaborationUser, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { faAlignLeft, faCheck, faCircleNotch, faDownLeftAndUpRightToCenter, faTimes, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -35,14 +26,17 @@ import { ModelingExplanationEditorComponent } from '../modeling-explanation-edit
 import { captureException } from '@sentry/angular';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
-import { ResizableDirective, type ResizableSizeEvent } from 'app/shared-ui/directives/resizable.directive';
+import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ApollonRailDisclosureComponent } from 'app/modeling/shared/modeling-editor/apollon-rail-disclosure/apollon-rail-disclosure.component';
 import {
+    RAIL_DISCLOSURE_MAX_HEIGHT,
     applyBottomCenterPlacement,
     calculateBottomCenterPlacement,
     clearBottomCenterPlacement,
+    measureRailDisclosureMaxHeight,
     synchronizeResizeObserverTargets,
 } from 'app/modeling/shared/modeling-editor/apollon-chrome-placement';
 import { FullscreenPresentationService } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
@@ -53,14 +47,21 @@ import { ModelingEditorTopLeftDirective } from 'app/modeling/shared/modeling-edi
 
 type ApollonEditorE2eHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
 
-let nextProblemStatementId = 0;
-
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, ArtemisTranslatePipe, FaIconComponent, ModelingExplanationEditorComponent, MarkdownDirective, ModelingEditorHelpComponent, ResizableDirective],
+    imports: [
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FaIconComponent,
+        ModelingExplanationEditorComponent,
+        MarkdownDirective,
+        ModelingEditorHelpComponent,
+        ResizableDirective,
+        ApollonRailDisclosureComponent,
+    ],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     protected readonly faCheck = faCheck;
@@ -69,11 +70,8 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     protected readonly faEnterFullscreen = faUpRightAndDownLeftFromCenter;
     protected readonly faExitFullscreen = faDownLeftAndUpRightToCenter;
     protected readonly faProblemStatement = faAlignLeft;
-    protected readonly faExpandProblemStatement = faChevronDown;
-    protected readonly faCollapseProblemStatement = faChevronUp;
     protected readonly farQuestionCircle = faQuestionCircle;
     protected readonly fullscreenSupported = document.fullscreenEnabled !== false;
-    protected readonly problemStatementPanelId = `modeling-editor-problem-statement-${++nextProblemStatementId}`;
 
     private readonly sanitizer = inject(DomSanitizer);
     private readonly elementRef = inject(ElementRef);
@@ -84,7 +82,8 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private readonly editorActions = viewChild<ElementRef<HTMLElement>>('editorActions');
     private readonly editorTopLeftRegion = viewChild<ElementRef<HTMLElement>>('editorTopLeftRegion');
     private readonly editorBottomCenter = viewChild<ElementRef<HTMLElement>>('editorBottomCenter');
-    private readonly editorProblemStatement = viewChild<ElementRef<HTMLElement>>('editorProblemStatement');
+    // Read as an element: the host node is what gets handed to the rail region.
+    private readonly editorProblemStatement = viewChild('editorProblemStatement', { read: ElementRef<HTMLElement> });
     private readonly projectedTopLeft = contentChild(ModelingEditorTopLeftDirective, { read: ElementRef });
     private readonly projectedBottomCenter = contentChild(ModelingEditorBottomCenterDirective, { read: ElementRef });
     protected readonly hasEditorTopLeft = computed(() => !!this.projectedTopLeft());
@@ -94,10 +93,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     readonly helpVisible = signal(false);
     readonly fullscreenActive = signal(false);
     readonly problemStatementVisible = signal(false);
-    protected readonly problemStatementWidth = signal(416);
-    protected readonly problemStatementHeight = signal(480);
-    private readonly problemStatementMaxHeight = signal(720);
-    protected readonly problemStatementResizeConstraints = computed(() => ({ minWidth: 288, maxWidth: 704, minHeight: 224, maxHeight: this.problemStatementMaxHeight() }));
+    protected readonly problemStatementMaxHeight = signal(RAIL_DISCLOSURE_MAX_HEIGHT);
     protected readonly bottomCenterElevated = signal(false);
 
     readonly showHelpButton = input(true);
@@ -128,8 +124,8 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private readonly observedChromeResizeTargets = new Set<HTMLElement>();
     private chromeMountObserver: MutationObserver | undefined;
     private chromeResizeFrame: number | undefined;
+    private readOnlyExportRevision = 0;
 
-    readonlyApollonDiagram?: SVG;
     readonly readOnlySVG = signal<SafeHtml | undefined>(undefined);
 
     constructor() {
@@ -140,8 +136,14 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
         effect(() => {
             const diagramType = this.diagramType();
+            const readOnly = this.readOnly();
 
             if (this.isDestroyed || !this.viewInitialized || !diagramType) {
+                return;
+            }
+
+            if (readOnly) {
+                this.destroyApollonEditor();
                 return;
             }
 
@@ -151,8 +153,9 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         effect(() => {
             const enabled = this.collaborationEnabled();
             const user = this.collaborationUser();
+            const readOnly = this.readOnly();
 
-            if (this.isDestroyed || !enabled || !user) {
+            if (this.isDestroyed || readOnly || !enabled || !user) {
                 return;
             }
 
@@ -170,8 +173,18 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
         effect(() => {
             const model = this.umlModel();
+            const readOnly = this.readOnly();
 
-            if (this.isDestroyed || !model || !this.apollonEditor) {
+            if (this.isDestroyed || !this.viewInitialized || !model) {
+                return;
+            }
+
+            if (readOnly) {
+                void this.renderReadOnlyDiagram(model);
+                return;
+            }
+
+            if (!this.apollonEditor) {
                 return;
             }
 
@@ -201,19 +214,23 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     async ngAfterViewInit(): Promise<void> {
         this.viewInitialized = true;
+        if (this.readOnly()) {
+            const model = this.umlModel();
+            if (model) {
+                await this.renderReadOnlyDiagram(model);
+            }
+            return;
+        }
+
         this.initializeApollonEditor();
         this.observeChromeLayout();
-        if (this.readOnly()) {
-            if (this.apollonEditor) {
-                this.readonlyApollonDiagram = await this.apollonEditor.exportAsSVG();
-                if (this.readonlyApollonDiagram?.svg) {
-                    this.readOnlySVG.set(this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg));
-                }
-            }
-        }
     }
 
     private initializeApollonEditor(): void {
+        if (this.readOnly()) {
+            return;
+        }
+
         const collaborationEnabled = untracked(() => this.collaborationEnabled()) && !this.readOnly();
         const collaborationUser = collaborationEnabled ? untracked(() => this.collaborationUser()) : undefined;
 
@@ -308,27 +325,27 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         return copy;
     }
 
+    private async renderReadOnlyDiagram(model: UMLModel): Promise<void> {
+        const revision = ++this.readOnlyExportRevision;
+        this.readOnlySVG.set(undefined);
+        try {
+            const diagram = await ApollonEditor.exportModelAsSvg(ModelingEditorComponent.modelWithoutAssessments(model));
+            if (!this.isDestroyed && revision === this.readOnlyExportRevision) {
+                this.readOnlySVG.set(this.sanitizer.bypassSecurityTrustHtml(diagram.svg));
+            }
+        } catch (error) {
+            if (!this.isDestroyed && revision === this.readOnlyExportRevision) {
+                captureException(error);
+            }
+        }
+    }
+
     getCurrentModel(): UMLModel {
         return ModelingEditorComponent.modelWithoutAssessments(this.apollonEditor!.model);
     }
 
     openHelp(): void {
         this.helpVisible.set(true);
-    }
-
-    protected toggleProblemStatement(): void {
-        if (!this.fullscreenActive() || !this.problemStatement()?.trim()) {
-            return;
-        }
-
-        this.problemStatementVisible.update((visible) => !visible);
-        this.scheduleChromePlacement();
-    }
-
-    protected resizeProblemStatement({ width, height }: ResizableSizeEvent): void {
-        this.problemStatementWidth.set(width);
-        this.problemStatementHeight.set(height);
-        this.scheduleChromePlacement();
     }
 
     private mountEditorRegions(): void {
@@ -410,7 +427,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         synchronizeResizeObserverTargets(observer, this.observedChromeResizeTargets, [editorFrame, ...elements]);
     }
 
-    private scheduleChromePlacement(): void {
+    protected scheduleChromePlacement(): void {
         if (this.chromeResizeFrame !== undefined || this.isDestroyed) {
             return;
         }
@@ -427,41 +444,14 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     }
 
     private updateProblemStatementMaxHeight(): void {
-        const editorFrame = this.editorFrame()?.nativeElement;
+        const apollonRoot = this.editorFrame()?.nativeElement?.querySelector<HTMLElement>('.apollon-editor');
         const problemStatement = this.editorProblemStatement()?.nativeElement;
-        const apollonRoot = editorFrame?.querySelector<HTMLElement>('.apollon-editor');
-        const trigger = problemStatement?.querySelector<HTMLElement>('.modeling-editor__problem-statement-trigger-island');
-        if (!editorFrame || !apollonRoot || !problemStatement || !trigger || !this.problemStatementVisible()) {
-            this.problemStatementMaxHeight.set(720);
-            return;
-        }
-
-        const rootRect = apollonRoot.getBoundingClientRect();
-        const triggerRect = trigger.getBoundingClientRect();
-        const styles = getComputedStyle(apollonRoot);
-        const chromeGap = Number.parseFloat(styles.getPropertyValue('--apollon-chrome-gap')) || 0;
-        const chromeEdge = Number.parseFloat(styles.getPropertyValue('--apollon-chrome-edge')) || 0;
-        const panelRight = triggerRect.right;
-        const panelLeft = Math.max(rootRect.left, panelRight - this.problemStatementWidth());
-        let boundary = rootRect.bottom - chromeEdge;
-
-        const bottomChrome = [
+        const maxHeight = measureRailDisclosureMaxHeight(apollonRoot, problemStatement, this.problemStatementVisible(), [
             this.editorBottomCenter()?.nativeElement,
-            apollonRoot.querySelector<HTMLElement>('[data-apollon-control="apollon:zoom"]'),
-            apollonRoot.querySelector<HTMLElement>('[data-apollon-control="apollon:minimap"]'),
-        ];
-        for (const control of bottomChrome) {
-            if (!control || control.hidden) {
-                continue;
-            }
-            const rect = control.getBoundingClientRect();
-            const intersectsHorizontally = panelLeft < rect.right && panelRight > rect.left;
-            if (rect.width > 0 && rect.height > 0 && rect.top > triggerRect.bottom && intersectsHorizontally) {
-                boundary = Math.min(boundary, rect.top - chromeGap);
-            }
-        }
-
-        this.problemStatementMaxHeight.set(Math.max(224, Math.min(720, Math.floor(boundary - triggerRect.bottom))));
+            apollonRoot?.querySelector<HTMLElement>('[data-apollon-control="apollon:zoom"]'),
+            apollonRoot?.querySelector<HTMLElement>('[data-apollon-control="apollon:minimap"]'),
+        ]);
+        this.problemStatementMaxHeight.set(maxHeight);
     }
 
     private updateBottomCenterPlacement(): void {
@@ -591,6 +581,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     ngOnDestroy(): void {
         this.isDestroyed = true;
+        this.readOnlyExportRevision++;
         this.chromeResizeObserver?.disconnect();
         this.chromeResizeObserver = undefined;
         this.observedChromeResizeTargets.clear();

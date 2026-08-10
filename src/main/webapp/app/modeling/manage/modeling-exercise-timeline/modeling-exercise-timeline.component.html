@@ -1,1 +1,10 @@
-<jhi-exercise-timeline [timelineItems]="timelineItems" (timelineStatusChange)="timelineStatus.emit($event)" />
+<jhi-exercise-update-timeline
+    [hasExampleSolution]="hasExampleSolution()"
+    [isImport]="isImport()"
+    [(releaseDate)]="releaseDate"
+    [(startDate)]="startDate"
+    [(dueDate)]="dueDate"
+    [(assessmentDueDate)]="assessmentDueDate"
+    [(exampleSolutionPublicationDate)]="exampleSolutionPublicationDate"
+    (timelineStatus)="timelineStatus.emit($event)"
+/>

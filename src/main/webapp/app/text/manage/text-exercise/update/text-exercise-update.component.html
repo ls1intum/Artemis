@@ -65,36 +65,20 @@
                 (markdownChange)="calculateFormSectionStatus()"
             />
         </div>
-        @if (!isExamMode()) {
-            <div class="form-group">
-                <jhi-date-time-picker
-                    #solutionPublicationDate
-                    class="form-element"
-                    name="exampleSolutionPublicationDate"
-                    labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
-                    [(ngModel)]="textExercise.exampleSolutionPublicationDate"
-                    [error]="textExercise.exampleSolutionPublicationDateError!"
-                    (valueChange)="validateDate()"
-                    [disabled]="isImport()"
-                />
-                @if (isImport()) {
-                    <span class="text-warning" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
-                }
-                @if (textExercise.exampleSolutionPublicationDateError) {
-                    <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateError"></span>
-                }
-            </div>
-        }
         <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
         <div class="grading-layout">
             @if (!isExamMode()) {
                 <jhi-text-exercise-timeline
                     class="exercise-timeline"
+                    [hasExampleSolution]="!!textExercise.exampleSolution"
+                    [isImport]="isImport()"
                     [(releaseDate)]="textExercise.releaseDate"
                     [(startDate)]="textExercise.startDate"
                     [(dueDate)]="textExercise.dueDate"
                     [(assessmentDueDate)]="textExercise.assessmentDueDate"
+                    [exampleSolutionPublicationDate]="textExercise.exampleSolutionPublicationDate"
+                    (exampleSolutionPublicationDateChange)="textExercise.exampleSolutionPublicationDate = $event; validateDate()"
                     (timelineStatus)="timelineStatus.set($event)"
                 />
             }

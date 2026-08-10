@@ -48,6 +48,11 @@ $draggable-width: 15px;
 
         &--top-left,
         &--top-right {
+            /* The overlay grid caps each top corner at fit-content(45%); letting
+               the region shrink is what turns that cap into wrapping rather than
+               an island that runs under its opposite corner. */
+            min-width: 0;
+            max-width: 100%;
             align-items: flex-start;
             gap: var(--apollon-chrome-gap);
         }

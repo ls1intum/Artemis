@@ -22,7 +22,39 @@ describe('CollapsableAssessmentInstructionsComponent', () => {
         fixture.detectChanges();
     });
 
-    it('provides a named, keyboard-operable resize separator', async () => {
+    it('should have default input values', () => {
+        expect(component.isAssessmentTraining()).toBe(false);
+        expect(component.showAssessmentInstructions()).toBe(true);
+        expect(component.collapsed()).toBe(false);
+        expect(component.exercise()).toEqual(mockExercise);
+    });
+
+    it('should render the expanded panel as a card with a primary header', () => {
+        const header = fixture.debugElement.query(By.css('.expanded-instructions .card > .card-header')).nativeElement as HTMLElement;
+
+        expect(header.classList).toContain('bg-primary');
+        expect(header.classList).toContain('text-white');
+        expect(header.querySelector('.card-title')).not.toBeNull();
+    });
+
+    it('should collapse when the card header is clicked and reopen from the collapsed bar', () => {
+        const header = fixture.debugElement.query(By.css('.expanded-instructions .card-header')).nativeElement as HTMLElement;
+        header.click();
+        fixture.detectChanges();
+
+        expect(component.collapsed()).toBe(true);
+        expect(fixture.debugElement.query(By.css('.expanded-instructions'))).toBeNull();
+
+        const collapsedBar = fixture.debugElement.query(By.css('.collapsed-instructions')).nativeElement as HTMLElement;
+        expect(collapsedBar.classList).toContain('bg-primary');
+        collapsedBar.click();
+        fixture.detectChanges();
+
+        expect(component.collapsed()).toBe(false);
+        expect(fixture.debugElement.query(By.css('.expanded-instructions'))).not.toBeNull();
+    });
+
+    it('should provide a named, keyboard-operable resize separator', async () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
@@ -34,24 +66,14 @@ describe('CollapsableAssessmentInstructionsComponent', () => {
         expect(handle.tabIndex).toBe(0);
 
         handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }));
-        expect(container.style.width).toBe('288px');
-        expect(handle.getAttribute('aria-valuenow')).toBe('288');
+        expect(container.style.width).toBe('215px');
+        expect(handle.getAttribute('aria-valuenow')).toBe('215');
     });
 
-    it('collapses and reopens through the disclosure control', () => {
-        const disclosure = fixture.debugElement.query(By.css('.instructions-disclosure')).nativeElement as HTMLButtonElement;
-        expect(disclosure.dataset.slot).toBe('button');
-        expect(disclosure.dataset.variant).toBe('ghost');
-        expect(disclosure.dataset.size).toBe('sm');
-        disclosure.click();
-        fixture.detectChanges();
-        expect(component.collapsed()).toBe(true);
-        expect(fixture.debugElement.query(By.css('.expanded-instructions'))).toBeNull();
-
-        const reopen = fixture.debugElement.query(By.css('.instructions-disclosure')).nativeElement as HTMLButtonElement;
-        reopen.click();
-        fixture.detectChanges();
-        expect(component.collapsed()).toBe(false);
-        expect(fixture.debugElement.query(By.css('.expanded-instructions'))).not.toBeNull();
+    it('should expose icons', () => {
+        expect(component.faChevronRight).toBeDefined();
+        expect(component.faChevronLeft).toBeDefined();
+        expect(component.faGripLinesVertical).toBeDefined();
+        expect(component.farListAlt).toBeDefined();
     });
 });

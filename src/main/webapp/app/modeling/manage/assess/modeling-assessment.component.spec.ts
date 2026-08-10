@@ -83,12 +83,14 @@ vi.mock('@tumaet/apollon', async (importOriginal) => {
     };
 });
 
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
+import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -489,5 +491,109 @@ describe('ModelingAssessmentComponent', () => {
     it('should ignore handleFeedback when resultFeedbacks is undefined', () => {
         (comp as any).handleFeedback();
         expect(comp.referencedFeedbacks).toEqual([]);
+    });
+});
+
+/** Stands in for the Athena chrome island: a component root inside `@if`, which
+ *  is the shape the real page projects. */
+@Component({ selector: 'jhi-chrome-notice-stub', template: '<span class="chrome-notice">notice</span>' })
+class ChromeNoticeStubComponent {}
+
+/** Pins the backwards-compatible form: a bare attribute still means "always shown". */
+@Component({
+    selector: 'jhi-modeling-assessment-bare-slot-host',
+    template: `
+        <jhi-modeling-assessment [umlModel]="umlModel" [diagramType]="diagramType">
+            <jhi-chrome-notice-stub modelingAssessmentTopLeft data-testid="bare-notice" />
+        </jhi-modeling-assessment>
+    `,
+    imports: [ModelingAssessmentComponent, ModelingAssessmentTopLeftDirective, ChromeNoticeStubComponent],
+})
+class ModelingAssessmentBareSlotHostComponent {
+    readonly umlModel = createV4ModelWithNodes();
+    readonly diagramType = UMLDiagramType.ClassDiagram;
+}
+
+@Component({
+    selector: 'jhi-modeling-assessment-chrome-host',
+    template: `
+        <jhi-modeling-assessment [umlModel]="umlModel" [diagramType]="diagramType">
+            <jhi-chrome-notice-stub [modelingAssessmentTopLeft]="showNotice()" data-testid="chrome-notice" />
+        </jhi-modeling-assessment>
+    `,
+    imports: [ModelingAssessmentComponent, ModelingAssessmentTopLeftDirective, ChromeNoticeStubComponent],
+})
+class ModelingAssessmentChromeHostComponent {
+    readonly showNotice = signal(false);
+    readonly umlModel = createV4ModelWithNodes();
+    readonly diagramType = UMLDiagramType.ClassDiagram;
+}
+
+/**
+ * Chrome islands are projected unconditionally and gated by occupancy, because a
+ * region that mounts while empty still reserves an inset — and `@if` around the
+ * projected content cannot be relied on to reach a named slot at all. These
+ * tests pin both halves: unoccupied means unmounted and nothing reserved, and
+ * occupied means the element really lands inside the region.
+ */
+describe('ModelingAssessmentComponent chrome regions', () => {
+    let fixture: ComponentFixture<ModelingAssessmentChromeHostComponent>;
+    let editor: InstanceType<typeof MockApollonEditor>;
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [ModelingAssessmentChromeHostComponent, ModelingAssessmentBareSlotHostComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [MockProvider(ArtemisTranslatePipe), { provide: TranslateService, useClass: MockTranslateService }],
+        });
+
+        fixture = TestBed.createComponent(ModelingAssessmentChromeHostComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        editor = fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).componentInstance.apollonEditor as unknown as InstanceType<typeof MockApollonEditor>;
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        vi.restoreAllMocks();
+    });
+
+    const noticeElement = () => fixture.debugElement.query(By.css('[data-testid="chrome-notice"]')).nativeElement as HTMLElement;
+
+    it('should never mount an unoccupied region, even though the slot is filled', () => {
+        // The element is in the DOM the whole time; only occupancy is off. Mounting
+        // here would reserve an inset for a slot that renders nothing.
+        expect(noticeElement()).toBeTruthy();
+        expect(editor.getRegionElement).not.toHaveBeenCalledWith('top-left');
+        expect(fixture.debugElement.query(By.css('.modeling-assessment__region--top-left')).nativeElement.classList).not.toContain('modeling-assessment__region--mounted');
+    });
+
+    it('should mount the projected island into the top-left region and release it again', async () => {
+        fixture.componentInstance.showNotice.set(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const region = editor._regionElements.get('top-left');
+        expect(region).toBeDefined();
+        // The element must really be inside the region: a slot that resolves its
+        // directive but never attaches its nodes mounts an empty region instead.
+        expect(region!.contains(noticeElement())).toBe(true);
+        expect(noticeElement().closest('.modeling-assessment__region--top-left')?.classList).toContain('modeling-assessment__region--mounted');
+
+        fixture.componentInstance.showNotice.set(false);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(editor.releaseRegionElement).toHaveBeenCalledWith('top-left');
+        expect(editor._regionElements.has('top-left')).toBe(false);
+    });
+
+    it('should treat a bare marker attribute as permanently occupied', async () => {
+        const bare = TestBed.createComponent(ModelingAssessmentBareSlotHostComponent);
+        bare.detectChanges();
+        await bare.whenStable();
+
+        const bareEditor = bare.debugElement.query(By.directive(ModelingAssessmentComponent)).componentInstance.apollonEditor as unknown as InstanceType<typeof MockApollonEditor>;
+        expect(bareEditor._regionElements.get('top-left')!.contains(bare.debugElement.query(By.css('[data-testid="bare-notice"]')).nativeElement)).toBe(true);
+        bare.destroy();
     });
 });

@@ -1,0 +1,23 @@
+<div class="exercise-update-timeline">
+    <div class="form-check">
+        <input
+            type="checkbox"
+            class="form-check-input"
+            name="exampleSolutionPublicationDateEnabled"
+            id="exampleSolutionPublicationDateEnabled"
+            data-testid="example-solution-publication-toggle"
+            [disabled]="!canConfigureExampleSolutionPublication()"
+            [(ngModel)]="isExampleSolutionPublicationDateVisible"
+        />
+        <label
+            class="form-control-label"
+            for="exampleSolutionPublicationDateEnabled"
+            [ngStyle]="!canConfigureExampleSolutionPublication() ? { color: 'grey' } : {}"
+            jhiTranslate="artemisApp.exercise.configureExampleSolutionPublication"
+        ></label>
+    </div>
+    @if (exampleSolutionPublicationHintKey(); as hintKey) {
+        <div class="example-solution-publication-hint" data-testid="example-solution-publication-hint" [jhiTranslate]="hintKey"></div>
+    }
+    <jhi-exercise-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="timelineStatus.emit($event)" />
+</div>

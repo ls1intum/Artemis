@@ -1,48 +1,61 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
 import { describe, expect, it, vi } from 'vitest';
-import { ExerciseTimelineStubComponent } from 'test/helpers/stubs/modeling/exercise-timeline-stub.component';
+import { ExerciseUpdateTimelineStubComponent } from 'test/helpers/stubs/exercise/exercise-update-timeline-stub.component';
 
 import { FileUploadExerciseTimelineComponent } from './file-upload-exercise-timeline.component';
 
 describe('FileUploadExerciseTimeline', () => {
     let component: FileUploadExerciseTimelineComponent;
     let fixture: ComponentFixture<FileUploadExerciseTimelineComponent>;
+    let innerTimeline: ExerciseUpdateTimelineStubComponent;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FileUploadExerciseTimelineComponent],
         })
             .overrideComponent(FileUploadExerciseTimelineComponent, {
-                set: { imports: [ExerciseTimelineStubComponent] },
+                set: { imports: [ExerciseUpdateTimelineStubComponent] },
             })
             .compileComponents();
 
         fixture = TestBed.createComponent(FileUploadExerciseTimelineComponent);
         component = fixture.componentInstance;
+        fixture.detectChanges();
         await fixture.whenStable();
+        innerTimeline = fixture.debugElement.query(By.directive(ExerciseUpdateTimelineStubComponent)).componentInstance;
     });
 
-    it('should expose all file upload exercise dates in chronological order', () => {
-        expect(component.timelineItems).toHaveLength(4);
-        expect(component.timelineItems.map((item) => item.labelStringKey)).toEqual([
-            'artemisApp.exercise.releaseDate',
-            'artemisApp.exercise.startDate',
-            'artemisApp.exercise.dueDate',
-            'artemisApp.exercise.assessmentDueDate',
-        ]);
-        expect(component.timelineItems.map((item) => item.date)).toEqual([component.releaseDate, component.startDate, component.dueDate, component.assessmentDueDate]);
-        expect(component.timelineItems.every((item) => item.kind === 'optional')).toBe(true);
-        expect(component.timelineItems[3].otherRequiredItem).toBe(component.timelineItems[2]);
+    it('should pass every date and the example solution state down to the shared timeline', () => {
+        const assessmentDueDate = dayjs().add(3, 'day');
+        const publicationDate = dayjs().add(5, 'day');
+        fixture.componentRef.setInput('hasExampleSolution', true);
+        fixture.componentRef.setInput('assessmentDueDate', assessmentDueDate);
+        fixture.componentRef.setInput('exampleSolutionPublicationDate', publicationDate);
+        fixture.detectChanges();
+
+        expect(innerTimeline.hasExampleSolution()).toBe(true);
+        expect(innerTimeline.isImport()).toBe(false);
+        expect(innerTimeline.assessmentDueDate()).toBe(assessmentDueDate);
+        expect(innerTimeline.exampleSolutionPublicationDate()).toBe(publicationDate);
+    });
+
+    it('should propagate a publication date cleared by the shared timeline back to the form', () => {
+        fixture.componentRef.setInput('exampleSolutionPublicationDate', dayjs());
+        fixture.detectChanges();
+
+        innerTimeline.exampleSolutionPublicationDate.set(undefined);
+        fixture.detectChanges();
+
+        expect(component.exampleSolutionPublicationDate()).toBeUndefined();
     });
 
     it('should forward timeline status changes from the exercise timeline', () => {
-        fixture.detectChanges();
         const timelineStatus = { valid: false, empty: true };
         const emitSpy = vi.spyOn(component.timelineStatus, 'emit');
-        const exerciseTimeline = fixture.debugElement.query(By.directive(ExerciseTimelineStubComponent)).componentInstance as ExerciseTimelineStubComponent;
 
-        exerciseTimeline.timelineStatusChange.emit(timelineStatus);
+        innerTimeline.timelineStatus.emit(timelineStatus);
 
         expect(emitSpy).toHaveBeenCalledExactlyOnceWith(timelineStatus);
     });

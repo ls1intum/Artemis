@@ -28,7 +28,6 @@ import { ModelingEditorTopLeftDirective } from 'app/modeling/shared/modeling-edi
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -75,7 +74,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
         ModelingEditorComponent,
         ModelingEditorBottomCenterDirective,
         ModelingEditorTopLeftDirective,
-        FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
@@ -116,8 +114,13 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     readonly bonusPoints = viewChild<NgModel>('bonusPoints');
     readonly points = viewChild<NgModel>('points');
-    readonly solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
     readonly editFormEl = viewChild<ElementRef<HTMLFormElement>>('editForm');
+    /**
+     * Whether the exercise carries an example solution that could be published. Recomputed from the live Apollon
+     * model in {@link calculateFormSectionStatus} (the model itself is not a signal), which the editor and the
+     * explanation editor both call on every change.
+     */
+    protected readonly hasExampleSolution = signal(false);
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
     protected readonly diagramTypes = [
@@ -191,7 +194,9 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         });
     }
 
+    /** Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes. */
     private updateFormSectionsOnIsValidChange() {
+        // Guard against viewChild not being available yet (before view init).
         const titleComponent = this.exerciseTitleChannelNameComponent?.();
         if (titleComponent?.titleChannelNameComponent) {
             titleComponent.titleChannelNameComponent().isValid();
@@ -200,6 +205,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         void this.calculateFormSectionStatus();
     }
 
+    /** Initializes all relevant data for creating or editing a modeling exercise. */
     ngOnInit(): void {
         this.document.documentElement.classList.add(ModelingExerciseUpdateComponent.SCROLL_SNAP_CLASS);
         scrollToTopOfPage();
@@ -274,7 +280,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     async calculateFormSectionStatus() {
         const modelingEditor = this.modelingEditor();
-        const currentModel = modelingEditor?.isApollonEditorMounted ? modelingEditor.getCurrentModel() : undefined;
+        // Before Apollon has mounted, fall back to the model imported from the exercise so the example solution is
+        // recognised on the first render (the publication date opt-in in the timeline depends on it).
+        const currentModel = (modelingEditor?.isApollonEditorMounted ? modelingEditor.getCurrentModel() : undefined) ?? this.exampleSolution();
+        const hasExampleSolutionDiagram = !isEmpty(currentModel?.nodes);
+        this.hasExampleSolution.set(hasExampleSolutionDiagram || !!this.modelingExercise?.exampleSolutionExplanation);
 
         this.formSectionStatus.set([
             {
@@ -285,27 +295,33 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(
-                    this.isExamMode() || (!this.modelingExercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true)),
-                ),
-                empty:
-                    isEmpty(currentModel?.nodes) ||
-                    (!this.isExamMode() && !this.modelingExercise.exampleSolutionPublicationDate) ||
-                    !this.modelingExercise.exampleSolutionExplanation,
+                valid: true,
+                empty: !hasExampleSolutionDiagram || !this.modelingExercise.exampleSolutionExplanation,
             },
             {
+                // The example solution publication date lives in the timeline (as for programming exercises), so its
+                // validity is part of the grading section.
                 title: 'artemisApp.exercise.sections.grading',
-                valid: Boolean((this.points()?.valid ?? true) && (this.bonusPoints()?.valid ?? true) && (this.isExamMode() || this.timelineStatus().valid)),
+                valid: Boolean(
+                    (this.points()?.valid ?? true) &&
+                    (this.bonusPoints()?.valid ?? true) &&
+                    (this.isExamMode() || (this.timelineStatus().valid && !this.modelingExercise.exampleSolutionPublicationDateError)),
+                ),
                 empty: !this.isExamMode() && this.timelineStatus().empty,
             },
         ]);
     }
 
+    /**
+     * Updates the exercise categories.
+     * @param categories list of exercise categories
+     */
     updateCategories(categories: ExerciseCategory[]): void {
         this.modelingExercise.categories = categories;
         this.exerciseCategories.set(categories);
     }
 
+    /** Validates that the configured dates are consistent. */
     validateDate(): void {
         this.exerciseService.validateDate(this.modelingExercise);
         void this.calculateFormSectionStatus();

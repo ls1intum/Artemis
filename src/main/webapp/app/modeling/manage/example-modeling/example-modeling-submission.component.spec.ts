@@ -33,6 +33,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DialogService } from 'primeng/dynamicdialog';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -44,6 +45,7 @@ class StubModelingEditorComponent {
     readOnly = input<boolean>(false);
     scrollLock = input<boolean>(false);
     explanation = input<string>();
+    problemStatement = input<string>();
     withExplanation = input<boolean>(false);
     tile = input<boolean>(false);
 
@@ -97,6 +99,7 @@ describe('Example Modeling Submission Component', () => {
         diagramType: UMLDiagramType.ClassDiagram,
         course: { id: 2 },
         maxPoints: 30,
+        problemStatement: 'Model the specified domain.',
     } as ModelingExercise;
 
     const mockFeedbackWithReference: Feedback = {
@@ -147,6 +150,7 @@ describe('Example Modeling Submission Component', () => {
             providers: [
                 MockProvider(ChangeDetectorRef),
                 MockProvider(ArtemisTranslatePipe),
+                MockProvider(DialogService),
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -193,6 +197,21 @@ describe('Example Modeling Submission Component', () => {
         expect(rationale).not.toBeNull();
         expect(assessment.querySelector('.example-assessment-rationale')).toBeNull();
         expect(rationale?.querySelector('textarea')).not.toBeNull();
+    });
+
+    it('places edit mode beside the same instructions and provides the problem statement in fullscreen', () => {
+        comp.exercise.set(exercise);
+        comp.exampleSubmission.set(exampleSubmission);
+        comp.assessmentMode.set(false);
+
+        fixture.detectChanges();
+
+        const workspace = fixture.nativeElement.querySelector('jhi-assessment-workspace') as HTMLElement;
+        const editor = fixture.debugElement.query((debugElement) => debugElement.componentInstance instanceof StubModelingEditorComponent)
+            .componentInstance as StubModelingEditorComponent;
+        expect(workspace.querySelector('[assessmentworkspacecanvas]')).not.toBeNull();
+        expect(workspace.querySelector('[assessmentworkspaceinstructions] jhi-assessment-instructions')).not.toBeNull();
+        expect(editor.problemStatement()).toBe(exercise.problemStatement);
     });
 
     it('should handle a new submission', () => {
@@ -466,10 +485,8 @@ describe('Example Modeling Submission Component', () => {
 
         comp.referencedFeedback.set([feedbackWithoutCredits]);
 
-        comp.checkScoreBoundaries();
-
         expect(comp.assessmentsAreValid()).toBe(false);
-        expect(comp.invalidError).toBeDefined();
+        expect(comp.invalidError()).toBeDefined();
         expect(comp.totalScore()).toBeUndefined();
     });
 
@@ -503,10 +520,107 @@ describe('Example Modeling Submission Component', () => {
 
     it('should treat empty assessments as valid with totalScore 0', () => {
         comp.exercise.set(exercise);
-        comp.checkScoreBoundaries();
         expect(comp.assessments()).toHaveLength(0);
         expect(comp.totalScore()).toBe(0);
         expect(comp.assessmentsAreValid()).toBe(true);
-        expect(comp.invalidError).toBeUndefined();
+        expect(comp.invalidError()).toBeUndefined();
+    });
+
+    describe('practice assessment (toComplete)', () => {
+        const solutionReferenced = { id: 2, type: FeedbackType.MANUAL, reference: 'ref-solution', referenceId: 'element-solution', credits: 5 } as Feedback;
+        const solutionUnreferenced = { id: 1, type: FeedbackType.MANUAL_UNREFERENCED, credits: 3 } as Feedback;
+
+        const startPracticeAssessment = async () => {
+            routeQueryParam.toComplete = 1;
+            const solution = { id: 1, feedbacks: [solutionUnreferenced, solutionReferenced] } as Result;
+            vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
+            vi.spyOn(TestBed.inject(ModelingAssessmentService), 'getExampleAssessment').mockReturnValue(of(solution));
+            comp.exercise.set(exercise);
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        };
+
+        it('should allow submitting the assessment as soon as the page is opened', async () => {
+            await startPracticeAssessment();
+
+            // The instructor's assessment is the solution and must not leak into the tutor's own assessment.
+            expect(comp.result()).toBeUndefined();
+            expect(comp.assessments()).toHaveLength(0);
+            // Regression: assessmentsAreValid used to stay false until an imperative recomputation that never ran here.
+            expect(comp.assessmentsAreValid()).toBe(true);
+
+            const submitButton = fixture.nativeElement.querySelector('#submit-example-assessment') as HTMLButtonElement;
+            expect(submitButton).not.toBeNull();
+            expect(submitButton.disabled).toBe(false);
+        });
+
+        it('should offer the unreferenced feedback editor even though no result is loaded', async () => {
+            await startPracticeAssessment();
+
+            const details = fixture.nativeElement.querySelector('[assessmentworkspacedetails]') as HTMLElement;
+            expect(details.querySelector('jhi-unreferenced-feedback')).not.toBeNull();
+        });
+
+        it('should count unreferenced feedback towards the score and the submitted assessment', async () => {
+            const tutorParticipationService = TestBed.inject(TutorParticipationService);
+            const assessSpy = vi.spyOn(tutorParticipationService, 'assessExampleSubmission');
+            await startPracticeAssessment();
+
+            const tutorFeedback = { text: 'Missing association', credits: 4, type: FeedbackType.MANUAL_UNREFERENCED, reference: '1' } as Feedback;
+            comp.onUnReferencedFeedbackChanged([tutorFeedback]);
+
+            expect(comp.totalScore()).toBe(4);
+            expect(comp.assessmentsAreValid()).toBe(true);
+
+            comp.checkAssessment();
+
+            expect(assessSpy).toHaveBeenCalledOnce();
+            const [submitted] = assessSpy.mock.calls[0];
+            expect(submitted.submission!.results!.at(-1)!.feedbacks).toEqual([tutorFeedback]);
+        });
+
+        it('should disable submitting while a feedback has no score', async () => {
+            await startPracticeAssessment();
+
+            comp.onUnReferencedFeedbackChanged([{ text: 'No score yet', type: FeedbackType.MANUAL_UNREFERENCED } as Feedback]);
+            fixture.detectChanges();
+
+            expect(comp.assessmentsAreValid()).toBe(false);
+            expect((fixture.nativeElement.querySelector('#submit-example-assessment') as HTMLButtonElement).disabled).toBe(true);
+        });
+    });
+
+    describe('grading the tutor training assessment', () => {
+        it('should mark unreferenced feedback wrong as well and keep the feedback instances shared with the canvas', () => {
+            const referenced = { ...mockFeedbackWithReference, reference: 'ref-1', correctionStatus: undefined } as Feedback;
+            const unreferenced = { text: 'Unnecessary', credits: 1, type: FeedbackType.MANUAL_UNREFERENCED, reference: '1' } as Feedback;
+            comp.referencedFeedback.set([referenced]);
+            comp.unreferencedFeedback.set([unreferenced]);
+
+            comp.markAllFeedbackToCorrect();
+            comp.markWrongFeedback([{ reference: '1', type: FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK } as FeedbackCorrectionError]);
+
+            // Referenced feedback keeps its identity: the modeling assessment component renders correctionStatus off
+            // these very objects.
+            expect(comp.referencedFeedback()[0]).toBe(referenced);
+            expect(referenced.correctionStatus).toBe('CORRECT');
+
+            // Unreferenced feedback is replaced instead, so the per-item input binding of the feedback card changes.
+            expect(comp.unreferencedFeedback()[0]).not.toBe(unreferenced);
+            expect(comp.unreferencedFeedback()[0].correctionStatus).toBe(FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK);
+        });
+
+        it('should refresh the highlighted elements when the assessment turns out to be correct', () => {
+            const missed: Feedback = { ...mockFeedbackWithReference, referenceId: 'element-1', reference: 'ref-1' };
+            comp.referencedExampleFeedback = [missed];
+            comp.highlightedElements.set(new Map([['element-1', 'stale']]));
+            comp.referencedFeedback.set([missed]);
+
+            comp.markAllFeedbackToCorrect();
+
+            expect(comp.highlightedElements().size).toBe(0);
+        });
     });
 });

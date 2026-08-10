@@ -11,6 +11,14 @@ import {
 } from './apollon-model.util';
 import testClassDiagramV3 from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import testClassDiagramV4 from 'test/helpers/sample/modeling/test-models/class-diagram-v4.json';
+import { UMLDiagramType } from '@tumaet/apollon';
+
+/**
+ * The schema version Apollon migrates every model to. Read from the normalizer
+ * rather than written down, so a library bump does not turn these tests red for
+ * a change they are not about — they are about migration happening at all.
+ */
+const CURRENT_MODEL_VERSION = normalizeApollonModel({ version: '4.0.0', type: UMLDiagramType.ClassDiagram, nodes: [], edges: [] } as unknown as ApollonModelData).version;
 
 describe('apollon-model.util', () => {
     describe('normalizeApollonModel', () => {
@@ -24,7 +32,7 @@ describe('apollon-model.util', () => {
             expect(normalized).not.toBe(input);
             expect(normalized.nodes).not.toBe(input.nodes);
             expect(normalized).toMatchObject({
-                version: original.version,
+                version: CURRENT_MODEL_VERSION,
                 type: testClassDiagramV4.type,
                 nodes: expect.arrayContaining([
                     expect.objectContaining({ id: 'class-in-package', data: expect.objectContaining({ attributes: [expect.objectContaining({ id: 'attr-1' })] }) }),
@@ -42,7 +50,7 @@ describe('apollon-model.util', () => {
             const normalized = normalizeApollonModel(input);
 
             expect(input).toEqual(original);
-            expect(normalized.version).toBe(testClassDiagramV4.version);
+            expect(normalized.version).toBe(CURRENT_MODEL_VERSION);
             expect(normalized.type).toBe(testClassDiagramV3.type);
             expect(normalized.nodes).toEqual(
                 expect.arrayContaining([

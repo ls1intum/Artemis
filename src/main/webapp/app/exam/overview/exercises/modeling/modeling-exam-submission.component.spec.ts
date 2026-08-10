@@ -162,7 +162,8 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(modelingEditor).not.toBeNull();
             const umlModel = modelingEditor.componentInstance.umlModel();
             expect(umlModel).toBeDefined();
-            expect(umlModel.version).toBe('4.0.0');
+            // Normalized to whatever schema version Apollon currently migrates to.
+            expect(umlModel.version).toMatch(/^4\.\d+\.\d+$/);
             expect(umlModel.type).toBe('ClassDiagram');
             expect(modelingEditor.componentInstance.withExplanation()).toBe(true);
             expect(modelingEditor.componentInstance.explanation()).toEqual(mockSubmission.explanationText);
@@ -264,7 +265,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
         expect(comp.submissionVersion).toEqual(submissionVersion);
         expect(comp.umlModel()).toBeDefined();
-        expect(comp.umlModel()!.version).toBe('4.0.0');
+        expect(comp.umlModel()!.version).toMatch(/^4\.\d+\.\d+$/);
         expect(comp.umlModel()!.type).toBe('ClassDiagram');
         expect(comp.explanationText()).toBe('explanation');
     });

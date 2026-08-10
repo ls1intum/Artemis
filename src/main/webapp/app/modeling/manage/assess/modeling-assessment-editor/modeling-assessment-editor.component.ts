@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
@@ -38,7 +38,11 @@ import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
-import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import {
+    FeedbackSuggestionsBannerComponent,
+    feedbackSuggestionsNotice as resolveFeedbackSuggestionsNotice,
+} from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
 import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
@@ -59,6 +63,7 @@ import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular'
         UnreferencedFeedbackComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
+        ModelingAssessmentTopLeftDirective,
         AssessmentNotPossibleYetComponent,
         TumUiButtonDirective,
         TumUiMessageComponent,
@@ -142,6 +147,21 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     get isFeedbackSuggestionsEnabled(): boolean {
         return Boolean(this.modelingExercise()?.feedbackSuggestionModule);
     }
+
+    /**
+     * Whether Athena has anything to report. Gates the chrome island so the
+     * canvas' top-left corner is only reserved while it is occupied — mounting
+     * an empty region would reserve an inset for nothing.
+     */
+    readonly feedbackSuggestionsNotice = computed(() =>
+        resolveFeedbackSuggestionsNotice({
+            isLoading: this.loadingFeedbackSuggestions(),
+            hasAutomaticFeedback: this.hasAutomaticFeedback(),
+            isAssessor: this.isAssessor(),
+            resultCompletionDate: this.result()?.completionDate,
+            isFeedbackSuggestionsEnabled: this.isFeedbackSuggestionsEnabled,
+        }),
+    );
 
     ngOnInit() {
         void this.accountService.identity().then((user) => {

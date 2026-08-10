@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
@@ -6,7 +6,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 
 @Component({
     template: `
-        <jhi-assessment-workspace storageKey="test-assessment-workspace">
+        <jhi-assessment-workspace storageKey="test-assessment-workspace" [showDetails]="showDetails()">
             <div assessmentWorkspaceCanvas data-testid="canvas">Canvas</div>
             <div assessmentWorkspaceInstructions data-testid="instructions">Instructions content</div>
             <div assessmentWorkspaceDetails data-testid="details">Feedback and notes</div>
@@ -14,7 +14,9 @@ import { provideTranslateService } from '@ngx-translate/core';
     `,
     imports: [AssessmentWorkspaceComponent],
 })
-class AssessmentWorkspaceTestHostComponent {}
+class AssessmentWorkspaceTestHostComponent {
+    readonly showDetails = signal(true);
+}
 
 class ResizeObserverMock {
     static instance: ResizeObserverMock | undefined;
@@ -71,5 +73,14 @@ describe('AssessmentWorkspaceComponent', () => {
 
         expect(fixture.nativeElement.querySelector('.assessment-workspace__primary-split').classList.contains('assessment-workspace__split--vertical')).toBe(false);
         expect(fixture.nativeElement.querySelector('.assessment-workspace__support-split').classList.contains('assessment-workspace__split--horizontal')).toBe(false);
+    });
+
+    it('uses the full support pane for instructions when details are disabled', () => {
+        fixture.componentInstance.showDetails.set(false);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="instructions"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="details"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.assessment-workspace__support-split')).toBeNull();
     });
 });

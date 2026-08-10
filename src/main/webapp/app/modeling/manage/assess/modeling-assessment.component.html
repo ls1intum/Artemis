@@ -11,9 +11,22 @@
         [class.modeling-assessment__region--bottom-center-elevated]="bottomCenterElevated()"
     >
         @if (explanation()) {
-            <jhi-modeling-explanation-editor [explanation]="explanation()" [readOnly]="true" [autosizeMaxRows]="6" />
+            <jhi-modeling-explanation-editor [explanation]="explanation()" [readOnly]="true" [autosizeMaxRows]="6" [autosizeMinRows]="4" />
         }
     </div>
+
+    <jhi-apollon-rail-disclosure
+        #panelRegion
+        [label]="panelLabel()"
+        [icon]="faPanel"
+        testId="modeling-assessment-panel"
+        [(visible)]="panelVisible"
+        [maxHeight]="panelMaxHeight()"
+        [hidden]="!hasPanel()"
+        (resized)="scheduleChromePlacement()"
+    >
+        <ng-content select="[modelingAssessmentPanel]" />
+    </jhi-apollon-rail-disclosure>
 
     <div
         #resizeContainer

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, contentChild, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, contentChild, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { captureException } from '@sentry/angular';
 import {
@@ -14,18 +14,24 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 import { normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
 import { TranslateService } from '@ngx-translate/core';
 import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ApollonRailDisclosureComponent } from 'app/modeling/shared/modeling-editor/apollon-rail-disclosure/apollon-rail-disclosure.component';
 import {
+    RAIL_DISCLOSURE_MAX_HEIGHT,
     applyBottomCenterPlacement,
     calculateBottomCenterPlacement,
     clearBottomCenterPlacement,
+    measureRailDisclosureMaxHeight,
     synchronizeResizeObserverTargets,
 } from 'app/modeling/shared/modeling-editor/apollon-chrome-placement';
+import { isOccupied } from 'app/modeling/manage/assess/modeling-assessment-projection';
+import { ModelingAssessmentPanelDirective } from 'app/modeling/manage/assess/modeling-assessment-panel.directive';
 import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
 import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
 
@@ -42,7 +48,7 @@ type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor 
     selector: 'jhi-modeling-assessment',
     templateUrl: './modeling-assessment.component.html',
     styleUrls: ['./modeling-assessment.component.scss'],
-    imports: [ArtemisTranslatePipe, FaIconComponent, ModelingExplanationEditorComponent, ResizableDirective],
+    imports: [ArtemisTranslatePipe, FaIconComponent, ModelingExplanationEditorComponent, ResizableDirective, ApollonRailDisclosureComponent],
 })
 export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -52,10 +58,25 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly topLeftRegion = viewChild<ElementRef<HTMLElement>>('topLeftRegion');
     private readonly topRightRegion = viewChild<ElementRef<HTMLElement>>('topRightRegion');
     private readonly bottomCenterRegion = viewChild<ElementRef<HTMLElement>>('bottomCenterRegion');
-    private readonly projectedTopLeft = contentChild(ModelingAssessmentTopLeftDirective, { read: ElementRef });
-    private readonly projectedTopRight = contentChild(ModelingAssessmentTopRightDirective, { read: ElementRef });
+    // Read as directives, not elements: a slot that is present but unoccupied
+    // must leave its region unmounted. See `ModelingAssessmentRegion`.
+    private readonly projectedTopLeft = contentChild(ModelingAssessmentTopLeftDirective);
+    private readonly projectedTopRight = contentChild(ModelingAssessmentTopRightDirective);
+    // Read as an element: the host node is what gets handed to the rail region.
+    protected readonly panelRegion = viewChild('panelRegion', { read: ElementRef<HTMLElement> });
+    private readonly projectedPanel = contentChild(ModelingAssessmentPanelDirective);
+    private panelRegionMounted = false;
+    /** Mirrors how the other regions are hosted; see `synchronizeHostRegion`. */
 
     readonly enablePopups = input(true);
+    /** Heading shown on the side panel's card. */
+    readonly panelLabel = input('');
+    protected readonly hasPanel = computed(() => isOccupied(this.projectedPanel()));
+    /** Open by default: in the assessed view the feedback IS the point of the page. */
+    readonly panelVisible = signal(true);
+    protected readonly panelMaxHeight = signal(RAIL_DISCLOSURE_MAX_HEIGHT);
+    protected readonly faPanel = faCommentDots;
+
     readonly highlightDifferences = input<boolean>();
     readonly resultFeedbacks = input<Feedback[]>();
 
@@ -126,8 +147,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             }
         });
         effect(() => {
-            this.projectedTopLeft();
-            this.projectedTopRight();
+            isOccupied(this.projectedTopLeft());
+            isOccupied(this.projectedTopRight());
+            isOccupied(this.projectedPanel());
+            this.panelRegion();
             this.explanation();
             this.topLeftRegion();
             this.topRightRegion();
@@ -220,8 +243,26 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             return;
         }
 
-        this.topLeftRegionMounted = this.synchronizeHostRegion('top-left', this.topLeftRegion()?.nativeElement, !!this.projectedTopLeft(), this.topLeftRegionMounted);
-        this.topRightRegionMounted = this.synchronizeHostRegion('top-right', this.topRightRegion()?.nativeElement, !!this.projectedTopRight(), this.topRightRegionMounted);
+        this.topLeftRegionMounted = this.synchronizeHostRegion('top-left', this.topLeftRegion()?.nativeElement, isOccupied(this.projectedTopLeft()), this.topLeftRegionMounted);
+        this.topRightRegionMounted = this.synchronizeHostRegion(
+            'top-right',
+            this.topRightRegion()?.nativeElement,
+            isOccupied(this.projectedTopRight()),
+            this.topRightRegionMounted,
+        );
+        // The side panel hangs off the right rail, so it sits inside the editor's
+        // own chrome — which is what carries it into fullscreen and means the
+        // reader never scrolls the page to reach their feedback.
+        const panel = this.panelRegion()?.nativeElement;
+        const panelWasMounted = this.panelRegionMounted;
+        this.panelRegionMounted = this.synchronizeHostRegion('right-rail', panel, isOccupied(this.projectedPanel()), this.panelRegionMounted);
+        if (this.panelRegionMounted && !panelWasMounted) {
+            // The rail scrolls its content by default, which clips a disclosure
+            // whose panel deliberately hangs past the trigger. Same opt-out the
+            // editor's problem statement makes — and it has to come after the
+            // first `getRegionElement`, since that is what creates the control.
+            this.apollonEditor.updateControl('apollon:host:right-rail', { style: { overflow: 'visible' } });
+        }
         this.bottomCenterRegionMounted = this.synchronizeHostRegion(
             'bottom-center',
             this.bottomCenterRegion()?.nativeElement,
@@ -261,7 +302,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.scheduleChromePlacement();
     }
 
-    private scheduleChromePlacement(): void {
+    protected scheduleChromePlacement(): void {
         if (this.chromeResizeFrame !== undefined || !this.apollonEditor) {
             return;
         }
@@ -269,7 +310,25 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.chromeResizeFrame = window.requestAnimationFrame(() => {
             this.chromeResizeFrame = undefined;
             this.updateBottomCenterPlacement();
+            this.updatePanelMaxHeight();
         });
+    }
+
+    private updatePanelMaxHeight(): void {
+        const apollonRoot = this.elementRef.nativeElement.querySelector<HTMLElement>('.apollon-editor');
+        this.panelMaxHeight.set(
+            measureRailDisclosureMaxHeight(apollonRoot, this.panelRegion()?.nativeElement, this.panelVisible(), [
+                this.bottomCenterRegion()?.nativeElement,
+                apollonRoot?.querySelector<HTMLElement>('[data-apollon-control="apollon:zoom"]'),
+                apollonRoot?.querySelector<HTMLElement>('[data-apollon-control="apollon:minimap"]'),
+            ]),
+        );
+    }
+
+    /** The open panel floats over the canvas, so bottom-center has to dodge it. */
+    private panelObstruction(): DOMRect | undefined {
+        const panel = this.panelRegion()?.nativeElement;
+        return panel && !panel.hidden ? panel.getBoundingClientRect() : undefined;
     }
 
     private updateBottomCenterPlacement(): void {
@@ -303,6 +362,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             zoom: zoom.getBoundingClientRect(),
             minimap: minimap.getBoundingClientRect(),
             surface: persistentSurface.getBoundingClientRect(),
+            obstruction: this.panelObstruction(),
             chromeGap: Number.parseFloat(editorStyle.getPropertyValue('--apollon-chrome-gap')) || 0,
             chromeEdge: Number.parseFloat(editorStyle.getPropertyValue('--apollon-chrome-edge')) || 0,
             rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
@@ -395,6 +455,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private updateHighlightedElements(newElements: Map<string, string> | undefined): void {
         // Apollon treats undefined as unchanged; null clears existing highlights.
         this.apollonEditor?.setElementHighlights(newElements ?? null);
+    }
+
+    /**
+     * Sends the canvas to one element and opens its feedback, so a feedback list
+     * beside the diagram can answer "where does this apply?". `undefined` clears
+     * the selection again.
+     */
+    revealAssessment(elementId: string | undefined): void {
+        this.apollonEditor?.revealAssessment(elementId ?? null);
     }
 
     private async updateElementCounts(newElementCounts: ModelElementCount[]) {

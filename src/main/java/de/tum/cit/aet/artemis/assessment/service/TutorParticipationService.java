@@ -226,7 +226,9 @@ public class TutorParticipationService {
                 return Stream.empty();
             }
 
-            var objectWriter = JsonObjectMapper.get().writer().withDefaultPrettyPrinter();
+            // Deliberately NOT pretty printed: this JSON travels as the exception's message, which HeaderUtil also
+            // puts into an HTTP response header - and a header value cannot contain the line breaks a pretty printer adds.
+            var objectWriter = JsonObjectMapper.get().writer();
             try {
                 // Build JSON string for the corresponding `FeedbackCorrectionError` object.
                 // TODO: I think we should let Spring automatically convert it to Json

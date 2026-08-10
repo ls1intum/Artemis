@@ -61,6 +61,9 @@
                 "deleteAssessment": "Bewertung löschen",
                 "deleteAssessmentFor": "Bewertung für {{ name }} löschen",
                 "assessmentFor": "Bewertung für {{ type }}",
+                "previousAssessment": "Vorherige Bewertung",
+                "scrollLockHint": "Halte {{modifier}} gedrückt und scrolle, um das Diagramm zu zoomen",
+                "scrollLockHintTouch": "Bewege das Diagramm mit zwei Fingern",
                 "nextAssessment": "Nächste Bewertung",
                 "noComment": "Kein Kommentar",
                 "notGraded": "Nicht bewertet",
@@ -299,7 +302,7 @@
                 "title": "So verwendet man den Modellierungseditor",
                 "walkthrough": "Anleitung",
                 "basicsTitle": "Ein Diagramm erstellen",
-                "intro": "Beginne mit den vier grundlegenden Interaktionen. Die Bedienelemente bleiben nahe an der Zeichenfläche, damit du dich auf dein Modell konzentrieren kannst.",
+                "intro": "Beginne mit den sechs grundlegenden Interaktionen. Die Bedienelemente bleiben nahe an der Zeichenfläche, damit du dich auf dein Modell konzentrieren kannst.",
                 "refineTitle": "Modell verfeinern",
                 "refineDescription": "Wenn die Struktur steht, kannst du mit diesen Interaktionen Teile deines Diagramms anordnen, korrigieren und wiederverwenden.",
                 "shortcuts": {

@@ -21,6 +21,7 @@ export class CollapsableAssessmentInstructionsComponent {
     collapsed = model(false);
     readonly readOnly = input.required<boolean>();
 
+    // Icons
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
     faGripLinesVertical = faGripLinesVertical;

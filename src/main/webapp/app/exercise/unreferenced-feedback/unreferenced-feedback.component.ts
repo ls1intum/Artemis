@@ -21,7 +21,6 @@ export class UnreferencedFeedbackComponent {
     readonly readOnly = input<boolean>(undefined!);
     readonly highlightDifferences = input<boolean>(undefined!);
     readonly useDefaultFeedbackSuggestionBadgeText = input(false);
-    readonly resultId = input<number>(undefined!);
 
     /**
      * In order to make it possible to mark unreferenced feedback based on the correction status, we assign reference ids to the unreferenced feedback

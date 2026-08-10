@@ -29,7 +29,7 @@
     &__step {
         display: grid;
         overflow: clip;
-        grid-template-columns: minmax(16rem, 1.4fr) minmax(14rem, 1fr);
+        grid-template-columns: minmax(20rem, 1.5fr) minmax(15rem, 1fr);
         border: 1px solid var(--tumaet-ui-border-color);
         border-radius: var(--tumaet-ui-radius-xl);
         background: var(--tumaet-ui-content-background);
@@ -67,15 +67,17 @@
         font-weight: 700;
     }
 
-    &__image-crop {
-        overflow: hidden;
-        aspect-ratio: 1280 / 656;
+    &__image {
+        display: grid;
+        min-width: 0;
+        place-items: center;
         border-inline-end: 1px solid var(--tumaet-ui-border-color);
+        background: var(--tumaet-ui-hover-background);
 
         img {
             display: block;
             width: 100%;
-            transform: translateY(-5%);
+            height: auto;
         }
     }
 
@@ -193,7 +195,7 @@ kbd {
     .modeling-editor-help__step {
         grid-template-columns: 1fr;
 
-        .modeling-editor-help__image-crop {
+        .modeling-editor-help__image {
             border-inline-end: 0;
             border-block-end: 1px solid var(--tumaet-ui-border-color);
         }

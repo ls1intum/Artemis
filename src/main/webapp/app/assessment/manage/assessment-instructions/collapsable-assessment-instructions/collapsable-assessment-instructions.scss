@@ -1,84 +1,65 @@
-:host {
-    display: block;
-    height: 100%;
-    min-height: 0;
-}
-
 .instructions-container {
     display: flex;
-    max-width: min(36rem, calc(100vw - 4rem));
+    height: 100vh;
 }
 
 .expanded-instructions {
-    position: relative;
-    width: clamp(18rem, 30vw, 34rem);
-    height: 100%;
-    min-height: 0;
-    padding-left: 0.6rem;
+    width: 30vw;
 
-    .instructions-panel {
-        display: flex;
+    .card {
         width: 100%;
-        min-width: 0;
-        min-height: 0;
-        flex-direction: column;
-        overflow: hidden;
-        border: 1px solid var(--apollon-chrome-border);
-        border-radius: var(--apollon-chrome-radius-lg);
-        background: var(--apollon-chrome-glass-solid);
-        box-shadow: 0 3px 12px color-mix(in srgb, var(--apollon-foreground) 12%, transparent);
-    }
+        min-width: 200px;
 
-    .instructions-header {
-        display: flex;
-        min-height: var(--apollon-chrome-island-h);
-        align-items: center;
-        padding: var(--apollon-chrome-pad);
-        border-bottom: 1px solid var(--apollon-chrome-border);
-    }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
 
-    .instructions-disclosure {
-        width: 100%;
-        justify-content: flex-start;
+            .card-title {
+                display: flex;
+            }
+        }
 
-        &__chevron {
-            margin-left: auto;
+        .card-body {
+            overflow-y: auto;
         }
     }
 
     .draggable-left {
-        position: absolute;
-        z-index: 2;
-        top: 0;
-        bottom: 0;
-        left: 0;
         display: flex;
-        width: 0.7rem;
         align-items: center;
         justify-content: center;
-        cursor: ew-resize;
-        color: var(--apollon-chrome-text-muted);
+        min-width: 15px;
     }
 
-    .instructions-content {
-        min-height: 0;
-        padding: 0.75rem;
-        flex: 1;
+    .scrollbar {
+        position: relative;
         overflow: auto;
-        overscroll-behavior: contain;
+    }
+
+    .wrapper-scroll-y {
+        display: block;
+        padding: 0 0.5rem;
     }
 }
 
 .collapsed-instructions {
-    align-self: flex-start;
+    width: 50px;
+    height: 170px;
+    justify-content: space-between;
+    flex-flow: column nowrap;
+    margin-left: 15px;
+    cursor: pointer;
 
-    .instructions-disclosure {
-        white-space: nowrap;
+    span {
+        writing-mode: vertical-rl;
+        margin: auto;
     }
-}
 
-@media (max-width: 50rem) {
-    .expanded-instructions {
-        width: min(24rem, calc(100vw - 5rem));
+    fa-icon {
+        display: flex;
+        justify-content: center;
+        padding: 15px 0;
     }
 }

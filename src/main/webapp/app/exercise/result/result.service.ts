@@ -69,14 +69,17 @@ export class ResultService implements IResultService {
     /**
      * Generates the result string for the given exercise and result.
      * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
-     * If either of the arguments is undefined the error is forwarded to sentry and an empty string is returned
+     * If the result or the exercise is undefined the error is forwarded to sentry and an empty string is returned.
+     *
+     * A missing `participation` is NOT an error: example submissions own a result without belonging to a
+     * participation. Only the programming branch reads the participation, and it degrades gracefully without one.
      * @param result the result containing all necessary information like the achieved points
      * @param exercise the exercise where the result belongs to
-     * @param participation the participation of the exercise and result
+     * @param participation the participation of the exercise and result, if the result belongs to one
      * @param short flag that indicates if the resultString should use the short format
      */
     getResultString(result: Result | undefined, exercise: Exercise | undefined, participation: Participation | undefined, short?: boolean): string {
-        if (result && exercise && participation) {
+        if (result && exercise) {
             return this.getResultStringDefinedParameters(result, exercise, participation, short);
         } else {
             captureException('Tried to generate a result string, but either the result or exercise was undefined');
@@ -92,7 +95,7 @@ export class ResultService implements IResultService {
      * @param participation the participation of the exercise and result
      * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringDefinedParameters(result: Result, exercise: Exercise, participation: Participation, short: boolean | undefined): string {
+    private getResultStringDefinedParameters(result: Result, exercise: Exercise, participation: Participation | undefined, short: boolean | undefined): string {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type !== ExerciseType.PROGRAMMING) {
@@ -155,12 +158,12 @@ export class ResultService implements IResultService {
     private getResultStringProgrammingExercise(
         result: Result,
         exercise: ProgrammingExercise,
-        participation: Participation,
+        participation: Participation | undefined,
         relativeScore: number,
         points: number,
         short: boolean | undefined,
     ): string {
-        const latestSubmission = (result.submission ?? participation.submissions?.[0]) as ProgrammingSubmission;
+        const latestSubmission = (result.submission ?? participation?.submissions?.[0]) as ProgrammingSubmission;
         let buildAndTestMessage: string;
         if (isAIResultAndFailed(result)) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
@@ -186,7 +189,11 @@ export class ResultService implements IResultService {
 
         let resultString = this.getBaseResultStringProgrammingExercise(result, relativeScore, points, buildAndTestMessage, short);
 
-        if (isStudentParticipation(result) && isResultPreliminary(result, participation, exercise)) {
+        // NOTE: this used to read `isStudentParticipation(result)`, which silently always evaluated to true: `Result`
+        // has no `type` property, and TypeScript's structural typing accepts it where a `Participation` is expected
+        // because both types consist of optional members. The template/solution participations of a programming
+        // exercise must not get the "(preliminary)" suffix, which is exactly what this guard is for.
+        if (participation && isStudentParticipation(participation) && isResultPreliminary(result, participation, exercise)) {
             resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
         }
 

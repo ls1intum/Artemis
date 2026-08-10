@@ -25,14 +25,6 @@
         [correctionRound]="correctionRound()"
         (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
     >
-        <jhi-feedback-suggestions-banner
-            jhiBannerSlot
-            [isLoading]="loadingFeedbackSuggestions()"
-            [hasAutomaticFeedback]="hasAutomaticFeedback()"
-            [isAssessor]="isAssessor()"
-            [resultCompletionDate]="result()?.completionDate"
-            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
-        />
         @if (submission()) {
             <jhi-assessment-workspace
                 class="modeling-assessment-page__workspace"
@@ -50,12 +42,27 @@
                         [explanation]="submission()?.explanationText || ''"
                         [highlightDifferences]="highlightDifferences"
                         [elementCounts]="submission()?.similarElements"
-                    />
+                    >
+                        <!-- Athena's status belongs to the diagram, so it rides in the canvas'
+                             top-left corner as chrome. Projected unconditionally and gated by
+                             occupancy rather than `@if`: a control-flow block cannot be relied
+                             on to reach a named slot, and an empty region would still reserve
+                             an inset. See `ModelingAssessmentRegion`. -->
+                        <jhi-feedback-suggestions-banner
+                            [modelingAssessmentTopLeft]="!!feedbackSuggestionsNotice()"
+                            appearance="chrome"
+                            [isLoading]="loadingFeedbackSuggestions()"
+                            [hasAutomaticFeedback]="hasAutomaticFeedback()"
+                            [isAssessor]="isAssessor()"
+                            [resultCompletionDate]="result()?.completionDate"
+                            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
+                        />
+                    </jhi-modeling-assessment>
                 </div>
 
                 <div assessmentWorkspaceInstructions>
                     @if (modelingExercise()) {
-                        <jhi-assessment-instructions [readOnly]="readOnly" [exercise]="modelingExercise()!" [showAssessmentInstructions]="true" [showExerciseTitle]="false" />
+                        <jhi-assessment-instructions [readOnly]="readOnly" [exercise]="modelingExercise()!" [showAssessmentInstructions]="true" [embeddedInEditorChrome]="true" />
                     }
                 </div>
 
@@ -69,7 +76,6 @@
                             [highlightDifferences]="highlightDifferences"
                             (onAcceptSuggestion)="removeSuggestion($event)"
                             (onDiscardSuggestion)="removeSuggestion($event)"
-                            [resultId]="result()!.id!"
                         />
                     }
 

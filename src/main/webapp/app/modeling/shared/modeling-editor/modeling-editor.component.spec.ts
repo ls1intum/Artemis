@@ -7,6 +7,11 @@ const { MockApollonEditor } = vi.hoisted(() => {
     const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
 
     class MockApollonEditorClass {
+        static exportModelAsSvg = vi.fn().mockResolvedValue({
+            svg: '<svg width="800" height="400" viewBox="0 0 800 400"></svg>',
+            clip: { x: 0, y: 0, width: 800, height: 400 },
+        });
+
         _model: any;
         _options: MockApollonOptions | undefined;
         _subscriptions = new Map<number, (model: any) => void>();
@@ -60,8 +65,6 @@ const { MockApollonEditor } = vi.hoisted(() => {
             this._destroyed = true;
             this._subscriptions.clear();
         });
-
-        exportAsSVG = vi.fn().mockResolvedValue({ svg: '<svg></svg>' });
 
         nextRender = Promise.resolve();
 
@@ -198,15 +201,19 @@ describe('ModelingEditorComponent', () => {
         expect(component.getCurrentModel()).not.toBe(component['apollonEditor']?.model);
     });
 
-    it('should scope the Artemis theme bridge to editable and read-only diagrams', async () => {
+    it('exports read-only diagrams without mounting an interactive editor or its frame', async () => {
         fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
         await component.ngAfterViewInit();
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.apollon-container.artemis-apollon-theme'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('.modeling-editor__frame'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('.apollon-container'))).toBeNull();
         expect(fixture.debugElement.query(By.css('.readonly-diagram.artemis-apollon-theme'))).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('.readonly-diagram svg')).not.toBeNull();
+        expect(component['apollonEditor']).toBeUndefined();
+        expect(MockApollonEditor.exportModelAsSvg).toHaveBeenCalledWith(expect.objectContaining({ assessments: {} }));
     });
 
     it('ngOnDestroy', async () => {
@@ -328,10 +335,10 @@ describe('ModelingEditorComponent', () => {
         await fixture.whenStable();
 
         const editor = component['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
-        const island = fixture.nativeElement.querySelector('.modeling-editor__problem-statement') as HTMLElement;
+        const island = fixture.nativeElement.querySelector('jhi-apollon-rail-disclosure') as HTMLElement;
         const disclosure = island.querySelector('[data-testid="modeling-editor-problem-statement"]') as HTMLButtonElement;
-        const horizontalResizer = island.querySelector('.modeling-editor__problem-statement-resizer--left') as HTMLElement;
-        const verticalResizer = island.querySelector('.modeling-editor__problem-statement-resizer--bottom') as HTMLElement;
+        const horizontalResizer = island.querySelector('.apollon-rail-disclosure__resizer--left') as HTMLElement;
+        const verticalResizer = island.querySelector('.apollon-rail-disclosure__resizer--bottom') as HTMLElement;
         expect(island.hidden).toBe(true);
         expect(editor.getRegionElement).not.toHaveBeenCalledWith('right-rail');
 
@@ -347,7 +354,7 @@ describe('ModelingEditorComponent', () => {
         expect(editor.getRegionElement).toHaveBeenCalledWith('right-rail');
         expect(editor.updateControl).toHaveBeenCalledWith('apollon:host:right-rail', { style: { overflow: 'visible' } });
 
-        const panel = island.querySelector('.modeling-editor__problem-statement-panel') as HTMLElement;
+        const panel = island.querySelector('.apollon-rail-disclosure__panel') as HTMLElement;
         expect(editor._regionElements.get('right-rail')?.contains(island)).toBe(true);
         expect(panel.hidden).toBe(true);
 

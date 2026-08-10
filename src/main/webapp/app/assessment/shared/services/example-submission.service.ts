@@ -10,6 +10,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { parseJson } from 'app/foundation/util/json.util';
+import { ApollonModelData, countModelElements } from 'app/modeling/shared/apollon-model.util';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
@@ -128,8 +129,12 @@ export class ExampleSubmissionService {
         if (submission && exercise && exercise.type === ExerciseType.TEXT) {
             return this.stringCountService.countWords((submission as TextSubmission).text);
         } else if (submission && exercise && exercise.type === ExerciseType.MODELING) {
-            const umlModel = parseJson<{ elements: unknown[]; relationships: unknown[] }>((submission as ModelingSubmission).model!);
-            return umlModel ? umlModel.elements?.length + umlModel.relationships?.length : 0;
+            // The persisted Apollon JSON has had three shapes over time: v3 keyed records under `elements`/`relationships`,
+            // v4 arrays under the same keys, and v5 arrays under `nodes`/`edges`. Reading `.length` off whichever key
+            // happened to be expected yielded `undefined + undefined === NaN` for every other shape, so delegate to the
+            // shared normalizer that understands all three.
+            const model = (submission as ModelingSubmission).model;
+            return model ? countModelElements(parseJson<ApollonModelData>(model)) : 0;
         }
         return 0;
     }

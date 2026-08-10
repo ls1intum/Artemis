@@ -612,7 +612,6 @@ $apollon-background-variant: $neutral-dark-l-10;
 $apollon-gray: $neutral-dark-l-5;
 $apollon-gray-variant: $gray-100;
 $apollon-grid: $neutral-dark-l-10;
-$apollon-scroll-overlay: rgba($black, 0.2);
 $apollon-guide-vertical: $danger;
 $apollon-guide-horizontal: $primary;
 $apollon-danger: $artemis-alert-danger-color;
@@ -620,10 +619,16 @@ $apollon-surface: $neutral-dark-l-5;
 $apollon-surface-sunken: darken($neutral-dark, 2%);
 $apollon-border: $border-color;
 $apollon-border-subtle: $neutral-dark-l-10;
-$apollon-radius: artemis.$border-radius;
-$apollon-radius-sm: artemis.$border-radius-sm;
-$apollon-radius-md: artemis.$border-radius;
-$apollon-radius-lg: artemis.$border-radius-lg;
+
+// Apollon paints its embedded @tumaet/ui primitives (the popover's buttons and
+// inputs, selects, menus) from this scale, so it has to be the SAME ramp the rest
+// of Artemis uses — not the legacy Bootstrap $border-radius-* values, which are
+// roughly half the size and made the editor's buttons read as visibly squarer
+// than every other TUM UI button on the page.
+$apollon-radius: var(--tumaet-ui-radius-md);
+$apollon-radius-sm: var(--tumaet-ui-radius-sm);
+$apollon-radius-md: var(--tumaet-ui-radius-md);
+$apollon-radius-lg: var(--tumaet-ui-radius-md);
 $apollon-shadow: 0 0.25rem 0.75rem rgba($black, 0.55);
 $apollon-hover-neutral: rgba($body-color, 0.1);
 $apollon-interactive-selection: $warning;

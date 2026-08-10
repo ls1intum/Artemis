@@ -1,170 +1,124 @@
-<div class="modeling-editor">
-    <div #editorFrame class="modeling-editor__frame artemis-apollon-theme" [class.modeling-editor__frame--tile]="tile()">
-        <jhi-modeling-editor-help [(visible)]="helpVisible" />
+<div class="modeling-editor" [class.modeling-editor--readonly]="readOnly()">
+    @if (!readOnly()) {
+        <div #editorFrame class="modeling-editor__frame artemis-apollon-theme" [class.modeling-editor__frame--tile]="tile()">
+            <jhi-modeling-editor-help [(visible)]="helpVisible" />
 
-        <div #editorTopLeftRegion class="modeling-editor__top-left-region nopan nodrag nowheel">
-            @if (savedStatus() && !readOnly()) {
-                <div
-                    class="modeling-editor__status-island apollon-glass"
-                    [class.modeling-editor__status-island--saved]="!savedStatus()?.isChanged && !savedStatus()?.isSaving"
-                    [class.modeling-editor__status-island--unsaved]="savedStatus()?.isChanged && !savedStatus()?.isSaving"
-                    [class.modeling-editor__status-island--saving]="savedStatus()?.isSaving"
-                    role="status"
-                >
-                    @if (savedStatus()?.isSaving) {
-                        <fa-icon class="spin" [icon]="faCircleNotch" />
-                        <span jhiTranslate="artemisApp.modelingEditor.saving"></span>
-                    } @else if (savedStatus()?.isChanged) {
-                        <fa-icon [icon]="faTimes" />
-                        <span jhiTranslate="artemisApp.modelingEditor.unsavedChanges"></span>
-                    } @else {
-                        <fa-icon [icon]="faCheck" />
-                        <span jhiTranslate="artemisApp.modelingEditor.allSaved"></span>
-                    }
+            <div #editorTopLeftRegion class="modeling-editor__top-left-region nopan nodrag nowheel">
+                @if (savedStatus() && !readOnly()) {
+                    <div
+                        class="modeling-editor__status-island apollon-glass"
+                        [class.modeling-editor__status-island--saved]="!savedStatus()?.isChanged && !savedStatus()?.isSaving"
+                        [class.modeling-editor__status-island--unsaved]="savedStatus()?.isChanged && !savedStatus()?.isSaving"
+                        [class.modeling-editor__status-island--saving]="savedStatus()?.isSaving"
+                        role="status"
+                    >
+                        @if (savedStatus()?.isSaving) {
+                            <fa-icon class="spin" [icon]="faCircleNotch" />
+                            <span jhiTranslate="artemisApp.modelingEditor.saving"></span>
+                        } @else if (savedStatus()?.isChanged) {
+                            <fa-icon [icon]="faTimes" />
+                            <span jhiTranslate="artemisApp.modelingEditor.unsavedChanges"></span>
+                        } @else {
+                            <fa-icon [icon]="faCheck" />
+                            <span jhiTranslate="artemisApp.modelingEditor.allSaved"></span>
+                        }
+                    </div>
+                }
+                <div class="modeling-editor__top-left apollon-glass">
+                    <ng-content select="[modelingEditorTopLeft]" />
                 </div>
-            }
-            <div class="modeling-editor__top-left apollon-glass">
-                <ng-content select="[modelingEditorTopLeft]" />
             </div>
-        </div>
 
-        <div
-            #editorActions
-            class="modeling-editor__actions apollon-glass apollon-chrome-cluster nopan nodrag nowheel"
-            role="group"
-            [attr.aria-label]="'artemisApp.modelingEditor.editorActions' | artemisTranslate"
-        >
-            @if (showHelpButton()) {
-                <button
-                    type="button"
-                    class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
-                    (click)="openHelp()"
-                    [attr.aria-label]="'artemisApp.modelingEditor.helpModal.help' | artemisTranslate"
-                    [title]="'artemisApp.modelingEditor.helpModal.help' | artemisTranslate"
-                >
-                    <fa-icon [icon]="farQuestionCircle" />
-                    <span jhiTranslate="artemisApp.modelingEditor.helpModal.help"></span>
-                </button>
-            }
-            @if (showFullscreenButton() && fullscreenSupported) {
-                <button
-                    type="button"
-                    class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
-                    data-testid="modeling-editor-fullscreen"
-                    (click)="toggleFullscreen()"
-                    [attr.aria-label]="
-                        (fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText') | artemisTranslate
-                    "
-                    [title]="
-                        (fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText') | artemisTranslate
-                    "
-                >
-                    <fa-icon [icon]="fullscreenActive() ? faExitFullscreen : faEnterFullscreen" />
-                    <span
-                        [jhiTranslate]="fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText'"
-                    ></span>
-                </button>
-            }
-        </div>
-
-        <aside
-            #editorProblemStatement
-            class="modeling-editor__problem-statement nopan nodrag nowheel"
-            [class.modeling-editor__problem-statement--expanded]="problemStatementVisible()"
-            [hidden]="!fullscreenActive() || !problemStatement()?.trim()"
-            [attr.aria-label]="'artemisApp.modelingSubmission.problemStatement' | artemisTranslate"
-        >
             <div
-                class="modeling-editor__problem-statement-trigger-island apollon-glass apollon-chrome-cluster"
-                [class.modeling-editor__problem-statement-trigger-island--expanded]="problemStatementVisible()"
+                #editorActions
+                class="modeling-editor__actions apollon-glass apollon-chrome-cluster nopan nodrag nowheel"
+                role="group"
+                [attr.aria-label]="'artemisApp.modelingEditor.editorActions' | artemisTranslate"
             >
-                <button
-                    type="button"
-                    class="modeling-editor__problem-statement-disclosure artemis-apollon-chrome-action apollon-chrome-iconbtn"
-                    data-testid="modeling-editor-problem-statement"
-                    (click)="toggleProblemStatement()"
-                    [attr.aria-expanded]="problemStatementVisible()"
-                    [attr.aria-controls]="problemStatementPanelId"
-                    [attr.aria-label]="'artemisApp.modelingSubmission.problemStatement' | artemisTranslate"
-                    [title]="'artemisApp.modelingSubmission.problemStatement' | artemisTranslate"
-                    [id]="problemStatementPanelId + '-trigger'"
-                >
-                    <fa-icon [icon]="faProblemStatement" />
-                    <span jhiTranslate="artemisApp.modelingSubmission.problemStatement"></span>
-                    <fa-icon [icon]="problemStatementVisible() ? faCollapseProblemStatement : faExpandProblemStatement" aria-hidden="true" />
-                </button>
+                @if (showHelpButton()) {
+                    <button
+                        type="button"
+                        class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
+                        (click)="openHelp()"
+                        [attr.aria-label]="'artemisApp.modelingEditor.helpModal.help' | artemisTranslate"
+                        [title]="'artemisApp.modelingEditor.helpModal.help' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="farQuestionCircle" />
+                        <span jhiTranslate="artemisApp.modelingEditor.helpModal.help"></span>
+                    </button>
+                }
+                @if (showFullscreenButton() && fullscreenSupported) {
+                    <button
+                        type="button"
+                        class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
+                        data-testid="modeling-editor-fullscreen"
+                        (click)="toggleFullscreen()"
+                        [attr.aria-label]="
+                            (fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText') | artemisTranslate
+                        "
+                        [title]="
+                            (fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText') | artemisTranslate
+                        "
+                    >
+                        <fa-icon [icon]="fullscreenActive() ? faExitFullscreen : faEnterFullscreen" />
+                        <span
+                            [jhiTranslate]="fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText'"
+                        ></span>
+                    </button>
+                }
             </div>
-            <section
-                class="modeling-editor__problem-statement-panel apollon-glass"
-                [id]="problemStatementPanelId"
-                [hidden]="!problemStatementVisible()"
-                role="region"
-                [attr.aria-labelledby]="problemStatementPanelId + '-trigger'"
-                [style.width.px]="problemStatementWidth()"
-                [style.height.px]="problemStatementHeight()"
-                [style.max-height.px]="problemStatementResizeConstraints().maxHeight"
-                jhiResizable
-                [resizableEdges]="{
-                    left: '.modeling-editor__problem-statement-resizer--left',
-                    bottom: '.modeling-editor__problem-statement-resizer--bottom',
-                }"
-                [resizableConstraints]="problemStatementResizeConstraints()"
-                [resizableEnabled]="problemStatementVisible()"
-                [resizableApplyInlineSize]="false"
-                (resizeMove)="resizeProblemStatement($event)"
+
+            <jhi-apollon-rail-disclosure
+                #editorProblemStatement
+                [label]="'artemisApp.modelingSubmission.problemStatement' | artemisTranslate"
+                [icon]="faProblemStatement"
+                testId="modeling-editor-problem-statement"
+                [(visible)]="problemStatementVisible"
+                [maxHeight]="problemStatementMaxHeight()"
+                [initialHeight]="480"
+                [hidden]="!fullscreenActive() || !problemStatement()?.trim()"
+                (resized)="scheduleChromePlacement()"
             >
-                <div class="modeling-editor__problem-statement-content scroll-container" tabindex="0">
-                    <div class="markdown-preview" [jhiMarkdown]="problemStatement() ?? ''"></div>
-                </div>
-                <div
-                    class="modeling-editor__problem-statement-resizer modeling-editor__problem-statement-resizer--left"
-                    [attr.aria-label]="'artemisApp.modelingSubmission.resizeProblemStatement' | artemisTranslate"
-                    [title]="'artemisApp.modelingSubmission.resizeProblemStatement' | artemisTranslate"
-                ></div>
-                <div
-                    class="modeling-editor__problem-statement-resizer modeling-editor__problem-statement-resizer--bottom"
-                    [attr.aria-label]="'artemisApp.modelingSubmission.resizeProblemStatement' | artemisTranslate"
-                    [title]="'artemisApp.modelingSubmission.resizeProblemStatement' | artemisTranslate"
-                ></div>
-            </section>
-        </aside>
+                <div class="markdown-preview" [jhiMarkdown]="problemStatement() ?? ''"></div>
+            </jhi-apollon-rail-disclosure>
 
-        <div #editorBottomCenter class="modeling-editor__bottom-center nopan nodrag nowheel" [class.modeling-editor__bottom-center--elevated]="bottomCenterElevated()">
-            @if (withExplanation()) {
-                <jhi-modeling-explanation-editor [(explanation)]="explanation" [readOnly]="readOnly()" />
-            }
-            <ng-content select="[modelingEditorBottomCenter]" />
-        </div>
+            <div #editorBottomCenter class="modeling-editor__bottom-center nopan nodrag nowheel" [class.modeling-editor__bottom-center--elevated]="bottomCenterElevated()">
+                @if (withExplanation()) {
+                    <jhi-modeling-explanation-editor [(explanation)]="explanation" [readOnly]="readOnly()" />
+                }
+                <ng-content select="[modelingEditorBottomCenter]" />
+            </div>
 
-        <div
-            #resizeContainer
-            [hidden]="readOnly()"
-            class="modeling-editor__canvas-shell"
-            [class.resizable]="resizeOptions()"
-            jhiResizable
-            [resizableEdges]="resizableEdges()"
-            [resizableConstraints]="{
-                minWidth: MODELING_EDITOR_MIN_WIDTH,
-                maxWidth: MODELING_EDITOR_MAX_WIDTH,
-                minHeight: MODELING_EDITOR_MIN_HEIGHT,
-                maxHeight: MODELING_EDITOR_MAX_HEIGHT,
-            }"
-        >
-            <div #editorContainer class="apollon-container artemis-apollon-theme"></div>
-            @if (resizeOptions()?.horizontalResize) {
-                <div class="draggable-right" [attr.aria-label]="'artemisApp.modelingSubmission.resizeEditor' | artemisTranslate">
-                    <fa-icon [icon]="faGripLinesVertical" />
-                </div>
-            }
-            @if (resizeOptions()?.verticalResize) {
-                <div class="draggable-bottom" [attr.aria-label]="'artemisApp.modelingSubmission.resizeEditor' | artemisTranslate">
-                    <fa-icon [icon]="faGripLines" />
-                </div>
-            }
+            <div
+                #resizeContainer
+                [hidden]="readOnly()"
+                class="modeling-editor__canvas-shell"
+                [class.resizable]="resizeOptions()"
+                jhiResizable
+                [resizableEdges]="resizableEdges()"
+                [resizableConstraints]="{
+                    minWidth: MODELING_EDITOR_MIN_WIDTH,
+                    maxWidth: MODELING_EDITOR_MAX_WIDTH,
+                    minHeight: MODELING_EDITOR_MIN_HEIGHT,
+                    maxHeight: MODELING_EDITOR_MAX_HEIGHT,
+                }"
+            >
+                <div #editorContainer class="apollon-container artemis-apollon-theme"></div>
+                @if (resizeOptions()?.horizontalResize) {
+                    <div class="draggable-right" [attr.aria-label]="'artemisApp.modelingSubmission.resizeEditor' | artemisTranslate">
+                        <fa-icon [icon]="faGripLinesVertical" />
+                    </div>
+                }
+                @if (resizeOptions()?.verticalResize) {
+                    <div class="draggable-bottom" [attr.aria-label]="'artemisApp.modelingSubmission.resizeEditor' | artemisTranslate">
+                        <fa-icon [icon]="faGripLines" />
+                    </div>
+                }
+            </div>
         </div>
-    </div>
+    }
     @if (readOnly()) {
-        <div class="d-flex align-items-center readonly-diagram scroll-container artemis-apollon-theme" [innerHtml]="readOnlySVG()"></div>
+        <div class="readonly-diagram artemis-apollon-theme" [innerHtml]="readOnlySVG()"></div>
     }
 
     @if (withExplanation() && readOnly()) {

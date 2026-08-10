@@ -102,7 +102,6 @@
     flex: 1;
     overflow: hidden;
 
-    > jhi-modeling-editor,
     > jhi-assessment-workspace {
         display: flex;
         width: 100%;
@@ -110,12 +109,9 @@
         min-width: 0;
         min-height: 0;
     }
-
-    > jhi-modeling-editor {
-        display: block;
-    }
 }
 
+.example-submission-editor-canvas,
 .example-submission-assessment-canvas {
     display: flex;
     width: 100%;
@@ -123,6 +119,7 @@
     min-width: 0;
     min-height: 0;
 
+    jhi-modeling-editor,
     jhi-modeling-assessment {
         display: block;
         width: 100%;
@@ -242,26 +239,6 @@
     min-width: 0;
     flex-direction: column;
     gap: 1rem;
-}
-
-.example-submission-hint {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.6rem;
-    border: 1px solid var(--tumaet-ui-border-color);
-    border-radius: #{artemis.$border-radius-xl};
-    background: var(--tumaet-ui-content-background);
-    color: var(--tumaet-ui-muted-color);
-    font-size: 0.8rem;
-
-    &__swatch {
-        width: 1rem;
-        height: 1rem;
-        border: 1px solid color-mix(in srgb, var(--tumaet-ui-primary-color) 70%, transparent);
-        border-radius: var(--tumaet-ui-radius-sm);
-        background: color-mix(in srgb, var(--tumaet-ui-primary-color) 35%, transparent);
-    }
 }
 
 @container (max-width: 48rem) {

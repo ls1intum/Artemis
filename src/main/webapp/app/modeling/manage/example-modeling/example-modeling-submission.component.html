@@ -62,50 +62,63 @@
                     </button>
                 }
                 @if (toComplete()) {
-                    <button type="button" tumUiButton size="small" (click)="checkAssessment()" [disabled]="!assessments() || !assessmentsAreValid()">
+                    <button type="button" tumUiButton size="small" (click)="checkAssessment()" [disabled]="!assessmentsAreValid()" id="submit-example-assessment">
                         <span jhiTranslate="artemisApp.exampleSubmission.submitAssessment"></span>
                     </button>
                 }
             </div>
         </header>
 
-        @if (highlightedElements().size > 0) {
-            <div class="example-submission-hint" role="status">
-                <span class="example-submission-hint__swatch" aria-hidden="true"></span>
-                <span jhiTranslate="artemisApp.exampleSubmission.modelElementHint"></span>
-            </div>
-        }
-
         <section class="example-submission-workspace">
             @if (!assessmentMode() && currentExercise.diagramType) {
-                <jhi-modeling-editor
-                    [umlModel]="umlModel()"
-                    [diagramType]="currentExercise.diagramType"
-                    [readOnly]="readOnly()"
-                    [explanation]="explanationText()"
-                    (explanationChange)="explanationChanged($event)"
-                    [withExplanation]="true"
-                    [tile]="true"
-                >
-                    <div modelingEditorTopLeft class="example-submission-mode-switch" role="group" [attr.aria-label]="'artemisApp.exampleSubmission.viewMode' | artemisTranslate">
-                        <button type="button" class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle" aria-pressed="true">
-                            <fa-icon [icon]="faShapes" />
-                            <span jhiTranslate="artemisApp.exampleSubmission.submissionMode"></span>
-                        </button>
-                        @if (exampleSubmission() && !isNewSubmission()) {
-                            <button
-                                type="button"
-                                class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle"
-                                aria-pressed="false"
-                                (click)="showAssessment()"
-                                id="show-modeling-example-assessment"
+                <jhi-assessment-workspace class="example-submission-edit-split" storageKey="example-modeling-submission-split" [showDetails]="false">
+                    <div assessmentWorkspaceCanvas class="example-submission-editor-canvas">
+                        <jhi-modeling-editor
+                            [umlModel]="umlModel()"
+                            [diagramType]="currentExercise.diagramType"
+                            [readOnly]="readOnly()"
+                            [explanation]="explanationText()"
+                            (explanationChange)="explanationChanged($event)"
+                            [withExplanation]="true"
+                            [problemStatement]="currentExercise.problemStatement"
+                            [tile]="true"
+                        >
+                            <div
+                                modelingEditorTopLeft
+                                class="example-submission-mode-switch"
+                                role="group"
+                                [attr.aria-label]="'artemisApp.exampleSubmission.viewMode' | artemisTranslate"
                             >
-                                <fa-icon [icon]="faClipboardCheck" />
-                                <span jhiTranslate="artemisApp.exampleSubmission.assessmentMode"></span>
-                            </button>
-                        }
+                                <button type="button" class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle" aria-pressed="true">
+                                    <fa-icon [icon]="faShapes" />
+                                    <span jhiTranslate="artemisApp.exampleSubmission.submissionMode"></span>
+                                </button>
+                                @if (exampleSubmission() && !isNewSubmission()) {
+                                    <button
+                                        type="button"
+                                        class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle"
+                                        aria-pressed="false"
+                                        (click)="showAssessment()"
+                                        id="show-modeling-example-assessment"
+                                    >
+                                        <fa-icon [icon]="faClipboardCheck" />
+                                        <span jhiTranslate="artemisApp.exampleSubmission.assessmentMode"></span>
+                                    </button>
+                                }
+                            </div>
+                        </jhi-modeling-editor>
                     </div>
-                </jhi-modeling-editor>
+
+                    <div assessmentWorkspaceInstructions>
+                        <jhi-assessment-instructions
+                            [readOnly]="readOnly()"
+                            [exercise]="currentExercise"
+                            [isAssessmentTraining]="toComplete()"
+                            [showAssessmentInstructions]="true"
+                            [embeddedInEditorChrome]="true"
+                        />
+                    </div>
+                </jhi-assessment-workspace>
             }
 
             @if (assessmentMode() && currentExercise.diagramType) {
@@ -170,7 +183,7 @@
                                         <span>{{ legendElement.text | artemisTranslate }}</span>
                                     </span>
                                 }
-                                @if (toComplete()) {
+                                @if (toComplete() || highlightedElements().size > 0) {
                                     <span class="assessment-legend__item">
                                         <span class="assessment-legend__highlight" aria-hidden="true"></span>
                                         <span jhiTranslate="artemisApp.exampleSubmission.legend.incorrectAssessment"></span>
@@ -186,7 +199,7 @@
                             [exercise]="currentExercise"
                             [isAssessmentTraining]="toComplete()"
                             [showAssessmentInstructions]="true"
-                            [showExerciseTitle]="false"
+                            [embeddedInEditorChrome]="true"
                         />
                     </div>
 
@@ -212,17 +225,17 @@
                                 ></textarea>
                             </section>
                         }
-                        @if (result()?.id) {
-                            <div class="example-submission-feedback">
-                                <jhi-unreferenced-feedback
-                                    [feedbacks]="unreferencedFeedback()"
-                                    [readOnly]="readOnly()"
-                                    [addReferenceIdForExampleSubmission]="true"
-                                    (feedbacksChange)="onUnReferencedFeedbackChanged($event)"
-                                    [resultId]="result().id!"
-                                />
-                            </div>
-                        }
+                        <!-- Not gated on an existing result: in the practice assessment no result is loaded at all (the
+                             instructor's one is the solution), and a not-yet-assessed example submission has none either —
+                             yet adding unreferenced feedback is exactly what both flows are for. -->
+                        <div class="example-submission-feedback">
+                            <jhi-unreferenced-feedback
+                                [feedbacks]="unreferencedFeedback()"
+                                [readOnly]="readOnly()"
+                                [addReferenceIdForExampleSubmission]="true"
+                                (feedbacksChange)="onUnReferencedFeedbackChanged($event)"
+                            />
+                        </div>
                     </div>
                 </jhi-assessment-workspace>
             }

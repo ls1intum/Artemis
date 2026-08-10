@@ -1,13 +1,44 @@
+.sgi-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Criteria sit in the same instructions column as the problem statement and the
+   example solution, so they follow that column's rhythm: one spacing step
+   between blocks, no rules, and the section's own text size. Bootstrap's
+   `.table` supplied all three differently — it drew a border under every row and
+   set its own cell padding — which is what made this panel read as a different
+   kind of content from its siblings. */
+.sgi-criterion + .sgi-criterion {
+    margin-top: 0.75rem;
+}
+
+.sgi-instruction + .sgi-instruction {
+    margin-top: 0.25rem;
+}
+
 .layout-table {
-    margin: 1px;
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    font-size: inherit;
+
+    td {
+        padding: 0.375rem 0.5rem;
+        border: 0;
+        vertical-align: top;
+    }
 
     .td-score,
     .td-usage-count {
         width: 4%;
+        white-space: nowrap;
     }
 
     .td-usage-count {
         position: relative;
-        white-space: nowrap;
+        text-align: end;
     }
 }

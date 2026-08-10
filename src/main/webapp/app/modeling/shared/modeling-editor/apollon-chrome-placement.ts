@@ -20,6 +20,9 @@ export interface BottomCenterPlacement {
     shift: number;
 }
 
+export const RAIL_DISCLOSURE_MIN_HEIGHT = 224;
+export const RAIL_DISCLOSURE_MAX_HEIGHT = 720;
+
 const MAXIMUM_SURFACE_WIDTH_REM = 44;
 const MINIMUM_INLINE_SURFACE_WIDTH_REM = 12;
 
@@ -98,4 +101,66 @@ function setPropertyIfChanged(element: HTMLElement, property: string, value: str
 
 function toPixelValue(value: number): string {
     return `${Math.round(value * 100) / 100}px`;
+}
+
+/**
+ * How tall a rail disclosure's panel may grow before it runs into the chrome
+ * parked below it (zoom, minimap, the bottom-center surface) or the canvas edge.
+ *
+ * Only the host can answer this: the disclosure knows nothing about what else
+ * the editor has placed on the canvas. Rectangles are viewport coordinates.
+ */
+export function calculateRailDisclosureMaxHeight(geometry: {
+    root: Pick<DOMRect, 'left' | 'right' | 'bottom'>;
+    trigger: Pick<DOMRect, 'right' | 'bottom'>;
+    panelWidth: number;
+    bottomChrome: Array<Pick<DOMRect, 'left' | 'right' | 'top' | 'width' | 'height'> | undefined>;
+    chromeGap: number;
+    chromeEdge: number;
+}): number {
+    const { root, trigger, panelWidth, bottomChrome, chromeGap, chromeEdge } = geometry;
+    const panelRight = trigger.right;
+    const panelLeft = Math.max(root.left, panelRight - panelWidth);
+    let boundary = root.bottom - chromeEdge;
+
+    for (const rect of bottomChrome) {
+        if (!rect) {
+            continue;
+        }
+        const intersectsHorizontally = panelLeft < rect.right && panelRight > rect.left;
+        if (rect.width > 0 && rect.height > 0 && rect.top > trigger.bottom && intersectsHorizontally) {
+            boundary = Math.min(boundary, rect.top - chromeGap);
+        }
+    }
+
+    return Math.max(RAIL_DISCLOSURE_MIN_HEIGHT, Math.min(RAIL_DISCLOSURE_MAX_HEIGHT, Math.floor(boundary - trigger.bottom)));
+}
+
+/**
+ * Reads the live geometry a rail disclosure sits in and returns the height cap
+ * for its panel. Returns the unconstrained maximum while the panel is closed —
+ * there is nothing to measure against, and a stale cap would clamp the panel the
+ * moment it opens.
+ */
+export function measureRailDisclosureMaxHeight(
+    apollonRoot: HTMLElement | null | undefined,
+    disclosure: HTMLElement | null | undefined,
+    visible: boolean,
+    bottomChrome: Array<HTMLElement | null | undefined>,
+): number {
+    const trigger = disclosure?.querySelector<HTMLElement>('.apollon-rail-disclosure__trigger-island');
+    const panel = disclosure?.querySelector<HTMLElement>('.apollon-rail-disclosure__panel');
+    if (!apollonRoot || !trigger || !panel || !visible) {
+        return RAIL_DISCLOSURE_MAX_HEIGHT;
+    }
+
+    const styles = getComputedStyle(apollonRoot);
+    return calculateRailDisclosureMaxHeight({
+        root: apollonRoot.getBoundingClientRect(),
+        trigger: trigger.getBoundingClientRect(),
+        panelWidth: panel.getBoundingClientRect().width,
+        bottomChrome: bottomChrome.map((element) => (element && !element.hidden ? element.getBoundingClientRect() : undefined)),
+        chromeGap: Number.parseFloat(styles.getPropertyValue('--apollon-chrome-gap')) || 0,
+        chromeEdge: Number.parseFloat(styles.getPropertyValue('--apollon-chrome-edge')) || 0,
+    });
 }

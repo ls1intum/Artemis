@@ -1,10 +1,11 @@
-import { Component, inject, model } from '@angular/core';
+import { Component, computed, inject, model } from '@angular/core';
 import { APOLLON_SHORTCUTS, type ApollonShortcutCombo, type ApollonShortcutId, shortcutKeyName } from '@tumaet/apollon';
 import { TumUiDialogComponent, TumUiTabComponent, TumUiTabListComponent, TumUiTabPanelComponent, TumUiTabPanelsComponent, TumUiTabsComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { OsDetectorService } from 'app/core/navbar/global-search/services/os-detector.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 
 type ShortcutGroup = 'editing' | 'selection' | 'view';
 
@@ -27,9 +28,20 @@ const SHORTCUT_GROUPS: Record<ApollonShortcutId, ShortcutGroup> = {
 };
 
 interface HelpWalkthrough {
-    readonly topic: 'createElement' | 'createRelationship' | 'updateElement' | 'moveElement';
-    readonly image: string;
+    readonly topic: 'createElement' | 'createRelationship' | 'updateElement' | 'moveElement' | 'resizeElement' | 'reconnectRelationship';
+    readonly imageName: string;
+    readonly width: number;
+    readonly height: number;
 }
+
+const WALKTHROUGHS: readonly HelpWalkthrough[] = [
+    { topic: 'createElement', imageName: 'create-element', width: 1120, height: 596 },
+    { topic: 'createRelationship', imageName: 'create-relationship', width: 1120, height: 480 },
+    { topic: 'updateElement', imageName: 'update-element', width: 1080, height: 1080 },
+    { topic: 'moveElement', imageName: 'move-element', width: 800, height: 560 },
+    { topic: 'resizeElement', imageName: 'resize-element', width: 800, height: 500 },
+    { topic: 'reconnectRelationship', imageName: 'reconnect-relationship', width: 1480, height: 680 },
+];
 
 @Component({
     selector: 'jhi-modeling-editor-help',
@@ -49,16 +61,18 @@ interface HelpWalkthrough {
 export class ModelingEditorHelpComponent {
     private readonly osDetector = inject(OsDetectorService);
     private readonly translateService = inject(TranslateService);
+    private readonly themeService = inject(ThemeService);
 
     visible = model(false);
 
-    protected readonly walkthroughs: readonly HelpWalkthrough[] = [
-        { topic: 'createElement', image: '/content/images/apollon-help-node-creation.png' },
-        { topic: 'createRelationship', image: '/content/images/apollon-help-edge-creation.png' },
-        { topic: 'updateElement', image: '/content/images/apollon-help-node-edit.png' },
-        { topic: 'moveElement', image: '/content/images/apollon-help-node-move.png' },
-    ];
-    protected readonly additionalTopics = ['select', 'resizeElement', 'reconnectRelationship', 'duplicate', 'deleteElement', 'undo'] as const;
+    protected readonly walkthroughs = computed(() => {
+        const theme = this.themeService.currentTheme() === Theme.DARK ? 'dark' : 'light';
+        return WALKTHROUGHS.map((walkthrough) => ({
+            ...walkthrough,
+            image: `/content/images/modeling-help/${walkthrough.imageName}-${theme}.png`,
+        }));
+    });
+    protected readonly additionalTopics = ['select', 'duplicate', 'deleteElement', 'undo'] as const;
     protected readonly shortcuts = APOLLON_SHORTCUTS;
     protected readonly actionKeyLabel = this.osDetector.actionKeyLabel;
     protected readonly shortcutLabelPrefix = 'artemisApp.modelingEditor.helpModal.shortcuts.actions.';

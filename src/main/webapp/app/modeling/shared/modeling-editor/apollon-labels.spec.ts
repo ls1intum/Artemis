@@ -86,6 +86,7 @@ describe('createApollonLabels', () => {
             ['colorPicker', ['COLOR_LABEL'], ['COLOR_LABEL']],
             ['stereotypeToggleLabel', ['STEREOTYPE_NAME'], ['STEREOTYPE_NAME']],
             ['stereotypeToggleTooltip', [false, 'TOOLTIP_NAME'], ['TOOLTIP_NAME']],
+            ['scrollLockHint', ['MODIFIER_CAP'], ['MODIFIER_CAP']],
         ] as const;
 
         for (const [key, defaultLabel] of Object.entries(DEFAULT_LABELS)) {

@@ -422,29 +422,27 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.selectedElementIds).toEqual(selectedIds);
     });
 
-    it('should shouldBeDisplayed return true if no selectedElementIds', () => {
+    it('should not mark any feedback while nothing is selected on the diagram', () => {
         createComponent();
 
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: '5' });
-        comp.selectedElementIds = [];
+        comp.onSelectedElementIdsChanged([]);
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.shouldBeDisplayed(feedback)).toBe(true);
-        comp.selectedElementIds = ['3'];
-        fixture.changeDetectorRef.detectChanges();
-        expect(comp.shouldBeDisplayed(feedback)).toBe(false);
+        expect(comp.isFeedbackForSelection(feedback)).toBe(false);
     });
 
-    it('should shouldBeDisplayed return true if feedback reference is in selectedElementIds', () => {
+    it('should mark only the feedback belonging to the selected elements', () => {
         createComponent();
 
         const id = 'referenceId';
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: id });
-        comp.selectedElementIds = [id];
+        comp.onSelectedElementIdsChanged([id]);
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.shouldBeDisplayed(feedback)).toBe(true);
-        comp.selectedElementIds = ['otherId'];
+        expect(comp.isFeedbackForSelection(feedback)).toBe(true);
+
+        comp.onSelectedElementIdsChanged(['otherId']);
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.shouldBeDisplayed(feedback)).toBe(false);
+        expect(comp.isFeedbackForSelection(feedback)).toBe(false);
     });
 
     it('should update submission with current values', () => {

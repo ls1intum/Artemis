@@ -270,17 +270,38 @@ export const evaluateTemplateStatus = (
 };
 
 /**
+ * A result does not necessarily belong to a participation. Example submissions (instructor-authored samples used for
+ * tutor training) own a submission and a result directly, with no participation anywhere in the object graph — neither
+ * as an explicit input nor via `result.submission.participation`. Results rendered from the exam summary or the
+ * course-overview sidebar may likewise arrive with the participation stripped server-side.
+ *
+ * Every helper below therefore takes `participation: Participation | undefined` and answers "nothing
+ * participation-specific is known" instead of throwing. Callers must not launder an absent participation through a
+ * non-null assertion.
+ */
+
+/**
+ * The submission a result should be judged against: the result's own submission when present (it is the potentially
+ * newer one, so `buildFailed` is up to date), otherwise the participation's latest submission.
+ *
+ * Undefined when the result carries no submission and there is no participation to fall back to.
+ */
+const getSubmissionUnderReview = (result: Result | undefined, participation: Participation | undefined): Submission | undefined => {
+    return result?.submission ?? (participation ? getLatestSubmission(participation) : undefined);
+};
+
+/**
  * Checks if only compilation was tested. This is the case, when a successful result is present with 0 of 0 passed tests
  * This could be because all test cases are only visible after the due date.
  */
-export const isOnlyCompilationTested = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus): boolean => {
+export const isOnlyCompilationTested = (result: Result | undefined, participation: Participation | undefined, templateStatus: ResultTemplateStatus): boolean => {
     const zeroTests = !result?.testCaseCount;
+    // Without a participation we cannot tell that this is a programming exercise, so compilation cannot be "the only thing tested".
     const isProgrammingExercise: boolean = participation?.exercise?.type === ExerciseType.PROGRAMMING;
     return (
         templateStatus !== ResultTemplateStatus.NO_RESULT &&
         templateStatus !== ResultTemplateStatus.IS_BUILDING &&
-        // prefer the potentially newer result.submission when available (so that buildFailed is up-to-date)
-        !isBuildFailed(result?.submission ?? getLatestSubmission(participation)) &&
+        !isBuildFailed(getSubmissionUnderReview(result, participation)) &&
         zeroTests &&
         isProgrammingExercise
     );
@@ -291,7 +312,7 @@ export const isOnlyCompilationTested = (result: Result | undefined, participatio
  *
  * @return {string} the css class
  */
-export const getTextColorClass = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus) => {
+export const getTextColorClass = (result: Result | undefined, participation: Participation | undefined, templateStatus: ResultTemplateStatus) => {
     if (!result) {
         return 'text-muted-color';
     }
@@ -341,7 +362,7 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
  * Get the icon type for the result icon as an array
  *
  */
-export const getResultIconClass = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus): IconProp => {
+export const getResultIconClass = (result: Result | undefined, participation: Participation | undefined, templateStatus: ResultTemplateStatus): IconProp => {
     if (!result) {
         return faQuestionCircle;
     }
@@ -390,32 +411,34 @@ export const getResultIconClass = (result: Result | undefined, participation: Pa
 /**
  * Returns true if the specified result is preliminary.
  * @param result the result.
- * @param participation the participation
+ * @param participation the participation, or undefined for a result that does not belong to one
  */
-export const resultIsPreliminary = (result: Result, participation: Participation) => {
+export const resultIsPreliminary = (result: Result, participation: Participation | undefined) => {
     const exerciseType = participation?.exercise?.type;
     if (exerciseType === ExerciseType.TEXT || exerciseType === ExerciseType.MODELING) {
         return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
-    } else return isProgrammingExerciseStudentParticipation(participation) && isResultPreliminary(result, participation, participation?.exercise);
+    }
+    // Preliminary is a property of an ongoing programming student participation; without one, nothing is preliminary.
+    return !!participation && isProgrammingExerciseStudentParticipation(participation) && isResultPreliminary(result, participation, participation.exercise);
 };
 
 /**
- * Returns true if the specified result is a student Participation
- * @param participation the participation
+ * Returns true if the given participation is a student participation (i.e. neither the template nor the solution
+ * participation of a programming exercise). A missing participation is not a student participation.
+ * @param participation the participation, or undefined for a result that does not belong to one
  */
-export const isStudentParticipation = (participation: Participation) => {
-    return Boolean(participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION);
+export const isStudentParticipation = (participation: Participation | undefined) => {
+    return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
 };
 
 /**
  * Returns true if the submission of the result is of type programming, is automatic, and
  * its build has failed.
  * @param result
- * @param participation
+ * @param participation the participation, or undefined for a result that does not belong to one
  */
-export const isBuildFailedAndResultIsAutomatic = (result: Result, participation: Participation) => {
-    const latestSubmission = result?.submission ?? getLatestSubmission(participation);
-    return isBuildFailed(latestSubmission) && !isManualResult(result);
+export const isBuildFailedAndResultIsAutomatic = (result: Result | undefined, participation: Participation | undefined): boolean => {
+    return isBuildFailed(getSubmissionUnderReview(result, participation)) && !isManualResult(result);
 };
 
 /**
@@ -423,9 +446,9 @@ export const isBuildFailedAndResultIsAutomatic = (result: Result, participation:
  * build.
  * @param submission the submission
  */
-export const isBuildFailed = (submission?: Submission) => {
+export const isBuildFailed = (submission?: Submission): boolean => {
     const isProgrammingSubmission = submission && submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING;
-    return isProgrammingSubmission && (submission as ProgrammingSubmission).buildFailed;
+    return !!isProgrammingSubmission && !!(submission as ProgrammingSubmission).buildFailed;
 };
 
 /**

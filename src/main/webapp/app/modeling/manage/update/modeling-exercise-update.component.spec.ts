@@ -32,7 +32,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
@@ -252,7 +251,6 @@ describe('ModelingExerciseUpdateComponent', () => {
                         FaIconComponent,
                         NgbTooltip,
                         ArtemisTranslatePipe,
-                        MockComponent(FormDateTimePickerComponent),
                         StubExerciseTitleChannelNamePrimengComponent,
                         MockComponent(TeamConfigFormGroupComponent),
                         MockComponent(IncludedInOverallScorePickerComponent),
@@ -422,6 +420,52 @@ describe('ModelingExerciseUpdateComponent', () => {
         expect(explanationEditor.nativeElement.hasAttribute('modelingEditorBottomCenter')).toBe(true);
         expect(fixture.nativeElement.querySelector('.modeling-markdown-explanation-editor__editor')).not.toBeNull();
         expect(explanationEditor.componentInstance.labelKey()).toBe('artemisApp.modelingExercise.exampleSolutionExplanation');
+    });
+
+    it('configures the example solution publication date in the grading timeline instead of next to the editor', async () => {
+        const modelingExercise = createModelingExercise(createCourse());
+        modelingExercise.exampleSolutionExplanation = 'Instructor context';
+        routeData$.next({ modelingExercise });
+        routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
+
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        // No standalone picker left in the solution section ...
+        expect(fixture.nativeElement.querySelector('[name="exampleSolutionPublicationDate"]')).toBeNull();
+        // ... the timeline owns the opt-in, and it is usable because the exercise has an example solution.
+        const toggle = fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline [data-testid="example-solution-publication-toggle"]') as HTMLInputElement;
+        expect(toggle).not.toBeNull();
+        expect(toggle.disabled).toBe(false);
+        expect(fixture.nativeElement.querySelectorAll('jhi-modeling-exercise-timeline .timeline-item-row')).toHaveLength(4);
+
+        toggle.click();
+        fixture.detectChanges();
+
+        // The publication date joins the other exercise dates as the last (and therefore latest) timeline step.
+        expect(fixture.nativeElement.querySelectorAll('jhi-modeling-exercise-timeline .timeline-item-row')).toHaveLength(5);
+        expect(fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline #datepicker-4')).not.toBeNull();
+    });
+
+    it('disables the publication opt-in and drops a leftover date while the exercise has no example solution', async () => {
+        const modelingExercise = createModelingExercise(createCourse());
+        modelingExercise.exampleSolutionPublicationDate = dayjs().add(7, 'day');
+        routeData$.next({ modelingExercise });
+        routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
+
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const toggle = fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline [data-testid="example-solution-publication-toggle"]') as HTMLInputElement;
+        expect(toggle.disabled).toBe(true);
+        expect(fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline [data-testid="example-solution-publication-hint"]')).not.toBeNull();
+        expect(comp.modelingExercise.exampleSolutionPublicationDate).toBeUndefined();
     });
 
     it('binds an existing Markdown example-solution explanation into the persistent surface', async () => {

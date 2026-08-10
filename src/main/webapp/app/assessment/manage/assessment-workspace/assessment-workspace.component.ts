@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, input, signal } from '@angular/core';
 import { CdkScrollable } from '@angular/cdk/scrolling';
+import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -14,7 +15,7 @@ const SPLIT_SUPPORT_AT = 560;
     selector: 'jhi-assessment-workspace',
     templateUrl: './assessment-workspace.component.html',
     styleUrls: ['./assessment-workspace.component.scss'],
-    imports: [CdkScrollable, FaIconComponent, SplitterModule, TranslateDirective],
+    imports: [CdkScrollable, FaIconComponent, NgTemplateOutlet, SplitterModule, TranslateDirective],
 })
 export class AssessmentWorkspaceComponent implements AfterViewInit, OnDestroy {
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -22,6 +23,7 @@ export class AssessmentWorkspaceComponent implements AfterViewInit, OnDestroy {
     private resizeObserver?: ResizeObserver;
 
     readonly detailsLabelKey = input('artemisApp.assessment.feedbackAndNotes');
+    readonly showDetails = input(true);
     readonly storageKey = input.required<string>();
 
     protected readonly sidebarStorageKey = computed(() => `${this.storageKey()}-support`);

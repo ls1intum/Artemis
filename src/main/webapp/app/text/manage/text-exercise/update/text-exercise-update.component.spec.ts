@@ -64,7 +64,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
@@ -245,7 +244,6 @@ describe('TextExercise Management Update Component', () => {
                         FaIconComponent,
                         NgbTooltip,
                         ArtemisTranslatePipe,
-                        MockComponent(FormDateTimePickerComponent),
                         StubExerciseTitleChannelNameComponent,
                         StubTeamConfigFormGroupComponent,
                         MockComponent(IncludedInOverallScorePickerComponent),

@@ -33,17 +33,41 @@ export class ExampleSubmissionAssessCommand {
     private onFailure(error: HttpErrorResponse) {
         const errorType = error.headers.get('x-artemisapp-error');
 
-        if (errorType === 'error.invalid_assessment') {
-            this.feedbackMarker.markAllFeedbackToCorrect();
-
-            // Mark all wrongly made feedbacks accordingly.
-            const correctionErrors = parseJson<{ errors: FeedbackCorrectionError[] }>(error['error']['title']).errors;
-            this.feedbackMarker.markWrongFeedback(correctionErrors);
-
-            const msg = correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
-            this.alertService.error(msg, { mistakeCount: correctionErrors.length });
-        } else {
+        if (errorType !== 'error.invalid_assessment') {
             onError(this.alertService, error);
+            return;
+        }
+
+        const correctionErrors = ExampleSubmissionAssessCommand.parseCorrectionErrors(error);
+        if (!correctionErrors) {
+            // The verdict arrived but its payload did not, so we cannot say which feedback was wrong. Reporting a
+            // generic failure beats throwing out of the subscriber, which used to abort the handler and leave the
+            // tutor with a silently dead "Submit assessment" button.
+            onError(this.alertService, error);
+            return;
+        }
+
+        this.feedbackMarker.markAllFeedbackToCorrect();
+        // Mark all wrongly made feedbacks accordingly.
+        this.feedbackMarker.markWrongFeedback(correctionErrors);
+
+        const msg = correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
+        this.alertService.error(msg, { mistakeCount: correctionErrors.length });
+    }
+
+    /**
+     * Reads the per-feedback correction errors the server packs into the problem detail's `title`.
+     * Returns `undefined` when that payload is missing or malformed.
+     */
+    private static parseCorrectionErrors(error: HttpErrorResponse): FeedbackCorrectionError[] | undefined {
+        const title: unknown = error.error?.title;
+        if (typeof title !== 'string') {
+            return undefined;
+        }
+        try {
+            return parseJson<{ errors?: FeedbackCorrectionError[] }>(title).errors;
+        } catch {
+            return undefined;
         }
     }
 }

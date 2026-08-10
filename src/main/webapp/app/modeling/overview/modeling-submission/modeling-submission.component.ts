@@ -1,9 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faCheck, faDownLeftAndUpRightToCenter, faExclamationTriangle, faTriangleExclamation, faUpRightAndDownLeftFromCenter, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/angular';
 import { type CollaborationUser, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon';
@@ -32,6 +34,8 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { ModelingAssessmentPanelDirective } from 'app/modeling/manage/assess/modeling-assessment-panel.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
@@ -48,7 +52,13 @@ import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assess
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
 import { ApollonModelData, countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+
+/**
+ * Ring colour for the element a hovered feedback entry refers to. Amber is the
+ * editor's own "this element is marked" accent (`--apollon-interactive-selection`),
+ * so the preview reads as part of the diagram rather than a second language.
+ */
+const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -65,7 +75,9 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
         RatingComponent,
         ComplaintsStudentViewComponent,
         MarkdownDirective,
-        UnifiedFeedbackComponent,
+        ArtemisTranslatePipe,
+        ModelingAssessmentPanelDirective,
+        NgTemplateOutlet,
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -81,6 +93,49 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
     readonly modelingEditor = viewChild(ModelingEditorComponent);
+    readonly modelingAssessment = viewChild(ModelingAssessmentComponent);
+    protected readonly faEnterFullscreen = faUpRightAndDownLeftFromCenter;
+    protected readonly faExitFullscreen = faDownLeftAndUpRightToCenter;
+
+    /**
+     * Feedback is shown in the editor's own language. Apollon marks an assessed
+     * element with a tone-coloured badge — check, cross, or alert — over the
+     * `--apollon-assessment-*` ramp, and the same element is listed here; two
+     * different vocabularies for one assessment made the list read as a foreign
+     * object bolted to the diagram.
+     */
+    protected feedbackTone(feedback: Feedback): 'positive' | 'negative' | 'zero' {
+        const credits = feedback.credits ?? 0;
+        if (credits > 0) {
+            return 'positive';
+        }
+        return credits < 0 ? 'negative' : 'zero';
+    }
+
+    protected feedbackToneIcon(feedback: Feedback): IconDefinition {
+        const tone = this.feedbackTone(feedback);
+        if (tone === 'positive') {
+            return faCheck;
+        }
+        return tone === 'negative' ? faXmark : faTriangleExclamation;
+    }
+
+    /** Signed, so a reader can tell a deduction from an award without the colour. */
+    protected feedbackPoints(feedback: Feedback): string {
+        const credits = feedback.credits ?? 0;
+        return credits > 0 ? `+${credits}` : `${credits}`;
+    }
+
+    /** The element the feedback is about, named the way the diagram names it. */
+    protected feedbackElementName(feedback: Feedback): string | undefined {
+        const names = this.assessmentsNames();
+        const referenceId = feedback.referenceId;
+        const assessment = names && referenceId ? names[referenceId] : undefined;
+        // Apollon names a member `Owner::+ field: Type`. Prefixing the raw element
+        // type on top of that reads like a debug dump; the name already says what
+        // the element is, so only the separator needs softening.
+        return assessment?.name ? assessment.name.replace('::', ' › ') : undefined;
+    }
 
     participationId = input<number>();
     inputExercise = input<ModelingExercise>();
@@ -106,6 +161,15 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly resultWithComplaint = signal<Result | undefined>(undefined);
 
     selectedElementIds: string[] = [];
+    /** Signal mirror of {@link selectedElementIds}, for template-driven emphasis. */
+    protected readonly selectedElementIdsSignal = signal<string[]>([]);
+    /** Element referenced by the feedback entry currently hovered or focused. */
+    protected readonly previewedFeedbackReferenceId = signal<string | undefined>(undefined);
+    /** Handed to the editor, which paints a ring around the previewed element. */
+    protected readonly highlightedFeedbackElements = computed(() => {
+        const referenceId = this.previewedFeedbackReferenceId();
+        return referenceId ? new Map([[referenceId, FEEDBACK_PREVIEW_HIGHLIGHT]]) : undefined;
+    });
 
     protected readonly apollonCollaborationUser = signal<CollaborationUser | undefined>(undefined);
 
@@ -145,6 +209,24 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     faExclamationTriangle = faExclamationTriangle;
 
     readonly isFeedbackView = signal(false);
+
+    /**
+     * Complaining is an action on a result, so it belongs beside the result — in
+     * the assessment card, not as a strip under the editor. Rendered below the
+     * canvas only in the live-editor branch, which has no card to hold it.
+     */
+    /**
+     * Whether the side panel has anything worth a rail. Feedback, the rating and
+     * the complaint actions all hang off a result, so with none of them the card
+     * would be an empty box announcing its own emptiness.
+     */
+    protected hasAssessmentToShow(): boolean {
+        return !!this.assessmentResult()?.feedbacks?.length || !!this.result();
+    }
+
+    protected showComplaintSection(): boolean {
+        return !!this.result() && !this.examMode() && !this.isFeedbackView();
+    }
 
     protected shouldShowLiveEditor(): boolean {
         return (
@@ -712,17 +794,43 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     onSelectedElementIdsChanged(selectedElementIds: string[]) {
         this.selectedElementIds = selectedElementIds;
+        this.selectedElementIdsSignal.set(selectedElementIds);
     }
 
-    shouldBeDisplayed(feedback: Feedback): boolean {
-        if (this.selectedElementIds.length === 0) {
-            return true;
-        }
-        if (!feedback.referenceId) {
-            return false;
-        }
+    /**
+     * Whether a feedback entry is about one of the elements currently selected on
+     * the diagram. Selecting an element used to HIDE every other entry, which left
+     * a student staring at a shortened list with nothing to say why; now it only
+     * marks the matching ones, so the rest of the assessment stays readable.
+     */
+    isFeedbackForSelection(feedback: Feedback): boolean {
+        const selected = this.selectedElementIdsSignal();
+        return selected.length > 0 && !!feedback.referenceId && selected.includes(feedback.referenceId);
+    }
 
-        return this.selectedElementIds.includes(feedback.referenceId);
+    /**
+     * Rings the element a feedback entry refers to while the reader is merely
+     * passing over that entry — a cheap preview, no canvas movement.
+     */
+    previewFeedbackTarget(feedback: Feedback): void {
+        this.previewedFeedbackReferenceId.set(feedback.referenceId);
+    }
+
+    clearFeedbackPreview(): void {
+        this.previewedFeedbackReferenceId.set(undefined);
+    }
+
+    /**
+     * Commits to an entry: the canvas selects that element, opens its feedback
+     * popover and pans to it. This is what makes the list navigable rather than
+     * merely readable — an entry is otherwise just text about a box the reader
+     * has to find by eye.
+     */
+    showFeedbackOnDiagram(feedback: Feedback): void {
+        if (!feedback.referenceId) {
+            return;
+        }
+        this.modelingAssessment()?.revealAssessment(feedback.referenceId);
     }
 
     canDeactivate(): boolean {

@@ -33,6 +33,17 @@ html.modeling-exercise-editor-scroll-snap {
     scroll-snap-type: block proximity;
 }
 
+html:fullscreen body:has(> .modeling-editor__frame--fullscreen) > [data-base-ui-portal] {
+    position: fixed;
+    z-index: $modeling-editor-fullscreen-z-index + 1;
+    inset: 0;
+    pointer-events: none;
+
+    > * {
+        pointer-events: auto;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     html.modeling-exercise-editor-scroll-snap {
         scroll-snap-type: none;
@@ -252,12 +263,6 @@ Generic styles
 // onto the existing input via plain CSS. `:not(:focus)` lets the focus ring win while editing.
 .invalid-date-input .p-datepicker-input:not(:focus) {
     border-color: var(--p-inputtext-invalid-border-color) !important;
-}
-
-// PrimeNG date picker: keep the overlay calendar at its natural width. With `appendTo="body"` PrimeNG
-// sets an inline `min-width` equal to the (full-width) input, which stretches the calendar far too wide.
-.jhi-date-time-picker-panel {
-    min-width: auto !important;
 }
 
 // PrimeNG date pickers render their own (rounded) invalid border via `[invalid]` / `.invalid-date-input`

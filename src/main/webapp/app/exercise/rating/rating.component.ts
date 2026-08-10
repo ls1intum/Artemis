@@ -24,6 +24,14 @@ export class RatingComponent {
     readonly result = input<Result>();
     participation = input.required<StudentParticipation>();
     readonly isOwnerOfParticipation = input<boolean>();
+    /** Star size in px; hosts embedded in dense chrome ask for a smaller one. */
+    readonly starSize = input('24');
+    /**
+     * `stacked` is the page-level callout every exercise type has always shown.
+     * `inline` puts the prompt and the stars on one row for hosts with a column
+     * to spare — a side panel, an editor's chrome — and wraps when there is not.
+     */
+    readonly layout = input<'stacked' | 'inline'>('stacked');
 
     constructor() {
         // Replaces both ngOnInit and ngOnChanges: load the rating on the initial binding and reload it whenever the

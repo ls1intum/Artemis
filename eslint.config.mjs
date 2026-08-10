@@ -606,6 +606,7 @@ export default tseslint.config(
             'src/main/webapp/app/localci/build-agent-details/**/*.html',
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
+            'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
             'packages/tum-ui/src/lib/**/*.html',
         ],
         languageOptions: {

@@ -15,10 +15,10 @@
                     <p jhiTranslate="artemisApp.modelingEditor.helpModal.intro"></p>
                 </div>
                 <ol class="modeling-editor-help__walkthrough">
-                    @for (walkthrough of walkthroughs; track walkthrough.topic) {
+                    @for (walkthrough of walkthroughs(); track walkthrough.topic) {
                         <li class="modeling-editor-help__step">
-                            <div class="modeling-editor-help__image-crop" aria-hidden="true">
-                                <img [src]="walkthrough.image" alt="" loading="lazy" />
+                            <div class="modeling-editor-help__image" aria-hidden="true">
+                                <img [src]="walkthrough.image" [attr.width]="walkthrough.width" [attr.height]="walkthrough.height" alt="" loading="lazy" />
                             </div>
                             <div class="modeling-editor-help__step-copy">
                                 <span class="modeling-editor-help__step-number" aria-hidden="true">{{ $index + 1 }}</span>

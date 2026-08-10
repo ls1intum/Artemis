@@ -98,7 +98,6 @@ import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warni
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
@@ -256,7 +255,6 @@ describe('FileUploadExerciseUpdateComponent', () => {
                         FaIconComponent,
                         NgbTooltip,
                         ArtemisTranslatePipe,
-                        MockComponent(FormDateTimePickerComponent),
                         StubExerciseTitleChannelNameComponent,
                         MockComponent(TeamConfigFormGroupComponent),
                         MockComponent(IncludedInOverallScorePickerComponent),

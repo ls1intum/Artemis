@@ -20,7 +20,14 @@
     tum-ui-select {
         display: block;
         width: auto;
-        min-width: 11rem;
+
+        /* The listbox overlay is pinned to the trigger's width
+           (matchOriginWidth), so the trigger has to be wide enough for the
+           LONGEST option, not just the selected one — otherwise entries like
+           "Sequential Function Chart" (25 chars) render truncated in the
+           dropdown. The container query below relaxes this when there is no
+           room for it. */
+        min-width: 15rem;
     }
 }
 

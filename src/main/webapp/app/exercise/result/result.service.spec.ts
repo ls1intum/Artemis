@@ -362,6 +362,20 @@ describe('ResultService', () => {
             expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         });
 
+        it('builds the string for a result without a participation and does not report it to Sentry', () => {
+            // Regression guard: an example submission's result belongs to no participation. That used to fall into the
+            // "either the result or exercise was undefined" branch, which rendered an empty score on the
+            // example-submission list and reported a Sentry event on every change-detection pass.
+            const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
+            captureExceptionSpy.mockClear();
+
+            expect(resultService.getResultString(modelingResult, modelingExercise, undefined, true)).toBe('artemisApp.result.resultString.short');
+            expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42 });
+            // The fixture exercise carries no course, which legitimately reports a rounding-settings exception; only
+            // the "undefined result or exercise" report must be absent.
+            expect(captureExceptionSpy).not.toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
+        });
+
         it('reports to Sentry if result or exercise is undefined', () => {
             // Re-mock to get reference because direct import doesn't work here
             const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');

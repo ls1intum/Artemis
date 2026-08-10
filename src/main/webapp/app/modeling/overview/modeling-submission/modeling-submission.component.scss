@@ -12,7 +12,7 @@
 .modeling-submission {
     display: flex;
     min-height: 0;
-    flex: 1 1 0;
+    flex: 1 1 auto;
     flex-direction: column;
 }
 
@@ -32,7 +32,7 @@ jhi-resizeable-container {
     display: flex;
     height: auto;
     min-height: 0;
-    flex: 1 1 0;
+    flex: 1 1 auto;
 }
 
 jhi-modeling-editor {
@@ -48,7 +48,7 @@ jhi-modeling-assessment {
     display: flex;
     width: 100%;
     height: 100%;
-    min-height: 0;
+    min-height: 24rem;
     overflow: clip;
     border-radius: var(--modeling-submission-editor-corner-radius);
     background: transparent;
@@ -60,57 +60,52 @@ jhi-modeling-assessment {
 
 jhi-fullscreen {
     display: block;
-    height: 100%;
     min-height: 0;
+    flex: 1 1 auto;
 }
 
+/* Anything the page puts under the canvas takes its height FROM the canvas.
+   Growing the page instead would push the editor out of the frame, and an
+   Apollon canvas you have to scroll to reach is unusable. */
+.modeling-submission-content {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+}
+
+.submission-container {
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.modeling-submission-complaint {
+    max-height: 40%;
+    flex: 0 0 auto;
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+/* The assessed view is the diagram: one child, filling the frame. The feedback
+   used to sit beside it in a second grid track, which is what left a dead band
+   under the canvas once it moved into the editor's own chrome. */
 .modeling-submission-assessment-layout {
-    display: grid;
+    display: flex;
     width: 100%;
     height: 100%;
     min-width: 0;
     min-height: 0;
-    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
-    gap: 0.75rem;
-
-    &__canvas,
-    &__feedback {
-        min-width: 0;
-        min-height: 0;
-    }
 
     &__canvas {
         display: flex;
+        min-width: 0;
+
+        /* The floor is what makes a content-sized host viable at all — the exam
+           summary renders this inside a collapsible card that has no height to
+           give, and a diagram surface has no intrinsic height to fall back on. */
+        min-height: 24rem;
+        flex: 1 1 auto;
         overflow: hidden;
-    }
-
-    &__feedback {
-        padding: 0.75rem;
-        overflow: auto;
-        border: 1px solid var(--tumaet-ui-border-color);
-        border-radius: var(--modeling-submission-editor-corner-radius);
-        background: var(--tumaet-ui-content-background);
-        overscroll-behavior: contain;
-
-        h4 {
-            margin-block: 0 0.75rem;
-            color: var(--tumaet-ui-text-color);
-            font-size: 1rem;
-        }
-    }
-}
-
-.feedback-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-top: 1rem;
-}
-
-@container (max-width: 48rem) {
-    .modeling-submission-assessment-layout {
-        grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
-        grid-template-columns: minmax(0, 1fr);
     }
 }
 
@@ -121,4 +116,188 @@ jhi-fullscreen {
         height: auto !important;
         break-inside: avoid !important;
     }
+}
+
+/* Feedback panel — the editor's own assessment language, not a second one.
+   A row carries the same tone badge Apollon paints on the element (check /
+   cross / alert over the `--apollon-assessment-*` ramp), the element's name as
+   the diagram names it, then the comment. Nothing else: the badge already says
+   whether it was right, so no word repeats it and no bespoke icon competes with
+   the canvas. */
+.modeling-submission-feedback {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    color: var(--apollon-foreground, var(--bs-body-color));
+    font-size: 0.875rem;
+}
+
+.modeling-submission-feedback__empty {
+    margin: 0;
+    color: var(--apollon-secondary, var(--bs-secondary-color));
+}
+
+.feedback-group__title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.375rem;
+    margin: 0 0 0.375rem;
+    color: var(--apollon-secondary, var(--bs-secondary-color));
+    font-size: 0.8125rem;
+    font-weight: 600;
+
+    &:not(:first-child) {
+        margin-top: 0.875rem;
+    }
+}
+
+.feedback-group__count {
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+}
+
+.feedback-list {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    flex-direction: column;
+    gap: 0.25rem;
+    list-style: none;
+}
+
+.feedback-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.5rem;
+    row-gap: 0.125rem;
+    padding: 0.4375rem 0.5rem;
+    border: 1px solid var(--apollon-border, var(--bs-border-color));
+    border-radius: var(--apollon-radius-md, 6px);
+    background-color: var(--apollon-surface, var(--bs-body-bg));
+
+    /* Colour only — see the raster note in the editor's stylesheet. */
+    transition: border-color 120ms ease;
+
+    &[role='button'] {
+        cursor: pointer;
+
+        &:hover {
+            border-color: var(--apollon-interactive-selection, #f39c12);
+        }
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--apollon-primary);
+        outline-offset: 2px;
+    }
+}
+
+/* Marked when its element is selected on the diagram — the same amber the
+   canvas uses for the element itself. */
+.feedback-row--selected {
+    border-color: var(--apollon-interactive-selection, #f39c12);
+    box-shadow: 0 0 0 1px var(--apollon-interactive-selection, #f39c12);
+}
+
+/* The score badge, matching Apollon's own on-canvas badge and popover pill. */
+.feedback-row__score {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.0625rem 0.375rem;
+    border-radius: var(--apollon-radius-sm, 4px);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.4;
+    white-space: nowrap;
+
+    &[data-tone='positive'] {
+        color: var(--apollon-assessment-positive-text);
+        background-color: var(--apollon-assessment-positive-bg);
+    }
+
+    &[data-tone='negative'] {
+        color: var(--apollon-assessment-negative-text);
+        background-color: var(--apollon-assessment-negative-bg);
+    }
+
+    &[data-tone='zero'] {
+        color: var(--apollon-assessment-zero-text);
+        background-color: var(--apollon-assessment-zero-bg);
+    }
+}
+
+.feedback-row__name {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--apollon-secondary, var(--bs-secondary-color));
+    font-size: 0.8125rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.feedback-row__text {
+    grid-column: 1 / -1;
+    margin: 0;
+}
+
+/* Complaining is an action on the result, so it lives with the result. */
+.modeling-submission-feedback__complaint {
+    margin-top: 0.75rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid var(--apollon-border, var(--bs-border-color));
+
+    /* Two equal actions across the card rather than two shrink-wrapped buttons
+       stranded on the left. */
+    ::ng-deep .btn {
+        width: 100%;
+        margin: 0;
+        font-size: 0.8125rem;
+    }
+
+    ::ng-deep .complaints-student-view__actions {
+        display: grid;
+        margin-top: 0.5rem !important;
+        gap: 0.375rem;
+        grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    }
+
+    /* Every column in here is a Bootstrap `col-md-*`, and those answer to the
+       VIEWPORT rather than to the box they sit in — so on a wide screen the
+       complaint form splits its title, its body and its submit button into
+       half-width columns inside a 26rem panel. In this card a row is one column. */
+    ::ng-deep .row > * {
+        width: 100%;
+        max-width: 100%;
+        flex: 0 0 100%;
+    }
+
+    /* The form is page-scale markup; in chrome it needs chrome-scale type. */
+    ::ng-deep h3 {
+        margin-bottom: 0.375rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+    }
+
+    ::ng-deep textarea {
+        width: 100%;
+        font-size: 0.8125rem;
+    }
+
+    ::ng-deep p {
+        margin-bottom: 0.5rem;
+        font-size: 0.8125rem;
+    }
+}
+
+/* The rating keeps its own shared markup and its `inline` layout; the card only
+   contributes the rule that separates it from the feedback above. */
+.modeling-submission-feedback__rating {
+    display: block;
+    margin-top: 0.75rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid var(--apollon-border, var(--bs-border-color));
+    color: var(--apollon-secondary, var(--bs-secondary-color));
 }

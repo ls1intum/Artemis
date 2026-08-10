@@ -164,18 +164,33 @@ describe('Example Submission Service', () => {
             expect(result).toBe(3);
         });
 
-        it('should return element count for modeling submission', () => {
+        // Apollon has persisted three different model shapes. Counting `elements.length + relationships.length`
+        // only ever worked for the v4 array form; the keyed v3 form and the v5 nodes/edges form both produced
+        // `undefined + undefined === NaN`, which the example-submission list rendered verbatim.
+        it.each([
+            {
+                shape: 'v3 keyed records',
+                model: { version: '3.0.0', elements: { a: { id: 'a' }, b: { id: 'b' } }, relationships: { c: { id: 'c' } } },
+            },
+            {
+                shape: 'v4 arrays under elements/relationships',
+                model: { elements: [{ id: 'a' }, { id: 'b' }], relationships: [{ id: 'c' }] },
+            },
+            {
+                shape: 'v5 arrays under nodes/edges',
+                model: { version: '5.0.0', nodes: [{ id: 'a' }, { id: 'b' }], edges: [{ id: 'c' }] },
+            },
+        ])('should return element count for a modeling submission stored as $shape', ({ model }) => {
             const modelingExercise = { type: ExerciseType.MODELING } as Exercise;
-            const modelingSubmission = {
-                model: JSON.stringify({
-                    elements: [{ id: 1 }, { id: 2 }],
-                    relationships: [{ id: 3 }],
-                }),
-            } as ModelingSubmission;
+            const modelingSubmission = { model: JSON.stringify(model) } as ModelingSubmission;
 
-            const result = service.getSubmissionSize(modelingSubmission, modelingExercise);
+            expect(service.getSubmissionSize(modelingSubmission, modelingExercise)).toBe(3);
+        });
 
-            expect(result).toBe(3);
+        it('should return 0 for a modeling submission without a model', () => {
+            const modelingExercise = { type: ExerciseType.MODELING } as Exercise;
+
+            expect(service.getSubmissionSize({} as ModelingSubmission, modelingExercise)).toBe(0);
         });
 
         it('should return 0 when submission is undefined', () => {

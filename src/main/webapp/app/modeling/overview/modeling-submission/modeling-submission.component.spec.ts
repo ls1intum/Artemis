@@ -593,29 +593,61 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.selectedElementIds).toEqual(selectedIds);
     });
 
-    it('should shouldBeDisplayed return true if no selectedElementIds', () => {
+    it('should not mark any feedback while nothing is selected on the diagram', () => {
         createModelingSubmissionComponent();
 
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: '5' });
-        comp.selectedElementIds = [];
+        comp.onSelectedElementIdsChanged([]);
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.shouldBeDisplayed(feedback)).toBe(true);
-        comp.selectedElementIds = ['3'];
-        fixture.changeDetectorRef.detectChanges();
-        expect(comp.shouldBeDisplayed(feedback)).toBe(false);
+        expect(comp.isFeedbackForSelection(feedback)).toBe(false);
     });
 
-    it('should shouldBeDisplayed return true if feedback reference is in selectedElementIds', () => {
+    it('should mark only the feedback belonging to the selected elements', () => {
         createModelingSubmissionComponent();
 
         const id = 'referenceId';
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: id });
-        comp.selectedElementIds = [id];
+        comp.onSelectedElementIdsChanged([id]);
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.shouldBeDisplayed(feedback)).toBe(true);
-        comp.selectedElementIds = ['otherId'];
+        expect(comp.isFeedbackForSelection(feedback)).toBe(true);
+
+        comp.onSelectedElementIdsChanged(['otherId']);
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.shouldBeDisplayed(feedback)).toBe(false);
+        expect(comp.isFeedbackForSelection(feedback)).toBe(false);
+    });
+
+    it("should highlight a feedback entry's element on the diagram while it is previewed", () => {
+        createModelingSubmissionComponent();
+
+        const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: 'element-7' });
+        expect(comp['highlightedFeedbackElements']()).toBeUndefined();
+
+        comp.previewFeedbackTarget(feedback);
+        expect(comp['highlightedFeedbackElements']()?.has('element-7')).toBe(true);
+
+        comp.clearFeedbackPreview();
+        expect(comp['highlightedFeedbackElements']()).toBeUndefined();
+    });
+
+    it("should send the diagram to a feedback entry's element when it is chosen", () => {
+        createModelingSubmissionComponent();
+
+        const revealAssessment = vi.fn();
+        vi.spyOn(comp, 'modelingAssessment').mockReturnValue({ revealAssessment } as unknown as ModelingAssessmentComponent);
+
+        comp.showFeedbackOnDiagram(<Feedback>(<unknown>{ referenceId: 'element-7' }));
+        expect(revealAssessment).toHaveBeenCalledWith('element-7');
+
+        // General feedback points at no element, so the canvas must not move.
+        comp.showFeedbackOnDiagram(<Feedback>(<unknown>{ detailText: 'general remark' }));
+        expect(revealAssessment).toHaveBeenCalledOnce();
+    });
+
+    it('should not highlight anything for feedback that references no element', () => {
+        createModelingSubmissionComponent();
+
+        comp.previewFeedbackTarget(<Feedback>(<unknown>{ detailText: 'general remark' }));
+        expect(comp['highlightedFeedbackElements']()).toBeUndefined();
     });
 
     it('should update submission with current values', () => {

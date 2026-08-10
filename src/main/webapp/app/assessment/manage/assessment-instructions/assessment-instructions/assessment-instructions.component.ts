@@ -39,7 +39,13 @@ export class AssessmentInstructionsComponent {
 
     readonly isAssessmentTraining = input(false);
     readonly showAssessmentInstructions = input(true);
-    readonly showExerciseTitle = input(true);
+    /**
+     * Set by a host that renders this panel inside the Apollon editor's chrome,
+     * where the surrounding card already provides the frame and the title. Every
+     * standalone use — the assessment dashboard, the tutor editors, example
+     * submissions — keeps the framed block with its own heading.
+     */
+    readonly embeddedInEditorChrome = input(false);
     readonly readOnly = input<boolean>();
     // For programming exercises we hand over the participation or use the template participation
     readonly programmingParticipation = input<ProgrammingExerciseStudentParticipation>();

@@ -1,44 +1,26 @@
-import { Component, model, output } from '@angular/core';
-import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { Component, input, model, output } from '@angular/core';
+import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseUpdateTimelineComponent } from 'app/exercise/exercise-timeline/exercise-update-timeline/exercise-update-timeline.component';
 import { Dayjs } from 'dayjs/esm';
 
+/**
+ * Modeling flavour of {@link ExerciseUpdateTimelineComponent}. Kept as a named component so the update form (and
+ * the e2e page objects) address the timeline of an exercise type through a stable selector.
+ */
 @Component({
     selector: 'jhi-modeling-exercise-timeline',
-    imports: [ExerciseTimelineComponent],
+    imports: [ExerciseUpdateTimelineComponent],
     templateUrl: './modeling-exercise-timeline.component.html',
 })
 export class ModelingExerciseTimelineComponent {
-    releaseDate = model<Dayjs | undefined>();
-    startDate = model<Dayjs | undefined>();
-    dueDate = model<Dayjs | undefined>();
-    assessmentDueDate = model<Dayjs | undefined>();
-    timelineItems = this.buildTimelineItems();
-    timelineStatus = output<ExerciseTimelineStatus>();
+    readonly hasExampleSolution = input(false);
+    readonly isImport = input(false);
 
-    private buildTimelineItems(): TimelineItem[] {
-        const dueDateItem: TimelineItem = {
-            kind: 'optional',
-            labelStringKey: 'artemisApp.exercise.dueDate',
-            date: this.dueDate,
-        };
-        return [
-            {
-                kind: 'optional',
-                labelStringKey: 'artemisApp.exercise.releaseDate',
-                date: this.releaseDate,
-            },
-            {
-                kind: 'optional',
-                labelStringKey: 'artemisApp.exercise.startDate',
-                date: this.startDate,
-            },
-            dueDateItem,
-            {
-                kind: 'optional',
-                labelStringKey: 'artemisApp.exercise.assessmentDueDate',
-                date: this.assessmentDueDate,
-                otherRequiredItem: dueDateItem,
-            },
-        ];
-    }
+    readonly releaseDate = model<Dayjs | undefined>();
+    readonly startDate = model<Dayjs | undefined>();
+    readonly dueDate = model<Dayjs | undefined>();
+    readonly assessmentDueDate = model<Dayjs | undefined>();
+    readonly exampleSolutionPublicationDate = model<Dayjs | undefined>();
+
+    readonly timelineStatus = output<ExerciseTimelineStatus>();
 }

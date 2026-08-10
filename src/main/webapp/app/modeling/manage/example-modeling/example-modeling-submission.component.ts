@@ -7,7 +7,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
-import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError, FeedbackCorrectionStatus, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -92,10 +92,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     readonly umlModel = signal<UMLModel>(undefined!);
     readonly explanationText = signal<string>(undefined!);
     feedbackChanged = false;
-    readonly assessmentsAreValid = signal(false);
     readonly result = signal<Result>(undefined!);
-    readonly totalScore = signal<number>(undefined!);
-    invalidError?: string;
     readonly exercise = signal<ModelingExercise>(undefined!);
     readonly course = signal<Course | undefined>(undefined);
     readonly readOnly = signal<boolean>(undefined!);
@@ -142,6 +139,34 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     unreferencedFeedback = signal<Feedback[]>([]);
 
     assessments = computed(() => [...this.referencedFeedback(), ...this.unreferencedFeedback()]);
+
+    /**
+     * Score and validity of the assessment currently on screen.
+     *
+     * Derived, not pushed: the practice assessment (`?toComplete=true`) deliberately never loads a result — the
+     * tutor must not see the instructor's solution — so the load path had nothing to trigger an imperative
+     * recomputation with, and the flags kept their pessimistic initial values. That left "Submit assessment"
+     * permanently disabled for a tutor whose assessment consists only of unreferenced feedback. A `computed`
+     * cannot fall out of sync with {@link assessments} in the first place.
+     */
+    private readonly scoreState = computed<{ valid: boolean; totalScore?: number; error?: string }>(() => {
+        const feedbacks = this.assessments();
+        if (feedbacks.length === 0) {
+            return { valid: true, totalScore: 0 };
+        }
+
+        const credits = feedbacks.map((feedback) => feedback.credits);
+        if (!credits.every((credit) => credit != undefined && !isNaN(credit))) {
+            return { valid: false, error: 'The score field must be a number and can not be empty!' };
+        }
+
+        const creditsTotalScore = credits.reduce((sum, credit) => sum! + credit!, 0)!;
+        return { valid: true, totalScore: getPositiveAndCappedTotalScore(creditsTotalScore, getTotalMaxPoints(this.exercise())) };
+    });
+
+    readonly assessmentsAreValid = computed(() => this.scoreState().valid);
+    readonly totalScore = computed(() => this.scoreState().totalScore);
+    readonly invalidError = computed(() => this.scoreState().error);
 
     highlightedElements = signal<Map<string, string>>(new Map<string, string>());
     referencedExampleFeedback: Feedback[] = [];
@@ -198,16 +223,15 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
                     this.assessmentExplanation.set(exampleSubmission.assessmentExplanation!);
 
-                    if (this.toComplete()) {
-                        this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id!).subscribe((result) => {
+                    this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id!).subscribe((result) => {
+                        if (this.toComplete()) {
+                            // Practice assessment: the instructor's assessment is the solution the tutor is graded against,
+                            // so it is kept aside for the "missed feedback" hint and never shown as the tutor's own.
                             this.updateExampleAssessmentSolution(result);
-                        });
-                    } else {
-                        this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id!).subscribe((result) => {
+                        } else {
                             this.updateAssessment(result);
-                            this.checkScoreBoundaries();
-                        });
-                    }
+                        }
+                    });
                 }),
             );
 
@@ -315,13 +339,11 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     onReferencedFeedbackChanged(referencedFeedback: Feedback[]) {
         this.referencedFeedback.set(referencedFeedback);
         this.feedbackChanged = true;
-        this.checkScoreBoundaries();
     }
 
     onUnReferencedFeedbackChanged(unreferencedFeedback: Feedback[]) {
         this.unreferencedFeedback.set(unreferencedFeedback);
         this.feedbackChanged = true;
-        this.checkScoreBoundaries();
     }
 
     showAssessment() {
@@ -349,16 +371,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     public saveExampleAssessment(): void {
-        this.checkScoreBoundaries();
         if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
-        if (this.assessmentExplanation() !== this.exampleSubmission().assessmentExplanation && this.assessments()) {
+        if (this.assessmentExplanation() !== this.exampleSubmission().assessmentExplanation) {
             this.updateAssessmentExplanationAndExampleAssessment();
-        } else if (this.assessmentExplanation() !== this.exampleSubmission().assessmentExplanation) {
-            this.updateAssessmentExplanation();
-        } else if (this.assessments()) {
+        } else {
             this.updateExampleAssessment();
         }
     }
@@ -386,15 +405,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             });
     }
 
-    private updateAssessmentExplanation() {
-        this.exampleSubmission().assessmentExplanation = this.assessmentExplanation();
-        this.exampleSubmissionService.update(this.exampleSubmission(), this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            const exampleSubmission = exampleSubmissionResponse.body!;
-            this.exampleSubmission.set(exampleSubmission);
-            this.assessmentExplanation.set(exampleSubmission.assessmentExplanation!);
-        });
-    }
-
     private updateExampleAssessment() {
         this.modelingAssessmentService.saveExampleAssessment(this.assessments(), this.exampleSubmissionId).subscribe({
             next: (result: Result) => {
@@ -405,27 +415,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
             },
         });
-    }
-
-    public checkScoreBoundaries() {
-        if (this.assessments().length === 0) {
-            this.totalScore.set(0);
-            this.assessmentsAreValid.set(true);
-            return;
-        }
-
-        const credits = this.assessments().map((feedback) => feedback.credits);
-        if (!credits.every((credit) => credit != undefined && !isNaN(credit))) {
-            this.invalidError = 'The score field must be a number and can not be empty!';
-            this.assessmentsAreValid.set(false);
-            return;
-        }
-
-        const maxPoints = getTotalMaxPoints(this.exercise());
-        const creditsTotalScore = credits.reduce((a, b) => a! + b!, 0)!;
-        this.totalScore.set(getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints));
-        this.assessmentsAreValid.set(true);
-        this.invalidError = undefined;
     }
 
     async back() {
@@ -451,7 +440,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     checkAssessment() {
-        this.checkScoreBoundaries();
         if (!this.assessmentsAreValid()) {
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
@@ -468,23 +456,58 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     markAllFeedbackToCorrect() {
-        this.referencedFeedback.update((list) => list.map((feedback) => ({ ...feedback, correctionStatus: 'CORRECT' })));
-        this.unreferencedFeedback.update((list) => list.map((feedback) => ({ ...feedback, correctionStatus: 'CORRECT' })));
+        this.applyCorrectionStatus(() => 'CORRECT');
+        // Also refreshes the canvas (see applyCorrectionStatus) and clears highlights left over from an earlier,
+        // wrong attempt — without this a tutor who fixes their assessment keeps seeing the old "you missed this" tint.
+        this.highlightMissedFeedback();
     }
 
     markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {
         const byReference = new Map(correctionErrors.map((err) => [err.reference, err]));
-
-        const referenced = this.referencedFeedback();
-        referenced.forEach((feedback) => {
-            const err = byReference.get(feedback.reference!);
-            if (err) {
-                feedback.correctionStatus = err.type;
-            }
-        });
-        this.referencedFeedback.set(referenced);
+        // Unreferenced feedback carries a generated reference too (see `addReferenceIdForExampleSubmission`), so the
+        // server's correction errors address both kinds and both have to be marked.
+        this.applyCorrectionStatus((feedback) => byReference.get(feedback.reference!)?.type);
 
         this.highlightMissedFeedback();
+    }
+
+    /**
+     * Applies the server's verdict to the tutor's own feedback. Both signals are re-set with a fresh array, because
+     * setting a signal to the identical reference does not notify.
+     *
+     * The two kinds of feedback need opposite treatment, dictated by who renders them:
+     * <ul>
+     *   <li>referenced feedback is drawn onto the canvas by {@link ModelingAssessmentComponent}, from the very
+     *       instances it received through `feedbackChanged` — so it is updated in place; handing out copies would
+     *       leave the canvas holding the pre-grading objects and no marker would ever appear;</li>
+     *   <li>unreferenced feedback is rendered by one `jhi-unreferenced-feedback-detail` per item, with the feedback as
+     *       that component's input — so it has to be replaced, otherwise the input binding never changes and the card
+     *       keeps showing no verdict.</li>
+     * </ul>
+     * The caller additionally refreshes {@link highlightedElements}, which is what makes the canvas repaint.
+     */
+    private applyCorrectionStatus(statusFor: (feedback: Feedback) => FeedbackCorrectionStatus | undefined) {
+        this.referencedFeedback.update((feedbacks) => {
+            for (const feedback of feedbacks) {
+                const status = statusFor(feedback);
+                if (status) {
+                    feedback.correctionStatus = status;
+                }
+            }
+            return [...feedbacks];
+        });
+
+        this.unreferencedFeedback.update((feedbacks) =>
+            feedbacks.map((feedback) => {
+                const status = statusFor(feedback);
+                if (!status) {
+                    return feedback;
+                }
+                const marked = deepClone(feedback);
+                marked.correctionStatus = status;
+                return marked;
+            }),
+        );
     }
 
     highlightMissedFeedback() {

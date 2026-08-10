@@ -1,11 +1,6 @@
 @mixin component-overrides {
     --artemis-apollon-chrome-border-width: 1px;
 
-    // Apollon currently reuses its grid color for the interaction-blocking overlay.
-    .scroll-overlay {
-        background-color: var(--apollon-scroll-overlay);
-    }
-
     .artemis-apollon-chrome-action {
         width: auto;
         min-width: 0;

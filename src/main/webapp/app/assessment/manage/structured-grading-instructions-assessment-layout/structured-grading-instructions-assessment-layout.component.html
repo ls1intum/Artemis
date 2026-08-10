@@ -1,5 +1,5 @@
 @if (criteria()) {
-    <div class="mb-2">
+    <div class="sgi-actions">
         <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="expandAll()">
             <fa-icon [icon]="faExpand" /> <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
         </button>
@@ -15,18 +15,18 @@
     </div>
 }
 @for (criterion of criteria(); track criterion; let criterionIndex = $index) {
-    <div>
+    <div class="sgi-criterion">
         <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
             @for (instruction of criterion!.structuredGradingInstructions; track instruction; let instructionIndex = $index) {
                 <div
-                    class="rounded"
+                    class="sgi-instruction rounded"
                     draggable="{{ allowDrop() }}"
                     (dragstart)="disableDrag()"
                     (dragstart)="drag($event, instruction)"
                     id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
                     [style.background-color]="setInstrColour(instruction)"
                 >
-                    <table class="table layout-table">
+                    <table class="layout-table">
                         <tbody>
                             <tr>
                                 <td [innerHTML]="setScore(instruction.credits)" class="td-score"></td>
@@ -46,6 +46,5 @@
                 </div>
             }
         </jhi-expandable-section>
-        <br />
     </div>
 }

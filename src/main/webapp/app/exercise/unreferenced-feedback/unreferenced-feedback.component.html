@@ -14,7 +14,6 @@
                 <div class="unreferenced-feedback__item">
                     <jhi-unreferenced-feedback-detail
                         [feedback]="feedback"
-                        [resultId]="resultId()"
                         (onFeedbackChange)="updateFeedback($event)"
                         (onFeedbackDelete)="deleteFeedback(feedback)"
                         [readOnly]="readOnly()"
@@ -27,7 +26,6 @@
                 <div class="unreferenced-feedback__item">
                     <jhi-unreferenced-feedback-detail
                         [feedback]="suggestion"
-                        [resultId]="resultId()"
                         [isSuggestion]="true"
                         [readOnly]="true"
                         (onAcceptSuggestion)="acceptSuggestion($event)"

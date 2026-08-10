@@ -21,7 +21,6 @@
             "moreInfo": "Beschwerde einreichen",
             "complaintNotAllowedTooltip": "Beschwerde aktuell nicht möglich: maximale Anzahl an Beschwerden ist erreicht oder die Einsichtsperiode ist vorbei.",
             "responseExists": "Antwort auf deine Beschwerde ",
-            "hint": "Scrolle nach unten, um die Beschwerde zu prüfen",
             "accepted": "Angenommen",
             "acceptedLong": "Beschwerde wurde angenommen",
             "rejected": "Abgelehnt",
@@ -76,7 +75,6 @@
             "responseExists": "Antwort auf deine Feedbackanfrage",
             "notAllowedTooltip": "Die Anfrage von weiterem Feedback ist aktuell nicht möglich, da die Bewertung älter als eine Woche ist",
             "accepted": "Beantwortet",
-            "hint": "Scrolle nach unten, um die Feedbackanfrage zu prüfen",
             "list": {
                 "title": "Liste der Feedbackanfragen",
                 "showAnsweredRequests": "Beantwortete Feedbackanfragen anzeigen",

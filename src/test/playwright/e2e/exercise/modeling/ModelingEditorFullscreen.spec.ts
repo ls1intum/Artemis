@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, type Locator } from '@playwright/test';
 
 import { instructor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
@@ -6,6 +6,49 @@ import { SEED_COURSES } from '../../../support/seedData';
 import { dismissPasskeyReminderIfPresent } from '../../../support/dismissPasskeyReminder';
 
 const course = { id: SEED_COURSES.exerciseManagement.id } as any;
+
+const expectReadOnlyDiagramToFit = async (editor: Locator) => {
+    await editor.scrollIntoViewIfNeeded();
+    await expect(editor.locator('.modeling-editor__frame')).toHaveCount(0);
+    const svg = editor.locator('.readonly-diagram > svg');
+    await expect(svg).toBeVisible();
+    const geometry = await svg.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        const viewBox = element.viewBox.baseVal;
+        return {
+            renderedRatio: bounds.width / bounds.height,
+            sourceRatio: viewBox.width / viewBox.height,
+            height: bounds.height,
+            maxHeight: Math.min(window.innerHeight * 0.7, 800),
+        };
+    });
+    expect(Math.abs(geometry.renderedRatio - geometry.sourceRatio)).toBeLessThan(0.02);
+    expect(geometry.height).toBeLessThanOrEqual(geometry.maxHeight + 1);
+
+    const tallGeometry = await svg.evaluate((element) => {
+        const original = {
+            width: element.getAttribute('width'),
+            height: element.getAttribute('height'),
+            viewBox: element.getAttribute('viewBox'),
+        };
+        element.setAttribute('width', '400');
+        element.setAttribute('height', '1600');
+        element.setAttribute('viewBox', '0 0 400 1600');
+        const bounds = element.getBoundingClientRect();
+        const containerWidth = element.parentElement!.getBoundingClientRect().width;
+        for (const [name, value] of Object.entries(original)) {
+            if (value === null) {
+                element.removeAttribute(name);
+            } else {
+                element.setAttribute(name, value);
+            }
+        }
+        return { ratio: bounds.width / bounds.height, height: bounds.height, maxHeight: Math.min(window.innerHeight * 0.7, 800), width: bounds.width, containerWidth };
+    });
+    expect(Math.abs(tallGeometry.ratio - 0.25)).toBeLessThan(0.02);
+    expect(tallGeometry.height).toBeLessThanOrEqual(tallGeometry.maxHeight + 1);
+    expect(tallGeometry.width).toBeLessThan(tallGeometry.containerWidth);
+};
 
 test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
     test.use({ viewport: { width: 1440, height: 1000 } });
@@ -21,6 +64,7 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(diagramTypeSelect).toContainText('Class Diagram');
         await diagramTypeSelect.scrollIntoViewIfNeeded();
         await diagramTypeSelect.click();
+        await expect(diagramTypeSelect).toHaveAttribute('aria-expanded', 'true');
         await expect(diagramTypeSelect).toBeFocused();
         await page.getByRole('option', { name: 'Activity Diagram' }).click();
         await expect(diagramTypeSelect).toContainText('Activity Diagram');
@@ -75,12 +119,12 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
             expect(gap).toBe('6px');
             expect(labeledControlStyle).toEqual(zoomControlStyle);
         }
-        await expect(page.locator('.modeling-editor__problem-statement')).toBeHidden();
+        await expect(page.locator('jhi-apollon-rail-disclosure')).toBeHidden();
 
         const problemStatementEditor = page.locator('#field_problemStatement .monaco-editor');
         await problemStatementEditor.click();
         await page.keyboard.insertText('## Design task\n\nModel a library with books and authors.');
-        await expect(page.locator('.modeling-editor__problem-statement-panel')).toContainText('Design task');
+        await expect(page.locator('.apollon-rail-disclosure__panel')).toContainText('Design task');
 
         const bottomCenter = page.locator('.modeling-exercise-example-explanation');
         const palette = page.locator('[data-apollon-control="apollon:palette"]');
@@ -238,6 +282,53 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         expect(Math.abs(bottomInset(frameBefore!, minimapBefore!) - bottomInset(frameAfter!, minimapAfter!))).toBeLessThanOrEqual(1);
     });
 
+    test('keeps the example solution publication picker compact', async ({ login, page }) => {
+        await login(instructor, `/course-management/${course.id}/modeling-exercises/new`);
+
+        // The date lives in the grading timeline behind an opt-in, the way programming
+        // exercises have always presented it. A brand-new exercise has no example
+        // solution yet, so publishing one is meaningless: the opt-in is disabled and
+        // says why, rather than silently vanishing.
+        const toggle = page.getByTestId('example-solution-publication-toggle');
+        await toggle.scrollIntoViewIfNeeded();
+        await expect(toggle).toBeDisabled();
+        await expect(page.getByTestId('example-solution-publication-hint')).toBeVisible();
+        const publicationRow = page.locator('.timeline-item-row', { hasText: 'Example Solution Publication Date' });
+        await expect(publicationRow).toHaveCount(0);
+
+        // Give the exercise an example solution. The explanation counts as solution
+        // content just as a drawn diagram does, and typing it does not depend on
+        // canvas pointer mechanics.
+        const explanation = page.locator('.modeling-exercise-example-explanation .monaco-editor');
+        await explanation.click();
+        await page.keyboard.insertText('The solution models a library.');
+
+        await expect(toggle).toBeEnabled();
+        await expect(page.getByTestId('example-solution-publication-hint')).toHaveCount(0);
+        await toggle.check();
+        await expect(publicationRow).toHaveCount(1);
+
+        // The picker stays a compact control rather than stretching across the form.
+        const trigger = publicationRow.locator('p-datepicker');
+        await trigger.scrollIntoViewIfNeeded();
+        await expect(trigger).not.toHaveClass(/p-datepicker-fluid/);
+        const triggerBox = await trigger.boundingBox();
+        expect(triggerBox).not.toBeNull();
+        expect(triggerBox!.width).toBeLessThanOrEqual(384);
+
+        await publicationRow.locator('.p-datepicker-input-icon-container').click();
+        const panel = page.locator('.p-datepicker-panel');
+        await expect(panel).toBeVisible();
+        const panelBox = await panel.boundingBox();
+        expect(panelBox).not.toBeNull();
+        expect(panelBox!.width).toBeLessThanOrEqual(384);
+
+        // Turning it back off removes the row, so no stale date can be saved.
+        await page.keyboard.press('Escape');
+        await toggle.uncheck();
+        await expect(publicationRow).toHaveCount(0);
+    });
+
     test('keeps the fullscreen problem statement stable while toggling and resizing it', async ({ login, page }) => {
         await login(instructor, `/course-management/${course.id}/modeling-exercises/new`);
 
@@ -247,7 +338,7 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         const problemStatementEditor = page.locator('#field_problemStatement .monaco-editor');
         await problemStatementEditor.click();
         await page.keyboard.insertText('## Design task\n\nModel a library with books and authors.');
-        await expect(page.locator('.modeling-editor__problem-statement-panel')).toContainText('Design task');
+        await expect(page.locator('.apollon-rail-disclosure__panel')).toContainText('Design task');
 
         const bottomCenter = page.locator('.modeling-exercise-example-explanation');
         const chromeGap = await page
@@ -262,14 +353,16 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(fullscreenFrame).toBeVisible();
         await expect(fullscreenFrame.locator('[data-apollon-region="top-left"] #field_diagramType')).toBeVisible();
         await expect(fullscreenFrame.locator('.modeling-markdown-explanation-editor__editor')).toBeVisible();
-        await expect(fullscreenFrame.locator('.scroll-overlay')).toHaveCount(0);
+        // The overlay root stays mounted so its listeners can find the editor;
+        // fullscreen releases the lock, so the hint must never be shown.
+        await expect(fullscreenFrame.locator('.scroll-overlay--visible')).toHaveCount(0);
 
-        const problemStatementIsland = fullscreenFrame.locator('[data-apollon-region="right-rail"] .modeling-editor__problem-statement');
-        const problemStatementPanel = problemStatementIsland.locator('.modeling-editor__problem-statement-panel');
+        const problemStatementIsland = fullscreenFrame.locator('[data-apollon-region="right-rail"] jhi-apollon-rail-disclosure');
+        const problemStatementPanel = problemStatementIsland.locator('.apollon-rail-disclosure__panel');
         const problemStatementButton = problemStatementIsland.getByTestId('modeling-editor-problem-statement');
-        const problemStatementTriggerIsland = problemStatementIsland.locator('.modeling-editor__problem-statement-trigger-island');
-        const horizontalProblemStatementResizer = problemStatementIsland.locator('.modeling-editor__problem-statement-resizer--left');
-        const verticalProblemStatementResizer = problemStatementIsland.locator('.modeling-editor__problem-statement-resizer--bottom');
+        const problemStatementTriggerIsland = problemStatementIsland.locator('.apollon-rail-disclosure__trigger-island');
+        const horizontalProblemStatementResizer = problemStatementIsland.locator('.apollon-rail-disclosure__resizer--left');
+        const verticalProblemStatementResizer = problemStatementIsland.locator('.apollon-rail-disclosure__resizer--bottom');
         await expect(problemStatementIsland).toBeVisible();
         await expect(problemStatementButton).toBeVisible();
         await expect(problemStatementButton).toHaveClass(/artemis-apollon-chrome-action/);
@@ -315,28 +408,51 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         expect(Math.abs(disclosureBoxBefore!.y - disclosureBoxAfter!.y)).toBeLessThanOrEqual(1);
         expect(Math.abs(panelBoxAfter!.y - (triggerIslandBoxAfter!.y + triggerIslandBoxAfter!.height - 2))).toBeLessThanOrEqual(1);
         expect(panelBoxAfter!.y).toBeGreaterThan(triggerIslandBoxAfter!.y);
-        const [problemStatementBorderWidths, explanationBorderWidth, explanationHandleBorderRadius] = await Promise.all([
+        const paletteSurface = fullscreenFrame.locator('.apollon-palette');
+        const explanationSurface = bottomCenter.locator('.modeling-explanation-surface__surface');
+        const [problemStatementChrome, paletteChrome, explanationChrome, expandedTriggerChrome, explanationHandleBorderRadius] = await Promise.all([
             problemStatementPanel.evaluate((panel) => {
                 const style = getComputedStyle(panel);
-                return [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth];
+                return {
+                    borderWidths: [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth],
+                    borderColor: style.borderTopColor,
+                    boxShadow: style.boxShadow,
+                };
             }),
-            bottomCenter.locator('.modeling-explanation-surface__body-shape').evaluate((shape) => getComputedStyle(shape).strokeWidth),
+            paletteSurface.evaluate((surface) => {
+                const style = getComputedStyle(surface);
+                return { borderWidth: style.borderTopWidth, borderColor: style.borderTopColor, boxShadow: style.boxShadow };
+            }),
+            explanationSurface.evaluate((surface) => {
+                const style = getComputedStyle(surface);
+                return { borderWidth: style.borderTopWidth, borderColor: style.borderTopColor, boxShadow: style.boxShadow };
+            }),
+            problemStatementTriggerIsland.evaluate((trigger) => {
+                const style = getComputedStyle(trigger);
+                return { borderWidth: style.borderTopWidth, borderColor: style.borderTopColor, boxShadow: style.boxShadow };
+            }),
             bottomCenter.locator('.modeling-explanation-surface__resizer').evaluate((handle) => getComputedStyle(handle, '::after').borderRadius),
         ]);
-        expect(problemStatementBorderWidths).toEqual(['1px', '1px', '1px', '1px']);
-        expect(explanationBorderWidth).toBe(problemStatementBorderWidths[0]);
+        expect(problemStatementChrome.borderWidths).toEqual(['1px', '1px', '1px', '1px']);
+        expect(problemStatementChrome.borderColor).toBe(paletteChrome.borderColor);
+        expect(problemStatementChrome.boxShadow).toBe(paletteChrome.boxShadow);
+        expect(explanationChrome).toEqual(paletteChrome);
+        expect(explanationChrome.borderWidth).toBe(problemStatementChrome.borderWidths[0]);
+        expect(expandedTriggerChrome.borderWidth).toBe(paletteChrome.borderWidth);
+        expect(expandedTriggerChrome.borderColor).toBe(paletteChrome.borderColor);
+        expect(expandedTriggerChrome.boxShadow).not.toBe('none');
         expect(Math.abs(explanationBoxBeforeStatement!.x - explanationBoxAfterStatement!.x)).toBeLessThanOrEqual(1);
         expect(Math.abs(explanationBoxBeforeStatement!.y - explanationBoxAfterStatement!.y)).toBeLessThanOrEqual(1);
         await expect(horizontalProblemStatementResizer).toBeVisible();
         await expect(horizontalProblemStatementResizer).toHaveAttribute('role', 'separator');
         await expect(horizontalProblemStatementResizer).toHaveAttribute('aria-orientation', 'vertical');
-        await expect(horizontalProblemStatementResizer).toHaveAttribute('aria-label', 'Resize problem statement');
+        await expect(horizontalProblemStatementResizer).toHaveAttribute('aria-label', 'Resize Problem Statement');
         await expect(horizontalProblemStatementResizer).toHaveAttribute('aria-valuemin', '288');
         await expect(horizontalProblemStatementResizer).toHaveAttribute('aria-valuemax', '704');
         await expect(verticalProblemStatementResizer).toBeVisible();
         await expect(verticalProblemStatementResizer).toHaveAttribute('role', 'separator');
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-orientation', 'horizontal');
-        await expect(verticalProblemStatementResizer).toHaveAttribute('aria-label', 'Resize problem statement');
+        await expect(verticalProblemStatementResizer).toHaveAttribute('aria-label', 'Resize Problem Statement');
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-valuemin', '224');
         const horizontalProblemStatementHandleStyle = await horizontalProblemStatementResizer.evaluate((handle) => ({
             cursor: getComputedStyle(handle).cursor,
@@ -364,8 +480,8 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         });
         const handlePlacement = await problemStatementPanel.evaluate((panel) => {
             const panelBounds = panel.getBoundingClientRect();
-            const leftHandle = panel.querySelector<HTMLElement>('.modeling-editor__problem-statement-resizer--left')!;
-            const bottomHandle = panel.querySelector<HTMLElement>('.modeling-editor__problem-statement-resizer--bottom')!;
+            const leftHandle = panel.querySelector<HTMLElement>('.apollon-rail-disclosure__resizer--left')!;
+            const bottomHandle = panel.querySelector<HTMLElement>('.apollon-rail-disclosure__resizer--bottom')!;
             const leftBounds = leftHandle.getBoundingClientRect();
             const bottomBounds = bottomHandle.getBoundingClientRect();
             return {
@@ -467,7 +583,7 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await page.setViewportSize({ width: 1440, height: 1000 });
         await fullscreenButton.click();
         await expect.poll(() => page.evaluate(() => document.fullscreenElement === document.documentElement)).toBe(true);
-        await expect(fullscreenFrame.locator('[data-apollon-region="right-rail"] .modeling-editor__problem-statement')).toBeVisible();
+        await expect(fullscreenFrame.locator('[data-apollon-region="right-rail"] jhi-apollon-rail-disclosure')).toBeVisible();
     });
 
     test('keeps document-portaled interactions visible in fullscreen and restores the page on exit', async ({ login, page }) => {
@@ -479,7 +595,9 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
 
         const fullscreenFrame = page.locator('.modeling-editor__frame--fullscreen');
         await expect(fullscreenFrame).toBeVisible();
-        await expect(fullscreenFrame.locator('.scroll-overlay')).toHaveCount(0);
+        // The overlay root stays mounted so its listeners can find the editor;
+        // fullscreen releases the lock, so the hint must never be shown.
+        await expect(fullscreenFrame.locator('.scroll-overlay--visible')).toHaveCount(0);
 
         const paletteClass = page.getByRole('button', { name: 'Add element: Class' });
         const canvas = fullscreenFrame.locator('.react-flow');
@@ -513,16 +631,65 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
 
         const popover = page.locator('.apollon-popover');
         await expect(popover).toBeVisible();
+        const expectPopoverAboveEditor = async () =>
+            expect
+                .poll(() =>
+                    popover.evaluate((element) => {
+                        const bounds = element.getBoundingClientRect();
+                        const hit = document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+                        return hit === element || (hit !== null && element.contains(hit));
+                    }),
+                )
+                .toBe(true);
+        await expectPopoverAboveEditor();
         const className = popover.getByRole('textbox', { name: 'Name', exact: true }).first();
         await className.fill('Fullscreen class');
         await expect(className).toHaveValue('Fullscreen class');
+        await page.keyboard.press('Escape');
+        await expect(popover).toBeHidden();
+
+        const secondNodeTarget = { x: canvasBox!.x + canvasBox!.width * 0.75, y: canvasBox!.y + canvasBox!.height * 0.5 };
+        await page.mouse.move(paletteBox!.x + paletteBox!.width / 2, paletteBox!.y + paletteBox!.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(secondNodeTarget.x, secondNodeTarget.y, { steps: 15 });
+        await page.mouse.up();
+
+        const nodes = fullscreenFrame.locator('.react-flow__node');
+        await expect(nodes).toHaveCount(2);
+        const sourceNode = nodes.first();
+        const targetNode = nodes.nth(1);
+        await sourceNode.hover();
+        const sourceHandle = await sourceNode.locator('.apollon-arc-handle--right').nth(1).boundingBox();
+        const targetHandle = await targetNode.locator('.apollon-arc-handle--left').nth(1).boundingBox();
+        expect(sourceHandle).not.toBeNull();
+        expect(targetHandle).not.toBeNull();
+        await page.mouse.move(sourceHandle!.x + sourceHandle!.width / 2, sourceHandle!.y + sourceHandle!.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(targetHandle!.x + targetHandle!.width / 2, targetHandle!.y + targetHandle!.height / 2, { steps: 20 });
+        await page.mouse.up();
+
+        const edge = fullscreenFrame.locator('.react-flow__edge').first();
+        await expect(edge).toBeVisible();
+        await edge.dispatchEvent('click');
+        await page.getByRole('button', { name: 'Edit edge' }).click();
+        await expect(popover).toBeVisible();
+        await expectPopoverAboveEditor();
+        await page.keyboard.press('Escape');
 
         await page.getByRole('button', { name: 'Help' }).click();
         const helpDialog = page.getByRole('dialog');
         await expect(helpDialog).toBeVisible();
         await expect(helpDialog.getByRole('button', { name: 'Close' })).toHaveCount(1);
         await expect(helpDialog.getByRole('tab', { name: 'Walkthrough' })).toBeVisible();
-        await expect(helpDialog.locator('img[src*="apollon-help-"]').first()).toBeVisible();
+        const walkthroughImages = helpDialog.locator('.modeling-editor-help__image img');
+        await expect(walkthroughImages).toHaveCount(6);
+        await expect(walkthroughImages.first()).toHaveAttribute('src', /modeling-help\/create-element-light\.png$/);
+        await expect(walkthroughImages.first()).toBeVisible();
+        const lightImageSources = await walkthroughImages.evaluateAll((images) => images.map((image) => image.getAttribute('src')!));
+        const imageResponses = await Promise.all(
+            [...lightImageSources, ...lightImageSources.map((source) => source.replace('-light.png', '-dark.png'))].map((source) => page.request.get(source)),
+        );
+        expect(imageResponses.every((response) => response.ok())).toBe(true);
         await helpDialog.getByRole('tab', { name: 'Keyboard shortcuts' }).click();
         await expect(helpDialog.getByText('Zoom to selection')).toBeVisible();
 
@@ -536,6 +703,16 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await login(instructor, `/course-management/${course.id}/modeling-exercises/8/example-submissions/1`);
 
         await dismissPasskeyReminderIfPresent(page);
+
+        const editWorkspace = page.locator('.example-submission-edit-split');
+        await expect(editWorkspace.getByRole('heading', { name: 'Instructions' })).toBeVisible();
+        const editEditor = editWorkspace.locator('jhi-modeling-editor');
+        await editEditor.getByTestId('modeling-editor-fullscreen').click();
+        await expect.poll(() => page.evaluate(() => document.fullscreenElement === document.documentElement)).toBe(true);
+        await expect(page.locator('.modeling-editor__frame--fullscreen').getByTestId('modeling-editor-problem-statement')).toHaveAttribute('aria-expanded', 'true');
+        await expect(page.locator('.modeling-editor__frame--fullscreen .apollon-rail-disclosure__panel')).toBeVisible();
+        await page.getByRole('button', { name: 'Exit Fullscreen' }).click();
+        await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBeNull();
 
         const readAndConfirmButton = page.getByRole('button', { name: 'Read and Confirm' });
         await readAndConfirmButton.click();
@@ -565,6 +742,7 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(assessment.locator('.example-assessment-rationale')).toHaveCount(0);
         await expect(workspace.getByRole('heading', { name: 'Instructions' })).toBeVisible();
         await expect(workspace.getByRole('heading', { name: 'Feedback', exact: true })).toBeVisible();
+        await expectReadOnlyDiagramToFit(workspace.locator('[assessmentWorkspaceInstructions] jhi-modeling-editor'));
         await expect
             .poll(() =>
                 page.evaluate(() => ({
@@ -594,5 +772,49 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await page.setViewportSize({ width: 1200, height: 900 });
         await expect(rationale).toBeVisible();
         await expectSeparated();
+    });
+
+    test('opens assessment feedback for relationships', async ({ login, page }) => {
+        await login(instructor, `/course-management/${course.id}/modeling-exercises/8/example-submissions/1`);
+        await dismissPasskeyReminderIfPresent(page);
+
+        await page.getByRole('button', { name: 'Read and Confirm' }).click();
+        await page.getByRole('button', { name: 'Define assessment' }).click();
+
+        const assessment = page.locator('jhi-modeling-assessment');
+        const openRelationshipFeedback = async () => {
+            const edgeHitTarget = assessment.locator('.react-flow__edge .edge-overlay').first();
+            await expect(edgeHitTarget).toBeAttached();
+            const edgeCenter = await edgeHitTarget.evaluate((element) => {
+                const path = element as SVGPathElement;
+                const point = path.getPointAtLength(path.getTotalLength() / 2).matrixTransform(path.getScreenCTM()!);
+                return { x: point.x, y: point.y };
+            });
+            await page.mouse.dblclick(edgeCenter.x, edgeCenter.y);
+            const popover = page.locator('.apollon-popover');
+            await expect(popover).toBeVisible();
+            await expect(popover.getByRole('spinbutton', { name: 'Points' })).toBeEditable();
+            await expect(popover.getByRole('textbox', { name: 'Feedback' })).toBeEditable();
+        };
+
+        const node = assessment.locator('.react-flow__node').first();
+        await node.dblclick();
+        await expect(page.locator('.apollon-popover')).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(page.locator('.apollon-popover')).toBeHidden();
+
+        await openRelationshipFeedback();
+    });
+
+    test('fits the read-only example solution to the management detail viewport', async ({ login, page }) => {
+        await login(instructor, `/course-management/${course.id}/modeling-exercises/8`);
+        await dismissPasskeyReminderIfPresent(page);
+
+        await expectReadOnlyDiagramToFit(
+            page
+                .locator('jhi-modeling-editor')
+                .filter({ has: page.locator('.readonly-diagram') })
+                .first(),
+        );
     });
 });

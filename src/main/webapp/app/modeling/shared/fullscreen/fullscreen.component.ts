@@ -18,7 +18,8 @@ export class FullscreenComponent {
 
     readonly mode = input<'compact' | 'extended'>('extended');
     readonly showButton = input(true);
-    protected readonly fullscreenActive = signal(isFullScreen());
+    /** Public so a host can render its own chrome-integrated control. */
+    readonly fullscreenActive = signal(isFullScreen());
 
     protected readonly faCompress = faCompress;
 

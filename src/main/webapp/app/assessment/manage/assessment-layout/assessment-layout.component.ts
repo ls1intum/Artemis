@@ -6,7 +6,6 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { AssessmentHeaderComponent } from '../assessment-header/assessment-header.component';
-import { AssessmentComplaintAlertComponent } from '../assessment-complaint-alert/assessment-complaint-alert.component';
 import { AssessmentNoteComponent } from '../assessment-note/assessment-note.component';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 
@@ -20,7 +19,7 @@ import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-fo
     selector: 'jhi-assessment-layout',
     templateUrl: './assessment-layout.component.html',
     styleUrls: ['./assessment-layout.component.scss'],
-    imports: [AssessmentHeaderComponent, AssessmentComplaintAlertComponent, AssessmentNoteComponent, ComplaintsForTutorComponent],
+    imports: [AssessmentHeaderComponent, AssessmentNoteComponent, ComplaintsForTutorComponent],
 })
 export class AssessmentLayoutComponent {
     @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;

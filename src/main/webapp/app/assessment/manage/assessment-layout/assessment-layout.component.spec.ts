@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
-import { AssessmentComplaintAlertComponent } from 'app/assessment/manage/assessment-complaint-alert/assessment-complaint-alert.component';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
@@ -35,7 +34,6 @@ describe('AssessmentLayoutComponent', () => {
                 AssessmentLayoutComponent,
                 AssessmentHeaderComponent,
                 AssessmentNoteComponent,
-                MockComponent(AssessmentComplaintAlertComponent),
                 MockComponent(AssessmentWarningComponent),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
@@ -68,11 +66,6 @@ describe('AssessmentLayoutComponent', () => {
     it('should include jhi-assessment-header', () => {
         const assessmentHeaderComponent = fixture.debugElement.query(By.directive(AssessmentHeaderComponent));
         expect(assessmentHeaderComponent).toBeTruthy();
-    });
-
-    it('should include jhi-assessment-complaint-alert', () => {
-        const assessmentComplaintAlertComponent = fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent));
-        expect(assessmentComplaintAlertComponent).toBeTruthy();
     });
 
     it('should include jhi-assessment-note when submission exists', () => {

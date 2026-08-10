@@ -870,3 +870,49 @@ export async function startAssessing(
     await exerciseAssessment.clickStartNewAssessment();
     exerciseAssessment.getLockedMessage();
 }
+
+/**
+ * Asserts that nothing on the page can be scrolled past the Apollon canvas.
+ *
+ * An Apollon canvas captures the wheel, so anything parked below it inside a
+ * scrolling ancestor is unreachable: the reader scrolls, the diagram zooms, and
+ * the content underneath never arrives. Every surface whose job is working with
+ * a diagram — participating, assessing, reading an assessment — must therefore
+ * make the canvas fill its frame and let anything else share that frame rather
+ * than extend the page.
+ *
+ * Only ancestors are checked. A side panel that scrolls beside the canvas
+ * (problem statement, assessment instructions, the feedback card itself) is
+ * fine, because reaching it never requires scrolling past the diagram.
+ *
+ * The one legitimate exception is the exercise create/edit form, where the page
+ * is a form and the editor runs with Apollon's scroll lock engaged so the wheel
+ * passes through to the page. Do not call this there.
+ */
+export async function expectNoScrollPastApollonCanvas(page: Page) {
+    const canvas = page.locator('.apollon-editor').first();
+    await expect(canvas).toBeVisible();
+
+    const overflowing = await canvas.evaluate((element) => {
+        const describe = (node: Element) =>
+            node.tagName.toLowerCase() +
+            (node.id ? `#${node.id}` : '') +
+            (typeof node.className === 'string' && node.className.trim() ? `.${node.className.trim().split(/\s+/)[0]}` : '');
+
+        const offenders: string[] = [];
+        for (let node: Element | null = element; node; node = node.parentElement) {
+            const scrolls = node.scrollHeight > node.clientHeight + 1;
+            if (!scrolls) {
+                continue;
+            }
+            const overflowY = getComputedStyle(node).overflowY;
+            const isScrollContainer = overflowY === 'auto' || overflowY === 'scroll' || node === document.documentElement || node === document.body;
+            if (isScrollContainer) {
+                offenders.push(`${describe(node)} overflows by ${node.scrollHeight - node.clientHeight}px`);
+            }
+        }
+        return offenders;
+    });
+
+    expect(overflowing, 'content below the Apollon canvas forces the page to scroll').toEqual([]);
+}

@@ -1,6 +1,11 @@
 import { DestroyRef, Directive, ElementRef, Renderer2, afterNextRender, effect, inject, input, output } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
+/**
+ * Which edges of the host can be resized. Each edge maps to a CSS selector for the
+ * drag handle that starts the resize — the handle is looked up inside the host, or
+ * in its parent when `resizableHandleOutsideHost` is set.
+ */
 export interface ResizableEdges {
     left?: string;
     right?: string;
@@ -8,6 +13,7 @@ export interface ResizableEdges {
     bottom?: string;
 }
 
+/** Min/max size in pixels. Any field may be omitted, meaning unconstrained on that side. */
 export interface ResizableConstraints {
     minWidth?: number;
     maxWidth?: number;
@@ -15,6 +21,7 @@ export interface ResizableConstraints {
     maxHeight?: number;
 }
 
+/** Snapshot of the host's size in pixels, reported with every resize event. */
 export interface ResizableSizeEvent {
     width: number;
     height: number;
@@ -32,8 +39,22 @@ interface HandleState {
 let nextResizableId = 0;
 
 /**
- * Resizes the host through selector-matched handles, optionally located in its parent.
- * Handles with an accessible name become keyboard-operable separators; inline sizing can be delegated to the consumer.
+ * Resizes the host by dragging selector-matched handles. Built on Pointer Events, so
+ * mouse, touch and pen are handled uniformly.
+ *
+ * ```html
+ * <div jhiResizable [resizableEdges]="{ left: '.draggable-left' }" [resizableConstraints]="{ minWidth: 215, maxWidth: 1500 }" (resizeEnd)="onResized($event)">
+ *     <div class="draggable-left"></div>
+ * </div>
+ * ```
+ *
+ * A pointerdown on a configured handle starts a resize, and the clamped size is written
+ * to the host's inline `width`/`height` during the drag. A consumer that owns its own
+ * sizing — one driving a signal, say — sets `resizableApplyInlineSize` to false and
+ * applies the reported size itself.
+ *
+ * A handle carrying an accessible name is also promoted to a keyboard-operable
+ * `role="separator"`, so the same affordance works with arrow keys, Home and End.
  */
 @Directive({
     selector: '[jhiResizable]',

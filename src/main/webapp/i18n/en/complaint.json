@@ -21,7 +21,6 @@
             "moreInfo": "Complain",
             "complaintNotAllowedTooltip": "Currently not allowed: complaint limit reached or assessment review period is over.",
             "responseExists": "Response to your complaint",
-            "hint": "Scroll down to review the complaint",
             "accepted": "Accepted",
             "acceptedLong": "Complaint was accepted",
             "rejected": "Rejected",
@@ -84,8 +83,7 @@
                 "loadAllRequestsExplanation": "The list only shows requests about your assessments. You can load all requests for all reviewers using this button: ",
                 "allRequestsLoaded": "All requests loaded",
                 "noRequestsToShow": "There are no requests to show at the moment"
-            },
-            "hint": "Scroll down to review More Feedback Request"
+            }
         }
     }
 }

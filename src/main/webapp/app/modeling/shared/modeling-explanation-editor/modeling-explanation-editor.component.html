@@ -1,11 +1,11 @@
-<jhi-modeling-explanation-surface [labelId]="labelId" [labelKey]="labelKey()" [notchWidth]="notchWidth()">
+<jhi-modeling-explanation-surface [labelId]="labelId" [labelKey]="labelKey()" [notchWidth]="notchWidth()" [minHeight]="surfaceMinHeight()">
     <textarea
         #resizableContent
         [id]="textareaId"
         class="text-editor-textarea nokey nowheel"
         rows="1"
         cdkTextareaAutosize
-        [cdkAutosizeMinRows]="1"
+        [cdkAutosizeMinRows]="autosizeMinRows()"
         [cdkAutosizeMaxRows]="autosizeMaxRows()"
         [attr.aria-labelledby]="labelId"
         [maxLength]="maxCharacterCount()"
