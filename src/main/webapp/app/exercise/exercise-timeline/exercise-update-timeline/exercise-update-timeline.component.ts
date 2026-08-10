@@ -28,6 +28,10 @@ export class ExerciseUpdateTimelineComponent implements OnInit {
     readonly hasExampleSolution = input(false);
     /** The server resets the publication date on import, so the opt-in is inert there (as for programming exercises). */
     readonly isImport = input(false);
+    /** Dates are governed by the exercise's variant group; see {@link ExerciseTimelineComponent}. */
+    readonly lockedToGroup = input(false);
+    /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
+    readonly lockedClick = output<void>();
 
     readonly releaseDate = model<Dayjs | undefined>();
     readonly startDate = model<Dayjs | undefined>();
@@ -37,13 +41,16 @@ export class ExerciseUpdateTimelineComponent implements OnInit {
 
     readonly timelineStatus = output<ExerciseTimelineStatus>();
 
-    readonly canConfigureExampleSolutionPublication = computed(() => this.hasExampleSolution() && !this.isImport());
+    readonly canConfigureExampleSolutionPublication = computed(() => this.hasExampleSolution() && !this.isImport() && !this.lockedToGroup());
     readonly isExampleSolutionPublicationDateVisible = signal(false);
 
     /** Explains a disabled opt-in; `undefined` while the opt-in is usable. */
     readonly exampleSolutionPublicationHintKey = computed<string | undefined>(() => {
         if (this.isImport()) {
             return 'artemisApp.exercise.exampleSolutionPublicationDateImportInfo';
+        }
+        if (this.lockedToGroup()) {
+            return 'artemisApp.exercise.exampleSolutionPublicationDateLockedToGroup';
         }
         if (!this.hasExampleSolution()) {
             return 'artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution';

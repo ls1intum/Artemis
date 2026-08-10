@@ -73,8 +73,8 @@ describe('ResizablePanelsComponent', () => {
         // Drag-to-collapse: the splitter leaves the panels at the near-zero position they were dragged to.
         component['onResizeEnd']([100, 0]);
         const [left, right] = panels();
-        left.style.flexBasis = 'calc(100% - 12px)';
-        right.style.flexBasis = 'calc(0% - 12px)';
+        left.style.flexBasis = 'calc(100% - 6px)';
+        right.style.flexBasis = 'calc(0% - 6px)';
         fixture.detectChanges();
         expect(component.isRightPanelCollapsed()).toBe(true);
 
@@ -83,8 +83,8 @@ describe('ResizablePanelsComponent', () => {
         fixture.detectChanges();
 
         expect(component.isRightPanelCollapsed()).toBe(false);
-        expect(right.style.flexBasis).toBe('calc(35% - 12px)');
-        expect(left.style.flexBasis).toBe('calc(65% - 12px)');
+        expect(right.style.flexBasis).toBe('calc(35% - 6px)');
+        expect(left.style.flexBasis).toBe('calc(65% - 6px)');
         expect(component.savedSizes()).toEqual([65, 35]);
     });
 
@@ -193,7 +193,7 @@ describe('ResizablePanelsComponent', () => {
         expect(component.savedSizes()).toEqual([72, 28]);
         const splitter = fixture.nativeElement.querySelector('p-splitter');
         const [, right] = Array.from(splitter.querySelectorAll('[data-pc-section="panel"]')) as HTMLElement[];
-        expect(right.style.flexBasis).toBe('calc(28% - 12px)');
+        expect(right.style.flexBasis).toBe('calc(28% - 6px)');
     });
 
     it('keeps the usable split when snap-collapsing after a reopen (splitter buffer is not aliased to savedSizes)', () => {

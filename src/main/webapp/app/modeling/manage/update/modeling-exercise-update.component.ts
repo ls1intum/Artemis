@@ -54,6 +54,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiSelectComponent } from '@tumaet/ui-angular';
 import { ModelingMarkdownExplanationEditorComponent } from 'app/modeling/shared/modeling-markdown-explanation-editor/modeling-markdown-explanation-editor.component';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -84,6 +85,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
         TumUiConfirmDialogComponent,
         TumUiSelectComponent,
         ModelingMarkdownExplanationEditorComponent,
+        ExerciseGroupTimelineLockComponent,
     ],
     providers: [TumUiConfirmationService],
 })

@@ -48,8 +48,13 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     /** Removes the standard content gutter around the primary panel for full-bleed editors or canvases. */
     readonly flushLeftPanel = input(false);
 
-    /** Gutter size (px) of the splitter; kept in sync with the template's [gutterSize]. */
-    private static readonly GUTTER_SIZE = 12;
+    /**
+     * Gutter size (px) of the splitter: the grey divider between the two panels, so it matches `--spacing-divider`,
+     * the width every other divider in the shells uses. The template binds `gutterSize` below, so the value the
+     * splitter renders and the value the flex-basis arithmetic assumes cannot drift apart.
+     */
+    private static readonly GUTTER_SIZE = 6;
+    protected readonly gutterSize = ResizablePanelsComponent.GUTTER_SIZE;
     /** Split (percent) used when reopening without a usable saved size. */
     private static readonly DEFAULT_SIZES = [65, 35];
 

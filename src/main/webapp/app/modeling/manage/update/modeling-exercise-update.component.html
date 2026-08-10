@@ -1,5 +1,6 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
     <tum-ui-confirm-dialog key="modeling-diagram-type-change" />
+    <jhi-exercise-group-timeline-lock #variantLock [exercise]="modelingExercise" (exerciseChange)="modelingExercise = $event" />
     <button type="submit" style="display: none" (click)="handleEnterKeyNavigation($event)"></button>
     <div class="d-flex align-items-center gap-2">
         @if (!modelingExercise.id) {
@@ -113,6 +114,8 @@
                         [(assessmentDueDate)]="modelingExercise.assessmentDueDate"
                         [exampleSolutionPublicationDate]="modelingExercise.exampleSolutionPublicationDate"
                         (exampleSolutionPublicationDateChange)="modelingExercise.exampleSolutionPublicationDate = $event; validateDate()"
+                        [lockedToGroup]="variantLock.locked()"
+                        (lockedClick)="variantLock.openModal()"
                         (timelineStatus)="timelineStatus.set($event)"
                     />
                 </div>

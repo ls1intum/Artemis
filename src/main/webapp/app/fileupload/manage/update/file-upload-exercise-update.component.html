@@ -1,4 +1,5 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
+    <jhi-exercise-group-timeline-lock #variantLock [exercise]="fileUploadExercise()" (exerciseChange)="fileUploadExercise.set($event)" />
     <div class="d-flex align-items-center gap-2">
         @if (fileUploadExercise().id && !isImport()) {
             <h2 id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel"></h2>
@@ -84,6 +85,8 @@
                     [(assessmentDueDate)]="fileUploadExercise().assessmentDueDate"
                     [exampleSolutionPublicationDate]="fileUploadExercise().exampleSolutionPublicationDate"
                     (exampleSolutionPublicationDateChange)="fileUploadExercise().exampleSolutionPublicationDate = $event; validateDate()"
+                    [lockedToGroup]="variantLock.locked()"
+                    (lockedClick)="variantLock.openModal()"
                     (timelineStatus)="timelineStatus.set($event)"
                 />
             }

@@ -15,6 +15,20 @@
     </fa-stack>
 }
 <div class="flex relative" data-testid="date-picker-wrapper" [class.invalid-date-input]="showErrorBorder()" (keydown)="onPickerKeydown($event)" (paste)="onPickerPaste($event)">
+    @if (lockedToGroup()) {
+        <div
+            class="date-lock-overlay"
+            role="button"
+            tabindex="0"
+            (click)="lockedClick.emit()"
+            (keydown.enter)="lockedClick.emit()"
+            (keydown.space)="lockedClick.emit()"
+            [tumUiTooltip]="'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate"
+        >
+            <fa-icon [icon]="faLock" class="date-lock-icon text-muted-color" />
+        </div>
+    }
     <p-datepicker
         #datePicker
         [inputId]="inputId()"
@@ -42,7 +56,7 @@
         [minDate]="minDate()"
         [maxDate]="maxDate()"
         [defaultDate]="startDate()"
-        [disabled]="disabled()"
+        [disabled]="effectiveDisabled()"
         [showButtonBar]="showTime() || timeOnly()"
         [invalid]="showErrorBorder()"
     >

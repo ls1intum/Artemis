@@ -15,6 +15,10 @@ import { Dayjs } from 'dayjs/esm';
 export class ModelingExerciseTimelineComponent {
     readonly hasExampleSolution = input(false);
     readonly isImport = input(false);
+    /** Dates are governed by the exercise's variant group; see {@link ExerciseTimelineComponent}. */
+    readonly lockedToGroup = input(false);
+    /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
+    readonly lockedClick = output<void>();
 
     readonly releaseDate = model<Dayjs | undefined>();
     readonly startDate = model<Dayjs | undefined>();

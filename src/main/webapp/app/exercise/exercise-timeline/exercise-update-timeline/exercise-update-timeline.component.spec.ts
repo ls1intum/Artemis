@@ -111,6 +111,34 @@ describe('ExerciseUpdateTimelineComponent', () => {
         expect(hint()).not.toBeNull();
     });
 
+    it('should pass the variant lock down to the inner timeline', async () => {
+        await createComponent({ hasExampleSolution: true, lockedToGroup: true });
+        const innerTimeline = fixture.debugElement.query(By.directive(ExerciseTimelineStubComponent)).componentInstance as ExerciseTimelineStubComponent;
+
+        expect(innerTimeline.lockedToGroup()).toBe(true);
+    });
+
+    it('should surface a locked click from the inner timeline', async () => {
+        await createComponent({ hasExampleSolution: true, lockedToGroup: true });
+        const emitSpy = vi.spyOn(component.lockedClick, 'emit');
+        const innerTimeline = fixture.debugElement.query(By.directive(ExerciseTimelineStubComponent)).componentInstance as ExerciseTimelineStubComponent;
+
+        innerTimeline.lockedClick.emit();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should disable the opt-in while the variant group governs the dates', async () => {
+        // A group-governed exercise must not be able to ADD a date either, or the
+        // form would offer a control whose value the group immediately overrides.
+        await createComponent({ hasExampleSolution: true, lockedToGroup: true });
+
+        expect(toggle().disabled).toBe(true);
+        expect(component.exampleSolutionPublicationHintKey()).toBe('artemisApp.exercise.exampleSolutionPublicationDateLockedToGroup');
+        expect(hint()).not.toBeNull();
+        expect(labelKeys()).not.toContain('artemisApp.exercise.exampleSolutionPublicationDate');
+    });
+
     it('should forward the status of the inner timeline', async () => {
         await createComponent({ hasExampleSolution: true });
         const emitSpy = vi.spyOn(component.timelineStatus, 'emit');

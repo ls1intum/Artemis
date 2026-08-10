@@ -1,6 +1,8 @@
 <jhi-exercise-update-timeline
     [hasExampleSolution]="hasExampleSolution()"
     [isImport]="isImport()"
+    [lockedToGroup]="lockedToGroup()"
+    (lockedClick)="lockedClick.emit()"
     [(releaseDate)]="releaseDate"
     [(startDate)]="startDate"
     [(dueDate)]="dueDate"

@@ -9,6 +9,8 @@ import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-
 export class ExerciseUpdateTimelineStubComponent {
     readonly hasExampleSolution = input(false);
     readonly isImport = input(false);
+    readonly lockedToGroup = input(false);
+    readonly lockedClick = output<void>();
 
     readonly releaseDate = model<Dayjs | undefined>();
     readonly startDate = model<Dayjs | undefined>();

@@ -399,7 +399,8 @@
             },
             "isUsedForTutorial": "Tutor:in muss überprüfen",
             "action": "Aktion",
-            "exerciseAssessmentDashboard": "Bewertungs-Dashboard"
+            "exerciseAssessmentDashboard": "Bewertungs-Dashboard",
+            "exampleSolutionPublicationDateLockedToGroup": "Die Veröffentlichung wird von der Variantengruppe der Aufgabe gesteuert."
         }
     }
 }

@@ -399,7 +399,8 @@
             },
             "isUsedForTutorial": "Tutor needs to review",
             "action": "Action",
-            "exerciseAssessmentDashboard": "Assessment Dashboard"
+            "exerciseAssessmentDashboard": "Assessment Dashboard",
+            "exampleSolutionPublicationDateLockedToGroup": "Publication is governed by the exercise's variant group."
         }
     }
 }
