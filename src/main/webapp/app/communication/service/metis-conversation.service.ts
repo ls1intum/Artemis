@@ -134,6 +134,10 @@ export class MetisConversationService implements OnDestroy {
                 type: AlertType.WARNING,
                 message: 'artemisApp.metis.channel.notAMember',
             });
+            // Keep whatever is currently open instead of closing it. Replacing it with nothing empties the view, and the
+            // active conversation subscriber reacts to that by removing the conversationId from the URL, so a reload can
+            // no longer restore the conversation either. Clearing on purpose stays possible by passing undefined.
+            return;
         }
         if (this.activeConversation?.id !== conversationId) {
             this.updateConversationAsRead();

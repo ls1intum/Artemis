@@ -181,6 +181,42 @@ describe('MetisConversationService', () => {
         });
     });
 
+    it('should keep the open conversation when a conversation that is not cached is requested', () => {
+        return new Promise((done) => {
+            metisConversationService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    metisConversationService.setActiveConversation(groupChat);
+
+                    metisConversationService.setActiveConversation(9999);
+
+                    // closing the open conversation would empty the view and strip its id from the URL, so a reload
+                    // could not restore it either
+                    metisConversationService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                        expect(activeConversation?.id).toBe(groupChat.id);
+                        done({});
+                    });
+                },
+            });
+        });
+    });
+
+    it('should still clear the active conversation when it is cleared on purpose', () => {
+        return new Promise((done) => {
+            metisConversationService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    metisConversationService.setActiveConversation(groupChat);
+
+                    metisConversationService.setActiveConversation(undefined);
+
+                    metisConversationService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                        expect(activeConversation).toBeUndefined();
+                        done({});
+                    });
+                },
+            });
+        });
+    });
+
     it('should keep the cached conversations and the active conversation when a force refresh fails', () => {
         return new Promise((done) => {
             metisConversationService.setUpConversationService(course).subscribe({
