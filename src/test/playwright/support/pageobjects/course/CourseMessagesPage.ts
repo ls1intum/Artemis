@@ -556,8 +556,7 @@ export class CourseMessagesPage {
      * re-issues the message-list request — which, against the shared database, returns the persisted
      * post — and re-renders the list. Retrying the reload before failing keeps callers testing their
      * actual behavior rather than this load-induced rendering race (the same mitigation
-     * {@link openConversation} already uses for activation and the bookmark-persistence test uses after
-     * its reload).
+     * {@link openConversation} already uses for activation).
      *
      * @param courseID - The ID of the course the conversation belongs to.
      * @param conversationID - The ID of the conversation to open.

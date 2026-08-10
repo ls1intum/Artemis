@@ -43,24 +43,25 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
         });
 
         test('Bookmarked message should persist after page reload', async ({ login, courseMessages, page }) => {
+            // Conversation activation retries can exceed the default fast-test budget under parallel multi-node load.
+            test.slow();
+
             await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=${seedChannelId}`);
             await courseMessages.checkMessage(message.id!, message.content!);
             await courseMessages.bookmarkMessage(message.id!);
             await courseMessages.checkMessageBookmarked(message.id!, true);
-            // Reload the page completely. Under heavy multi-node load the conversation occasionally fails to
-            // re-activate from the conversationId query param after a reload (the conversations-cache activation race
-            // that openConversation also works around), leaving an empty view in which the message never renders.
-            // Retry the full reload until the message reappears so this assertion tests bookmark persistence rather
-            // than that unrelated activation race.
-            for (let attempt = 0; attempt < 3; attempt++) {
-                await page.reload();
+            // Perform a real reload first so bookmark persistence is covered. If the known conversations-cache
+            // activation race leaves the view empty, re-activate the same conversation once before checking the
+            // persisted bookmark state.
+            await page.reload();
+            try {
+                await courseMessages.getSinglePost(message.id!).waitFor({ state: 'visible', timeout: 12000 });
+            } catch {
                 try {
+                    await courseMessages.openConversation(writeCourse.id, seedChannelId);
                     await courseMessages.getSinglePost(message.id!).waitFor({ state: 'visible', timeout: 12000 });
-                    break;
-                } catch {
-                    if (attempt === 2) {
-                        throw new Error('Bookmarked message did not reappear after reload — conversation failed to re-activate');
-                    }
+                } catch (reactivationError) {
+                    throw new Error('Bookmarked message did not reappear after reload and bounded conversation reactivation', { cause: reactivationError });
                 }
             }
             // Verify the message is still visible and still bookmarked
