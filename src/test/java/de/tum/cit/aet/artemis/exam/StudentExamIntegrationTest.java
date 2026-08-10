@@ -380,9 +380,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStudentExamsForExam_asInstructor() throws Exception {
-        // measured baseline is 8 queries (user/course loads, the user-course-role membership check, exam/course
-        // consistency checks, and findByExamIdWithSessions); guards against an accidental N+1 regression (e.g.
-        // touching a lazy association per element) creeping into the DTO factory
+        // measured baseline is 8 queries (auth + access checks including the user_course_role membership check + findByExamIdWithSessions);
+        // guards against an accidental N+1 regression (e.g. touching a lazy association per element) creeping into the DTO factory
         List<StudentExamDTO> studentExams = assertThatDb(
                 () -> request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.OK, StudentExamDTO.class))
                 .hasBeenCalledAtMostTimes(8);
@@ -753,9 +752,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor2, exam.getExerciseGroups());
 
-        // measured baseline is 8 queries (user/course loads, the user-course-role membership check, exam/course
-        // consistency checks, and findAllTestRunsByExamId); guards against an accidental N+1 regression (e.g.
-        // touching a lazy association per element) creeping into the DTO factory
+        // measured baseline is 8 queries (auth + access checks including the user_course_role membership check + findAllTestRunsByExamId);
+        // guards against an accidental N+1 regression (e.g. touching a lazy association per element) creeping into the DTO factory
         List<StudentExamDTO> response = assertThatDb(
                 () -> request.getList("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs", HttpStatus.OK, StudentExamDTO.class))
                 .hasBeenCalledAtMostTimes(8);
