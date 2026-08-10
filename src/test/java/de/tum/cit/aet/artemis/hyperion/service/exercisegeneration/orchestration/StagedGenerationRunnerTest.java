@@ -408,6 +408,39 @@ class StagedGenerationRunnerTest {
         assertThat(approvedSpecs.approved("s")).hasValueSatisfying(specification -> assertThat(specification).contains(VALID_SPEC_DOCUMENT.strip()));
     }
 
+    /**
+     * Re-entry must never leave the run holding less than it already had. The specification used to be cleared before replacement discovery ran, so a reviewer that was
+     * unavailable on re-entry destroyed a reviewed specification and took the whole generation down with it — while the very same unavailability on the first selection is
+     * tolerated and continues from the brief. Discovery now runs first, and an empty result keeps the incumbent concept and its specification.
+     */
+    @Test
+    void aReplacementConceptThatNeverArrivesKeepsTheSpecificationTheRunAlreadyReviewed() {
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
+        when(conceptSelector.select(eq("brief"), any(), any(), any())).thenReturn(new ExerciseConceptSelector.ConceptSelection(true, 1, "initial concept", 1, List.of(), "", ""));
+        when(conceptSelector.select(eq("brief"), anyString(), any(), any(), any()))
+                .thenReturn(new ExerciseConceptSelector.ConceptSelection(false, null, null, 1, List.of(), "Concept review was unavailable.", ""));
+        when(reviewer.reviewSpecification(eq("brief"), anyString(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, true, true, List.of("the central interaction cannot carry the objective"), "", "MISALIGNED"));
+        when(reviewer.reviewSpecification(eq("brief"), anyString(), anyString(), any(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, conceptSelector,
+                "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, VALID_SPEC_DOCUMENT), completed(1, VALID_SPEC_DOCUMENT),
+                completed(3, "build"), completed(1, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
+
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
+                () -> SeededStructuralTests.EMPTY, true, true, null);
+
+        assertThat(outcome.result().status()).isNotEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(approvedSpecs.approved("s")).hasValueSatisfying(specification -> assertThat(specification).contains(VALID_SPEC_DOCUMENT.strip()));
+        assertThat(outcome.unresolvedConceptFindings()).isNotEmpty().first().asString().contains("asked for a different exercise concept", "produced no candidate to switch to");
+        assertThat(outcome.unresolvedConceptFindings()).contains("the central interaction cannot carry the objective");
+        // One replacement attempt only: the reviewer asks for reselection again on the next round, and retrying spends discovery turns to reach the same unavailable reviewer.
+        verify(conceptSelector, times(1)).select(eq("brief"), anyString(), any(), any(), any());
+    }
+
     @Test
     void authoritativeStatementRefinesItsContractWithoutReplacingTheInstructorConcept() {
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);

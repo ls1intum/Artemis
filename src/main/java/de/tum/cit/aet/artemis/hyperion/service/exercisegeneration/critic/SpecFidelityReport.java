@@ -80,8 +80,9 @@ public record SpecFidelityReport(List<Finding> findings) {
         /** A complete pre-freeze specification review still rejected the compiled contract after its bounded refinement budget. */
         SPECIFICATION_REVIEW_FINDING,
         /**
-         * A complete concept review admitted no candidate, and the run proceeded with the least-rejected one rather than producing nothing. Blocking and not auto-repairable: the
-         * objection is to the exercise's central design choice, which no scoped repair of tests, scaffold, or statement can settle.
+         * The concept review did not approve the concept the run built from, and the run proceeded with it rather than producing nothing — either because a complete review
+         * admitted no candidate and the least-rejected one was used, or because a review that asked for a different concept could not be given one. Blocking and not
+         * auto-repairable: the objection is to the exercise's central design choice, which no scoped repair of tests, scaffold, or statement can settle.
          */
         CONCEPT_ADMISSION_FINDING
     }

@@ -116,7 +116,7 @@ public class GenerationReviewService {
                 case EXECUTABLE_EVIDENCE_UNAVAILABLE -> "Executable quality evidence could not be completed automatically";
                 case QUALITY_REVIEW_UNAVAILABLE -> "Generated exercise quality could not be reviewed automatically";
                 case SPECIFICATION_REVIEW_FINDING -> "The compiled exercise specification still has an unresolved review finding: " + finding.requirement();
-                case CONCEPT_ADMISSION_FINDING -> "The concept review admitted no candidate; this exercise was built from the least-rejected one: " + finding.requirement();
+                case CONCEPT_ADMISSION_FINDING -> "The concept review did not approve the concept this exercise was built from: " + finding.requirement();
             };
             Severity severity = finding.isBlocking() ? Severity.HIGH : Severity.MEDIUM;
             ArtifactLocationDTO location = new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", ANCHOR_LINE, ANCHOR_LINE);

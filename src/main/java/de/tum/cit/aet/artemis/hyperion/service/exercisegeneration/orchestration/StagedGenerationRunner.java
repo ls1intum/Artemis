@@ -348,6 +348,9 @@ public class StagedGenerationRunner {
         SpecFidelityCriticService.SpecificationReview previousSpecificationReview = null;
         String previousRejectedLearningFitDirection = null;
         boolean freshSemanticSpecAttempt = false;
+        // Set once replacement concept discovery has come back empty. Reselection is not retried after that: the reviewer would ask for it again on the very next round, and each
+        // attempt spends discovery turns to reach the same unavailable reviewer.
+        boolean conceptReplacementUnavailable = false;
         String selectedConcept = null;
         int specificationReviewNumber = 0;
         baseTools.configureStructuralOracleRefresh(structuralSeedHook);
@@ -567,27 +570,16 @@ public class StagedGenerationRunner {
                                 String rejectedDirection = "SUFFICIENT".equals(review.learningFitDirection()) ? null : review.learningFitDirection();
                                 boolean repeatedLearningFitFailure = rejectedDirection != null && rejectedDirection.equals(previousRejectedLearningFitDirection);
                                 previousRejectedLearningFitDirection = rejectedDirection;
-                                if (conceptSelectionApplies && (review.conceptualReworkRequired() || repeatedLearningFitFailure)) {
+                                if (conceptSelectionApplies && !conceptReplacementUnavailable && (review.conceptualReworkRequired() || repeatedLearningFitFailure)) {
                                     // The selected concept itself failed the pre-freeze review, so re-enter the context-separated discovery boundary rather than let the SPEC
                                     // agent privately replace its own plan. A repeated learning-fit direction also triggers reselection: rewriting a second time against an
                                     // unchanged qualitative proxy optimizes the proxy instead of the concept.
-                                    if (conversation != null) {
-                                        archivedConversation.addAll(conversation);
-                                    }
-                                    conversation = null;
-                                    String clearResult;
-                                    try {
-                                        clearResult = baseTools.writeFile("SPEC.md", "");
-                                    }
-                                    catch (RuntimeException e) {
-                                        clearResult = "ERROR: " + e.getMessage();
-                                    }
-                                    if (clearResult == null || clearResult.startsWith("ERROR")) {
-                                        String failure = "Could not clear the rejected specification before concept replacement. Generation stopped to prevent the rejected "
-                                                + "contract from contaminating a fresh attempt." + (clearResult == null ? "" : "\n" + clearResult);
-                                        return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation,
-                                                conversation);
-                                    }
+                                    // Discovery runs before the incumbent specification is cleared. Clearing first meant a re-entry that produced no replacement left the run
+                                    // holding less than it started with: the reviewed specification was already gone, so the only exit was to fail the whole generation. An
+                                    // unavailable concept reviewer is tolerated on the first selection above, which continues from the brief; it must not be fatal here, where
+                                    // there is strictly more to lose.
+                                    ExerciseConceptSelector.ConceptSelection replacement = null;
+                                    ExerciseConceptSelector.ConceptFallback replacementFallback = null;
                                     if (conceptSelector != null) {
                                         if (wallClockExceeded(startedAt)) {
                                             String failure = "Exercise generation reached its wall-clock budget before replacement concept discovery, so no new model work "
@@ -595,8 +587,7 @@ public class StagedGenerationRunner {
                                             return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation,
                                                     conversation);
                                         }
-                                        ExerciseConceptSelector.ConceptSelection replacement = conceptSelector.select(sourceBrief, CONCEPT_REPLACEMENT_FEEDBACK, cancelled,
-                                                usageSink, progress);
+                                        replacement = conceptSelector.select(sourceBrief, CONCEPT_REPLACEMENT_FEEDBACK, cancelled, usageSink, progress);
                                         totalTurns += replacement.turns();
                                         remainingPool = Math.max(0, remainingPool - replacement.turns());
                                         archivedConversation.addAll(replacement.transcript());
@@ -604,21 +595,46 @@ public class StagedGenerationRunner {
                                         if (cancelled.getAsBoolean()) {
                                             return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, replacement.feedback(), archivedConversation, conversation);
                                         }
-                                        ExerciseConceptSelector.ConceptFallback replacementFallback = replacement.fallback();
-                                        if (!replacement.accepted() && replacementFallback == null) {
-                                            String failure = replacement.complete()
-                                                    ? "No replacement exercise concept passed the learning-fit review, and the review named no candidate to fall back to."
-                                                    : "Replacement concept discovery did not produce a reviewable decision.";
-                                            return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns,
-                                                    appendGateReport(lastFinalMessage, failure + "\n" + replacement.feedback()), archivedConversation, conversation, List.of(),
-                                                    replacement.complete() ? TerminationReason.NO_ADMISSIBLE_CONCEPT : null);
+                                        replacementFallback = replacement.fallback();
+                                    }
+                                    if (replacement != null && !replacement.accepted() && replacementFallback == null) {
+                                        // Nothing to replace the concept with, so the incumbent one and the specification written for it both stand. The reviewer's objection
+                                        // travels to the instructor instead of taking the run down with it, and the refinement rounds that remain still improve the contract
+                                        // this concept can reach. Downstream compile, test, and oracle gates stay fail-closed.
+                                        conceptReplacementUnavailable = true;
+                                        log.info("Exercise {}: replacement concept discovery produced no candidate; keeping the incumbent concept and specification",
+                                                exercise.getId());
+                                        emit(progress, replacement.complete()
+                                                ? "No replacement concept passed the learning-fit review. Continuing with the concept and specification this run already has, "
+                                                        + "and attaching the review's objection for instructor review."
+                                                : "Replacement concept discovery was unavailable. Continuing with the concept and specification this run already has, and "
+                                                        + "attaching the review's objection for instructor review.");
+                                        conceptFindings.addAll(SpecificationReviewPrompts.conceptReselectionUnavailableNotes(review));
+                                    }
+                                    else {
+                                        if (conversation != null) {
+                                            archivedConversation.addAll(conversation);
                                         }
-                                        if (replacement.accepted()) {
+                                        conversation = null;
+                                        String clearResult;
+                                        try {
+                                            clearResult = baseTools.writeFile("SPEC.md", "");
+                                        }
+                                        catch (RuntimeException e) {
+                                            clearResult = "ERROR: " + e.getMessage();
+                                        }
+                                        if (clearResult == null || clearResult.startsWith("ERROR")) {
+                                            String failure = "Could not clear the rejected specification before concept replacement. Generation stopped to prevent the rejected "
+                                                    + "contract from contaminating a fresh attempt." + (clearResult == null ? "" : "\n" + clearResult);
+                                            return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation,
+                                                    conversation);
+                                        }
+                                        if (replacement != null && replacement.accepted()) {
                                             selectedConcept = replacement.selectedConcept();
                                             // The rejected concept's objections described a design this run no longer builds, so carrying them would mislead the instructor.
                                             conceptFindings.clear();
                                         }
-                                        else {
+                                        else if (replacementFallback != null) {
                                             selectedConcept = replacementFallback.concept();
                                             conceptFindings.clear();
                                             conceptFindings.addAll(SpecificationReviewPrompts.conceptAdmissionNotes(replacementFallback));
@@ -627,18 +643,18 @@ public class StagedGenerationRunner {
                                             log.info("Exercise {}: no replacement concept was admitted; proceeding with candidate {} ({} failed selection axes)", exercise.getId(),
                                                     replacementFallback.candidate(), replacementFallback.failedRequiredAxes());
                                         }
+                                        previousRejectedLearningFitDirection = null;
+                                        // The concept is being replaced, so every specification measured so far described a concept the reviewer rejected.
+                                        bestSpecSnapshot = null;
+                                        bestSpecFindingCount = Integer.MAX_VALUE;
+                                        bestSpecFindings = List.of();
+                                        previousSpecificationReview = null;
+                                        // Neither rejected candidate text nor quote-rich SPEC feedback enters the fresh discovery/SPEC contexts: the independent reviewer
+                                        // assesses the replacement from scratch against the raw brief.
+                                        gateFeedback = null;
+                                        semanticSpecFeedback = null;
+                                        freshSemanticSpecAttempt = true;
                                     }
-                                    previousRejectedLearningFitDirection = null;
-                                    // The concept is being replaced, so every specification measured so far described a concept the reviewer rejected.
-                                    bestSpecSnapshot = null;
-                                    bestSpecFindingCount = Integer.MAX_VALUE;
-                                    bestSpecFindings = List.of();
-                                    previousSpecificationReview = null;
-                                    // Neither rejected candidate text nor quote-rich SPEC feedback enters the fresh discovery/SPEC contexts: the independent reviewer assesses
-                                    // the replacement from scratch against the raw brief.
-                                    gateFeedback = null;
-                                    semanticSpecFeedback = null;
-                                    freshSemanticSpecAttempt = true;
                                 }
                                 emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": refining the specification after brief-fidelity review");
                                 allocation = allocateStageBudget(SEMANTIC_SPEC_REFINEMENT_BUDGET, 0, allocatablePool(stage, remainingPool));

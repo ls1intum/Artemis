@@ -33,6 +33,18 @@ final class SpecificationReviewPrompts {
         return List.copyOf(notes);
     }
 
+    /**
+     * Renders the instructor-facing notes for a run whose specification review asked for a different concept, and whose replacement discovery then produced no candidate to
+     * switch to. The run keeps the concept and specification it already had, so the objection is the instructor's decision to make and travels verbatim.
+     */
+    static List<String> conceptReselectionUnavailableNotes(SpecFidelityCriticService.SpecificationReview review) {
+        List<String> notes = new ArrayList<>();
+        notes.add("The specification review asked for a different exercise concept, and replacement concept discovery produced no candidate to switch to. This exercise was "
+                + "built from the concept the review objected to, so judging whether the objection matters is left to you.");
+        review.findings().stream().filter(finding -> !finding.isBlank()).map(String::strip).forEach(notes::add);
+        return List.copyOf(notes);
+    }
+
     static List<String> unresolvedInconclusiveReviewFindings(SpecFidelityCriticService.SpecificationReview review) {
         if (review.riskHistory().isEmpty()) {
             return List.of("The automated specification quality review was inconclusive, so the mechanically checked contract requires instructor review.");

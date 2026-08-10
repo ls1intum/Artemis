@@ -76,7 +76,9 @@ class GenerationReviewServiceTest {
         assertThat(created).isOne();
         assertThat(GenerationReviewService.toReviewFindings(report)).singleElement().satisfies(finding -> {
             assertThat(finding.severity()).isEqualTo(Severity.HIGH);
-            assertThat(finding.description()).contains("concept review admitted no candidate", "required behavior");
+            // Mechanism-neutral: the run reaches this finding both when no candidate was admitted and when a review asking for a different concept could not be given one. The
+            // finding text states which, so the wrapper must not assert one of them.
+            assertThat(finding.description()).contains("concept review did not approve the concept", "required behavior");
         });
     }
 

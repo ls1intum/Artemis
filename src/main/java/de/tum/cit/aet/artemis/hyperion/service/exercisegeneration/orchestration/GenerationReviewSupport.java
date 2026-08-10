@@ -144,8 +144,8 @@ final class GenerationReviewSupport {
         List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>(report.findings());
         unresolvedConceptFindings.stream()
                 .map(finding -> new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONCEPT_ADMISSION_FINDING, finding,
-                        "The concept review admitted no candidate, so this exercise was generated from the one it rejected least. Deciding whether the objection matters is a "
-                                + "design call only you can make: accept it, regenerate from a sharper brief, or discard the draft."))
+                        "The concept review did not approve the concept this exercise was generated from; the finding states what it objected to. Deciding whether the objection "
+                                + "matters is a design call only you can make: accept it, regenerate from a sharper brief, or discard the draft."))
                 .filter(finding -> !findings.contains(finding)).forEach(findings::add);
         return new SpecFidelityReport(List.copyOf(findings));
     }

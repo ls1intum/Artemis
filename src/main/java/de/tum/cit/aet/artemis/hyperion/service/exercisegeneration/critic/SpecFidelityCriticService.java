@@ -946,10 +946,9 @@ public class SpecFidelityCriticService {
             case SPECIFICATION_REVIEW_FINDING -> builder.append("\n- The frozen specification still carries this pre-freeze review finding: \"").append(finding.requirement())
                     .append("\". It cannot be repaired downstream without changing the approved contract; preserve it for explicit instructor review rather than disguising it "
                             + "with artifact changes.");
-            case CONCEPT_ADMISSION_FINDING ->
-                builder.append("\n- The concept review admitted no candidate and this exercise was built from the least-rejected one: \"").append(finding.requirement()).append(
-                        "\". The objection is to the central design, which the instructor must settle; keep building the exercise this concept describes and do not restate "
-                                + "or paper over the objection in the artifacts.");
+            case CONCEPT_ADMISSION_FINDING -> builder.append("\n- The concept review did not approve the concept this exercise was built from: \"").append(finding.requirement())
+                    .append("\". The objection is to the central design, which the instructor must settle; keep building the exercise this concept describes and do not restate "
+                            + "or paper over the objection in the artifacts.");
         }
     }
 }
