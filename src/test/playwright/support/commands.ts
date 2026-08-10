@@ -266,8 +266,41 @@ export class Commands {
         await attachedWithin(30_000);
     };
 
+    /**
+     * Re-navigates to {@link expectedUrl} if the page has landed on the bare `/courses` fallback instead.
+     * <p>
+     * A reload re-bootstraps the SPA from scratch. When a lazy route chunk fails to resolve — a known
+     * symptom under heavy parallel CI load — the router falls back to `/courses`, and nothing ever
+     * navigates back. Any assertion about route-specific content then waits for an element that cannot
+     * exist, and every further reload re-loads the fallback, so a retry loop makes it worse rather than
+     * better. Restoring the route explicitly turns that dead end into one more attempt.
+     */
+    static restoreRouteIfDrifted = async (page: Page, expectedUrl: string): Promise<void> => {
+        if (Commands.driftedToCoursesFallback(expectedUrl, page.url())) {
+            await page.goto(expectedUrl, { waitUntil: 'domcontentloaded' });
+        }
+    };
+
+    /**
+     * Reloads the page, then restores the route if the reload drifted to the `/courses` fallback.
+     * <p>
+     * Pass {@link expectedUrl} when reloading in a loop: the URL the loop started on is the one to
+     * return to, whereas the URL immediately before a later reload may already be the fallback.
+     * Defaults to the current URL, which is what a single reload wants.
+     *
+     * @see restoreRouteIfDrifted for why the fallback is a dead end without this.
+     */
+    static reloadAndRestoreRoute = async (page: Page, expectedUrl?: string): Promise<void> => {
+        const targetUrl = expectedUrl ?? page.url();
+        await page.reload();
+        await Commands.restoreRouteIfDrifted(page, targetUrl);
+    };
+
     static reloadUntilFound = async (page: Page, locator: Locator, interval = 10000, timeout = 60000) => {
         const startTime = Date.now();
+        // The route this loop is polling on. Every reload returns here, so a drift to the /courses
+        // fallback costs one attempt instead of the whole timeout budget.
+        const requestedUrl = page.url();
 
         while (Date.now() - startTime < timeout) {
             try {
@@ -284,14 +317,16 @@ export class Commands {
                     throw new Error(`Page was closed while waiting for element matching "${locator}"`);
                 }
                 try {
-                    await page.reload();
+                    await Commands.reloadAndRestoreRoute(page, requestedUrl);
                 } catch (reloadError) {
-                    throw new Error(`Failed to reload page while waiting for element: ${reloadError}`, { cause: reloadError });
+                    throw new Error(`Failed to reload or restore the page while waiting for element: ${reloadError}`, { cause: reloadError });
                 }
             }
         }
 
-        throw new Error(`Timed out finding an element matching the "${locator}" locator (URL: ${page.url()})`);
+        // Name both routes: a final URL that is not the requested one is the signal that the SPA
+        // drifted and never came back, which is otherwise indistinguishable from a missing element.
+        throw new Error(`Timed out finding an element matching the "${locator}" locator (requested URL: ${requestedUrl}, final URL: ${page.url()})`);
     };
 
     static reloadUntilTextFound = async (page: Page, locator: Locator, expectedText: string | RegExp, interval = 5000, timeout = 60000) => {
