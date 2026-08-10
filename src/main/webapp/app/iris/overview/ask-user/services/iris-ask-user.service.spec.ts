@@ -21,6 +21,7 @@ describe('IrisAskUserService', () => {
     let stopTimerSubject: Subject<void>;
     let pageLeavingSubject: Subject<void>;
     let awaitingAnswerStub: ReturnType<typeof vi.fn>;
+    let currentLatestEventStub: ReturnType<typeof vi.fn>;
     let askUserHttpService: {
         latestSubmissionHasPoints: ReturnType<typeof vi.fn>;
         startTimer: ReturnType<typeof vi.fn>;
@@ -39,6 +40,7 @@ describe('IrisAskUserService', () => {
         stopTimerSubject = new Subject<void>();
         pageLeavingSubject = new Subject<void>();
         awaitingAnswerStub = vi.fn(() => false);
+        currentLatestEventStub = vi.fn(() => latestEventSubject.asObservable());
         askUserHttpService = {
             latestSubmissionHasPoints: vi.fn(() => of(true)),
             startTimer: vi.fn(() => of(new HttpResponse({ body: { timerExpiresAt: dayjs().add(2, 'minutes'), timeLimit: 120 } }))),
@@ -56,7 +58,7 @@ describe('IrisAskUserService', () => {
                 {
                     provide: IrisChatService,
                     useValue: {
-                        currentLatestEvent: vi.fn(() => latestEventSubject.asObservable()),
+                        currentLatestEvent: currentLatestEventStub,
                         currentRunInfo: vi.fn(() => runInfoSubject.asObservable()),
                         awaitingAnswer: awaitingAnswerStub,
                         stopTimer$: stopTimerSubject,
@@ -220,5 +222,127 @@ describe('IrisAskUserService', () => {
         await expect(firstValueFrom(service.startInClassQuiz(exerciseId))).rejects.toThrow(IrisErrorMessageKey.START_ASK_USER_FAILED);
 
         await expect(firstValueFrom(service.activeQuizTypeForExercise(exerciseId).pipe(take(1)))).resolves.toBeUndefined();
+    });
+
+    it('should resolve latestSubmissionHasPoints from the server for the current exercise', () => {
+        TestBed.tick();
+
+        expect(service.latestSubmissionHasPoints()).toBe(true);
+        expect(askUserHttpService.latestSubmissionHasPoints).toHaveBeenCalledExactlyOnceWith(exerciseId);
+    });
+
+    it('should resolve latestSubmissionHasPoints to false when no exercise is set', () => {
+        service.exercise.set(undefined);
+        TestBed.tick();
+
+        expect(service.latestSubmissionHasPoints()).toBe(false);
+    });
+
+    it('should resolve the active quiz type and isAnyAskUserMode for the current exercise', () => {
+        TestBed.tick();
+        expect(service.activeQuizType()).toBeUndefined();
+        expect(service.isAnyAskUserMode()).toBe(false);
+
+        service.setActiveQuizTypeForExercise(exerciseId, 'regular');
+        TestBed.tick();
+
+        expect(service.activeQuizType()).toBe('regular');
+        expect(service.isAnyAskUserMode()).toBe(true);
+    });
+
+    it('should resolve the active quiz type to undefined when no exercise is set', () => {
+        service.exercise.set(undefined);
+        TestBed.tick();
+
+        expect(service.activeQuizType()).toBeUndefined();
+        expect(service.isAnyAskUserMode()).toBe(false);
+    });
+
+    it('should not reload data when activate is called while already enabled', () => {
+        expect(currentLatestEventStub).toHaveBeenCalledOnce();
+
+        service.activate();
+
+        expect(currentLatestEventStub).toHaveBeenCalledOnce();
+    });
+
+    it('should disable the feature and be a no-op when deactivating again', () => {
+        expect(service.enabled()).toBe(true);
+
+        service.deactivate();
+        expect(service.enabled()).toBe(false);
+
+        service.deactivate();
+        expect(service.enabled()).toBe(false);
+    });
+
+    it('should not start the timer when there is no current programming exercise', () => {
+        service.exercise.set(undefined);
+
+        (service as any).startAskUserTimer();
+
+        expect(askUserHttpService.startTimer).not.toHaveBeenCalled();
+    });
+
+    it('should not update the timer state when the server response has no expiry', () => {
+        askUserHttpService.startTimer.mockReturnValue(of(new HttpResponse({ body: { timeLimit: 60 } as any })));
+
+        latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
+
+        expect(service.timerExpiresAt()).toBeUndefined();
+        expect(service.timeLimit()).toBe(0);
+    });
+
+    it('should be a no-op when a run fails while no quiz is active', () => {
+        runInfoSubject.next({ runId: 'run-1', state: IrisRunState.FAILED });
+
+        expect(service.quizActive()).toBe(false);
+        expect(service.quizStarted()).toBe(false);
+        expect(service.timerExpiresAt()).toBeUndefined();
+    });
+
+    it('should ignore pipe events when there is no current programming exercise', () => {
+        service.exercise.set(undefined);
+
+        latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
+
+        expect(service.quizActive()).toBe(false);
+        expect(askUserHttpService.startTimer).not.toHaveBeenCalled();
+    });
+
+    it('should restart the timer when the next question arrives', () => {
+        latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
+        expect(askUserHttpService.startTimer).toHaveBeenCalledOnce();
+
+        latestEventSubject.next(IrisPipeEvent.NEXT_QUESTION);
+
+        expect(askUserHttpService.startTimer).toHaveBeenCalledTimes(2);
+    });
+
+    it('should reset the quiz state when the quiz finishes', () => {
+        latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
+        expect(service.quizActive()).toBe(true);
+
+        latestEventSubject.next(IrisPipeEvent.QUIZ_FINISHED);
+
+        expect(service.quizActive()).toBe(false);
+        expect(service.quizStarted()).toBe(false);
+        expect(service.timerExpiresAt()).toBeUndefined();
+        expect(service.timeLimit()).toBe(0);
+    });
+
+    it('should ignore unrecognized pipe events', () => {
+        latestEventSubject.next(undefined);
+
+        expect(service.quizActive()).toBe(false);
+        expect(service.quizStarted()).toBe(false);
+    });
+
+    it('should not clear the active quiz type when the provided quiz type does not match the stored one', async () => {
+        service.setActiveQuizTypeForExercise(exerciseId, 'regular');
+
+        service.clearActiveQuizTypeForExercise(exerciseId, 'inClass');
+
+        await expect(firstValueFrom(service.activeQuizTypeForExercise(exerciseId).pipe(take(1)))).resolves.toBe('regular');
     });
 });

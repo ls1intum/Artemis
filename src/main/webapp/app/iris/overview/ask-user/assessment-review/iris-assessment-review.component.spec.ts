@@ -122,4 +122,49 @@ describe('IrisAssessmentReviewComponent', () => {
         expect((component as any).assessment().verdictReview).toBeUndefined();
         expect(alertSpy).toHaveBeenCalledExactlyOnceWith('error.http.400');
     });
+
+    it('should reject answers and update the local review state', () => {
+        const rejectButton = fixture.debugElement.queryAll(By.css('button'))[1].nativeElement as HTMLButtonElement;
+
+        rejectButton.click();
+        fixture.detectChanges();
+
+        expect(assessmentReviewService.rejectAnswers).toHaveBeenCalledExactlyOnceWith(3);
+        expect((component as any).assessment().verdictReview).toBe(IrisVerdictReview.REJECTED);
+        expect((component as any).reviewTranslationSuffix()).toBe('rejected');
+        expect(fixture.debugElement.query(By.css('span'))).not.toBeNull();
+    });
+
+    it('should not send a request when the assessment id is undefined', () => {
+        routeData.next({ reviewData: { course, exercise, assessment: { ...assessment(), id: undefined }, rows } });
+        fixture.detectChanges();
+
+        const acceptButton = fixture.debugElement.queryAll(By.css('button'))[0].nativeElement as HTMLButtonElement;
+        acceptButton.click();
+
+        expect(assessmentReviewService.acceptAnswers).not.toHaveBeenCalled();
+    });
+
+    it('should render the unsuspicious verdict text', () => {
+        routeData.next({ reviewData: { course, exercise, assessment: { ...assessment(), verdict: IrisVerdict.UNSUSPICIOUS }, rows } });
+        fixture.detectChanges();
+
+        expect((component as any).verdictTranslationSuffix()).toBe('unsuspicious');
+        expect(fixture.debugElement.query(By.css('.iris-verdict'))).not.toBeNull();
+    });
+
+    it('should fall back to an undefined verdict translation suffix for an unrecognized verdict', () => {
+        routeData.next({ reviewData: { course, exercise, assessment: { ...assessment(), verdict: 'UNKNOWN' as IrisVerdict }, rows } });
+        fixture.detectChanges();
+
+        expect((component as any).verdictTranslationSuffix()).toBeUndefined();
+        expect(fixture.debugElement.query(By.css('.iris-verdict'))).not.toBeNull();
+    });
+
+    it('should fall back to an undefined review translation suffix for an unrecognized review state', () => {
+        routeData.next({ reviewData: { course, exercise, assessment: assessment('UNKNOWN' as IrisVerdictReview), rows } });
+        fixture.detectChanges();
+
+        expect((component as any).reviewTranslationSuffix()).toBeUndefined();
+    });
 });
