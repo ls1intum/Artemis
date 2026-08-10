@@ -96,7 +96,13 @@ kill_tree() {
 }
 
 # How long to wait for a killed process to release its listening socket before giving up.
+# Validated rather than trusted: a non-numeric value would otherwise blow up the integer comparison below with a
+# bash arithmetic error, in a pre-flight step whose whole job is to get out of the developer's way.
 PORT_RELEASE_TIMEOUT="${PORT_RELEASE_TIMEOUT:-30}"
+if ! [[ "$PORT_RELEASE_TIMEOUT" =~ ^[0-9]+$ ]]; then
+    echo "Ignoring PORT_RELEASE_TIMEOUT='${PORT_RELEASE_TIMEOUT}': expected a non-negative integer number of seconds. Using 30."
+    PORT_RELEASE_TIMEOUT=30
+fi
 
 # Free a port if a leftover process holds it. Mirrors run-e2e-tests-local-fast.sh.
 check_port_available() {
@@ -115,10 +121,17 @@ check_port_available() {
         # Poll for the port to be released instead of sleeping a fixed 2s and checking once. A JVM
         # shutting down can hold its listening socket noticeably longer than that, and the single
         # check then aborts the whole run over a port that frees a moment later.
+        #
+        # Shaped so the check always happens at least once and always happens *after* the last sleep: a
+        # pre-kill `lsof` result must never be what decides the error, otherwise PORT_RELEASE_TIMEOUT=0
+        # skips the loop entirely and a port released during the final second is still reported as busy.
         local waited=0
-        while [ "$waited" -lt "$PORT_RELEASE_TIMEOUT" ]; do
+        while true; do
             listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
             if [ -z "$listeners" ]; then
+                break
+            fi
+            if [ "$waited" -ge "$PORT_RELEASE_TIMEOUT" ]; then
                 break
             fi
             sleep 1
