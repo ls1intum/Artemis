@@ -209,7 +209,7 @@ public class CourseOverviewResource {
             throw new AccessForbiddenException(ENTITY_NAME, courseId);
         }
         long notificationCount = userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(user.getId(), courseId);
-        return ResponseEntity.ok(new CourseForOverviewDTO(course, notificationCount));
+        return ResponseEntity.ok(CourseForOverviewDTO.of(course, notificationCount));
     }
 
     /**

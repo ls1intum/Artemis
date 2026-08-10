@@ -22,7 +22,7 @@ import { CourseForDashboardDTO } from 'app/course/shared/entities/course-for-das
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseAccessStateDTO } from 'app/course/shared/entities/course-access-state-dto';
-import { CourseForOverviewDTO } from 'app/course/shared/entities/course-for-overview-dto';
+import { CourseForOverviewDTO, courseFromOverviewDTO } from 'app/course/shared/entities/course-for-overview-dto';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -309,12 +309,16 @@ export class CourseManagementService implements OnDestroy {
         return this.http.get<CourseForOverviewDTO>(`${this.resourceUrl}/${courseId}/for-overview`, { observe: 'response' }).pipe(
             map((res: HttpResponse<CourseForOverviewDTO>): EntityResponseType => {
                 const dto = res.body;
-                if (dto?.course.id) {
-                    this.courseNotificationService.updateNotificationCountMap(dto.course.id, dto.courseNotificationCount);
+                if (!dto) {
+                    // HttpResponse<Course> already allows a null body; rebuild it rather than cast a clone
+                    return new HttpResponse<Course>({ headers: res.headers, status: res.status, statusText: res.statusText, url: res.url ?? undefined });
                 }
-                // Unwrap the DTO so the rest of the pipe (and every consumer) keeps working with a plain course response
-                return res.clone({ body: dto?.course ?? null });
+                this.courseNotificationService.updateNotificationCountMap(dto.id, dto.courseNotificationCount);
+                // Build the course the rest of the pipe and every consumer of the stored course still work with
+                return res.clone({ body: courseFromOverviewDTO(dto) });
             }),
+            // Still the shared post-processing: it derives the course icon path, the access-right flags and the title
+            // service entries that consumers of the stored course read
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
             tap((res: EntityResponseType) => this.storeCoursePreservingLoadedContent(courseId, res.body ?? undefined)),
         );

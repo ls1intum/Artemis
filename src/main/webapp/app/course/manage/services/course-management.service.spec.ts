@@ -566,7 +566,8 @@ describe('Course Management Service', () => {
         const notificationSpy = vi.spyOn(courseNotificationService, 'updateNotificationCountMap');
         let responseCourse: Course | null | undefined;
         courseManagementService.findCourseForOverview(7).subscribe((response) => (responseCourse = response.body));
-        httpMock.expectOne({ method: 'GET', url: 'api/course/courses/7/for-overview' }).flush({ course: { id: 7, title: 'Course' }, courseNotificationCount: 4 });
+        // The endpoint returns flat scalars now, not a nested course object
+        httpMock.expectOne({ method: 'GET', url: 'api/course/courses/7/for-overview' }).flush({ id: 7, title: 'Course', courseNotificationCount: 4 });
 
         expect(responseCourse).toMatchObject({ id: 7, title: 'Course' });
         expect(notificationSpy).toHaveBeenCalledExactlyOnceWith(7, 4);

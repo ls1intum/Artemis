@@ -1104,12 +1104,14 @@ public class CourseTestService {
 
         CourseForOverviewDTO overview = request.get("/api/course/courses/" + expected.getId() + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class);
 
-        assertThat(overview.course().getId()).isEqualTo(expected.getId());
-        assertThat(overview.course().getTitle()).isEqualTo(expected.getTitle());
-        // The whole point of this endpoint: none of the expensive content comes along
-        assertThat(overview.course().getExercises()).as("no exercises are loaded").isNullOrEmpty();
-        assertThat(overview.course().getLectures()).as("no lectures are loaded").isNullOrEmpty();
-        assertThat(overview.course().getExams()).as("no exams are loaded").isNullOrEmpty();
+        assertThat(overview.id()).isEqualTo(expected.getId());
+        assertThat(overview.title()).isEqualTo(expected.getTitle());
+        // The whole point of this endpoint: it is a flat projection, so none of the expensive content can come along.
+        // Asserting on the serialized response rather than the record, because the record simply has no such fields.
+        String body = request.performMvcRequest(MockMvcRequestBuilders.get("/api/course/courses/" + expected.getId() + "/for-overview")).andReturn().getResponse()
+                .getContentAsString();
+        assertThat(body).as("no content collections are serialized").doesNotContain("\"exercises\":", "\"lectures\":", "\"exams\":", "\"competencies\":", "\"tutorialGroups\":");
+        assertThat(body).as("nor a nested course object").doesNotContain("\"course\":");
     }
 
     // Test

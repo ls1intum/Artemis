@@ -28,10 +28,8 @@ class CourseEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchite
     }
 
     // TODO: Reduce this to 0 by removing entity references from DTOs
-    // NOTE: raised by one for CourseForOverviewDTO.course, which carries the course record the overview container
-    // needs. The exercises alongside it are projected (ExerciseOverviewDTO), so only the course itself remains.
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 3;
+        return 2;
     }
 }
