@@ -2,7 +2,7 @@
 
 **Status:** Proposed follow-up work after the course-tab lazy-loading and exercise-projection PR.
 
-**Last validated:** 2026-08-09. Baseline numbers unchanged; plan reviewed and extended 2026-08-10.
+**Last validated:** 2026-08-09. Plan reviewed and extended 2026-08-10; the `for-dashboard` retirement moved into the current PR.
 
 **Scope:** The student dashboard after login, the common course shell, and every student course tab in the web app.
 
@@ -370,89 +370,38 @@ whose exercise is unreleased or, for an online course, has not been launched by 
   grow. Keep the query separate from non-quiz scoring unless measurement shows a clear benefit and the SQL stays
   readable.
 
-## Follow-up PR 11: retire the remaining web dependencies on `for-dashboard`
+## Done in the current PR: the web no longer calls `for-dashboard`
 
-**Priority:** High for two paths, trivial for the other two. It is the precondition for ever removing the endpoint.
+All four web callers were retired, so the deprecation now blocks only on the native clients.
 
-### Problem
+| Caller | Was | Now |
+| --- | --- | --- |
+| `course-exercise-group-detail` | the whole course dashboard on a student route | the exercises tab's own response plus the stored course |
+| `course-registration-detail` | the dashboard used as a 403 probe | `access-state`, one EXISTS query and one boolean |
+| `course-management-container` | dashboard, alongside an existing `find()` for the same course | `find()` |
+| `learning-path-instructor-page` | dashboard, for the course record | `find()` |
 
-Exactly four production callers remain in `src/main/webapp`. None of them needs the payload it asks for.
+Two details worth remembering.
 
-| Caller | Route | What it reads | Replacement |
-| --- | --- | --- | --- |
-| `course-exercise-group-detail.component` | student, inside the course container | course (one field), the course exercises, achieved group points | `CourseOverviewExercisesService` + `CourseStorageService` |
-| `course-registration-detail.component` | student | nothing — the response is discarded, only the status code is used | `for-overview` |
-| `course-management-container.component` | instructor | the Course record | `courseManagementService.find` (already called in the same component) |
-| `learning-path-instructor-page.component` | instructor | the Course record | `courseManagementService.find` |
+The group detail page is a child route of the exercises tab inside the course container, so the normal path — exercises
+tab, then a group card — reuses the already loaded response and costs nothing; a deep link costs one request. The only
+field it reads off the course is `maxComplaintTimeDays`, via the exercise header.
 
-### Exercise group detail
+Keeping that page whole required two scalars in the exercise projection: `staticCodeAnalysisEnabled`, which gates the
+code-issue counter on the exercise header, and the result's `codeIssueCount`, which fills it. `for-dashboard` exposed
+both — `filterSensitiveInformation` does not strip them — so omitting them would have silently blanked the counter.
+Both ride on rows the projection already selects, so neither adds a query. `staticCodeAnalysisEnabled` moved from the
+profile's forbidden-field list to its required-field list.
 
-The student path, and the one that matters: it pays the full 32.6 KB entity payload to render one variant group. It
-needs three things.
+The new `GET courses/{courseId}/access-state` is deliberately the cheapest endpoint that can answer its question. It
+reuses `existsByLoginInCourseWithMinRoleOrAdmin`, so it hydrates nothing and needs no user load, and it returns
+`false` instead of 403 for a user without access: on the enrollment page that is the expected answer, and a 403 would
+have surfaced as a global error alert. That is also why the smaller-looking alternatives were rejected —
+`courses/{courseId}/title` has no course-membership check at all, and giving `available-tabs` a `skipAlert` 403 would
+have silenced legitimate alerts for the route guard.
 
-1. `course`, used for exactly one field. It is passed to `ExerciseHeadersInformationComponent`, whose only read is
-   `resolvedCourse().maxComplaintTimeDays` for the complaint due date. The container has already loaded the course via
-   `for-overview`, so `CourseStorageService.getCourse(courseId)` covers it with no request.
-2. `courseExercises`, from which `buildGroupsFromExercises` rebuilds the group. It reads only
-   `exercise.exerciseVariantGroup`, and the cards then read id, title, type, difficulty, categories, maxPoints,
-   `includedInOverallScore`, the four dates, and one participation with one submission and one result.
-   `ExerciseOverviewDTO` carries all of it. Problem statements are already fetched separately through
-   `exerciseVariantGroupService.getProblemStatements`, because `for-dashboard` strips them too.
-3. `achievedGroupPoints`, read from `ScoresStorageService`, which is populated from `achievedPointsPerVariantGroup` —
-   returned by `exercises-for-overview`.
-
-So the replacement is `CourseOverviewExercisesService.loadIfNeeded(courseId)` plus the stored course. The route
-`exercises/group/:groupId` is a child of the exercises tab inside the course container, so the normal path (exercises
-tab, then a group card) already has the response: **zero requests**. A deep link costs one `exercises-for-overview`.
-
-One real contract gap must be closed first: `ResultOverviewDTO` has no `codeIssueCount`, which
-`getStaticCodeAnalysisItem` displays for programming exercises with static code analysis enabled. `for-dashboard`
-returns it today, so switching without it would silently render 0 issues. Add the column to the DTO and its
-projection; it is one more scalar on a row already being selected, not another query.
-
-Everything else the header reads is equivalent, and this is worth stating because it looks like a loss and is not:
-`numberOfSubmissions` and the Athena feedback-request count walk the participation's full submission and result
-history, but `filterParticipationForCourseDashboard` already reduces every participation to a single submission with a
-single result. Both paths therefore see at most one of each. That behaviour is unchanged by this migration; if it is
-wrong, it is wrong today and belongs in its own fix.
-
-### Registration detail
-
-`isCourseFullyAccessible` calls the heaviest endpoint in the system, maps the response to `true`, discards it, and
-redirects to `/courses/{id}` — which then loads the course again. It only needs the status code.
-
-Use `for-overview`. It was written to mirror `for-dashboard`'s authorization exactly, including the
-`noAccessButCouldEnroll` `AccessForbiddenAlertException` with `skipAlert`, so the enrollment page stays silent for a
-user who is not enrolled. That fidelity is the reason not to reach for a smaller endpoint:
-
-- `courses/{courseId}/title` is one query, but it carries only `@EnforceAtLeastStudent` and no course-membership
-  check, so it answers for any logged-in user. It is not an enrollment probe.
-- `available-tabs` does check membership, but throws a plain `AccessForbiddenException`. Without `skipAlert` the
-  global `ErrorHandlerInterceptor` would raise a toast on the enrollment page, and adding `skipAlert` there would
-  silence the alert for every other consumer, including the route guard.
-
-`for-overview` is roughly 700 bytes and three statements against 32.6 KB, and its response is the same one the course
-container needs immediately after the redirect.
-
-### Instructor pages
-
-Both only assign `this.course`. `course-management-container` is the clearer case: it already calls
-`courseManagementService.find(courseId)` in `subscribeToCourseUpdates` for the same course, so its `loadCourse()` is a
-redundant second request for data it is about to receive anyway. Instructor traffic is low; prefer the plain contract
-over a tuned one.
-
-### Acceptance criteria
-
-- No `findOneForDashboard` call remains in `src/main/webapp`; the stale mock in `metis-conversation.service.spec.ts`
-  goes with it.
-- `ResultOverviewDTO` carries `codeIssueCount`, asserted by the payload contract test.
-- The student exercise-group detail page hydrates no Course, Participation, Submission, or Result entity graph, and
-  costs zero additional requests when reached from the exercises tab.
-- The enrollment page still shows no error toast for a user who is not enrolled but may self-enroll, and still
-  redirects when the user is enrolled.
-- Instructor management screens are unchanged.
-- The endpoint itself is untouched and stays green for native clients. Once no web caller remains, record the native
-  clients as the only remaining blocker for removal and give the endpoint a removal target.
+Remaining work before the endpoint can be deleted: migrate the iOS, Android, and VS Code clients, which is explicitly
+out of scope here. Once they are off it, give the endpoint a removal target.
 
 ## Follow-up PR 12: consolidate the two course score calculations
 
@@ -497,12 +446,11 @@ severity, and isolation:
 2. Project the login dashboard (PR 1).
 3. Remove the communication N+1, then bound message histories (PR 3).
 4. Bulk-project learning-path navigation (PR 2).
-5. Retire the web `for-dashboard` callers (PR 11), starting with the student exercise-group detail page.
-6. Make the common shell scalar and remove the grade-query overhead as separate PRs (PR 4, PR 5).
-7. Push calendar filtering into the DB and project tutorial-group summaries (PR 6, PR 7).
-8. Consolidate Exams, FAQ, and Training contracts in independent small PRs (PR 8).
-9. Handle Iris startup and history paging in an Iris-owned PR (PR 9).
-10. Restrict overview quiz-score rows when row-volume measurements justify the shared-query change (PR 10).
+5. Make the common shell scalar and remove the grade-query overhead as separate PRs (PR 4, PR 5).
+6. Push calendar filtering into the DB and project tutorial-group summaries (PR 6, PR 7).
+7. Consolidate Exams, FAQ, and Training contracts in independent small PRs (PR 8).
+8. Handle Iris startup and history paging in an Iris-owned PR (PR 9).
+9. Restrict overview quiz-score rows when row-volume measurements justify the shared-query change (PR 10).
 
 Dashboard, learning path, and communication are independent and can be developed in parallel, but each should be
 reviewed and measured separately.
