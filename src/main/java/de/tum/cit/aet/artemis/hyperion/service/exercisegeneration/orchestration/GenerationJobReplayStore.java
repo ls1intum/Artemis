@@ -597,8 +597,13 @@ final class GenerationJobReplayStore {
         String key = key(exerciseId);
         jobMap().lock(key);
         try {
+            // Fails closed: the caller must still be the exercise's current run, evidenced either by the transcript naming it or by it still holding the job slot. Absence of
+            // both is not permission — the transcript carries the same terminal-replay TTL as the artifact, so once it has expired or been discarded there is nothing left to
+            // retain against, and treating that as "no newer run exists" would let a long-delayed superseded worker repopulate the slot.
             GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
-            if (transcript != null && !transcript.jobId().equals(jobId)) {
+            GenerationJobService.JobInfo activeJob = jobMap().get(key);
+            boolean currentRun = transcript != null && transcript.jobId().equals(jobId) || activeJob != null && activeJob.jobId().equals(jobId);
+            if (!currentRun) {
                 return false;
             }
             artifactMap().set(key, new GenerationJobService.JobArtifacts(jobId, userLogin, artifacts), terminalReplayTtlSeconds, TimeUnit.SECONDS);

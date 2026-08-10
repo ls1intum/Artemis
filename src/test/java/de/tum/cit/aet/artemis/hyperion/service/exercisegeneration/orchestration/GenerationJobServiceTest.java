@@ -699,6 +699,25 @@ class GenerationJobServiceTest {
         assertThat(jobService.getRetainedArtifacts(owner, exercise)).isEmpty();
     }
 
+    /**
+     * The transcript carries the same terminal-replay TTL as the artifact, so a long-delayed worker can arrive after it has expired. Absence of evidence is not evidence that
+     * this run is still current, so the write must fail closed rather than repopulate the slot.
+     */
+    @Test
+    void retainUnsavedArtifacts_isRefusedWhenNeitherTranscriptNorActiveJobNamesTheRun() {
+        long exerciseId = 603L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        jobService.clearJob(exerciseId, jobId);
+        // Stands in for the transcript ageing out of the replay store while a superseded worker was still winding down.
+        transcriptMap().remove(String.valueOf(exerciseId));
+
+        jobService.retainUnsavedArtifacts(exerciseId, jobId, owner.getLogin(), retainedArtifacts(jobId));
+
+        assertThat(jobService.getRetainedArtifacts(owner, exercise)).isEmpty();
+    }
+
     @Test
     void getRetainedArtifacts_forADifferentUser_isEmpty_ownerOnlyWithNoSanitizedFallback() {
         long exerciseId = 601L;
