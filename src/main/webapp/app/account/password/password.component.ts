@@ -109,6 +109,15 @@ export class PasswordComponent implements OnInit {
      */
     onPasswordMayBeCompromisedChange(compromised: boolean): void {
         this.passwordMayBeCompromised.set(compromised);
+        if (!compromised) {
+            // Restore the safe defaults rather than leaving the previous selection behind. The three options are
+            // rendered inside `@if (passwordMayBeCompromised())`, so a group deselected before closing the section
+            // would otherwise still be deselected when it is reopened - silently keeping a credential the user
+            // would reasonably expect to be revoked, having been shown these as selected by default.
+            this.revokePasskeys.set(true);
+            this.revokeSshKeys.set(true);
+            this.revokeVcsAccessTokens.set(true);
+        }
     }
 
     /**

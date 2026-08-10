@@ -107,6 +107,22 @@ describe('Password Component Tests', () => {
             expect(service.changePassword).toHaveBeenCalledWith('myPassword', 'oldPassword', undefined);
         });
 
+        it('should restore the safe defaults when the compromise choice is withdrawn', () => {
+            // The three options are rendered inside `@if (passwordMayBeCompromised())`, so closing the section used to
+            // leave a deselected group deselected. Reopening then presented options the user had been told default to
+            // selected, while silently keeping a credential they would expect to be revoked.
+            comp.onPasswordMayBeCompromisedChange(true);
+            comp.revokeSshKeys.set(false);
+            comp.revokeVcsAccessTokens.set(false);
+
+            comp.onPasswordMayBeCompromisedChange(false);
+            comp.onPasswordMayBeCompromisedChange(true);
+
+            expect(comp.revokePasskeys()).toBe(true);
+            expect(comp.revokeSshKeys()).toBe(true);
+            expect(comp.revokeVcsAccessTokens()).toBe(true);
+        });
+
         it('should set success to true upon success', () => {
             // GIVEN
             vi.spyOn(service, 'changePassword').mockReturnValue(of(void 0));
