@@ -267,20 +267,24 @@ public class UserService {
     /**
      * Reset user password for given reset key
      *
-     * @param newPassword new password string
-     * @param key         reset key
+     * @param newPassword      new password string
+     * @param key              reset key
+     * @param revocationChoice which of the user's other credentials to revoke alongside the reset
      * @return user for whom the password was performed
      */
-    public Optional<User> completePasswordReset(String newPassword, String key) {
+    public Optional<User> completePasswordReset(String newPassword, String key, CredentialRevocationChoiceDTO revocationChoice) {
         log.debug("Reset user password for reset key {}", key);
         return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
             user.setPassword(passwordService.hashPassword(newPassword));
             user.setResetKey(null);
             user.setResetDate(null);
             saveUser(user);
-            // A reset is the recovery flow: either the owner is remediating a compromise, and an intruder's passkey or
-            // token must not survive it, or an intruder has just taken the account over and already controls it.
-            accountCredentialRevocationService.revokeAllCredentials(user, "password reset completed");
+            // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
+            // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
+            // exactly as they do when changing a password from inside the account - with the difference that a reset
+            // defaults to revoking everything (see KeyAndPasswordVM#revokeCredentialsOrAll), because completing one
+            // only proves control of the mailbox.
+            accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password reset completed");
             return user;
         });
     }

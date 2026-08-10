@@ -284,16 +284,46 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    void aCompletedPasswordResetRevokesEverything() {
-        // The remediation a user is told to perform has to end the intrusion, not just change one of several credentials.
+    void aCompletedPasswordResetRevokesEverythingByDefault() {
+        // The remediation a user is told to perform has to end the intrusion, not just change one of several credentials,
+        // so revoking everything is what a reset does unless the user says otherwise.
         giveUserCredentials();
+        prepareResetKey();
+
+        userService.completePasswordReset("new-Password-123", "reset-key-" + user.getId(), new CredentialRevocationChoiceDTO(true, true, true)).orElseThrow();
+
+        assertAllCredentialsRevoked();
+    }
+
+    @Test
+    void aCompletedPasswordResetKeepsTheCredentialsTheUserChoseToKeep() {
+        // Forgetting a password is not the same as losing it to someone else. Re-enrolling every authenticator and key is
+        // a real cost, so the user can keep them - and the choice has to be honoured rather than overridden by the reset.
+        giveUserCredentials();
+        prepareResetKey();
+
+        userService.completePasswordReset("new-Password-123", "reset-key-" + user.getId(), CredentialRevocationChoiceDTO.none()).orElseThrow();
+
+        assertAllCredentialsKept();
+    }
+
+    @Test
+    void aCompletedPasswordResetRevokesOnlyTheSelectedCredentialType() {
+        // A partial choice must be applied exactly: revoking SSH keys must not take the passkeys with it.
+        giveUserCredentials();
+        prepareResetKey();
+
+        userService.completePasswordReset("new-Password-123", "reset-key-" + user.getId(), new CredentialRevocationChoiceDTO(false, true, false)).orElseThrow();
+
+        assertPasskeyKept();
+        assertVcsAccessTokensKept();
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+    }
+
+    private void prepareResetKey() {
         user.setResetKey("reset-key-" + user.getId());
         user.setResetDate(Instant.now());
         userRepository.save(user);
-
-        userService.completePasswordReset("new-Password-123", "reset-key-" + user.getId()).orElseThrow();
-
-        assertAllCredentialsRevoked();
     }
 
     @Test
