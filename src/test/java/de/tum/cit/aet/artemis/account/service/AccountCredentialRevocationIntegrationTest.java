@@ -8,10 +8,12 @@ import java.time.ZonedDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
@@ -71,6 +73,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     private PasskeyCredentialsRepository passkeyCredentialsRepository;
 
     @Autowired
+    private PasskeyCredentialCleanupRepository passkeyCredentialCleanupRepository;
+
+    @Autowired
     private PasskeyCredentialUtilService passkeyCredentialUtilService;
 
     @Autowired
@@ -99,6 +104,32 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     private long participationId;
 
     private String repositoryUri;
+
+    /**
+     * The cleanup repository must delete passkeys through its own query, and must never be feature-gated.
+     * <p>
+     * Both halves matter. The query is exercised so that a malformed JPQL statement fails here: Hibernate validates
+     * repository queries lazily, so a broken one otherwise survives mocked unit tests and only surfaces at startup.
+     * The annotation check guards the actual defect this repository exists for - the previous implementation went
+     * through {@code Optional<PasskeyCredentialsRepository>}, which is {@code @Conditional(PasskeyEnabled.class)} and
+     * therefore absent while passkeys are disabled, so revocation silently left the rows in place and they became
+     * usable again on re-enable. Asserting the absence of the annotation is what keeps that from being reintroduced;
+     * booting a second Spring context with the feature off would cost far more and prove no more.
+     */
+    @Test
+    void shouldDeletePasskeysUnconditionally() {
+        assertThat(PasskeyCredentialCleanupRepository.class.getAnnotation(Conditional.class))
+                .as("the cleanup repository must not be feature-gated, otherwise revocation is a no-op while passkeys are disabled").isNull();
+
+        passkeyCredentialCleanupRepository.deleteAllByUserId(user.getId());
+        var credentialId = passkeyCredentialUtilService.createAndSavePasskeyCredential(user).getCredentialId();
+        assertThat(passkeyCredentialsRepository.findByCredentialId(credentialId)).isPresent();
+
+        var deleted = passkeyCredentialCleanupRepository.deleteAllByUserId(user.getId());
+
+        assertThat(deleted).isEqualTo(1);
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
+    }
 
     @BeforeEach
     void initTestCase() {

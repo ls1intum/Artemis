@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.account.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -11,7 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
+import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
@@ -52,9 +50,11 @@ public class AccountCredentialRevocationService {
     private final UserRepository userRepository;
 
     /**
-     * Empty when passkeys are disabled: the repository is {@code @Conditional(PasskeyEnabled.class)}.
+     * Deliberately the unconditional cleanup repository rather than {@code Optional<PasskeyCredentialsRepository>}:
+     * revocation must delete passkeys even while the feature is disabled, because rows enrolled beforehand survive and
+     * become usable again on re-enable.
      */
-    private final Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository;
+    private final PasskeyCredentialCleanupRepository passkeyCredentialCleanupRepository;
 
     private final UserSshPublicKeyService userSshPublicKeyService;
 
@@ -62,11 +62,11 @@ public class AccountCredentialRevocationService {
 
     private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
 
-    public AccountCredentialRevocationService(UserRepository userRepository, Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository,
+    public AccountCredentialRevocationService(UserRepository userRepository, PasskeyCredentialCleanupRepository passkeyCredentialCleanupRepository,
             UserSshPublicKeyService userSshPublicKeyService, ParticipationVcsAccessTokenService participationVcsAccessTokenService,
             RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
         this.userRepository = userRepository;
-        this.passkeyCredentialsRepository = passkeyCredentialsRepository;
+        this.passkeyCredentialCleanupRepository = passkeyCredentialCleanupRepository;
         this.userSshPublicKeyService = userSshPublicKeyService;
         this.participationVcsAccessTokenService = participationVcsAccessTokenService;
         this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
@@ -135,11 +135,14 @@ public class AccountCredentialRevocationService {
 
     /**
      * Deletes all passkeys of the user, so that an authenticator enrolled by an intruder cannot outlive the password.
+     * <p>
+     * Runs whether or not the passkey feature is enabled: a passkey enrolled while it was on is still in the database
+     * after it is switched off, and works again as soon as it is switched back on.
      *
      * @param user the account whose passkeys are deleted
-     * @return how many passkeys were deleted, or 0 when passkeys are disabled
+     * @return how many passkeys were deleted
      */
     private int revokePasskeys(User user) {
-        return passkeyCredentialsRepository.map(repository -> repository.deleteAllByUserId(user.getId())).orElse(0);
+        return passkeyCredentialCleanupRepository.deleteAllByUserId(user.getId());
     }
 }
