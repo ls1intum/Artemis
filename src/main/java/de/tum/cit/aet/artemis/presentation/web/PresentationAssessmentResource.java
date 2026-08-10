@@ -23,9 +23,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
@@ -50,13 +49,9 @@ public class PresentationAssessmentResource {
 
     private final CourseRepository courseRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
-    public PresentationAssessmentResource(PresentationAssessmentService presentationAssessmentService, CourseRepository courseRepository,
-            AuthorizationCheckService authCheckService) {
+    public PresentationAssessmentResource(PresentationAssessmentService presentationAssessmentService, CourseRepository courseRepository) {
         this.presentationAssessmentService = presentationAssessmentService;
         this.courseRepository = courseRepository;
-        this.authCheckService = authCheckService;
     }
 
     /**
@@ -66,11 +61,10 @@ public class PresentationAssessmentResource {
      * @return the ResponseEntity with status 200 (OK) and the presentation assessments
      */
     @GetMapping("courses/{courseId}/presentation-assessments")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<PresentationAssessmentDTO>> getPresentationAssessments(@PathVariable long courseId) {
         log.debug("REST request to get presentation assessments for course {}", courseId);
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         List<PresentationAssessmentDTO> presentationAssessments = presentationAssessmentService.findAllByCourseId(courseId).stream().map(PresentationAssessmentDTO::of).toList();
         return ResponseEntity.ok(presentationAssessments);
     }
@@ -83,11 +77,10 @@ public class PresentationAssessmentResource {
      * @return the ResponseEntity with status 200 (OK) and the presentation assessment
      */
     @GetMapping("courses/{courseId}/presentation-assessments/{assessmentId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<PresentationAssessmentDTO> getPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to get presentation assessment {} for course {}", assessmentId, courseId);
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentService.findByIdAndCourseIdElseThrow(courseId, assessmentId)));
     }
 
@@ -100,12 +93,12 @@ public class PresentationAssessmentResource {
      * @throws URISyntaxException if the Location URI is invalid
      */
     @PostMapping("courses/{courseId}/presentation-assessments")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<PresentationAssessmentDTO> createPresentationAssessment(@PathVariable long courseId, @Valid @RequestBody PresentationAssessmentDTO dto)
             throws URISyntaxException {
         log.debug("REST request to create presentation assessment for course {}: {}", courseId, dto);
+        validatePresentationAssessmentCourseId(courseId, dto);
         Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         PresentationAssessment presentationAssessment = presentationAssessmentService.create(course, dto);
         PresentationAssessmentDTO result = PresentationAssessmentDTO.of(presentationAssessment);
         return ResponseEntity.created(new URI("/api/presentation/courses/" + courseId + "/presentation-assessments/" + result.id())).body(result);
@@ -120,12 +113,12 @@ public class PresentationAssessmentResource {
      * @return the ResponseEntity with status 200 (OK) and the updated presentation assessment
      */
     @PutMapping("courses/{courseId}/presentation-assessments/{assessmentId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<PresentationAssessmentDTO> updatePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId,
             @Valid @RequestBody PresentationAssessmentDTO dto) {
         log.debug("REST request to update presentation assessment {} for course {}: {}", assessmentId, courseId, dto);
+        validatePresentationAssessmentCourseId(courseId, dto);
         Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         return ResponseEntity.ok(presentationAssessmentService.update(course, assessmentId, dto));
     }
 
@@ -137,40 +130,36 @@ public class PresentationAssessmentResource {
      * @return the ResponseEntity with status 204 (No Content)
      */
     @DeleteMapping("courses/{courseId}/presentation-assessments/{assessmentId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> deletePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to delete presentation assessment {} for course {}", assessmentId, courseId);
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         presentationAssessmentService.delete(courseId, assessmentId);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<PresentationAssessmentInstanceDTO> createPresentationAssessmentInstance(@PathVariable long courseId, @PathVariable long assessmentId,
             @Valid @RequestBody PresentationAssessmentInstanceDTO dto) throws URISyntaxException {
         Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         PresentationAssessmentInstance instance = presentationAssessmentService.createInstance(course, assessmentId, dto);
         return ResponseEntity.created(new URI("/api/presentation/courses/" + courseId + "/presentation-assessments/" + assessmentId + "/instances/" + instance.getId()))
                 .body(PresentationAssessmentInstanceDTO.of(instance));
     }
 
     @PutMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<PresentationAssessmentInstanceDTO> updatePresentationAssessmentInstance(@PathVariable long courseId, @PathVariable long assessmentId,
             @PathVariable long instanceId, @Valid @RequestBody PresentationAssessmentInstanceDTO dto) {
         Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         return ResponseEntity.ok(PresentationAssessmentInstanceDTO.of(presentationAssessmentService.updateInstance(course, assessmentId, instanceId, dto)));
     }
 
     @DeleteMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> deletePresentationAssessmentInstance(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable long instanceId) {
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         presentationAssessmentService.deleteInstance(courseId, assessmentId, instanceId);
         return ResponseEntity.noContent().build();
     }
@@ -183,11 +172,10 @@ public class PresentationAssessmentResource {
      * @return the ResponseEntity with status 200 (OK) and the assigned students
      */
     @GetMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<PresentationAssessmentStudentDTO>> getPresentationAssessmentStudents(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to get students for presentation assessment {} in course {}", assessmentId, courseId);
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         return ResponseEntity.ok(presentationAssessmentService.findStudents(courseId, assessmentId).stream().map(PresentationAssessmentStudentDTO::of).toList());
     }
 
@@ -200,11 +188,10 @@ public class PresentationAssessmentResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> addStudentToPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable String studentLogin) {
         log.debug("REST request to add student {} to presentation assessment {} in course {}", studentLogin, assessmentId, courseId);
         Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         presentationAssessmentService.addStudent(course, assessmentId, studentLogin);
         return ResponseEntity.ok().build();
     }
@@ -218,11 +205,10 @@ public class PresentationAssessmentResource {
      * @return the ResponseEntity with status 204 (No Content)
      */
     @DeleteMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> removeStudentFromPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable String studentLogin) {
         log.debug("REST request to remove student {} from presentation assessment {} in course {}", studentLogin, assessmentId, courseId);
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         presentationAssessmentService.removeStudent(courseId, assessmentId, studentLogin);
         return ResponseEntity.noContent().build();
     }
@@ -233,5 +219,11 @@ public class PresentationAssessmentResource {
             throw new AccessForbiddenException("Presentation assessments are disabled for this course.");
         }
         return course;
+    }
+
+    private void validatePresentationAssessmentCourseId(long courseId, PresentationAssessmentDTO dto) {
+        if (dto.courseId() != null && dto.courseId() != courseId) {
+            throw new BadRequestAlertException("The path course id and body course id must match", PresentationAssessment.ENTITY_NAME, "courseIdMismatch");
+        }
     }
 }

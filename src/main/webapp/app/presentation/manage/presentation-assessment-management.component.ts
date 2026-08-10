@@ -6,12 +6,16 @@ import { finalize } from 'rxjs/operators';
 
 import { faList, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DialogService } from 'primeng/dynamicdialog';
-import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
-import { MessageModule } from 'primeng/message';
 import { FormsModule } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
+import {
+    TumUiButtonComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiMessageComponent,
+    TumUiTableDirective,
+    TumUiTableSortEvent,
+    TumUiTableSortableColumnComponent,
+} from '@tumaet/ui-angular';
 
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -24,7 +28,6 @@ import { PresentationAssessmentService } from 'app/presentation/manage/presentat
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { PresentationAssessmentFormDialogComponent, PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
-import { TranslateService } from '@ngx-translate/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PresentationAssessmentInstanceFormDialogComponent } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
@@ -50,21 +53,23 @@ interface PresentationStudentRow {
         DeleteButtonDirective,
         ArtemisDatePipe,
         CourseTitleBarActionsDirective,
-        ButtonModule,
-        TableModule,
-        MessageModule,
         FormsModule,
-        InputTextModule,
         ArtemisTranslatePipe,
         RouterLink,
+        PresentationAssessmentFormDialogComponent,
+        PresentationAssessmentInstanceFormDialogComponent,
+        TumUiButtonComponent,
+        TumUiDialogComponent,
+        TumUiInputDirective,
+        TumUiMessageComponent,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
     ],
 })
 export class PresentationAssessmentManagementComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly presentationAssessmentService = inject(PresentationAssessmentService);
     private readonly alertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
     private readonly courseManagementService = inject(CourseManagementService);
 
     protected readonly faPencilAlt = faPencilAlt;
@@ -87,6 +92,14 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     readonly instanceTimeFilter = signal<InstanceTimeFilter>('all');
     readonly expandedInstanceIds = signal<number[]>([]);
     readonly expandedStudentRows = signal<string[]>([]);
+    readonly presentationDialogVisible = signal(false);
+    readonly dialogPresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
+    readonly instanceDialogVisible = signal(false);
+    readonly dialogInstancePresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
+    readonly dialogInstance = signal<PresentationAssessmentInstance | undefined>(undefined);
+    readonly dialogAssignedStudents = signal<User[]>([]);
+    readonly studentSortField = signal('studentLogin');
+    readonly studentSortOrder = signal(1);
     readonly selectedPresentation = computed(() => {
         const selectedId = this.selectedPresentationId();
         return this.presentationAssessments().find((assessment) => assessment.id === selectedId) ?? this.presentationAssessments()[0];
@@ -101,7 +114,10 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     readonly selectedInstances = computed(() => this.filterInstances(this.selectedPresentation()?.instances ?? []));
     readonly filteredStudentRows = computed(() => {
         const query = this.studentSearchTerm().trim().toLocaleLowerCase();
-        return query ? this.studentRows().filter((row) => row.studentLogin.toLocaleLowerCase().includes(query)) : this.studentRows();
+        const rows = query ? this.studentRows().filter((row) => row.studentLogin.toLocaleLowerCase().includes(query)) : this.studentRows();
+        const field = this.studentSortField();
+        const order = this.studentSortOrder();
+        return [...rows].sort((first, second) => this.compareStudentRows(first, second, field) * order);
     });
 
     private dialogErrorSource = new Subject<string>();
@@ -144,6 +160,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     updateStudentSearch(searchTerm: string): void {
         this.studentSearchTerm.set(searchTerm);
+    }
+
+    onStudentSort(event: TumUiTableSortEvent): void {
+        this.studentSortField.set(event.field);
+        this.studentSortOrder.set(event.order);
     }
 
     getLinkedExerciseRoute(presentationAssessment: PresentationAssessment): (string | number)[] | undefined {
@@ -216,36 +237,12 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     private openPresentationDialog(presentationAssessment?: PresentationAssessment): void {
-        const dialogRef = this.dialogService.open(PresentationAssessmentFormDialogComponent, {
-            header: this.translateService.instant(
-                presentationAssessment ? 'artemisApp.presentationAssessment.home.editLabel' : 'artemisApp.presentationAssessment.home.createLabel',
-            ),
-            width: 'min(48rem, calc(100vw - 2rem))',
-            breakpoints: {
-                '960px': 'calc(100vw - 2rem)',
-                '640px': '100vw',
-            },
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            draggable: false,
-            data: {
-                courseId: this.courseId(),
-                course: this.course(),
-                presentationAssessment,
-                exercises: this.exercises(),
-            },
-        });
-
-        dialogRef?.onClose.subscribe((result: PresentationAssessmentFormDialogResult | undefined) => {
-            if (result) {
-                this.save(result);
-            }
-        });
+        this.dialogPresentationAssessment.set(presentationAssessment);
+        this.presentationDialogVisible.set(true);
     }
 
-    private save(result: PresentationAssessmentFormDialogResult): void {
+    handlePresentationDialogSave(result: PresentationAssessmentFormDialogResult): void {
+        this.presentationDialogVisible.set(false);
         this.isSaving.set(true);
         const presentationAssessment = result.presentationAssessment;
         const isUpdate = Boolean(presentationAssessment.id);
@@ -262,40 +259,44 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         });
     }
 
+    handlePresentationDialogCancel(): void {
+        this.presentationDialogVisible.set(false);
+    }
+
     private openInstanceDialog(presentationAssessment: PresentationAssessment, instance?: PresentationAssessmentInstance): void {
         const course = this.course();
         if (!presentationAssessment.id || !course) {
             return;
         }
-        const dialogRef = this.dialogService.open(PresentationAssessmentInstanceFormDialogComponent, {
-            header: this.translateService.instant(instance ? 'artemisApp.presentationAssessment.instance.editLabel' : 'artemisApp.presentationAssessment.instance.createLabel'),
-            width: 'min(70rem, calc(100vw - 2rem))',
-            modal: true,
-            draggable: false,
-            data: {
-                courseId: this.courseId(),
-                course,
-                presentationAssessment,
-                instance,
-                assignedStudents: (instance?.studentLogins ?? []).map((login) => {
-                    const user = new User(undefined, login);
-                    return user;
-                }),
-            },
+        this.dialogInstancePresentationAssessment.set(presentationAssessment);
+        this.dialogInstance.set(instance);
+        this.dialogAssignedStudents.set(
+            (instance?.studentLogins ?? []).map((login) => {
+                const user = new User(undefined, login);
+                return user;
+            }),
+        );
+        this.instanceDialogVisible.set(true);
+    }
+
+    handleInstanceDialogSave(result: PresentationAssessmentInstance): void {
+        const presentationAssessment = this.dialogInstancePresentationAssessment();
+        if (!presentationAssessment?.id) {
+            return;
+        }
+        this.instanceDialogVisible.set(false);
+        this.isSaving.set(true);
+        const request = result.id
+            ? this.presentationAssessmentService.updateInstance(this.courseId(), presentationAssessment.id, result)
+            : this.presentationAssessmentService.createInstance(this.courseId(), presentationAssessment.id, result);
+        request.pipe(finalize(() => this.isSaving.set(false))).subscribe({
+            next: () => this.loadAll(),
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
-        dialogRef?.onClose.subscribe((result: PresentationAssessmentInstance | undefined) => {
-            if (!result) {
-                return;
-            }
-            this.isSaving.set(true);
-            const request = result.id
-                ? this.presentationAssessmentService.updateInstance(this.courseId(), presentationAssessment.id!, result)
-                : this.presentationAssessmentService.createInstance(this.courseId(), presentationAssessment.id!, result);
-            request.pipe(finalize(() => this.isSaving.set(false))).subscribe({
-                next: () => this.loadAll(),
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
-        });
+    }
+
+    handleInstanceDialogCancel(): void {
+        this.instanceDialogVisible.set(false);
     }
 
     private filterInstances(instances: PresentationAssessmentInstance[]): PresentationAssessmentInstance[] {
@@ -308,5 +309,35 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     private studentRowKey(row: PresentationStudentRow): string {
         return `${row.instance.id ?? 'new'}:${row.studentLogin}`;
+    }
+
+    private compareStudentRows(first: PresentationStudentRow, second: PresentationStudentRow, field: string): number {
+        const firstValue = this.studentSortValue(first, field);
+        const secondValue = this.studentSortValue(second, field);
+        if (firstValue === secondValue) {
+            return 0;
+        }
+        if (firstValue === undefined) {
+            return 1;
+        }
+        if (secondValue === undefined) {
+            return -1;
+        }
+        return firstValue < secondValue ? -1 : 1;
+    }
+
+    private studentSortValue(row: PresentationStudentRow, field: string): string | number | undefined {
+        switch (field) {
+            case 'studentLogin':
+                return row.studentLogin.toLocaleLowerCase();
+            case 'presentationTitle':
+                return row.presentationAssessment.title?.toLocaleLowerCase();
+            case 'presentationDate':
+                return row.instance.presentationDate?.valueOf();
+            case 'resultPoints':
+                return row.instance.resultPoints;
+            default:
+                return undefined;
+        }
     }
 }

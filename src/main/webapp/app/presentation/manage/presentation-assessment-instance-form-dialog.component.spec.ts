@@ -2,8 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-
 import { PresentationAssessmentInstanceFormDialogComponent } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -13,30 +11,17 @@ import { User } from 'app/account/user/user.model';
 describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentInstanceFormDialogComponent>;
     let component: PresentationAssessmentInstanceFormDialogComponent;
-    let dialogRef: { close: ReturnType<typeof vi.fn> };
+    let saved: ReturnType<typeof vi.fn>;
 
     const presentationDate = dayjs('2026-07-31T13:26:00+02:00');
 
     beforeEach(async () => {
-        dialogRef = { close: vi.fn() };
+        saved = vi.fn();
         const course = Object.assign(new Course(), { id: 1, title: 'Test Course' });
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentInstanceFormDialogComponent],
             providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                {
-                    provide: DynamicDialogConfig,
-                    useValue: {
-                        data: {
-                            courseId: 1,
-                            course,
-                            presentationAssessment: { id: 42, maxPoints: 20 },
-                            instance: { id: 11, presentationDate },
-                            assignedStudents: [new User(undefined, 'student1')],
-                        },
-                    },
-                },
                 { provide: CourseManagementService, useValue: {} },
                 { provide: TranslateService, useValue: { instant: (key: string) => key } },
             ],
@@ -46,6 +31,12 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
 
         fixture = TestBed.createComponent(PresentationAssessmentInstanceFormDialogComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('presentationAssessment', { id: 42, maxPoints: 20 });
+        fixture.componentRef.setInput('instance', { id: 11, presentationDate });
+        fixture.componentRef.setInput('initialAssignedStudents', [new User(undefined, 'student1')]);
+        component.saved.subscribe(saved);
         fixture.detectChanges();
     });
 
@@ -60,7 +51,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
 
         component.save();
 
-        expect(dialogRef.close).not.toHaveBeenCalled();
+        expect(saved).not.toHaveBeenCalled();
         expect(component.editForm.controls.presentationDate.invalid).toBe(true);
     });
 
@@ -70,7 +61,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
 
         component.save();
 
-        const savedInstance = dialogRef.close.mock.calls[0][0];
+        const savedInstance = saved.mock.calls[0][0];
         expect(savedInstance.presentationDate.format('YYYY-MM-DD HH:mm')).toBe('2026-08-10 14:45');
     });
 });

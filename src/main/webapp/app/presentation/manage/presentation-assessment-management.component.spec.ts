@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,9 +10,6 @@ import { PresentationAssessmentService } from 'app/presentation/manage/presentat
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
-import { PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
@@ -29,8 +26,6 @@ describe('PresentationAssessmentManagementComponent', () => {
         deleteInstance: ReturnType<typeof vi.fn>;
     };
     let alertService: { success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
-    let dialogCloseSubject: Subject<PresentationAssessmentFormDialogResult | undefined>;
-    let dialogService: { open: ReturnType<typeof vi.fn> };
 
     const courseId = 1;
     const course = { id: courseId, title: 'Test Course', isAtLeastInstructor: true } as Course;
@@ -45,7 +40,6 @@ describe('PresentationAssessmentManagementComponent', () => {
     };
 
     beforeEach(async () => {
-        dialogCloseSubject = new Subject<PresentationAssessmentFormDialogResult | undefined>();
         presentationAssessmentService = {
             findAllByCourseId: vi.fn().mockReturnValue(of(new HttpResponse({ body: [presentationAssessment] }))),
             create: vi.fn(),
@@ -56,15 +50,12 @@ describe('PresentationAssessmentManagementComponent', () => {
             deleteInstance: vi.fn(),
         };
         alertService = { success: vi.fn(), addAlert: vi.fn() };
-        dialogService = { open: vi.fn().mockReturnValue({ onClose: dialogCloseSubject.asObservable() }) };
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentManagementComponent],
             providers: [
                 { provide: PresentationAssessmentService, useValue: presentationAssessmentService },
                 { provide: AlertService, useValue: alertService },
-                { provide: DialogService, useValue: dialogService },
-                { provide: TranslateService, useValue: { instant: (key: string) => key } },
                 {
                     provide: CourseManagementService,
                     useValue: { findWithExercises: vi.fn().mockReturnValue(of(new HttpResponse({ body: { ...course, exercises: [] } }))) },
@@ -114,25 +105,17 @@ describe('PresentationAssessmentManagementComponent', () => {
 
     it('should open the create dialog without persisting on cancel', () => {
         component.startCreate();
-        dialogCloseSubject.next(undefined);
+        component.handlePresentationDialogCancel();
 
-        expect(dialogService.open).toHaveBeenCalledOnce();
+        expect(component.presentationDialogVisible()).toBe(false);
         expect(presentationAssessmentService.create).not.toHaveBeenCalled();
     });
 
     it('should open the parent edit dialog without instance data', () => {
         component.startEdit(presentationAssessment);
 
-        expect(dialogService.open).toHaveBeenCalledWith(
-            expect.anything(),
-            expect.objectContaining({
-                data: expect.objectContaining({
-                    courseId,
-                    course,
-                    presentationAssessment,
-                }),
-            }),
-        );
+        expect(component.presentationDialogVisible()).toBe(true);
+        expect(component.dialogPresentationAssessment()).toBe(presentationAssessment);
     });
 
     it('should create a parent presentation after dialog save', () => {
@@ -140,7 +123,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         presentationAssessmentService.create.mockReturnValue(of(new HttpResponse({ body: savedAssessment })));
         component.startCreate();
 
-        dialogCloseSubject.next({
+        component.handlePresentationDialogSave({
             presentationAssessment: { title: 'New presentation', description: 'Description', maxPoints: 25, courseId },
         });
 
@@ -161,7 +144,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         presentationAssessmentService.update.mockReturnValue(of(new HttpResponse({ body: presentationAssessment })));
         component.startEdit(presentationAssessment);
 
-        dialogCloseSubject.next({
+        component.handlePresentationDialogSave({
             presentationAssessment: { ...presentationAssessment, title: 'Updated presentation' },
         });
 
@@ -179,7 +162,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         presentationAssessmentService.create.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
         component.startCreate();
 
-        dialogCloseSubject.next({
+        component.handlePresentationDialogSave({
             presentationAssessment: { title: 'New presentation', maxPoints: 25, courseId },
         });
 

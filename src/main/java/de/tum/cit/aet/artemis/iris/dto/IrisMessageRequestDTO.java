@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisMessageRequestDTO(@NonNull List<IrisMessageContentDTO> content, @Nullable Integer messageDifferentiator, @NonNull Map<String, String> uncommittedFiles,
-        @Valid @Nullable IrisPendingContextDTO pendingContext, @Valid @Nullable List<IrisMessageContextDTO> context) {
+        @Valid @Nullable IrisPendingContextDTO pendingContext, @Nullable List<@Valid IrisMessageContextDTO> context) {
 
     /**
      * Compact constructor that normalizes null uncommittedFiles to an empty map.
@@ -36,7 +36,7 @@ public record IrisMessageRequestDTO(@NonNull List<IrisMessageContentDTO> content
     }
 
     public IrisMessageRequestDTO(@NonNull List<IrisMessageContentDTO> content, @Nullable Integer messageDifferentiator, @NonNull Map<String, String> uncommittedFiles,
-            @Valid @Nullable List<IrisMessageContextDTO> context) {
+            @Nullable List<@Valid IrisMessageContextDTO> context) {
         this(content, messageDifferentiator, uncommittedFiles, null, context);
     }
 }

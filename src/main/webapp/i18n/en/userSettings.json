@@ -6,6 +6,31 @@
             "userSettings": "User Settings",
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
+            "vcsAccessTokensOverview": {
+                "title": "Access Tokens",
+                "description": "An overview of the VCS access tokens you can use to clone repositories over HTTPS. Each token is limited to a single repository. Revoking a token disables it immediately; a new token is created automatically the next time you open that repository's clone dialog.",
+                "table": {
+                    "course": "Course",
+                    "exercise": "Exercise",
+                    "type": "Type",
+                    "repository": "Repository",
+                    "empty": "You do not have any VCS access tokens yet."
+                },
+                "type": {
+                    "participation": "Participation",
+                    "template": "Template",
+                    "solution": "Solution",
+                    "tests": "Tests",
+                    "auxiliary": "Auxiliary",
+                    "assignment": "Assignment",
+                    "repository": "Repository"
+                },
+                "revoke": {
+                    "label": "Revoke",
+                    "question": "Are you sure you want to revoke this VCS access token? It stops working immediately. A new token is created automatically the next time you open that repository's clone dialog.",
+                    "success": "The VCS access token was revoked."
+                }
+            },
             "passkeys": "Passkeys",
             "LLMUsage": "AI Experience",
             "accountInformation": "Account Information",
@@ -132,7 +157,22 @@
                 },
                 "setupLater": "Set Up Later",
                 "setupPasskey": "Set Up Passkey",
-                "remindMeIn30Days": "Remind Me in 30 Days"
+                "remindMeIn30Days": "Remind Me in 30 Days",
+                "heroTitle": "Set Up Your First Passkey on This Device",
+                "facts": {
+                    "faster": {
+                        "title": "Faster sign-in:",
+                        "desc": "skip repeated login screens after your device recognizes you"
+                    },
+                    "noPasswords": {
+                        "title": "No passwords needed:",
+                        "desc": "never forget or reset a password again"
+                    },
+                    "secure": {
+                        "title": "More secure than passwords:",
+                        "desc": "phishing-resistant and bound to your device"
+                    }
+                }
             },
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",

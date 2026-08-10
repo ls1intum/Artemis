@@ -29,35 +29,35 @@
         </div>
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-result" jhiTranslate="artemisApp.presentationAssessment.resultPoints"></label>
-            <p-inputnumber inputId="presentation-instance-result" styleClass="w-full" [min]="0" [step]="0.5" formControlName="resultPoints" />
+            <tum-ui-input-number inputId="presentation-instance-result" [fluid]="true" [min]="0" [step]="0.5" [maxFractionDigits]="2" formControlName="resultPoints" />
             @if (editForm.hasError('resultPointsExceedMaxPoints')) {
-                <p-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span></p-message>
+                <tum-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span></tum-ui-message>
             }
         </div>
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-language" jhiTranslate="artemisApp.presentationAssessment.language"></label>
-            <p-select inputId="presentation-instance-language" styleClass="w-full" [options]="languageOptions" optionLabel="label" optionValue="value" formControlName="language" />
+            <tum-ui-select inputId="presentation-instance-language" [options]="languageOptions" optionLabel="label" optionValue="value" formControlName="language" />
         </div>
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-mode" jhiTranslate="artemisApp.presentationAssessment.mode.label"></label>
-            <p-select inputId="presentation-instance-mode" styleClass="w-full" [options]="modeOptions()" optionLabel="label" optionValue="value" formControlName="mode" />
+            <tum-ui-select inputId="presentation-instance-mode" [options]="modeOptions()" optionLabel="label" optionValue="value" formControlName="mode" />
         </div>
         @if (editForm.controls.mode.value === PresentationAssessmentMode.IN_PERSON) {
             <div class="flex flex-col gap-2">
                 <label for="presentation-instance-location" jhiTranslate="artemisApp.presentationAssessment.location"></label>
-                <input id="presentation-instance-location" pInputText class="w-full" formControlName="location" />
+                <input id="presentation-instance-location" tumUiInput class="w-full" formControlName="location" />
             </div>
         } @else {
             <div class="flex flex-col gap-2">
                 <label for="presentation-instance-link" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></label>
-                <input id="presentation-instance-link" pInputText class="w-full" type="url" formControlName="meetingLink" />
+                <input id="presentation-instance-link" tumUiInput class="w-full" type="url" formControlName="meetingLink" />
             </div>
         }
     </div>
 
     <jhi-course-group
         [(allGroupUsers)]="assignedStudents"
-        [courseGroup]="studentsCourseGroup"
+        [courseRoleSlug]="studentsCourseGroup"
         [isLoadingAllGroupUsers]="false"
         [isAdmin]="false"
         [course]="presentationStudentCourse()"
@@ -73,11 +73,11 @@
         <span><span jhiTranslate="artemisApp.course.students"></span> ({{ assignedStudents().length }})</span>
     </jhi-course-group>
     @if (assignedStudents().length === 0 && editForm.touched) {
-        <p-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.instanceRequiresPresenter"></span></p-message>
+        <tum-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.instanceRequiresPresenter"></span></tum-ui-message>
     }
 
     <div class="flex justify-end gap-2">
-        <p-button severity="secondary" type="button" (onClick)="cancel()"><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span></p-button>
-        <p-button type="submit"><fa-icon [icon]="faSave" /><span jhiTranslate="entity.action.save"></span></p-button>
+        <tum-ui-button severity="secondary" type="button" (clicked)="cancel()"><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span></tum-ui-button>
+        <tum-ui-button type="submit"><fa-icon [icon]="faSave" /><span jhiTranslate="entity.action.save"></span></tum-ui-button>
     </div>
 </form>

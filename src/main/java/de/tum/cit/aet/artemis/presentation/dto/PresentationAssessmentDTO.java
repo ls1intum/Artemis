@@ -9,11 +9,14 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
 
 /**
  * DTO for course-level presentation assessments.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PresentationAssessmentDTO(Long id, @NotBlank @Size(max = 255) String title, @Size(max = 1000) String description, @NotNull @Positive Double maxPoints,
         @PositiveOrZero Double resultPoints, ZonedDateTime presentationDate, Long courseId, List<String> studentLogins, Long exerciseId, String exerciseTitle,
         List<PresentationAssessmentInstanceDTO> instances) {

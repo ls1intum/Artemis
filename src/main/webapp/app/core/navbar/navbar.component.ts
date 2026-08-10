@@ -39,8 +39,8 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
 import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
-import { getSignalBasedOnRoute } from '../../foundation/route/getSignalBasedOnRoute';
-import { getCurrentRouteSignal } from '../../foundation/route/getCurrentRouteSignal';
+import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
+import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSignal';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 
@@ -482,6 +482,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 case 'exercises':
                     this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
                     return;
+                case 'group':
+                    this.addResolvedTitleAsCrumb(EntityType.EXERCISE_VARIANT_GROUP, [Number(segment)], currentPath, segment);
+                    return;
                 case 'tutorial-lectures':
                     this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
                     return;
@@ -613,6 +616,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         switch (segment) {
             // No breadcrumbs for those segments
             case 'reset':
+            case 'group':
             case 'groups':
             case 'code-editor':
             case 'repository':
@@ -844,6 +848,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private getStudentViewLinkFromRoute(url: string, course: Course | undefined): string[] {
+        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/courses'];
+
         const courseId = course?.id?.toString();
 
         const baseStudentPath = courseId ? ['/courses', courseId] : ['/courses'];
@@ -870,10 +876,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private getManagementViewLinkFromRoute(url: string, course: Course | undefined): string[] {
+        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/course-management'];
+
         const courseId = course?.id?.toString();
-        const isAtLeastEditor = !!course?.isAtLeastEditor;
-        const isAtLeastInstructor = !!course?.isAtLeastInstructor;
-        const courseHasTutorialGroupConfiguration = !!course?.tutorialGroupsConfiguration;
+        const isAtLeastTutorInCourse = !!course?.isAtLeastTutor;
+        const isAtLeastEditorInCourse = !!course?.isAtLeastEditor;
+        const isAtLeastInstructorInCourse = !!course?.isAtLeastInstructor;
+
+        if (!isAtLeastTutorInCourse) return ['/course-management'];
 
         const baseManagementPath = courseId ? ['/course-management', courseId] : ['/course-management'];
         const routeMappings = [
@@ -885,7 +895,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             { urlParts: ['competencies'], targetPath: [...baseManagementPath, 'competency-management'] },
             { urlParts: ['faq'], targetPath: [...baseManagementPath, 'faqs'] },
             { urlParts: ['statistics'], targetPath: [...baseManagementPath, 'course-statistics'] },
-            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups-checklist'] },
+            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups'] },
         ];
 
         const matchedRoute = routeMappings.find((route) => {
@@ -896,12 +906,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return baseManagementPath;
         }
 
-        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditor;
-        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructor;
-        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructor;
-        const targetIsTutorialsButUserNotAllowed = matchedRoute.urlParts.includes('tutorial-groups') && !isAtLeastInstructor && !courseHasTutorialGroupConfiguration;
+        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditorInCourse;
+        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructorInCourse;
+        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructorInCourse;
 
-        if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed || targetIsTutorialsButUserNotAllowed) {
+        if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed) {
             return baseManagementPath;
         }
 

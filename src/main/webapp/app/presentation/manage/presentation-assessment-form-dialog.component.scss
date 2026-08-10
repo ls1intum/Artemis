@@ -43,14 +43,6 @@
     gap: 0.5rem;
 }
 
-::ng-deep .presentation-assessment-number-input {
-    width: 100%;
-
-    .p-inputnumber-input {
-        width: 100%;
-    }
-}
-
 .presentation-assessment-date-field {
     ::ng-deep [data-testid='date-picker-wrapper'] {
         margin-top: 0.5rem;
@@ -70,10 +62,5 @@
 
     .presentation-assessment-actions {
         flex-direction: column-reverse;
-
-        ::ng-deep .p-button {
-            width: 100%;
-            justify-content: center;
-        }
     }
 }

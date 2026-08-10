@@ -1,40 +1,28 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { ButtonModule } from 'primeng/button';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { MessageModule } from 'primeng/message';
-import { SelectModule } from 'primeng/select';
-import { InputTextModule } from 'primeng/inputtext';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { TumUiButtonComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
-import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
+import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { User } from 'app/account/user/user.model';
 import { PresentationAssessment, PresentationAssessmentInstance, PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { TranslateService } from '@ngx-translate/core';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     const resultPoints = control.get('resultPoints')?.value;
     const maxPoints = control.get('maxPoints')?.value;
     return resultPoints !== null && resultPoints !== undefined && Number(resultPoints) > Number(maxPoints) ? { resultPointsExceedMaxPoints: true } : null;
 };
-
-export interface PresentationAssessmentInstanceDialogData {
-    courseId: number;
-    course: Course;
-    presentationAssessment: PresentationAssessment;
-    instance?: PresentationAssessmentInstance;
-    assignedStudents: User[];
-}
 
 @Component({
     selector: 'jhi-presentation-assessment-instance-form-dialog',
@@ -43,27 +31,33 @@ export interface PresentationAssessmentInstanceDialogData {
     imports: [
         FormsModule,
         ReactiveFormsModule,
-        ButtonModule,
-        InputNumberModule,
-        MessageModule,
-        SelectModule,
-        InputTextModule,
         FaIconComponent,
         TranslateDirective,
         FormDateTimePickerComponent,
         CourseGroupComponent,
+        TumUiButtonComponent,
+        TumUiInputDirective,
+        TumUiInputNumberComponent,
+        TumUiMessageComponent,
+        TumUiSelectComponent,
     ],
 })
-export class PresentationAssessmentInstanceFormDialogComponent implements OnInit {
+export class PresentationAssessmentInstanceFormDialogComponent {
     private readonly formBuilder = inject(FormBuilder);
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly translateService = inject(TranslateService);
 
+    readonly courseId = input.required<number>();
+    readonly course = input.required<Course>();
+    readonly presentationAssessment = input.required<PresentationAssessment>();
+    readonly instance = input<PresentationAssessmentInstance>();
+    readonly initialAssignedStudents = input<User[]>([]);
+    readonly saved = output<PresentationAssessmentInstance>();
+    readonly cancelled = output<void>();
+
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
-    protected readonly studentsCourseGroup = CourseGroup.STUDENTS;
+    protected readonly studentsCourseGroup = CourseRoleSlug.STUDENTS;
     protected readonly PresentationAssessmentMode = PresentationAssessmentMode;
     protected readonly DateTimePickerType = DateTimePickerType;
     protected readonly hiddenStudentColumnFields = ['id', 'visibleRegistrationNumber', 'email'];
@@ -79,12 +73,8 @@ export class PresentationAssessmentInstanceFormDialogComponent implements OnInit
     readonly assignedStudents = signal<User[]>([]);
     readonly filteredAssignedStudentsSize = signal(0);
 
-    private courseId = 0;
-    private instance?: PresentationAssessmentInstance;
-    private course!: Course;
-
     readonly presentationStudentCourse = computed(() => {
-        const presentationCourse: Course = Object.assign({}, this.course);
+        const presentationCourse: Course = deepClone(this.course());
         presentationCourse.isAtLeastInstructor = false;
         return presentationCourse;
     });
@@ -103,21 +93,20 @@ export class PresentationAssessmentInstanceFormDialogComponent implements OnInit
         { validators: resultPointsDoNotExceedMaxPoints },
     );
 
-    ngOnInit(): void {
-        const data = this.dialogConfig.data as PresentationAssessmentInstanceDialogData;
-        this.courseId = data.courseId;
-        this.course = data.course;
-        this.instance = data.instance;
-        this.assignedStudents.set([...data.assignedStudents]);
-        this.editForm.reset({
-            presentationDate: data.instance?.presentationDate?.startOf('day'),
-            presentationTime: data.instance?.presentationDate,
-            resultPoints: data.instance?.resultPoints,
-            maxPoints: data.presentationAssessment.maxPoints ?? 0,
-            language: data.instance?.language ?? 'en',
-            mode: data.instance?.mode ?? PresentationAssessmentMode.IN_PERSON,
-            location: data.instance?.location ?? '',
-            meetingLink: data.instance?.meetingLink ?? '',
+    constructor() {
+        effect(() => {
+            const instance = this.instance();
+            this.assignedStudents.set([...this.initialAssignedStudents()]);
+            this.editForm.reset({
+                presentationDate: instance?.presentationDate?.startOf('day'),
+                presentationTime: instance?.presentationDate,
+                resultPoints: instance?.resultPoints,
+                maxPoints: this.presentationAssessment().maxPoints ?? 0,
+                language: instance?.language ?? 'en',
+                mode: instance?.mode ?? PresentationAssessmentMode.IN_PERSON,
+                location: instance?.location ?? '',
+                meetingLink: instance?.meetingLink ?? '',
+            });
         });
     }
 
@@ -134,8 +123,8 @@ export class PresentationAssessmentInstanceFormDialogComponent implements OnInit
             .minute(presentationTime?.minute() ?? 0)
             .second(0)
             .millisecond(0);
-        this.dialogRef.close({
-            id: this.instance?.id,
+        this.saved.emit({
+            id: this.instance()?.id,
             presentationDate: combinedPresentationDate,
             resultPoints: value.resultPoints ?? undefined,
             studentLogins: [
@@ -153,10 +142,10 @@ export class PresentationAssessmentInstanceFormDialogComponent implements OnInit
     }
 
     cancel(): void {
-        this.dialogRef.close();
+        this.cancelled.emit();
     }
 
-    studentSearch = (loginOrName: string): Observable<HttpResponse<User[]>> => this.courseManagementService.searchStudents(this.courseId, loginOrName);
+    studentSearch = (loginOrName: string): Observable<HttpResponse<User[]>> => this.courseManagementService.searchStudents(this.courseId(), loginOrName);
     addStudent = (): Observable<HttpResponse<void>> => of(new HttpResponse<void>());
     removeStudent = (): Observable<HttpResponse<void>> => of(new HttpResponse<void>());
     handleAssignedStudentsSizeChange = (size: number): void => this.filteredAssignedStudentsSize.set(size);

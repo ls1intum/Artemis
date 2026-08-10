@@ -1,0 +1,328 @@
+import { Component, signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
+import { DOWN_ARROW, END } from '@angular/cdk/keycodes';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { vi } from 'vitest';
+import { TumUiSelectComponent } from './tum-ui-select.component';
+
+interface Option {
+    label: string;
+    value: string;
+}
+const OPTIONS: Option[] = [
+    { label: 'Alpha', value: 'a' },
+    { label: 'Bravo', value: 'b' },
+    { label: 'Charlie', value: 'c' },
+];
+
+describe('TumUiSelectComponent', () => {
+    let component: TumUiSelectComponent;
+    let fixture: ComponentFixture<TumUiSelectComponent>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({ imports: [TumUiSelectComponent, FontAwesomeTestingModule] }).compileComponents();
+        fixture = TestBed.createComponent(TumUiSelectComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('options', OPTIONS);
+        fixture.componentRef.setInput('optionLabel', 'label');
+        fixture.componentRef.setInput('optionValue', 'value');
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    function triggerButton(): HTMLButtonElement {
+        return fixture.debugElement.query(By.css('button[aria-haspopup="listbox"]')).nativeElement;
+    }
+    function labelText(): string {
+        return triggerButton().textContent?.trim() ?? '';
+    }
+    function openPanel(): void {
+        triggerButton().click();
+        fixture.detectChanges();
+    }
+    function listbox(): HTMLElement {
+        return document.querySelector('[role="listbox"]') as HTMLElement;
+    }
+    function optionElements(): HTMLElement[] {
+        return Array.from(document.querySelectorAll('[role="option"]')) as HTMLElement[];
+    }
+
+    it('renders the placeholder when nothing is selected', () => {
+        fixture.componentRef.setInput('placeholder', 'Pick one');
+        fixture.detectChanges();
+        expect(labelText()).toBe('Pick one');
+    });
+
+    it('reflects an externally written value as the matching option label (CVA writeValue)', () => {
+        component.writeValue('b');
+        fixture.detectChanges();
+        expect(labelText()).toBe('Bravo');
+    });
+
+    it('opens a role="listbox" panel with one role="option" per option and marks the selected one', () => {
+        component.writeValue('c');
+        fixture.detectChanges();
+        openPanel();
+        expect(listbox()).not.toBeNull();
+        expect(listbox().getAttribute('role')).toBe('listbox');
+        const options = optionElements();
+        expect(options).toHaveLength(3);
+        expect(options.map((o) => o.getAttribute('role'))).toEqual(['option', 'option', 'option']);
+        expect(options[2].getAttribute('aria-selected')).toBe('true');
+        expect(options[0].getAttribute('aria-selected')).toBe('false');
+        expect(triggerButton().getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('scrolls the selected option into view when opening', () => {
+        const scrollIntoView = vi.fn();
+        const original = HTMLElement.prototype.scrollIntoView;
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+        try {
+            component.writeValue('c');
+            fixture.detectChanges();
+            openPanel();
+            expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+            expect(scrollIntoView.mock.instances).toEqual([optionElements()[2]]);
+        } finally {
+            Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: original });
+        }
+    });
+
+    it('selecting an option updates the CVA, emits selectionChange, and closes', () => {
+        const onChangeCallback = vi.fn();
+        component.registerOnChange(onChangeCallback);
+        const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+        triggerButton().focus();
+        openPanel();
+        optionElements()[1].click();
+        fixture.detectChanges();
+        expect(onChangeCallback).toHaveBeenCalledWith('b');
+        expect(emitSpy).toHaveBeenCalledWith('b');
+        expect(labelText()).toBe('Bravo');
+        expect(listbox()).toBeNull();
+        expect(document.activeElement).toBe(triggerButton());
+    });
+
+    it('emits the whole option object when optionValue is not set', () => {
+        fixture.componentRef.setInput('optionValue', undefined);
+        fixture.detectChanges();
+        const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+        openPanel();
+        optionElements()[0].click();
+        fixture.detectChanges();
+        expect(emitSpy).toHaveBeenCalledWith(OPTIONS[0]);
+        expect(labelText()).toBe('Alpha');
+    });
+
+    it('keyboard: ArrowDown advances the active option and Enter selects it', () => {
+        const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+        openPanel();
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', keyCode: DOWN_ARROW, bubbles: true }));
+        fixture.detectChanges();
+        expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[1].id);
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        fixture.detectChanges();
+        expect(emitSpy).toHaveBeenCalledWith('b');
+    });
+
+    it('keyboard: ArrowDown stops at the final option', () => {
+        openPanel();
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'End', keyCode: END, bubbles: true }));
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', keyCode: DOWN_ARROW, bubbles: true }));
+        fixture.detectChanges();
+        expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[2].id);
+    });
+
+    it.each(['Enter', ' '])('keyboard: %j opens the closed select', (key) => {
+        const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+        triggerButton().dispatchEvent(event);
+        fixture.detectChanges();
+        expect(event.defaultPrevented).toBe(true);
+        expect(listbox()).not.toBeNull();
+    });
+
+    it('keyboard: Escape closes the panel without selecting', () => {
+        const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+        openPanel();
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        fixture.detectChanges();
+        expect(listbox()).toBeNull();
+        expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    it('type-ahead activates the first option whose label starts with the typed character', () => {
+        vi.useFakeTimers();
+        openPanel();
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'c', bubbles: true }));
+        vi.advanceTimersByTime(500);
+        fixture.detectChanges();
+        expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[2].id);
+    });
+
+    it('discards pending type-ahead input when the panel closes', () => {
+        vi.useFakeTimers();
+        openPanel();
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'c', bubbles: true }));
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        triggerButton().click();
+        vi.advanceTimersByTime(500);
+        fixture.detectChanges();
+        expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[0].id);
+    });
+
+    it('cycles through matching options when the same type-ahead character is repeated', () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('options', [
+            { label: 'Alpha', value: 'a' },
+            { label: 'Alpine', value: 'alpine' },
+            { label: 'Bravo', value: 'b' },
+        ]);
+        openPanel();
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
+        vi.advanceTimersByTime(500);
+        fixture.detectChanges();
+        expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[1].id);
+    });
+
+    it('commits the active option on Tab without preventing focus navigation', () => {
+        const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+        openPanel();
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', keyCode: DOWN_ARROW, bubbles: true }));
+        const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+        triggerButton().dispatchEvent(event);
+        fixture.detectChanges();
+        expect(emitSpy).toHaveBeenCalledWith('b');
+        expect(event.defaultPrevented).toBe(false);
+    });
+
+    it('keeps aria-activedescendant valid when options shrink', () => {
+        openPanel();
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'End', keyCode: END, bubbles: true }));
+        fixture.detectChanges();
+        fixture.componentRef.setInput('options', OPTIONS.slice(0, 2));
+        fixture.detectChanges();
+        expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[1].id);
+    });
+
+    it('activates the first option when an open empty select receives options', () => {
+        fixture.componentRef.setInput('options', []);
+        fixture.detectChanges();
+        openPanel();
+        fixture.componentRef.setInput('options', OPTIONS);
+        fixture.detectChanges();
+        expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[0].id);
+    });
+
+    it('does not open when disabled and reflects the disabled attribute on the trigger', () => {
+        fixture.componentRef.setInput('disabled', true);
+        fixture.detectChanges();
+        expect(triggerButton().disabled).toBe(true);
+        triggerButton().click();
+        fixture.detectChanges();
+        expect(listbox()).toBeNull();
+    });
+
+    it('setDisabledState(true) closes an open panel (reactive-forms disable while open)', () => {
+        openPanel();
+        expect(listbox()).not.toBeNull();
+        component.setDisabledState(true);
+        fixture.detectChanges();
+        expect(listbox()).toBeNull();
+    });
+
+    it('showClear renders a clear button that resets the value and emits undefined', () => {
+        fixture.componentRef.setInput('showClear', true);
+        const onChangeCallback = vi.fn();
+        component.registerOnChange(onChangeCallback);
+        component.writeValue('a');
+        fixture.detectChanges();
+        const clear = fixture.debugElement.query(By.css('button:not([aria-haspopup])')).nativeElement as HTMLButtonElement;
+        clear.focus();
+        clear.click();
+        fixture.detectChanges();
+        expect(onChangeCallback).toHaveBeenCalledWith(undefined);
+        expect(document.activeElement).toBe(triggerButton());
+    });
+
+    it('renders the empty message when there are no options', () => {
+        fixture.componentRef.setInput('options', []);
+        fixture.componentRef.setInput('emptyMessage', 'Nothing here');
+        fixture.detectChanges();
+        openPanel();
+        const emptyOption = optionElements()[0];
+        expect(emptyOption.textContent?.trim()).toBe('Nothing here');
+        expect(emptyOption.getAttribute('aria-disabled')).toBe('true');
+        expect(emptyOption.getAttribute('aria-selected')).toBe('false');
+    });
+});
+
+describe('TumUiSelectComponent with [(ngModel)]', () => {
+    @Component({
+        imports: [TumUiSelectComponent, FormsModule],
+        template: `<tum-ui-select [(ngModel)]="value" [options]="options" optionLabel="label" optionValue="value" />`,
+    })
+    class NgModelHostComponent {
+        readonly options = OPTIONS;
+        value = signal<string | undefined>('a');
+    }
+
+    it('two-way binds the primitive value through ngModel', async () => {
+        await TestBed.configureTestingModule({ imports: [NgModelHostComponent, FontAwesomeTestingModule] }).compileComponents();
+        const fixture = TestBed.createComponent(NgModelHostComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const trigger = fixture.debugElement.query(By.css('button[aria-haspopup="listbox"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.textContent?.trim()).toBe('Alpha');
+
+        trigger.click();
+        fixture.detectChanges();
+        (document.querySelectorAll('[role="option"]')[2] as HTMLElement).click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(fixture.componentInstance.value()).toBe('c');
+        fixture.destroy();
+    });
+});
+
+describe('TumUiSelectComponent with reactive formControl', () => {
+    @Component({
+        imports: [TumUiSelectComponent, ReactiveFormsModule],
+        template: `<tum-ui-select [formControl]="control" [options]="options" optionLabel="label" optionValue="value" />`,
+    })
+    class ReactiveHostComponent {
+        readonly options = OPTIONS;
+        readonly control = new FormControl<string | undefined>('b');
+    }
+
+    it('reflects and updates the FormControl value, and honors control.disable()', async () => {
+        await TestBed.configureTestingModule({ imports: [ReactiveHostComponent, FontAwesomeTestingModule] }).compileComponents();
+        const fixture = TestBed.createComponent(ReactiveHostComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const trigger = fixture.debugElement.query(By.css('button[aria-haspopup="listbox"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.textContent?.trim()).toBe('Bravo');
+
+        trigger.click();
+        fixture.detectChanges();
+        (document.querySelectorAll('[role="option"]')[0] as HTMLElement).click();
+        fixture.detectChanges();
+        expect(fixture.componentInstance.control.value).toBe('a');
+
+        fixture.componentInstance.control.disable();
+        fixture.detectChanges();
+        expect(trigger.disabled).toBe(true);
+        fixture.destroy();
+    });
+});

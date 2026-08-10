@@ -2,18 +2,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentFormDialogComponent } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
-import { Course } from 'app/course/shared/entities/course.model';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('PresentationAssessmentFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentFormDialogComponent>;
     let component: PresentationAssessmentFormDialogComponent;
-    let dialogRef: { close: ReturnType<typeof vi.fn> };
+    let saved: ReturnType<typeof vi.fn>;
+    let cancelled: ReturnType<typeof vi.fn>;
 
     const courseId = 1;
-    const course = { id: courseId, title: 'Test Course', isAtLeastInstructor: true } as Course;
     const presentationAssessment: PresentationAssessment = {
         id: 42,
         title: 'Final presentation',
@@ -24,24 +22,11 @@ describe('PresentationAssessmentFormDialogComponent', () => {
     const exercise = { id: 7, title: 'Linked exercise' } as Exercise;
 
     beforeEach(async () => {
-        dialogRef = { close: vi.fn() };
+        saved = vi.fn();
+        cancelled = vi.fn();
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentFormDialogComponent],
-            providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                {
-                    provide: DynamicDialogConfig,
-                    useValue: {
-                        data: {
-                            courseId,
-                            course,
-                            presentationAssessment,
-                            exercises: [exercise],
-                        },
-                    },
-                },
-            ],
         })
             .overrideComponent(PresentationAssessmentFormDialogComponent, {
                 set: { template: '' },
@@ -50,6 +35,11 @@ describe('PresentationAssessmentFormDialogComponent', () => {
 
         fixture = TestBed.createComponent(PresentationAssessmentFormDialogComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', courseId);
+        fixture.componentRef.setInput('presentationAssessment', presentationAssessment);
+        fixture.componentRef.setInput('exercises', [exercise]);
+        component.saved.subscribe(saved);
+        component.cancelled.subscribe(cancelled);
         fixture.detectChanges();
     });
 
@@ -63,7 +53,7 @@ describe('PresentationAssessmentFormDialogComponent', () => {
 
         component.save();
 
-        expect(dialogRef.close).toHaveBeenCalledWith(
+        expect(saved).toHaveBeenCalledWith(
             expect.objectContaining({
                 presentationAssessment: expect.objectContaining({
                     id: presentationAssessment.id,
@@ -77,6 +67,6 @@ describe('PresentationAssessmentFormDialogComponent', () => {
     it('should close without result on cancel', () => {
         component.cancel();
 
-        expect(dialogRef.close).toHaveBeenCalledWith();
+        expect(cancelled).toHaveBeenCalledOnce();
     });
 });

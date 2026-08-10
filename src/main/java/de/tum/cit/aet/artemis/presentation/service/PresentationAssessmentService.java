@@ -10,13 +10,12 @@ import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
@@ -36,16 +35,16 @@ public class PresentationAssessmentService {
 
     private final PresentationAssessmentRepository presentationAssessmentRepository;
 
-    private final UserRepository userRepository;
+    private final CourseAccessService courseAccessService;
 
     private final ExerciseRepository exerciseRepository;
 
     private final PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
 
-    public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
-            PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository) {
+    public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, CourseAccessService courseAccessService,
+            ExerciseRepository exerciseRepository, PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository) {
         this.presentationAssessmentRepository = presentationAssessmentRepository;
-        this.userRepository = userRepository;
+        this.courseAccessService = courseAccessService;
         this.exerciseRepository = exerciseRepository;
         this.presentationAssessmentInstanceRepository = presentationAssessmentInstanceRepository;
     }
@@ -68,8 +67,7 @@ public class PresentationAssessmentService {
      * @return the presentation assessment
      */
     public PresentationAssessment findByIdAndCourseIdElseThrow(long courseId, long assessmentId) {
-        return presentationAssessmentRepository.findByIdAndCourseId(assessmentId, courseId)
-                .orElseThrow(() -> new EntityNotFoundException(PresentationAssessment.ENTITY_NAME, assessmentId));
+        return presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
     }
 
     /**
@@ -99,7 +97,6 @@ public class PresentationAssessmentService {
      * @param dto          the updated presentation assessment data
      * @return the persisted presentation assessment data
      */
-    @Transactional
     public PresentationAssessmentDTO update(Course course, long assessmentId, PresentationAssessmentDTO dto) {
         if (dto.id() == null) {
             throw new BadRequestAlertException("A presentation assessment update must have an ID", PresentationAssessment.ENTITY_NAME, "idMissing");
@@ -128,6 +125,14 @@ public class PresentationAssessmentService {
         presentationAssessmentRepository.delete(presentationAssessment);
     }
 
+    /**
+     * Creates an instance of a presentation assessment.
+     *
+     * @param course       the owning course
+     * @param assessmentId the parent presentation assessment id
+     * @param dto          the instance data
+     * @return the persisted presentation assessment instance
+     */
     public PresentationAssessmentInstance createInstance(Course course, long assessmentId, PresentationAssessmentInstanceDTO dto) {
         if (dto.id() != null) {
             throw new BadRequestAlertException("A new presentation instance cannot already have an ID", PresentationAssessmentInstance.ENTITY_NAME, "idExists");
@@ -139,6 +144,15 @@ public class PresentationAssessmentService {
         return presentationAssessmentInstanceRepository.save(instance);
     }
 
+    /**
+     * Updates an instance of a presentation assessment.
+     *
+     * @param course       the owning course
+     * @param assessmentId the parent presentation assessment id
+     * @param instanceId   the presentation assessment instance id
+     * @param dto          the updated instance data
+     * @return the persisted presentation assessment instance
+     */
     public PresentationAssessmentInstance updateInstance(Course course, long assessmentId, long instanceId, PresentationAssessmentInstanceDTO dto) {
         if (dto.id() == null || !dto.id().equals(instanceId)) {
             throw new BadRequestAlertException("The path id and body id must match", PresentationAssessmentInstance.ENTITY_NAME, "idMismatch");
@@ -179,7 +193,8 @@ public class PresentationAssessmentService {
      * @return the assigned students
      */
     public Set<User> findStudents(long courseId, long assessmentId) {
-        return findWithStudentsByIdAndCourseIdElseThrow(courseId, assessmentId).getStudents();
+        findByIdAndCourseIdElseThrow(courseId, assessmentId);
+        return presentationAssessmentRepository.findStudentsForPresentationAssessment(assessmentId, courseId);
     }
 
     /**
@@ -191,12 +206,11 @@ public class PresentationAssessmentService {
      */
     public void addStudent(Course course, long assessmentId, String studentLogin) {
         PresentationAssessment presentationAssessment = findWithStudentsByIdAndCourseIdElseThrow(course.getId(), assessmentId);
-        User student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
-                .orElseThrow(() -> new EntityNotFoundException("User with login " + studentLogin + " does not exist"));
-        if (!student.getGroups().contains(course.getStudentGroupName())) {
+        Set<User> students = findCourseStudentsByLogins(course, List.of(studentLogin));
+        if (students.isEmpty()) {
             throw new BadRequestAlertException("The user is not a student in the course", PresentationAssessment.ENTITY_NAME, "studentNotInCourse");
         }
-        presentationAssessment.getStudents().add(student);
+        presentationAssessment.getStudents().add(students.iterator().next());
         presentationAssessmentRepository.save(presentationAssessment);
     }
 
@@ -214,8 +228,7 @@ public class PresentationAssessmentService {
     }
 
     private PresentationAssessment findWithStudentsByIdAndCourseIdElseThrow(long courseId, long assessmentId) {
-        return presentationAssessmentRepository.findWithStudentsByIdAndCourseId(assessmentId, courseId)
-                .orElseThrow(() -> new EntityNotFoundException(PresentationAssessment.ENTITY_NAME, assessmentId));
+        return presentationAssessmentRepository.findWithStudentsByIdAndCourseIdElseThrow(assessmentId, courseId);
     }
 
     private void applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentDTO dto) {
@@ -254,7 +267,7 @@ public class PresentationAssessmentService {
             }
             uniqueLogins.add(login.trim());
         }
-        Set<User> students = new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(course.getStudentGroupName(), uniqueLogins));
+        Set<User> students = courseAccessService.findCourseStudentsByLogins(course, uniqueLogins);
         Set<String> foundLogins = students.stream().map(User::getLogin).collect(Collectors.toSet());
         if (!foundLogins.containsAll(uniqueLogins)) {
             throw new BadRequestAlertException("At least one user is not a student in the course", PresentationAssessment.ENTITY_NAME, "studentNotInCourse");

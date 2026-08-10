@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,9 +53,14 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -77,8 +83,12 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.conduction.SubmissionPolicyForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamWideAnnouncementEventDTO;
@@ -116,6 +126,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -146,6 +157,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     private static final Logger log = LoggerFactory.getLogger(StudentExamIntegrationTest.class);
 
     private static final String TEST_PREFIX = "studexam";
+
+    private static final String OTHER_STUDENT = TEST_PREFIX + "other" + "student42";
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
@@ -213,6 +226,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @Autowired
     private GradingScaleUtilService gradingScaleUtilService;
 
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
     private User student1;
 
     private Course course1;
@@ -251,7 +267,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exam1 = examUtilService.addActiveExamWithRegisteredUser(course1, student2);
         exam1 = examRepository.save(exam1);
 
@@ -280,7 +296,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         studentExamForTestExam2.setSubmissionDate(ZonedDateTime.now().minusMinutes(65));
         studentExamRepository.save(studentExamForTestExam2);
 
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_STUDENT);
         studentRepos.clear();
         programmingInitialCommitHashes.clear();
         programmingUpdatedCommitHashes.clear();
@@ -352,7 +368,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     private void testAllPreAuthorize() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId(), HttpStatus.FORBIDDEN, StudentExam.class);
-        request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.FORBIDDEN, StudentExamDTO.class);
     }
 
     @Test
@@ -364,8 +380,17 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStudentExamsForExam_asInstructor() throws Exception {
-        List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        // measured baseline is 7 queries (auth + access checks + findByExamIdWithSessions); guards against an
+        // accidental N+1 regression (e.g. touching a lazy association per element) creeping into the DTO factory
+        List<StudentExamDTO> studentExams = assertThatDb(
+                () -> request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.OK, StudentExamDTO.class))
+                .hasBeenCalledAtMostTimes(7);
         assertThat(studentExams).hasSize(2);
+        // the nested exam/user are intentionally omitted for this endpoint (see StudentExamDTO#of)
+        assertThat(studentExams).allSatisfy(dto -> {
+            assertThat(dto.exam()).isNull();
+            assertThat(dto.user()).isNull();
+        });
     }
 
     @Test
@@ -603,6 +628,77 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(optionalExamSession.get().getIpAddressAsIpAddress().toNormalizedString()).isEqualTo("10.0.28.1");
     }
 
+    /**
+     * Wire-contract guard for the student-facing data minimisation the conduction endpoint performs on the raw JSON.
+     * <p>
+     * During conduction (results not published, not a test run) the server strips every solution signal a student must
+     * not see while keeping exactly the ids the exam-taking client needs to render the question and build an answer.
+     * This pins that masking at the wire, at the exact locations the client reads: quiz answer options must carry an
+     * {@code id} but neither {@code isCorrect} nor {@code explanation}; drag-and-drop / short-answer questions must
+     * carry their answerable {@code dragItems}/{@code dropLocations}/{@code spots} (with ids) but no
+     * {@code correctMappings}; short-answer questions must not leak {@code solutions}; and the text exercise must not
+     * leak its {@code exampleSolution}. A conduction DTO projection must reproduce this masked shape exactly — never
+     * re-adding the stripped fields — so this guards the migration against silently exposing solutions to students.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testConductionWireMasksSolutionsButKeepsAnswerableIds() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+        userUtilService.changeUser(studentExam.getUser().getLogin());
+
+        final HttpHeaders headers = getHttpHeadersForExamSession();
+        JsonNode conductionWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, JsonNode.class, headers);
+
+        boolean sawQuiz = false;
+        boolean sawText = false;
+        for (JsonNode exercise : conductionWire.get("exercises")) {
+            if ("text".equals(exercise.path("type").asText())) {
+                sawText = true;
+                assertThat(exercise.has("exampleSolution")).as("text exercise must not leak exampleSolution during conduction").isFalse();
+            }
+            JsonNode questions = exercise.get("quizQuestions");
+            if (questions == null) {
+                continue;
+            }
+            sawQuiz = true;
+            assertThat(questions).hasSize(3);
+            for (JsonNode question : questions) {
+                assertThat(question.hasNonNull("id")).as("quiz question carries an id for the client").isTrue();
+                assertThat(question.hasNonNull("type")).as("quiz question carries its polymorphic type discriminator").isTrue();
+                switch (question.get("type").asText()) {
+                    case "multiple-choice" -> {
+                        JsonNode options = question.get("answerOptions");
+                        assertThat(options).as("MC question keeps its answer options for the client").isNotNull();
+                        assertThat(options).hasSize(2);
+                        for (JsonNode option : options) {
+                            assertThat(option.hasNonNull("id")).as("answer option carries an id the client needs to submit a selection").isTrue();
+                            assertThat(option.has("isCorrect")).as("answer option must not leak isCorrect during conduction").isFalse();
+                            assertThat(option.has("explanation")).as("answer option must not leak explanation during conduction").isFalse();
+                        }
+                    }
+                    case "drag-and-drop" -> {
+                        assertThat(question.get("dragItems")).as("DnD question keeps its drag items for the client").isNotNull();
+                        assertThat(question.get("dropLocations")).as("DnD question keeps its drop locations for the client").isNotNull();
+                        assertThat(question.path("correctMappings").isEmpty()).as("DnD question must not leak correctMappings during conduction").isTrue();
+                    }
+                    case "short-answer" -> {
+                        assertThat(question.get("spots")).as("SA question keeps its spots for the client").isNotNull();
+                        assertThat(question.path("correctMappings").isEmpty()).as("SA question must not leak correctMappings during conduction").isTrue();
+                        assertThat(question.path("solutions").isEmpty()).as("SA question must not leak solutions during conduction").isTrue();
+                    }
+                    default -> {
+                    }
+                }
+            }
+        }
+
+        assertThat(sawQuiz).as("conduction wire exposed a quiz exercise to mask-check").isTrue();
+        assertThat(sawText).as("conduction wire exposed a text exercise to mask-check").isTrue();
+
+        deleteExamWithInstructor(exam1);
+    }
+
     @ParameterizedTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ValueSource(booleans = { true, false })
@@ -613,7 +709,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         // --> 2 min = 120s working time
 
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
 
         exam2.setTestExam(isTestExam);
@@ -650,21 +746,30 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         // --> 2 min = 120s working time
 
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor2, exam.getExerciseGroups());
 
-        List<StudentExam> response = request.getList("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs", HttpStatus.OK, StudentExam.class);
+        // measured baseline is 7 queries (auth + access checks + findAllTestRunsByExamId); guards against an
+        // accidental N+1 regression (e.g. touching a lazy association per element) creeping into the DTO factory
+        List<StudentExamDTO> response = assertThatDb(
+                () -> request.getList("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs", HttpStatus.OK, StudentExamDTO.class))
+                .hasBeenCalledAtMostTimes(7);
         assertThat(response).hasSize(2);
+        // the template reads user.name/user.id (see StudentExamDTO#withUser); the nested exam is intentionally omitted
+        assertThat(response).allSatisfy(dto -> {
+            assertThat(dto.user()).isNotNull();
+            assertThat(dto.exam()).isNull();
+        });
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise() throws Exception {
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
@@ -680,7 +785,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise_notExamExercise() throws Exception {
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course2, false);
         request.getList("/api/exercise/exercises/" + exercise.getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
     }
@@ -689,7 +794,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise_notInstructor() throws Exception {
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
@@ -703,7 +808,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise_noTestRunSubmissions() throws Exception {
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
@@ -722,7 +827,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
 
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
 
@@ -753,7 +858,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
 
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
 
@@ -769,9 +874,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
 
-        // generate individual student exams
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        // generate individual student exams (the response masks the nested exam; re-fetch managed entities to modify them)
+        request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExamDTO.class,
+                HttpStatus.OK);
+        List<StudentExam> studentExams = new ArrayList<>(studentExamRepository.findByExamId(exam.getId()));
 
         // Modify working times
 
@@ -799,11 +905,18 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         int newWorkingTime = 180 * 60;
         exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
         exam1 = examRepository.save(exam1);
-        StudentExam result = request.patchWithResponseBody(
-                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime, StudentExam.class,
-                HttpStatus.OK);
-        assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
+        StudentExamDTO result = request.patchWithResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime,
+                StudentExamDTO.class, HttpStatus.OK);
+        assertThat(result.workingTime()).isEqualTo(newWorkingTime);
         assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
+        // the client's processStudentExam/setAccessRightsForCourse need the nested exam + course
+        assertThat(result.exam()).isNotNull();
+        assertThat(result.exam().id()).isEqualTo(exam1.getId());
+        assertThat(result.exam().course()).isNotNull();
+        assertThat(result.exam().course().id()).isEqualTo(course1.getId());
+        // user is intentionally omitted from this endpoint's response (see StudentExamDTO#withExam)
+        assertThat(result.user()).isNull();
     }
 
     @Test
@@ -813,17 +926,83 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
         exam1 = examRepository.save(exam1);
         request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
-                newWorkingTime, StudentExam.class, HttpStatus.BAD_REQUEST);
+                newWorkingTime, StudentExamDTO.class, HttpStatus.BAD_REQUEST);
         // working time did not change
         var studentExamDB = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
 
         newWorkingTime = -10;
         request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
-                newWorkingTime, StudentExam.class, HttpStatus.BAD_REQUEST);
+                newWorkingTime, StudentExamDTO.class, HttpStatus.BAD_REQUEST);
         // working time did not change
         studentExamDB = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateWorkingTime_failsIfIndividualEndReachesSummaryPublicationDate() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
+        // the submission overview becomes visible one hour after the nominal end date
+        exam1.setPublishResultsDate(null);
+        exam1.setExamSummaryPublicationDate(exam1.getEndDate().plusHours(1));
+        exam1 = examRepository.save(exam1);
+        int originalWorkingTime = studentExam1.getWorkingTime();
+        long secondsUntilPublication = Duration.between(exam1.getStartDate(), exam1.getExamSummaryPublicationDate()).getSeconds();
+
+        // an individual extension that would push this student past the publication date must be rejected: otherwise the summary and conduction gates open for students who
+        // already submitted while this student is still writing
+        request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
+                (int) secondsUntilPublication + 60, StudentExam.class, HttpStatus.BAD_REQUEST);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(originalWorkingTime);
+
+        // an extension landing exactly on the publication date is rejected as well (the summary must not open at the very moment the student is still allowed to submit)
+        request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
+                (int) secondsUntilPublication, StudentExam.class, HttpStatus.BAD_REQUEST);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(originalWorkingTime);
+
+        // an extension that keeps the individual end before the publication date is still allowed
+        int allowedWorkingTime = (int) secondsUntilPublication - 60;
+        StudentExam result = request.patchWithResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", allowedWorkingTime,
+                StudentExam.class, HttpStatus.OK);
+        assertThat(result.getWorkingTime()).isEqualTo(allowedWorkingTime);
+
+        // with the individual extension in place, the instructor may no longer pull the publication date in front of that student's individual end date
+        Exam examWithExtension = examRepository.findByIdElseThrow(exam1.getId());
+        examWithExtension.setExamSummaryPublicationDate(examWithExtension.getStartDate().plusSeconds(allowedWorkingTime));
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examWithExtension), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamDuration_failsWhenRescaledIndividualExtensionCrossesSummaryPublicationDate() throws Exception {
+        // NOTE: unlike the working-time PATCH tests above, this one goes through the full exam update, which validates
+        // the date ordering. The "active exam" fixture starts an hour in the past but keeps a visible date near now, so
+        // the visible date has to be pulled in front of the start date for any update of it to be accepted at all.
+        exam1.setVisibleDate(exam1.getStartDate().minusMinutes(30));
+        exam1.setPublishResultsDate(null);
+        exam1 = examRepository.save(exam1);
+        int examDuration = exam1.getDuration();
+
+        // Give the student a modest individual extension (+10% of the exam duration) and set the publication date just
+        // after that individual end, so the invariant holds for the current state.
+        int extendedWorkingTime = examDuration + examDuration / 10;
+        request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
+                extendedWorkingTime, StudentExam.class, HttpStatus.OK);
+        Exam examWithExtension = examRepository.findByIdElseThrow(exam1.getId());
+        ZonedDateTime individualEnd = examWithExtension.getStartDate().plusSeconds(extendedWorkingTime);
+        examWithExtension.setExamSummaryPublicationDate(individualEnd.plusMinutes(5));
+        Exam savedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examWithExtension), Exam.class, HttpStatus.OK);
+
+        // Now stretch the exam end date. The nominal end stays before the publication date, but updateStudentExamsAndRescheduleExercises
+        // rescales the individual extension proportionally, which pushes this student past it — so the update has to be rejected.
+        savedExam.setEndDate(savedExam.getExamSummaryPublicationDate().minusMinutes(1));
+        assertThat(savedExam.getEndDate()).isBefore(savedExam.getExamSummaryPublicationDate());
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(savedExam), HttpStatus.BAD_REQUEST);
+
+        // the rejected update must not have touched the stored working time
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(extendedWorkingTime);
     }
 
     @Test
@@ -833,10 +1012,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         int oldWorkingTime = studentExam1.getWorkingTime();
         exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
         exam1 = examRepository.save(exam1);
-        StudentExam result = request.patchWithResponseBody(
-                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime, StudentExam.class,
-                HttpStatus.OK);
-        assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
+        StudentExamDTO result = request.patchWithResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime,
+                StudentExamDTO.class, HttpStatus.OK);
+        assertThat(result.workingTime()).isEqualTo(newWorkingTime);
         assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
 
         var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForId(studentExam1.getId(), false);
@@ -861,10 +1040,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         testExam1.setEndDate(ZonedDateTime.now().plusHours(1));
         testExam1 = examRepository.save(testExam1);
 
-        StudentExam result = request.patchWithResponseBody(
+        StudentExamDTO result = request.patchWithResponseBody(
                 "/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExamForTestExam1.getId() + "/working-time", newWorkingTime,
-                StudentExam.class, HttpStatus.OK);
-        assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
+                StudentExamDTO.class, HttpStatus.OK);
+        assertThat(result.workingTime()).isEqualTo(newWorkingTime);
 
         var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForId(studentExamForTestExam1.getId(), false);
         assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
@@ -977,24 +1156,20 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         submission.setText("Test2");
         submission.setSubmitted(false);
 
-        // if the submitted exam has the submitted flag set to true, the request should be ignored, but still return OK
+        // The client-supplied submitted flag is no longer read (it is dropped from the DTO): the submitted state is
+        // derived from the database. A client that claims submitted=true while its DB copy is not yet submitted therefore
+        // does NOT short-circuit — the exam is legitimately submitted and the change is saved.
         studentExam1.setSubmitted(true);
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
-
-        // Check that submission change is not saved
-        assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test1", null);
-
-        // if the submitted exam has the submitted flag set to false, and the studentExam is not yet submitted, the request should be accepted ...
-        studentExam1.setSubmitted(false);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
-        // ... and the exam actually be submitted and the change be saved
         assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test2", true);
 
         // Change submission again
         submission.setText("Test3");
         submission.setSubmitted(false);
 
-        // Subsequent calls should still return OK, but not persist my new submission change
+        // Subsequent calls are ignored because the DATABASE now marks the exam as submitted (the idempotent double-submit
+        // guard), regardless of the client-supplied flag, and still return OK without persisting the new change.
+        studentExam1.setSubmitted(false);
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
         assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test2", true);
     }
@@ -1025,16 +1200,20 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testSubmitStudentExam_differentUser() throws Exception {
+    void testSubmitStudentExam_manipulatedUserInBodyIsIgnored() throws Exception {
         studentExam1.setSubmitted(false);
         studentExamRepository.save(studentExam1);
-        // Forbidden because user object is wrong
+        // The submit body no longer carries a user field: ownership is derived from the persisted student exam (owned by
+        // student1, the authenticated user), not from a client claim. A body that still claims a different user (a stale
+        // full-entity body from before the DTO rollout) is deserialized ignoring that field, so the request succeeds and
+        // the DB ownership stays student1. Cross-user submission is rejected by DB truth in testSubmitExamOtherUser_forbidden.
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         studentExam1.setUser(student2);
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
 
         studentExam1 = studentExamRepository.findByIdElseThrow(studentExam1.getId());
         assertThat(studentExam1.getUser()).isEqualTo(student1);
+        assertThat(studentExam1.isSubmitted()).isTrue();
     }
 
     @Test
@@ -1066,7 +1245,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         StudentExam submittedStudentExam = studentExamRepository.findById(studentExamForTestExam1.getId()).orElseThrow();
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
 
-        verify(programmingTriggerService, timeout(30000)).triggerBuildForParticipations(List.of(participation));
+        verify(programmingTriggerService, timeout(60000)).triggerBuildForParticipations(List.of(participation));
     }
 
     @Test
@@ -1364,6 +1543,42 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetStudentExamForSummary_examSummaryPublicationDate() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+
+        // configure a submission-overview publication date far in the future before the student conducts the exam
+        exam2.setPublishResultsDate(null);
+        exam2.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
+        exam2 = examRepository.save(exam2);
+
+        final String conductionUrl = "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction";
+        final String summaryUrl = "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/summary";
+
+        userUtilService.changeUser(studentExam.getUser().getLogin());
+        // a student who has NOT submitted yet must still be able to fetch the conduction even though the summary is not published yet (the gate must not break ongoing exams)
+        var studentExamResponse = request.get(conductionUrl, HttpStatus.OK, StudentExam.class);
+        // submit early so the summary would generally be accessible (it only requires the student exam to be submitted)
+        request.postWithoutResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.OK);
+
+        // 1) summary publication date in the future: the submitted student may NOT access the summary yet, and must not be able to re-fetch the exam content via conduction either
+        request.get(summaryUrl, HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get(conductionUrl, HttpStatus.FORBIDDEN, StudentExam.class);
+
+        // 2) summary publication date in the past: the student may access the summary
+        exam2.setExamSummaryPublicationDate(ZonedDateTime.now().minusMinutes(1));
+        exam2 = examRepository.save(exam2);
+        var summary = request.get(summaryUrl, HttpStatus.OK, StudentExam.class);
+        assertThat(summary.isSubmitted()).isTrue();
+
+        // 3) summary publication date still in the future, but results are already published: the summary is available as a safeguard
+        exam2.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
+        exam2.setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
+        exam2 = examRepository.save(exam2);
+        request.get(summaryUrl, HttpStatus.OK, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitStudentExam_realistic() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
 
@@ -1471,6 +1686,157 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         deleteExamWithInstructor(exam1);
     }
 
+    /**
+     * Wire-contract guard for the exam conduction -> hand-in round trip.
+     * <p>
+     * The exam-taking client fetches the conduction response, keeps it typed as the full {@code StudentExam} model, and
+     * later builds the hand-in body from it via {@code toSubmitStudentExamDTO}, which reads exactly
+     * {@code exercises[].id}, {@code studentParticipations[].id} and {@code submissions[].{id, submissionExerciseType}}
+     * plus the per-type content (text+language / model+explanationText / submittedAnswers). This test reproduces that
+     * exact walk against the <em>raw JSON</em> the conduction endpoint returns: it asserts every id path the client
+     * mapper depends on is present on the wire, then builds the slim submit body from those wire ids (injecting the
+     * last-second answers a student would enter), posts it, and fresh-queries the database to prove the text, modeling
+     * and quiz content survived the round trip.
+     * <p>
+     * Unlike the other submit tests, this one never echoes the full conduction entity back to the submit endpoint and
+     * never saves through the dedicated per-exercise submission endpoints — the content reaches the server only through
+     * the slim body assembled from the wire. That makes it the regression guard for the conduction-response DTO
+     * migration: if a migrated conduction projection drops any id path the client mapper reads, the slim body can no
+     * longer be assembled (the id assertions fail) or the content no longer round-trips.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testConductionWireToSlimSubmitBodyRoundTripPersistsContent() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+        User student = studentExam.getUser();
+        userUtilService.changeUser(student.getLogin());
+
+        final HttpHeaders headers = getHttpHeadersForExamSession();
+        // 1. Fetch the conduction response as the raw JSON the client receives.
+        JsonNode conductionWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, JsonNode.class, headers);
+        assertThat(conductionWire.hasNonNull("id")).as("conduction wire carries the student exam id").isTrue();
+        assertThat(conductionWire.get("exercises")).as("conduction wire carries exercises").isNotNull();
+
+        final String expectedText = "Round-trip text " + UUID.randomUUID();
+        final String expectedModel = "{\"element\":\"round-trip model\"}";
+        final String expectedExplanation = "Round-trip explanation";
+
+        // 2. Build the slim submit body exactly as the client's toSubmitStudentExamDTO mapper does, reading only the wire
+        // ids the mapper reads and injecting the per-type content a student would have entered.
+        ObjectMapper mapper = request.getObjectMapper();
+        ObjectNode submitBody = mapper.createObjectNode();
+        submitBody.put("id", conductionWire.get("id").asLong());
+        ArrayNode submitExercises = submitBody.putArray("exercises");
+
+        Long textSubmissionId = null;
+        Long modelingSubmissionId = null;
+        Long quizSubmissionId = null;
+        Long mcQuestionId = null;
+        Long mcOptionId = null;
+
+        for (JsonNode exercise : conductionWire.get("exercises")) {
+            assertThat(exercise.hasNonNull("id")).as("conduction wire exercise carries an id").isTrue();
+            ObjectNode slimExercise = submitExercises.addObject();
+            slimExercise.put("id", exercise.get("id").asLong());
+            ArrayNode slimParticipations = slimExercise.putArray("studentParticipations");
+
+            JsonNode wireParticipations = exercise.get("studentParticipations");
+            if (wireParticipations == null) {
+                continue;
+            }
+            for (JsonNode participation : wireParticipations) {
+                assertThat(participation.hasNonNull("id")).as("conduction wire participation carries an id").isTrue();
+                ObjectNode slimParticipation = slimParticipations.addObject();
+                slimParticipation.put("id", participation.get("id").asLong());
+                ArrayNode slimSubmissions = slimParticipation.putArray("submissions");
+
+                JsonNode wireSubmissions = participation.get("submissions");
+                if (wireSubmissions == null) {
+                    continue;
+                }
+                for (JsonNode submission : wireSubmissions) {
+                    String type = submission.path("submissionExerciseType").asText(null);
+                    ObjectNode slimSubmission = slimSubmissions.addObject();
+                    if (submission.hasNonNull("id")) {
+                        slimSubmission.put("id", submission.get("id").asLong());
+                    }
+                    if (type != null) {
+                        slimSubmission.put("submissionExerciseType", type);
+                    }
+                    if (type == null) {
+                        continue;
+                    }
+                    switch (type) {
+                        case "text" -> {
+                            assertThat(submission.hasNonNull("id")).as("conduction wire text submission carries an id").isTrue();
+                            textSubmissionId = submission.get("id").asLong();
+                            slimSubmission.put("text", expectedText);
+                        }
+                        case "modeling" -> {
+                            assertThat(submission.hasNonNull("id")).as("conduction wire modeling submission carries an id").isTrue();
+                            modelingSubmissionId = submission.get("id").asLong();
+                            slimSubmission.put("model", expectedModel);
+                            slimSubmission.put("explanationText", expectedExplanation);
+                        }
+                        case "quiz" -> {
+                            assertThat(submission.hasNonNull("id")).as("conduction wire quiz submission carries an id").isTrue();
+                            quizSubmissionId = submission.get("id").asLong();
+                            JsonNode questions = exercise.get("quizQuestions");
+                            assertThat(questions).as("conduction wire quiz exercise carries quizQuestions").isNotNull();
+                            ArrayNode answers = slimSubmission.putArray("submittedAnswers");
+                            for (JsonNode question : questions) {
+                                if ("multiple-choice".equals(question.path("type").asText()) && mcQuestionId == null) {
+                                    JsonNode options = question.get("answerOptions");
+                                    assertThat(options).as("conduction wire MC question carries answerOptions").isNotNull();
+                                    assertThat(options.isEmpty()).as("conduction wire MC question exposes at least one option").isFalse();
+                                    mcQuestionId = question.get("id").asLong();
+                                    mcOptionId = options.get(0).get("id").asLong();
+                                    ObjectNode answer = answers.addObject();
+                                    answer.put("type", "multiple-choice");
+                                    answer.putObject("quizQuestion").put("id", mcQuestionId);
+                                    answer.putArray("selectedOptions").addObject().put("id", mcOptionId);
+                                }
+                            }
+                        }
+                        default -> {
+                            // programming / file-upload carry no content the hand-in persists
+                        }
+                    }
+                }
+            }
+        }
+
+        assertThat(textSubmissionId).as("conduction wire exposed a text submission").isNotNull();
+        assertThat(quizSubmissionId).as("conduction wire exposed a quiz submission").isNotNull();
+        assertThat(mcOptionId).as("conduction wire exposed an MC question with a selectable option").isNotNull();
+
+        // 3. Post the slim body — the exact shape the client assembles from the conduction wire.
+        request.postWithoutResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", submitBody, HttpStatus.OK);
+
+        // 4. Fresh-query the database and assert the last-second content survived the round trip.
+        StudentExam persisted = studentExamRepository.findById(studentExam.getId()).orElseThrow();
+        assertThat(persisted.isSubmitted()).as("student exam is marked submitted after hand-in").isTrue();
+
+        TextSubmission persistedText = (TextSubmission) submissionRepository.findById(textSubmissionId).orElseThrow();
+        assertThat(persistedText.getText()).as("text hand-in content persisted from the slim body").isEqualTo(expectedText);
+
+        if (modelingSubmissionId != null) {
+            ModelingSubmission persistedModel = (ModelingSubmission) submissionRepository.findById(modelingSubmissionId).orElseThrow();
+            assertThat(persistedModel.getModel()).as("modeling hand-in content persisted from the slim body").isEqualTo(expectedModel);
+            assertThat(persistedModel.getExplanationText()).as("modeling explanation persisted from the slim body").isEqualTo(expectedExplanation);
+        }
+
+        QuizSubmission persistedQuiz = quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(quizSubmissionId);
+        assertThat(persistedQuiz.getSubmittedAnswers()).as("quiz hand-in answers persisted from the slim body").isNotEmpty();
+        var mcAnswer = persistedQuiz.getSubmittedAnswers().stream().filter(answer -> answer instanceof MultipleChoiceSubmittedAnswer)
+                .map(answer -> (MultipleChoiceSubmittedAnswer) answer).findFirst().orElseThrow();
+        final Long expectedOptionId = mcOptionId;
+        assertThat(mcAnswer.getSelectedOptions()).as("MC selected option persisted from the slim body").anyMatch(option -> expectedOptionId.equals(option.getId()));
+
+        deleteExamWithInstructor(exam1);
+    }
+
     private void saveSubmissionByExerciseType(Exercise exercise) throws Exception {
         var participation = exercise.getStudentParticipations().iterator().next();
         if (exercise instanceof ProgrammingExercise programmingExercise) {
@@ -1572,7 +1938,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 dndMapping.setDragItem(dragAndDropQuestion.getDragItems().get(dndDragItemIndex));
                 dndMapping.setDropLocationIndex(dndLocationIndex);
                 dndMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndLocationIndex));
-                submittedAnswer.getMappings().add(dndMapping);
+                submittedAnswer.addMappings(dndMapping);
                 submittedAnswer.setQuizQuestion(dragAndDropQuestion);
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
@@ -1581,8 +1947,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
                 shortAnswerSubmittedText.setText(shortAnswerText);
                 shortAnswerSubmittedText.setSpot(shortAnswerQuestion.getSpots().get(saSpotIndex));
-                submittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
                 submittedAnswer.setQuizQuestion(shortAnswerQuestion);
+                submittedAnswer.addSubmittedTexts(shortAnswerSubmittedText);
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
             else if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
@@ -1836,6 +2202,491 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         deleteExamWithInstructor(exam1);
     }
 
+    /**
+     * Wire-contract guard for the SUMMARY path's exercise-level quiz questions once results are published.
+     * <p>
+     * After the publish-results date the quiz summary UI ({@code quiz-exam-summary}, rendered with
+     * {@code showResult = resultsPublished}) reads the correct answers off the exercise-level quiz questions to show
+     * which options were right/wrong. The pre-DTO wire stopped masking quizzes after the publish date, so it carried
+     * these solutions; the DTO projection must do the same or the published student sees no right/wrong on the quiz
+     * summary. This pins that the published {@code /summary} wire carries the multiple-choice {@code isCorrect} /
+     * {@code explanation}, the drag-and-drop {@code correctMappings} and the short-answer {@code correctMappings} on the
+     * exercise-level questions — the exact fields the summary UI needs. Uses a genuinely answered, published quiz
+     * fixture, since a prior wire dump using a non-published / answer-less fixture is exactly how this regressed.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSummaryWireServesQuizSolutionsAfterPublishResults() throws Exception {
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
+
+        userUtilService.changeUser(studentExam.getUser().getLogin());
+        JsonNode summaryWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/summary", HttpStatus.OK,
+                JsonNode.class);
+
+        boolean sawQuiz = false;
+        for (JsonNode exercise : summaryWire.get("exercises")) {
+            JsonNode questions = exercise.get("quizQuestions");
+            if (questions == null) {
+                continue;
+            }
+            sawQuiz = true;
+            assertThat(questions).hasSize(3);
+            for (JsonNode question : questions) {
+                switch (question.get("type").asText()) {
+                    case "multiple-choice" -> {
+                        assertThat(question.hasNonNull("explanation")).as("published summary MC question must carry its explanation").isTrue();
+                        JsonNode options = question.get("answerOptions");
+                        assertThat(options).as("published summary MC question keeps its answer options").isNotNull();
+                        long correctOptions = 0;
+                        boolean sawOptionExplanation = false;
+                        for (JsonNode option : options) {
+                            if (option.path("isCorrect").asBoolean(false)) {
+                                correctOptions++;
+                            }
+                            sawOptionExplanation |= option.hasNonNull("explanation");
+                        }
+                        assertThat(correctOptions).as("published summary MC wire must reveal the correct answer option via isCorrect").isGreaterThanOrEqualTo(1);
+                        assertThat(sawOptionExplanation).as("published summary MC options must carry their explanation").isTrue();
+                    }
+                    case "drag-and-drop" -> assertThat(question.path("correctMappings").isEmpty()).as("published summary DnD wire must carry correctMappings").isFalse();
+                    case "short-answer" -> assertThat(question.path("correctMappings").isEmpty()).as("published summary SA wire must carry correctMappings").isFalse();
+                    default -> {
+                    }
+                }
+            }
+        }
+        assertThat(sawQuiz).as("published summary wire exposed a quiz exercise to check").isTrue();
+        deleteExamWithInstructor(exam1);
+    }
+
+    /**
+     * Security-sensitive counterpart to {@link #testSummaryWireServesQuizSolutionsAfterPublishResults()}: before the
+     * publish-results date the {@code /summary} endpoint is reachable (it only requires the student exam to be
+     * submitted), and the exercise-level quiz questions must stay solution-hidden exactly as during conduction. This
+     * pins that the not-yet-published summary wire leaks neither the multiple-choice {@code isCorrect} /
+     * {@code explanation} nor the drag-and-drop / short-answer {@code correctMappings} / {@code solutions}, so making
+     * the summary publish-aware never regresses the pre-publish masking.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSummaryWireMasksQuizSolutionsBeforePublishResults() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+        StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin(), studentExam);
+
+        // move to a point where the individual student exam has ended but is still in the grace period, so the student can submit
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        exam2 = examRepository.save(exam2);
+
+        // submit as the student (addExamExerciseSubmissionsForUser already switched to the student user); results are NOT published
+        request.postWithoutResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamWithSubmissions, HttpStatus.OK);
+
+        JsonNode summaryWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamWithSubmissions.getId() + "/summary",
+                HttpStatus.OK, JsonNode.class);
+
+        boolean sawQuiz = false;
+        for (JsonNode exercise : summaryWire.get("exercises")) {
+            JsonNode questions = exercise.get("quizQuestions");
+            if (questions == null) {
+                continue;
+            }
+            sawQuiz = true;
+            assertThat(questions).hasSize(3);
+            for (JsonNode question : questions) {
+                assertThat(question.has("explanation")).as("unpublished summary quiz question must not leak explanation").isFalse();
+                switch (question.get("type").asText()) {
+                    case "multiple-choice" -> {
+                        for (JsonNode option : question.get("answerOptions")) {
+                            assertThat(option.has("isCorrect")).as("unpublished summary MC option must not leak isCorrect").isFalse();
+                            assertThat(option.has("explanation")).as("unpublished summary MC option must not leak explanation").isFalse();
+                        }
+                    }
+                    case "drag-and-drop" -> assertThat(question.path("correctMappings").isEmpty()).as("unpublished summary DnD must not leak correctMappings").isTrue();
+                    case "short-answer" -> {
+                        assertThat(question.path("correctMappings").isEmpty()).as("unpublished summary SA must not leak correctMappings").isTrue();
+                        assertThat(question.path("solutions").isEmpty()).as("unpublished summary SA must not leak solutions").isTrue();
+                    }
+                    default -> {
+                    }
+                }
+            }
+        }
+        assertThat(sawQuiz).as("unpublished summary wire exposed a quiz exercise to mask-check").isTrue();
+
+        // The detail projection follows the same publish gate (its summary consumers only render results once
+        // published), so the not-yet-published instructor detail wire must stay solution-hidden too.
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        JsonNode detailWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamWithSubmissions.getId(),
+                HttpStatus.OK, JsonNode.class);
+        assertExerciseWireMasksQuizSolutions(detailWire.get("studentExam").get("exercises"), "unpublished instructor detail");
+        deleteExamWithInstructor(exam1);
+    }
+
+    /**
+     * Test-run counterpart to {@link #testSummaryWireServesQuizSolutionsAfterPublishResults()}: test runs are exempt
+     * from quiz masking (the server never strips their quiz solutions and the client's {@code resultsArePublished}
+     * treats test runs as published immediately), so the test-run summary wire must carry the quiz solutions even
+     * while the real exam's results are NOT yet published. Gating the summary projection only on
+     * {@code areResultsPublishedYet()} regressed exactly this: an instructor finishing a test run saw no quiz
+     * right/wrong on its summary.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTestRunSummaryWireServesQuizSolutionsBeforePublishResults() throws Exception {
+        var testRun = createTestRun();
+        // pin the interesting state: the real exam's results are NOT published, only the test-run exemption applies
+        testRunExam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        testRunExam = examRepository.save(testRunExam);
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse, HttpStatus.OK, null);
+
+        JsonNode summaryWire = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/" + testRun.getId() + "/summary",
+                HttpStatus.OK, JsonNode.class);
+
+        assertExerciseWireCarriesQuizSolutions(summaryWire.get("exercises"), "unpublished test-run summary");
+
+        // The instructor test-run summary route resolves its student exam via the DETAIL endpoint (getStudentExam ->
+        // StudentExamWithGradeDTO.studentExam), so the detail projection must apply the same test-run exemption.
+        JsonNode detailWire = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/" + testRun.getId(), HttpStatus.OK,
+                JsonNode.class);
+        assertExerciseWireCarriesQuizSolutions(detailWire.get("studentExam").get("exercises"), "unpublished test-run detail");
+    }
+
+    /**
+     * Regression for the reconstructed-participation merge. {@link de.tum.cit.aet.artemis.exam.service.StudentExamSubmitMapper}
+     * hands {@code ExamQuizService.evaluateQuizParticipationsForTestRunAndTestExam} a participation carrying only the
+     * fields the submit path needs (id, participant, exercise, testRun, INITIALIZED). Saving that id-bearing partial
+     * entity merges it over the persisted row and wipes every column it does not carry.
+     * <p>
+     * The assertions re-read the row from the database after the hand-in has completed, so they see the persisted
+     * columns rather than the warm in-memory object that would hide the clobber. {@code attempt} is the field that
+     * tells repeated test-exam attempts apart; test exams reach this same code path.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSubmitKeepsPersistedQuizParticipationMetadata() throws Exception {
+        var testRun = createTestRun();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+
+        QuizExercise quizExercise = (QuizExercise) testRunResponse.getExercises().stream().filter(QuizExercise.class::isInstance).findFirst().orElseThrow();
+        long participationId = quizExercise.getStudentParticipations().iterator().next().getId();
+
+        // stamp the persisted row with the metadata the reconstruction never carries; truncated to milliseconds so the
+        // values survive the database round-trip exactly (PostgreSQL keeps microseconds, not nanoseconds)
+        ZonedDateTime initializationDate = ZonedDateTime.now().minusHours(2).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(2).truncatedTo(ChronoUnit.MILLIS);
+        StudentParticipation beforeSubmit = studentParticipationRepository.findById(participationId).orElseThrow();
+        beforeSubmit.setInitializationDate(initializationDate);
+        beforeSubmit.setIndividualDueDate(individualDueDate);
+        beforeSubmit.setAttempt(3);
+        beforeSubmit.setPresentationScore(7.0);
+        beforeSubmit.setInitializationState(InitializationState.FINISHED);
+        studentParticipationRepository.save(beforeSubmit);
+
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse, HttpStatus.OK, null);
+
+        StudentParticipation afterSubmit = studentParticipationRepository.findById(participationId).orElseThrow();
+        assertThat(afterSubmit.getInitializationDate()).as("initializationDate must survive the hand-in").isNotNull();
+        assertThat(afterSubmit.getInitializationDate().toInstant()).isEqualTo(initializationDate.toInstant());
+        assertThat(afterSubmit.getIndividualDueDate()).as("individualDueDate must survive the hand-in").isNotNull();
+        assertThat(afterSubmit.getIndividualDueDate().toInstant()).isEqualTo(individualDueDate.toInstant());
+        assertThat(afterSubmit.getAttempt()).as("attempt must survive the hand-in, it numbers repeated test-exam attempts").isEqualTo(3);
+        assertThat(afterSubmit.getPresentationScore()).as("presentationScore must survive the hand-in").isEqualTo(7.0);
+        assertThat(afterSubmit.getInitializationState()).as("a FINISHED participation must not regress to INITIALIZED").isEqualTo(InitializationState.FINISHED);
+    }
+
+    /**
+     * Submit-path counterpart to {@link StudentExamProjectionNullExerciseTest}, which pins only that the RESPONSE
+     * projections drop null exercises. {@code StudentExam.exercises} is an {@code @OrderColumn} list, so a hole in
+     * {@code exercise_order} materializes as a null element, and a null passes every {@code instanceof} filter on the
+     * submit path. {@code ExamQuizService.evaluateQuizParticipationsForTestRunAndTestExam} runs after the exam was
+     * already marked submitted and outside the caller's try/catch, so dereferencing the gap answered the hand-in with
+     * a 500 on an exam the student can no longer resubmit.
+     * <p>
+     * Asserts the hand-in returns 200 and that the quiz which survived the gap was still evaluated (it got a result).
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSubmitTestRunWithNullExerciseGapSucceedsAndStillEvaluatesQuiz() throws Exception {
+        var testRun = createTestRun();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+        QuizExercise quizExercise = (QuizExercise) testRunResponse.getExercises().stream().filter(QuizExercise.class::isInstance).findFirst().orElseThrow();
+
+        // punch a hole into exercise_order: prepending a null shifts every real exercise up one index and leaves
+        // index 0 without a row, which is exactly how a gap loads back
+        StudentExam persisted = studentExamRepository.findWithExercisesById(testRun.getId()).orElseThrow();
+        List<Exercise> exercisesWithGap = new ArrayList<>(persisted.getExercises());
+        exercisesWithGap.addFirst(null);
+        persisted.setExercises(exercisesWithGap);
+        studentExamRepository.save(persisted);
+        assertThat(studentExamRepository.findWithExercisesById(testRun.getId()).orElseThrow().getExercises()).as("the fixture must really produce a null gap").containsNull();
+
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse, HttpStatus.OK, null);
+
+        assertThat(studentExamRepository.findById(testRun.getId()).orElseThrow().isSubmitted()).isTrue();
+        var quizParticipations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissionsResultsAndFeedbacks(quizExercise.getId(),
+                userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getId());
+        assertThat(quizParticipations).as("the quiz that survived the gap must still have a participation").isNotEmpty();
+        assertThat(quizParticipations.stream().flatMap(participation -> participation.getSubmissions().stream()).flatMap(submission -> submission.getResults().stream()))
+                .as("the quiz that survived the gap must still have been evaluated").isNotEmpty();
+    }
+
+    /**
+     * Pins the configured exam metadata on the live conduction wire.
+     * <p>
+     * {@code moduleNumber}, {@code courseName} and {@code examiner} come straight off the {@code Exam} entity and are
+     * rendered by {@code ExamStartInformationComponent} (one information box each, on the exam cover) and
+     * {@code ExamGeneralInformationComponent} (the summary table). Both guard every field with a presence check, so a
+     * projection that drops them degrades silently: HTTP 200, no error, and the metadata the instructor configured
+     * simply never appears. {@code ExamForConductionDTO} is shared by the conduction, summary and detail payloads
+     * (the latter two through {@code ExamForSummaryDTO}'s {@code @JsonUnwrapped}), so this one wire covers all three.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testConductionWireCarriesExamMetadata() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+        exam2.setModuleNumber("IN2000");
+        exam2.setCourseName("Introduction to Software Engineering");
+        exam2.setExaminer("Prof. Dr. Stephan Krusche");
+        exam2 = examRepository.save(exam2);
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        JsonNode conductionWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, JsonNode.class);
+
+        JsonNode examNode = conductionWire.get("exam");
+        assertThat(examNode).as("conduction wire must carry the exam").isNotNull();
+        assertThat(examNode.path("moduleNumber").asText()).as("moduleNumber must reach the exam cover").isEqualTo("IN2000");
+        assertThat(examNode.path("courseName").asText()).as("courseName must reach the exam cover").isEqualTo("Introduction to Software Engineering");
+        assertThat(examNode.path("examiner").asText()).as("examiner must reach the exam cover").isEqualTo("Prof. Dr. Stephan Krusche");
+        deleteExamWithInstructor(exam1);
+    }
+
+    /**
+     * Pins that the conduction submission-policy projection resolves the concrete policy subtype through a real
+     * Hibernate proxy, not only through the query-loaded instance the conduction path happens to attach.
+     * <p>
+     * {@code SubmissionPolicyForConductionDTO.of} derives the client's {@code type} discriminator with a {@code switch}
+     * pattern match over {@link LockRepositoryPolicy} / {@link SubmissionPenaltyPolicy}. With a plain Hibernate proxy
+     * that match would fail — the proxy would extend only the abstract base — and the student would silently lose the
+     * policy display on a 200. It holds here because {@link SubmissionPolicy} is annotated {@code @ConcreteProxy}, so
+     * Hibernate proxies the concrete subtype. This test is the guard on that annotation: delete {@code @ConcreteProxy}
+     * and this fails, which is the signal to unproxy in the factory instead.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSubmissionPolicyProjectionResolvesConcreteTypeThroughHibernateProxy() {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findFirst().orElseThrow();
+        LockRepositoryPolicy policy = new LockRepositoryPolicy();
+        policy.setActive(true);
+        policy.setSubmissionLimit(3);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(policy, programmingExercise);
+
+        // open-in-view is off, so the lazy association is only proxyable inside an explicit transaction
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            ProgrammingExercise reloaded = (ProgrammingExercise) exerciseRepository.findById(programmingExercise.getId()).orElseThrow();
+            SubmissionPolicy lazyPolicy = reloaded.getSubmissionPolicy();
+            assertThat(lazyPolicy.getClass()).as("fixture must be a Hibernate proxy, otherwise this test does not cover the proxy path").isNotEqualTo(LockRepositoryPolicy.class);
+            Hibernate.initialize(lazyPolicy);
+            assertThat(Hibernate.isInitialized(lazyPolicy)).isTrue();
+
+            var dto = SubmissionPolicyForConductionDTO.of(lazyPolicy);
+            assertThat(dto).as("an initialized proxy must still project").isNotNull();
+            assertThat(dto.type()).as("the discriminator the client's SubmissionPolicyType switches on must survive the proxy").isEqualTo("lock_repository");
+            assertThat(dto.submissionLimit()).isEqualTo(3);
+            assertThat(dto.active()).isTrue();
+        });
+    }
+
+    /**
+     * Conduction counterpart to {@link #testTestRunSummaryWireServesQuizSolutionsBeforePublishResults()}: the test-run
+     * exemption is decided on the entity by {@code ExamService.loadQuizExercisesForStudentExam}, which masks only when
+     * {@code !(areResultsPublishedYet() || isTestRun())}. A test run therefore reaches the conduction projection with
+     * its solutions intact, and the projection must carry them through — that is what gives the instructor the
+     * right/wrong preview the test run exists for. Projecting conduction unconditionally through the solution-hidden
+     * quiz shape silently stripped them on a 200.
+     * <p>
+     * Note that a stripped test-run conduction wire still LOOKS solution-bearing at a glance: the short-answer
+     * projection keeps its {@code solutions} array (only {@code correctMappings} is dropped) and drag-and-drop keeps
+     * its {@code dragItems}. The assertion therefore checks the fields that actually reveal the answer — multiple-choice
+     * {@code isCorrect} and {@code correctMappings} — rather than the presence of a "solutions" key.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTestRunConductionWireServesQuizSolutions() throws Exception {
+        var testRun = createTestRun();
+        // pin the interesting state: the real exam's results are NOT published, only the test-run exemption applies
+        testRunExam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        testRunExam = examRepository.save(testRunExam);
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        JsonNode conductionWire = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-runs/" + testRun.getId() + "/conduction",
+                HttpStatus.OK, JsonNode.class);
+
+        assertExerciseWireCarriesQuizSolutions(conductionWire.get("exercises"), "test-run conduction");
+    }
+
+    /**
+     * Guards the other half of {@link #testTestRunConductionWireServesQuizSolutions()}: threading the test-run
+     * exemption into the conduction projection must not loosen the gate for a real student sitting the exam. A
+     * student's conduction wire stays solution-hidden.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testStudentConductionWireMasksQuizSolutions() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        JsonNode conductionWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, JsonNode.class);
+
+        assertExerciseWireMasksQuizSolutions(conductionWire.get("exercises"), "student conduction");
+        deleteExamWithInstructor(exam1);
+    }
+
+    /**
+     * Pins the two student-facing programming fields on the live conduction wire.
+     * <p>
+     * {@code allowOnlineEditor} gates the embedded editor ({@code programming-exam-submission.component.html}) and the
+     * "offline IDE only" branches of the exam navigation. The fixture is deliberately an ONLINE-EDITOR-ONLY exercise
+     * ({@code allowOfflineIde = false}), which is the case that degrades worst: without the field the student gets a
+     * 200 with no editor and no offline fallback either.
+     * <p>
+     * {@code submissionPolicy} feeds the remaining-submissions indicator
+     * ({@code ProgrammingSubmissionPolicyStatusComponent} reads {@code active}, {@code submissionLimit}, {@code type}
+     * and {@code exceedingPenalty}). {@code prepareStudentExamForConduction} loads the policy onto the exercise, so
+     * dropping it from the projection means the backend keeps enforcing a limit the student cannot see. Non-default
+     * values throughout, so a projection that emitted the field but not its contents still fails.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testConductionWireCarriesProgrammingEditorGateAndSubmissionPolicy() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+        long programmingExerciseId = studentExam.getExercises().stream().filter(ProgrammingExercise.class::isInstance).findFirst().orElseThrow().getId();
+        // reload a clean instance: the exercise hanging off the student exam carries a detached participations
+        // collection, and saving that graph would cascade an orphan removal onto the student's participations
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseRepository.findById(programmingExerciseId).orElseThrow();
+        programmingExercise.setAllowOnlineEditor(true);
+        programmingExercise.setAllowOfflineIde(false);
+        programmingExercise = (ProgrammingExercise) exerciseRepository.save(programmingExercise);
+
+        SubmissionPenaltyPolicy submissionPolicy = new SubmissionPenaltyPolicy();
+        submissionPolicy.setActive(true);
+        submissionPolicy.setSubmissionLimit(5);
+        submissionPolicy.setExceedingPenalty(2.0);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(submissionPolicy, programmingExercise);
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        JsonNode conductionWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, JsonNode.class);
+
+        JsonNode programmingNode = null;
+        for (JsonNode exercise : conductionWire.get("exercises")) {
+            if (exercise.path("id").asLong() == programmingExercise.getId()) {
+                programmingNode = exercise;
+            }
+        }
+        assertThat(programmingNode).as("conduction wire must carry the programming exercise").isNotNull();
+        assertThat(programmingNode.path("allowOnlineEditor").asBoolean()).as("allowOnlineEditor must be on the conduction wire, else the online editor never renders").isTrue();
+
+        JsonNode policyNode = programmingNode.get("submissionPolicy");
+        assertThat(policyNode).as("conduction wire must carry the active submission policy").isNotNull();
+        assertThat(policyNode.path("active").asBoolean()).isTrue();
+        assertThat(policyNode.path("submissionLimit").asInt()).isEqualTo(5);
+        assertThat(policyNode.path("type").asText()).as("type is the discriminator the client's SubmissionPolicyType switches on").isEqualTo("submission_penalty");
+        assertThat(policyNode.path("exceedingPenalty").asDouble()).isEqualTo(2.0);
+        deleteExamWithInstructor(exam1);
+    }
+
+    /**
+     * Asserts that the given {@code exercises} wire node carries the quiz solutions the summary UI renders: at least one
+     * multiple-choice option flagged {@code isCorrect} and non-empty {@code correctMappings} on drag-and-drop /
+     * short-answer questions.
+     */
+    private static void assertExerciseWireCarriesQuizSolutions(JsonNode exercises, String context) {
+        boolean sawQuizQuestionWithSolution = false;
+        for (JsonNode exercise : exercises) {
+            JsonNode questions = exercise.get("quizQuestions");
+            if (questions == null) {
+                continue;
+            }
+            for (JsonNode question : questions) {
+                switch (question.get("type").asText()) {
+                    case "multiple-choice" -> {
+                        long correctOptions = 0;
+                        for (JsonNode option : question.get("answerOptions")) {
+                            if (option.path("isCorrect").asBoolean(false)) {
+                                correctOptions++;
+                            }
+                        }
+                        assertThat(correctOptions).as(context + " MC wire must reveal the correct answer option via isCorrect").isGreaterThanOrEqualTo(1);
+                        sawQuizQuestionWithSolution = true;
+                    }
+                    case "drag-and-drop", "short-answer" -> {
+                        assertThat(question.path("correctMappings").isEmpty()).as(context + " wire must carry correctMappings").isFalse();
+                        sawQuizQuestionWithSolution = true;
+                    }
+                    default -> {
+                    }
+                }
+            }
+        }
+        assertThat(sawQuizQuestionWithSolution).as(context + " wire exposed a quiz question to solution-check").isTrue();
+    }
+
+    /**
+     * Asserts that the given {@code exercises} wire node keeps the quiz questions solution-hidden: no {@code explanation},
+     * no multiple-choice {@code isCorrect}, empty drag-and-drop / short-answer {@code correctMappings}.
+     */
+    private static void assertExerciseWireMasksQuizSolutions(JsonNode exercises, String context) {
+        boolean sawQuiz = false;
+        for (JsonNode exercise : exercises) {
+            JsonNode questions = exercise.get("quizQuestions");
+            if (questions == null) {
+                continue;
+            }
+            sawQuiz = true;
+            for (JsonNode question : questions) {
+                assertThat(question.has("explanation")).as(context + " quiz question must not leak explanation").isFalse();
+                if ("multiple-choice".equals(question.get("type").asText())) {
+                    for (JsonNode option : question.get("answerOptions")) {
+                        assertThat(option.has("isCorrect")).as(context + " MC option must not leak isCorrect").isFalse();
+                    }
+                }
+                else {
+                    assertThat(question.path("correctMappings").isEmpty()).as(context + " must not leak correctMappings").isTrue();
+                }
+            }
+        }
+        assertThat(sawQuiz).as(context + " wire exposed a quiz exercise to mask-check").isTrue();
+    }
+
+    /**
+     * Instructor-detail counterpart to {@link #testSummaryWireServesQuizSolutionsAfterPublishResults()}: the instructor
+     * student-exam summary route resolves its student exam via {@code getStudentExam}
+     * ({@code StudentExamWithGradeDTO.studentExam} = the detail projection) into the same shared summary component, so
+     * once results are published the DETAIL wire must carry the quiz solutions as well — fixing only the student
+     * {@code /summary} endpoint regressed exactly this instructor path.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testInstructorDetailWireServesQuizSolutionsAfterPublishResults() throws Exception {
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
+
+        JsonNode detailWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId(), HttpStatus.OK,
+                JsonNode.class);
+        assertExerciseWireCarriesQuizSolutions(detailWire.get("studentExam").get("exercises"), "published instructor detail");
+        deleteExamWithInstructor(exam1);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithoutGradingScaleAsStudentAfterPublishResults() throws Exception {
@@ -1858,7 +2709,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchievedInFirstCorrection()).isZero();
         assertThat(studentExamGradeInfoFromServer.studentResult().overallGradeInFirstCorrection()).isNull();
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus()).isNull();
-        assertThat(studentExamGradeInfoFromServer.studentExam()).isEqualTo(studentExam);
+        assertThat(studentExamGradeInfoFromServer.studentExam().id()).isEqualTo(studentExam.getId());
 
         var studentExamFromServer = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
@@ -1957,7 +2808,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchievedInFirstCorrection()).isZero();
         assertThat(studentExamGradeInfoFromServer.studentResult().overallGradeInFirstCorrection()).isEqualTo("5.0");
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus()).isNull();
-        assertThat(studentExamGradeInfoFromServer.studentExam()).isEqualTo(studentExam);
+        assertThat(studentExamGradeInfoFromServer.studentExam().id()).isEqualTo(studentExam.getId());
 
         var studentExamFromServer = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
@@ -2067,7 +2918,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(studentExamGradeInfoFromServerForUserId.studentResult().overallPointsAchieved())
                 .isEqualTo(studentExamGradeInfoFromServer.studentResult().overallPointsAchieved());
         assertThat(studentExamGradeInfoFromServerForUserId.studentResult().hasPassed()).isEqualTo(studentExamGradeInfoFromServer.studentResult().hasPassed());
-        assertThat(studentExamGradeInfoFromServer.studentExam()).isEqualTo(studentExam);
+        assertThat(studentExamGradeInfoFromServer.studentExam().id()).isEqualTo(studentExam.getId());
     }
 
     @Test
@@ -2370,7 +3221,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         Set<User> users = exam2.getRegisteredUsers();
         mockDeleteProgrammingExercise(programmingExercise, users);
 
-        await().atMost(Duration.ofMinutes(1)).pollInterval(10, TimeUnit.MILLISECONDS).until(participantScoreScheduleService::isIdle);
+        await().atMost(Duration.ofMinutes(2)).pollInterval(10, TimeUnit.MILLISECONDS).until(participantScoreScheduleService::isIdle);
         request.delete("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
     }
@@ -2453,6 +3304,26 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     /**
+     * The server resolves the requested exercise ids straight from the exercise repository, which accepts any id, so it
+     * must reject ids that point outside the exam the test run belongs to. Otherwise an instructor could pull a foreign
+     * exam's exercise into a test run of their own exam.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateTestRunRejectsExerciseOfAnotherExam() throws Exception {
+        Exam ownExam = examUtilService.addTextModelingProgrammingExercisesToExam(examUtilService.addExam(course1), false, true);
+        Exam foreignExam = examUtilService.addTextModelingProgrammingExercisesToExam(examUtilService.addExam(course1), false, true);
+
+        List<Long> exerciseIds = new ArrayList<>(ownExam.getExerciseGroups().stream().map(exerciseGroup -> exerciseGroup.getExercises().iterator().next().getId()).toList());
+        exerciseIds.add(foreignExam.getExerciseGroups().getFirst().getExercises().iterator().next().getId());
+        CreateTestRunDTO testRunConfiguration = new CreateTestRunDTO(ownExam.getId(), exerciseIds, 6000);
+
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + ownExam.getId() + "/test-runs", testRunConfiguration, StudentExamDTO.class,
+                HttpStatus.CONFLICT);
+        assertThat(studentExamRepository.findAllByExamId_AndTestRunIsTrue(ownExam.getId())).isEmpty();
+    }
+
+    /**
      * the server invokes SecurityUtils.setAuthorizationObject() so after invoking this method you need to "login" the user again
      *
      * @return the created test run
@@ -2467,23 +3338,31 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     private StudentExam createTestRun(Exam exam) throws Exception {
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
-        StudentExam testRun = new StudentExam();
-        testRun.setExercises(new ArrayList<>());
-
-        exam.getExerciseGroups().forEach(exerciseGroup -> testRun.getExercises().add(exerciseGroup.getExercises().iterator().next()));
-        testRun.setExam(exam);
-        testRun.setWorkingTime(6000);
-        testRun.setUser(instructor);
+        // the client builds this list by iterating the exam's exercise groups in order, picking one exercise per
+        // group; the order must be preserved end-to-end since StudentExam.exercises is an @OrderColumn list
+        List<Long> exerciseIds = exam.getExerciseGroups().stream().map(exerciseGroup -> exerciseGroup.getExercises().iterator().next().getId()).toList();
+        CreateTestRunDTO testRunConfiguration = new CreateTestRunDTO(exam.getId(), exerciseIds, 6000);
 
         var testRunsInDbBefore = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
-        var newTestRun = request.postWithResponseBody("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs", testRun, StudentExam.class,
-                HttpStatus.OK);
+        var newTestRun = request.postWithResponseBody("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs", testRunConfiguration,
+                StudentExamDTO.class, HttpStatus.OK);
         var testRunsInDbAfter = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
         assertThat(testRunsInDbAfter).hasSize(testRunsInDbBefore.size() + 1);
-        assertThat(newTestRun.isTestRun()).isTrue();
-        assertThat(newTestRun.getWorkingTime()).isEqualTo(6000);
-        assertThat(newTestRun.getUser()).isEqualTo(instructor);
-        return newTestRun;
+        assertThat(newTestRun.testRun()).isTrue();
+        assertThat(newTestRun.workingTime()).isEqualTo(6000);
+        assertThat(newTestRun.user()).isNotNull();
+        assertThat(newTestRun.user().id()).isEqualTo(instructor.getId());
+        // the nested exam is intentionally omitted from this endpoint's response (see StudentExamDTO#withUser)
+        assertThat(newTestRun.exam()).isNull();
+
+        // reload from the repository: verifies actual persistence (not just the echoed response) and, since
+        // StudentExam.exercises is an @OrderColumn list, that the exact order of exerciseIds was preserved
+        StudentExam persistedTestRun = studentExamRepository.findByIdWithExercisesElseThrow(newTestRun.id());
+        assertThat(persistedTestRun.getExercises().stream().map(Exercise::getId).toList()).containsExactlyElementsOf(exerciseIds);
+        assertThat(persistedTestRun.getUser().getId()).isEqualTo(instructor.getId());
+        assertThat(persistedTestRun.getWorkingTime()).isEqualTo(6000);
+        assertThat(persistedTestRun.isTestRun()).isTrue();
+        return persistedTestRun;
     }
 
     @Test
@@ -2685,7 +3564,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null,
                 HttpStatus.CONFLICT);
-        request.put("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.OK);
+        StudentExamDTO submitResponse = request.putWithResponseBody(
+                "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, StudentExamDTO.class,
+                HttpStatus.OK);
+        assertThat(submitResponse.id()).isEqualTo(studentExam.getId());
+        assertThat(submitResponse.submitted()).isTrue();
+        assertThat(submitResponse.submissionDate()).isNotNull();
+        // no exercise/user data leaks through this endpoint's response (see StudentExamDTO#of)
+        assertThat(submitResponse.exam()).isNull();
+        assertThat(submitResponse.user()).isNull();
         studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
         assertThat(studentExam.isSubmitted()).isTrue();
         assertThat(studentExam.getSubmissionDate()).isNotNull();
@@ -2700,7 +3587,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null,
                 HttpStatus.CONFLICT);
-        request.put("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.OK);
+        StudentExamDTO unsubmitResponse = request.putWithResponseBody(
+                "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, StudentExamDTO.class,
+                HttpStatus.OK);
+        assertThat(unsubmitResponse.id()).isEqualTo(studentExam.getId());
+        assertThat(unsubmitResponse.submitted()).isFalse();
+        assertThat(unsubmitResponse.submissionDate()).isNull();
+        // no exercise/user data leaks through this endpoint's response (see StudentExamDTO#of)
+        assertThat(unsubmitResponse.exam()).isNull();
+        assertThat(unsubmitResponse.user()).isNull();
         studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
         assertThat(studentExam.isSubmitted()).isFalse();
         assertThat(studentExam.getSubmissionDate()).isNull();
@@ -2758,26 +3653,41 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     // StudentExamResource - getStudentExamsForCoursePerUser
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_STUDENT, roles = "USER")
     void testGetStudentExamsForCoursePerUser_NoCourseAccess() throws Exception {
-        examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
-        request.getList("/api/exam/courses/" + course1.getId() + "/test-exams-per-user", HttpStatus.FORBIDDEN, StudentExam.class);
+        examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(OTHER_STUDENT));
+        request.getList("/api/exam/courses/" + course1.getId() + "/test-exams-per-user", HttpStatus.FORBIDDEN, StudentExamDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamsForCoursePerUser_success() throws Exception {
         examUtilService.addStudentExamForTestExam(exam2, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
-        List<StudentExam> studentExamListReceived = request.getList("/api/exam/courses/" + course1.getId() + "/test-exams-per-user", HttpStatus.OK, StudentExam.class);
+        List<StudentExamDTO> studentExamListReceived = request.getList("/api/exam/courses/" + course1.getId() + "/test-exams-per-user", HttpStatus.OK, StudentExamDTO.class);
         assertThat(studentExamListReceived).hasSizeGreaterThanOrEqualTo(2);
-        assertThat(studentExamListReceived).contains(studentExamForTestExam1, studentExamForTestExam2);
+        assertThat(studentExamListReceived).extracting(StudentExamDTO::id).contains(studentExamForTestExam1.getId(), studentExamForTestExam2.getId());
+        // the client reads exam.id/.course.id (setAccessRightsForCourse) and exam.workingTime/.testExam (working-time display)
+        StudentExamDTO dtoForTestExam1 = studentExamListReceived.stream().filter(dto -> dto.id() == studentExamForTestExam1.getId()).findFirst().orElseThrow();
+        StudentExamDTO dtoForTestExam2 = studentExamListReceived.stream().filter(dto -> dto.id() == studentExamForTestExam2.getId()).findFirst().orElseThrow();
+        assertThat(dtoForTestExam1.exam()).isNotNull();
+        assertThat(dtoForTestExam1.exam().id()).isEqualTo(testExam1.getId());
+        assertThat(dtoForTestExam2.exam()).isNotNull();
+        assertThat(dtoForTestExam2.exam().id()).isEqualTo(testExam2.getId());
+        assertThat(studentExamListReceived).allSatisfy(dto -> {
+            assertThat(dto.exam()).isNotNull();
+            assertThat(dto.exam().testExam()).isTrue();
+            assertThat(dto.exam().course()).isNotNull();
+            assertThat(dto.exam().course().id()).isEqualTo(course1.getId());
+            // user is intentionally omitted from this endpoint's response (see StudentExamDTO#withExam)
+            assertThat(dto.user()).isNull();
+        });
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamsForCoursePerUser_success_noStudentExams() throws Exception {
-        course2 = courseUtilService.addEmptyCourse();
-        List<StudentExam> studentExamListReceived = request.getList("/api/exam/courses/" + course2.getId() + "/test-exams-per-user", HttpStatus.OK, StudentExam.class);
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        List<StudentExamDTO> studentExamListReceived = request.getList("/api/exam/courses/" + course2.getId() + "/test-exams-per-user", HttpStatus.OK, StudentExamDTO.class);
         assertThat(studentExamListReceived).isEmpty();
     }
 
@@ -2790,18 +3700,18 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_STUDENT, roles = "USER")
     void testGetStudentExamForTestExamForSummary_NoCourseAccess() throws Exception {
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
+        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(OTHER_STUDENT));
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam.getId() + "/summary", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_STUDENT, roles = "USER")
     void testGetStudentExamForTestExamForSummary_NoExamAccess() throws Exception {
         Exam exam99 = examUtilService.addTestExam(course1);
-        StudentExam studentExam99 = examUtilService.addStudentExamForTestExam(exam99, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
+        StudentExam studentExam99 = examUtilService.addStudentExamForTestExam(exam99, userUtilService.getUserByLogin(OTHER_STUDENT));
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam99.getId() + "/summary", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
@@ -2842,7 +3752,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     // StudentExamRessource - GetStudentExamForConduction
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_STUDENT, roles = "USER")
     void testGetStudentExamForConduction_notRegisteredInCourse() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam1.getId() + "/conduction", HttpStatus.FORBIDDEN,
                 StudentExam.class);
@@ -2972,8 +3882,18 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // find User With Groups And Authorities + find Student Exam ById With Exercises + find Exam Session By Student Exam Id
         // + update Student Exam + find Student Participations By Student Exam With Submissions Result
-        // TODO: Hibernate 7 increased base query count from 5 to 6 — investigate remaining extra query in a follow-up
+        // TODO: Hibernate 7 increased base query count from 5 to 6 - investigate remaining extra query in a follow-up
         private final int BASE_QUERY_COUNT = 6;
+
+        // The submit path rebuilds the quiz submission from the slim SubmitStudentExamDTO via
+        // QuizSubmissionService.buildSubmissionFromLiveClientDTO (reusing the #12832 quiz live-save mapper). That mapper
+        // re-resolves the client-supplied answer ids against the quiz exercise, so the submit reconstruction loads the
+        // quiz exercise WITH its questions (and their eager nested options/items/spots). This cost is incurred ONLY when
+        // the quiz submission actually carries answers: an empty/absent answer set has nothing to re-resolve, so the
+        // reconstruction skips the load entirely and builds an empty submission from the id alone (see
+        // StudentExamSubmitMapper#buildQuizSubmission). Hence it appears in the changed-answers test but not the
+        // unchanged one, whose conduction quiz submission has no answers.
+        private final int QUIZ_RECONSTRUCTION_QUERY_COUNT = 9;
 
         private TextExercise textExercise;
 
@@ -3003,15 +3923,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             exam1.setExamMaxPoints(19);
             exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
 
-            // Generate student exam
-            List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/generate-student-exams",
-                    Optional.empty(), StudentExam.class, HttpStatus.OK);
+            // Generate student exam (the response masks the nested exam/user; re-fetch the single managed entity below)
+            List<StudentExamDTO> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/generate-student-exams",
+                    Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
             assertThat(studentExams).hasSize(exam1.getExamUsers().size());
             assertThat(studentExamRepository.findByExamId(exam1.getId())).hasSize(1);
 
             // Prepare student exam
             ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
-            StudentExam studentExam = studentExams.getFirst();
+            StudentExam studentExam = studentExamRepository.findByExamId(exam1.getId()).iterator().next();
             userUtilService.changeUser(studentExam.getUser().getLogin());
             studentExamForConduction = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                     HttpStatus.OK, StudentExam.class);
@@ -3046,6 +3966,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testUnchangedSubmissionsDoNotChangeQueryCount() throws Exception {
+            // The conduction quiz submission carries no answers, so the reconstruction skips the quiz question-tree load
+            // (FIX 5) and no content actually changes, so nothing is persisted: the hand-in stays at the bare skeleton
+            // cost. Tightened from BASE + QUIZ_RECONSTRUCTION to just BASE now that the empty-answer reload is elided.
             assertThatDb(() -> request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,
                     StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT);
         }
@@ -3074,16 +3997,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
             request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
-            // load Quiz Submissions Submitted Answers (for comparison)
-            // TODO: Hibernate 7 increased quiz query count from 3 to 8 due to EAGER @ManyToOne on SubmittedAnswer.quizQuestion — needs FetchType.LAZY
-            // The bidirectional @OrderColumn refactor (#12584 fix) added 2 more — Hibernate now issues per-child-collection
-            // SELECTs to refresh the order indices on the question's EAGER child Lists when the question is touched.
-            // Tracked in #12808 to evaluate switching those collections to FetchType.LAZY and reclaiming the +2.
-            final int quizQueryCount = 10;
+            // Additional cost of actually persisting the changed quiz submission (loadQuizSubmissionsSubmittedAnswers +
+            // save), on top of the DTO reconstruction load (QUIZ_RECONSTRUCTION_QUERY_COUNT). The reconstruction load
+            // warms the quiz questions into the session, so this incremental save cost is 8 (previously 10 when the
+            // client posted the fully-hydrated answers and no reconstruction load happened).
+            final int quizSaveQueryCount = 8;
 
             // When
             assertThatDb(() -> request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,
-                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT + quizQueryCount);
+                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT + QUIZ_RECONSTRUCTION_QUERY_COUNT + quizSaveQueryCount);
             StudentExam submittedExam = request.get(
                     "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
                     StudentExam.class);
@@ -3120,6 +4042,35 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testPoisonedExerciseIsDroppedWhileHandInSucceedsAndOtherExercisesSave() throws Exception {
+            // Governing principle: the exam is ALWAYS marked submitted, and a broken per-exercise submission degrades to
+            // a logged drop of only that exercise's answers — never a 5xx and never data loss for other exercises. Here
+            // the quiz submission references a non-existent submission id, so the per-exercise save rejects and swallows
+            // it, while the healthy text change is still persisted and the exam is submitted.
+            final String healthyAnswer = "This healthy text answer must survive a poisoned sibling exercise";
+            textSubmission.setText(healthyAnswer);
+            quizSubmission.setId(999_999_999L);
+
+            // must return 200 (not 5xx): the hand-in is never aborted by a broken exercise
+            request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, StudentExam.class,
+                    HttpStatus.OK);
+
+            // the exam is marked submitted despite the poisoned quiz
+            StudentExam submitted = studentExamRepository.findById(studentExamForConduction.getId()).orElseThrow();
+            assertThat(submitted.isSubmitted()).isTrue();
+            assertThat(submitted.getSubmissionDate()).isNotNull();
+
+            // no data loss for the healthy sibling: the changed text answer is persisted
+            StudentExam summary = request.get(
+                    "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
+                    StudentExam.class);
+            TextExercise textExerciseAfter = ExerciseUtilService.getFirstExerciseWithType(summary, TextExercise.class);
+            TextSubmission textSubmissionAfter = (TextSubmission) textExerciseAfter.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+            assertThat(textSubmissionAfter.getText()).isEqualTo(healthyAnswer);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testChangedAndNotSubmittedTextSubmission() throws Exception {
             // Given
             final String changedAnswer = "This is a changed answer";
@@ -3140,6 +4091,29 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             assertThat(submissionAfterExamSubmission.getText()).isEqualTo(changedAnswer);
             assertVersionedSubmission(textSubmission);
             assertVersionedSubmission(submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testHandInPersistsTextSubmissionLanguageFromSlimDto() throws Exception {
+            // Wire-parity regression guard: the slim submit DTO must carry the client-detected language. The downstream
+            // save (saveSubmissionTextExercise) persists the reconstructed submission via a JPA merge that overwrites
+            // every mapped column, so a language dropped from the DTO would be nulled out on this hand-in. The conduction
+            // submission starts with a null language; here we set it the way the client does (predictLanguage) and change
+            // the text so the content-equality short-circuit does not skip the save, hand in, then re-read the row.
+            assertThat(textSubmission.getLanguage()).as("the conduction submission starts without a language").isNull();
+            final String changedAnswer = "Dies ist eine geänderte Antwort auf Deutsch";
+            textSubmission.setText(changedAnswer);
+            textSubmission.setLanguage(Language.GERMAN);
+
+            request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, StudentExam.class,
+                    HttpStatus.OK);
+
+            // fresh query straight from the repository (not the summary DTO): both the text AND the language must have
+            // been persisted, proving the language survived the slim-DTO round-trip and the overwriting merge.
+            TextSubmission persisted = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
+            assertThat(persisted.getText()).isEqualTo(changedAnswer);
+            assertThat(persisted.getLanguage()).isEqualTo(Language.GERMAN);
         }
 
         @Test
@@ -3259,8 +4233,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             changedMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndDropLocationIndex));
 
             DragAndDropSubmittedAnswer changedAnswer = new DragAndDropSubmittedAnswer();
-            changedAnswer.getMappings().add(changedMapping);
             changedAnswer.setQuizQuestion(dragAndDropQuestion);
+            changedAnswer.addMappings(changedMapping);
 
             quizSubmission.getSubmittedAnswers().add(changedAnswer);
             return changedMapping;
@@ -3272,8 +4246,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             changedText.setSpot(shortAnswerQuestion.getSpots().get(spotIndex));
 
             ShortAnswerSubmittedAnswer changedAnswer = new ShortAnswerSubmittedAnswer();
-            changedAnswer.getSubmittedTexts().add(changedText);
             changedAnswer.setQuizQuestion(shortAnswerQuestion);
+            changedAnswer.addSubmittedTexts(changedText);
 
             quizSubmission.getSubmittedAnswers().add(changedAnswer);
             return changedText;
@@ -3312,6 +4286,185 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     .getSubmittedAnswerForQuestion(multipleChoiceQuestion);
 
             assertThat(answerAfterSubmission.toSelectedIds()).containsAll(changedAnswerOption.stream().map(AnswerOption::getId).collect(Collectors.toSet()));
+        }
+
+        private long participationId(Exercise exercise) {
+            return exercise.getStudentParticipations().iterator().next().getId();
+        }
+
+        private ObjectNode idRef(long id) {
+            return objectMapper.createObjectNode().put("id", id);
+        }
+
+        private ObjectNode participationNode(long participationId, ArrayNode submissions) {
+            ObjectNode participation = objectMapper.createObjectNode();
+            participation.put("id", participationId);
+            participation.set("submissions", submissions);
+            return participation;
+        }
+
+        private ObjectNode exerciseNode(long exerciseId, ArrayNode participations) {
+            ObjectNode exercise = objectMapper.createObjectNode();
+            exercise.put("id", exerciseId);
+            exercise.set("studentParticipations", participations);
+            return exercise;
+        }
+
+        private ArrayNode arrayOf(ObjectNode... nodes) {
+            ArrayNode array = objectMapper.createArrayNode();
+            for (ObjectNode node : nodes) {
+                array.add(node);
+            }
+            return array;
+        }
+
+        /**
+         * Trap #4 + slim-path proof: post the actual slim {@code SubmitStudentExamDTO} wire shape (NOT a full entity),
+         * then reload from fresh queries and assert every answer type persisted exactly. A silently-dropped field would
+         * leave the persisted content unchanged and this test would fail.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testSubmitViaSlimDtoPersistsEveryAnswerTypeFromFreshQueries() throws Exception {
+            long selectedOptionId = multipleChoiceQuestion.getAnswerOptions().get(1).getId();
+            long dragItemId = dragAndDropQuestion.getDragItems().get(0).getId();
+            long dropLocationId = dragAndDropQuestion.getDropLocations().get(1).getId();
+            long spotId = shortAnswerQuestion.getSpots().get(0).getId();
+
+            ObjectNode mcAnswer = objectMapper.createObjectNode();
+            mcAnswer.put("type", "multiple-choice");
+            mcAnswer.set("quizQuestion", idRef(multipleChoiceQuestion.getId()));
+            mcAnswer.set("selectedOptions", arrayOf(idRef(selectedOptionId)));
+
+            ObjectNode dndMapping = objectMapper.createObjectNode();
+            dndMapping.set("dragItem", idRef(dragItemId));
+            dndMapping.set("dropLocation", idRef(dropLocationId));
+            ObjectNode dndAnswer = objectMapper.createObjectNode();
+            dndAnswer.put("type", "drag-and-drop");
+            dndAnswer.set("quizQuestion", idRef(dragAndDropQuestion.getId()));
+            dndAnswer.set("mappings", arrayOf(dndMapping));
+
+            ObjectNode saText = objectMapper.createObjectNode();
+            saText.put("text", "slim short answer");
+            saText.set("spot", idRef(spotId));
+            ObjectNode saAnswer = objectMapper.createObjectNode();
+            saAnswer.put("type", "short-answer");
+            saAnswer.set("quizQuestion", idRef(shortAnswerQuestion.getId()));
+            saAnswer.set("submittedTexts", arrayOf(saText));
+
+            ObjectNode textSubmissionNode = objectMapper.createObjectNode();
+            textSubmissionNode.put("submissionExerciseType", "text");
+            textSubmissionNode.put("id", textSubmission.getId());
+            textSubmissionNode.put("text", "slim text answer");
+
+            ObjectNode modelingSubmissionNode = objectMapper.createObjectNode();
+            modelingSubmissionNode.put("submissionExerciseType", "modeling");
+            modelingSubmissionNode.put("id", modeSubmission.getId());
+            modelingSubmissionNode.put("model", "slim model");
+            modelingSubmissionNode.put("explanationText", "slim explanation");
+
+            ObjectNode quizSubmissionNode = objectMapper.createObjectNode();
+            quizSubmissionNode.put("submissionExerciseType", "quiz");
+            quizSubmissionNode.put("id", quizSubmission.getId());
+            quizSubmissionNode.set("submittedAnswers", arrayOf(mcAnswer, dndAnswer, saAnswer));
+
+            ArrayNode exercises = arrayOf(exerciseNode(textExercise.getId(), arrayOf(participationNode(participationId(textExercise), arrayOf(textSubmissionNode)))),
+                    exerciseNode(modeExercise.getId(), arrayOf(participationNode(participationId(modeExercise), arrayOf(modelingSubmissionNode)))),
+                    exerciseNode(quizExercise.getId(), arrayOf(participationNode(participationId(quizExercise), arrayOf(quizSubmissionNode)))));
+            ObjectNode body = objectMapper.createObjectNode();
+            body.put("id", studentExamForConduction.getId());
+            body.set("exercises", exercises);
+
+            request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", body, HttpStatus.OK);
+
+            // reload text + modeling from fresh repository queries
+            TextSubmission reloadedText = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
+            assertThat(reloadedText.getText()).isEqualTo("slim text answer");
+            ModelingSubmission reloadedModeling = (ModelingSubmission) submissionRepository.findById(modeSubmission.getId()).orElseThrow();
+            assertThat(reloadedModeling.getModel()).isEqualTo("slim model");
+            assertThat(reloadedModeling.getExplanationText()).isEqualTo("slim explanation");
+
+            // reload quiz answers via a fresh summary request and assert each answer type persisted
+            StudentExam submittedExam = request.get(
+                    "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
+                    StudentExam.class);
+            QuizSubmission reloadedQuiz = (QuizSubmission) ExerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class).getStudentParticipations().iterator()
+                    .next().findLatestSubmission().orElseThrow();
+            MultipleChoiceSubmittedAnswer mc = (MultipleChoiceSubmittedAnswer) reloadedQuiz.getSubmittedAnswerForQuestion(multipleChoiceQuestion);
+            assertThat(mc.toSelectedIds()).containsExactly(selectedOptionId);
+            DragAndDropSubmittedAnswer dnd = (DragAndDropSubmittedAnswer) reloadedQuiz.getSubmittedAnswerForQuestion(dragAndDropQuestion);
+            assertThat(dnd.getMappings()).hasSize(1);
+            assertThat(dnd.getMappings().iterator().next().getDragItem().getId()).isEqualTo(dragItemId);
+            assertThat(dnd.getMappings().iterator().next().getDropLocation().getId()).isEqualTo(dropLocationId);
+            ShortAnswerSubmittedAnswer sa = (ShortAnswerSubmittedAnswer) reloadedQuiz.getSubmittedAnswerForQuestion(shortAnswerQuestion);
+            assertThat(sa.getSubmittedTexts()).hasSize(1);
+            assertThat(sa.getSubmittedTexts().iterator().next().getText()).isEqualTo("slim short answer");
+            assertThat(sa.getSubmittedTexts().iterator().next().getSpot().getId()).isEqualTo(spotId);
+        }
+
+        /**
+         * Trap #3: a raw body with explicit empty arrays (the shape a real client emits, which a DTO-serialized test
+         * body would silently omit via {@code @JsonInclude(NON_EMPTY)}). The submit must return 200, mark the exam
+         * submitted, and persist nothing — matching the early-return / skip semantics.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testSubmitViaSlimDtoWithExplicitEmptyExercisesArrayMarksSubmittedWithoutSaving() throws Exception {
+            String originalText = ((TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow()).getText();
+
+            ObjectNode body = objectMapper.createObjectNode();
+            body.put("id", studentExamForConduction.getId());
+            body.set("exercises", objectMapper.createArrayNode());
+
+            request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", body, HttpStatus.OK);
+
+            assertThat(studentExamRepository.findById(studentExamForConduction.getId()).orElseThrow().isSubmitted()).isTrue();
+            assertThat(((TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow()).getText()).isEqualTo(originalText);
+        }
+
+        /**
+         * Trap #3, nested variant: an exercise whose participation carries an explicit empty submissions array, and a
+         * quiz submission with an explicit empty submittedAnswers array. Both must be handled without error (skip / empty
+         * rebuild), the exam still marked submitted, and the untouched text submission preserved.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testSubmitViaSlimDtoWithExplicitEmptyNestedArraysIsSafe() throws Exception {
+            String originalText = ((TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow()).getText();
+
+            // text exercise participation with an explicit empty submissions array -> size != 1 -> skipped
+            ObjectNode textParticipation = participationNode(participationId(textExercise), objectMapper.createArrayNode());
+            // quiz submission with an explicit empty submittedAnswers array -> rebuilt as an empty answer set
+            ObjectNode quizSubmissionNode = objectMapper.createObjectNode();
+            quizSubmissionNode.put("submissionExerciseType", "quiz");
+            quizSubmissionNode.put("id", quizSubmission.getId());
+            quizSubmissionNode.set("submittedAnswers", objectMapper.createArrayNode());
+
+            ArrayNode exercises = arrayOf(exerciseNode(textExercise.getId(), arrayOf(textParticipation)),
+                    exerciseNode(quizExercise.getId(), arrayOf(participationNode(participationId(quizExercise), arrayOf(quizSubmissionNode)))));
+            ObjectNode body = objectMapper.createObjectNode();
+            body.put("id", studentExamForConduction.getId());
+            body.set("exercises", exercises);
+
+            request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", body, HttpStatus.OK);
+
+            assertThat(studentExamRepository.findById(studentExamForConduction.getId()).orElseThrow().isSubmitted()).isTrue();
+            assertThat(((TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow()).getText()).isEqualTo(originalText);
+        }
+
+        /**
+         * Trap #2: a stale client tab opened before the DTO rollout still posts the full-entity {@code StudentExam}
+         * body. It must deserialize losslessly into the DTO (matching discriminators + ignore-unknown) and persist the
+         * changed answer exactly as the slim body would.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testSubmitLegacyFullEntityBodyStillPersistsChangedText() throws Exception {
+            textSubmission.setText("legacy full entity text");
+
+            request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, HttpStatus.OK);
+
+            assertThat(((TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow()).getText()).isEqualTo("legacy full entity text");
         }
     }
 }

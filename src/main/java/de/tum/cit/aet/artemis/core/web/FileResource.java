@@ -85,7 +85,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
-import de.tum.cit.aet.artemis.quiz.repository.DragItemRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 
 /**
@@ -142,8 +141,6 @@ public class FileResource {
 
     private final QuizQuestionRepository quizQuestionRepository;
 
-    private final DragItemRepository dragItemRepository;
-
     private final CourseRepository courseRepository;
 
     private final Optional<LectureUnitApi> lectureUnitApi;
@@ -151,7 +148,7 @@ public class FileResource {
     public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService, FileDownloadService fileDownloadService,
             ResourceLoaderService resourceLoaderService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi,
             Optional<LectureAttachmentApi> lectureAttachmentApi, Optional<SlideApi> slideApi, UserRepository userRepository, Optional<ExamUserApi> examUserApi,
-            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
+            QuizQuestionRepository quizQuestionRepository, CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
         this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.fileDownloadService = fileDownloadService;
@@ -163,7 +160,6 @@ public class FileResource {
         this.authorizationCheckService = authorizationCheckService;
         this.examUserApi = examUserApi;
         this.quizQuestionRepository = quizQuestionRepository;
-        this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
         this.lectureUnitApi = lectureUnitApi;
         this.fileUploadApi = fileUploadApi;
@@ -321,19 +317,25 @@ public class FileResource {
     }
 
     /**
-     * GET /files/drag-and-drop/drag-items/:dragItemId/:filename : Get the drag item file with the given name for the given drag item
+     * GET /files/drag-and-drop/questions/:questionId/drag-items/:dragItemId/:filename : Get the drag item file with the given name for the given drag item.
+     * <p>
+     * The drag item id is question-scoped (drag items are stored inside the question's JSON content, not as their own entity), so the owning question id is part of the path.
+     * Access
+     * control resolves through the question, mirroring the drag-and-drop background endpoint.
      *
-     * @param dragItemId ID of the drag item, the file belongs to
+     * @param questionId ID of the drag and drop question the drag item belongs to
+     * @param dragItemId question-scoped ID of the drag item, the file belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/drag-and-drop/drag-items/{dragItemId}/*")
+    @GetMapping("files/drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId) {
-        log.debug("REST request to get file for drag item : {}", dragItemId);
-        DragItem dragItem = dragItemRepository.findWithEagerQuestionByIdElseThrow(dragItemId);
-        Course course = dragItem.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember();
+    public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long questionId, @PathVariable Long dragItemId) {
+        log.debug("REST request to get file for drag item {} of question {}", dragItemId, questionId);
+        DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
+        Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        if (dragItem.getPictureFilePath() == null) {
+        DragItem dragItem = question.findDragItemById(dragItemId);
+        if (dragItem == null || dragItem.getPictureFilePath() == null) {
             throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
         }
         return responseEntityForFilePath(getActualPathFromPublicPathString(dragItem.getPictureFilePath(), FilePathType.DRAG_ITEM));
@@ -365,7 +367,7 @@ public class FileResource {
             return ResponseEntity.badRequest().build();
         }
 
-        User requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        User requestingUser = userRepository.getUserWithAuthorities();
         // auth check - either the user that submitted the exercise or the requesting user is at least a tutor for the exercise
         if (!usersOfTheSubmission.contains(requestingUser) && !authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             throw new AccessForbiddenException();
@@ -501,7 +503,7 @@ public class FileResource {
         LectureUnitApi unitApi = lectureUnitApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitApi.class));
         LectureAttachmentApi attachmentApi = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         Lecture lecture = api.findByIdElseThrow(lectureId);
 
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);

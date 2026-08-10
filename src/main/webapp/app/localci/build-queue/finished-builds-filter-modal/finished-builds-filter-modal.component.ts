@@ -6,12 +6,14 @@ import { HttpParams } from '@angular/common/http';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormsModule } from '@angular/forms';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiRadioButtonComponent } from 'app/shared-ui/tum-ui/radio-button/tum-ui-radio-button.component';
-import { TumUiAutoCompleteCompleteEvent, TumUiAutoCompleteComponent } from 'app/shared-ui/tum-ui/autocomplete/tum-ui-autocomplete.component';
-
+import {
+    TumUiAutoCompleteComponent,
+    TumUiAutoCompleteSearchEvent,
+    TumUiButtonComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiRadioButtonComponent,
+} from '@tumaet/ui-angular';
 export class FinishedBuildJobFilter {
     status?: string = undefined;
     buildAgentAddress?: string = undefined;
@@ -211,7 +213,7 @@ export class FinishedBuildsFilterModalComponent {
      * Called by the autocomplete on each keystroke to populate the build agent address suggestions.
      * @param event the autocomplete complete event carrying the current query
      */
-    searchBuildAgentAddresses(event: TumUiAutoCompleteCompleteEvent): void {
+    searchBuildAgentAddresses(event: TumUiAutoCompleteSearchEvent): void {
         const term = event.query;
         const buildAgentAddresses = this.buildAgentAddresses;
         const filtered = (term === '' ? buildAgentAddresses : buildAgentAddresses.filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)).slice(0, 10);

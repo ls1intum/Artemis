@@ -16,7 +16,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -28,7 +27,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  */
 @Entity
 @Table(name = "presentation_assessment")
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PresentationAssessment extends DomainObject {
 
     public static final String ENTITY_NAME = "presentationAssessment";

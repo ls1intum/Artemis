@@ -11,7 +11,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
-import { TumUiAutoCompleteCompleteEvent, TumUiAutoCompleteSelectEvent, TumUiAutoCompleteUnselectEvent } from 'app/shared-ui/tum-ui/autocomplete/tum-ui-autocomplete.component';
 import * as Sentry from '@sentry/angular';
 
 import { UserManagementUpdateComponent } from 'app/admin/user-management/update/user-management-update.component';
@@ -29,7 +28,6 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { PROFILE_JENKINS } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
@@ -62,7 +60,7 @@ describe('UserManagementUpdateComponent', () => {
     let profileService: ProfileService;
 
     /** Test user data loaded from parent route */
-    const testUser = new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT], ['admin'], undefined, undefined, undefined);
+    const testUser = new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT]);
 
     /** Mock parent route containing user data from resolver */
     const parentRoute = {
@@ -74,6 +72,7 @@ describe('UserManagementUpdateComponent', () => {
     let mockRouterState: RouterState;
 
     beforeEach(async () => {
+        parentRoute.data = of({ user: testUser });
         await TestBed.configureTestingModule({
             imports: [UserManagementUpdateComponent],
             providers: [{ provide: ActivatedRoute, useValue: mockRoute }, ...testBedProviders],
@@ -201,6 +200,7 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             expect(component.editForm.controls['id']).toBeDefined();
+            expect(component.editForm.controls['isTestUser']).toBeDefined();
         });
 
         it('should include SUPER_ADMIN authority when current user is a super admin', () => {
@@ -320,72 +320,6 @@ describe('UserManagementUpdateComponent', () => {
         expect(component.user().organizations).toEqual([organization1]);
     });
 
-    it('should add selected group from autocomplete to user', () => {
-        const newGroup = 'nicegroup';
-        component.user.set({ groups: [] } as unknown as User);
-        component.allGroups = [newGroup];
-
-        const event = { value: newGroup } as unknown as TumUiAutoCompleteSelectEvent;
-
-        component.onGroupSelect(event);
-
-        expect(component.user().groups).toEqual([newGroup]);
-    });
-
-    it('should not add group that is not in allowed groups list', () => {
-        const allowedGroup = 'nicegroup';
-        const notAllowedGroup = 'badgroup';
-        component.allGroups = [allowedGroup];
-        component.user.set({ groups: [] } as unknown as User);
-
-        const event = { value: notAllowedGroup } as unknown as TumUiAutoCompleteSelectEvent;
-
-        component.onGroupSelect(event);
-
-        expect(component.user().groups).toEqual([]);
-    });
-
-    it('should add the typed group on Enter and cancel the key so it does not submit the form', () => {
-        const newGroup = 'nicegroup';
-        const originalGroups: string[] = [];
-        component.user.set({ groups: originalGroups } as unknown as User);
-        component.allGroups = [newGroup];
-        const input = document.createElement('input');
-        input.value = newGroup;
-        const event = { target: input, preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as Event;
-
-        component.onGroupAdd(component.user(), event);
-
-        expect(component.user().groups).toEqual([newGroup]);
-        // Immutable update (new array reference) so the one-way [ngModel] fires writeValue and the chip renders.
-        expect(component.user().groups).not.toBe(originalGroups);
-        expect(event.preventDefault).toHaveBeenCalledOnce();
-        expect(event.stopPropagation).toHaveBeenCalledOnce();
-        expect(input.value).toBe('');
-    });
-
-    it('should not add a typed group on Enter when it is not in the allowed groups list', () => {
-        component.allGroups = ['nicegroup'];
-        component.user.set({ groups: [] } as unknown as User);
-        const input = document.createElement('input');
-        input.value = 'badgroup';
-        const event = { target: input, preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as Event;
-
-        component.onGroupAdd(component.user(), event);
-
-        expect(component.user().groups).toEqual([]);
-    });
-
-    it('should remove group from user on unselect', () => {
-        const group1 = 'nicegroup';
-        const group2 = 'badgroup';
-        component.user.set({ groups: [group1, group2] } as unknown as User);
-
-        component.onGroupUnselect({ value: group1 } as unknown as TumUiAutoCompleteUnselectEvent);
-
-        expect(component.user().groups).toEqual([group2]);
-    });
-
     describe('previousState', () => {
         it('should navigate to user detail page when editing existing user', () => {
             const routerMock = TestBed.inject(Router) as unknown as MockRouter;
@@ -406,44 +340,6 @@ describe('UserManagementUpdateComponent', () => {
         });
     });
 
-    it('should filter groups by lowercase search value', () => {
-        component.allGroups = ['AdminGroup', 'StudentGroup', 'TutorGroup'];
-
-        // @ts-ignore - accessing private method for testing
-        const result = component.filter('admin');
-
-        expect(result).toEqual(['AdminGroup']);
-    });
-
-    it('should add group to user when user has no groups yet', () => {
-        const newGroup = 'nicegroup';
-        component.allGroups = [newGroup];
-        component.user.set({} as User); // No groups property
-
-        component.onGroupSelect({ value: newGroup } as unknown as TumUiAutoCompleteSelectEvent);
-
-        expect(component.user().groups).toEqual([newGroup]);
-    });
-
-    it('should not add duplicate group to user', () => {
-        const existingGroup = 'nicegroup';
-        component.allGroups = [existingGroup];
-        component.user.set({ groups: [existingGroup] } as unknown as User);
-
-        component.onGroupSelect({ value: existingGroup } as unknown as TumUiAutoCompleteSelectEvent);
-
-        expect(component.user().groups).toEqual([existingGroup]);
-    });
-
-    it('should handle empty group value on select', () => {
-        component.allGroups = ['nicegroup'];
-        component.user.set({ groups: [] } as unknown as User);
-
-        component.onGroupSelect({ value: '' } as unknown as TumUiAutoCompleteSelectEvent);
-
-        expect(component.user().groups).toEqual([]);
-    });
-
     it('should not modify organizations when the selector is cancelled', () => {
         component.user.set({ organizations: [{ id: 1 }] as Organization[] } as User);
 
@@ -456,15 +352,6 @@ describe('UserManagementUpdateComponent', () => {
         expect(component.user().organizations).toHaveLength(1);
     });
 
-    it('should filter out undefined groups when filtering', () => {
-        component.allGroups = ['AdminGroup', undefined as unknown as string, 'StudentGroup'];
-
-        // @ts-ignore - accessing private method for testing
-        const result = component.filter('group');
-
-        expect(result).toEqual(['AdminGroup', 'StudentGroup']);
-    });
-
     describe('ngOnInit - additional coverage', () => {
         it('should fetch organizations for existing user', () => {
             const organizationService = TestBed.inject(OrganizationManagementService);
@@ -475,32 +362,6 @@ describe('UserManagementUpdateComponent', () => {
 
             expect(organizationService.getOrganizationsByUser).toHaveBeenCalledWith(testUser.id);
             expect(component.user().organizations).toEqual(mockOrganizations);
-        });
-
-        it('should handle groups from courseAdminService with body containing groups', () => {
-            const courseAdminService = TestBed.inject(CourseAdminService);
-            const mockGroups = ['group1', 'group2', undefined as unknown as string, 'group3'];
-            vi.spyOn(courseAdminService, 'getAllGroupsForAllCourses').mockReturnValue(of(new HttpResponse({ body: mockGroups })));
-
-            component.ngOnInit();
-
-            // Should filter out undefined groups
-            expect(component.allGroups).toEqual(['group1', 'group2', 'group3']);
-        });
-
-        it('should initialize empty groups for new user without id', () => {
-            // Simulate scenario where route returns no user (new user creation)
-            // The component initializes user.groups = [] when user.id is undefined
-            component.user.set(new User()); // No id
-            component.user().groups = undefined;
-            // @ts-ignore - accessing private method
-            component.initializeForm();
-
-            // Simulate new user scenario where groups should be initialized
-            if (!component.user().id) {
-                component.user().groups = [];
-            }
-            expect(component.user().groups).toEqual([]);
         });
     });
 
@@ -592,10 +453,9 @@ describe('UserManagementUpdateComponent', () => {
             expect(component.isSaving()).toBe(false);
         });
 
-        it('should preserve user groups and organizations when saving', () => {
+        it('should preserve organizations when saving', () => {
             const existingUser = new User(123);
             existingUser.login = 'test_user';
-            existingUser.groups = ['group1', 'group2'];
             existingUser.organizations = [{ id: 1 }] as Organization[];
             vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: existingUser })));
             component.user.set(existingUser);
@@ -604,7 +464,6 @@ describe('UserManagementUpdateComponent', () => {
 
             component.save();
 
-            expect(component.user().groups).toEqual(['group1', 'group2']);
             expect(component.user().organizations).toEqual([{ id: 1 }]);
         });
     });
@@ -640,6 +499,24 @@ describe('UserManagementUpdateComponent', () => {
             component.initializeForm();
 
             expect(component.editForm.get('internal')?.disabled).toBe(true);
+        });
+
+        it('should patch the isTestUser flag so the checkbox reflects the persisted value', () => {
+            const testUser = new User(123);
+            testUser.isTestUser = true;
+            component.user.set(testUser);
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+
+            expect(component.editForm.get('isTestUser')?.value).toBe(true);
+        });
+
+        it('should leave the isTestUser checkbox unchecked for a user that is not flagged', () => {
+            component.user.set(new User(123));
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+
+            expect(component.editForm.get('isTestUser')?.value).toBeFalsy();
         });
     });
 
@@ -733,83 +610,5 @@ describe('UserManagementUpdateComponent', () => {
             expect(sorted).toContain('ROLE_UNKNOWN');
             expect(sorted).toContain('ROLE_CUSTOM');
         });
-    });
-
-    describe('group suggestions', () => {
-        it('should filter group suggestions based on query value', () => {
-            component.allGroups = ['AdminGroup', 'StudentGroup', 'TutorGroup'];
-            component.user.set({ groups: [] } as unknown as User);
-
-            component.filterGroups({ query: 'admin' } as unknown as TumUiAutoCompleteCompleteEvent);
-
-            expect(component.groupSuggestions()).toEqual(['AdminGroup']);
-        });
-
-        it('should suggest all unassigned groups when query is empty', () => {
-            component.allGroups = ['Group1', 'Group2'];
-            component.user.set({ groups: ['Group1'] } as unknown as User);
-
-            component.filterGroups({ query: '' } as unknown as TumUiAutoCompleteCompleteEvent);
-
-            expect(component.groupSuggestions()).toEqual(['Group2']);
-        });
-
-        it('does not throw when the group autocomplete is used before groups load', () => {
-            // Do NOT reassign component.allGroups here: the point of this test is to exercise the as-constructed
-            // state, where allGroups is populated solely by the field initializer. Removing the initializer must
-            // make filterGroups() -> filter() deref undefined and fail this test.
-            expect(component.allGroups).toBeDefined();
-
-            expect(() => component.filterGroups({ query: 'x' } as unknown as TumUiAutoCompleteCompleteEvent)).not.toThrow();
-            expect(component.groupSuggestions()).toEqual([]);
-        });
-    });
-});
-
-/**
- * Renders the real template (no overrideTemplate) to guard against the global-role checkbox firing
- * toggleAuthority twice per click: the role wrapper's bubbled click must not re-fire the inner
- * tum-ui-checkbox's onChange and cancel the toggle. A single rendered control must toggle exactly once.
- */
-describe('UserManagementUpdateComponent global-role checkbox rendering', () => {
-    let component: UserManagementUpdateComponent;
-    let fixture: ComponentFixture<UserManagementUpdateComponent>;
-
-    const parentRoute = { data: of({ user: undefined }) } as unknown as ActivatedRoute;
-    const mockRoute = { parent: parentRoute } as unknown as ActivatedRoute;
-
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [UserManagementUpdateComponent],
-            providers: [{ provide: ActivatedRoute, useValue: mockRoute }, ...testBedProviders],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(UserManagementUpdateComponent);
-        component = fixture.componentInstance;
-        const adminUserService = TestBed.inject(AdminUserService);
-        // ROLE_INSTRUCTOR is not filtered out for non-super-admins, so the role item renders for any current user.
-        vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([Authority.INSTRUCTOR]));
-
-        component.ngOnInit();
-        fixture.detectChanges();
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    it('should toggle the authority exactly once per checkbox click', () => {
-        const toggleSpy = vi.spyOn(component, 'toggleAuthority');
-
-        const roleItem = fixture.nativeElement.querySelector('[data-testid="global-role-item"]') as HTMLLabelElement;
-        expect(roleItem).not.toBeNull();
-        const checkboxInput = roleItem.querySelector('input[type="checkbox"]') as HTMLInputElement;
-        expect(checkboxInput).not.toBeNull();
-
-        checkboxInput.click();
-        fixture.detectChanges();
-
-        expect(toggleSpy).toHaveBeenCalledExactlyOnceWith(Authority.INSTRUCTOR);
-        expect(component.hasAuthority(Authority.INSTRUCTOR)).toBe(true);
     });
 });

@@ -51,6 +51,9 @@
             "delete": {
                 "question": "Soll die Präsentationsbewertung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Titel der Präsentationsbewertung zur Bestätigung ein."
+            },
+            "students": {
+                "removeQuestion": "Soll der Benutzer mit Login <strong>{{ title }}</strong> wirklich aus dieser Präsentation entfernt werden?"
             }
         }
     }

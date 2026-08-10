@@ -51,6 +51,9 @@
             "delete": {
                 "question": "Are you sure you want to permanently delete the presentation assessment <strong>{{ title }}</strong>? This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the title of the presentation assessment to confirm."
+            },
+            "students": {
+                "removeQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this presentation?"
             }
         }
     }

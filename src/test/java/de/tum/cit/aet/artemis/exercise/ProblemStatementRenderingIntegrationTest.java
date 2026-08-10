@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -383,8 +384,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("data-formula=\"E = mc^2\"");
         assertThat(result.html()).contains("data-display-mode=\"false\"");
         assertThat(result.html()).contains("data-display-mode=\"true\"");
-        assertThat(result.html()).contains("/webjars/katex/dist/katex.min.css");
-        assertThat(result.html()).contains("/webjars/katex/dist/katex.min.js");
+        assertThat(result.html()).contains("/assets/katex/katex.min.css");
+        assertThat(result.html()).contains("/assets/katex/katex.min.js");
     }
 
     @Test
@@ -401,7 +402,15 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     void shouldServeKatexResourcesAnonymously() throws Exception {
-        request.get("/webjars/katex/dist/katex.min.css", HttpStatus.OK, String.class);
+        // The rendered document is loaded in a WebView that does not authenticate for the asset requests, so this path has
+        // to stay outside the security rules.
+        //
+        // Only that is asserted here, not that the file exists: KaTeX now comes from the client's own copy, which the
+        // Angular build copies out of node_modules, and server tests run with the client build skipped. So 404 ("not built
+        // in this run") is an acceptable outcome while 401 or 403 ("behind authentication") is not.
+        int status = request.performMvcRequest(get("/assets/katex/katex.min.css")).andReturn().getResponse().getStatus();
+
+        assertThat(status).as("the KaTeX assets must not be behind authentication").isIn(HttpStatus.OK.value(), HttpStatus.NOT_FOUND.value());
     }
 
     // --- Interactive toggle ---

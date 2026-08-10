@@ -1,28 +1,21 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { MessageModule } from 'primeng/message';
-import { TextareaModule } from 'primeng/textarea';
-import { AutoCompleteCompleteEvent, AutoCompleteModule } from 'primeng/autocomplete';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import {
+    TumUiAutoCompleteComponent,
+    TumUiAutoCompleteSearchEvent,
+    TumUiButtonComponent,
+    TumUiInputDirective,
+    TumUiInputNumberComponent,
+    TumUiMessageComponent,
+} from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
-import { Course } from 'app/course/shared/entities/course.model';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-
-export interface PresentationAssessmentFormDialogData {
-    courseId: number;
-    course?: Course;
-    presentationAssessment?: PresentationAssessment;
-    exercises: Exercise[];
-}
 
 export interface PresentationAssessmentFormDialogResult {
     presentationAssessment: PresentationAssessment;
@@ -35,29 +28,28 @@ export interface PresentationAssessmentFormDialogResult {
     imports: [
         FormsModule,
         ReactiveFormsModule,
-        ButtonModule,
-        InputTextModule,
-        InputNumberModule,
-        MessageModule,
-        TextareaModule,
-        AutoCompleteModule,
         TranslateDirective,
         ArtemisTranslatePipe,
         FaIconComponent,
+        TumUiAutoCompleteComponent,
+        TumUiButtonComponent,
+        TumUiInputDirective,
+        TumUiInputNumberComponent,
+        TumUiMessageComponent,
     ],
 })
-export class PresentationAssessmentFormDialogComponent implements OnInit {
+export class PresentationAssessmentFormDialogComponent {
     private readonly formBuilder = inject(FormBuilder);
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+
+    readonly courseId = input.required<number>();
+    readonly presentationAssessment = input<PresentationAssessment>();
+    readonly exercises = input<Exercise[]>([]);
+    readonly saved = output<PresentationAssessmentFormDialogResult>();
+    readonly cancelled = output<void>();
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
-    readonly exercises = signal<Exercise[]>([]);
     readonly filteredExercises = signal<Exercise[]>([]);
-
-    private courseId = 0;
-    private presentationAssessment?: PresentationAssessment;
 
     editForm = this.formBuilder.group({
         title: ['', [Validators.required, Validators.maxLength(255)]],
@@ -66,22 +58,21 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
         exercise: [undefined as Exercise | undefined],
     });
 
-    ngOnInit(): void {
-        const data = this.dialogConfig.data as PresentationAssessmentFormDialogData;
-        this.courseId = data.courseId;
-        this.presentationAssessment = data.presentationAssessment;
-        this.exercises.set(data.exercises ?? []);
-        this.filteredExercises.set(data.exercises ?? []);
-
-        this.editForm.reset({
-            title: this.presentationAssessment?.title ?? '',
-            description: this.presentationAssessment?.description ?? '',
-            maxPoints: this.presentationAssessment?.maxPoints ?? 20,
-            exercise: this.exercises().find((exercise) => exercise.id === this.presentationAssessment?.exerciseId),
+    constructor() {
+        effect(() => {
+            const presentationAssessment = this.presentationAssessment();
+            const exercises = this.exercises();
+            this.filteredExercises.set(exercises);
+            this.editForm.reset({
+                title: presentationAssessment?.title ?? '',
+                description: presentationAssessment?.description ?? '',
+                maxPoints: presentationAssessment?.maxPoints ?? 20,
+                exercise: exercises.find((exercise) => exercise.id === presentationAssessment?.exerciseId),
+            });
         });
     }
 
-    filterExercises(event: AutoCompleteCompleteEvent): void {
+    filterExercises(event: TumUiAutoCompleteSearchEvent): void {
         const query = event.query.trim().toLocaleLowerCase();
         this.filteredExercises.set(query ? this.exercises().filter((exercise) => exercise.title?.toLocaleLowerCase().includes(query)) : this.exercises());
     }
@@ -91,24 +82,21 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
             this.editForm.markAllAsTouched();
             return;
         }
-
-        this.dialogRef.close({
-            presentationAssessment: this.createFromForm(),
-        } satisfies PresentationAssessmentFormDialogResult);
+        this.saved.emit({ presentationAssessment: this.createFromForm() });
     }
 
     cancel(): void {
-        this.dialogRef.close();
+        this.cancelled.emit();
     }
 
     private createFromForm(): PresentationAssessment {
         const formValue = this.editForm.getRawValue();
         return {
-            id: this.presentationAssessment?.id,
+            id: this.presentationAssessment()?.id,
             title: formValue.title?.trim(),
             description: formValue.description ?? undefined,
             maxPoints: formValue.maxPoints ?? undefined,
-            courseId: this.courseId,
+            courseId: this.courseId(),
             exerciseId: formValue.exercise?.id,
         };
     }

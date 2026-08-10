@@ -212,11 +212,15 @@ public class LectureContentProcessingService {
      */
     @Async
     public void handleUnitsDeletion(List<AttachmentVideoUnit> units) {
+        SecurityUtils.setAuthorizationObject();
+        deleteUnitsFromPyris(units);
+    }
+
+    private void deleteUnitsFromPyris(List<AttachmentVideoUnit> units) {
         if (units == null || units.isEmpty()) {
             return;
         }
 
-        SecurityUtils.setAuthorizationObject();
         log.info("Handling deletion cleanup for {} units", units.size());
 
         if (irisLectureApi.isPresent()) {

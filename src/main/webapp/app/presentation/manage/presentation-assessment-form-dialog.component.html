@@ -2,57 +2,53 @@
     <div class="presentation-assessment-form-grid">
         <div class="presentation-assessment-field presentation-assessment-title-field">
             <label for="presentation-assessment-title" jhiTranslate="artemisApp.presentationAssessment.title"></label>
-            <input id="presentation-assessment-title" pInputText class="w-full" type="text" formControlName="title" />
+            <input id="presentation-assessment-title" tumUiInput class="w-full" type="text" formControlName="title" />
             @if (editForm.controls.title.invalid && editForm.controls.title.touched) {
-                <p-message severity="error" data-testid="presentation-title-error">
+                <tum-ui-message severity="error" data-testid="presentation-title-error">
                     <span jhiTranslate="entity.validation.required"></span>
-                </p-message>
+                </tum-ui-message>
             }
         </div>
 
         <div class="presentation-assessment-field">
             <label for="presentation-assessment-max-points" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></label>
-            <p-inputnumber inputId="presentation-assessment-max-points" styleClass="presentation-assessment-number-input" [min]="0.01" [step]="0.5" formControlName="maxPoints" />
+            <tum-ui-input-number inputId="presentation-assessment-max-points" [fluid]="true" [min]="0.01" [step]="0.5" [maxFractionDigits]="2" formControlName="maxPoints" />
             @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
-                <p-message severity="error" data-testid="presentation-max-points-error">
+                <tum-ui-message severity="error" data-testid="presentation-max-points-error">
                     <span jhiTranslate="entity.validation.min"></span>
-                </p-message>
+                </tum-ui-message>
             }
         </div>
 
         <div class="presentation-assessment-field presentation-assessment-exercise-field">
             <label for="presentation-assessment-exercise" jhiTranslate="artemisApp.presentationAssessment.exercise"></label>
-            <p-autocomplete
+            <tum-ui-autocomplete
                 inputId="presentation-assessment-exercise"
-                styleClass="w-full"
-                inputStyleClass="w-full"
+                class="w-full"
                 formControlName="exercise"
                 [suggestions]="filteredExercises()"
-                (completeMethod)="filterExercises($event)"
+                (searchRequested)="filterExercises($event)"
                 optionLabel="title"
-                [dropdown]="true"
-                [forceSelection]="true"
-                [showClear]="true"
+                [minLength]="0"
                 [completeOnFocus]="true"
-                appendTo="body"
                 placeholder="{{ 'artemisApp.presentationAssessment.noExercise' | artemisTranslate }}"
             />
         </div>
 
         <div class="presentation-assessment-field presentation-assessment-description-field">
             <label for="presentation-assessment-description" jhiTranslate="artemisApp.presentationAssessment.description"></label>
-            <textarea id="presentation-assessment-description" pTextarea rows="4" formControlName="description"></textarea>
+            <textarea id="presentation-assessment-description" tumUiTextarea class="w-full" rows="4" formControlName="description"></textarea>
         </div>
     </div>
 
     <div class="presentation-assessment-actions">
-        <p-button severity="secondary" type="button" (onClick)="cancel()">
+        <tum-ui-button severity="secondary" type="button" (clicked)="cancel()">
             <fa-icon [icon]="faBan" />
             <span jhiTranslate="entity.action.cancel"></span>
-        </p-button>
-        <p-button type="submit">
+        </tum-ui-button>
+        <tum-ui-button type="submit">
             <fa-icon [icon]="faSave" />
             <span jhiTranslate="entity.action.save"></span>
-        </p-button>
+        </tum-ui-button>
     </div>
 </form>
