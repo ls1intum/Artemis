@@ -1,5 +1,15 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
+/*
+ * The host needs a box of its own: `ResizeObserver` reports nothing for a non-replaced inline element, and
+ * `observeShellMetrics()` watches this element to keep `--navbar-height` in step with the rendered navbar. Left
+ * inline, the height the shells size themselves from goes stale whenever the navbar grows without a navigation —
+ * a system notification appearing, or breadcrumbs wrapping. `jhi-footer` declares the same for the same reason.
+ */
+:host {
+    display: block;
+}
+
 /* ==========================================================================
 Navbar
 ========================================================================== */

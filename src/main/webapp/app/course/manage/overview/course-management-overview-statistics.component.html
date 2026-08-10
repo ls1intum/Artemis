@@ -9,7 +9,7 @@
 @if (startDateAlreadyPassed) {
     <div class="col-md-12 text-center">
         <div style="height: 250px">
-            <p-chart type="line" [data]="chartData()" [options]="chartOptions()" />
+            <p-chart type="line" [data]="chartData()" [options]="chartOptions()" [ariaLabel]="'artemisApp.courseStatistics.activeStudents' | artemisTranslate" />
         </div>
     </div>
 } @else {

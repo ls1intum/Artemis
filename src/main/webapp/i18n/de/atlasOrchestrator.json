@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "atlasOrchestrator": {
+            "button": "Kompetenzen vorschlagen",
             "tooltip": "Den Atlas-Kompetenz-Orchestrator für diese Aufgabe ausführen",
             "error": "Atlas-Orchestrator-Durchlauf fehlgeschlagen. Bitte versuche es später erneut.",
             "partial": "Atlas-Orchestrator-Durchlauf wurde mittendrin abgebrochen — überprüfe die Teilaktionen im Dialog und mache fehlerhafte ggf. rückgängig.",
