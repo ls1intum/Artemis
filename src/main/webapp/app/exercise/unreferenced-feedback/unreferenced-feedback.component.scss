@@ -4,20 +4,23 @@
     gap: 0.5rem; /* Reduced overall spacing */
     padding-top: 0.5rem;
 
-    /* A flex column item stretches to the parent's full width by default; without this the button became a
-       full-width bar instead of the compact, content-sized button it was before. */
-    .add-unreferenced-feedback {
-        align-self: flex-start;
-    }
-
     &__header {
         display: flex;
         flex-wrap: wrap;
-        align-items: baseline;
+        align-items: center;
         justify-content: space-between;
         gap: 0.5rem;
         padding-bottom: 0.375rem;
         border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Points summary/tag + add button sit together on the trailing edge of the header line. */
+    &__header-trailing {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        margin-inline-start: auto;
     }
 
     &__title {

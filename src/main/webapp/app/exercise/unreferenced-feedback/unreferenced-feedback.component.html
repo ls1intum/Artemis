@@ -1,40 +1,41 @@
 <div class="unreferenced-feedback" (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
-    @if (!placeAddButtonWithOtherGroup()) {
-        <button type="button" tumUiButton severity="success" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
-            <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
-        </button>
-    }
-
-    <!-- Section header: the title on the leading edge, the point balance of this list on the trailing edge. -->
+    <!-- Section header: title leading; points summary + add button trailing. -->
     <div class="unreferenced-feedback__header">
         <h4 class="unreferenced-feedback__title" jhiTranslate="artemisApp.assessment.detail.feedback"></h4>
-        @if (unreferencedFeedback.length > 0) {
-            @let summary = pointsSummary();
-            <dl class="unreferenced-feedback__summary">
-                <div class="unreferenced-feedback__summary-item">
-                    <dt jhiTranslate="artemisApp.assessment.detail.baseAward"></dt>
-                    <dd class="unreferenced-feedback__summary-value unreferenced-feedback__summary-value--award">
-                        {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: summary.awarded } }}
-                    </dd>
-                </div>
-                <div class="unreferenced-feedback__summary-item">
-                    <dt jhiTranslate="artemisApp.assessment.detail.deductions"></dt>
-                    <dd class="unreferenced-feedback__summary-value unreferenced-feedback__summary-value--deduction">
-                        {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: summary.deducted } }}
-                    </dd>
-                </div>
-                <div class="unreferenced-feedback__summary-item">
-                    <dt jhiTranslate="artemisApp.assessment.detail.finalScore"></dt>
-                    <dd class="unreferenced-feedback__summary-value unreferenced-feedback__summary-value--total">
-                        @if (maxPoints() !== undefined) {
-                            {{ 'artemisApp.assessment.detail.pointsOfShort' | artemisTranslate: { points: summary.total, maxPoints: maxPoints() } }}
-                        } @else {
-                            {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: summary.total } }}
-                        }
-                    </dd>
-                </div>
-            </dl>
-        }
+        <div class="unreferenced-feedback__header-trailing">
+            @if (unreferencedFeedback.length > 0) {
+                @let summary = pointsSummary();
+                <dl class="unreferenced-feedback__summary">
+                    <div class="unreferenced-feedback__summary-item">
+                        <dt jhiTranslate="artemisApp.assessment.detail.baseAward"></dt>
+                        <dd class="unreferenced-feedback__summary-value unreferenced-feedback__summary-value--award">
+                            {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: summary.awarded } }}
+                        </dd>
+                    </div>
+                    <div class="unreferenced-feedback__summary-item">
+                        <dt jhiTranslate="artemisApp.assessment.detail.deductions"></dt>
+                        <dd class="unreferenced-feedback__summary-value unreferenced-feedback__summary-value--deduction">
+                            {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: summary.deducted } }}
+                        </dd>
+                    </div>
+                    <div class="unreferenced-feedback__summary-item">
+                        <dt jhiTranslate="artemisApp.assessment.detail.finalScore"></dt>
+                        <dd class="unreferenced-feedback__summary-value unreferenced-feedback__summary-value--total">
+                            @if (maxPoints() !== undefined) {
+                                {{ 'artemisApp.assessment.detail.pointsOfShort' | artemisTranslate: { points: summary.total, maxPoints: maxPoints() } }}
+                            } @else {
+                                {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: summary.total } }}
+                            }
+                        </dd>
+                    </div>
+                </dl>
+            }
+            @if (!placeAddButtonWithOtherGroup()) {
+                <button type="button" tumUiButton severity="primary" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
+                    <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
+                </button>
+            }
+        </div>
     </div>
 
     @if (unreferencedFeedback.length + feedbackSuggestions().length === 0) {
@@ -50,13 +51,23 @@
                     } @else {
                         <h5 class="unreferenced-feedback__group-title">{{ group.title }}</h5>
                     }
-                    <tum-ui-tag [severity]="group.pointsSeverity" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: group.points }" />
+                    <div class="unreferenced-feedback__header-trailing">
+                        <tum-ui-tag [severity]="group.pointsSeverity" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: group.points }" />
+                        @if (placeAddButtonWithOtherGroup() && group.translateTitle) {
+                            <button
+                                type="button"
+                                tumUiButton
+                                severity="primary"
+                                size="small"
+                                class="add-unreferenced-feedback"
+                                (click)="addUnreferencedFeedback()"
+                                [disabled]="readOnly()"
+                            >
+                                <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
+                            </button>
+                        }
+                    </div>
                 </header>
-            }
-            @if (placeAddButtonWithOtherGroup() && group.translateTitle) {
-                <button type="button" tumUiButton severity="success" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
-                    <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
-                </button>
             }
             <div class="unreferenced-feedback__cards">
                 @for (feedback of group.feedbacks; track feedback) {
