@@ -13,6 +13,7 @@
             "pageHeaderExam": "Klausur-Dashboard für Tutor:innen von",
             "pageHeaderExamTestRun": "Testlauf Bewertungs-Dashboard",
             "assessments": "Bewertungen",
+            "assessmentsChartAriaLabel": "Kreisdiagramm der Verteilung der Abgaben auf die Bewertungszustände",
             "assessmentLocks": "Gesperrte Bewertungen",
             "totalAssessmentsForCorrectionrounds": "Bewertungen der Korrekturrunden",
             "complaints": "Beschwerden",

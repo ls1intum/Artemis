@@ -25,7 +25,7 @@ Using JPA entities directly in REST controllers creates severe problems that com
 
 - **Breaking Changes:** Any change to the database schema (renaming a column, adding a field) automatically changes the API contract, breaking clients
 - **No Versioning Control:** Without DTOs, you cannot maintain multiple API versions or deprecate fields gracefully
-- **Tight Coupling:** Frontend and backend become tightly coupled to the database schema
+- **Tight Coupling:** Client and server become tightly coupled to the database schema
 
 #### 3. Performance Problems
 
