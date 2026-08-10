@@ -141,7 +141,7 @@ overrides:
   cookie: '1.1.1'
   debug: '4.4.3'
   diff: '9.0.0'
-  dompurify: '3.4.12'
+  dompurify: '3.4.13'
   esbuild: '0.28.1'
   express: '5.2.1'
   # Kept on the 3.x line (ajv/fast-json-stringify require ^3).
