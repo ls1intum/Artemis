@@ -174,3 +174,28 @@ $resize-hit-offset: math.div($resize-hit-size, 2);
         }
     }
 }
+
+/* Docked: the panel joins the rail's flow, so Apollon reserves its width and the
+   canvas is laid out beside it. The seam with the trigger stays, but the panel no
+   longer needs its own width - the rail is the column now. */
+:host(.apollon-rail-disclosure--docked) {
+    min-height: 0;
+
+    .apollon-rail-disclosure__panel {
+        position: static;
+        width: auto !important;
+        max-width: none;
+        min-height: 0;
+        flex: 1 1 auto;
+        border-top-right-radius: 0;
+    }
+
+    .apollon-rail-disclosure__trigger-island {
+        align-self: stretch;
+    }
+
+    /* Width is the rail's to give; dragging the panel's edge would fight it. */
+    .apollon-rail-disclosure__resizer--left {
+        display: none;
+    }
+}

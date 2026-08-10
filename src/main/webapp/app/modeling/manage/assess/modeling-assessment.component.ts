@@ -71,6 +71,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     readonly enablePopups = input(true);
     /** Heading shown on the side panel's card. */
     readonly panelLabel = input('');
+    /** Docks the side panel beside the canvas instead of floating it over; see {@link ApollonRailDisclosureComponent.docked}. */
+    readonly panelDocked = input(false);
     protected readonly hasPanel = computed(() => isOccupied(this.projectedPanel()));
     /** Open by default: in the assessed view the feedback IS the point of the page. */
     readonly panelVisible = signal(true);
@@ -99,6 +101,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private topRightRegionMounted = false;
     private bottomCenterRegionMounted = false;
     private chromeResizeObserver?: ResizeObserver;
+    private panelResizeObserver?: ResizeObserver;
+    private fitViewFrame?: number;
+    private lastReservedPanelWidth = -1;
     private readonly observedChromeResizeTargets = new Set<HTMLElement>();
     private chromeMountObserver?: MutationObserver;
     private chromeResizeFrame?: number;
@@ -182,6 +187,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     ngOnDestroy() {
         this.chromeResizeObserver?.disconnect();
+        this.panelResizeObserver?.disconnect();
+        if (this.fitViewFrame !== undefined) {
+            window.cancelAnimationFrame(this.fitViewFrame);
+        }
         this.observedChromeResizeTargets.clear();
         this.chromeMountObserver?.disconnect();
         if (this.chromeResizeFrame !== undefined) {
@@ -262,6 +271,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             // editor's problem statement makes — and it has to come after the
             // first `getRegionElement`, since that is what creates the control.
             this.apollonEditor.updateControl('apollon:host:right-rail', { style: { overflow: 'visible' } });
+            this.observePanelWidth(panel);
         }
         this.bottomCenterRegionMounted = this.synchronizeHostRegion(
             'bottom-center',
@@ -300,6 +310,45 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             this.chromeMountObserver.observe(host, { childList: true, subtree: true });
         }
         this.scheduleChromePlacement();
+    }
+
+    /**
+     * The rail reserves whatever width the panel takes, but reserving room is not
+     * the same as using it: the camera keeps its old framing until it is told to
+     * refit, which leaves the diagram sitting under the panel. The panel's width
+     * settles asynchronously — it grows once the feedback renders — so this
+     * watches it rather than refitting once at mount.
+     */
+    private observePanelWidth(panel: HTMLElement): void {
+        if (typeof ResizeObserver === 'undefined') {
+            return;
+        }
+        this.panelResizeObserver?.disconnect();
+        this.panelResizeObserver = new ResizeObserver(() => {
+            const width = Math.round(panel.getBoundingClientRect().width);
+            if (width === this.lastReservedPanelWidth) {
+                return;
+            }
+            this.lastReservedPanelWidth = width;
+            this.scheduleFitView();
+        });
+        this.panelResizeObserver.observe(panel);
+    }
+
+    /**
+     * Two frames out: the overlay engine measures a region on the frame AFTER it
+     * changes size, so refitting any sooner frames against the previous inset.
+     */
+    private scheduleFitView(): void {
+        if (this.fitViewFrame !== undefined) {
+            window.cancelAnimationFrame(this.fitViewFrame);
+        }
+        this.fitViewFrame = window.requestAnimationFrame(() => {
+            this.fitViewFrame = window.requestAnimationFrame(() => {
+                this.fitViewFrame = undefined;
+                this.apollonEditor?.fitView({ respectInsets: true });
+            });
+        });
     }
 
     protected scheduleChromePlacement(): void {

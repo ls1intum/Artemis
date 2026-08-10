@@ -100,10 +100,14 @@ jhi-fullscreen {
         display: flex;
         min-width: 0;
 
-        /* The floor is what makes a content-sized host viable at all — the exam
+        /* The floor is what makes a content-sized host viable at all - the exam
            summary renders this inside a collapsible card that has no height to
-           give, and a diagram surface has no intrinsic height to fall back on. */
-        min-height: 24rem;
+           give, and a diagram surface has no intrinsic height to fall back on.
+           There it is also the ACTUAL height, so it has to be enough to review a
+           diagram and its feedback side by side, not merely enough to prove the
+           canvas exists. Capped against the viewport so a summary card can never
+           grow taller than the screen it is read on. */
+        min-height: min(34rem, 70dvh);
         flex: 1 1 auto;
         overflow: hidden;
     }

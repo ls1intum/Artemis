@@ -70,6 +70,21 @@ test.describe.serial('Exam modeling summary', { tag: '@slow' }, () => {
         await expect(panel).toBeVisible();
         await expect(panel.locator('.feedback-row').first()).toBeVisible();
         await expect(panel).toContainText('Good');
+
+        // Docked, not floating: reviewing is reading, and the summary has the width
+        // to put the feedback beside the diagram rather than over it.
+        await expect(panel).toHaveClass(/apollon-rail-disclosure--docked/);
+
+        // And the diagram is framed clear of it - the camera has to refit once the
+        // rail reserves its width, or the nodes stay hidden underneath.
+        const panelBox = (await panel.boundingBox())!;
+        const nodes = page.locator('jhi-modeling-exam-summary .react-flow__node');
+        const nodeCount = await nodes.count();
+        expect(nodeCount).toBeGreaterThan(0);
+        for (let index = 0; index < nodeCount; index++) {
+            const nodeBox = (await nodes.nth(index).boundingBox())!;
+            expect(nodeBox.x + nodeBox.width, `node ${index} must not sit under the feedback panel`).toBeLessThanOrEqual(panelBox.x + 1);
+        }
     });
 
     test.afterAll('Delete exam', async ({ browser }) => {
