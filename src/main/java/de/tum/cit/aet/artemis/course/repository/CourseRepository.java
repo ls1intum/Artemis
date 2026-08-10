@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguratio
 import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -730,4 +731,46 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
             """)
     long countCoursesForInstructor(@Param("userId") Long userId);
+
+    /**
+     * Projects the fields the course overview container renders.
+     *
+     * The endpoint used to load the whole {@code Course} to read a handful of scalars off it. Selecting them directly
+     * means the successful path materialises no entity at all, so nothing can lazily initialise on the way out and the
+     * response cannot drift as the entity gains fields.
+     *
+     * The unread notification count lives outside this table, so the caller fills it in with
+     * {@link CourseForOverviewDTO#withNotificationCount(long)}.
+     *
+     * @param courseId the course to project
+     * @return the projected course, or empty when it does not exist
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO(
+                course.id,
+                course.title,
+                course.startDate,
+                course.endDate,
+                course.color,
+                course.courseIcon,
+                course.testCourse,
+                course.onlineCourse,
+                course.enrollmentEnabled,
+                course.enrollmentEndDate,
+                course.unenrollmentEnabled,
+                course.unenrollmentEndDate,
+                course.courseInformationSharingConfiguration,
+                course.courseInformationSharingMessagingCodeOfConduct,
+                course.accuracyOfScores,
+                course.presentationScore,
+                course.maxComplaints,
+                course.maxTeamComplaints,
+                course.maxComplaintTimeDays,
+                course.maxComplaintTextLimit,
+                course.maxComplaintResponseTextLimit,
+                course.maxRequestMoreFeedbackTimeDays)
+            FROM Course course
+            WHERE course.id = :courseId
+            """)
+    Optional<CourseForOverviewDTO> findForOverview(@Param("courseId") long courseId);
 }

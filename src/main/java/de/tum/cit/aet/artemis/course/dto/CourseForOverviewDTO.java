@@ -6,87 +6,87 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 
 /**
  * The course data the course overview container itself needs.
  * <p>
- * Deliberately scalars rather than the {@code Course} entity. Returning the entity made the response whatever Jackson
- * happened to serialize off it, which meant the contract moved whenever the entity did, and it left the door open for a
- * lazy association to be initialised on the way out. Every field here is one the web client reads.
+ * Scalars rather than the {@code Course} entity, and projected straight out of the database: the endpoint never
+ * materialises a Course on the successful path, so the response cannot drift with the entity and no lazy association
+ * can be initialised on the way out.
  * <p>
- * Content collections are absent: exercises, lectures, exams, participations and scores are loaded by the tab that
- * needs them, and which tabs to offer comes from {@link CourseAvailableTabsDTO}. {@code tutorialGroupsConfiguration} is
- * absent for the same reason — it was never initialised on this path either, and the tutorial groups tab loads its own.
+ * Every field here has a reader on an overview path. Fields the entity carries but the overview never reads are
+ * deliberately absent — short name, description, semester, language, time zone, max points, the enrolment start date
+ * and confirmation message, and the instructor-facing onboarding, Athena, grade-relevance and data-retention flags.
+ * {@code learningPathsEnabled} and {@code trainingEnabled} are gone too: which tabs to offer now comes from
+ * {@link CourseAvailableTabsDTO}. Content collections are absent because each tab loads what it needs, and
+ * {@code tutorialGroupsConfiguration} because it was never initialised on this path either.
  *
  * @param id                                             the id of the course
- * @param title                                          the title shown in the header and the browser tab
- * @param shortName                                      the short name, used in links and repository names
- * @param description                                    the course description
- * @param semester                                       the semester the course belongs to
+ * @param title                                          shown in the header, the browser tab, and typed to confirm unenrollment
  * @param startDate                                      when the course starts
- * @param endDate                                        when the course ends; drives the archived/active distinction
- * @param enrollmentEnabled                              whether students may enroll themselves
- * @param enrollmentStartDate                            when self-enrollment opens
- * @param enrollmentEndDate                              when self-enrollment closes
- * @param enrollmentConfirmationMessage                  shown when a student enrolls
- * @param unenrollmentEnabled                            whether students may unenroll themselves
- * @param unenrollmentEndDate                            until when they may
+ * @param endDate                                        when the course ends; separates active from archived courses
  * @param color                                          the course colour used across the overview
- * @param courseIcon                                     the path of the course icon
+ * @param courseIcon                                     the course icon, from which the client derives its display path
  * @param testCourse                                     whether this is a test course
  * @param onlineCourse                                   whether this is an LTI online course
- * @param language                                       the course language
- * @param timeZone                                       the course time zone, used for tutorial groups and the calendar
+ * @param enrollmentEnabled                              whether self-enrollment is on; the unenrollment dialog reads it
+ * @param enrollmentEndDate                              when self-enrollment closes; likewise
+ * @param unenrollmentEnabled                            whether the overview offers the unenroll action
+ * @param unenrollmentEndDate                            until when it does
  * @param courseInformationSharingConfiguration          which communication features are enabled
- * @param courseInformationSharingMessagingCodeOfConduct the code of conduct shown in communication
- * @param maxPoints                                      the points achievable in the course
+ * @param courseInformationSharingMessagingCodeOfConduct the code of conduct shown in the communication tab
  * @param accuracyOfScores                               the number of decimal places scores are rounded to
- * @param presentationScore                              the basic presentation threshold, or {@code null} when unused
+ * @param presentationScore                              the basic presentation threshold, read by the statistics tab
+ * @param complaintsEnabled                              whether complaints are possible at all
  * @param maxComplaints                                  how many complaints a student may file
  * @param maxTeamComplaints                              how many complaints a team may file
  * @param maxComplaintTimeDays                           how long a complaint may be filed after the result
  * @param maxComplaintTextLimit                          the character limit of a complaint
  * @param maxComplaintResponseTextLimit                  the character limit of a complaint response
+ * @param requestMoreFeedbackEnabled                     whether more feedback may be requested at all
  * @param maxRequestMoreFeedbackTimeDays                 how long more feedback may be requested after the result
- * @param complaintsEnabled                              derived: whether complaints are possible at all
- * @param requestMoreFeedbackEnabled                     derived: whether more feedback may be requested at all
- * @param learningPathsEnabled                           whether the learning path tab may be offered
- * @param trainingEnabled                                whether the course has quiz questions available for practice
- * @param gradeRelevant                                  derived: whether the course counts towards a grade
- * @param dataRetentionHold                              derived: whether the course is under a data retention hold
- * @param restrictedAthenaModulesAccess                  whether Athena modules are restricted for this course
- * @param onboardingDone                                 whether the instructor onboarding was completed
  * @param courseNotificationCount                        the number of unread notifications for the course
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseForOverviewDTO(long id, String title, @Nullable String shortName, @Nullable String description, @Nullable String semester, @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate, @Nullable Boolean enrollmentEnabled, @Nullable ZonedDateTime enrollmentStartDate, @Nullable ZonedDateTime enrollmentEndDate,
-        @Nullable String enrollmentConfirmationMessage, boolean unenrollmentEnabled, @Nullable ZonedDateTime unenrollmentEndDate, @Nullable String color,
-        @Nullable String courseIcon, boolean testCourse, @Nullable Boolean onlineCourse, @Nullable Language language, @Nullable String timeZone,
-        @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, @Nullable String courseInformationSharingMessagingCodeOfConduct,
-        @Nullable Integer maxPoints, @Nullable Integer accuracyOfScores, @Nullable Integer presentationScore, @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints,
-        int maxComplaintTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit, int maxRequestMoreFeedbackTimeDays, boolean complaintsEnabled,
-        boolean requestMoreFeedbackEnabled, boolean learningPathsEnabled, boolean trainingEnabled, boolean gradeRelevant, boolean dataRetentionHold,
-        boolean restrictedAthenaModulesAccess, boolean onboardingDone, long courseNotificationCount) {
+public record CourseForOverviewDTO(long id, String title, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable String color, @Nullable String courseIcon,
+        boolean testCourse, @Nullable Boolean onlineCourse, @Nullable Boolean enrollmentEnabled, @Nullable ZonedDateTime enrollmentEndDate, boolean unenrollmentEnabled,
+        @Nullable ZonedDateTime unenrollmentEndDate, @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+        @Nullable String courseInformationSharingMessagingCodeOfConduct, @Nullable Integer accuracyOfScores, @Nullable Integer presentationScore, boolean complaintsEnabled,
+        @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit,
+        boolean requestMoreFeedbackEnabled, int maxRequestMoreFeedbackTimeDays, long courseNotificationCount) {
 
     /**
-     * Reads the overview fields off a course.
-     *
-     * @param course                  the course the overview is opened for
-     * @param courseNotificationCount the number of unread notifications for it
-     * @return the projected course
+     * JPQL constructor, leaving the notification count at zero for {@link #withNotificationCount(long)} to fill in.
+     * Complaints and more-feedback requests are enabled by their respective day limits being
+     * positive, which the entity derives in {@code getComplaintsEnabled()} and {@code getRequestMoreFeedbackEnabled()}.
+     * Deriving them here keeps that rule in one place rather than repeating it in the query.
      */
-    public static CourseForOverviewDTO of(Course course, long courseNotificationCount) {
-        return new CourseForOverviewDTO(course.getId(), course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStartDate(),
-                course.getEndDate(), course.isEnrollmentEnabled(), course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getEnrollmentConfirmationMessage(),
-                course.isUnenrollmentEnabled(), course.getUnenrollmentEndDate(), course.getColor(), course.getCourseIcon(), course.isTestCourse(), course.isOnlineCourse(),
-                course.getLanguage(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(), course.getCourseInformationSharingMessagingCodeOfConduct(),
-                course.getMaxPoints(), course.getAccuracyOfScores(), course.getPresentationScore(), course.getMaxComplaints(), course.getMaxTeamComplaints(),
-                course.getMaxComplaintTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getMaxRequestMoreFeedbackTimeDays(),
-                course.getComplaintsEnabled(), course.getRequestMoreFeedbackEnabled(), course.getLearningPathsEnabled(), course.isTrainingEnabled(), course.isGradeRelevant(),
-                course.isDataRetentionHold(), course.getRestrictedAthenaModulesAccess(), course.isOnboardingDone(), courseNotificationCount);
+    public CourseForOverviewDTO(long id, String title, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable String color, @Nullable String courseIcon,
+            boolean testCourse, @Nullable Boolean onlineCourse, @Nullable Boolean enrollmentEnabled, @Nullable ZonedDateTime enrollmentEndDate, boolean unenrollmentEnabled,
+            @Nullable ZonedDateTime unenrollmentEndDate, @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+            @Nullable String courseInformationSharingMessagingCodeOfConduct, @Nullable Integer accuracyOfScores, @Nullable Integer presentationScore,
+            @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit,
+            int maxRequestMoreFeedbackTimeDays) {
+        this(id, title, startDate, endDate, color, courseIcon, testCourse, onlineCourse, enrollmentEnabled, enrollmentEndDate, unenrollmentEnabled, unenrollmentEndDate,
+                courseInformationSharingConfiguration, courseInformationSharingMessagingCodeOfConduct, accuracyOfScores, presentationScore, maxComplaintTimeDays > 0, maxComplaints,
+                maxTeamComplaints, maxComplaintTimeDays, maxComplaintTextLimit, maxComplaintResponseTextLimit, maxRequestMoreFeedbackTimeDays > 0, maxRequestMoreFeedbackTimeDays,
+                0);
+    }
+
+    /**
+     * Returns a copy carrying the given unread notification count.
+     *
+     * The count comes from a different table than the projection, so the query leaves it at zero and the caller fills
+     * it in.
+     *
+     * @param courseNotificationCount the number of unread notifications for the course
+     * @return the projected course with its notification count
+     */
+    public CourseForOverviewDTO withNotificationCount(long courseNotificationCount) {
+        return new CourseForOverviewDTO(id, title, startDate, endDate, color, courseIcon, testCourse, onlineCourse, enrollmentEnabled, enrollmentEndDate, unenrollmentEnabled,
+                unenrollmentEndDate, courseInformationSharingConfiguration, courseInformationSharingMessagingCodeOfConduct, accuracyOfScores, presentationScore, complaintsEnabled,
+                maxComplaints, maxTeamComplaints, maxComplaintTimeDays, maxComplaintTextLimit, maxComplaintResponseTextLimit, requestMoreFeedbackEnabled,
+                maxRequestMoreFeedbackTimeDays, courseNotificationCount);
     }
 }

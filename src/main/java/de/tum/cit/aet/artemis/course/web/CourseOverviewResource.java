@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
@@ -196,20 +197,33 @@ public class CourseOverviewResource {
     @EnforceAtLeastStudent
     public ResponseEntity<CourseForOverviewDTO> getCourseForOverview(@PathVariable long courseId) {
         log.debug("REST request to get course {} for the course overview", courseId);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            // The user might still be allowed to enroll; mirror the for-dashboard behaviour so the client can redirect
-            // to the enrollment page instead of showing a plain access error.
-            course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
-            if (enrollmentService.isUserAllowedToSelfEnrollInCourse(user, course)) {
-                throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could enroll in it.", ENTITY_NAME,
-                        "noAccessButCouldEnroll", true);
-            }
-            throw new AccessForbiddenException(ENTITY_NAME, courseId);
+        // Membership is decided by an indexed EXISTS on the login, so the successful path never materialises the course
+        if (!authCheckService.isAtLeastStudentInCourse(courseId)) {
+            denyAccessOrOfferEnrollment(courseId);
         }
-        long notificationCount = userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(user.getId(), courseId);
-        return ResponseEntity.ok(CourseForOverviewDTO.of(course, notificationCount));
+        long userId = userRepository.getUserIdElseThrow();
+        long notificationCount = userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, courseId);
+        CourseForOverviewDTO overview = courseRepository.findForOverview(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return ResponseEntity.ok(overview.withNotificationCount(notificationCount));
+    }
+
+    /**
+     * Refuses access to a course, offering enrollment when the user could still enroll in it.
+     * <p>
+     * The exceptional path, and the only one that loads the course: the enrollment check needs its organizations and
+     * prerequisites. The alert exception is skipAlert so the client can redirect to the enrollment page rather than
+     * show a plain access error.
+     *
+     * @param courseId the course being refused
+     */
+    private void denyAccessOrOfferEnrollment(long courseId) {
+        User user = userRepository.getUserWithAuthoritiesAndOrganizations();
+        Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
+        if (enrollmentService.isUserAllowedToSelfEnrollInCourse(user, course)) {
+            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could enroll in it.", ENTITY_NAME,
+                    "noAccessButCouldEnroll", true);
+        }
+        throw new AccessForbiddenException(ENTITY_NAME, courseId);
     }
 
     /**
