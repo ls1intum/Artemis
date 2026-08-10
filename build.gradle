@@ -373,7 +373,7 @@ dependencies {
     implementation "ch.qos.logback:logback-classic"
     implementation "ch.qos.logback:logback-core"
 
-    implementation "org.jsoup:jsoup:1.22.2"
+    implementation "org.jsoup:jsoup:1.23.1"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
     implementation "commons-codec:commons-codec:1.22.0"
 

@@ -311,20 +311,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return studentParticipations;
     }
 
-    public Exercise participations(Set<StudentParticipation> participations) {
-        this.studentParticipations = participations;
-        return this;
-    }
-
     public Exercise addParticipation(StudentParticipation participation) {
         this.studentParticipations.add(participation);
         participation.setExercise(this);
         return this;
-    }
-
-    public void removeParticipation(StudentParticipation participation) {
-        this.studentParticipations.remove(participation);
-        participation.setExercise(null);
     }
 
     public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
@@ -400,7 +390,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnore
     public Course getCourseViaExerciseGroupOrCourseMember() {
         if (isExamExercise()) {
-            return this.getExerciseGroup().getExam().getCourse();
+            // Student-facing exam payloads mask the exam out (exerciseGroup.setExam(null)) before serialization, so the
+            // exam (and therefore its course) can be null here. Guard against the resulting NullPointerException by
+            // returning null instead of dereferencing a masked graph; callers that derive a course from an exam exercise
+            // on a masked graph must tolerate a null course (they cannot resolve one anyway).
+            var exam = this.getExerciseGroup().getExam();
+            return exam != null ? exam.getCourse() : null;
         }
         else {
             return this.getCourse();
@@ -730,11 +725,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return gradingCriteria;
     }
 
-    public void addGradingCriteria(GradingCriterion gradingCriterion) {
-        this.gradingCriteria.add(gradingCriterion);
-        gradingCriterion.setExercise(this);
-    }
-
     public void setGradingCriteria(Set<GradingCriterion> gradingCriteria) {
         reconnectCriteriaWithExercise(gradingCriteria);
     }
@@ -981,20 +971,5 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             setGradingCriteria(managedCriteria);
         }
         return managedCriteria;
-    }
-
-    /**
-     * Ensures that the exercise has a mutable set for competency links.
-     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
-     *
-     * @return the non-null mutable set of competency links
-     */
-    public Set<CompetencyExerciseLink> ensureCompetencyLinksSet() {
-        Set<CompetencyExerciseLink> managedLinks = getCompetencyLinks();
-        if (managedLinks == null) {
-            managedLinks = new HashSet<>();
-            setCompetencyLinks(managedLinks);
-        }
-        return managedLinks;
     }
 }
