@@ -273,7 +273,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     filter(() => this.isCurrentLoad(generation)),
                     tap({
                         next: async (submission?: ProgrammingSubmission) => {
-                            await this.onSubmissionReceived(submissionId, submission);
+                            await this.onSubmissionReceived(submissionId, submission, generation);
                         },
                         complete: () => {
                             if (this.isCurrentLoad(generation)) {
@@ -292,6 +292,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     }),
                     // The following is needed for highlighting changed code lines
                     switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise().id!, false, true)),
+                    // Re-check after every request: the filter above only judged the lock response, while a newer load can
+                    // start while these follow-ups are still in flight. Without this the older answer overwrites the state
+                    // of the newer assessment.
+                    filter(() => this.isCurrentLoad(generation)),
                     tap((response) => {
                         const programmingExercise = response.body!;
                         this.templateParticipation = programmingExercise.templateParticipation!;
@@ -309,6 +313,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         );
                         return observable;
                     }),
+                    filter(() => this.isCurrentLoad(generation)),
                     tap((templateFilesObj) => {
                         if (templateFilesObj) {
                             this.templateFileSession = templateFilesObj;
@@ -340,7 +345,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
-    private async onSubmissionReceived(submissionId: string, submission?: ProgrammingSubmission) {
+    private async onSubmissionReceived(submissionId: string, submission: ProgrammingSubmission | undefined, generation: number) {
         if (!submission) {
             // there are no unassessed submissions
             this.submission.set(submission);
@@ -349,7 +354,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         // validate feedback here already so that overrides are possible for assessment note changes
         // without touching the feedbacks
-        await this.handleReceivedSubmission(submission).then(() => this.validateFeedback());
+        await this.handleReceivedSubmission(submission, generation).then(() => this.validateFeedback());
+        if (!this.isCurrentLoad(generation)) {
+            // a newer load took over while the steps above were awaited, so this one must not rewrite the url any more
+            return;
+        }
         if (submissionId === 'new') {
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission()!.id}`);
@@ -373,7 +382,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, this.correctionRound());
     }
 
-    private async handleReceivedSubmission(submission: ProgrammingSubmission): Promise<void> {
+    private async handleReceivedSubmission(submission: ProgrammingSubmission, generation: number): Promise<void> {
         this.loadingInitialSubmission.set(false);
 
         // Set domain to correctly fetch data
@@ -407,7 +416,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
         if ((this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
-            await this.loadFeedbackSuggestions();
+            await this.loadFeedbackSuggestions(generation);
         }
     }
 
@@ -431,10 +440,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /**
      * Load the feedback suggestions for the current submission from Athena.
      */
-    private async loadFeedbackSuggestions(): Promise<void> {
+    private async loadFeedbackSuggestions(generation: number = this.loadGeneration): Promise<void> {
         this.loadingFeedbackSuggestions.set(true);
         try {
             const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), this.submission()!.id!))) ?? [];
+            if (!this.isCurrentLoad(generation)) {
+                // Athena answered for a submission that is no longer shown. Keeping the suggestions would attach them to
+                // the assessment that replaced it.
+                return;
+            }
             const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback()];
             this.feedbackSuggestions.set(
                 feedbackSuggestions.filter((suggestion) =>
@@ -442,7 +456,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 ),
             );
         } finally {
-            this.loadingFeedbackSuggestions.set(false);
+            if (this.isCurrentLoad(generation)) {
+                // an obsolete load must not clear the indicator of the one that superseded it
+                this.loadingFeedbackSuggestions.set(false);
+            }
         }
     }
 

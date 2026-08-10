@@ -517,6 +517,49 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.submission()?.id).toBe(501);
     });
 
+    it('should ignore a follow up request of a load that was superseded after its lock response', async () => {
+        // The lock response of the obsolete load already passed the generation check, so its follow-up requests were
+        // issued. If one of them answers after a newer load has taken over, it must not write the template of the
+        // superseded assessment over the current one.
+        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
+        const params$ = new BehaviorSubject<Params>({ submissionId: 123 });
+        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
+        activatedRoute.params = params$.asObservable();
+        activatedRoute.queryParamMap = queryParamMap$.asObservable();
+
+        const pendingTemplateByRound = new Map<number, Subject<HttpResponse<ProgrammingExercise>>>();
+        let currentRound = 0;
+        lockAndGetProgrammingSubmissionParticipationStub.mockImplementation((_submissionId: number, correctionRound = 0) => {
+            currentRound = correctionRound;
+            return of(deepClone(submission));
+        });
+        findWithParticipationsStub.mockImplementation(() => {
+            const pending = new Subject<HttpResponse<ProgrammingExercise>>();
+            pendingTemplateByRound.set(currentRound, pending);
+            return pending.asObservable();
+        });
+
+        comp.ngOnInit();
+        await firstValueFrom(scheduled([null], asapScheduler));
+        // the second round supersedes the first one, both are waiting for their template request
+        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+        await firstValueFrom(scheduled([null], asapScheduler));
+        expect([...pendingTemplateByRound.keys()]).toEqual([0, 1]);
+
+        const currentExercise = deepClone(exercise);
+        currentExercise.templateParticipation!.id = 777;
+        pendingTemplateByRound.get(1)!.next(new HttpResponse({ body: currentExercise }));
+        await firstValueFrom(scheduled([null], asapScheduler));
+
+        // the superseded load answers last
+        const supersededExercise = deepClone(exercise);
+        supersededExercise.templateParticipation!.id = 888;
+        pendingTemplateByRound.get(0)!.next(new HttpResponse({ body: supersededExercise }));
+        await firstValueFrom(scheduled([null], asapScheduler));
+
+        expect(comp.templateParticipation.id).toBe(777);
+    });
+
     it('should not show complaint when participation contains no complaint', async () => {
         findBySubmissionIdStub.mockReturnValue(of({ body: undefined }));
         comp.ngOnInit();
