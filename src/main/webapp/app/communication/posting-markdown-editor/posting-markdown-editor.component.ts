@@ -17,6 +17,7 @@ import monaco from 'monaco-editor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/communication/service/metis.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
@@ -65,6 +66,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     private fileService = inject(FileService);
     private courseManagementService = inject(CourseManagementService);
     private lectureService = inject(LectureService);
+    private exerciseService = inject(ExerciseService);
     private channelService = inject(ChannelService);
     viewContainerRef = inject(ViewContainerRef);
     private positionBuilder = inject(OverlayPositionBuilder);
@@ -121,7 +123,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new UrlAction(),
             new AttachmentAction(),
             ...messagingOnlyActions,
-            new ExerciseReferenceAction(this.metisService),
+            new ExerciseReferenceAction(this.metisService, this.exerciseService),
             new FaqReferenceAction(this.metisService),
         ]);
 
