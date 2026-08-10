@@ -833,6 +833,16 @@ class DifferentialVerificationServiceTest {
         assertThat(result.reasons()).anyMatch(r -> r.contains("does not pass its own tests"));
     }
 
+    /** The post-loop reason had the same defect as the in-loop observation: "0 failing of 2" reads as a contradiction and names nothing to repair. */
+    @Test
+    void shouldNameTheBuildRatherThanTheTestsWhenNoTestFailed() {
+        VerificationResult result = verify(result(2, 0, 0, 1), result(2, 2, 0, 1));
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.solutionPassed()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("did not succeed even though all 2 of its tests passed") && reason.contains("Build output:"))
+                .noneMatch(reason -> reason.contains("0 failing of 2"));
+    }
+
     @Test
     void shouldRejectWhenSolutionHasNoTests() {
         VerificationResult result = verify(result(0, 0, 0, 0), result(0, 0, 0, 1));
@@ -1463,6 +1473,22 @@ class DifferentialVerificationServiceTest {
             assertThat(report.solutionFailedNames()).contains("sortsArrayWithDuplicates");
             assertThat(report.wouldBeAccepted()).isFalse();
             assertThat(report.toObservation()).contains("Solution FAILS").contains("sortsArrayWithDuplicates").contains("must pass every test");
+        }
+
+        /**
+         * A build can fail with every test passing — a compile error in code no test reaches, a build-script fault, a crash after the run. The observation used to render
+         * "Solution FAILS:" followed by the empty list of failing tests and withhold the build output, which is only shown when no test ran at all. That left the agent told it
+         * had failed with nothing to repair against, and both live runs that hit it burned their whole loop.
+         */
+        @Test
+        void aSolutionThatPassesEveryTestButFailsItsBuildIsToldWhereToLook() {
+            List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+            AgentVerifyReport report = selfCheck(resultWithFails(1, all, List.of()), resultWithFails(1, all, all), PROBLEM_STATEMENT_WITH_TASK);
+
+            assertThat(report.solutionPassed()).isFalse();
+            assertThat(report.solutionFailedNames()).isEmpty();
+            assertThat(report.wouldBeAccepted()).isFalse();
+            assertThat(report.toObservation()).contains("all 2 tests passed but the build itself did not succeed", "outside the tests").doesNotContain("must pass every test");
         }
 
         @Test

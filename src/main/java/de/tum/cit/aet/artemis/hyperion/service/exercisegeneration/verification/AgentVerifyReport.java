@@ -112,6 +112,13 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             builder.append("Solution FAILS: it ran no tests (it did not compile, or no test was discovered) — fix it so it builds and runs the tests.\n");
             appendBuildDiagnostic(builder, "Solution", solutionBuildDiagnostic);
         }
+        else if (solutionFailedNames.isEmpty()) {
+            // The tests ran and none of them failed, yet the build did not succeed. Naming the failing tests here would name none of them, and the earlier wording ("Solution
+            // FAILS: <nothing>") left nothing to repair against, so the build output is the only actionable evidence and is shown here as well as in the ran-no-tests case.
+            builder.append("Solution FAILS: all ").append(solutionTests).append(" tests passed but the build itself did not succeed, so the failure is outside the tests — a "
+                    + "compile error in code the tests do not reach, a build-script or dependency fault, or a crash after the tests ran.\n");
+            appendBuildDiagnostic(builder, "Solution", solutionBuildDiagnostic);
+        }
         else {
             builder.append("Solution FAILS: ").append(renderNames(solutionFailedNames)).append(" — your reference solution must pass every test.\n");
         }

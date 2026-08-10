@@ -616,6 +616,13 @@ public class DifferentialVerificationService {
             reasons.add("No tests were detected when building against the solution. The exercise must contain at least one meaningful test, and the solution must compile so the "
                     + "tests can run.");
         }
+        else if (!solutionPassed && solution.failures() == 0) {
+            // Reporting "0 failing of N" here read as a contradiction and named no test to repair. The build broke for a reason the test reports do not carry, so say that and
+            // hand over the build output instead.
+            reasons.add("The solution build did not succeed even though all " + solution.tests() + " of its tests passed, so the failure is outside the tests — a compile error "
+                    + "in code the tests do not reach, a build-script or dependency fault, or a crash after the tests ran. Build output: "
+                    + (solution.buildDiagnostic().isBlank() ? "not captured." : solution.buildDiagnostic()));
+        }
         else if (!solutionPassed) {
             reasons.add(
                     "The solution does not pass its own tests (" + solution.failures() + " failing of " + solution.tests() + "). The solution must compile and pass every test.");
