@@ -65,8 +65,16 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private courseOverviewGuard = inject(CourseOverviewGuard);
     private courseTitleBarService = inject(CourseTitleBarService);
 
-    // Only shown when a page projects title-bar content (e.g. FAQ); sidebar tabs and plain pages render none.
-    protected readonly showCourseTitleBar = computed(() => !!(this.courseTitleBarService.actionsTemplate() || this.courseTitleBarService.titleTemplate()));
+    /**
+     * Every page that does not bring its own sidebar gets the shell title bar, so the student overview matches course
+     * management and administration — calendar, statistics, competencies, learning path and quiz training previously
+     * had no bar at all. The title comes from the route's `pageTitle`.
+     *
+     * The sidebar pages (exercises, lectures, exams, communication, tutorial groups) are excluded because their
+     * sidebar header already carries the page identity and the collapse control; a second bar above it would only
+     * repeat it. Those pages can still project content, which is what keeps the communication search bar working.
+     */
+    protected readonly showCourseTitleBar = computed(() => !this.hasSidebar() || !!(this.courseTitleBarService.actionsTemplate() || this.courseTitleBarService.titleTemplate()));
 
     private toggleSidebarEventSubscription?: Subscription;
     private teamAssignmentUpdateListener?: Subscription;
