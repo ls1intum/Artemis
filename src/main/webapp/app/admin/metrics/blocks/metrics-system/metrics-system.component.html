@@ -1,6 +1,7 @@
 <h4>System</h4>
 @if (!updating() && systemMetrics()) {
-    <div class="flex flex-col gap-2">
+    <!-- Row separators: this label/value block reads as a table, so it gets the same row rhythm as one. -->
+    <div class="flex flex-col divide-y divide-surface-200 dark:divide-surface-700 [&>*]:py-2">
         <div class="flex justify-between">
             <span>Uptime</span>
             <span>{{ convertMillisecondsToDuration(systemMetrics()['process.uptime']) }}</span>

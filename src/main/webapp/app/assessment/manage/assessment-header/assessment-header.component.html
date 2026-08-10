@@ -129,6 +129,7 @@
                     </button>
                     @if (!isTestRun()) {
                         <button
+                            id="cancel"
                             class="btn m-1 btn-danger"
                             (click)="onCancel.emit()"
                             [disabled]="!(exercise()?.isAtLeastInstructor || isAssessor()) || saveBusy() || submitBusy() || cancelBusy()"

@@ -110,10 +110,19 @@ export class ExamParticipationActions {
         await expect(exercise.locator(`#exercise-group-title-${exerciseID}`).getByText(exerciseTitle)).toBeVisible();
     }
 
-    async verifyTextExerciseOnFinalPage(exerciseID: number, textFixture: string): Promise<void> {
+    /**
+     * Verifies the submitted text of an exercise on the exam summary page.
+     *
+     * @param exerciseID the exercise whose submission is checked
+     * @param textFixture the fixture holding the expected submission text
+     * @param timeout optional override, in ms. Pass `RELOAD_RENDER_TIMEOUT` from `support/timeouts` for the first check after a
+     *                `page.reload()`, where the summary view has to re-bootstrap and lazy-load its chunks; omit it
+     *                otherwise so a genuine regression still fails on the default timeout.
+     */
+    async verifyTextExerciseOnFinalPage(exerciseID: number, textFixture: string, timeout?: number): Promise<void> {
         const exercise = getExercise(this.page, exerciseID);
         const submissionText = await Fixtures.get(textFixture);
-        await expect(exercise.locator('#text-editor')).toHaveValue(submissionText!);
+        await expect(exercise.locator('#text-editor')).toHaveValue(submissionText!, { timeout });
     }
 
     async verifyGradingKeyOnFinalPage(gradeName: string) {
