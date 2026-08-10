@@ -213,7 +213,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(host.unapplyInstruction).not.toHaveBeenCalled();
             expect(openDeleteDialogSpy).toHaveBeenCalledOnce();
             const dialogData: DeleteDialogData = openDeleteDialogSpy.mock.calls[0][0];
-            expect(dialogData.deleteQuestion).toBe('artemisApp.feedback.delete.question');
+            expect(dialogData.deleteQuestion).toBe('artemisApp.feedback.delete.allInstances');
 
             // Simulate the tutor confirming in the dialog.
             triggerDeleteDialogDelete(dialogData.delete, {});

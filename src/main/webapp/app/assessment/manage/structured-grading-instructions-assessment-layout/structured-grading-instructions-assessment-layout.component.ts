@@ -137,8 +137,8 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
             return;
         }
         this.deleteDialogService.openDeleteDialog({
-            deleteQuestion: 'artemisApp.feedback.delete.question',
-            translateValues: { text: '' },
+            deleteQuestion: 'artemisApp.feedback.delete.allInstances',
+            translateValues: {},
             actionType: ActionType.Delete,
             buttonType: ButtonType.ERROR,
             requireConfirmationOnlyForAdditionalChecks: false,
