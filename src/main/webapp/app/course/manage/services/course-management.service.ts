@@ -340,6 +340,11 @@ export class CourseManagementService implements OnDestroy {
             return;
         }
         const alreadyLoadedExercises = course.id !== undefined ? this.courseStorageService.getCourse(course.id)?.exercises : undefined;
+        // Deliberately a shallow copy rather than a deepClone. `course` was built from the overview projection moments
+        // ago and is referenced by nothing else, and everything it holds is either a scalar or an immutable dayjs, so
+        // there is no nested state to alias. The exercises are carried over by reference on purpose: live updates
+        // mutate those exercise objects in place and the sidebar renders the same objects, so copying them would
+        // detach the rendered cards from the updates.
         this.courseStorageService.updateCourse(alreadyLoadedExercises ? { ...course, exercises: alreadyLoadedExercises } : course);
     }
 
