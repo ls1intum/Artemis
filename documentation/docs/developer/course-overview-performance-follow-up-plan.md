@@ -372,41 +372,87 @@ whose exercise is unreleased or, for an online course, has not been launched by 
 
 ## Follow-up PR 11: retire the remaining web dependencies on `for-dashboard`
 
-**Priority:** High for one student path, low for the rest, but it is the precondition for ever removing the endpoint.
+**Priority:** High for two paths, trivial for the other two. It is the precondition for ever removing the endpoint.
 
 ### Problem
 
-The web app still calls the deprecated single-course `for-dashboard` from four places, so the deprecation cannot
-complete and the heaviest course payload is still on a student route:
+Exactly four production callers remain in `src/main/webapp`. None of them needs the payload it asks for.
 
-| Caller                                     | Route            | What it actually needs                             |
-| ------------------------------------------ | ---------------- | -------------------------------------------------- |
-| `course-exercise-group-detail.component`   | student overview | the course and its exercises for one exercise group |
-| `course-registration-detail.component`     | student          | only whether the request returns 403                |
-| `course-management-container.component`    | instructor       | the course plus scores for the management shell     |
-| `learning-path-instructor-page.component`  | instructor       | the course record                                   |
+| Caller | Route | What it reads | Replacement |
+| --- | --- | --- | --- |
+| `course-exercise-group-detail.component` | student, inside the course container | course (one field), the course exercises, achieved group points | `CourseOverviewExercisesService` + `CourseStorageService` |
+| `course-registration-detail.component` | student | nothing — the response is discarded, only the status code is used | `for-overview` |
+| `course-management-container.component` | instructor | the Course record | `courseManagementService.find` (already called in the same component) |
+| `learning-path-instructor-page.component` | instructor | the Course record | `courseManagementService.find` |
 
-The student exercise-group detail page is the notable one: it pays the full 32.6 KB entity payload to render one
-group. The registration probe is the cheapest to fix and the most obviously wrong — it uses the most expensive endpoint
-in the system as a boolean authorization check.
+### Exercise group detail
 
-### Design
+The student path, and the one that matters: it pays the full 32.6 KB entity payload to render one variant group. It
+needs three things.
 
-1. Replace the registration probe with a dedicated lightweight check, or reuse `available-tabs` / `for-overview`, whose
-   403 semantics are already identical.
-2. Point exercise-group detail at `for-overview` plus `exercises-for-overview`, which already carry every field it
-   reads; prefer reusing `CourseOverviewExercisesService` when the route is inside the course container.
-3. Decide separately for the two instructor pages whether they need a management-specific projection or can use
-   `for-overview`. Instructor traffic is low, so a plain contract is worth more than a tuned one here.
-4. Once no web caller remains, record the native-client migration as the only remaining blocker for removal and give
-   the endpoint a removal target.
+1. `course`, used for exactly one field. It is passed to `ExerciseHeadersInformationComponent`, whose only read is
+   `resolvedCourse().maxComplaintTimeDays` for the complaint due date. The container has already loaded the course via
+   `for-overview`, so `CourseStorageService.getCourse(courseId)` covers it with no request.
+2. `courseExercises`, from which `buildGroupsFromExercises` rebuilds the group. It reads only
+   `exercise.exerciseVariantGroup`, and the cards then read id, title, type, difficulty, categories, maxPoints,
+   `includedInOverallScore`, the four dates, and one participation with one submission and one result.
+   `ExerciseOverviewDTO` carries all of it. Problem statements are already fetched separately through
+   `exerciseVariantGroupService.getProblemStatements`, because `for-dashboard` strips them too.
+3. `achievedGroupPoints`, read from `ScoresStorageService`, which is populated from `achievedPointsPerVariantGroup` —
+   returned by `exercises-for-overview`.
+
+So the replacement is `CourseOverviewExercisesService.loadIfNeeded(courseId)` plus the stored course. The route
+`exercises/group/:groupId` is a child of the exercises tab inside the course container, so the normal path (exercises
+tab, then a group card) already has the response: **zero requests**. A deep link costs one `exercises-for-overview`.
+
+One real contract gap must be closed first: `ResultOverviewDTO` has no `codeIssueCount`, which
+`getStaticCodeAnalysisItem` displays for programming exercises with static code analysis enabled. `for-dashboard`
+returns it today, so switching without it would silently render 0 issues. Add the column to the DTO and its
+projection; it is one more scalar on a row already being selected, not another query.
+
+Everything else the header reads is equivalent, and this is worth stating because it looks like a loss and is not:
+`numberOfSubmissions` and the Athena feedback-request count walk the participation's full submission and result
+history, but `filterParticipationForCourseDashboard` already reduces every participation to a single submission with a
+single result. Both paths therefore see at most one of each. That behaviour is unchanged by this migration; if it is
+wrong, it is wrong today and belongs in its own fix.
+
+### Registration detail
+
+`isCourseFullyAccessible` calls the heaviest endpoint in the system, maps the response to `true`, discards it, and
+redirects to `/courses/{id}` — which then loads the course again. It only needs the status code.
+
+Use `for-overview`. It was written to mirror `for-dashboard`'s authorization exactly, including the
+`noAccessButCouldEnroll` `AccessForbiddenAlertException` with `skipAlert`, so the enrollment page stays silent for a
+user who is not enrolled. That fidelity is the reason not to reach for a smaller endpoint:
+
+- `courses/{courseId}/title` is one query, but it carries only `@EnforceAtLeastStudent` and no course-membership
+  check, so it answers for any logged-in user. It is not an enrollment probe.
+- `available-tabs` does check membership, but throws a plain `AccessForbiddenException`. Without `skipAlert` the
+  global `ErrorHandlerInterceptor` would raise a toast on the enrollment page, and adding `skipAlert` there would
+  silence the alert for every other consumer, including the route guard.
+
+`for-overview` is roughly 700 bytes and three statements against 32.6 KB, and its response is the same one the course
+container needs immediately after the redirect.
+
+### Instructor pages
+
+Both only assign `this.course`. `course-management-container` is the clearer case: it already calls
+`courseManagementService.find(courseId)` in `subscribeToCourseUpdates` for the same course, so its `loadCourse()` is a
+redundant second request for data it is about to receive anyway. Instructor traffic is low; prefer the plain contract
+over a tuned one.
 
 ### Acceptance criteria
 
-- No `findOneForDashboard` call remains in `src/main/webapp`.
-- The student exercise-group detail page hydrates no Course, Participation, Submission, or Result entity graph.
-- Enrollment redirect behavior, the 403 path, and instructor management screens are unchanged in tests.
-- The endpoint itself is untouched and stays green for native clients.
+- No `findOneForDashboard` call remains in `src/main/webapp`; the stale mock in `metis-conversation.service.spec.ts`
+  goes with it.
+- `ResultOverviewDTO` carries `codeIssueCount`, asserted by the payload contract test.
+- The student exercise-group detail page hydrates no Course, Participation, Submission, or Result entity graph, and
+  costs zero additional requests when reached from the exercises tab.
+- The enrollment page still shows no error toast for a user who is not enrolled but may self-enroll, and still
+  redirects when the user is enrolled.
+- Instructor management screens are unchanged.
+- The endpoint itself is untouched and stays green for native clients. Once no web caller remains, record the native
+  clients as the only remaining blocker for removal and give the endpoint a removal target.
 
 ## Follow-up PR 12: consolidate the two course score calculations
 
