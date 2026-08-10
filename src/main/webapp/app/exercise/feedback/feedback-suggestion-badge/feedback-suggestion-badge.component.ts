@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     },
 })
 export class FeedbackSuggestionBadgeComponent {
-    readonly feedback = input<Feedback>(undefined!);
+    readonly feedbackText = input<string | undefined>(undefined);
 
     readonly variant = input<'overlay' | 'footer'>('overlay');
 
@@ -28,10 +28,12 @@ export class FeedbackSuggestionBadgeComponent {
     }
 
     get text(): string {
-        switch (Feedback.getFeedbackSuggestionType(this.feedback())) {
+        switch (Feedback.getFeedbackSuggestionType(this.feedbackText())) {
             case FeedbackSuggestionType.SUGGESTED:
             case FeedbackSuggestionType.ACCEPTED:
                 return 'artemisApp.assessment.suggestion.suggested';
+            case FeedbackSuggestionType.ADAPTED:
+                return 'artemisApp.assessment.suggestion.adapted';
             default:
                 return '';
         }

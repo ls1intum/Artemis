@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { Feedback, FeedbackSuggestionType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackSuggestionType } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { MockDirective } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -20,9 +20,7 @@ describe('FeedbackSuggestionBadgeComponent', () => {
 
         fixture = TestBed.createComponent(FeedbackSuggestionBadgeComponent);
         component = fixture.componentInstance;
-        const feedback = new Feedback();
-        feedback.text = 'Test Feedback';
-        fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('feedbackText', 'Test Feedback');
         fixture.detectChanges();
     });
 
@@ -31,21 +29,24 @@ describe('FeedbackSuggestionBadgeComponent', () => {
     });
 
     it('should have the correct text for a SUGGESTED feedback', () => {
-        fixture.componentRef.setInput('feedback', new Feedback());
         vi.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.SUGGESTED);
 
         expect(component.text).toBe('artemisApp.assessment.suggestion.suggested');
     });
 
     it('should have the correct text for an ACCEPTED feedback', () => {
-        fixture.componentRef.setInput('feedback', new Feedback());
         vi.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.ACCEPTED);
 
         expect(component.text).toBe('artemisApp.assessment.suggestion.suggested');
     });
 
+    it('should have the correct text for an ADAPTED feedback', () => {
+        vi.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.ADAPTED);
+
+        expect(component.text).toBe('artemisApp.assessment.suggestion.adapted');
+    });
+
     it('should have empty text for undefined feedback type', () => {
-        fixture.componentRef.setInput('feedback', new Feedback());
         vi.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(undefined as any as FeedbackSuggestionType);
 
         expect(component.text).toBe('');
@@ -63,5 +64,15 @@ describe('FeedbackSuggestionBadgeComponent', () => {
 
         expect(component.icon).toBe(faWandMagicSparkles);
         expect((fixture.nativeElement as HTMLElement).classList.contains('suggestion-badge-host--footer')).toBe(true);
+    });
+
+    it('re-derives its displayed suggestion state within the same test when feedbackText changes value, without remounting (regression test: the badge must react to the primitive value, not to Feedback object identity)', () => {
+        fixture.componentRef.setInput('feedbackText', `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`);
+        fixture.detectChanges();
+        expect(component.text).toBe('artemisApp.assessment.suggestion.suggested');
+
+        fixture.componentRef.setInput('feedbackText', `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+        fixture.detectChanges();
+        expect(component.text).toBe('artemisApp.assessment.suggestion.adapted');
     });
 });
