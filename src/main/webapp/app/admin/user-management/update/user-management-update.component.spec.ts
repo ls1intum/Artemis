@@ -314,6 +314,32 @@ describe('UserManagementUpdateComponent', () => {
             expect(component.editForm.get('password')?.value).toBe('');
         });
 
+        it('should keep the form saveable after toggling back to keeping the existing password', () => {
+            // Second regression guard, found by exercising this in the browser. The password input lives inside
+            // `@if (!useRandomPassword())`, so toggling back destroys the RequiredValidator directive while its
+            // required rule stays composed on the control. Clearing the value then left the control invalid, the
+            // whole form invalid, and the Save button permanently disabled — so the fix above would have traded a
+            // silent password change for an admin who cannot save at all.
+            const existingUser = new User(123);
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            const passwordControl = component.editForm.get('password')!;
+
+            component.shouldRandomizePassword(false);
+            expect(passwordControl.errors).toEqual({ required: true });
+
+            component.editForm.patchValue({ password: 'typed-Password-123' });
+            expect(passwordControl.valid).toBe(true);
+
+            component.shouldRandomizePassword(true);
+
+            expect(passwordControl.value).toBe('');
+            expect(passwordControl.errors).toBeNull();
+            expect(passwordControl.valid).toBe(true);
+        });
+
         it('should never request credential revocation without a replacement password', async () => {
             const existingUser = new User(123);
             const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: existingUser })));

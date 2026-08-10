@@ -220,11 +220,20 @@ export class UserManagementUpdateComponent implements OnInit {
     shouldRandomizePassword(useRandomPassword: boolean) {
         this.useRandomPassword.set(useRandomPassword);
         this.user().password = useRandomPassword ? undefined : '';
-        // Clear the reactive control too, not just the model: save() submits editForm.getRawValue(), so a
-        // password typed before toggling back to "keep password" would otherwise still be sent — silently
-        // changing the password while revokeCredentials is reset to false, i.e. a real credential change
-        // that leaves the user's other credentials intact.
-        this.editForm?.get('password')?.reset('');
+        const passwordControl = this.editForm?.get('password');
+        if (passwordControl) {
+            // Own the password validators here rather than through a template `[required]` binding. The input
+            // lives inside `@if (!useRandomPassword())`, so toggling back to "keep password" destroys the
+            // RequiredValidator directive while its required rule stays composed on the control. Clearing the
+            // value below would then leave the form permanently invalid and the Save button disabled.
+            const lengthRules = [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)];
+            passwordControl.setValidators(useRandomPassword ? lengthRules : [Validators.required, ...lengthRules]);
+            // Clear the control too, not just the model: save() submits editForm.getRawValue(), so a password
+            // typed before toggling back would otherwise still be sent — silently changing the password while
+            // revokeCredentials is reset to false, i.e. a real credential change that leaves the user's other
+            // credentials intact. reset() re-runs the validators set above.
+            passwordControl.reset('');
+        }
         if (useRandomPassword) {
             this.revokeCredentials.set(false);
         }

@@ -101,7 +101,6 @@
                                 [minLength]="PASSWORD_MIN_LENGTH"
                                 [maxLength]="PASSWORD_MAX_LENGTH"
                                 formControlName="password"
-                                [required]="!useRandomPassword()"
                             />
                             @if (editForm.get('password')!.dirty && editForm.get('password')!.invalid) {
                                 <div>
