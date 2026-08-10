@@ -102,6 +102,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /** Route parameters of the currently shown submission, so a round change can re-request the same submission. */
     private lastRouteParams?: Params;
 
+    /** Whether a round-only reload is queued, so a path change in the same navigation can cancel it. */
+    private roundReloadPending = false;
+
     /** Identity of the last request actually issued, making {@link loadSubmissionForRoute} idempotent. */
     private lastLoadedRequestKey?: string;
     // Template-read state written in async callbacks (route params subscription + HTTP loads) must be
@@ -205,11 +208,25 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             // otherwise leave the locked participation on the previous round while this page indexes results and tags
             // feedback with the new one. Only once a submission is on screen: before that the path subscription below
             // performs the initial load.
+            // Defer, so a navigation that also changes the path can cancel this: the router emits the query and
+            // the path separately for one navigation, and these load paths lock a submission server-side, so the
+            // intermediate state (previous path, new round) must never reach the server. One navigation, one
+            // request, for the final combination of path and round.
             if (this.lastRouteParams?.['submissionId']) {
-                this.loadSubmissionForRoute(this.lastRouteParams);
+                this.roundReloadPending = true;
+                void Promise.resolve().then(() => {
+                    if (this.roundReloadPending && this.lastRouteParams) {
+                        this.roundReloadPending = false;
+                        this.loadSubmissionForRoute(this.lastRouteParams);
+                    }
+                });
             }
         });
-        this.paramSub = this.route.params.subscribe((params) => this.loadSubmissionForRoute(params));
+        this.paramSub = this.route.params.subscribe((params) => {
+            // This navigation changed the path too, so the deferred round reload above is redundant.
+            this.roundReloadPending = false;
+            this.loadSubmissionForRoute(params);
+        });
     }
 
     /**

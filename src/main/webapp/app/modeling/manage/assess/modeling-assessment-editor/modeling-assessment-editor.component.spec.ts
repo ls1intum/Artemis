@@ -231,11 +231,30 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             // Only the query changes; the path parameters stay exactly as they were.
             queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
+            // The reload is deferred by a microtask so a path change in the same navigation could cancel it.
+            await Promise.resolve();
             await fixture.whenStable();
 
             expect(component.correctionRound()).toBe(1);
             expect(getSubmissionSpy).toHaveBeenLastCalledWith(2, 1, 0);
             expect(getSubmissionSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should request the submission once when the path and the round change together', async () => {
+            // The router emits the query and the path separately for one navigation, and this load path locks the
+            // submission server-side, so the intermediate state (previous submission, new round) must never reach the
+            // server: exactly one request, for the final combination.
+            const getSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+            getSubmissionSpy.mockClear();
+
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
+            paramMapSubject.next(convertToParamMap({ submissionId: '3', courseId: '1', exerciseId: '1' }));
+            await Promise.resolve();
+            await fixture.whenStable();
+
+            expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(3, 1, 0);
         });
 
         it('should open the first round for a url without the parameter even on a reused component', async () => {

@@ -439,7 +439,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(123, expectedRound);
     });
 
-    it('should re-lock the submission when only the round changes in the url', () => {
+    it('should re-lock the submission when only the round changes in the url', async () => {
         // Angular does not re-emit unchanged path parameters, so a query-only navigation used to update the round
         // signal without re-requesting anything: this page then locked round 0 while indexing results and tagging
         // feedback for round 1. The route mock uses one-shot observables, so a writable view swaps in subjects for
@@ -455,10 +455,30 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         // Only the query changes; the path parameters stay exactly as they were.
         queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+        // The reload is deferred by a microtask so a path change in the same navigation could cancel it.
+        await Promise.resolve();
 
         expect(comp.correctionRound()).toBe(1);
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenLastCalledWith(123, 1);
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledTimes(2);
+    });
+
+    it('should lock the submission once when the path and the round change together', async () => {
+        // The router emits the query and the path separately for one navigation, and locking is a server-side side
+        // effect, so the intermediate state (previous submission, new round) must never reach the server.
+        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
+        const params$ = new BehaviorSubject<Params>({ submissionId: 123 });
+        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
+        activatedRoute.params = params$.asObservable();
+        activatedRoute.queryParamMap = queryParamMap$.asObservable();
+        comp.ngOnInit();
+        lockAndGetProgrammingSubmissionParticipationStub.mockClear();
+
+        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+        params$.next({ submissionId: 456 });
+        await Promise.resolve();
+
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(456, 1);
     });
 
     it('should not show complaint when participation contains no complaint', async () => {

@@ -101,6 +101,9 @@ export class FileUploadAssessmentComponent implements OnInit {
     /** Route parameters of the currently shown submission, so a round change can re-request the same submission. */
     private lastRouteParams?: Params;
 
+    /** Whether a round-only reload is queued, so a path change in the same navigation can cancel it. */
+    private roundReloadPending = false;
+
     /** Identity of the last request actually issued, making {@link loadSubmissionForRoute} idempotent. */
     private lastLoadedRequestKey?: string;
     resultId!: number; // set in ngOnInit() from route params
@@ -142,6 +145,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         // against each other, not to suppress a genuine re-init.
         this.lastLoadedRequestKey = undefined;
         this.lastRouteParams = undefined;
+        this.roundReloadPending = false;
 
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
@@ -154,12 +158,26 @@ export class FileUploadAssessmentComponent implements OnInit {
             // feedback with the new one. Re-request with the same parsed value the rest of the page now uses.
             // Only once a submission is actually on screen: before that there is nothing to re-request, and the path
             // subscription below is what performs the initial load.
+            // Defer, so a navigation that also changes the path can cancel this: the router emits the query and
+            // the path separately for one navigation, and these load paths lock a submission server-side, so the
+            // intermediate state (previous path, new round) must never reach the server. One navigation, one
+            // request, for the final combination of path and round.
             if (this.lastRouteParams?.['submissionId']) {
-                this.loadSubmissionForRoute(this.lastRouteParams);
+                this.roundReloadPending = true;
+                void Promise.resolve().then(() => {
+                    if (this.roundReloadPending && this.lastRouteParams) {
+                        this.roundReloadPending = false;
+                        this.loadSubmissionForRoute(this.lastRouteParams);
+                    }
+                });
             }
         });
 
-        this.route.params.subscribe((params) => this.loadSubmissionForRoute(params));
+        this.route.params.subscribe((params) => {
+            // This navigation changed the path too, so the deferred round reload above is redundant.
+            this.roundReloadPending = false;
+            this.loadSubmissionForRoute(params);
+        });
     }
 
     /**
