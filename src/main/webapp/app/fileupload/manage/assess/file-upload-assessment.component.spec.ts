@@ -356,6 +356,68 @@ describe('FileUploadAssessmentComponent', () => {
             expect(component.submission()?.id).toBe(501);
         });
 
+        it('should ignore a round error that arrives after a newer response', async () => {
+            // Same race on the failure path: a superseded request that fails must not report its error or clear the
+            // loading state of the request that replaced it.
+            const pendingByRound = new Map<number, Subject<HttpResponse<FileUploadSubmission>>>();
+            vi.spyOn(fileUploadSubmissionService, 'get').mockImplementation((_submissionId, correctionRound = 0) => {
+                const pending = new Subject<HttpResponse<FileUploadSubmission>>();
+                pendingByRound.set(correctionRound, pending);
+                return pending.asObservable();
+            });
+            const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+            component.ngOnInit();
+
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+            await Promise.resolve();
+
+            pendingByRound.get(0)!.error(new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } }));
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(component.loadingInitialSubmission()).toBe(true);
+        });
+
+        it('should ignore an optimal submission that arrives after a newer round was requested', async () => {
+            // The "new" route resolves to whichever submission the server hands out, so a superseded request answering
+            // late would install a submission the url no longer asks for — and its own error path must stay silent too.
+            const pendingByRound = new Map<number, Subject<FileUploadSubmission | undefined>>();
+            vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockImplementation((_exerciseId, _lock, correctionRound = 0) => {
+                const pending = new Subject<FileUploadSubmission | undefined>();
+                pendingByRound.set(correctionRound, pending);
+                return pending.asObservable();
+            });
+            const alertSpy = vi.spyOn(alertService, 'info');
+            const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 'new' });
+            component.ngOnInit();
+
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+            await Promise.resolve();
+            expect([...pendingByRound.keys()]).toEqual([0, 1]);
+
+            // Neither an answer nor a failure of the obsolete request may reach the page.
+            pendingByRound.get(0)!.next(undefined);
+            pendingByRound.get(0)!.error(new HttpErrorResponse({ status: 403 }));
+
+            expect(alertSpy).not.toHaveBeenCalled();
+            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(component.loadingInitialSubmission()).toBe(true);
+        });
+
+        it('should not request the submission again for a repeated identical route emission', () => {
+            // Both route subscriptions feed the same load, so it has to be idempotent: an emission that changes nothing
+            // must not lock the submission a second time server-side.
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            component.ngOnInit();
+            expect(getSpy).toHaveBeenCalledExactlyOnceWith(7, 0, 0);
+
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 7 });
+
+            expect(getSpy).toHaveBeenCalledOnce();
+        });
+
         it('should extract route params for course and exercise', () => {
             const submission = createSubmission();
             vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
