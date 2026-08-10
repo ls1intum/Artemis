@@ -138,6 +138,10 @@ describe('CompetencySelection', () => {
         component.writeValue([new CompetencyLearningObjectLink({ id: 1, title: 'other' } as Competency, 1)]);
         expect(component.selectedCompetencyLinks).toHaveLength(1);
         expect(component.selectedCompetencyLinks?.first()?.competency?.title).toBe('test');
+        expect(component.checkboxStates()[1]).toBeTruthy();
+
+        component.writeValue(undefined);
+        expect(component.checkboxStates()[1]).toBeFalsy();
     });
 
     it('should update link weight when value is written', () => {
