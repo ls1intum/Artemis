@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SidebarEventService } from '../service/sidebar-event.service';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -26,7 +26,20 @@ export class SidebarCardMediumComponent {
     /** Key used for grouping or categorizing sidebar items */
     readonly groupKey = input<string>();
 
+    /**
+     * True when this card heads a connected variant group. The card styles itself (see `.group-header` in the SCSS) so
+     * the accordion need not reach into its markup.
+     */
+    protected readonly isConnectedGroupHeader = computed<boolean>(() => {
+        const item = this.sidebarItem();
+        return !!item.groupedItems?.length && !!item.groupConnected;
+    });
+
     onNonExamCardClicked() {
+        if (this.sidebarItem().groupedItems?.length) {
+            this.storeTargetComponentSubRoute();
+            return;
+        }
         this.storeTargetComponentSubRoute();
         if (this.itemSelected()) {
             this.refreshChildComponent();

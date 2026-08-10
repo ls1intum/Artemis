@@ -13,7 +13,14 @@
             [class.hidden]="!(currentSize() > MAX_SPAN_SIZE && currentPeriod() > 0)"
         />
         <div class="col-lg-8 ps-0 chart-container" style="height: 300px">
-            <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" (onDataSelect)="onSelect($event)" />
+            <p-chart
+                type="bar"
+                [data]="chartData()"
+                [options]="chartOptions()"
+                [plugins]="dataLabelsPlugin"
+                (onDataSelect)="onSelect($event)"
+                [ariaLabel]="'artemisApp.course.averageScore' | artemisTranslate"
+            />
         </div>
         <fa-icon
             [icon]="faArrowRight"
