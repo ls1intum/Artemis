@@ -2,194 +2,150 @@
 <!--- Template If Grading Instructions are not used in Assessment --->
 @if (!currentExercise.gradingInstructionFeedbackUsed) {
     <div class="edit-sqi">
-        <div class="grading-instructions-mode" role="group" [attr.aria-label]="'artemisApp.exercise.assessmentInstructions' | artemisTranslate">
-            <button
-                id="edit-mode"
-                type="button"
-                tumUiButton
-                severity="secondary"
-                [variant]="showEditMode() ? 'solid' : 'text'"
-                [attr.aria-pressed]="showEditMode()"
-                (click)="switchMode()"
-            >
+        <div class="col-12 col-sm-auto d-flex me-1 mb-1">
+            <button id="edit-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': showEditMode(), 'btn-default': !showEditMode() }">
                 <span jhiTranslate="entity.action.edit"></span>
             </button>
-            <button
-                id="edit-text-mode"
-                type="button"
-                tumUiButton
-                severity="secondary"
-                [variant]="showEditMode() ? 'text' : 'solid'"
-                [attr.aria-pressed]="!showEditMode()"
-                (click)="switchMode()"
-            >
+            <button id="edit-text-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': !showEditMode(), 'btn-default': showEditMode() }">
                 <span jhiTranslate="artemisApp.exercise.editText"></span>
             </button>
         </div>
         <div class="grading-instructions-update-border">
             <!--- Edit Mode --->
             @if (showEditMode()) {
-                <div class="grading-criteria">
-                    @for (criterion of currentExercise.gradingCriteria; track criterion; let criterionIndex = $index) {
-                        <tum-ui-card class="grading-criterion-card">
-                            <div class="grading-criterion-card__header">
-                                <div class="grading-field grading-criterion-card__title">
-                                    <label class="grading-field__label" jhiTranslate="artemisApp.exercise.assessmentCriterion" [for]="'criterion-title-' + criterionIndex"></label>
-                                    <input
-                                        tumUiInput
-                                        type="text"
-                                        [id]="'criterion-title-' + criterionIndex"
-                                        [name]="'criterionTitle-' + criterionIndex"
-                                        [(ngModel)]="criterion.title!"
-                                        (change)="onCriterionTitleChange($event, criterion)"
-                                        placeholder="Criterion Title"
-                                    />
+                <div>
+                    @for (criterion of currentExercise.gradingCriteria; track criterion) {
+                        <div>
+                            <div class="row border p-2 criterion-title-row">
+                                <div class="col-md-9 text-start">
+                                    <div class="form-inline">
+                                        <label class="form-control-label col-sm-2" jhiTranslate="artemisApp.exercise.assessmentCriterion" for="criterionTitle"
+                                            >Assessment Criterion</label
+                                        >
+                                        <input
+                                            class="form-control col-sm-6"
+                                            type="text"
+                                            id="criterionTitle"
+                                            name="criterionTitle"
+                                            [(ngModel)]="criterion.title!"
+                                            (change)="onCriterionTitleChange($event, criterion)"
+                                            placeholder="Criterion Title"
+                                        />
+                                    </div>
                                 </div>
-                                <button
-                                    type="button"
-                                    tumUiButton
-                                    severity="danger"
-                                    variant="outlined"
-                                    class="grading-criterion-card__delete"
-                                    (click)="deleteGradingCriterion(criterion)"
-                                >
-                                    <fa-icon [icon]="faTrash" />
-                                    <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
-                                </button>
+                                <div class="col-md-3 text-end">
+                                    <div class="col-md-auto input-group-btn d-flex-end">
+                                        <span class="btn btn-md btn-danger" (click)="deleteGradingCriterion(criterion)">
+                                            <fa-icon [icon]="faTrash" />
+                                            <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-
-                            <div class="grading-instruction-list">
-                                @for (instruction of criterion.structuredGradingInstructions; track instruction; let instructionIndex = $index) {
-                                    <article class="grading-instruction-card">
-                                        <div class="grading-instruction-card__top">
-                                            <div class="grading-field grading-field--credits">
-                                                <div class="grading-field__label-row">
-                                                    <label
-                                                        class="grading-field__label"
-                                                        jhiTranslate="artemisApp.exercise.credits"
-                                                        [for]="'instruction-credits-' + criterionIndex + '-' + instructionIndex"
-                                                    ></label>
-                                                    <jhi-help-icon text="artemisApp.exercise.creditsHint" />
-                                                </div>
-                                                <input
-                                                    tumUiInput
-                                                    [(ngModel)]="instruction.credits"
-                                                    type="number"
-                                                    step="0.5"
-                                                    [id]="'instruction-credits-' + criterionIndex + '-' + instructionIndex"
-                                                    (change)="updateGradingInstruction(instruction, criterion)"
-                                                />
-                                            </div>
-                                            <button
-                                                id="delete-instruction-row"
-                                                type="button"
-                                                tumUiButton
-                                                severity="secondary"
-                                                variant="outlined"
-                                                size="small"
-                                                class="grading-instruction-card__delete"
-                                                [attr.aria-label]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
-                                                [tumUiTooltip]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
-                                                (click)="deleteInstruction(instruction, criterion)"
-                                            >
-                                                <fa-icon [icon]="faTrash" />
-                                            </button>
-                                        </div>
-
-                                        <div class="grading-instruction-card__fields">
-                                            <div class="grading-field grading-field--scale">
-                                                <div class="grading-field__label-row">
-                                                    <label
-                                                        class="grading-field__label"
-                                                        jhiTranslate="artemisApp.exercise.gradingScale"
-                                                        [for]="'instruction-scale-' + criterionIndex + '-' + instructionIndex"
-                                                    ></label>
-                                                    <jhi-help-icon text="artemisApp.exercise.gradingScaleHint" />
-                                                </div>
-                                                <input
-                                                    tumUiInput
-                                                    [(ngModel)]="instruction.gradingScale"
-                                                    type="text"
-                                                    [id]="'instruction-scale-' + criterionIndex + '-' + instructionIndex"
-                                                    (change)="updateGradingInstruction(instruction, criterion)"
-                                                />
-                                            </div>
-                                            <div class="grading-field grading-field--description">
-                                                <div class="grading-field__label-row">
-                                                    <label
-                                                        class="grading-field__label"
-                                                        jhiTranslate="artemisApp.exercise.instructionDescription"
-                                                        [for]="'instruction-description-' + criterionIndex + '-' + instructionIndex"
-                                                    ></label>
-                                                    <jhi-help-icon text="artemisApp.exercise.descriptionHint" />
-                                                </div>
-                                                <textarea
-                                                    tumUiTextarea
-                                                    [(ngModel)]="instruction.instructionDescription"
-                                                    [id]="'instruction-description-' + criterionIndex + '-' + instructionIndex"
-                                                    rows="3"
-                                                    (change)="updateGradingInstruction(instruction, criterion)"
-                                                ></textarea>
-                                            </div>
-                                            <div class="grading-field grading-field--feedback">
-                                                <div class="grading-field__label-row">
-                                                    <label
-                                                        class="grading-field__label"
-                                                        jhiTranslate="artemisApp.exercise.feedback"
-                                                        [for]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex"
-                                                    ></label>
-                                                    <jhi-help-icon text="artemisApp.exercise.feedbackHint" />
-                                                </div>
-                                                <textarea
-                                                    tumUiTextarea
-                                                    [(ngModel)]="instruction.feedback"
-                                                    [id]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex"
-                                                    rows="3"
-                                                    (change)="updateGradingInstruction(instruction, criterion)"
-                                                ></textarea>
-                                            </div>
-                                            <div class="grading-field grading-field--limit">
-                                                <div class="grading-field__label-row">
-                                                    <label
-                                                        class="grading-field__label"
-                                                        jhiTranslate="artemisApp.exercise.limit"
-                                                        [for]="'instruction-limit-' + criterionIndex + '-' + instructionIndex"
-                                                    ></label>
-                                                    <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
-                                                </div>
-                                                <input
-                                                    tumUiInput
-                                                    [(ngModel)]="instruction.usageCount"
-                                                    type="number"
-                                                    step="1"
-                                                    min="0"
-                                                    [id]="'instruction-limit-' + criterionIndex + '-' + instructionIndex"
-                                                    (change)="updateGradingInstruction(instruction, criterion)"
-                                                />
-                                            </div>
-                                        </div>
-                                    </article>
-                                }
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th width="10%">
+                                                <span jhiTranslate="artemisApp.exercise.credits"></span>
+                                                <jhi-help-icon text="artemisApp.exercise.creditsHint" class="me-1" />
+                                            </th>
+                                            <th width="10%">
+                                                <span jhiTranslate="artemisApp.exercise.gradingScale"></span>
+                                                <jhi-help-icon text="artemisApp.exercise.gradingScaleHint" class="me-1" />
+                                            </th>
+                                            <th width="30%">
+                                                <span jhiTranslate="artemisApp.exercise.instructionDescription"></span>
+                                                <jhi-help-icon text="artemisApp.exercise.descriptionHint" class="me-1" />
+                                            </th>
+                                            <th width="30%">
+                                                <span jhiTranslate="artemisApp.exercise.feedback"></span>
+                                                <jhi-help-icon text="artemisApp.exercise.feedbackHint" class="me-1" />
+                                            </th>
+                                            <th width="10%">
+                                                <span jhiTranslate="artemisApp.exercise.limit"></span>
+                                                <jhi-help-icon text="artemisApp.exercise.usageCountHint" class="me-1" />
+                                            </th>
+                                            <th width="5%">
+                                                <span jhiTranslate="artemisApp.exercise.action"></span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (instruction of criterion.structuredGradingInstructions; track instruction; let i = $index) {
+                                            <tr class="grading-scale-table-row">
+                                                <td>
+                                                    <input
+                                                        class="form-control input-lg"
+                                                        [(ngModel)]="instruction.credits"
+                                                        type="number"
+                                                        step="0.5"
+                                                        (change)="updateGradingInstruction(instruction, criterion)"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        class="form-control input-lg"
+                                                        [(ngModel)]="instruction.gradingScale"
+                                                        type="text"
+                                                        (change)="updateGradingInstruction(instruction, criterion)"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <textarea
+                                                        class="form-control input-lg"
+                                                        [(ngModel)]="instruction.instructionDescription"
+                                                        type="text"
+                                                        rows="2"
+                                                        (change)="updateGradingInstruction(instruction, criterion)"
+                                                    ></textarea>
+                                                </td>
+                                                <td>
+                                                    <textarea
+                                                        class="form-control input-lg"
+                                                        [(ngModel)]="instruction.feedback"
+                                                        type="text"
+                                                        rows="2"
+                                                        (change)="updateGradingInstruction(instruction, criterion)"
+                                                    ></textarea>
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        class="form-control input-lg"
+                                                        [(ngModel)]="instruction.usageCount"
+                                                        type="number"
+                                                        step="1"
+                                                        min="0"
+                                                        (change)="updateGradingInstruction(instruction, criterion)"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <span class="instruction-delete-button col-2" id="delete-instruction-row" (click)="deleteInstruction(instruction, criterion)">
+                                                        <fa-icon
+                                                            [icon]="faTrash"
+                                                            size="2x"
+                                                            ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}"
+                                                        />
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
                             </div>
-
-                            <button
-                                id="add-instruction-button"
-                                type="button"
-                                tumUiButton
-                                severity="secondary"
-                                variant="text"
-                                class="grading-criterion-card__add-instruction"
-                                (click)="addNewInstruction(criterion)"
-                            >
-                                <fa-icon [icon]="faPlus" />
-                                <span jhiTranslate="artemisApp.exercise.addAssessmentInstruction"></span>
-                            </button>
-                        </tum-ui-card>
+                            <span class="re-evaluate-button mb-3" id="add-instruction-button" (click)="addNewInstruction(criterion)">
+                                <fa-icon [icon]="faPlus" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}" />
+                            </span>
+                        </div>
                     }
-                    <button id="add-criterion-button" type="button" tumUiButton severity="success" (click)="addNewGradingCriterion()">
-                        <fa-icon [icon]="faPlus" />
-                        <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
-                    </button>
+                    <div class="row mt-4">
+                        <div class="col-12 col-sm-6 col-xl-3 mb-1">
+                            <button id="add-criterion-button" class="btn btn-block btn-success" (click)="addNewGradingCriterion()">
+                                <fa-icon [icon]="faPlus" />
+                                <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             }
             <!--- End of Edit Mode --->

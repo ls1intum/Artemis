@@ -1,174 +1,20 @@
 .edit-sqi {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-
     .grading-instructions-update-border {
+        padding: 10px;
+        border-radius: 0.1rem;
+        border-width: 1px;
+        border-style: solid;
+        border-color: var(--edit-sqi-grading-instructions-update-border);
         height: auto;
     }
 
-    .grading-instructions-mode {
-        display: inline-flex;
-        align-self: flex-start;
-        gap: 0.25rem;
-        padding: 0.25rem;
-        border: 1px solid var(--border-color);
-        border-radius: 0.625rem;
-        background-color: var(--module-bg);
-    }
-
-    .grading-criteria,
-    .grading-instruction-list {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .grading-criteria {
-        gap: 1rem;
-    }
-
-    .grading-instruction-list {
-        gap: 0.75rem;
-    }
-
-    .grading-criterion-card {
-        position: relative;
-        min-width: 0;
-        overflow: hidden;
-        border: 1px solid var(--border-color);
-
-        &::before {
-            content: '';
-            position: absolute;
-            inset-block: 0;
-            inset-inline-start: 0;
-            width: 4px;
-            background-color: var(--primary);
-        }
-
-        &__header {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        &__title {
-            flex: 1 1 24rem;
-            max-width: 36rem;
-        }
-
-        &__delete {
-            flex: 0 0 auto;
-        }
-
-        &__add-instruction {
-            align-self: flex-start;
-            margin-top: 0.75rem;
-        }
-    }
-
-    .grading-instruction-card {
-        min-width: 0;
-        padding: 0.75rem;
-        border: 1px solid var(--border-color);
-        border-radius: 0.625rem;
-        background-color: var(--module-bg);
-
-        &__top {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-        }
-
-        &__fields {
-            display: grid;
-            grid-template-columns: minmax(8rem, 0.7fr) minmax(14rem, 1.5fr) minmax(14rem, 1.5fr) minmax(7rem, 0.6fr);
-            gap: 0.75rem;
-            align-items: start;
-        }
-
-        &__delete {
-            flex: 0 0 auto;
-            color: var(--danger);
-        }
-    }
-
-    .grading-field {
-        display: flex;
-        min-width: 0;
-        flex-direction: column;
-        gap: 0.375rem;
-
-        &__label-row {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        &__label {
-            color: var(--secondary);
-            font-size: 0.6875rem;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-        }
-
-        &--credits {
-            width: 8rem;
-        }
-
-        input,
-        textarea {
-            width: 100%;
-            min-width: 0;
-            box-sizing: border-box;
-        }
-
-        textarea {
-            resize: vertical;
-        }
-    }
-
-    @media (max-width: 900px) {
-        .grading-instruction-card__fields {
-            grid-template-columns: minmax(8rem, 0.7fr) minmax(14rem, 1.5fr);
-        }
-    }
-
-    @media (max-width: 600px) {
-        .grading-criterion-card__header {
-            align-items: stretch;
-            flex-direction: column;
-        }
-
-        .grading-criterion-card__title {
-            flex-basis: auto;
-            max-width: none;
-        }
-
-        .grading-criterion-card__delete {
-            align-self: flex-start;
-        }
-
-        .grading-instruction-card__fields {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* Legacy markdown-backed instruction mode below still uses these action and editor layout hooks. */
     .re-evaluate-button {
         display: inline-block;
         padding: 4px;
         cursor: pointer;
 
         &:hover {
-            color: var(--primary);
+            color: blue;
         }
     }
 
@@ -176,7 +22,7 @@
         display: inline-block;
         padding: 4px;
         cursor: pointer;
-        color: var(--danger);
+        color: #dc3545;
     }
 
     .instructions {
@@ -204,5 +50,9 @@
         .background-file {
             display: flex;
         }
+    }
+
+    .criterion-title-row {
+        background-color: var(--edit-sqi-criterion-title-row-background);
     }
 }

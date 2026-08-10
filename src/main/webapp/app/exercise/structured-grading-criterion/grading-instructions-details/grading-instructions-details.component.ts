@@ -13,31 +13,19 @@ import { GradingUsageCountAction } from 'app/editor/monaco-editor/model/actions/
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { GradingCriterionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
 import { GradingInstructionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-instruction.action';
+import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonDirective, TumUiCardComponent, TumUiInputDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
     styleUrls: ['./grading-instructions-details.component.scss'],
-    imports: [
-        TranslateDirective,
-        FormsModule,
-        FaIconComponent,
-        HelpIconComponent,
-        NgbTooltip,
-        MarkdownEditorMonacoComponent,
-        ArtemisTranslatePipe,
-        TumUiButtonDirective,
-        TumUiCardComponent,
-        TumUiInputDirective,
-        TumUiTooltipDirective,
-    ],
+    imports: [NgClass, TranslateDirective, FormsModule, FaIconComponent, HelpIconComponent, NgbTooltip, MarkdownEditorMonacoComponent, ArtemisTranslatePipe],
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
     private injector = inject(Injector);
