@@ -239,6 +239,7 @@ public class UserCreationService {
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
         user.setLangKey(updatedUserDTO.getLangKey());
+        boolean revokeCredentialsAfterPasswordChange = user.isInternal() && updatedUserDTO.getPassword() != null && updatedUserDTO.isRevokeCredentials();
         if (user.isInternal() && updatedUserDTO.getPassword() != null) {
             user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
         }
@@ -248,8 +249,9 @@ public class UserCreationService {
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
-        if (isBeingDeactivated) {
-            accountCredentialRevocationService.revokeAllCredentials(savedUser, "user deactivated by an administrator");
+        if (isBeingDeactivated || revokeCredentialsAfterPasswordChange) {
+            String reason = isBeingDeactivated ? "user deactivated by an administrator" : "password changed by an administrator";
+            accountCredentialRevocationService.revokeAllCredentials(savedUser, reason);
         }
         return savedUser;
     }

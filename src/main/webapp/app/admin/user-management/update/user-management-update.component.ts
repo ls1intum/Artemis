@@ -94,6 +94,9 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Whether a random password should be generated (new users) or the old password kept (existing users). */
     readonly useRandomPassword = signal(true);
 
+    /** Whether an administrator explicitly chose to revoke the existing user's other credentials with a password change. */
+    readonly revokeCredentials = signal(false);
+
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
 
@@ -187,6 +190,9 @@ export class UserManagementUpdateComponent implements OnInit {
         const userOrganizations = this.user().organizations;
         const updatedUser: User = this.editForm.getRawValue();
         updatedUser.organizations = userOrganizations;
+        if (updatedUser.id) {
+            updatedUser.revokeCredentials = !!updatedUser.password && this.revokeCredentials();
+        }
         this.user.set(updatedUser);
         if (updatedUser.id) {
             this.userService.update(updatedUser).subscribe({
@@ -214,6 +220,9 @@ export class UserManagementUpdateComponent implements OnInit {
     shouldRandomizePassword(useRandomPassword: boolean) {
         this.useRandomPassword.set(useRandomPassword);
         this.user().password = useRandomPassword ? undefined : '';
+        if (useRandomPassword) {
+            this.revokeCredentials.set(false);
+        }
     }
 
     /**

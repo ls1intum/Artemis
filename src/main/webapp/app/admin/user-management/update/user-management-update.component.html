@@ -121,6 +121,19 @@
                                     }
                                 </div>
                             }
+                            @if (user().id) {
+                                <div class="flex items-center gap-2">
+                                    <tum-ui-checkbox
+                                        inputId="revokeCredentials"
+                                        name="revokeCredentials"
+                                        data-testid="revoke-credentials"
+                                        [ngModel]="revokeCredentials()"
+                                        [ngModelOptions]="{ standalone: true }"
+                                        (changed)="revokeCredentials.set($event.checked)"
+                                    />
+                                    <label for="revokeCredentials" jhiTranslate="artemisApp.userManagement.revokeCredentials"></label>
+                                </div>
+                            }
                         </div>
                     }
                 }

@@ -8,11 +8,13 @@ import java.time.ZonedDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
@@ -20,8 +22,17 @@ import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
+import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
+import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -31,8 +42,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * These are the cases where a silent gap is expensive: a user who resets their password because they suspect a
  * compromise, and an administrator who deactivates an account. Each transition is asserted per credential type - the
  * passkeys, the personal VCS access token together with its expiry date, and the SSH keys - because the failure mode is
- * one type being forgotten, which is how passkeys and the personal VCS access token came to be missing from the
- * soft-delete cleanup in the first place.
+ * one type being forgotten. The fixture therefore contains every persisted credential category covered by the service:
+ * passkeys, SSH keys, and personal, participation-scoped, and repository-scoped VCS access tokens.
  */
 class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -46,6 +57,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private UserCreationService userCreationService;
+
+    @Autowired
+    private PasswordService passwordService;
 
     @Autowired
     private UserRepository userRepository;
@@ -62,7 +76,29 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     private UserUtilService userUtilService;
 
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
+    @Autowired
+    private RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository;
+
     private User user;
+
+    private ZonedDateTime vcsAccessTokenExpiryDate;
+
+    private ZonedDateTime sshKeyCreationDate;
+
+    private String passkeyCredentialId;
+
+    private long participationId;
+
+    private String repositoryUri;
 
     @BeforeEach
     void initTestCase() {
@@ -71,20 +107,21 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     }
 
     /**
-     * Gives the account one of each credential this service revokes: a passkey, a personal VCS access token and an SSH
-     * key. The latter two are on their own enough to read and write the user's repositories, and the passkey is on its
-     * own enough to log in.
+     * Gives the account one of each persisted credential category this service revokes.
      */
     private void giveUserCredentials() {
         // Cleared first: the fixture user is reused across the tests in this class, so a test that deliberately leaves a
         // credential in place would otherwise make a later test see two of them.
         passkeyCredentialsRepository.deleteAllByUserId(user.getId());
         userSshPublicKeyRepository.deleteAll(userSshPublicKeyRepository.findAllByUserId(user.getId()));
+        participationVCSAccessTokenRepository.deleteAllByUserId(user.getId());
+        repositoryVCSAccessTokenRepository.deleteAllByUserId(user.getId());
 
-        passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+        passkeyCredentialId = passkeyCredentialUtilService.createAndSavePasskeyCredential(user).getCredentialId();
 
         user.setVcsAccessToken("vcs-token-" + user.getId());
-        user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().plusMonths(6));
+        vcsAccessTokenExpiryDate = ZonedDateTime.now().plusMonths(6).withNano(0);
+        user.setVcsAccessTokenExpiryDate(vcsAccessTokenExpiryDate);
         userRepository.save(user);
 
         UserSshPublicKey sshKey = new UserSshPublicKey();
@@ -92,8 +129,31 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         sshKey.setLabel("Test key");
         sshKey.setPublicKey("ssh-ed25519 AAAA-not-a-real-key-" + user.getId());
         sshKey.setKeyHash("hash-" + user.getId());
-        sshKey.setCreationDate(ZonedDateTime.now());
+        sshKeyCreationDate = ZonedDateTime.now().withNano(0);
+        sshKey.setCreationDate(sshKeyCreationDate);
         userSshPublicKeyRepository.save(sshKey);
+
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Credential Revocation", "CRREV");
+        ProgrammingExercise exercise = course.getExercises().stream().filter(ProgrammingExercise.class::isInstance).map(ProgrammingExercise.class::cast).findFirst().orElseThrow();
+        var participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise, user);
+        participation.setRepositoryUri("http://localhost/git/CRREV/" + user.getLogin() + ".git");
+        participation = programmingExerciseStudentParticipationRepository.save(participation);
+        participationId = participation.getId();
+
+        ParticipationVCSAccessToken participationToken = new ParticipationVCSAccessToken();
+        participationToken.setUser(user);
+        participationToken.setParticipation(participation);
+        participationToken.setVcsAccessToken("participation-token-" + user.getId());
+        participationVCSAccessTokenRepository.save(participationToken);
+
+        repositoryUri = "http://localhost/git/CRREV/crrev-template.git";
+        RepositoryVCSAccessToken repositoryToken = new RepositoryVCSAccessToken();
+        repositoryToken.setUser(user);
+        repositoryToken.setExercise(exercise);
+        repositoryToken.setRepositoryType(RepositoryType.TEMPLATE);
+        repositoryToken.setRepositoryUri(repositoryUri);
+        repositoryToken.setVcsAccessToken("repository-token-" + user.getId());
+        repositoryVCSAccessTokenRepository.save(repositoryToken);
     }
 
     private User reloadUser() {
@@ -104,23 +164,83 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
      * Asserts that the personal VCS access token is gone, expiry date included: clearing only the token would leave a
      * dangling expiry date, and a later change that forgot the token itself would still look like a revocation.
      */
-    private void assertVcsAccessTokenRevoked() {
-        assertVcsAccessTokenRevoked(reloadUser());
+    private void assertVcsAccessTokensRevoked() {
+        assertVcsAccessTokensRevoked(reloadUser());
     }
 
     /**
      * @param reloaded the account as it was read back from the database; a soft-deleted account has to be loaded by id,
      *                     because it can no longer be looked up by login
      */
-    private void assertVcsAccessTokenRevoked(User reloaded) {
+    private void assertVcsAccessTokensRevoked(User reloaded) {
         assertThat(reloaded.getVcsAccessToken()).isNull();
         assertThat(reloaded.getVcsAccessTokenExpiryDate()).isNull();
+        assertThat(participationVCSAccessTokenRepository.findOverviewsByUserId(user.getId())).isEmpty();
+        assertThat(repositoryVCSAccessTokenRepository.findOverviewsByUserId(user.getId())).isEmpty();
     }
 
-    private void assertVcsAccessTokenKept() {
+    private void assertVcsAccessTokensKept() {
         User reloaded = reloadUser();
         assertThat(reloaded.getVcsAccessToken()).isEqualTo("vcs-token-" + user.getId());
-        assertThat(reloaded.getVcsAccessTokenExpiryDate()).isNotNull();
+        assertThat(reloaded.getVcsAccessTokenExpiryDate()).isEqualTo(vcsAccessTokenExpiryDate);
+        assertThat(participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participationId)).hasValueSatisfying(token -> {
+            assertThat(token.getVcsAccessToken()).isEqualTo("participation-token-" + user.getId());
+            assertThat(token.getUser().getId()).isEqualTo(user.getId());
+            assertThat(token.getParticipation().getId()).isEqualTo(participationId);
+        });
+        assertThat(participationVCSAccessTokenRepository.findOverviewsByUserId(user.getId())).hasSize(1);
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), repositoryUri)).hasValueSatisfying(token -> {
+            assertThat(token.getVcsAccessToken()).isEqualTo("repository-token-" + user.getId());
+            assertThat(token.getRepositoryType()).isEqualTo(RepositoryType.TEMPLATE);
+            assertThat(token.getRepositoryUri()).isEqualTo(repositoryUri);
+        });
+        assertThat(repositoryVCSAccessTokenRepository.findOverviewsByUserId(user.getId())).hasSize(1);
+    }
+
+    private void assertSshKeyKept() {
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).singleElement().satisfies(sshKey -> {
+            assertThat(sshKey.getUserId()).isEqualTo(user.getId());
+            assertThat(sshKey.getLabel()).isEqualTo("Test key");
+            assertThat(sshKey.getPublicKey()).isEqualTo("ssh-ed25519 AAAA-not-a-real-key-" + user.getId());
+            assertThat(sshKey.getKeyHash()).isEqualTo("hash-" + user.getId());
+            assertThat(sshKey.getCreationDate()).isEqualTo(sshKeyCreationDate);
+        });
+    }
+
+    private void assertPasskeyKept() {
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).singleElement().satisfies(passkey -> {
+            assertThat(passkey.getCredentialId()).isEqualTo(passkeyCredentialId);
+            assertThat(passkey.getLabel()).isEqualTo("Default Passkey Label");
+            assertThat(passkey.getUser().getId()).isEqualTo(user.getId());
+            assertThat(passkey.getUvInitialized()).isTrue();
+            assertThat(passkey.getBackupEligible()).isTrue();
+            assertThat(passkey.getBackupState()).isTrue();
+        });
+    }
+
+    private void assertAllCredentialsKept() {
+        assertVcsAccessTokensKept();
+        assertSshKeyKept();
+        assertPasskeyKept();
+    }
+
+    private void assertAllCredentialsRevoked() {
+        assertAllCredentialsRevoked(reloadUser());
+    }
+
+    private void assertAllCredentialsRevoked(User reloaded) {
+        assertVcsAccessTokensRevoked(reloaded);
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
+    }
+
+    private void assertPasswordChangedTo(String previousPasswordHash, String newPassword) {
+        User reloaded = reloadUser();
+        assertThat(reloaded.getPassword()).isNotEqualTo(previousPasswordHash);
+        assertThat(passwordService.checkPasswordMatch(newPassword, reloaded.getPassword())).isTrue();
+        assertThat(reloaded.getActivated()).isTrue();
+        assertThat(reloaded.isInternal()).isTrue();
+        assertThat(reloaded.isDeleted()).isFalse();
     }
 
     @Test
@@ -129,9 +249,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         accountCredentialRevocationService.revokeAllCredentials(user, "test");
 
-        assertVcsAccessTokenRevoked();
-        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
-        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
+        assertAllCredentialsRevoked();
     }
 
     @Test
@@ -144,9 +262,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         userService.completePasswordReset("new-Password-123", "reset-key-" + user.getId()).orElseThrow();
 
-        assertVcsAccessTokenRevoked();
-        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
-        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
+        assertAllCredentialsRevoked();
     }
 
     @Test
@@ -158,9 +274,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         userCreationService.deactivateUser(user);
 
         assertThat(reloadUser().getActivated()).isFalse();
-        assertVcsAccessTokenRevoked();
-        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
-        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
+        assertAllCredentialsRevoked();
     }
 
     @Test
@@ -173,9 +287,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         User deleted = userRepository.findById(user.getId()).orElseThrow();
         assertThat(deleted.isDeleted()).isTrue();
-        assertVcsAccessTokenRevoked(deleted);
-        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
-        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
+        assertAllCredentialsRevoked(deleted);
     }
 
     /**
@@ -192,9 +304,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         userService.changePassword(UserFactory.USER_PASSWORD, "new-Password-123", new CredentialRevocationChoiceDTO(false, false, true));
 
-        assertVcsAccessTokenRevoked();
-        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).hasSize(1);
-        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).hasSize(1);
+        assertVcsAccessTokensRevoked();
+        assertSshKeyKept();
+        assertPasskeyKept();
     }
 
     @Test
@@ -205,8 +317,20 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         userService.changePassword(UserFactory.USER_PASSWORD, "new-Password-123", new CredentialRevocationChoiceDTO(false, true, false));
 
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
-        assertVcsAccessTokenKept();
-        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).hasSize(1);
+        assertVcsAccessTokensKept();
+        assertPasskeyKept();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void aPasswordChangeCanRevokeOnlyThePasskeys() {
+        giveUserCredentials();
+
+        userService.changePassword(UserFactory.USER_PASSWORD, "new-Password-123", new CredentialRevocationChoiceDTO(true, false, false));
+
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
+        assertVcsAccessTokensKept();
+        assertSshKeyKept();
     }
 
     @Test
@@ -218,9 +342,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         userService.changePassword(UserFactory.USER_PASSWORD, "new-Password-123", CredentialRevocationChoiceDTO.none());
 
-        assertVcsAccessTokenKept();
-        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).hasSize(1);
-        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).hasSize(1);
+        assertAllCredentialsKept();
     }
 
     /**
@@ -240,9 +362,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         userCreationService.updateUser(userWithAuthorities, update);
 
         assertThat(reloadUser().getActivated()).isFalse();
-        assertVcsAccessTokenRevoked();
-        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
-        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
+        assertAllCredentialsRevoked();
     }
 
     /**
@@ -259,9 +379,83 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         update.setFirstName("Renamed");
         userCreationService.updateUser(userWithAuthorities, update);
 
-        assertVcsAccessTokenKept();
-        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).hasSize(1);
-        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).hasSize(1);
+        assertThat(reloadUser().getFirstName()).isEqualTo("Renamed");
+        assertAllCredentialsKept();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void anAdminPasswordChangeKeepsCredentialsByDefault() throws Exception {
+        giveUserCredentials();
+        String oldPasswordHash = user.getPassword();
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities, "new-Password-123");
+        update.setName("Test User");
+        assertThat(update.isRevokeCredentials()).isFalse();
+        request.put("/api/account/admin/users", update, HttpStatus.OK);
+
+        assertPasswordChangedTo(oldPasswordHash, "new-Password-123");
+        assertAllCredentialsKept();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void anAdminPasswordChangeRevokesEverythingWhenSelected() throws Exception {
+        giveUserCredentials();
+        String oldPasswordHash = user.getPassword();
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities, "new-Password-123");
+        update.setName("Test User");
+        update.setRevokeCredentials(true);
+        assertThat(update.isRevokeCredentials()).isTrue();
+        request.put("/api/account/admin/users", update, HttpStatus.OK);
+
+        assertPasswordChangedTo(oldPasswordHash, "new-Password-123");
+        assertAllCredentialsRevoked();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void selectingRevocationWithoutChangingThePasswordKeepsCredentials() throws Exception {
+        giveUserCredentials();
+        String oldPasswordHash = user.getPassword();
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setName("Renamed User");
+        update.setFirstName("Renamed");
+        update.setRevokeCredentials(true);
+        request.put("/api/account/admin/users", update, HttpStatus.OK);
+
+        User reloaded = reloadUser();
+        assertThat(reloaded.getPassword()).isEqualTo(oldPasswordHash);
+        assertThat(reloaded.getFirstName()).isEqualTo("Renamed");
+        assertThat(reloaded.getActivated()).isTrue();
+        assertAllCredentialsKept();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void selectingRevocationForAnExternalUserKeepsCredentials() throws Exception {
+        giveUserCredentials();
+        user.setInternal(false);
+        userRepository.save(user);
+        String oldPasswordHash = user.getPassword();
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities, "new-Password-123");
+        update.setName("External User");
+        update.setRevokeCredentials(true);
+        request.put("/api/account/admin/users", update, HttpStatus.OK);
+
+        User reloaded = reloadUser();
+        assertThat(reloaded.isInternal()).isFalse();
+        assertThat(reloaded.getPassword()).isEqualTo(oldPasswordHash);
+        assertThat(passwordService.checkPasswordMatch("new-Password-123", reloaded.getPassword())).isFalse();
+        assertThat(reloaded.getActivated()).isTrue();
+        assertAllCredentialsKept();
     }
 
     @Test
@@ -270,8 +464,6 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         accountCredentialRevocationService.revokeAllCredentials(user, "test");
         accountCredentialRevocationService.revokeAllCredentials(user, "test");
 
-        assertVcsAccessTokenRevoked();
-        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
-        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
+        assertAllCredentialsRevoked();
     }
 }
