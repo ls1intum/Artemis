@@ -96,8 +96,14 @@ export class CommunicationAPIRequests {
      */
     async getConversationById(courseId: number, conversationId: number): Promise<ChannelDTO | undefined> {
         const response = await this.page.request.get(`api/communication/courses/${courseId}/conversations`);
+        if (!response.ok()) {
+            throw new Error(`Failed to fetch the conversations of course ${courseId}: ${response.status()} ${response.statusText()}`);
+        }
         const conversations: ConversationDTO[] = await response.json();
-        return conversations.find((conv: ConversationDTO) => conv.id === conversationId) as ChannelDTO | undefined;
+        const conversation = conversations.find((conv: ConversationDTO) => conv.id === conversationId);
+        // The endpoint returns mixed conversation types, so narrow rather than cast: a one-to-one or
+        // group chat with this id yields undefined instead of a bogus ChannelDTO.
+        return conversation ? getAsChannelDTO(conversation) : undefined;
     }
 
     /**

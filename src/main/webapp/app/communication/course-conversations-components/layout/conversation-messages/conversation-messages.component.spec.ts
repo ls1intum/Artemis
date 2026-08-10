@@ -202,7 +202,7 @@ examples.forEach((activeConversation) => {
 
         it('should find visible elements at the scroll position and save scroll position', () => {
             // Mock des Containers
-            component.content().nativeElement = {
+            component.content()!.nativeElement = {
                 getBoundingClientRect: vi.fn().mockReturnValue({ top: 0, bottom: 100 }),
                 scrollTop: 0,
                 scrollHeight: 200,
@@ -236,11 +236,11 @@ examples.forEach((activeConversation) => {
         });
 
         it('should scroll to the bottom when a new message is created', () => {
-            component.content().nativeElement.scrollTop = 100;
+            component.content()!.nativeElement.scrollTop = 100;
             fixture.detectChanges();
             component.handleNewMessageCreated();
             vi.advanceTimersByTime(300);
-            expect(component.content().nativeElement.scrollTop).toBe(component.content().nativeElement.scrollHeight);
+            expect(component.content()!.nativeElement.scrollTop).toBe(component.content()!.nativeElement.scrollHeight);
         });
 
         it('should create empty post with the correct conversation type', () => {

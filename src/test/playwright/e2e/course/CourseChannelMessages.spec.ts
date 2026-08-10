@@ -12,10 +12,14 @@ const readOnlyCourse = { id: SEED_COURSES.channel1.id };
 const writeCourse = { id: SEED_COURSES.channel2.id };
 
 // Budget for the client to re-bootstrap after a full page reload. Deliberately larger than the
-// default expect timeout: a reload re-downloads and re-parses the whole bundle (Playwright disables
-// the HTTP cache per context), which is one of the slowest things a test can wait for under parallel
-// CI load. Still well inside the @fast per-test timeout, so a genuine regression fails rather than hangs.
-const RELOAD_RENDER_TIMEOUT = 45_000;
+// default 10s expect timeout: a reload re-downloads and re-parses the whole bundle (Playwright
+// disables the HTTP cache per context), which is one of the slowest things a test can wait for
+// under parallel CI load.
+// Sized to fit the @fast per-test budget (60s locally, 75s in CI) alongside the work before the
+// reload, so that a genuine regression still fails as a clear assertion error rather than as an
+// opaque whole-test timeout. Only the first assertion after a reload needs this; anything rendered
+// in the same pass is already present by then and uses the default timeout.
+const RELOAD_RENDER_TIMEOUT = 30_000;
 
 test.describe('Channel messages', { tag: '@fast' }, () => {
     test.describe('Create channel', () => {
@@ -163,11 +167,12 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             // Then confirm the reloaded UI shows them. A reload re-bootstraps the entire client, and
             // Playwright disables the HTTP cache per context, so the bundle is re-fetched from scratch —
             // on a loaded CI runner that can take longer than the default expect timeout. Wait on the
-            // assertions themselves (they poll) with a budget that matches a cold reload, rather than
-            // gating on an intermediate element within a fixed window.
+            // assertions themselves (they poll) rather than gating on an intermediate element within a
+            // fixed window. Only the first assertion absorbs the re-bootstrap; the topic is rendered in
+            // the same pass, so it keeps the default timeout and the two budgets cannot stack.
             await page.reload();
             await expect(courseMessages.getName()).toContainText(newName, { timeout: RELOAD_RENDER_TIMEOUT });
-            await expect(courseMessages.getTopic()).toContainText(topic, { timeout: RELOAD_RENDER_TIMEOUT });
+            await expect(courseMessages.getTopic()).toContainText(topic);
         });
     });
 
