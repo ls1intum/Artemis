@@ -18,6 +18,7 @@ test.beforeEach(async ({ page }) => {
             lastName: 'ReminderTest',
             email: TEST_USER.email,
             authorities: ['ROLE_USER'],
+            internal: true,
         },
     });
 });

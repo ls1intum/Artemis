@@ -13,7 +13,9 @@
             "edit": "Editieren",
             "copy": "Kopieren",
             "copied": "Kopiert",
-            "new": "Neu"
+            "new": "Neu",
+            "expand": "Erweitern",
+            "collapse": "Einklappen"
         },
         "weekdays": {
             "monday": "Montag",
@@ -38,6 +40,7 @@
             "title": "Suchen",
             "placeholder": "Suchen oder Frage stellen...",
             "noResultsFound": "Keine Ergebnisse gefunden",
+            "searchPlaceholder": "Suche...",
             "tooShortQueryHint": "Bitte gib einen längeren Suchbegriff ein.",
             "shortQueryHint": "Dein Suchbegriff ist recht kurz. Verwende einen längeren Suchbegriff, um bessere Ergebnisse zu erhalten.",
             "searching": "Suche läuft...",
@@ -184,6 +187,7 @@
             },
             "admin": {
                 "main": "Administration",
+                "short": "Admin",
                 "loginWithPasskeyToUseAdminFeatures": "Mit Passkey anmelden um Admin-Funktionen zu nutzen",
                 "setupPasskey": "Passkey registrieren",
                 "passkeyRestrictionExplanation": "Zum Schutz der Studierendendaten und zur Sicherstellung der Zuverlässigkeit von Artemis sind Administratoraktionen nur nach Passkey-Login verfügbar.",
@@ -328,6 +332,7 @@
         },
         "item-count": "Zeige {{first}} bis {{second}} von {{total}} Einträgen",
         "paginator": {
+            "ariaLabel": "Seitennavigation",
             "first": "Erste Seite",
             "previous": "Vorherige Seite",
             "next": "Nächste Seite",
@@ -335,7 +340,11 @@
             "rowsPerPage": "Einträge pro Seite"
         },
         "datePicker": {
+            "placeholder": "DD.MM.YYYY HH:mm",
             "open": "Kalender öffnen",
+            "dialog": "Datum und Uhrzeit auswählen",
+            "previousMonth": "Vorheriger Monat: {{ month }}",
+            "nextMonth": "Nächster Monat: {{ month }}",
             "clear": "Löschen",
             "done": "Fertig",
             "time": "Uhrzeit",
@@ -358,6 +367,7 @@
             "addimage": "Bild hinzufügen",
             "back": "Zurück",
             "cancel": "Abbrechen",
+            "clear": "Leeren",
             "continue": "Fortfahren",
             "delete": "Löschen",
             "deleteQuestion": "Bist du sicher dass du das Löschen ausführen willst?",
