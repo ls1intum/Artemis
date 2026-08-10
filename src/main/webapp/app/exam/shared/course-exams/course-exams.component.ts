@@ -7,6 +7,7 @@ import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.mode
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -63,7 +64,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private studentExamTestExamInitialFetchSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
-    private studentExams?: StudentExam[];
+    // Mixes StudentExamDTO items (from the migrated test-exams-per-user endpoint) with full StudentExam entities
+    // (from the not-yet-migrated live-participation stream, see the combineLatest subscription below).
+    private studentExams?: StudentExamOrDTO[];
     studentExamsForRealExams = new Map<number, StudentExam>();
     public expandAttemptsMap = new Map<number, boolean>();
     /** The exams of the course visible to the user, loaded by this tab rather than shipped with the course. */
@@ -79,7 +82,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
     sortedRealExams?: ExamForOverview[];
     sortedTestExams?: ExamForOverview[];
-    testExamMap: Map<number, StudentExam[]> = new Map();
+    testExamMap: Map<number, StudentExamOrDTO[]> = new Map();
     examSelected = signal(true);
     accordionExamGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sidebarData = signal<SidebarData | undefined>(undefined);
@@ -171,7 +174,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private loadExams(courseId: number): void {
         this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
         this.studentExamTestExamInitialFetchSubscription = this.examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId).subscribe({
-            next: (response: StudentExam[]) => {
+            next: (response: StudentExamOrDTO[]) => {
                 this.studentExams = response;
                 this.prepareSidebarData();
             },
@@ -277,7 +280,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * @param examId the examId for which the StudentExams should be retrieved
      * @return a by id descending ordered list of studentExams
      */
-    getStudentExamForExamIdOrderedByIdReverse(examId: number): StudentExam[] {
+    getStudentExamForExamIdOrderedByIdReverse(examId: number): StudentExamOrDTO[] {
         if (!this.studentExams) {
             return [];
         }
@@ -411,8 +414,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     // Method to iterate through the map and get all student exams
-    getAllStudentExams(): StudentExam[] {
-        const allStudentExams: StudentExam[] = [];
+    getAllStudentExams(): StudentExamOrDTO[] {
+        const allStudentExams: StudentExamOrDTO[] = [];
         this.testExamMap.forEach((studentExams) => {
             studentExams.forEach((studentExam) => {
                 allStudentExams.push(studentExam);
@@ -440,7 +443,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * working time cannot change.
      * For the latest StudentExam, which is still within the allowed working time, a subscription is used to periodically check this.
      */
-    calculateIndividualWorkingTimeForTestExams(studentExam: StudentExam, latestExam: boolean) {
+    calculateIndividualWorkingTimeForTestExams(studentExam: StudentExamOrDTO, latestExam: boolean) {
         if (studentExam.started && studentExam.submitted && studentExam.startedDate && studentExam.submissionDate) {
             this.withinWorkingTime = false;
         } else if (latestExam) {
@@ -467,7 +470,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     /**
      * Determines if the given StudentExam is (still) within the working time
      */
-    isWithinWorkingTime(studentExam: StudentExam, exam: Exam) {
+    isWithinWorkingTime(studentExam: StudentExamOrDTO, exam: Exam) {
         if (studentExam.started && !studentExam.submitted && studentExam.startedDate && exam.workingTime) {
             const endDate = dayjs(studentExam.startedDate).add(exam.workingTime, 'seconds');
             this.withinWorkingTime = dayjs(endDate).isAfter(dayjs());

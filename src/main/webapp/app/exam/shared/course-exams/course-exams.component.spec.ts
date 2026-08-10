@@ -7,10 +7,11 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
@@ -81,29 +82,36 @@ describe('CourseExamsComponent', () => {
         testExam: true,
     } as Exam;
 
-    const studentExamForExam3AndSubmitted = {
+    // The test-exams-per-user endpoint returns StudentExamDTO, whose nested `exam` is the slimmed
+    // ExamForStudentExamDTO projection (id, title, testExam, workingTime) — not the full Exam entity.
+    const toExamForStudentExamDTO = (exam: Exam) => ({ id: exam.id!, title: exam.title, testExam: !!exam.testExam, workingTime: exam.workingTime ?? 0 });
+
+    const studentExamForExam3AndSubmitted: StudentExamDTO = {
         id: 11,
         started: true,
         startedDate: dayjs().subtract(2, 'hour'),
         submitted: true,
         submissionDate: dayjs().subtract(1, 'hour'),
-        exam: visibleTestExam1,
-    } as StudentExam;
+        testRun: false,
+        exam: toExamForStudentExamDTO(visibleTestExam1),
+    };
 
-    const studentExamForExam3AndNotSubmitted = {
+    const studentExamForExam3AndNotSubmitted: StudentExamDTO = {
         id: 12,
         started: true,
         startedDate: dayjs().subtract(2, 'hour'),
-        exam: visibleTestExam1,
-    } as StudentExam;
+        testRun: false,
+        exam: toExamForStudentExamDTO(visibleTestExam1),
+    };
 
-    const studentExamForExam4AndSubmitted = {
+    const studentExamForExam4AndSubmitted: StudentExamDTO = {
         id: 13,
         started: true,
         submitted: true,
         submissionDate: dayjs().subtract(1, 'hour'),
-        exam: visibleTestExam2,
-    } as StudentExam;
+        testRun: false,
+        exam: toExamForStudentExamDTO(visibleTestExam2),
+    };
 
     beforeEach(() => {
         router.navigate.mockClear();
@@ -160,7 +168,7 @@ describe('CourseExamsComponent', () => {
                     of([visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam] as ExamForOverview[]),
                 );
                 vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
-                    of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]) as Observable<StudentExam[]>,
+                    of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]),
                 );
                 vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([]));
             });
@@ -219,8 +227,8 @@ describe('CourseExamsComponent', () => {
         const params = new BehaviorSubject({ courseId: '1' });
         const firstExams = new Subject<ExamForOverview[]>();
         const secondExams = new Subject<ExamForOverview[]>();
-        const firstStudentExams = new Subject<StudentExam[]>();
-        const secondStudentExams = new Subject<StudentExam[]>();
+        const firstStudentExams = new Subject<StudentExamDTO[]>();
+        const secondStudentExams = new Subject<StudentExamDTO[]>();
         const firstRealExamSidebar = new Subject<Exam[]>();
         const secondRealExamSidebar = new Subject<Exam[]>();
         (TestBed.inject(ActivatedRoute) as any).parent.params = params.asObservable();

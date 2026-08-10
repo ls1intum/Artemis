@@ -353,6 +353,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 }
                 this.isServiceSetUp.set(true);
                 this.isLoading.set(false);
+            } else {
+                // The service reported that it is not set up, either because loading the conversations failed or because it
+                // was disabled. Follow that state instead of keeping the view in its previous one, and stop the loading
+                // indicator rather than spinning forever. The error itself has already been raised by the service.
+                this.isServiceSetUp.set(false);
+                this.isLoading.set(false);
             }
 
             this.createChannelFn = (channel: ChannelDTO) => this.metisConversationService.createChannel(channel);
@@ -601,6 +607,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.accordionConversationGroups().recents.entityData = this.sidebarConversations()?.filter((item) => item.isCurrent) || [];
                 this.updateSidebarData();
             },
+            error: () => {
+                // Keep the sidebar as it is. Rebuilding it from a refresh that failed would show a list that does not
+                // match the server, and the error has already been reported by the service.
+            },
         });
     }
 
@@ -676,6 +686,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                     complete: () => {
                         this.prepareSidebarData();
                     },
+                    error: () => {
+                        // The group chat itself was created, only reloading the conversations failed. Leave the sidebar as
+                        // it is rather than rebuilding it from a list that never arrived; the service reported the error.
+                    },
                 });
             });
     }
@@ -695,6 +709,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                     this.metisConversationService.createOneToOneChat(chatPartner.login).subscribe({
                         complete: () => {
                             this.prepareSidebarData();
+                        },
+                        error: () => {
+                            // see above, the chat exists and only the reload of the conversations failed
                         },
                     });
                 }
@@ -728,6 +745,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                         this.prepareSidebarData();
                         this.closeSidebarOnMobile();
                     },
+                    // the service already reported the failure, the sidebar keeps its current contents
+                    error: () => {},
                 });
             },
         });
@@ -757,6 +776,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                                 this.metisConversationService.setActiveConversation(newActiveConversation);
                                 this.closeSidebarOnMobile();
                             }
+                        },
+                        error: () => {
+                            // Do not open the conversation after a failed refresh. It is not part of the cached list yet,
+                            // so activating it would only warn that the user is not a member of it.
                         },
                     });
                 } else {

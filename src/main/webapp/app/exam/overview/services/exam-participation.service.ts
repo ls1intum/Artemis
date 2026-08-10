@@ -9,6 +9,8 @@ import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/ex
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { toSubmitStudentExamDTO } from 'app/exam/overview/services/submit-student-exam-dto.mapper';
 import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -202,20 +204,27 @@ export class ExamParticipationService {
     }
 
     /**
-     * Loads {@link StudentExam} objects linked to a test exam per user and per course from server
+     * Loads {@link StudentExamDTO} objects linked to a test exam per user and per course from server
      * @param courseId the id of the course we are interested
-     * @returns a List of all StudentExams without Exercises per User and Course
+     * @returns a List of all StudentExams without Exercises per User and Course. Each includes a nested `exam`
+     * (id, title, testExam, workingTime, course{id, groupNames}) but no `user`, `exercises`, or `examSessions`.
      */
-    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExam[]> {
+    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExamDTO[]> {
         const url = `api/exam/courses/${courseId}/test-exams-per-user`;
         return this.httpClient
-            .get<StudentExam[]>(url, { observe: 'response' })
-            .pipe(map((studentExam: HttpResponse<StudentExam[]>) => this.processListOfStudentExamsFromServer(studentExam)));
+            .get<StudentExamDTO[]>(url, { observe: 'response' })
+            .pipe(map((studentExam: HttpResponse<StudentExamDTO[]>) => this.processListOfStudentExamsFromServer(studentExam)));
     }
 
-    private processListOfStudentExamsFromServer(studentExamsResponse: HttpResponse<StudentExam[]>) {
+    /**
+     * Unlike {@link convertStudentExamDateFromServer}, this does not touch the nested `exam` — the DTO returned by
+     * `test-exams-per-user` (`ExamForStudentExamDTO`) never carries date fields (no `startDate`/`endDate`), so there
+     * is nothing to convert there.
+     */
+    private processListOfStudentExamsFromServer(studentExamsResponse: HttpResponse<StudentExamDTO[]>): StudentExamDTO[] {
         studentExamsResponse.body!.forEach((studentExam) => {
-            return ExamParticipationService.convertStudentExamDateFromServer(studentExam);
+            studentExam.submissionDate = studentExam.submissionDate && dayjs(studentExam.submissionDate);
+            studentExam.startedDate = studentExam.startedDate && dayjs(studentExam.startedDate);
         });
         return studentExamsResponse.body!;
     }
@@ -228,10 +237,9 @@ export class ExamParticipationService {
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/submit';
-        const studentExamCopy = cloneDeep(studentExam);
-        ExamParticipationService.breakCircularDependency(studentExamCopy);
+        const submitStudentExamDTO = toSubmitStudentExamDTO(studentExam);
 
-        return this.httpClient.post<void>(url, studentExamCopy).pipe(
+        return this.httpClient.post<void>(url, submitStudentExamDTO).pipe(
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
                     return throwError(() => new Error('artemisApp.studentExam.submissionNotInTime'));
