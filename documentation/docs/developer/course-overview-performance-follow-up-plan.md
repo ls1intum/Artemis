@@ -2,36 +2,39 @@
 
 **Status:** Proposed follow-up work after the course-tab lazy-loading and exercise-projection PR.
 
-**Last validated:** 2026-08-09.
+**Last validated:** 2026-08-09. Baseline numbers unchanged; plan reviewed and extended 2026-08-10.
 
 **Scope:** The student dashboard after login, the common course shell, and every student course tab in the web app.
 
-## Decision for the current PR
+## What the current PR delivered
 
-Do not add another broad production optimization to the current PR. The remaining opportunities cross REST contracts,
-feature-module boundaries, or non-trivial business logic. Adding one now would make an already broad change harder to
-review and roll back. Correctness fixes requested in review remain in scope, including preserving programming/quiz
-actions in the projection, applying online-course LTI visibility to the title projection, and making the shared client
-cache resilient to request and WebSocket races.
+This section is the starting line for everything below. The course-tab PR split the single `for-dashboard` course load
+into a lean shell plus per-tab content, and rebuilt the exercises/statistics payload on database projections and a
+stateless score calculator.
 
-One small review-driven optimization is also included: returning to the lectures or exams tab during the same course
-visit reuses its already loaded overview DTO response. The course-keyed state shares concurrent requests, rejects late
-responses from a previous course, retries failed requests, and is cleared on an in-place course switch and when the
-course container is destroyed. It neither persists across visits nor changes a REST contract. Only the
-`exams-for-overview` response is reused; the two student-exam calls retain their existing refresh behavior.
+The scope was deliberately capped there. The remaining opportunities cross REST contracts, feature-module boundaries,
+or non-trivial business logic; folding one of them into an already broad change would have made it harder to review and
+to roll back. What did stay in scope were review-driven correctness fixes: preserving programming/quiz actions in the
+projection, applying online-course LTI visibility to the title projection, and making the shared client state resilient
+to request and WebSocket races.
 
-A review-driven score-correctness fix adds overview-specific individual and team grade projections keyed by the
-already computed visible non-quiz exercise IDs. They retain the latest eligible rated result while a newer submission
-is still waiting for a result. This replaces the previous course-wide non-quiz projections without adding a statement;
-the individual quiz projection remains course-wide because it has distinct first-submission semantics.
+Two smaller pieces are worth carrying forward as context:
 
-Beyond these production changes, the only additional performance work suitable for the current PR is test-only:
-payload and database-query budgets for `exercises-for-overview`. They protect the main reduction without expanding
-runtime scope. The profile now checks that required fields remain present, unused fields remain absent, Hibernate does
-not hydrate the exercise entity graph, the 20-exercise text/programming projection stays at no more than eight
-statements, and its uncompressed JSON remains below 20 KB. The latest validation produced 12,803 bytes and eight
-statements; a course with a visible quiz adds one bounded batch-marker projection. The budgets deliberately leave
-payload headroom for legitimate small contract additions.
+- Returning to the lectures or exams tab during the same course visit reuses its already loaded overview DTO. The
+  course-keyed state shares concurrent requests, rejects late responses from a previous course, retries failed
+  requests, and is cleared on an in-place course switch and when the course container is destroyed. It neither
+  persists across visits nor changes a REST contract. Only `exams-for-overview` is reused; the two student-exam calls
+  retain their existing refresh behavior.
+- Overview-specific individual and team grade projections are keyed by the already computed visible non-quiz exercise
+  IDs and retain the latest eligible rated result while a newer submission is still waiting for one. This replaced the
+  previous course-wide non-quiz projections without adding a statement. The individual quiz projection remains
+  course-wide because of its distinct first-submission semantics (see the quiz-row follow-up).
+
+The regression budgets that protect the reduction are test-only and already in place. The profile asserts that required
+fields remain present, unused fields remain absent, Hibernate does not hydrate the exercise entity graph, the
+20-exercise text/programming projection stays at no more than eight statements, and its uncompressed JSON stays below
+20 KB. The latest validation produced 12,803 bytes and eight statements; a course with a visible quiz adds one bounded
+batch-marker projection. The budgets deliberately leave payload headroom for legitimate small contract additions.
 
 ## Goals
 
@@ -52,6 +55,9 @@ payload headroom for legitimate small contract additions.
 - Do not combine unrelated tabs merely to reduce the displayed REST-call count. Calls should only be combined when
   their data has the same lifecycle and is needed by the same user action.
 - Do not assert wall-clock timings in CI. Assert query/row/entity-load and payload budgets; log timings for comparison.
+  These budgets are the proxy for behavior under load: a development-machine millisecond figure says nothing about a
+  busy database, while statements and rows per request scale directly with concurrent students. Treat a query-count
+  regression as a load regression even when the measured time is unchanged.
 
 ## Measurement protocol
 
@@ -229,6 +235,11 @@ avoid hydrating it on the successful path and, if it remains simple, share work 
 3. Authorize the successful path by course ID/user role without first materializing Course. Keep the organization and
    prerequisite entity load only on the exceptional self-enrollment redirect path.
 4. If tabs are included, make the guard and container share the same cached observable and migrate them atomically.
+5. Consolidate the per-visit client state while the container is being touched anyway. There are now three separate
+   holders — `CourseAvailableTabsService`, `CourseOverviewExercisesService`, and `CourseOverviewTabDataService` — each
+   with its own course key, in-flight sharing, and eviction. One store with a single documented eviction rule
+   (course switch, container destroy, user change) is easier to reason about than three that must stay in agreement.
+   This is a refactor with no contract change; keep it in its own commit so it can be reviewed independently.
 
 ### Acceptance criteria
 
@@ -359,21 +370,107 @@ whose exercise is unreleased or, for an online course, has not been launched by 
   grow. Keep the query separate from non-quiz scoring unless measurement shows a clear benefit and the SQL stays
   readable.
 
+## Follow-up PR 11: retire the remaining web dependencies on `for-dashboard`
+
+**Priority:** High for one student path, low for the rest, but it is the precondition for ever removing the endpoint.
+
+### Problem
+
+The web app still calls the deprecated single-course `for-dashboard` from four places, so the deprecation cannot
+complete and the heaviest course payload is still on a student route:
+
+| Caller                                     | Route            | What it actually needs                             |
+| ------------------------------------------ | ---------------- | -------------------------------------------------- |
+| `course-exercise-group-detail.component`   | student overview | the course and its exercises for one exercise group |
+| `course-registration-detail.component`     | student          | only whether the request returns 403                |
+| `course-management-container.component`    | instructor       | the course plus scores for the management shell     |
+| `learning-path-instructor-page.component`  | instructor       | the course record                                   |
+
+The student exercise-group detail page is the notable one: it pays the full 32.6 KB entity payload to render one
+group. The registration probe is the cheapest to fix and the most obviously wrong — it uses the most expensive endpoint
+in the system as a boolean authorization check.
+
+### Design
+
+1. Replace the registration probe with a dedicated lightweight check, or reuse `available-tabs` / `for-overview`, whose
+   403 semantics are already identical.
+2. Point exercise-group detail at `for-overview` plus `exercises-for-overview`, which already carry every field it
+   reads; prefer reusing `CourseOverviewExercisesService` when the route is inside the course container.
+3. Decide separately for the two instructor pages whether they need a management-specific projection or can use
+   `for-overview`. Instructor traffic is low, so a plain contract is worth more than a tuned one here.
+4. Once no web caller remains, record the native-client migration as the only remaining blocker for removal and give
+   the endpoint a removal target.
+
+### Acceptance criteria
+
+- No `findOneForDashboard` call remains in `src/main/webapp`.
+- The student exercise-group detail page hydrates no Course, Participation, Submission, or Result entity graph.
+- Enrollment redirect behavior, the 403 path, and instructor management screens are unchanged in tests.
+- The endpoint itself is untouched and stays green for native clients.
+
+## Follow-up PR 12: consolidate the two course score calculations
+
+**Priority:** High for maintainability, neutral for performance. Do this before anything else changes scoring rules.
+
+### Problem
+
+There are now two independent implementations of the same rules. `CourseScoreCalculator` is the stateless DTO version
+introduced by this PR and used only by `exercises-for-overview`. `CourseScoreCalculationService` still holds the
+entity-based version used by `for-dashboard`, `BonusResource`, and `ExamService`, and it does not delegate to the
+calculator at any point — the two share no code. Every future rule change (variant-group caps, presentation points,
+plagiarism deductions, included-in-overall-score handling) has to be made twice and can silently diverge between the
+course overview and exam bonus grading.
+
+### Design
+
+1. Characterize the entity path first: total scores, per-type scores, participation results, and per-variant-group
+   points across each `IncludedInOverallScore` value, presentation points on and off, `PLAGIARISM` and
+   `POINT_DEDUCTION` verdicts, variant groups with and without a cap, individual due dates, practice-mode
+   participations, and absent grading scales.
+2. Migrate `getScoresAndParticipationResults`, `calculateCourseScoresForExamBonusSource`, and `calculateReachablePoints`
+   to build calculator inputs and delegate, keeping their existing signatures.
+3. Hoist the per-student presentation-score query out of the calculation. The bonus-source path currently issues it
+   inside a `parallelStream` over students, which is a query per student; the bulk projection already exists.
+4. Delete the duplicated arithmetic from `CourseScoreCalculationService`, leaving it as the fetch-and-map layer.
+
+### Acceptance criteria
+
+- `CourseScoreCalculationService` contains no scoring arithmetic and no second copy of the inclusion, capping,
+  rounding, or presentation rules.
+- Characterization tests agree before and after for every listed case.
+- The exam bonus-source path issues a bounded number of statements for 1, 20, and 200 students.
+- No behavior change is introduced together with the consolidation; rule changes come in a later PR.
+
 ## Delivery order
 
-The recommended order balances total student impact, measured severity, and isolation:
+Section numbers are identifiers, not priorities. The recommended order balances total student impact, measured
+severity, and isolation:
 
-1. Project the login dashboard.
-2. Bulk-project learning-path navigation.
-3. Remove the communication N+1, then bound message histories.
-4. Make the common shell scalar and remove the grade-query overhead as separate PRs.
-5. Push calendar filtering into the DB and project tutorial-group summaries.
-6. Consolidate Exams, FAQ, and Training contracts in independent small PRs.
-7. Handle Iris startup and history paging in an Iris-owned PR.
-8. Restrict overview quiz-score rows when row-volume measurements justify the shared-query change.
+1. Consolidate the two score calculations (PR 12). It is behavior-preserving, unblocks safe rule changes everywhere
+   else, and is the one item that gets more expensive the longer it waits.
+2. Project the login dashboard (PR 1).
+3. Remove the communication N+1, then bound message histories (PR 3).
+4. Bulk-project learning-path navigation (PR 2).
+5. Retire the web `for-dashboard` callers (PR 11), starting with the student exercise-group detail page.
+6. Make the common shell scalar and remove the grade-query overhead as separate PRs (PR 4, PR 5).
+7. Push calendar filtering into the DB and project tutorial-group summaries (PR 6, PR 7).
+8. Consolidate Exams, FAQ, and Training contracts in independent small PRs (PR 8).
+9. Handle Iris startup and history paging in an Iris-owned PR (PR 9).
+10. Restrict overview quiz-score rows when row-volume measurements justify the shared-query change (PR 10).
 
 Dashboard, learning path, and communication are independent and can be developed in parallel, but each should be
 reviewed and measured separately.
+
+Two ordering choices are worth stating explicitly, because the raw numbers alone suggest a different sequence:
+
+- The learning path is by far the worst single endpoint (232 statements for a 59-byte response), but it is opt-in per
+  course and only reached by students in courses that enable it. The dashboard is smaller per request and paid by every
+  student on every login, so it comes first on aggregate impact. If a production trace shows heavy learning-path use,
+  swap them.
+- Communication costs 36 statements on landing and another 28 on selecting a conversation, and it is the most
+  frequently visited tab in Artemis. Its combined ~64 statements per visit arguably exceed the dashboard's aggregate
+  cost. It is ranked below the dashboard only because the fix touches a widely used converter and needs the
+  characterization work described in PR 3; do not read the ordering as a judgment that it matters less.
 
 ## Definition of done for every follow-up
 
@@ -385,9 +482,11 @@ reviewed and measured separately.
    content size.
 5. Add a scaling assertion comparing the representative fixture with a larger one; a query inside a loop is a failure
    even when the 20-item timing looks fast.
-6. Keep calculations pure and pass one captured `calculationTime` through the input DTO when time affects behavior.
-7. Test authorization and exceptional paths separately; optimizing the enrolled-student path must not weaken access
+6. Confirm every new or newly hot predicate is index-backed. A projection keyed by a collection of IDs is only cheap if
+   the supporting index exists and is chosen; check with `EXPLAIN` rather than assuming, and say so in the PR.
+7. Keep calculations pure and pass one captured `calculationTime` through the input DTO when time affects behavior.
+8. Test authorization and exceptional paths separately; optimizing the enrolled-student path must not weaken access
    control or self-enrollment behavior.
-8. Run focused server/client tests, architecture tests, formatting/linting, type checking, and the relevant manual or
+9. Run focused server/client tests, architecture tests, formatting/linting, type checking, and the relevant manual or
    E2E workflow.
-9. Put measured before/after values and contract changes in that PR's description.
+10. Put measured before/after values and contract changes in that PR's description.
