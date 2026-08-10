@@ -35,6 +35,7 @@ test.describe('Passkey', () => {
                 lastName: 'TestUser',
                 email: user.email,
                 authorities: ['ROLE_USER'],
+                internal: true,
             },
         });
     });

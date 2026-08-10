@@ -84,7 +84,7 @@
                             name="randomPassword"
                             [ngModel]="useRandomPassword()"
                             [ngModelOptions]="{ standalone: true }"
-                            (onChange)="shouldRandomizePassword($event.checked)"
+                            (changed)="shouldRandomizePassword($event.checked)"
                         />
                         <label for="randomPassword" [jhiTranslate]="user().id ? 'artemisApp.userManagement.keepPassword' : 'artemisApp.userManagement.randomPassword'"></label>
                     </div>
@@ -125,27 +125,10 @@
                     }
                 }
                 <div class="mb-3 flex flex-col gap-2">
-                    <label jhiTranslate="artemisApp.userManagement.groups"></label>
-                    <tum-ui-autocomplete
-                        class="w-full"
-                        styleClass="w-full"
-                        [multiple]="true"
-                        [ngModel]="user().groups ?? []"
-                        [ngModelOptions]="{ standalone: true }"
-                        [suggestions]="groupSuggestions()"
-                        (completeMethod)="filterGroups($event)"
-                        (onSelect)="onGroupSelect($event)"
-                        (onUnselect)="onGroupUnselect($event)"
-                        (keydown.enter)="onGroupAdd(user(), $event)"
-                        [placeholder]="'artemisApp.userManagement.addGroup' | artemisTranslate"
-                        data-testid="group-autocomplete"
-                    />
-                </div>
-                <div class="mb-3 flex flex-col gap-2">
                     <label jhiTranslate="artemisApp.userManagement.organizations"></label>
                     <div class="flex flex-wrap gap-2">
                         @for (organization of user().organizations; track organization) {
-                            <tum-ui-chip [label]="organization.name" [removable]="true" (onRemove)="removeOrganizationFromUser(organization)" data-testid="organization-chip" />
+                            <tum-ui-chip [label]="organization.name" [removable]="true" (removed)="removeOrganizationFromUser(organization)" data-testid="organization-chip" />
                         }
                     </div>
                     <div>
@@ -227,7 +210,7 @@
                             inputId="langKey"
                             name="langKey"
                             formControlName="langKey"
-                            styleClass="w-full"
+                            class="w-full"
                             [options]="languageOptions()"
                             optionLabel="label"
                             optionValue="value"
@@ -243,7 +226,7 @@
                                 [class]="hasAuthority(authority) ? 'border-primary bg-primary/12' : ''"
                                 data-testid="global-role-item"
                             >
-                                <tum-ui-checkbox [ngModel]="hasAuthority(authority)" [ngModelOptions]="{ standalone: true }" (onChange)="toggleAuthority(authority)" />
+                                <tum-ui-checkbox [ngModel]="hasAuthority(authority)" [ngModelOptions]="{ standalone: true }" (changed)="toggleAuthority(authority)" />
                                 <span class="font-medium">{{ getAuthorityTranslationKey(authority) | artemisTranslate }}</span>
                             </label>
                         }
@@ -263,14 +246,7 @@
     </div>
 </div>
 
-<!-- Organization selector dialog (declarative replacement for the former programmatic dialog open) -->
-<tum-ui-dialog
-    [(visible)]="orgSelectorVisible"
-    [modal]="true"
-    [dismissableMask]="true"
-    [style]="{ width: '80vw' }"
-    [header]="'artemisApp.organizationManagement.modalSelector.title' | artemisTranslate"
->
+<tum-ui-dialog [(visible)]="orgSelectorVisible" [dismissableMask]="true" size="large" [header]="'artemisApp.organizationManagement.modalSelector.title' | artemisTranslate">
     @if (orgSelectorVisible()) {
         <jhi-organization-selector
             [assignedOrganizations]="user().organizations ?? []"

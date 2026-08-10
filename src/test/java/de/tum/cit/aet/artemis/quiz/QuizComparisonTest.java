@@ -57,7 +57,7 @@ class QuizComparisonTest {
 
     @Test
     void testCompareSubmissionsWithNullQuestionAndIds() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
         List<QuizQuestion> quizQuestions = setAllQuizQuestionIds(quizExercise);
 
@@ -83,7 +83,7 @@ class QuizComparisonTest {
 
     @Test
     void testCompareSubmissionsOfDifferentQuestionTypeSameId() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
         List<QuizQuestion> quizQuestions = setAllQuizQuestionIds(quizExercise);
         Long id1 = quizQuestions.getFirst().getId();
@@ -104,7 +104,7 @@ class QuizComparisonTest {
 
     @Test
     void testCompareSubmissionsWithEmptySubmission() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
         List<QuizQuestion> quizQuestions = setAllQuizQuestionIds(quizExercise);
 
@@ -122,7 +122,7 @@ class QuizComparisonTest {
 
     @Test
     void compareCourseQuizSubmittedAnswers() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
 
         createSubmissionsForQuizQuestionsAndAssert(quizExercise);
@@ -130,7 +130,7 @@ class QuizComparisonTest {
 
     @Test
     void compareExamQuizSubmittedAnswers() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course, true);
         QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exam.getExerciseGroups().getFirst());
 
@@ -163,7 +163,7 @@ class QuizComparisonTest {
 
     @Test
     void compareQuizSubmittedAnswersWithChangedAnswers() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
 
         long id = 1L;
@@ -200,42 +200,53 @@ class QuizComparisonTest {
                 DragItem dragItem1 = mapping1.getDragItem();
                 DropLocation dropLocation1 = mapping1.getDropLocation();
 
+                // getMappings() returns resolved copies; mutate the copies and persist them back via setMappings so the stored selection reflects the change
+                Set<DragAndDropMapping> workingMappings = new HashSet<>(dragAndDropMappings);
+
                 // change the drag item of one mapping
                 mapping1.setDragItem(mapping2.getDragItem());
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // mapping 1 and 2 have their drag items switched
                 mapping2.setDragItem(dragItem1);
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // change all 3 drag items
                 mapping2.setDragItem(mapping3.getDragItem());
                 mapping3.setDragItem(dragItem1);
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // reset
                 mapping3.setDragItem(mapping2.getDragItem());
                 mapping2.setDragItem(mapping1.getDragItem());
                 mapping1.setDragItem(dragItem1);
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
                 // change the drop location of one mapping
                 mapping1.setDropLocation(mapping2.getDropLocation());
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // mapping 1 and 2 have their drop locations switched
                 mapping2.setDropLocation(dropLocation1);
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // change all 3 drop locations
                 mapping2.setDropLocation(mapping3.getDropLocation());
                 mapping3.setDropLocation(dropLocation1);
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // reset
                 mapping3.setDropLocation(mapping2.getDropLocation());
                 mapping2.setDropLocation(mapping1.getDropLocation());
                 mapping1.setDropLocation(dropLocation1);
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
             }
@@ -283,7 +294,7 @@ class QuizComparisonTest {
 
     @Test
     void compareQuizSubmittedAnswersWithAddedAnswers() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
 
         long id = 1L;
@@ -307,8 +318,10 @@ class QuizComparisonTest {
                 notSelectedOption.forEach(originalAnswer::addSelectedOptions);
                 assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isTrue();
 
-                // reset submitted answers, compare with the unchanged original
+                // reset both submitted answers back to the original single selection and confirm they compare equal again
+                // (getSelectedOptions() returns a resolved copy, not a live view, so the earlier additions must be undone explicitly on both)
                 changedSubmittedAnswer.setSelectedOptions(answerOptions);
+                originalAnswer.setSelectedOptions(answerOptions);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
             }
@@ -385,7 +398,7 @@ class QuizComparisonTest {
 
     @Test
     void compareQuizSubmittedAnswersWithRemovedAnswers() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
 
         long id = 1L;
@@ -599,10 +612,14 @@ class QuizComparisonTest {
                 }
             }
             case ShortAnswerQuestion shortAnswerQuestion -> {
+                // resolved mappings hold references to the very spot/solution objects whose ids are reassigned below
+                var mappings = shortAnswerQuestion.getCorrectMappings();
                 for (var spot : shortAnswerQuestion.getSpots()) {
                     spot.setId(id);
                     id++;
                 }
+                // re-store the mappings so their id-based content entries pick up the reassigned spot ids
+                shortAnswerQuestion.setCorrectMappings(mappings);
             }
             case MultipleChoiceQuestion multipleChoiceQuestion -> {
                 for (var answerOption : multipleChoiceQuestion.getAnswerOptions()) {
@@ -614,5 +631,83 @@ class QuizComparisonTest {
             }
         }
         return id;
+    }
+
+    @Test
+    void addCorrectMappingDeduplicatesByComponentPair() {
+        DragAndDropQuestion question = new DragAndDropQuestion();
+        DropLocation dropLocation = new DropLocation();
+        question.addDropLocation(dropLocation);
+        DragItem dragItem = new DragItem();
+        question.addDragItem(dragItem);
+
+        DragAndDropMapping mapping = new DragAndDropMapping();
+        mapping.setDropLocation(dropLocation);
+        mapping.setDragItem(dragItem);
+        question.addCorrectMapping(mapping);
+
+        // Adding the same (drag item, drop location) pair again must not create a second correct mapping.
+        DragAndDropMapping duplicate = new DragAndDropMapping();
+        duplicate.setDropLocation(dropLocation);
+        duplicate.setDragItem(dragItem);
+        question.addCorrectMapping(duplicate);
+
+        Assertions.assertThat(question.getCorrectMappings()).hasSize(1);
+    }
+
+    @Test
+    void dragAndDropSubmittedAnswerSkipsNullAndIncompleteMappings() {
+        DragAndDropQuestion question = new DragAndDropQuestion();
+        DropLocation dropLocation = new DropLocation();
+        question.addDropLocation(dropLocation);
+        DragItem dragItem = new DragItem();
+        question.addDragItem(dragItem);
+
+        DragAndDropSubmittedAnswer answer = new DragAndDropSubmittedAnswer();
+        answer.setQuizQuestion(question);
+        DragAndDropMapping valid = new DragAndDropMapping();
+        valid.setDragItem(dragItem);
+        valid.setDropLocation(dropLocation);
+        // a mapping without a drag item / drop location must be dropped instead of stored as an unusable entry
+        DragAndDropMapping incomplete = new DragAndDropMapping();
+        answer.setMappings(new HashSet<>(List.of(valid, incomplete)));
+        answer.addMappings(null); // must not NPE
+
+        Assertions.assertThat(answer.getMappings()).hasSize(1);
+    }
+
+    @Test
+    void multipleChoiceSubmittedAnswerSkipsNullSelectedOptions() {
+        MultipleChoiceQuestion question = new MultipleChoiceQuestion();
+        AnswerOption option = new AnswerOption();
+        question.addAnswerOption(option);
+
+        MultipleChoiceSubmittedAnswer answer = new MultipleChoiceSubmittedAnswer();
+        answer.setQuizQuestion(question);
+        Set<AnswerOption> options = new HashSet<>();
+        options.add(option);
+        options.add(new AnswerOption()); // no id -> skipped
+        answer.setSelectedOptions(options);
+        answer.addSelectedOptions(null); // must not NPE
+
+        Assertions.assertThat(answer.getSelectedOptions()).hasSize(1);
+    }
+
+    @Test
+    void shortAnswerSubmittedAnswerSkipsNullSubmittedTexts() {
+        ShortAnswerQuestion question = new ShortAnswerQuestion();
+        ShortAnswerSpot spot = new ShortAnswerSpot();
+        question.addSpot(spot);
+
+        ShortAnswerSubmittedAnswer answer = new ShortAnswerSubmittedAnswer();
+        answer.setQuizQuestion(question);
+        ShortAnswerSubmittedText text = new ShortAnswerSubmittedText();
+        text.setSpot(spot);
+        text.setText("answer");
+        answer.setSubmittedTexts(new HashSet<>(List.of(text)));
+        answer.addSubmittedTexts(null); // must not NPE
+        answer.removeSubmittedTexts(null); // must not NPE
+
+        Assertions.assertThat(answer.getSubmittedTexts()).hasSize(1);
     }
 }

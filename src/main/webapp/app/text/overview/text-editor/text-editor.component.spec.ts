@@ -50,7 +50,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FormsModule } from '@angular/forms';
 import { Component, input } from '@angular/core';
 
@@ -60,13 +59,7 @@ class MockRequestFeedbackButtonComponent {
     exercise = input<any>();
     pendingChanges = input<any>();
     hasAthenaResultForLatestSubmission = input<any>();
-    isGeneratingFeedback = input<any>();
     isSubmitted = input<any>();
-}
-
-@Component({ selector: 'jhi-exercise-chatbot-button', template: '', standalone: true })
-class MockIrisExerciseChatbotButtonComponent {
-    mode = input<any>();
 }
 
 describe('TextEditorComponent', () => {
@@ -123,10 +116,10 @@ describe('TextEditorComponent', () => {
         })
             .overrideComponent(TextEditorComponent, {
                 remove: {
-                    imports: [RequestFeedbackButtonComponent, IrisExerciseChatbotButtonComponent],
+                    imports: [RequestFeedbackButtonComponent],
                 },
                 add: {
-                    imports: [MockRequestFeedbackButtonComponent, MockIrisExerciseChatbotButtonComponent, FormsModule],
+                    imports: [MockRequestFeedbackButtonComponent, FormsModule],
                 },
             })
             .compileComponents();

@@ -15,11 +15,3 @@ overrides:
 
 allowBuilds:
   esbuild: true
-
-# pnpm 11 enforces a default `minimumReleaseAge` (24h): a frozen install rejects any
-# lockfile entry published within the last day as a supply-chain safeguard. brace-expansion
-# 5.0.9 was published <24h before this bump, so it is listed here to let the frozen install
-# pass. Remove the entry once the version has aged past the cutoff (the gate then passes on
-# its own) — keep this list minimal.
-minimumReleaseAgeExclude:
-  - brace-expansion@5.0.9

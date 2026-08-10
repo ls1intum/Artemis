@@ -8,7 +8,7 @@ import { User } from 'app/account/user/user.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
-import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
+import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Organization } from 'app/admin/organization-management/organization.model';
@@ -45,7 +45,6 @@ describe('Course Management Service', () => {
     let isAtLeastInstructorInCourseSpy: ReturnType<typeof vi.spyOn>;
     let convertExercisesDateFromServerSpy: ReturnType<typeof vi.spyOn>;
     let convertDatesForLecturesFromServerSpy: ReturnType<typeof vi.spyOn>;
-    let syncGroupsSpy: ReturnType<typeof vi.spyOn>;
 
     const resourceUrl = 'api/course/courses';
 
@@ -81,13 +80,12 @@ describe('Course Management Service', () => {
         isAtLeastTutorInCourseSpy = vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
         isAtLeastEditorInCourseSpy = vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
         isAtLeastInstructorInCourseSpy = vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
-        syncGroupsSpy = vi.spyOn(accountService, 'syncGroups').mockImplementation(() => undefined);
         convertDatesForLecturesFromServerSpy = vi.spyOn(lectureService, 'convertLectureArrayDatesFromServer');
         ({ course, exercises } = createSampleCourse());
 
         courseForDashboard = new CourseForDashboardDTO();
         courseForDashboard.course = course;
-        courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
+        courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, absoluteScoreTotal: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
         courseForDashboard.totalScores = courseScores;
         courseForDashboard.programmingScores = courseScores;
         courseForDashboard.modelingScores = courseScores;
@@ -257,6 +255,7 @@ describe('Course Management Service', () => {
         const setStoredTotalScoresSpy = vi.spyOn(scoresStorageService, 'setStoredTotalScores');
         const setStoredScoresPerExerciseTypeSpy = vi.spyOn(scoresStorageService, 'setStoredScoresPerExerciseType');
         const setParticipationResultsSpy = vi.spyOn(scoresStorageService, 'setStoredParticipationResults');
+        const setAchievedGroupPointsSpy = vi.spyOn(scoresStorageService, 'setStoredAchievedPointsPerVariantGroup');
         courseManagementService
             .findOneForDashboard(course.id!)
             .pipe(take(1))
@@ -264,6 +263,7 @@ describe('Course Management Service', () => {
                 expect(setStoredTotalScoresSpy).toHaveBeenCalledWith(course.id!, courseScores);
                 expect(setStoredScoresPerExerciseTypeSpy).toHaveBeenCalledWith(course.id!, scoresPerExerciseType);
                 expect(setParticipationResultsSpy).toHaveBeenCalledWith(courseForDashboard.participationResults);
+                expect(setAchievedGroupPointsSpy).toHaveBeenCalledWith(course.id!, courseForDashboard.achievedPointsPerVariantGroup);
             });
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
         req.flush(courseForDashboard);
@@ -330,25 +330,13 @@ describe('Course Management Service', () => {
     });
 
     it('should register for the course', () => {
-        const groups = ['student-group-name'];
-        courseManagementService
-            .registerForCourse(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(groups));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/enroll` });
-        req.flush(groups);
-        expect(syncGroupsSpy).toHaveBeenCalledWith(groups);
+        courseManagementService.registerForCourse(course.id!).pipe(take(1)).subscribe();
+        httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/enroll` }).flush(null);
     });
 
     it('should unenroll from the course', () => {
-        const groups = ['student-group-name'];
-        courseManagementService
-            .unenrollFromCourse(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(groups));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/unenroll` });
-        req.flush(groups);
-        expect(syncGroupsSpy).toHaveBeenCalledWith(groups);
+        courseManagementService.unenrollFromCourse(course.id!).pipe(take(1)).subscribe();
+        httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/unenroll` }).flush(null);
     });
 
     it('should get all courses with quiz exercises', () => {
@@ -416,12 +404,12 @@ describe('Course Management Service', () => {
     it('should find all users of course group', () => {
         const users = [new User(1, 'user1'), new User(2, 'user2')];
         returnedFromService = [...users];
-        const courseGroup = CourseGroup.STUDENTS;
+        const courseRoleSlug = CourseRoleSlug.STUDENTS;
         courseManagementService
-            .getAllUsersInCourseGroup(course.id!, courseGroup)
+            .getAllUsersInCourseRole(course.id!, courseRoleSlug)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(users));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/${courseGroup}` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/${courseRoleSlug}` });
         req.flush(returnedFromService);
     });
 
@@ -454,23 +442,23 @@ describe('Course Management Service', () => {
 
     it('should add user to course group', () => {
         const user = new User(1, 'name');
-        const courseGroup = CourseGroup.STUDENTS;
+        const courseRoleSlug = CourseRoleSlug.STUDENTS;
         courseManagementService
-            .addUserToCourseGroup(course.id!, courseGroup, user.login!)
+            .addUserToCourseRole(course.id!, courseRoleSlug, user.login!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/${courseGroup}/${user.login}` });
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/${courseRoleSlug}/${user.login}` });
         req.flush({});
     });
 
     it('should remove user from course group', () => {
         const user = new User(1, 'name');
-        const courseGroup = CourseGroup.STUDENTS;
+        const courseRoleSlug = CourseRoleSlug.STUDENTS;
         courseManagementService
-            .removeUserFromCourseGroup(course.id!, courseGroup, user.login!)
+            .removeUserFromCourseRole(course.id!, courseRoleSlug, user.login!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
-        const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}/${courseGroup}/${user.login}` });
+        const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}/${courseRoleSlug}/${user.login}` });
         req.flush({});
     });
 
