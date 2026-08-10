@@ -311,7 +311,7 @@ export class CourseManagementService implements OnDestroy {
                 const dto = res.body;
                 if (!dto) {
                     // HttpResponse<Course> already allows a null body; rebuild it rather than cast a clone
-                    return new HttpResponse<Course>({ headers: res.headers, status: res.status, statusText: res.statusText, url: res.url ?? undefined });
+                    return new HttpResponse<Course>({ headers: res.headers, status: res.status, url: res.url ?? undefined });
                 }
                 this.courseNotificationService.updateNotificationCountMap(dto.id, dto.courseNotificationCount);
                 // Build the course the rest of the pipe and every consumer of the stored course still work with
