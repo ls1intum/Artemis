@@ -69,7 +69,7 @@
             jhiDeleteButton
             [actionType]="ActionType.Remove"
             [entityTitle]="row.login"
-            deleteQuestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"
+            [deleteQuestion]="removeUserQuestionKey()"
             (delete)="removeFromGroup(row)"
             [dialogError]="dialogError$"
         >

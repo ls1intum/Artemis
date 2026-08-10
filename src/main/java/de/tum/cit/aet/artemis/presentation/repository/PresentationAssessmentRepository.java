@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -47,5 +48,5 @@ public interface PresentationAssessmentRepository extends ArtemisJpaRepository<P
             WHERE presentationAssessment.id = :assessmentId
                 AND presentationAssessment.course.id = :courseId
             """)
-    Set<User> findStudentsForPresentationAssessment(long assessmentId, long courseId);
+    Set<User> findStudentsForPresentationAssessment(@Param("assessmentId") long assessmentId, @Param("courseId") long courseId);
 }

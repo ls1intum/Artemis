@@ -19,11 +19,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { PresentationAssessmentFormDialogComponent, PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
-import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
-import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
+import { TumUiButtonComponent, TumUiDialogComponent, TumUiMessageComponent, TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-presentation-assessment-management',
@@ -141,8 +137,15 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     private save(result: PresentationAssessmentFormDialogResult): void {
         this.isSaving.set(true);
+        const formAssessment = result.presentationAssessment;
         const presentationAssessment = {
-            ...result.presentationAssessment,
+            id: formAssessment.id,
+            title: formAssessment.title,
+            description: formAssessment.description,
+            maxPoints: formAssessment.maxPoints,
+            resultPoints: formAssessment.resultPoints,
+            presentationDate: formAssessment.presentationDate,
+            courseId: formAssessment.courseId,
             studentLogins: [...new Set(result.assignedStudents.map((student) => student.login).filter((login): login is string => !!login))],
         };
         const isUpdate = Boolean(presentationAssessment.id);

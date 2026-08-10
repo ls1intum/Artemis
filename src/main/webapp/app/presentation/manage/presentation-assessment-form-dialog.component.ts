@@ -9,15 +9,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
-import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
+import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiButtonComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
@@ -68,7 +66,7 @@ export class PresentationAssessmentFormDialogComponent {
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
-    protected readonly studentsCourseGroup = CourseGroup.STUDENTS;
+    protected readonly studentsCourseGroup = CourseRoleSlug.STUDENTS;
 
     readonly assignedStudents = signal<User[]>([]);
     readonly filteredAssignedStudentsSize = signal(0);

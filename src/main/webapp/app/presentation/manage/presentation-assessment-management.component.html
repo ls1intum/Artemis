@@ -73,10 +73,7 @@
 
     <tum-ui-dialog
         [(visible)]="dialogVisible"
-        [modal]="true"
-        [draggable]="false"
-        [style]="{ width: 'min(80rem, calc(100vw - 2rem))', maxHeight: 'calc(100vh - 2rem)' }"
-        [contentStyle]="{ overflow: 'auto' }"
+        size="large"
         [header]="(dialogPresentationAssessment() ? 'artemisApp.presentationAssessment.home.editLabel' : 'artemisApp.presentationAssessment.home.createLabel') | artemisTranslate"
         [closeButtonAriaLabel]="'entity.action.close' | artemisTranslate"
     >

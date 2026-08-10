@@ -71,6 +71,7 @@ export class CourseGroupComponent {
     readonly addUserToGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
     readonly removeUserFromGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
     readonly handleUsersSizeChange = input<(filteredUsersSize: number) => void>(() => {});
+    readonly removeUserQuestionKey = input('artemisApp.course.courseGroup.removeFromGroup.modalQuestion');
 
     readonly importFinish = output<void>();
 
