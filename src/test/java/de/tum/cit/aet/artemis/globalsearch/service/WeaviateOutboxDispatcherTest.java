@@ -67,7 +67,7 @@ class WeaviateOutboxDispatcherTest {
 
     @Test
     void testDrainUpsert_writesWeaviateRefreshesLedgerAndDeletesRow() {
-        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, "{\"entity_id\":1,\"type\":\"course\"}");
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 1L)).thenReturn(Optional.empty());
         when(searchableEntityWeaviateService.applyOutboxEntry(entry)).thenReturn(Optional.of(HASH));
@@ -86,7 +86,7 @@ class WeaviateOutboxDispatcherTest {
 
     @Test
     void testDrainFailedWrite_keepsRowWithBackoffThenLaterRunSucceeds() {
-        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, "{\"entity_id\":1}");
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         doThrow(new RuntimeException("weaviate unavailable")).when(searchableEntityWeaviateService).applyOutboxEntry(entry);
 
@@ -110,8 +110,8 @@ class WeaviateOutboxDispatcherTest {
 
     @Test
     void testDrain_processesRowsInIdOrderSoLatestWins() {
-        WeaviateOutboxEntry older = WeaviateOutboxEntry.forUpsert(COURSE, 1L, "{\"title\":\"old\"}");
-        WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 1L, "{\"title\":\"new\"}");
+        WeaviateOutboxEntry older = WeaviateOutboxEntry.forUpsert(COURSE, 1L);
+        WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 1L);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(older, newer));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 1L)).thenReturn(Optional.empty());
         when(searchableEntityWeaviateService.applyOutboxEntry(any())).thenReturn(Optional.of(HASH));
@@ -140,7 +140,7 @@ class WeaviateOutboxDispatcherTest {
 
     @Test
     void testDrainPerEntitySuccess_collapsesOlderRowsForSameEntity() {
-        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 42L, "{\"title\":\"new\"}");
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 42L);
         entry.setId(10L);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 42L)).thenReturn(Optional.empty());
@@ -173,10 +173,10 @@ class WeaviateOutboxDispatcherTest {
         List<WeaviateOutboxEntry> table = new ArrayList<>();
         wireInMemoryOutbox(table, weaviate);
 
-        WeaviateOutboxEntry older = WeaviateOutboxEntry.forUpsert(COURSE, 42L, "old");
+        WeaviateOutboxEntry older = WeaviateOutboxEntry.forUpsert(COURSE, 42L);
         older.setId(5L);
         older.setNextAttemptAt(ZonedDateTime.now().plusMinutes(1));
-        WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 42L, "new");
+        WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 42L);
         newer.setId(10L);
         table.add(older);
         table.add(newer);
@@ -187,7 +187,8 @@ class WeaviateOutboxDispatcherTest {
         table.forEach(entry -> entry.setNextAttemptAt(ZonedDateTime.now().minusMinutes(1)));
         dispatcher.drain();
 
-        assertThat(weaviate).containsEntry(COURSE + ":42", "new");
+        // The stored value is the id of the row that wrote it; the newer row (id 10) must remain the final writer.
+        assertThat(weaviate).containsEntry(COURSE + ":42", "10");
         assertThat(table).isEmpty();
     }
 
@@ -215,7 +216,8 @@ class WeaviateOutboxDispatcherTest {
             WeaviateOutboxEntry entry = invocation.getArgument(0);
             String key = entry.getEntityType() + ":" + entry.getEntityId();
             if (entry.getOperation() == WeaviateOutboxOperation.UPSERT) {
-                weaviate.put(key, entry.getPayload());
+                // Stand in for the re-derived write: record which row (by id) last wrote this entity.
+                weaviate.put(key, String.valueOf(entry.getId()));
                 return Optional.of(HASH);
             }
             else if (entry.getOperation() == WeaviateOutboxOperation.DELETE_ENTITY) {

@@ -11,7 +11,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +38,7 @@ import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
  * Unit tests for the enqueue side of {@link SearchableEntityWeaviateService}.
  * <p>
  * Every public {@code upsert*Async} / {@code delete*Async} method must record the intent as a durable outbox
- * row (correct operation, type, id, and payload/params) and must NOT touch Weaviate synchronously — the
+ * row (correct operation, type, id, and params) and must NOT touch Weaviate synchronously — the
  * dispatcher performs the actual write later.
  */
 class SearchableEntityWeaviateServiceEnqueueTest {
@@ -62,7 +61,7 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     }
 
     @Test
-    void testUpsertCourse_enqueuesRowWithCanonicalPayloadAndNoSynchronousWrite() throws Exception {
+    void testUpsertCourse_enqueuesUpsertRowAndNoSynchronousWrite() {
         var dto = new CourseSearchableEntityDTO(42L, "Algorithms", "ALG", "A course description");
 
         service.upsertCourseAsync(dto);
@@ -71,9 +70,8 @@ class SearchableEntityWeaviateServiceEnqueueTest {
         assertThat(entry.getOperation()).isEqualTo(WeaviateOutboxOperation.UPSERT);
         assertThat(entry.getEntityType()).isEqualTo(SearchableEntitySchema.TypeValues.COURSE);
         assertThat(entry.getEntityId()).isEqualTo(42L);
+        // The row stores only the entity identity; the dispatcher re-derives the property map at apply time.
         assertThat(entry.getParams()).isNull();
-        // The stored payload is the canonical (key-sorted) serialization of the property map the call site built.
-        assertThat(entry.getPayload()).isEqualTo(objectMapper.writeValueAsString(new TreeMap<>(dto.toPropertyMap())));
         // No write must reach Weaviate from the request path; the only Weaviate entry point is getCollection.
         verify(weaviateService, never()).getCollection(any());
         verify(eventPublisher).publishEvent(any(WeaviateOutboxEnqueuedEvent.class));
@@ -120,7 +118,6 @@ class SearchableEntityWeaviateServiceEnqueueTest {
         assertThat(entry.getOperation()).isEqualTo(WeaviateOutboxOperation.DELETE_ENTITY);
         assertThat(entry.getEntityType()).isEqualTo(SearchableEntitySchema.TypeValues.FAQ);
         assertThat(entry.getEntityId()).isEqualTo(55L);
-        assertThat(entry.getPayload()).isNull();
         verify(weaviateService, never()).getCollection(any());
     }
 
@@ -156,7 +153,6 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     private void assertBulkDelete(WeaviateOutboxEntry entry, WeaviateOutboxOperation operation, String paramKey, long paramValue) throws Exception {
         assertThat(entry.getOperation()).isEqualTo(operation);
         assertThat(entry.getEntityType()).isNull();
-        assertThat(entry.getPayload()).isNull();
         Map<String, Object> params = objectMapper.readValue(entry.getParams(), new TypeReference<>() {
         });
         assertThat(((Number) params.get(paramKey)).longValue()).isEqualTo(paramValue);

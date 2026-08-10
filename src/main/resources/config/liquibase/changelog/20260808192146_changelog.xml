@@ -6,9 +6,9 @@
         weaviate_outbox stores the intent of every SearchableEntities write (upsert or delete) as a durable
         row. A single-writer dispatcher on the scheduling node reads due rows in id order (no locking, since it
         is the only writer) and performs the actual Weaviate write with retry/backoff, so a Weaviate outage or
-        node death no longer loses the write. UPSERT rows carry a payload snapshot (the property map the call
-        site already built);
-        bulk delete rows carry their parameters as JSON.
+        node death no longer loses the write. An UPSERT row carries only (entity_type, entity_id) and the
+        dispatcher re-derives the current property map from the database at dispatch time; bulk delete rows
+        carry their parameters as JSON.
 
         searchable_entity_sync_state records, per (entity_type, entity_id), the content hash last confirmed
         written to Weaviate. The dispatcher refreshes it on a successful upsert; a later reconcile pass reads it
@@ -24,7 +24,6 @@
             </column>
             <column name="entity_type" type="varchar(64)"/>
             <column name="entity_id" type="bigint"/>
-            <column name="payload" type="longtext"/>
             <column name="params" type="text"/>
             <column defaultValueNumeric="0" name="attempts" type="int">
                 <constraints nullable="false"/>

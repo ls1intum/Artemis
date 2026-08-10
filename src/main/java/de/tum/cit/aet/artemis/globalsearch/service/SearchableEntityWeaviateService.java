@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
@@ -199,7 +200,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert exercise without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), dto.toPropertyMap());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId());
     }
 
     /**
@@ -218,7 +219,7 @@ public class SearchableEntityWeaviateService {
                 log.warn("Cannot upsert exercise without an ID for exam {}", examId);
                 continue;
             }
-            saveUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), dto.toPropertyMap());
+            saveUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId());
             enqueued++;
         }
         if (enqueued > 0) {
@@ -239,7 +240,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert lecture without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE, dto.lectureId(), dto.toPropertyMap());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE, dto.lectureId());
     }
 
     // ----- LectureUnit sync -----
@@ -254,7 +255,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert lecture unit without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE_UNIT, dto.lectureUnitId(), dto.toPropertyMap());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE_UNIT, dto.lectureUnitId());
     }
 
     /**
@@ -280,7 +281,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert exam without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.EXAM, dto.examId(), dto.toPropertyMap());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.EXAM, dto.examId());
     }
 
     // ----- FAQ sync -----
@@ -295,7 +296,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert faq without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.FAQ, dto.faqId(), dto.toPropertyMap());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.FAQ, dto.faqId());
     }
 
     // ----- Channel sync -----
@@ -310,7 +311,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert channel without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.CHANNEL, dto.channelId(), dto.toPropertyMap());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.CHANNEL, dto.channelId());
     }
 
     // ----- Course sync -----
@@ -325,7 +326,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert course without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.COURSE, dto.courseId(), dto.toPropertyMap());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.COURSE, dto.courseId());
     }
 
     // ----- Post sync -----
@@ -340,7 +341,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert post without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.POST, dto.postId(), dto.toPropertyMap());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.POST, dto.postId());
     }
 
     // ----- Answer Post sync -----
@@ -355,7 +356,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert answer post without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.ANSWER_POST, dto.answerPostId(), dto.toPropertyMap());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.ANSWER_POST, dto.answerPostId());
     }
 
     /**
@@ -415,15 +416,16 @@ public class SearchableEntityWeaviateService {
     // ----- Enqueue helpers -----
 
     /**
-     * Serializes and saves a single UPSERT outbox row without signalling the dispatcher.
+     * Saves a single UPSERT outbox row without signalling the dispatcher. The row stores only the entity
+     * identity; the dispatcher re-derives the current property map from the database when it applies the row.
      * Used both directly (single-entity upserts, followed by a signal) and in the exam-refresh loop.
      */
-    private void saveUpsert(String type, Long entityId, Map<String, Object> propertyMap) {
-        outboxRepository.save(WeaviateOutboxEntry.forUpsert(type, entityId, serializeMap(propertyMap)));
+    private void saveUpsert(String type, Long entityId) {
+        outboxRepository.save(WeaviateOutboxEntry.forUpsert(type, entityId));
     }
 
-    private void enqueueUpsert(String type, Long entityId, Map<String, Object> propertyMap) {
-        saveUpsert(type, entityId, propertyMap);
+    private void enqueueUpsert(String type, Long entityId) {
+        saveUpsert(type, entityId);
         log.debug("Enqueued upsert for {} {}", type, entityId);
         signalEnqueued();
     }
@@ -452,7 +454,7 @@ public class SearchableEntityWeaviateService {
             return objectMapper.writeValueAsString(new TreeMap<>(map));
         }
         catch (JsonProcessingException e) {
-            throw new WeaviateException("Failed to serialize Weaviate outbox payload: " + e.getMessage(), e);
+            throw new WeaviateException("Failed to serialize Weaviate outbox data: " + e.getMessage(), e);
         }
     }
 
@@ -494,23 +496,23 @@ public class SearchableEntityWeaviateService {
                 yield Optional.empty();
             }
             case DELETE_POSTS_FOR_CHANNEL -> {
-                doDeletePostsForChannel(longParam(entry, "channelId"));
+                doDeletePostsForChannel(longParam(entry, "channelId"), entry.getId());
                 yield Optional.empty();
             }
             case DELETE_POSTS_FOR_COURSE -> {
-                doDeletePostsForCourse(longParam(entry, "courseId"));
+                doDeletePostsForCourse(longParam(entry, "courseId"), entry.getId());
                 yield Optional.empty();
             }
             case DELETE_ANSWER_POSTS_FOR_POST -> {
-                doDeleteAnswerPostsForPost(longParam(entry, "postId"));
+                doDeleteAnswerPostsForPost(longParam(entry, "postId"), entry.getId());
                 yield Optional.empty();
             }
             case DELETE_ALL_FOR_COURSE -> {
-                doDeleteAllForCourse(longParam(entry, "courseId"));
+                doDeleteAllForCourse(longParam(entry, "courseId"), entry.getId());
                 yield Optional.empty();
             }
             case DELETE_LECTURE_UNITS_FOR_LECTURE -> {
-                doDeleteLectureUnitsForLecture(longParam(entry, "lectureId"));
+                doDeleteLectureUnitsForLecture(longParam(entry, "lectureId"), entry.getId());
                 yield Optional.empty();
             }
         };
@@ -519,13 +521,21 @@ public class SearchableEntityWeaviateService {
     /**
      * Re-derives the entity and either upserts its current property map (returning the written content hash) or,
      * when it no longer exists or is no longer indexable, converges to a delete (returning {@link Optional#empty()}).
+     * <p>
+     * The written row is stamped with {@link SearchableEntitySchema.Properties#SOURCE_SEQ} equal to this entry's
+     * outbox id, so a later bulk delete can fence it (see {@link #writtenBefore}). The stamp is intentionally
+     * excluded from the content hash, which is computed over the re-derived property map only, so the sync ledger
+     * keeps detecting content drift rather than flapping on every write.
      */
     private Optional<String> applyUpsert(WeaviateOutboxEntry entry) {
         Optional<Map<String, Object>> desired = resolver.resolve(entry.getEntityType(), entry.getEntityId());
         if (desired.isPresent()) {
             Map<String, Object> properties = desired.get();
-            upsertRow(entry.getEntityType(), entry.getEntityId(), properties);
-            return Optional.of(sha256Hex(serializeMap(properties)));
+            String contentHash = sha256Hex(serializeMap(properties));
+            Map<String, Object> propertiesToWrite = new HashMap<>(properties);
+            propertiesToWrite.put(SearchableEntitySchema.Properties.SOURCE_SEQ, entry.getId());
+            upsertRow(entry.getEntityType(), entry.getEntityId(), propertiesToWrite);
+            return Optional.of(contentHash);
         }
         deleteEntityInternal(entry.getEntityType(), entry.getEntityId());
         return Optional.empty();
@@ -537,7 +547,7 @@ public class SearchableEntityWeaviateService {
             });
         }
         catch (JsonProcessingException e) {
-            throw new WeaviateException("Failed to deserialize Weaviate outbox payload: " + e.getMessage(), e);
+            throw new WeaviateException("Failed to deserialize Weaviate outbox data: " + e.getMessage(), e);
         }
     }
 
@@ -594,30 +604,48 @@ public class SearchableEntityWeaviateService {
                 type + " " + entityId);
     }
 
-    private void doDeleteLectureUnitsForLecture(long lectureId) {
+    private void doDeleteLectureUnitsForLecture(long lectureId, long deleteOutboxId) {
         deleteManyOrThrow(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE_UNIT),
-                Filter.property(SearchableEntitySchema.Properties.LECTURE_ID).eq(lectureId)), "lecture unit rows for lecture " + lectureId);
+                Filter.property(SearchableEntitySchema.Properties.LECTURE_ID).eq(lectureId), writtenBefore(deleteOutboxId)), "lecture unit rows for lecture " + lectureId);
     }
 
-    private void doDeleteAnswerPostsForPost(long postId) {
+    private void doDeleteAnswerPostsForPost(long postId, long deleteOutboxId) {
         deleteManyOrThrow(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST),
-                Filter.property(SearchableEntitySchema.Properties.POST_ID).eq(postId)), "answer post rows for post " + postId);
+                Filter.property(SearchableEntitySchema.Properties.POST_ID).eq(postId), writtenBefore(deleteOutboxId)), "answer post rows for post " + postId);
     }
 
-    private void doDeletePostsForChannel(long channelId) {
+    private void doDeletePostsForChannel(long channelId, long deleteOutboxId) {
         var typeFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
                 Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST));
-        deleteManyOrThrow(Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.CHANNEL_ID).eq(channelId)), "post/answer post rows for channel " + channelId);
+        deleteManyOrThrow(Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.CHANNEL_ID).eq(channelId), writtenBefore(deleteOutboxId)),
+                "post/answer post rows for channel " + channelId);
     }
 
-    private void doDeletePostsForCourse(long courseId) {
+    private void doDeletePostsForCourse(long courseId, long deleteOutboxId) {
         var typeFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
                 Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST));
-        deleteManyOrThrow(Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId)), "post/answer post rows for course " + courseId);
+        deleteManyOrThrow(Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId), writtenBefore(deleteOutboxId)),
+                "post/answer post rows for course " + courseId);
     }
 
-    private void doDeleteAllForCourse(long courseId) {
-        deleteManyOrThrow(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId), "rows for course " + courseId);
+    private void doDeleteAllForCourse(long courseId, long deleteOutboxId) {
+        deleteManyOrThrow(Filter.and(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId), writtenBefore(deleteOutboxId)), "rows for course " + courseId);
+    }
+
+    /**
+     * Fence for bulk deletes. Matches only rows whose {@link SearchableEntitySchema.Properties#SOURCE_SEQ} is
+     * strictly less than the bulk delete's own outbox id, or that carry no {@code source_seq} at all (rows written
+     * before this fence existed or seeded outside the outbox, which predate every delete).
+     * <p>
+     * Because a per-entity upsert enqueued after this delete has a larger outbox id, its row's {@code source_seq}
+     * is larger and the fence spares it. This closes the last ordering hazard the per-entity collapse cannot: a
+     * bulk delete deferred by backoff waking up after a newer in-scope upsert already succeeded and erasing it.
+     *
+     * @param deleteOutboxId the outbox id of the bulk delete entry being applied
+     * @return a filter selecting only rows written strictly before this delete
+     */
+    private static Filter writtenBefore(long deleteOutboxId) {
+        return Filter.or(Filter.property(SearchableEntitySchema.Properties.SOURCE_SEQ).lt(deleteOutboxId), Filter.property(SearchableEntitySchema.Properties.SOURCE_SEQ).isNull());
     }
 
     /**
