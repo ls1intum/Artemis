@@ -198,6 +198,45 @@ describe('date-time-picker reports unparseable input to its form control', () =>
             expect(host.form.controls.softDueDate.value).toBeUndefined();
         });
 
+        // reset() on a field that was still empty writes a value equal to the held one, so it takes writeValue's
+        // idempotency early return. The pending entry has to be dropped before that return, or widening a bound
+        // afterwards writes the discarded date into the form.
+        it('does not resurrect a rejected date after a reset of a still-empty field', () => {
+            picker.updateField(max.add(3, 'day').toDate());
+            fixture.detectChanges();
+            expect(host.form.valid).toBe(false);
+
+            host.form.reset();
+            fixture.detectChanges();
+            expect(host.form.valid).toBe(true);
+
+            host.max.set(max.add(1, 'year'));
+            fixture.detectChanges();
+
+            expect(host.form.valid).toBe(true);
+            // reset() leaves the control at null rather than undefined; what matters is that the discarded
+            // date did not come back.
+            expect(host.form.controls.softDueDate.value ?? undefined).toBeUndefined();
+        });
+
+        it('does not resurrect a rejected date after the parent rewrites the value it already held', () => {
+            const held = min.add(2, 'day');
+            host.form.controls.softDueDate.setValue(held);
+            fixture.detectChanges();
+            picker.updateField(max.add(3, 'day').toDate());
+            fixture.detectChanges();
+            expect(host.form.valid).toBe(false);
+
+            // The parent writes the same date it already had, which is an equal write.
+            host.form.controls.softDueDate.setValue(held);
+            fixture.detectChanges();
+
+            host.max.set(max.add(1, 'year'));
+            fixture.detectChanges();
+
+            expect(host.form.controls.softDueDate.value?.toISOString()).toBe(held.toISOString());
+        });
+
         it('does not resurrect a rejected date after the parent wrote a new value', () => {
             picker.updateField(max.add(3, 'day').toDate());
             fixture.detectChanges();

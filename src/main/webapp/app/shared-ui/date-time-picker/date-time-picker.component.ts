@@ -260,6 +260,12 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
     writeValue(value?: dayjs.Dayjs | Date | null) {
         // convert dayjs to date, because p-datepicker only works correctly with date objects
         const next = dayjs.isDayjs(value) ? value.toDate() : (value ?? null);
+        // A programmatic write supersedes whatever the user had typed, so both pending-entry flags drop here,
+        // ABOVE the idempotency guard. Resetting an already-empty field writes an equal value and takes the
+        // early return below, and an entry left behind there would be written into the form by the next bound
+        // change - handing the parent a date it had just discarded.
+        this.rejectedEntry = undefined;
+        this.needsParentSync = false;
         // Idempotency guard: Angular re-invokes writeValue on every change-detection pass while
         // p-datepicker's CVA write calls markForCheck. Re-setting the `value` signal with an equal
         // value would never let change detection settle (NG0103), so skip no-op writes.
@@ -269,9 +275,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
             this.updateSignals();
             return;
         }
-        // The parent replaced what the field held, so a rejected entry from before is stale and must not be
-        // accepted later by a moving bound.
-        this.rejectedEntry = undefined;
         this.value.set(next);
         this.updateSignals();
         this.reflectValueInPicker(next);
