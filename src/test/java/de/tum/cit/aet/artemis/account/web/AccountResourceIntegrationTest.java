@@ -823,4 +823,22 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.PASSWORD);
         assertThat(loginOptions.idpName()).isNull();
     }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForOverlyLongIdentifierReturnsBadRequest() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("usernameOrEmail", "a".repeat(256));
+
+        request.get("/api/core/public/login-options", HttpStatus.BAD_REQUEST, LoginOptionsDTO.class, params);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForIdentifierAtTheLengthLimitIsAccepted() throws Exception {
+        // the limit itself has to stay valid, so only what exceeds it is rejected
+        LoginOptionsDTO loginOptions = getLoginOptions("a".repeat(255));
+
+        assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.PASSWORD);
+    }
 }
