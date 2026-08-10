@@ -3,16 +3,15 @@ package de.tum.cit.aet.artemis.quiz.domain;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+
 /**
  * Counts rated and unrated results for one integer point bucket of a {@link QuizPointStatistic}.
  * <p>
  * Point counters are stored as a JSON list in {@code quiz_statistic.counters}. Their ids are local to the owning statistic and remain stable while the bucket exists.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PointCounter {
-
-    @JsonProperty("id")
-    private Long id;
+public class PointCounter extends DomainObject {
 
     @JsonProperty("points")
     private double points;
@@ -22,14 +21,6 @@ public class PointCounter {
 
     @JsonProperty("unRatedCounter")
     private int unRatedCounter;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public double getPoints() {
         return points;
