@@ -146,7 +146,10 @@ int execveat(int dirfd, const char* pathname, char* const argv[], char* const en
 }
 
 int kill(pid_t pid, int sig) {
-    if (pid == 0 || pid == -1) {
+    // Only a signal to a single, named process gets through. Every pid <= 0 addresses more than one
+    // process: 0 is the caller's own process group, -1 is every process the user may signal, and any
+    // other negative pid is the process group -pid.
+    if (pid <= 0) {
         printf("You're not allowed to send signals to PID %i! This will be reported.\n", pid);
         return -1;
     }

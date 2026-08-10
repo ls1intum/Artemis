@@ -509,22 +509,35 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     /**
-     * Keeps the beginning and the end of an over-long log, rather than only the end.
+     * Keeps the beginning and the end of an over-long log, rather than only the end, and never returns more
+     * than {@code maxCharacters} in total.
      * <p>
      * A crashing sanitizer run prints the same line until its output limit is reached, which fills a
      * tail-only excerpt entirely with copies of that line. The first lines are where the diagnosis
      * actually is -- the error header, the mapping it failed on, the test case that was running --
      * so keep both ends and say how much was dropped in between.
+     * <p>
+     * The marker counts against the budget: it is sized from the largest number it could carry (the whole
+     * input length) before the remainder is split, so the result honours {@code maxCharacters} whatever the
+     * digit count of the actual omission turns out to be.
      */
     private String trimToExcerpt(String input, int maxCharacters) {
         if (input.length() <= maxCharacters) {
             return input;
         }
-        int headLength = maxCharacters / 2;
-        int tailLength = maxCharacters - headLength;
-        int omitted = input.length() - maxCharacters;
-        return input.substring(0, headLength) + System.lineSeparator() + "... [" + omitted + " characters omitted] ..." + System.lineSeparator()
-                + input.substring(input.length() - tailLength);
+        int markerBudget = omissionMarker(input.length()).length();
+        int contentBudget = maxCharacters - markerBudget;
+        if (contentBudget <= 0) {
+            // No room for both ends and a marker — the head is the more useful half.
+            return input.substring(0, maxCharacters);
+        }
+        int headLength = contentBudget / 2;
+        int tailLength = contentBudget - headLength;
+        return input.substring(0, headLength) + omissionMarker(input.length() - contentBudget) + input.substring(input.length() - tailLength);
+    }
+
+    private String omissionMarker(int omittedCharacters) {
+        return System.lineSeparator() + "... [" + omittedCharacters + " characters omitted] ..." + System.lineSeparator();
     }
 
     private void initializeLazyLocalCIServices() {
