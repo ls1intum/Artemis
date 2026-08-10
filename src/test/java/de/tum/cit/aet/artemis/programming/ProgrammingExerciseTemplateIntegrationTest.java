@@ -596,6 +596,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         String uniqueId = UUID.randomUUID().toString().substring(0, 8).replace("-", "");
         String originalShortName = exercise.getShortName();
         exercise.setShortName(originalShortName + uniqueId);
+        // The factory already derived a project key (and the test repository URI) from the original short name. The
+        // server derives the key from course and short name itself and never takes it from the request body, so the
+        // fixture has to re-derive it here or the connector mocks below would be registered for the stale key.
+        exercise.forceNewProjectKey();
         log.debug("Running test with unique exercise short name: {}", exercise.getShortName());
 
         exercise.setProgrammingLanguage(language);

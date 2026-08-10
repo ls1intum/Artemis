@@ -38,6 +38,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * {@code course} reuses the shared {@link CourseRefDTO}: the unchanged client posts a nested course object and the
  * server re-loads the course by id. Client-posted {@code templateParticipation}/{@code solutionParticipation} stubs
  * are ignored via {@code ignoreUnknown}.
+ * <p>
+ * {@code projectKey} is deliberately absent. The entity request body accepted it - Jackson infers the private field as
+ * a mutator because a public getter of the same name exists - so a client could name the VCS/CI project of the
+ * exercise it created. The key is derived from course and exercise short name, and it is derived here now.
  *
  * @param id                                         the exercise id; must be {@code null} for a valid creation
  * @param title                                      the exercise title
