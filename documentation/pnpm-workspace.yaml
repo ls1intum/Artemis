@@ -18,7 +18,7 @@ overrides:
   body-parser: '1.20.6'
   brace-expansion: '5.0.9'
   # Kept on the 3.x line (consumers require ^3).
-  fast-uri: '3.1.4'
+  fast-uri: '3.1.5'
   follow-redirects: '1.16.0'
   http-proxy-middleware: '3.0.7'
   joi: '17.13.4'
