@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
-import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { TimelineComponent, TimelineItem, TimelineStatus, TimelineValidationMode } from 'app/shared-ui/timeline/timeline.component';
 
 @Component({
     selector: 'jhi-exam-timeline',
@@ -8,6 +8,7 @@ import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/t
     templateUrl: './exam-timeline.component.html',
 })
 export class ExamTimelineComponent {
+    readonly TimelineValidationMode = TimelineValidationMode;
     readonly testExam = input(false);
     readonly visibleDate = model<Dayjs | undefined>();
     readonly startDate = model<Dayjs | undefined>();

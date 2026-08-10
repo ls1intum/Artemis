@@ -32,11 +32,16 @@ export interface TimelineStatus {
 type InternalTimelineItem = TimelineItem & {
     internalDate: Date | undefined;
     isInputRequiredButUndefined: boolean;
-    isBeforePreviousDate: boolean;
+    hasInvalidDateOrder: boolean;
     isOtherRequiredItemDateUndefined: boolean;
     isInvalidInput: boolean;
     tooltip: string | undefined;
 };
+
+export enum TimelineValidationMode {
+    SEQUENTIALLY_STRICT = 'SEQUENTIALLY_STRICT',
+    SEQUENTIALLY_ALLOW_EQUAL = 'SEQUENTIALLY_ALLOW_EQUAL',
+}
 
 @Component({
     selector: 'jhi-timeline',
@@ -55,6 +60,7 @@ export class TimelineComponent {
     private invalidInputKeys = signal<Set<string>>(new Set());
 
     timelineItems = input.required<TimelineItem[]>();
+    validationMode = input<TimelineValidationMode>(TimelineValidationMode.SEQUENTIALLY_ALLOW_EQUAL);
     readonly = input<boolean>(false);
     /** Dates governed by the variant group: datepickers are disabled and clicks emit {@link lockedClick}. */
     lockedToGroup = input<boolean>(false);
@@ -136,11 +142,12 @@ export class TimelineComponent {
         return this.timelineItems().map((item, index, items) => {
             this.currentLocale();
             const date = item.date();
-            const isBeforePreviousDate =
+            const itemsToCheckAgainst = item.orderCheckAgainst ?? items.slice(0, index);
+            const hasInvalidDateOrder =
                 date !== undefined &&
-                (item.orderCheckAgainst ?? items.slice(0, index)).some((previousItem) => {
+                itemsToCheckAgainst.some((previousItem) => {
                     const previousDate = previousItem.date();
-                    return previousDate !== undefined && date.isBefore(previousDate);
+                    return previousDate !== undefined && this.isDateOrderInvalid(date, previousDate);
                 });
             const isInputRequiredButUndefined = item.kind === 'required' && date === undefined;
             const otherRequiredItem = item.otherRequiredItem;
@@ -149,8 +156,12 @@ export class TimelineComponent {
             let tooltip: string | undefined;
             if (isInvalidInput) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateInvalidTooltip');
-            } else if (isBeforePreviousDate) {
-                tooltip = this.translateService.instant('artemisApp.exercise.timelineDateOrderTooltip');
+            } else if (hasInvalidDateOrder) {
+                const tooltipKey =
+                    this.validationMode() === TimelineValidationMode.SEQUENTIALLY_STRICT
+                        ? 'artemisApp.exercise.timelineDateStrictOrderTooltip'
+                        : 'artemisApp.exercise.timelineDateOrderTooltip';
+                tooltip = this.translateService.instant(tooltipKey);
             } else if (isInputRequiredButUndefined) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateRequiredTooltip');
             } else if (isOtherRequiredItemDateUndefined && otherRequiredItem) {
@@ -165,7 +176,7 @@ export class TimelineComponent {
                 otherRequiredItem: item.otherRequiredItem,
                 internalDate: date?.toDate(),
                 isInputRequiredButUndefined,
-                isBeforePreviousDate,
+                hasInvalidDateOrder,
                 isOtherRequiredItemDateUndefined,
                 isInvalidInput,
                 tooltip,
@@ -173,10 +184,17 @@ export class TimelineComponent {
         });
     }
 
+    private isDateOrderInvalid(date: Dayjs, previousDate: Dayjs): boolean {
+        if (this.validationMode() === TimelineValidationMode.SEQUENTIALLY_STRICT) {
+            return !date.isAfter(previousDate);
+        }
+        return date.isBefore(previousDate);
+    }
+
     private computeExerciseTimelineStatus(): TimelineStatus {
         const items = this.internalTimelineItems();
         return {
-            valid: items.every((item) => !item.isBeforePreviousDate && !item.isInputRequiredButUndefined && !item.isOtherRequiredItemDateUndefined && !item.isInvalidInput),
+            valid: items.every((item) => !item.hasInvalidDateOrder && !item.isInputRequiredButUndefined && !item.isOtherRequiredItemDateUndefined && !item.isInvalidInput),
             empty: items.some((item) => item.date() === undefined),
         };
     }

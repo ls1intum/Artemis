@@ -185,7 +185,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidConfiguration).toBe(false);
         });
 
-        it('should accept equal visible and start dates through the timeline', async () => {
+        it('should reject equal visible and start dates through the timeline', async () => {
             const startDate = dayjs().add(1, 'hour').startOf('minute');
             examWithoutExercises.visibleDate = startDate;
             examWithoutExercises.startDate = startDate;
@@ -195,8 +195,8 @@ describe('ExamUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.timelineStatus().valid).toBe(true);
-            expect(component.isValidConfiguration).toBe(true);
+            expect(component.timelineStatus().valid).toBe(false);
+            expect(component.isValidConfiguration).toBe(false);
         });
 
         it('should invalidate the configuration when an exam text exceeds the maximum length', () => {

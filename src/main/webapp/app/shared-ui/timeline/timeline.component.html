@@ -17,7 +17,7 @@
         <div class="timeline-item-row">
             @let isInvalid =
                 internalItem.isInvalidInput ||
-                internalItem.isBeforePreviousDate ||
+                internalItem.hasInvalidDateOrder ||
                 internalItem.isOtherRequiredItemDateUndefined ||
                 (dateModel.touched && internalItem.isInputRequiredButUndefined);
             <div class="timeline-graphic">

@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { MockComponent } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TimelineComponent } from 'app/shared-ui/timeline/timeline.component';
+import { TimelineComponent, TimelineValidationMode } from 'app/shared-ui/timeline/timeline.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExamTimelineComponent } from './exam-timeline.component';
 
@@ -37,6 +37,13 @@ describe('ExamTimelineComponent', () => {
         ]);
         expect(component.timelineItems().map((item) => item.date)).toEqual([component.visibleDate, component.startDate, component.endDate]);
         expect(component.timelineItems().every((item) => item.kind === 'required')).toBe(true);
+    });
+
+    it('should use sequentially strict timeline validation', () => {
+        fixture.detectChanges();
+        const timeline = fixture.debugElement.query(By.directive(TimelineComponent)).componentInstance as unknown as { validationMode: TimelineValidationMode };
+
+        expect(timeline.validationMode).toBe(TimelineValidationMode.SEQUENTIALLY_STRICT);
     });
 
     it('should use the working-window labels for a test exam', () => {
