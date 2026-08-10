@@ -678,6 +678,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                     complete: () => {
                         this.prepareSidebarData();
                     },
+                    error: () => {
+                        // The group chat itself was created, only reloading the conversations failed. Leave the sidebar as
+                        // it is rather than rebuilding it from a list that never arrived; the service reported the error.
+                    },
                 });
             });
     }
@@ -697,6 +701,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                     this.metisConversationService.createOneToOneChat(chatPartner.login).subscribe({
                         complete: () => {
                             this.prepareSidebarData();
+                        },
+                        error: () => {
+                            // see above, the chat exists and only the reload of the conversations failed
                         },
                     });
                 }
