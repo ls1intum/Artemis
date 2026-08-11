@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -245,23 +247,18 @@ public class AutonomousTutorService {
      */
     private Set<ConversationNotificationRecipientSummary> getReviewNotificationRecipients(Conversation conversation, Course course) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            return userRepository.findStaffNotificationRecipientsInCourseForConversation(conversation.getId(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(),
-                    course.getInstructorGroupName());
+            return userRepository.findStaffNotificationRecipientsInCourseForConversation(conversation.getId(), course.getId());
         }
         return getNotificationRecipients(conversation, course).stream().filter(ConversationNotificationRecipientSummary::isAtLeastTutorInCourse).collect(Collectors.toSet());
     }
 
     private Set<ConversationNotificationRecipientSummary> getNotificationRecipients(Conversation conversation, Course course) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
-                    course.getEditorGroupName(), course.getInstructorGroupName());
+            return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getId());
         }
-        var taGroup = course.getTeachingAssistantGroupName();
-        var editorGroup = course.getEditorGroupName();
-        var instructorGroup = course.getInstructorGroupName();
-        return conversationParticipantRepository.findConversationParticipantsWithUserGroupsByConversationId(conversation.getId()).stream().map(participant -> {
-            var groups = participant.getUser().getGroups();
-            boolean isAtLeastTutor = groups.contains(taGroup) || groups.contains(editorGroup) || groups.contains(instructorGroup);
+        return conversationParticipantRepository.findConversationParticipantsWithUserCourseRolesByConversationId(conversation.getId()).stream().map(participant -> {
+            var rolesInCourse = participant.getUser().getCourseRolesByCourseId().getOrDefault(course.getId(), EnumSet.noneOf(CourseRole.class));
+            boolean isAtLeastTutor = rolesInCourse.stream().anyMatch(role -> role.isAtLeast(CourseRole.TEACHING_ASSISTANT));
             return new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(), participant.getIsHidden() != null && participant.getIsHidden(),
                     isAtLeastTutor);
         }).collect(Collectors.toSet());

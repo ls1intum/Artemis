@@ -31,7 +31,7 @@ export default [
         },
     },
     {
-        files: ['src/**/*.{ts,tsx}'],
+        files: ['src/**/*.{ts,tsx}', 'tests/**/*.ts'],
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {

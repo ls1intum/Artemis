@@ -79,8 +79,7 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
         greenMail.reset();
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setInstructorGroupName(TEST_PREFIX + "instructor");
-        courseRepository.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         doReturn(true).when(mailSendingService).isMailConfigured();
     }
@@ -106,7 +105,7 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
 
     @Test
     void shouldNotNotifyInstructorsWhoOptedOut() {
-        var optedOutInstructor = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        var optedOutInstructor = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         optOutSetting = new GlobalNotificationSetting();
         optOutSetting.setUserId(optedOutInstructor.getId());
         optOutSetting.setNotificationType(GlobalNotificationType.MAVEN_CENTRAL_RATE_LIMIT);
@@ -124,8 +123,7 @@ class MavenCentralRateLimitNotificationServiceIntegrationTest extends AbstractPr
     void shouldNotifyInstructorsForExamExercises() {
         var examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise("Maven Rate Limit Exam Exercise", "MVN429EXAM", false);
         var examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
-        examCourse.setInstructorGroupName(TEST_PREFIX + "instructor");
-        courseRepository.save(examCourse);
+        userUtilService.enrollPrefixedUsersInCourse(examCourse, TEST_PREFIX);
 
         mavenCentralRateLimitNotificationService.notifyInstructorsIfBuildWasRateLimited(examExercise.getId(), examExercise.getProgrammingLanguage(), rateLimitedBuildLogs());
 

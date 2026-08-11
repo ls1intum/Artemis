@@ -29,8 +29,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { defer, finalize } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { AccountService } from 'app/core/auth/account.service';
@@ -473,9 +472,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
 
             if (backupInstructionIndex != undefined && backupInstructionIndex >= 0) {
-                instructions[instructionIndex] = cloneDeep(
-                    this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions[backupInstructionIndex],
-                );
+                instructions[instructionIndex] = cloneDeep(this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions[backupInstructionIndex]);
             }
         }
         if (backupCriterionIndex < 0 || backupInstructionIndex == undefined || backupInstructionIndex < 0) {
@@ -675,9 +672,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             gradingInstructionFeedbackUsed: exercise.gradingInstructionFeedbackUsed,
         };
         this.isGenerating.set(true);
-        defer(() =>
-            this.generationService.generate(exercise, { exampleSolution, additionalContext }),
-        )
+        defer(() => this.generationService.generate(exercise, { exampleSolution, additionalContext }))
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.isGenerating.set(false)),

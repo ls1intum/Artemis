@@ -37,6 +37,7 @@ export interface UserAddAction {
 
                 &:hover {
                     background: var(--overview-card-hover-bg, var(--bs-tertiary-bg));
+                    color: var(--overview-card-hover-color, var(--bs-body-color));
                     border-color: var(--bs-secondary-border-subtle);
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
                 }
@@ -70,25 +71,25 @@ export class UserManagementDropdownComponent {
         return [
             {
                 icon: faSchool,
-                routerLink: [`/course-management/${id}/groups/students`],
+                routerLink: [`/course-management/${id}/members/students`],
                 label: 'entity.action.addStudent',
                 id: 'add-student',
             },
             {
                 icon: faPersonChalkboard,
-                routerLink: [`/course-management/${id}/groups/tutors`],
+                routerLink: [`/course-management/${id}/members/tutors`],
                 label: 'entity.action.addTutor',
                 id: 'add-tutor',
             },
             {
                 icon: faListAlt,
-                routerLink: [`/course-management/${id}/groups/editors`],
+                routerLink: [`/course-management/${id}/members/editors`],
                 label: 'entity.action.addEditor',
                 id: 'add-editor',
             },
             {
                 icon: faGraduationCap,
-                routerLink: [`/course-management/${id}/groups/instructors`],
+                routerLink: [`/course-management/${id}/members/instructors`],
                 label: 'entity.action.addInstructor',
                 id: 'add-instructor',
             },

@@ -198,14 +198,6 @@
                 "title": "Frist für Feedbackanfragen von Studierenden in Tagen nach dem Ergebnis",
                 "description": "Diese Zahl bezieht sich auf die Tage, nachdem das Ergebnis verfügbar ist (Einreichungsfrist der Bewertung oder Ergebnisdatum, je nachdem, welches später liegt). Studierende können nach Ablauf dieser Frist nicht mehr Feedback anfragen."
             },
-            "customizeGroupNames": {
-                "title": "Passe Gruppennamen an",
-                "description": "Das Anpassen der Gruppennamen sollte nicht nötig sein und kann dazu führen, dass Nutzer:innen den Zugang zum Kurs verlieren. Stelle sicher, dass du einen guten Grund für das Anpassen der Gruppennamen hast."
-            },
-            "studentGroupName": "Gruppe der Studierenden",
-            "teachingAssistantGroupName": "Gruppe der Tutor:innen",
-            "editorGroupName": "Gruppe der Editor:innen",
-            "instructorGroupName": "Gruppe der Lehrenden",
             "description": "Kursbeschreibung",
             "organizations": "Kurs Organisationen",
             "startDate": "Start",
@@ -216,7 +208,10 @@
             "recentlyAccessed": "Zuletzt verwendet",
             "maxPoints": {
                 "title": "Max. Punktzahl des Kurses",
-                "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mithilfe der im Kurs erreichbaren Punkte berechnet."
+                "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mithilfe der im Kurs erreichbaren Punkte berechnet.",
+                "min": "Die maximale Punktzahl muss mindestens 1 betragen.",
+                "max": "Die maximale Punktzahl darf {{ max }} nicht überschreiten.",
+                "wholeNumber": "Die maximale Punktzahl muss eine ganze Zahl sein."
             },
             "accuracyOfScores": {
                 "title": "Nachkommastellen für Ergebnisberechnungen",
@@ -228,6 +223,14 @@
                 "title": "Testkurs",
                 "description": "Aktiviere diese Checkbox für Kurse die für Testzwecke sind.",
                 "plural": "Testkurse"
+            },
+            "gradeRelevant": {
+                "title": "Notenrelevanter Kurs",
+                "description": "Bei notenrelevanten Kursen (deren Ergebnisse z. B. in offizielle Noten oder Prüfungsunterlagen einfließen) werden die Studierendendaten für die gesetzlich vorgeschriebene Aufbewahrungsfrist (standardmäßig 5 Jahre) gespeichert. Deaktiviere dies für nicht notenrelevante Kurse, damit deren Studierendendaten gemäß Datenschutzrecht früher (standardmäßig nach 1 Jahr) gelöscht werden."
+            },
+            "dataRetentionHold": {
+                "title": "Aufbewahrungssperre",
+                "description": "Aktiviere dies, solange ein Widerspruch oder ein Rechtsstreit zu diesem Kurs anhängig ist. Ein laufendes Verfahren verlängert die Aufbewahrungsfrist gesetzlich. Ein gesperrter Kurs wird deshalb weder für die automatische Löschung alter Studierendendaten vorgemerkt noch gelöscht. Deaktiviere die Sperre, sobald das Verfahren abgeschlossen ist."
             },
             "accessGroups": "Zugriffsrechte",
             "learningPaths": {
@@ -425,7 +428,9 @@
                     "unenrollmentAfterEnrollmentEnd": "Das Abmeldungsenddatum muss nach dem Einschreibungsenddatum liegen.",
                     "unenrollmentBeforeCourseEndDate": "Das Abmeldungsenddatum darf nicht nach dem Kursenddatum liegen.",
                     "accuracyOfScoresRange": "Dezimalstellen für Bewertungsberechnungen müssen zwischen 0 und 5 liegen.",
-                    "maxPointsPositive": "Maximale Punkte müssen größer als 0 sein."
+                    "maxPointsPositive": "Maximale Punkte müssen größer als 0 sein.",
+                    "maxPointsWholeNumber": "Die maximale Punktzahl muss eine ganze Zahl sein.",
+                    "maxPointsTooHigh": "Die maximale Punktzahl darf {{ max }} nicht überschreiten."
                 },
                 "generalSettings": {
                     "title": "Allgemein",

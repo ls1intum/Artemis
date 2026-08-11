@@ -28,12 +28,23 @@ public interface ExerciseGroupRepository extends ArtemisJpaRepository<ExerciseGr
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<ExerciseGroup> findWithExercisesById(Long exerciseGroupId);
 
+    /**
+     * Finds the exercise groups of an exam, in their stored order, with their exercises.
+     * <p>
+     * The course is fetch-joined even though no caller reads it: {@code Exam.course} is a {@code @ManyToOne} without an
+     * explicit fetch type, so it is EAGER, and hydrating the fetched exam would otherwise cost a second round trip for a
+     * course that is immediately discarded (the list DTO sets the exam to null).
+     *
+     * @param examId the exam whose exercise groups are returned
+     * @return the exercise groups of the exam, ordered as stored, or an empty list if it has none
+     */
     @Query("""
             SELECT eg
             FROM Exam exam
-                LEFT JOIN exam.exerciseGroups eg
+                JOIN exam.exerciseGroups eg
                 LEFT JOIN FETCH eg.exercises
-                LEFT JOIN FETCH eg.exam
+                LEFT JOIN FETCH eg.exam eagerExam
+                LEFT JOIN FETCH eagerExam.course
             WHERE exam.id = :examId
             ORDER BY INDEX(eg)
             """)

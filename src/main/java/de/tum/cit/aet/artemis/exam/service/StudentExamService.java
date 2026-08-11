@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
+import static de.tum.cit.aet.artemis.exam.service.ExamSubmissionService.isContentEqualTo;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -21,7 +22,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -53,6 +55,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -67,15 +70,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
-import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.domain.compare.DnDMapping;
-import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.text.api.TextFeedbackApi;
@@ -128,6 +126,8 @@ public class StudentExamService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final ExamRepository examRepository;
 
     private final CacheManager cacheManager;
@@ -135,6 +135,8 @@ public class StudentExamService {
     private final WebsocketMessagingService websocketMessagingService;
 
     private final TaskScheduler scheduler;
+
+    private final StudentExamSubmitMapper studentExamSubmitMapper;
 
     /**
      * Maximum number of Athena feedback requests a student may accumulate across all of their submitted test-exam
@@ -148,8 +150,8 @@ public class StudentExamService {
             Optional<ModelingSubmissionApi> modelingSubmissionApi, Optional<TextFeedbackApi> textFeedbackApi, Optional<ModelingFeedbackApi> modelingFeedbackApi,
             SubmissionVersionService submissionVersionService, SubmissionService submissionService, StudentParticipationRepository studentParticipationRepository,
             ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService,
-            ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            ExamService examService) {
+            ExerciseRepository exerciseRepository, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
+            @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -165,11 +167,30 @@ public class StudentExamService {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingTriggerService = programmingTriggerService;
+        this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.cacheManager = cacheManager;
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
         this.examService = examService;
+        this.studentExamSubmitMapper = studentExamSubmitMapper;
+    }
+
+    /**
+     * Reconstructs the transient submission graph from the slim client DTO onto the authoritative student exam and then
+     * submits it. This is the single service entry point for the hand-in endpoint, so the controller does not need to
+     * depend on the reconstruction mapper directly.
+     * <p>
+     * The per-exercise degrade semantics of the reconstruction are owned by {@link StudentExamSubmitMapper} and left
+     * unchanged: a broken exercise drops only its own last-second changes while the hand-in still succeeds.
+     *
+     * @param existingStudentExam  the student exam loaded from the database (with its exercises)
+     * @param submitStudentExamDTO the slim request body carrying the last-second submission changes
+     * @param currentUser          the current user
+     */
+    public void submitStudentExam(StudentExam existingStudentExam, SubmitStudentExamDTO submitStudentExamDTO, User currentUser) {
+        studentExamSubmitMapper.attachSubmissions(existingStudentExam, submitStudentExamDTO, currentUser);
+        submitStudentExam(existingStudentExam, currentUser);
     }
 
     /**
@@ -298,8 +319,13 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
+        // StudentExam.exercises is an @OrderColumn list, so Hibernate materializes a null for every gap in
+        // exercise_order. A null passes an `instanceof` filter, so without the explicit null check the gap would reach
+        // the participation query below (which is not covered by the per-exercise catch) and cost every exercise its
+        // last-second changes.
+        var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
         // we only need to save submissions for modeling, text and quiz exercises;
-        var relevantExercises = studentExam.getExercises().stream().filter(ex -> !(ex instanceof ProgrammingExercise) && !(ex instanceof FileUploadExercise)).toList();
+        var relevantExercises = exercises.stream().filter(ex -> !(ex instanceof ProgrammingExercise) && !(ex instanceof FileUploadExercise)).toList();
         if (relevantExercises.isEmpty()) {
             // nothing to save
             return;
@@ -307,7 +333,7 @@ public class StudentExamService {
         // 4. DB Call: read
         List<StudentParticipation> existingRelevantParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam, relevantExercises);
 
-        for (Exercise exercise : studentExam.getExercises()) {
+        for (Exercise exercise : exercises) {
             // we do not apply the following checks for programming exercises or file upload exercises
             try {
                 saveSubmission(currentUser, existingRelevantParticipations, exercise);
@@ -397,13 +423,9 @@ public class StudentExamService {
         for (SubmittedAnswer submittedAnswer : ((QuizSubmission) submissionFromClient).getSubmittedAnswers()) {
             submittedAnswer.setSubmission(((QuizSubmission) submissionFromClient));
 
-            switch (submittedAnswer) {
-                case DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer ->
-                    dragAndDropSubmittedAnswer.getMappings().forEach(dragAndDropMapping -> dragAndDropMapping.setSubmittedAnswer(dragAndDropSubmittedAnswer));
-                case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer ->
-                    shortAnswerSubmittedAnswer.getSubmittedTexts().forEach(submittedText -> submittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer));
-                default -> {
-                }
+            // Drag-and-drop submitted mappings are stored id-based in the JSON selection and need no back-reference fixup.
+            if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+                shortAnswerSubmittedAnswer.getSubmittedTexts().forEach(submittedText -> submittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer));
             }
         }
 
@@ -418,151 +440,6 @@ public class StudentExamService {
             quizSubmissionRepository.save(quizSubmissionFromClient);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
-    }
-
-    /**
-     * Returns {@code true} if the drag and drop answer submitted answer of a quiz exercise are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param answer1 a drag and drop submitted answer
-     * @param answer2 a drag and drop submitted answer to be compared with {@code answer1} for equality
-     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(DragAndDropSubmittedAnswer answer1, DragAndDropSubmittedAnswer answer2) {
-        // we use a record with dragItemId and dropLocationId and use streams to create those records for both submitted answers and compare them using sets
-        Set<DnDMapping> mappings1 = answer1.toDnDMapping();
-        Set<DnDMapping> mappings2 = answer2.toDnDMapping();
-        return Objects.equals(mappings1, mappings2);
-    }
-
-    /**
-     * Returns {@code true} if the multiple choice answer submitted answer of a quiz exercise are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param answer1 a multiple choice submitted answer
-     * @param answer2 a multiple choice submitted answer to be compared with {@code answer1} for equality
-     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(MultipleChoiceSubmittedAnswer answer1, MultipleChoiceSubmittedAnswer answer2) {
-        // we compare if all selected options are the same by comparing the selection option id sets, e.g. (1,3,5) vs. (2,4,5)
-        Set<Long> selections1 = answer1.toSelectedIds();
-        Set<Long> selections2 = answer2.toSelectedIds();
-        return Objects.equals(selections1, selections2);
-    }
-
-    /**
-     * Returns {@code true} if the short answer submitted answer of a quiz exercise are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param answer1 a short answer submitted answer
-     * @param answer2 a short answer submitted answer to be compared with {@code answer1} for equality
-     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(ShortAnswerSubmittedAnswer answer1, ShortAnswerSubmittedAnswer answer2) {
-        // we use a record with spotId and spotText and use streams to create those records for both submitted answers and compare them using sets
-        Set<SAMapping> mappings1 = answer1.toSAMappings();
-        Set<SAMapping> mappings2 = answer2.toSAMappings();
-        return Objects.equals(mappings1, mappings2);
-    }
-
-    /**
-     * Returns {@code true} if the quiz submissions are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param submission1 a quiz submission
-     * @param submission2 a quiz submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(@Nullable QuizSubmission submission1, @Nullable QuizSubmission submission2) {
-        if (submission1 == null && submission2 == null) {
-            return true;
-        }
-        else if (submission1 == null || submission2 == null) {
-            return false;
-        }
-
-        var answers1 = submission1.getSubmittedAnswers();
-        var answers2 = submission2.getSubmittedAnswers();
-        if (answers1.size() != answers2.size()) {
-            return false;
-        }
-
-        for (var answer1 : answers1) {
-            for (var answer2 : answers2) {
-                QuizQuestion quizQuestion1 = answer1.getQuizQuestion();
-                QuizQuestion quizQuestion2 = answer2.getQuizQuestion();
-
-                // we should still be able to compare even if the quizQuestion or the quizQuestion id is null
-                if (quizQuestion1 == null || quizQuestion1.getId() == null || quizQuestion2 == null || quizQuestion2.getId() == null
-                        || quizQuestion1.getId().equals(quizQuestion2.getId())) {
-                    if (!isContentEqualTo(answer1, answer2)) {
-                        return false;
-                    }
-                }
-            }
-        }
-        // we did not find any differences
-        return true;
-    }
-
-    /**
-     * Returns {@code true} if the quiz submissions are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param answer1 a quiz submission
-     * @param answer2 a quiz submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
-     * @throws RuntimeException if the answer types are not supported
-     */
-    public static boolean isContentEqualTo(SubmittedAnswer answer1, SubmittedAnswer answer2) {
-        return switch (answer1) {
-            case DragAndDropSubmittedAnswer dndSubmittedAnswer1 when answer2 instanceof DragAndDropSubmittedAnswer dndSubmittedAnswer2 ->
-                isContentEqualTo(dndSubmittedAnswer1, dndSubmittedAnswer2);
-            case MultipleChoiceSubmittedAnswer mcSubmittedAnswer1 when answer2 instanceof MultipleChoiceSubmittedAnswer mcSubmittedAnswer2 ->
-                isContentEqualTo(mcSubmittedAnswer1, mcSubmittedAnswer2);
-            case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer1 when answer2 instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer2 ->
-                isContentEqualTo(shortAnswerSubmittedAnswer1, shortAnswerSubmittedAnswer2);
-            default -> {
-                log.error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
-                yield false;
-            }
-        };
-    }
-
-    /**
-     * Returns {@code true} if the text submissions are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param submission1 a text submission
-     * @param submission2 a text submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the text submissions are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(@Nullable TextSubmission submission1, @Nullable TextSubmission submission2) {
-        if (submission1 == null && submission2 == null) {
-            return true;
-        }
-        else if (submission1 == null || submission2 == null) {
-            return false;
-        }
-        return Objects.equals(submission1.getText(), submission2.getText());
-    }
-
-    /**
-     * Returns {@code true} if the modeling submissions are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param submission1 a modeling submission
-     * @param submission2 a modeling submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the modeling submissions are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(@Nullable ModelingSubmission submission1, @Nullable ModelingSubmission submission2) {
-        if (submission1 == null && submission2 == null) {
-            return true;
-        }
-        else if (submission1 == null || submission2 == null) {
-            return false;
-        }
-        return Objects.equals(submission1.getModel(), submission2.getModel()) && Objects.equals(submission1.getExplanationText(), submission2.getExplanationText());
     }
 
     private void saveSubmissionVersion(User currentUser, Submission submissionFromClient) {
@@ -712,28 +589,59 @@ public class StudentExamService {
 
     /**
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
-     * Calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
+     * Resolves the exercise ids, then calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
      *
-     * @param testRunConfiguration the configured studentExam
+     * @param exam        the exam the test run belongs to
+     * @param exerciseIds the ids of the exercises to include in the test run, in the exact order they should be persisted
+     * @param workingTime the working time of the test run in seconds
      * @return the created testRun studentExam
      */
-    public StudentExam createTestRun(StudentExam testRunConfiguration) {
-        StudentExam testRun = generateTestRun(testRunConfiguration);
+    public StudentExam createTestRun(Exam exam, List<Long> exerciseIds, Integer workingTime) {
+        List<Exercise> exercises = resolveExamExercises(exam, exerciseIds);
+        StudentExam testRun = generateTestRun(exam, exercises, workingTime);
         setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
         return testRun;
     }
 
     /**
+     * Loads the given exercises with a single query and returns them in the order of the given ids
+     * (StudentExam.exercises is an @OrderColumn list, so the order must be preserved).
+     * A test run may only contain exercises of the exam it belongs to; any other exercise id is rejected.
+     *
+     * @param exam        the exam the exercises must belong to
+     * @param exerciseIds the ordered ids of the exercises to load
+     * @return the exercises in the order of the given ids
+     */
+    private List<Exercise> resolveExamExercises(Exam exam, List<Long> exerciseIds) {
+        Map<Long, Exercise> exercisesById = exerciseRepository.findAllById(exerciseIds).stream().collect(Collectors.toMap(Exercise::getId, Function.identity()));
+        List<Exercise> exercises = new ArrayList<>(exerciseIds.size());
+        for (Long exerciseId : exerciseIds) {
+            Exercise exercise = exercisesById.get(exerciseId);
+            if (exercise == null) {
+                throw new EntityNotFoundException("Exercise", exerciseId);
+            }
+            Exam exerciseExam = exercise.getExam();
+            if (exerciseExam == null || !exerciseExam.getId().equals(exam.getId())) {
+                throw new ConflictException("The exercise does not belong to the exam", "Exercise", "exerciseExamConflict");
+            }
+            exercises.add(exercise);
+        }
+        return exercises;
+    }
+
+    /**
      * Create TestRun student exam based on the configuration provided.
      *
-     * @param testRunConfiguration Contains the exercises and working time for this test run
+     * @param exam        the exam the test run belongs to
+     * @param exercises   the exercises to include in the test run, in the exact order they should be persisted
+     * @param workingTime the working time of the test run in seconds
      * @return The created test run
      */
-    private StudentExam generateTestRun(StudentExam testRunConfiguration) {
+    private StudentExam generateTestRun(Exam exam, List<Exercise> exercises, Integer workingTime) {
         StudentExam testRun = new StudentExam();
-        testRun.setExercises(testRunConfiguration.getExercises());
-        testRun.setExam(testRunConfiguration.getExam());
-        testRun.setWorkingTime(testRunConfiguration.getWorkingTime());
+        testRun.setExercises(exercises);
+        testRun.setExam(exam);
+        testRun.setWorkingTime(workingTime);
         testRun.setUser(userRepository.getUser());
         testRun.setTestRun(true);
         testRun.setSubmitted(false);
