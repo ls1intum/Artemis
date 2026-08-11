@@ -1,4 +1,24 @@
 /**
+ * Snaps a measured CSS-pixel length to the device pixel grid.
+ *
+ * `getBoundingClientRect()` reports subpixel sizes, and these measurements become the offset of everything the
+ * shells render below the header. Writing them through verbatim puts that content on a fractional device pixel:
+ * the navbar measures 63.75px, which at `devicePixelRatio` 2 is 127.5 device pixels — half a pixel — so every
+ * hairline below it straddles two device rows instead of landing on one.
+ *
+ * Apollon's canvas made this visible: its 5px grid draws a 1px line every 5px, and at the half-pixel offset the
+ * horizontal lines collapsed from 2 device pixels to 1 and their spacing drifted between 9 and 10, which reads as
+ * gaps and missing lines in the grid. Snapping here fixes it at the source for every consumer.
+ *
+ * Rounding against `devicePixelRatio` rather than to whole CSS pixels keeps this correct on fractional-ratio
+ * displays, where a whole CSS pixel is still half a device pixel.
+ */
+function snapToDevicePixelGrid(cssPixels: number): number {
+    const ratio = window.devicePixelRatio || 1;
+    return Math.round(cssPixels * ratio) / ratio;
+}
+
+/**
  * Update the header height SCSS variable based on the navbar height.
  *
  * The navbar height can change based on the screen size and the content of the navbar
@@ -9,7 +29,7 @@ export function updateHeaderHeight() {
         const navbar = document.querySelector('jhi-navbar');
         if (navbar) {
             // do not use navbar.offsetHeight, this might not be defined in Safari!
-            const headerHeight = navbar.getBoundingClientRect().height;
+            const headerHeight = snapToDevicePixelGrid(navbar.getBoundingClientRect().height);
             document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
         }
     });
@@ -114,7 +134,7 @@ function measureShellMetrics(): void {
             continue;
         }
         // do not use offsetHeight, this might not be defined in Safari!
-        const next = `${element.getBoundingClientRect().height}px`;
+        const next = `${snapToDevicePixelGrid(element.getBoundingClientRect().height)}px`;
         // Writing an unchanged value would invalidate style for the whole document on every navigation.
         if (root.style.getPropertyValue(cssVariable) !== next) {
             root.style.setProperty(cssVariable, next);

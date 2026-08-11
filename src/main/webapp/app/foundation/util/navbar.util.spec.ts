@@ -61,15 +61,38 @@ describe('navbar util shell metrics', () => {
         return teardown;
     }
 
-    it('writes the measured navbar and footer heights', () => {
+    it('writes the measured navbar and footer heights, snapped to the device pixel grid', () => {
+        // The real navbar measures 63.75px. Written through verbatim it offsets everything below the header by
+        // half a device pixel at devicePixelRatio 2 (127.5), so hairlines there straddle two device rows —
+        // Apollon's 5px canvas grid rendered lines at 1 device pixel instead of 2, which reads as gaps.
+        // jsdom reports devicePixelRatio 1, so snapping lands on whole CSS pixels here.
         addElement('jhi-navbar', 63.75);
         addElement('jhi-footer', 31.5);
 
         startObserving();
         vi.runAllTimers();
 
-        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('63.75px');
-        expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('31.5px');
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('64px');
+        expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('32px');
+    });
+
+    it('snaps against devicePixelRatio, so a whole CSS pixel is not assumed to be a whole device pixel', () => {
+        const originalRatio = window.devicePixelRatio;
+        Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+        try {
+            addElement('jhi-navbar', 63.4);
+            addElement('jhi-footer', 31.4);
+
+            startObserving();
+            vi.runAllTimers();
+
+            // At ratio 2 the device grid is every 0.5 CSS pixels, so these keep a half-pixel that rounding to
+            // whole CSS pixels would have discarded (63.4 -> 63 and 31.4 -> 31).
+            expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('63.5px');
+            expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('31.5px');
+        } finally {
+            Object.defineProperty(window, 'devicePixelRatio', { value: originalRatio, configurable: true });
+        }
     });
 
     it('observes both elements and re-targets them after a navigation', () => {
