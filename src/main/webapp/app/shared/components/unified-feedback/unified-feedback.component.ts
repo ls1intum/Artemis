@@ -68,6 +68,12 @@ export class UnifiedFeedbackComponent {
     editable = input<boolean>(false);
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
+    /**
+     * Whether the title may be edited while {@link editable} is true. Consumers that derive the title themselves on
+     * save (e.g. the programming inline feedback, which auto-generates "File X at line Y" for non-suggestions) set
+     * this to false so the UI never invites editing a value that would be discarded. Defaults to true.
+     */
+    titleEditable = input<boolean>(true);
 
     feedbackTitle = model<string | undefined>(undefined);
     feedbackDetail = model<string | undefined>(undefined);

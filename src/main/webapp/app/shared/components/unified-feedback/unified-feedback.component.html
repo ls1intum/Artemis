@@ -12,7 +12,7 @@
                     <span class="unified-feedback-icon-badge">
                         <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
                     </span>
-                    @if (editable()) {
+                    @if (editable() && titleEditable()) {
                         <input
                             class="unified-feedback-title-input"
                             type="text"

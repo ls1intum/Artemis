@@ -14,6 +14,7 @@
             [editable]="true"
             [readOnly]="readOnly()"
             [feedback]="feedback"
+            [titleEditable]="Feedback.isFeedbackSuggestion(feedback)"
             [showReference]="false"
             [highlightDifferences]="highlightDifferences()"
             [(feedbackTitle)]="feedback.text"
@@ -25,9 +26,6 @@
             (keydown)="handleKeydown($event)"
         >
             <div unifiedFeedbackExtraControls>
-                <button type="button" class="btn btn-secondary btn-sm" (click)="cancelFeedback()">
-                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-                </button>
                 @if (feedback.type === MANUAL) {
                     <button
                         jhiDeleteButton

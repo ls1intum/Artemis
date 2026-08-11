@@ -100,6 +100,28 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.currentFeedback().gradingInstruction).toEqual(instruction);
         expect(comp.currentFeedback().credits).toEqual(instruction.credits);
         expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
+        expect(comp.currentFeedback().text).toBe(`File ${fileName} at line ${codeLine + 1}`);
+    });
+
+    it('should keep the suggestion prefix in the title when an SGI is dropped on a feedback suggestion', () => {
+        const suggestionText = `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`;
+        fixture.componentRef.setInput('feedback', {
+            type: FeedbackType.MANUAL,
+            text: suggestionText,
+        } as Feedback);
+        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
+        // Fake call as a DragEvent cannot be created programmatically
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback: Feedback) => {
+            feedback.gradingInstruction = instruction;
+            feedback.credits = instruction.credits;
+        });
+
+        comp.updateFeedbackOnDrop(new Event(''));
+
+        expect(comp.currentFeedback().gradingInstruction).toEqual(instruction);
+        expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
+        // The auto-generated title must not overwrite the suggestion identity.
+        expect(comp.currentFeedback().text).toBe(suggestionText);
     });
 
     it('should count feedback with one credit as positive', () => {
@@ -212,6 +234,22 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         const titleInput = fixture.debugElement.query(By.css('.unified-feedback-title-input'));
         expect(titleInput).toBeTruthy();
         expect(titleInput.nativeElement.value).toBe('Missing null check');
+    });
+
+    it('should not render an editable title field for a non-suggestion feedback while editing', async () => {
+        // The title of a non-suggestion feedback is auto-generated on save, so it must not be offered as an input.
+        fixture.componentRef.setInput('feedback', {
+            type: FeedbackType.MANUAL,
+            text: 'File testFile at line 2',
+            detailText: 'Add a null check.',
+            credits: 1,
+        } as Feedback);
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.unified-feedback-title-input'))).toBeNull();
     });
 
     it('should show the suggestion badge only while editing, not in the collapsed view', () => {

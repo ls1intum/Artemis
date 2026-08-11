@@ -5,7 +5,7 @@ import { cloneDeep } from 'lodash-es';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faBan, faExclamationTriangle, faPencilAlt, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faPencilAlt, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -23,7 +23,6 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly faSave = faSave;
-    protected readonly faBan = faBan;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faTrashAlt = faTrashAlt;
     protected readonly faExclamationTriangle = faExclamationTriangle;
@@ -133,7 +132,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         const feedback = this.currentFeedback();
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
-        feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        if (!Feedback.isFeedbackSuggestion(feedback)) {
+            feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        }
     }
 
     /**

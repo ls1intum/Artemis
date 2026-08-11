@@ -439,6 +439,32 @@ describe('UnifiedFeedbackComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
+    it('should show the title input by default when editable, keeping existing consumers unchanged', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set('Encapsulation broken');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.titleEditable()).toBe(true);
+        expect(fixture.nativeElement.querySelector('.unified-feedback-title-input')).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('.unified-feedback-title')).toBeNull();
+    });
+
+    it('should render the read-only title instead of the title input when titleEditable is false', async () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('titleEditable', false);
+        fixture.componentRef.setInput('title', 'File Sort.java at line 4');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.unified-feedback-title-input')).toBeNull();
+        const title = fixture.nativeElement.querySelector('.unified-feedback-title');
+        expect(title).toBeTruthy();
+        expect(title.textContent).toContain('File Sort.java at line 4');
+    });
+
     it('should show the grading instruction label and lock the points input when a grading instruction is attached', async () => {
         fixture.componentRef.setInput('editable', true);
         fixture.componentRef.setInput('feedback', { credits: 2, gradingInstruction: { feedback: 'Fixed rubric text', credits: 2 } } as any);
