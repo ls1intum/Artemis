@@ -109,7 +109,7 @@ public class AccountResource {
         if (accountService.isPasswordLengthInvalid(passwordChangeDto.newPassword())) {
             throw new PasswordViolatesRequirementsException();
         }
-        userService.changePassword(passwordChangeDto.currentPassword(), passwordChangeDto.newPassword());
+        userService.changePassword(passwordChangeDto.currentPassword(), passwordChangeDto.newPassword(), passwordChangeDto.revokeCredentialsOrNone());
 
         return ResponseEntity.ok().build();
     }
