@@ -193,6 +193,23 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
         @Test
         @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void updateUser_toggleIsInternalFlag_success() throws Exception {
+            User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "internaluser");
+            assertThat(regularUser.isInternal()).isTrue();
+
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(regularUser.getLogin());
+            managedUserVM.setId(regularUser.getId());
+            managedUserVM.setInternal(false);
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+
+            User updatedUser = userTestRepository.findByIdWithAuthoritiesElseThrow(regularUser.getId());
+            assertThat(updatedUser.isInternal()).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
         void updateUser_revokeSuperAdminBySuperAdmin_success() throws Exception {
             // Create a super admin user
             userUtilService.addSuperAdmin(TEST_PREFIX + "test2");

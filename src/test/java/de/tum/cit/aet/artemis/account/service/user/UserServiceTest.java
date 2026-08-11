@@ -178,6 +178,25 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     }
 
     @Test
+    void testUpdateUser_withManagedUserVM_respectsIsInternalFlag() {
+        String login = TEST_PREFIX + "internal_to_external_user";
+        User user = userCreationService.createUser(login, "password123", "Internal", "User", "internal_test@example.com", null, null, "en", true);
+        assertThat(user.isInternal()).as("created user should be internal initially").isTrue();
+
+        ManagedUserVM updateDTO = new ManagedUserVM(user);
+        updateDTO.setInternal(false);
+
+        userCreationService.updateUser(user, updateDTO);
+
+        Optional<User> reloadedUser = userRepository.findOneByLogin(login);
+        assertThat(reloadedUser).isPresent();
+        assertThat(reloadedUser.get().isInternal()).as("updated user should now be external").isFalse();
+
+        // Cleanup
+        reloadedUser.ifPresent(userRepository::delete);
+    }
+
+    @Test
     void testApplicationReady_noActionWhenInternalAdminNotConfigured() {
         // Setup: Clear internal admin configuration
         ReflectionTestUtils.setField(userService, "artemisInternalAdminUsername", Optional.empty());

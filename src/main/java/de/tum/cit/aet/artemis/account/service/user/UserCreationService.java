@@ -245,6 +245,7 @@ public class UserCreationService {
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
         user.setLangKey(updatedUserDTO.getLangKey());
+        user.setInternal(updatedUserDTO.isInternal());
         boolean revokeCredentialsAfterPasswordChange = user.isInternal() && updatedUserDTO.getPassword() != null && updatedUserDTO.isRevokeCredentials();
         if (user.isInternal() && updatedUserDTO.getPassword() != null) {
             user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
