@@ -21,12 +21,9 @@
 @import 'src/main/webapp/content/scss/github-alerts';
 @import 'primeicons/primeicons.css';
 
-// Smooth transition between themes.
-// Deliberately excludes SVG content. `background`/`background-color` are not rendered on SVG
-// elements in any engine, so a transition there can never be seen - but it still attaches a paint
-// transition to every node of an SVG subtree. Apollon's canvas alone carried 364 of these, including
-// the <pattern>, <path> and <rect> that draw the grid, and an element running a paint transition is
-// treated as animating, which is what keeps a surface on the raster it was built with.
+// Smooth transition between themes. SVG is excluded: `background` is not rendered on SVG elements,
+// so the transition can never be seen there, yet it still marks every node of an SVG subtree as
+// running a paint transition - which is enough to keep a surface on a stale raster.
 *:not(svg, svg *) {
     transition:
         background-color 0.2s,

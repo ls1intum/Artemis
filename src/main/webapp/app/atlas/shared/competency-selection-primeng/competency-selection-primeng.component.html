@@ -1,6 +1,5 @@
-<!-- Deliberately renders nothing while loading. A spinner here reserves height for a section that resolves to
-     nothing on every course without competencies, and that collapse moves everything below it after it has
-     already painted - which left the modeling editor's canvas showing the raster it was painted with. -->
+<!-- Renders nothing while loading: a spinner would reserve height for a section that resolves to nothing on
+     every course without competencies, shifting the page after it has painted. -->
 @if (competencyLinks()?.length) {
     <div>
         <div class="d-flex align-items-center mb-1">

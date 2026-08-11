@@ -62,10 +62,7 @@ describe('navbar util shell metrics', () => {
     }
 
     it('writes the measured navbar and footer heights, snapped to the device pixel grid', () => {
-        // The real navbar measures 63.75px. Written through verbatim it offsets everything below the header by
-        // half a device pixel at devicePixelRatio 2 (127.5), so hairlines there straddle two device rows —
-        // Apollon's 5px canvas grid rendered lines at 1 device pixel instead of 2, which reads as gaps.
-        // jsdom reports devicePixelRatio 1, so snapping lands on whole CSS pixels here.
+        // jsdom reports devicePixelRatio 1, so the grid here is whole CSS pixels.
         addElement('jhi-navbar', 63.75);
         addElement('jhi-footer', 31.5);
 
@@ -86,8 +83,8 @@ describe('navbar util shell metrics', () => {
             startObserving();
             vi.runAllTimers();
 
-            // At ratio 2 the device grid is every 0.5 CSS pixels, so these keep a half-pixel that rounding to
-            // whole CSS pixels would have discarded (63.4 -> 63 and 31.4 -> 31).
+            // At ratio 2 the grid is every 0.5 CSS pixels, so a half-pixel survives that whole-pixel
+            // rounding would discard.
             expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('63.5px');
             expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('31.5px');
         } finally {

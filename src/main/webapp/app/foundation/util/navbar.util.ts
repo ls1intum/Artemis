@@ -1,17 +1,11 @@
 /**
  * Snaps a measured CSS-pixel length to the device pixel grid.
  *
- * `getBoundingClientRect()` reports subpixel sizes, and these measurements become the offset of everything the
- * shells render below the header. Writing them through verbatim puts that content on a fractional device pixel:
- * the navbar measures 63.75px, which at `devicePixelRatio` 2 is 127.5 device pixels — half a pixel — so every
- * hairline below it straddles two device rows instead of landing on one.
+ * These measurements position everything the shells render below the header, and `getBoundingClientRect()` reports
+ * subpixel sizes. A fractional offset puts every hairline below it across two device rows instead of on one.
  *
- * Apollon's canvas made this visible: its 5px grid draws a 1px line every 5px, and at the half-pixel offset the
- * horizontal lines collapsed from 2 device pixels to 1 and their spacing drifted between 9 and 10, which reads as
- * gaps and missing lines in the grid. Snapping here fixes it at the source for every consumer.
- *
- * Rounding against `devicePixelRatio` rather than to whole CSS pixels keeps this correct on fractional-ratio
- * displays, where a whole CSS pixel is still half a device pixel.
+ * Rounds against `devicePixelRatio`, not to whole CSS pixels: on a 2x display a whole CSS pixel is still half a
+ * device pixel.
  */
 function snapToDevicePixelGrid(cssPixels: number): number {
     const ratio = window.devicePixelRatio || 1;

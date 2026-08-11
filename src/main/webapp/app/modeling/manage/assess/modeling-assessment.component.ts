@@ -337,12 +337,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             // 'auto' alone measures only the in-flow trigger; the float needs saying.
             inset: width > 0 ? { right: width } : 'auto',
         });
-        // The inset is layout and is kept current on every change; the camera is the reader's and is
-        // framed only once. Apollon already fits on mount, before this inset exists, so a single
-        // refit corrects that first frame for the reserved room. Refitting on every reservation
-        // meant each toggle of the panel threw away whatever zoom and pan the tutor had chosen —
-        // mid-assessment, while reading one element. Later reservations still update the inset, so a
-        // fit the reader actually asks for lays out clear of the panel.
+        // Apollon fits on mount, before this inset exists, so one refit corrects that first frame.
+        // Never again: the viewport is the reader's, and they toggle this panel while assessing.
         if (!this.hasFramedForPanelInset) {
             this.hasFramedForPanelInset = true;
             this.scheduleFitView();
