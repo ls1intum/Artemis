@@ -16,7 +16,6 @@ interface ExerciseTypeCard {
     labelKey: string;
     descriptionKey: string;
     icon: IconProp;
-    accentClass: string;
 }
 
 const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
@@ -25,35 +24,30 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
         labelKey: 'artemisApp.exerciseManagement.type.PROGRAMMING',
         descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.PROGRAMMING',
         icon: faKeyboard,
-        accentClass: 'card--programming',
     },
     {
         type: ExerciseType.QUIZ,
         labelKey: 'artemisApp.exerciseManagement.type.QUIZ',
         descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.QUIZ',
         icon: faCheckDouble,
-        accentClass: 'card--quiz',
     },
     {
         type: ExerciseType.MODELING,
         labelKey: 'artemisApp.exerciseManagement.type.MODELING',
         descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.MODELING',
         icon: faProjectDiagram,
-        accentClass: 'card--modeling',
     },
     {
         type: ExerciseType.TEXT,
         labelKey: 'artemisApp.exerciseManagement.type.TEXT',
         descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.TEXT',
         icon: faFont,
-        accentClass: 'card--text',
     },
     {
         type: ExerciseType.FILE_UPLOAD,
         labelKey: 'artemisApp.exerciseManagement.type.FILE_UPLOAD',
         descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.FILE_UPLOAD',
         icon: faFileUpload,
-        accentClass: 'card--fileupload',
     },
 ];
 

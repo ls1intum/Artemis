@@ -58,7 +58,7 @@
         left: 0;
         right: 0;
         height: 3px;
-        background: var(--card-accent, var(--primary));
+        background: var(--tumaet-ui-primary-color);
         opacity: 0;
         transition: opacity 0.2s ease;
     }
@@ -88,26 +88,6 @@
     }
 }
 
-.card--programming {
-    --card-accent: var(--exercise-accent-programming);
-}
-
-.card--quiz {
-    --card-accent: var(--exercise-accent-quiz);
-}
-
-.card--modeling {
-    --card-accent: var(--exercise-accent-modeling);
-}
-
-.card--text {
-    --card-accent: var(--exercise-accent-text);
-}
-
-.card--fileupload {
-    --card-accent: var(--exercise-accent-fileupload);
-}
-
 .card-icon-wrapper {
     width: 44px;
     height: 44px;
@@ -116,16 +96,17 @@
     align-items: center;
     justify-content: center;
     margin-bottom: 0.75rem;
-    color: var(--white);
-    background: var(--card-accent, var(--primary));
+    color: var(--tumaet-ui-primary-contrast-color);
+    background: var(--tumaet-ui-primary-color);
     box-shadow: 0 3px 8px color-mix(in srgb, var(--black) 12%, transparent);
     font-size: 1.1rem;
 }
 
+// Uses the accessible brand foreground (light: --primary-dark); plain --primary would miss WCAG AA at this size.
 .card-cta {
     font-weight: 600;
     font-size: 0.8rem;
-    color: var(--card-accent, var(--primary));
+    color: var(--tumaet-ui-accent-color);
     display: inline-flex;
     align-items: center;
 }

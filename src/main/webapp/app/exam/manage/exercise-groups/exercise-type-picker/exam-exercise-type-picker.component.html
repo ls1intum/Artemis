@@ -4,7 +4,7 @@
     [closable]="true"
     [closeOnEscape]="true"
     [dismissableMask]="false"
-    [style]="{ width: '680px', maxWidth: '95vw' }"
+    size="medium"
 >
     <div class="tab-bar mb-3">
         <button
@@ -26,7 +26,7 @@
     <div class="exercise-grid">
         @for (card of typeCards(); track card.type) {
             <button
-                class="exercise-card {{ card.accentClass }}"
+                class="exercise-card"
                 [attr.data-testid]="(activeTab() === 'import' ? 'import-' : 'create-') + card.type + '-exercise'"
                 (click)="onCardClick(card.type)"
                 type="button"
