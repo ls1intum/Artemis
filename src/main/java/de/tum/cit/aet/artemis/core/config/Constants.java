@@ -253,8 +253,12 @@ public final class Constants {
 
     /**
      * Audit event: a user changed their own password from inside their account.
+     * <p>
+     * The trailing marker suppresses a gitleaks false positive: the rule keys on an identifier ending in PASSWORD being
+     * assigned a quoted string, which is what an audit event type named after the action inevitably looks like. The value
+     * is the event type shown in the admin audit log, not a credential.
      */
-    public static final String CHANGE_OWN_PASSWORD = "CHANGE_OWN_PASSWORD";
+    public static final String CHANGE_OWN_PASSWORD = "CHANGE_OWN_PASSWORD"; // gitleaks:allow
 
     /**
      * Audit event: a user completed a password reset from an emailed link.
