@@ -343,7 +343,7 @@ describe('ModelingExerciseUpdateComponent', () => {
             });
 
             it('should synchronize live diagram changes for assessment criteria context', () => {
-                const changedModel = { elements: { changed: true }, relationships: {}, version: '3.0.0' } as UMLModel;
+                const changedModel = { elements: { changed: true }, relationships: {}, version: '3.0.0' } as unknown as UMLModel;
                 const statusSpy = vi.spyOn(comp, 'calculateFormSectionStatus');
 
                 comp.onModelChanged(changedModel);

@@ -85,6 +85,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             exercise.maxPoints = 5;
             exercise.course = { id: 7, isAtLeastEditor: true };
             component.ngOnInit();
+            vi.spyOn(alertService, 'success');
         });
 
         it('should gate generation by prerequisites', () => {
@@ -135,7 +136,6 @@ describe('GradingInstructionsDetailsComponent', () => {
             const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
             exercise.gradingInstructions = 'Keep this text';
             generationService.generate.mockReturnValue(response);
-            vi.spyOn(alertService, 'success');
             const generatedSpy = vi.spyOn(component.criteriaGenerated, 'emit');
 
             component.generateAssessmentCriteria();
