@@ -97,16 +97,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Set<StudentExam> findByExamId(@Param("examId") long examId);
 
-    /**
-     * Whether any student exam (including test runs) has already been generated for the given exam. Used to block
-     * structural changes — such as moving an exercise into a different exercise group — that would desync a student
-     * exam's already-picked exercise selection or the exam's cached point totals.
-     *
-     * @param examId the id of the exam
-     * @return true if at least one student exam exists for the exam
-     */
-    boolean existsByExamId(long examId);
-
     @Query("""
             SELECT se
             FROM StudentExam se

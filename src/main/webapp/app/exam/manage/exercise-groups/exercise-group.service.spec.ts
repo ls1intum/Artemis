@@ -36,14 +36,4 @@ describe('Exercise Group Service', () => {
             ]),
         );
     });
-
-    it('should PUT the target group id when moving an exercise to a different group', () => {
-        const httpClientPutSpy = vi.spyOn(httpClient, 'put').mockImplementation(() => {
-            return {} as any;
-        });
-
-        service.moveExerciseToGroup(1, 2, 3, 4);
-
-        expect(httpClientPutSpy).toHaveBeenCalledWith('api/exam/courses/1/exams/2/exercises/3/exercise-group', { exerciseGroupId: 4 }, { observe: 'response' });
-    });
 });

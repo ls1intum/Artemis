@@ -23,34 +23,6 @@ export class ExamExerciseGroupsPage {
         await this.page.click(`#group-${groupID} .edit-group`);
     }
 
-    /**
-     * Clicks a row action for the given exercise. Exercise actions live in the shared `jhi-exercise-action-bar`
-     * component: each action is rendered inline in the row, but narrow rows collapse the leftmost ones into an
-     * ellipsis overflow menu (appended to the body). This resolves the action whether it is visible inline or
-     * hidden in that menu.
-     */
-    private async clickRowAction(groupID: number, exerciseID: number, actionId: string) {
-        const row = this.page.locator(`#group-${groupID} #exercise-${exerciseID}`);
-        await row.waitFor({ state: 'attached' });
-        const inlineAction = row.locator(`[data-testid="exercise-action-${actionId}"]`);
-        if (await inlineAction.isVisible()) {
-            await inlineAction.click();
-            return;
-        }
-        // The action collapsed into the row's ellipsis overflow menu, which the kit renders in an overlay popover.
-        await row.locator('.action-more').click();
-        await this.page.locator('.tum-ui-popover-panel').getByTestId(`exercise-action-${actionId}`).click();
-    }
-
-    /**
-     * Opens the per-group "Add Exercise" / "Import Exercise" type-picker modal and selects the exercise-type card.
-     * Mode is `create` or `import`; the type is the exercise-type route segment (e.g. `file-upload`, `text`).
-     */
-    private async selectExerciseTypeCard(groupID: number, mode: 'create' | 'import', type: string) {
-        await this.page.locator(`#group-${groupID}`).getByTestId(`${mode}-exercise-button`).click();
-        await this.page.getByTestId(`${mode}-${type}-exercise`).click();
-    }
-
     async clickEditGroupForTestExam() {
         await this.page.getByRole('link', { name: 'Edit' }).click();
     }
@@ -77,23 +49,31 @@ export class ExamExerciseGroupsPage {
     }
 
     async clickAddTextExercise(groupID: number) {
-        await this.selectExerciseTypeCard(groupID, 'create', 'text');
+        const addButton = this.page.locator(`#group-${groupID} .add-text-exercise`);
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
     }
 
     async clickAddModelingExercise(groupID: number) {
-        await this.selectExerciseTypeCard(groupID, 'create', 'modeling');
+        const addButton = this.page.locator(`#group-${groupID} .add-modeling-exercise`);
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
     }
 
     async clickAddQuizExercise(groupID: number) {
-        await this.selectExerciseTypeCard(groupID, 'create', 'quiz');
+        const addButton = this.page.locator(`#group-${groupID} .add-quiz-exercise`);
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
     }
 
     async clickAddProgrammingExercise(groupID: number) {
-        await this.selectExerciseTypeCard(groupID, 'create', 'programming');
+        const addButton = this.page.locator(`#group-${groupID} .add-programming-exercise`);
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
     }
 
     async clickEditExercise(groupID: number, exerciseID: number) {
-        await this.clickRowAction(groupID, exerciseID, 'edit');
+        await this.page.locator(`#group-${groupID} #exercise-${exerciseID}`).locator('.btn', { hasText: 'Edit' }).click();
     }
 
     async visitPageViaUrl(courseId: number, examId: number) {
