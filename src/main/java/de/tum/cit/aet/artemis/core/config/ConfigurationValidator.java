@@ -339,8 +339,20 @@ public class ConfigurationValidator {
      */
     private void validateBuildAgentGitPassword() {
         String buildAgentGitPassword = environment.getProperty(BUILD_AGENT_GIT_PASSWORD_PROPERTY);
-        if (!StringUtils.hasText(buildAgentGitPassword)) {
+        if (buildAgentGitPassword == null) {
+            // Only the localvc and buildagent profiles define the property at all, so an instance running neither has
+            // no build-agent shortcut to protect.
             return;
+        }
+        if (!StringUtils.hasText(buildAgentGitPassword)) {
+            // A configured but blank value is worse than a shipped default: LocalVCServletService compares the supplied
+            // Basic credentials against it directly, so the published build-agent username with an empty password would
+            // pass, again ahead of the rate limit, the authorization checks and the access log.
+            throw new InsecureDefaultCredentialException(BUILD_AGENT_GIT_PASSWORD_PROPERTY,
+                    "the build-agent git password is configured but blank, and a caller presenting the build-agent username with an empty password can then read every "
+                            + "repository without any authorization check or access-log entry",
+                    "Set a unique, non-blank password and keep it in sync with the build agents' configuration. The property has to carry a value even when the agents "
+                            + "authenticate with an ssh key, because the localvc and buildagent profiles require it to resolve.");
         }
 
         rejectIfKnownDefault(buildAgentGitPassword, KNOWN_DEFAULT_BUILD_AGENT_GIT_PASSWORDS, BUILD_AGENT_GIT_PASSWORD_PROPERTY,
