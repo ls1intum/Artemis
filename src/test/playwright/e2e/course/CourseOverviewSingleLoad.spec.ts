@@ -13,7 +13,7 @@ import { admin, studentOne } from '../../support/users';
 test.describe('Course overview navigation', { tag: '@fast' }, () => {
     test('loads the course shell and tabs once each, without the deprecated dashboard endpoint', async ({ page, login, courseManagementAPIRequests }) => {
         await login(admin);
-        const course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
+        const course = await courseManagementAPIRequests.createCourse();
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
 
         // The all-courses list endpoint is courses/for-dashboard, so match on the single-course URL only
@@ -56,7 +56,7 @@ test.describe('Course overview navigation', { tag: '@fast' }, () => {
 
     test('loads exercises only when the exercises tab is opened, and reloads them when it is selected again', async ({ page, login, courseManagementAPIRequests }) => {
         await login(admin);
-        const course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
+        const course = await courseManagementAPIRequests.createCourse();
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
 
         const exercisesForOverview = `courses/${course.id}/exercises-for-overview`;
