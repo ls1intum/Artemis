@@ -10,7 +10,8 @@ import { describe, expect, it } from 'vitest';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { AppliedActionType, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
@@ -22,13 +23,15 @@ describe('AtlasOrchestrationTriggerComponent', () => {
     let alertService: AlertService;
     let apiService: CompetencyOrchestrationApiService;
 
-    const exercise = { id: 123 } as ProgrammingExercise;
+    const exercise = { id: 123 } as Exercise;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [],
             providers: [
                 MockProvider(AlertService),
+                // The component self-hides unless the Atlas module is active; enable it so the button and dialog render.
+                MockProvider(ProfileService, { isModuleFeatureActive: () => true }),
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -38,7 +41,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
 
         fixture = TestBed.createComponent(AtlasOrchestrationTriggerComponent);
         comp = fixture.componentInstance;
-        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('exercise', exercise);
         alertService = TestBed.inject(AlertService);
         apiService = TestBed.inject(CompetencyOrchestrationApiService);
     });
@@ -48,7 +51,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
     });
 
     it('should open the orchestration result dialog with applied actions when the run succeeds', async () => {
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
+        vi.spyOn(apiService, 'runForExercise').mockResolvedValue({
             status: CompetencyOrchestrationStatus.Success,
             summary: 'Assigned this exercise to Recursion.',
             appliedActions: [
@@ -76,7 +79,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
 
     it('should show warning toast and dialog when orchestrator returns PARTIAL', async () => {
         const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
+        vi.spyOn(apiService, 'runForExercise').mockResolvedValue({
             status: CompetencyOrchestrationStatus.Partial,
             summary: 'Orchestrator failed after applying 1 action(s).',
             appliedActions: [
@@ -106,7 +109,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
 
     it('should error when Atlas orchestrator returns FAILED', async () => {
         const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(
+        vi.spyOn(apiService, 'runForExercise').mockRejectedValue(
             new HttpErrorResponse({
                 status: 503,
                 error: { status: CompetencyOrchestrationStatus.Failed, summary: 'model not configured' },
@@ -123,7 +126,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
 
     it('should surface the summary when Atlas orchestrator returns INTERNAL_ERROR (500)', async () => {
         const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(
+        vi.spyOn(apiService, 'runForExercise').mockRejectedValue(
             new HttpErrorResponse({
                 status: 500,
                 error: { status: CompetencyOrchestrationStatus.Failed, summary: 'Atlas orchestrator run failed.' },
@@ -139,11 +142,53 @@ describe('AtlasOrchestrationTriggerComponent', () => {
 
     it('should error when Atlas orchestrator request throws', async () => {
         const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(new Error('boom'));
+        vi.spyOn(apiService, 'runForExercise').mockRejectedValue(new Error('boom'));
 
         await comp.triggerAtlasOrchestrator();
 
         // The catch path uses onError(), which addAlerts the underlying error message.
         expect(addAlertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'boom', disableTranslation: true });
+    });
+
+    it('should not call the API when the exercise has no id', async () => {
+        const runSpy = vi.spyOn(apiService, 'runForExercise');
+        fixture.componentRef.setInput('exercise', {} as Exercise);
+
+        await comp.triggerAtlasOrchestrator();
+
+        expect(runSpy).not.toHaveBeenCalled();
+    });
+
+    it('should apply the provided buttonClass to the trigger button', () => {
+        fixture.componentRef.setInput('buttonClass', 'btn btn-outline-primary btn-sm atlas-trigger-marker');
+        fixture.detectChanges();
+
+        const button = fixture.debugElement.query(By.css('button'));
+        expect(button.nativeElement.className).toContain('atlas-trigger-marker');
+    });
+
+    it('should hide the trigger entirely when the Atlas module is inactive', () => {
+        TestBed.resetTestingModule();
+        return TestBed.configureTestingModule({
+            imports: [],
+            providers: [
+                MockProvider(AlertService),
+                MockProvider(ProfileService, { isModuleFeatureActive: () => false }),
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                provideTranslateService(),
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                const localFixture = TestBed.createComponent(AtlasOrchestrationTriggerComponent);
+                localFixture.componentRef.setInput('exercise', exercise);
+                localFixture.detectChanges();
+
+                // Module off: neither the button nor the result dialog is rendered — hosts need no Atlas-specific guard.
+                expect(localFixture.debugElement.query(By.css('button'))).toBeNull();
+                expect(localFixture.debugElement.query(By.directive(OrchestrationResultDialogComponent))).toBeNull();
+            });
     });
 });
