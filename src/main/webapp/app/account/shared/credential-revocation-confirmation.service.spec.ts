@@ -5,7 +5,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { ActionType, DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ActionType, DeleteDialogData, triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 /**
  * The four revocation sites stub this service, so nothing else exercises it. Its own behaviour is what decides whether a
@@ -54,7 +54,7 @@ describe('CredentialRevocationConfirmationService', () => {
         expect(openDeleteDialog).toHaveBeenCalledOnce();
         expect(openedWith().actionType).toBe(ActionType.Remove);
         expect(openedWith().deleteQuestion).toBe('artemisApp.credentialRevocation.confirmQuestion');
-        openedWith().delete.emit({});
+        triggerDeleteDialogDelete(openedWith().delete);
 
         await expect(confirmation).resolves.toBe(true);
     });
@@ -72,7 +72,7 @@ describe('CredentialRevocationConfirmationService', () => {
         const dialogErrors: string[] = [];
         openedWith().dialogError!.subscribe((value) => dialogErrors.push(value));
 
-        openedWith().delete.emit({});
+        triggerDeleteDialogDelete(openedWith().delete);
         await confirmation;
 
         // An empty error closes the dialog; the caller reports its own failure afterwards.
@@ -82,7 +82,7 @@ describe('CredentialRevocationConfirmationService', () => {
     it('should resolve only once when a confirmed dialog also emits onClose', async () => {
         // The dialog closes after being confirmed, so both paths fire. The confirmation must stay `true`.
         const confirmation = service.confirm({ passkeys: true, sshKeys: false, vcsAccessTokens: false });
-        openedWith().delete.emit({});
+        triggerDeleteDialogDelete(openedWith().delete);
         onClose.next(undefined);
 
         await expect(confirmation).resolves.toBe(true);
@@ -100,7 +100,7 @@ describe('CredentialRevocationConfirmationService', () => {
 
         expect(credentials).toBe(expected.replace(/(\w+)/g, 'artemisApp.credentialRevocation.types.$1'));
 
-        openedWith().delete.emit({});
+        triggerDeleteDialogDelete(openedWith().delete);
         await confirmation;
     });
 });
