@@ -163,19 +163,6 @@ describe('Exercise Scores Component', () => {
             expect(searchSpy).toHaveBeenCalledOnce();
         });
 
-        it('should refresh properly', () => {
-            const searchSpy = vi.spyOn(participationService, 'searchParticipationScores').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
-
-            component.onLazyLoad({ first: 0, rows: 50 });
-            searchSpy.mockClear();
-
-            component.refresh();
-
-            expect(searchSpy).toHaveBeenCalledOnce();
-            expect(component.participations()).toEqual([sampleDto]);
-            expect(component.isLoading()).toBe(false);
-        });
-
         it('should reset filter options and reload', () => {
             const searchSpy = vi.spyOn(participationService, 'searchParticipationScores').mockReturnValue(of({ content: [], totalElements: 0 }));
 

@@ -400,13 +400,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Triggers a re-fetch of the current page from the server
-     */
-    refresh() {
-        this.loadPage();
-    }
-
     ngOnDestroy() {
         this.paramSub.unsubscribe();
         const ex = this.exercise();

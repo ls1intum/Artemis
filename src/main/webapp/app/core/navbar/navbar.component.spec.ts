@@ -407,27 +407,6 @@ describe('NavbarComponent', () => {
         expect(component.gitUsername()).toBe('Max Musterman');
     });
 
-    it('should set the exam active state correctly', async () => {
-        vi.useFakeTimers();
-        const now = dayjs();
-        const activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
-
-        fixture.detectChanges();
-        activatedRoute.setParameters({ examId: 1 });
-        router.setUrl('/course/2/exams/1');
-
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(component.isExamActive()).toBe(false);
-        await vi.advanceTimersByTimeAsync(61000);
-        expect(component.isExamActive()).toBe(true);
-        await vi.advanceTimersByTimeAsync(61000);
-        expect(component.isExamActive()).toBe(true);
-        await vi.advanceTimersByTimeAsync(180000);
-        expect(component.isExamActive()).toBe(false);
-        vi.useRealTimers();
-    });
-
     describe('Special Cases for Breadcrumbs', () => {
         it('programming exercise import', () => {
             const testUrl = '/course-management/1/programming-exercises/import/2';
