@@ -1,8 +1,8 @@
+import { TumUiButtonComponent, TumUiPanelComponent } from '@tumaet/ui-angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -26,16 +26,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
-import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
-import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
-import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
+import { ExamExerciseTableComponent } from 'app/exam/manage/exercise-groups/exercise-table/exam-exercise-table.component';
+import { ExamExerciseGroupEditModalComponent } from 'app/exam/manage/exercise-groups/group-edit-modal/exam-exercise-group-edit-modal.component';
+import { ExamExerciseTypePickerComponent } from 'app/exam/manage/exercise-groups/exercise-type-picker/exam-exercise-type-picker.component';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -67,15 +63,13 @@ describe('Exercise Groups Component', () => {
         TestBed.configureTestingModule({
             imports: [
                 ExerciseGroupsComponent,
-                MockComponent(ExamExerciseRowButtonsComponent),
-                MockComponent(ProgrammingExerciseInstructorStatusComponent),
+                MockComponent(ExamExerciseTableComponent),
+                MockComponent(ExamExerciseGroupEditModalComponent),
+                MockComponent(ExamExerciseTypePickerComponent),
+                MockComponent(TumUiPanelComponent),
+                MockComponent(TumUiButtonComponent),
                 MockDirective(DeleteButtonDirective),
-                MockDirective(HasAnyAuthorityDirective),
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FileUploadExerciseGroupCellComponent),
-                MockComponent(ModelingExerciseGroupCellComponent),
-                MockComponent(ProgrammingExerciseGroupCellComponent),
-                MockComponent(QuizExerciseGroupCellComponent),
                 MockDirective(TranslateDirective),
             ],
             providers: [
@@ -169,41 +163,6 @@ describe('Exercise Groups Component', () => {
 
         expect(exerciseGroupService.delete).toHaveBeenCalledOnce();
         expect(comp.exerciseGroups()).toHaveLength(groups.length - 1);
-    });
-
-    it('returns the exercise icon type quiz', () => {
-        const icon = faCheckDouble;
-        const exercise = { type: ExerciseType.QUIZ } as Exercise;
-
-        expect(comp.exerciseIcon(exercise)).toBe(icon);
-    });
-
-    it('returns the exercise icon type file upload', () => {
-        const icon = faFileUpload;
-        const exercise = { type: ExerciseType.FILE_UPLOAD } as Exercise;
-
-        expect(comp.exerciseIcon(exercise)).toBe(icon);
-    });
-
-    it('returns the exercise icon type modeling', () => {
-        const icon = faProjectDiagram;
-        const exercise = { type: ExerciseType.MODELING } as Exercise;
-
-        expect(comp.exerciseIcon(exercise)).toBe(icon);
-    });
-
-    it('returns the exercise icon type programming', () => {
-        const icon = faKeyboard;
-        const exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
-
-        expect(comp.exerciseIcon(exercise)).toBe(icon);
-    });
-
-    it('returns the exercise icon type text', () => {
-        const icon = faFont;
-        const exercise = { type: ExerciseType.TEXT } as Exercise;
-
-        expect(comp.exerciseIcon(exercise)).toBe(icon);
     });
 
     it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
@@ -342,17 +301,62 @@ describe('Exercise Groups Component', () => {
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved');
     });
 
-    it('maps exercise types to exercise groups', () => {
+    it('opens the type picker for a group and forwards import requests to the import dialog', () => {
         comp.exerciseGroups.set(groups);
-        const firstGroupId = groups[0].id!;
-        const expectedResult = [ExerciseType.TEXT, ExerciseType.PROGRAMMING];
 
-        comp.setupExerciseGroupToExerciseTypesDict();
-        const map = comp.exerciseGroupToExerciseTypesDict();
+        comp.openTypePicker(0, 'import');
 
-        expect(map).toBeDefined();
-        expect(map.size).toBe(groups.length);
-        expect(map.get(firstGroupId)).toEqual(expectedResult);
+        expect(comp.typePickerVisible()).toBe(true);
+        expect(comp.typePickerGroupId()).toBe(0);
+        expect(comp.typePickerMode()).toBe('import');
+
+        const openImportModalSpy = vi.spyOn(comp, 'openImportModal');
+        comp.onTypePickerImport(ExerciseType.TEXT);
+
+        expect(openImportModalSpy).toHaveBeenCalledWith(groups[0], ExerciseType.TEXT);
+    });
+
+    it('opens the group-edit modal for an existing group and updates it on save', async () => {
+        comp.exerciseGroups.set(groups);
+        const updated = { id: 1, title: 'Renamed', isMandatory: false } as ExerciseGroup;
+        vi.spyOn(exerciseGroupService, 'update').mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: updated })));
+
+        comp.openGroupEditModal(1);
+        expect(comp.groupEditIsNew()).toBe(false);
+        expect(comp.groupEditTarget()).toEqual(groups[1]);
+
+        comp.onGroupEditSaved(updated);
+        await Promise.resolve();
+
+        expect(exerciseGroupService.update).toHaveBeenCalledWith(course.id, exam.id, updated);
+        expect(comp.exerciseGroups()!.find((g) => g.id === 1)?.title).toBe('Renamed');
+    });
+
+    it('creates a new group via the create-group modal', async () => {
+        comp.exerciseGroups.set(groups);
+        const created = { id: 99, title: 'New group', isMandatory: true, exam } as ExerciseGroup;
+        vi.spyOn(exerciseGroupService, 'create').mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: created })));
+
+        comp.openCreateGroupModal();
+        expect(comp.groupEditIsNew()).toBe(true);
+
+        comp.onGroupEditSaved({ title: 'New group', isMandatory: true });
+        await Promise.resolve();
+
+        expect(exerciseGroupService.create).toHaveBeenCalledOnce();
+        expect(comp.exerciseGroups()).toHaveLength(groups.length + 1);
+    });
+
+    it('moves an exercise into a different group on table group change', async () => {
+        comp.exerciseGroups.set(groups);
+        vi.spyOn(exerciseGroupService, 'moveExerciseToGroup').mockReturnValue(of(new HttpResponse<void>()));
+
+        comp.onTableGroupChange({ exercise: { id: 3 } as Exercise, group: { id: 1 } as ExerciseGroup });
+        await Promise.resolve();
+
+        expect(exerciseGroupService.moveExerciseToGroup).toHaveBeenCalledWith(course.id, exam.id, 3, 1);
+        expect(comp.exerciseGroups()!.find((g) => g.id === 0)!.exercises).toHaveLength(1);
+        expect(comp.exerciseGroups()!.find((g) => g.id === 1)!.exercises).toEqual([{ id: 3, type: ExerciseType.TEXT }]);
     });
 
     it('opens the import modal for exercise groups', async () => {

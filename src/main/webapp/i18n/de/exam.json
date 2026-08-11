@@ -697,6 +697,8 @@
                 "selectExerciseGroupExplanation": "Wähle durch Klicken die individuellen Aufgaben aus, welche mit den Aufgabengruppen importiert werden sollen",
                 "noExerciseGroup": "Die ausgewählte Klausur {{examTitle}} hat keine Aufgabengruppen",
                 "update": "Aufgabengruppe bearbeiten",
+                "addExercise": "Aufgabe hinzufügen",
+                "importExercise": "Aufgabe importieren",
                 "type": "Typ",
                 "title": "Titel",
                 "points": "Punktzahl",

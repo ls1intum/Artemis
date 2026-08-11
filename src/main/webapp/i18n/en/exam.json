@@ -694,6 +694,8 @@
                 "create": "Create new Exercise Group",
                 "import": "Import Exercise Group",
                 "update": "Edit Exercise Group",
+                "addExercise": "Add Exercise",
+                "importExercise": "Import Exercise",
                 "selectExerciseGroup": "Select Exercise Groups",
                 "selectExerciseGroupExplanation": "Select the individual exercises, which should be imported alongside the exercise groups, by clicking on it",
                 "noExerciseGroup": "The selected exam {{examTitle}} has no exercise groups",
