@@ -42,12 +42,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -62,6 +67,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
@@ -74,6 +80,8 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "programmingexerciseparticipation";
+
+    private static final String SCORPIO_REPOSITORY_URI = "http://artemis.local/git/TESTPROJECT/testproject-student1.git";
 
     private final String participationsBaseUrl = "/api/programming/programming-exercise-participations/";
 
@@ -103,6 +111,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -672,53 +683,77 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     /**
      * This route is annotated {@code @AllowedTools(ToolTokenType.SCORPIO)} and read by the out-of-repo IntelliJ
-     * plugin, so its payload must stay a superset of the entity payload it replaced. The key set is asserted rather
-     * than argued in a javadoc.
+     * plugin, so its payload must stay a superset of the entity payload it replaced. Both variants of
+     * {@code withSubmission} are asserted against the raw JSON, because deserializing into the entity would hide a
+     * dropped key, and the fixture populates every nested node so that no key can be absent by {@code NON_EMPTY}
+     * instead of by being dropped.
+     *
+     * @param withSubmission the request flag; it selects the fetch graph, not the response shape, because
+     *                           {@code Result.submission} is an eager association
      */
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] withSubmission={0}")
+    @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetLatestResultWithFeedbacks_keepsTheScorpioKeySet() throws Exception {
-        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+    void testGetLatestResultWithFeedbacks_keepsTheScorpioKeySet(boolean withSubmission) throws Exception {
+        var result = setUpFullyPopulatedResult();
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
 
-        JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks");
+        Map<String, Object> body = getJsonMap(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks?withSubmission=" + withSubmission);
 
-        assertThat(body.path("id").asLong()).isEqualTo(result.getId());
+        assertThat(body).containsOnlyKeys("id", "exerciseId", "completionDate", "successful", "score", "rated", "submission", "feedbacks", "assessmentType", "testCaseCount",
+                "passedTestCaseCount", "codeIssueCount");
+        assertThat(body.get("id")).isEqualTo(result.getId().intValue());
         // exerciseId is a non-nullable column with a plain getter, so it was on the entity wire for every result
-        assertThat(body.path("exerciseId").asLong()).isEqualTo(programmingExercise.getId());
-        assertThat(body.path("feedbacks")).isNotEmpty();
-        assertThat(body.path("assessmentType").asText()).isEqualTo(AssessmentType.AUTOMATIC.name());
+        assertThat(body.get("exerciseId")).isEqualTo(programmingExercise.getId().intValue());
+        assertThat(body.get("assessmentType")).isEqualTo(AssessmentType.AUTOMATIC.name());
+        assertScorpioFeedbackKeySets(body);
+        assertScorpioSubmissionKeySets(body, participation);
     }
 
     /**
-     * {@code withSubmission=true} nests the whole submission, so the same superset rule applies one level down: the
-     * nested object has to keep every property {@link ProgrammingSubmission} put on the entity wire. The raw key set
-     * is asserted because deserializing into the entity would hide a dropped key.
+     * Asserts the feedback subtree. The manual feedback pins the structured grading instruction and the automatic one
+     * pins the test case, so both associations the {@link Feedback} entity put on this wire are covered.
+     *
+     * @param body the parsed response
      */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetLatestResultWithFeedbacks_withSubmission_keepsTheScorpioKeySet() throws Exception {
-        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
-        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
-        // Pin the values behind the computed and the boolean keys, so their presence does not depend on the fixture.
-        participation.setInitializationDate(ZonedDateTime.now().minusMinutes(30));
-        participationRepository.save(participation);
-        ProgrammingSubmission submission = (ProgrammingSubmission) result.getSubmission();
-        submission.setSubmissionDate(participation.getInitializationDate().plusMinutes(5));
-        submission.setCommitHash("1234567890abcdef");
-        submission.setType(SubmissionType.MANUAL);
-        submission.setExampleSubmission(true);
-        submission.setBuildFailed(true);
-        submissionRepository.save(submission);
+    private void assertScorpioFeedbackKeySets(Map<String, Object> body) {
+        List<Map<String, Object>> feedbacks = listOf(body, "feedbacks");
+        Map<String, Object> manualFeedback = feedbacks.stream().filter(feedback -> FeedbackType.MANUAL.name().equals(feedback.get("type"))).findFirst().orElseThrow();
+        assertThat(manualFeedback).containsOnlyKeys("id", "text", "detailText", "hasLongFeedbackText", "reference", "credits", "positive", "type", "visibility",
+                "gradingInstruction");
+        assertThat(manualFeedback.get("credits")).isEqualTo(2.0);
+        assertThat(manualFeedback.get("reference")).isEqualTo("reference-1");
+        assertThat(manualFeedback.get("hasLongFeedbackText")).isEqualTo(false);
 
-        Map<String, Object> body = getJsonMap(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks?withSubmission=true");
+        Map<String, Object> gradingInstruction = mapOf(manualFeedback, "gradingInstruction");
+        assertThat(gradingInstruction).containsOnlyKeys("id", "credits", "gradingScale", "instructionDescription", "feedback", "usageCount");
+        assertThat(gradingInstruction.get("gradingScale")).isEqualTo("good test");
+        assertThat(gradingInstruction.get("feedback")).isEqualTo("test feedback");
+        assertThat(gradingInstruction.get("usageCount")).isEqualTo(0);
 
-        assertThat(body).containsKey("submission");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> submissionJson = (Map<String, Object>) body.get("submission");
-        assertThat(submissionJson).containsKeys("id", "submissionExerciseType", "submissionDate", "commitHash", "type", "submitted", "exampleSubmission", "buildFailed", "empty",
-                "durationInMinutes", "participation");
-        assertThat(submissionJson.get("id")).isEqualTo(submission.getId().intValue());
+        Map<String, Object> automaticFeedback = feedbacks.stream().filter(feedback -> feedback.containsKey("testCase")).findFirst().orElseThrow();
+        assertThat(automaticFeedback.get("type")).isEqualTo(FeedbackType.AUTOMATIC.name());
+        Map<String, Object> testCase = mapOf(automaticFeedback, "testCase");
+        assertThat(testCase).containsOnlyKeys("id", "testName", "weight", "active", "visibility", "bonusMultiplier", "bonusPoints", "type");
+        assertThat(testCase.get("weight")).isEqualTo(3.0);
+        assertThat(testCase.get("bonusMultiplier")).isEqualTo(2.0);
+        assertThat(testCase.get("bonusPoints")).isEqualTo(1.0);
+        assertThat(testCase.get("active")).isEqualTo(true);
+        assertThat(testCase.get("visibility")).isEqualTo(Visibility.ALWAYS.name());
+        assertThat(testCase.get("type")).isEqualTo(ProgrammingExerciseTestCaseType.DEFAULT.name());
+    }
+
+    /**
+     * Asserts the submission subtree down to the participant. {@code Result.submission} is an eager association, so
+     * this ran for both values of {@code withSubmission} on the entity wire and has to keep doing so.
+     *
+     * @param body          the parsed response
+     * @param participation the participation the fixture built
+     */
+    private void assertScorpioSubmissionKeySets(Map<String, Object> body, StudentParticipation participation) {
+        Map<String, Object> submissionJson = mapOf(body, "submission");
+        assertThat(submissionJson).containsOnlyKeys("id", "submissionExerciseType", "submissionDate", "commitHash", "type", "submitted", "exampleSubmission", "buildFailed",
+                "empty", "durationInMinutes", "participation");
         assertThat(submissionJson.get("submissionExerciseType")).isEqualTo("programming");
         assertThat(submissionJson.get("commitHash")).isEqualTo("1234567890abcdef");
         assertThat(submissionJson.get("type")).isEqualTo(SubmissionType.MANUAL.name());
@@ -728,6 +763,120 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         // A programming submission is never empty; the constant was on the entity wire and stays on this one.
         assertThat(submissionJson.get("empty")).isEqualTo(false);
         assertThat(submissionJson.get("durationInMinutes")).isEqualTo(5);
+
+        Map<String, Object> participationJson = mapOf(submissionJson, "participation");
+        assertThat(participationJson).containsOnlyKeys("id", "type", "initializationState", "initializationDate", "individualDueDate", "testRun", "attempt", "presentationScore",
+                "student", "participantIdentifier", "participantName", "repositoryUri", "buildPlanId", "branch", "userIndependentRepositoryUri", "exercise");
+        assertThat(participationJson.get("id")).isEqualTo(participation.getId().intValue());
+        assertThat(participationJson.get("type")).isEqualTo("programming");
+        assertThat(participationJson.get("initializationState")).isEqualTo(InitializationState.INITIALIZED.name());
+        assertThat(participationJson.get("testRun")).isEqualTo(true);
+        assertThat(participationJson.get("attempt")).isEqualTo(0);
+        assertThat(participationJson.get("presentationScore")).isEqualTo(42.0);
+        assertThat(participationJson.get("repositoryUri")).isEqualTo(SCORPIO_REPOSITORY_URI);
+        assertThat(participationJson.get("buildPlanId")).isEqualTo("TESTPROJECT-STUDENT1");
+        assertThat(participationJson.get("branch")).isEqualTo("main");
+        // The user info is stripped from the authority, so a plain http URI comes back unchanged.
+        assertThat(participationJson.get("userIndependentRepositoryUri")).isEqualTo(SCORPIO_REPOSITORY_URI);
+        assertThat(participationJson.get("participantIdentifier")).isEqualTo(TEST_PREFIX + "student1");
+
+        Map<String, Object> student = mapOf(participationJson, "student");
+        assertThat(student).containsOnlyKeys("id", "login", "name", "firstName", "lastName", "email", "langKey", "activated", "deleted", "internal", "testUser", "ltiCreated",
+                "memirisEnabled", "bot", "participantIdentifier", "selectedLLMUsage", "selectedLLMUsageTimestamp", "createdDate");
+        assertThat(student.get("login")).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(student.get("participantIdentifier")).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(student.get("bot")).isEqualTo(false);
+
+        // The exercise keeps its own response shape; only the members the entity computed on top of it are pinned here.
+        Map<String, Object> exercise = mapOf(participationJson, "exercise");
+        assertThat(exercise).containsKeys("id", "type", "exerciseType", "visibleToStudents", "studentAssignedTeamIdComputed", "defaultTestCaseVisibility",
+                "gradingInstructionFeedbackUsed", "course");
+        assertThat(exercise.get("exerciseType")).isEqualTo("programming");
+        assertThat(exercise.get("visibleToStudents")).isEqualTo(true);
+        assertThat(exercise.get("studentAssignedTeamIdComputed")).isEqualTo(false);
+        assertThat(exercise.get("defaultTestCaseVisibility")).isEqualTo(Visibility.ALWAYS.name());
+        assertThat(mapOf(exercise, "course")).containsKeys("enrollmentEnabled", "unenrollmentEnabled", "onboardingDone", "restrictedAthenaModulesAccess", "learningPathsEnabled",
+                "gradeRelevant", "dataRetentionHold", "trainingEnabled");
+    }
+
+    /**
+     * Builds a result whose every nested node carries a non-default value: a structured grading instruction on a
+     * manual feedback, a test case on an automatic feedback, and a participation with a repository, a branch, an
+     * initialization state and {@code testRun} set. Without that, a key the projection dropped would be
+     * indistinguishable from a key {@code NON_EMPTY} suppressed.
+     *
+     * @return the result the route serves
+     */
+    private Result setUpFullyPopulatedResult() {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(5));
+        programmingExercise.setStartDate(ZonedDateTime.now().minusDays(4));
+        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(3));
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
+        programmingExercise.setShowTestNamesToStudents(true);
+        exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusDays(1));
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+        participation.setInitializationDate(ZonedDateTime.now().minusMinutes(30));
+        participation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setRepositoryUri(SCORPIO_REPOSITORY_URI);
+        participation.setBranch("main");
+        participation.setBuildPlanId("TESTPROJECT-STUDENT1");
+        participation.setTestRun(true);
+        participation.setPresentationScore(42.0);
+        participationRepository.save(participation);
+
+        var submission = (ProgrammingSubmission) result.getSubmission();
+        submission.setSubmissionDate(participation.getInitializationDate().plusMinutes(5));
+        submission.setCommitHash("1234567890abcdef");
+        submission.setType(SubmissionType.MANUAL);
+        submission.setExampleSubmission(true);
+        submission.setBuildFailed(true);
+        submissionRepository.save(submission);
+
+        var instruction = GradingCriterionUtil
+                .findAnyInstructionWhere(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId()), anyInstruction -> true).orElseThrow();
+        Feedback manualFeedback = new Feedback();
+        manualFeedback.setType(FeedbackType.MANUAL);
+        manualFeedback.setText("manual feedback text");
+        manualFeedback.setDetailText("manual detail text");
+        manualFeedback.setReference("reference-1");
+        manualFeedback.setCredits(2.0);
+        manualFeedback.setPositive(true);
+        manualFeedback.setVisibility(Visibility.ALWAYS);
+        manualFeedback.setGradingInstruction(instruction);
+        participationUtilService.addFeedbackToResult(manualFeedback, result);
+
+        var testCase = testCaseRepository.findByExerciseId(programmingExercise.getId()).iterator().next();
+        testCase.setWeight(3.0);
+        testCase.setBonusMultiplier(2.0);
+        testCase.setBonusPoints(1.0);
+        testCase.setActive(true);
+        testCase.setVisibility(Visibility.ALWAYS);
+        testCaseRepository.save(testCase);
+        Feedback automaticFeedback = new Feedback();
+        automaticFeedback.setType(FeedbackType.AUTOMATIC);
+        automaticFeedback.setText(testCase.getTestName());
+        automaticFeedback.setDetailText("automatic detail text");
+        automaticFeedback.setCredits(1.0);
+        automaticFeedback.setPositive(true);
+        automaticFeedback.setVisibility(Visibility.ALWAYS);
+        automaticFeedback.setTestCase(testCase);
+        return participationUtilService.addFeedbackToResult(automaticFeedback, result);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> mapOf(Map<String, Object> parent, String key) {
+        assertThat(parent).containsKey(key);
+        return (Map<String, Object>) parent.get(key);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, Object>> listOf(Map<String, Object> parent, String key) {
+        assertThat(parent).containsKey(key);
+        return (List<Map<String, Object>>) parent.get(key);
     }
 
     @Test

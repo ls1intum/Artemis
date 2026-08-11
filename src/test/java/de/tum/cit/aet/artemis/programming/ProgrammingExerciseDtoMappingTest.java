@@ -21,17 +21,28 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -39,6 +50,7 @@ import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingParticipationLatestResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
 
@@ -164,7 +176,8 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(dto.submissionPolicy()).isNull();
         assertThat(dto.templateParticipation()).isNull();
         assertThat(dto.solutionParticipation()).isNull();
-        assertThat(dto.gradingInstructionFeedbackUsed()).isNull();
+        // The entity always serialized its transient flag, so the single-argument overload carries the default too.
+        assertThat(dto.gradingInstructionFeedbackUsed()).isFalse();
     }
 
     @Test
@@ -460,6 +473,148 @@ class ProgrammingExerciseDtoMappingTest {
 
         assertThat(dto.id()).isEqualTo(3L);
         assertThat(dto.feedbacks()).isNull();
+    }
+
+    // --- ProgrammingParticipationLatestResultDTO (the SCORPIO latest-result route) --------------------------------
+
+    @Test
+    void latestResultFeedbackCarriesTheGradingInstructionAndTheWholeTestCase() {
+        GradingInstruction instruction = new GradingInstruction();
+        instruction.setId(7L);
+        instruction.setCredits(1.5);
+        instruction.setGradingScale("good");
+        instruction.setInstructionDescription("description");
+        instruction.setFeedback("proposed feedback");
+        instruction.setUsageCount(2);
+
+        ProgrammingExerciseTestCase testCase = new ProgrammingExerciseTestCase();
+        testCase.setId(8L);
+        testCase.setTestName("test1");
+        testCase.setWeight(3.0);
+        testCase.setBonusMultiplier(2.0);
+        testCase.setBonusPoints(1.0);
+        testCase.setActive(true);
+        testCase.setVisibility(Visibility.ALWAYS);
+
+        Feedback feedback = new Feedback();
+        feedback.setId(9L);
+        feedback.setType(FeedbackType.MANUAL);
+        feedback.setGradingInstruction(instruction);
+        feedback.setTestCase(testCase);
+
+        var dto = ProgrammingParticipationLatestResultDTO.FeedbackRefDTO.of(feedback);
+
+        assertThat(dto.gradingInstruction()).isNotNull();
+        assertThat(dto.gradingInstruction().credits()).isEqualTo(1.5);
+        assertThat(dto.gradingInstruction().gradingScale()).isEqualTo("good");
+        assertThat(dto.gradingInstruction().usageCount()).isEqualTo(2);
+        assertThat(dto.testCase()).isNotNull();
+        // The shared ResultDTO.TestCaseDTO stops at id and testName; this route kept the rest of the entity payload.
+        assertThat(dto.testCase().weight()).isEqualTo(3.0);
+        assertThat(dto.testCase().bonusMultiplier()).isEqualTo(2.0);
+        assertThat(dto.testCase().bonusPoints()).isEqualTo(1.0);
+        assertThat(dto.testCase().active()).isTrue();
+        assertThat(dto.testCase().visibility()).isEqualTo(Visibility.ALWAYS);
+        assertThat(dto.testCase().type()).isEqualTo(ProgrammingExerciseTestCaseType.DEFAULT);
+    }
+
+    @Test
+    void latestResultFeedbackGuardsUninitializedAssociations() {
+        Feedback feedback = new Feedback();
+        feedback.setId(1L);
+        feedback.setTestCase(uninitializedProxy(ProgrammingExerciseTestCase.class));
+        feedback.setGradingInstruction(uninitializedProxy(GradingInstruction.class));
+
+        var dto = ProgrammingParticipationLatestResultDTO.FeedbackRefDTO.of(feedback);
+
+        assertThat(dto.testCase()).isNull();
+        assertThat(dto.gradingInstruction()).isNull();
+    }
+
+    @Test
+    void latestResultParticipationCarriesTheRepositoryAndParticipantFields() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(4L);
+        User student = new User();
+        student.setId(11L);
+        student.setLogin("student1");
+        student.setFirstName("First");
+        student.setLastName("Last");
+
+        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(3L);
+        participation.setExercise(exercise);
+        participation.setParticipant(student);
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setInitializationDate(ZonedDateTime.now().minusDays(1));
+        participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+        participation.setTestRun(true);
+        participation.setPresentationScore(42.0);
+        participation.setRepositoryUri("http://user@artemis.local/git/PROJ/proj-student1.git");
+        participation.setBuildPlanId("PROJ-STUDENT1");
+        participation.setBranch("main");
+
+        var dto = ProgrammingParticipationLatestResultDTO.ParticipationRefDTO.of(participation);
+
+        assertThat(dto.type()).isEqualTo("programming");
+        assertThat(dto.initializationState()).isEqualTo(InitializationState.INITIALIZED);
+        assertThat(dto.initializationDate()).isNotNull();
+        assertThat(dto.individualDueDate()).isNotNull();
+        assertThat(dto.testRun()).isTrue();
+        assertThat(dto.presentationScore()).isEqualTo(42.0);
+        assertThat(dto.repositoryUri()).isEqualTo("http://user@artemis.local/git/PROJ/proj-student1.git");
+        assertThat(dto.buildPlanId()).isEqualTo("PROJ-STUDENT1");
+        assertThat(dto.branch()).isEqualTo("main");
+        // The entity computed this one by stripping the user info from the authority.
+        assertThat(dto.userIndependentRepositoryUri()).isEqualTo("http://artemis.local/git/PROJ/proj-student1.git");
+        assertThat(dto.participantIdentifier()).isEqualTo("student1");
+        assertThat(dto.participantName()).isEqualTo("First Last");
+        assertThat(dto.student()).isNotNull();
+        assertThat(dto.student().login()).isEqualTo("student1");
+        assertThat(dto.team()).isNull();
+        // A student participation serialized the exercise under `exercise`, so the other slot stays empty.
+        assertThat(dto.exercise()).isNotNull();
+        assertThat(dto.programmingExercise()).isNull();
+    }
+
+    @Test
+    void latestResultParticipationPutsATemplateExerciseInTheProgrammingExerciseSlot() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(4L);
+        TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
+        participation.setId(5L);
+        participation.setProgrammingExercise(exercise);
+
+        var dto = ProgrammingParticipationLatestResultDTO.ParticipationRefDTO.of(participation);
+
+        assertThat(dto.type()).isEqualTo("template");
+        // A template participation @JsonIgnores getExercise() and serialized programmingExercise instead.
+        assertThat(dto.exercise()).isNull();
+        assertThat(dto.programmingExercise()).isNotNull();
+        assertThat(dto.programmingExercise().id()).isEqualTo(4L);
+        assertThat(dto.student()).isNull();
+        assertThat(dto.branch()).isNull();
+    }
+
+    @Test
+    void latestResultTeamParticipationGuardsAnUninitializedStudentCollection() {
+        Team team = new Team();
+        team.setId(6L);
+        team.setName("Team 1");
+        team.setShortName("t1");
+        team.setStudents(uninitializedSet());
+
+        StudentParticipation participation = new StudentParticipation();
+        participation.setId(7L);
+        participation.setParticipant(team);
+
+        var dto = ProgrammingParticipationLatestResultDTO.ParticipationRefDTO.of(participation);
+
+        assertThat(dto.student()).isNull();
+        assertThat(dto.team()).isNotNull();
+        assertThat(dto.team().shortName()).isEqualTo("t1");
+        assertThat(dto.team().participantIdentifier()).isEqualTo("t1");
+        assertThat(dto.team().students()).isNull();
     }
 
     /**

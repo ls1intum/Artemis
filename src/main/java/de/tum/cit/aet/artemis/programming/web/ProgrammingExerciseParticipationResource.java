@@ -263,7 +263,10 @@ public class ProgrammingExerciseParticipationResource {
      * Get the latest result for a given programming exercise participation including its result.
      *
      * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
-     * @param withSubmission  flag determining whether the corresponding submission should also be returned
+     * @param withSubmission  flag determining whether the submission is fetched together with the result. It does not
+     *                            change the response shape: {@code Result.submission} is an eager association, so the
+     *                            submission was on this route's payload for both values of the flag long before the
+     *                            DTOs existed, and the SCORPIO client must keep seeing it
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed
      *         to access the participation.
      */
@@ -283,7 +286,7 @@ public class ProgrammingExerciseParticipationResource {
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
         result.ifPresent(value -> resultService.filterSensitiveInformationIfNecessary(participation, value));
 
-        return result.map(value -> ResponseEntity.ok(ProgrammingParticipationLatestResultDTO.of(value, withSubmission))).orElseGet(() -> ResponseEntity.ok(null));
+        return result.map(value -> ResponseEntity.ok(ProgrammingParticipationLatestResultDTO.of(value))).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**

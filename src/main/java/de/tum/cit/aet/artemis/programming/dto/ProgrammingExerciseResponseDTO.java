@@ -12,10 +12,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
@@ -92,6 +94,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * @param exerciseVariantGroup                       the variant group owning the shared timeline, when fetched
  * @param studentParticipations                      the student participations; {@code null} when not loaded
  * @param auxiliaryRepositories                      the auxiliary repositories; {@code null} when not loaded
+ * @param exerciseType                               the constant exercise-type discriminator {@code "programming"};
+ *                                                       the entity serialized it next to the Jackson subtype id
+ *                                                       {@code type}, so both stay on the wire
+ * @param visibleToStudents                          whether the exercise is already visible to students; computed
+ *                                                       from the release date, {@code false} for exam exercises
+ * @param studentAssignedTeamIdComputed              whether the transient team assignment was computed for the
+ *                                                       requesting user
+ * @param defaultTestCaseVisibility                  the visibility new test cases get; derived from course vs. exam
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingExerciseResponseDTO(Long id, String type, String title, String shortName, String channelName, String problemStatement, Set<String> categories,
@@ -106,7 +116,8 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         UpdateProgrammingExerciseBuildConfigDTO buildConfig, SubmissionPolicyDTO submissionPolicy, ProgrammingExerciseCourseDTO course,
         ProgrammingExerciseExamGroupDTO exerciseGroup, TemplateSolutionParticipationDTO templateParticipation, TemplateSolutionParticipationDTO solutionParticipation,
         ExerciseVariantGroupReferenceDTO exerciseVariantGroup, List<ProgrammingExerciseStudentParticipationDTO> studentParticipations,
-        List<AuxiliaryRepositoryDTO> auxiliaryRepositories) implements Serializable {
+        List<AuxiliaryRepositoryDTO> auxiliaryRepositories, ExerciseType exerciseType, boolean visibleToStudents, boolean studentAssignedTeamIdComputed,
+        Visibility defaultTestCaseVisibility) implements Serializable {
 
     /**
      * The constant Jackson subtype id of {@link ProgrammingExercise}.
@@ -121,7 +132,8 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
      */
     public static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise) {
-        return of(exercise, null);
+        // The entity always put the transient flag on the wire, so the default false is carried rather than dropped.
+        return of(exercise, exercise == null ? null : exercise.isGradingInstructionFeedbackUsed());
     }
 
     /**
@@ -193,7 +205,8 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
                 exercise.isAllowOnlineIde(), gradingInstructionFeedbackUsed, UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()), submissionPolicy, course,
                 exerciseGroup, TemplateSolutionParticipationDTO.ofTemplate(exercise.getTemplateParticipation()),
                 TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation()), ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()),
-                studentParticipations, auxiliaryRepositories);
+                studentParticipations, auxiliaryRepositories, exercise.getExerciseType(), exercise.isVisibleToStudents(), exercise.isStudentAssignedTeamIdComputed(),
+                exercise.getDefaultTestCaseVisibility());
     }
 
     /**
