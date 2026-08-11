@@ -295,7 +295,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         StudentExamWithGradeDTO studentGrade = examService.getStudentExamGradesForSummary(student, studentExam, false);
         assertThat(studentGrade).isNotNull();
-        assertThat(studentGrade.studentExam().getUser().getId()).isEqualTo(student.getId());
+        assertThat(studentGrade.studentExam().user().id()).isEqualTo(student.getId());
         // Verify the student sees the correct points from the first correction (8.0), not 0
         assertThat(studentGrade.studentResult().overallPointsAchieved()).isEqualTo(8.0);
     }
