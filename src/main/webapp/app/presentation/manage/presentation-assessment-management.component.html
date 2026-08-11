@@ -1,6 +1,6 @@
 <div>
     <div *titleBarActions class="flex justify-end">
-        <tum-ui-button id="create-presentation-assessment" size="small" [icon]="faPlus" (clicked)="startCreate()">
+        <tum-ui-button id="create-presentation-assessment" size="small" [icon]="faPlus" [disabled]="isSaving()" (clicked)="startCreate()">
             <span jhiTranslate="artemisApp.presentationAssessment.home.createLabel"></span>
         </tum-ui-button>
     </div>
@@ -45,7 +45,7 @@
                         <td>{{ presentationAssessment.description }}</td>
                         <td>
                             <div class="flex justify-end gap-2">
-                                <tum-ui-button size="small" [icon]="faPencilAlt" (clicked)="startEdit(presentationAssessment)">
+                                <tum-ui-button size="small" [icon]="faPencilAlt" [disabled]="isSaving()" (clicked)="startEdit(presentationAssessment)">
                                     <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                                 </tum-ui-button>
                                 <button
@@ -72,9 +72,13 @@
     }
 
     <tum-ui-dialog
-        [(visible)]="dialogVisible"
+        [visible]="dialogVisible()"
+        (visibleChange)="handleDialogVisibleChange($event)"
         size="large"
         [header]="(dialogPresentationAssessment() ? 'artemisApp.presentationAssessment.home.editLabel' : 'artemisApp.presentationAssessment.home.createLabel') | artemisTranslate"
+        [closable]="!isSaving()"
+        [closeOnEscape]="!isSaving()"
+        [dismissableMask]="!isSaving()"
         [closeButtonAriaLabel]="'entity.action.close' | artemisTranslate"
     >
         @if (dialogVisible()) {
@@ -83,6 +87,7 @@
                 [course]="course()"
                 [presentationAssessment]="dialogPresentationAssessment()"
                 [initialAssignedStudents]="dialogAssignedStudents()"
+                [isSaving]="isSaving()"
                 (saved)="handleDialogSave($event)"
                 (cancelled)="handleDialogCancel()"
             />

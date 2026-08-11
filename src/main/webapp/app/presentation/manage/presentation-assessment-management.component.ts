@@ -83,12 +83,18 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     startCreate(): void {
+        if (this.isSaving()) {
+            return;
+        }
         this.dialogRequestId++;
         this.isLoadingAssignedStudents.set(false);
         this.openPresentationDialog(undefined, []);
     }
 
     startEdit(presentationAssessment: PresentationAssessment): void {
+        if (this.isSaving()) {
+            return;
+        }
         if (!presentationAssessment.id) {
             return;
         }
@@ -145,9 +151,24 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     handleDialogCancel(): void {
+        if (this.isSaving()) {
+            return;
+        }
         this.dialogRequestId++;
         this.isLoadingAssignedStudents.set(false);
         this.dialogVisible.set(false);
+    }
+
+    handleDialogVisibleChange(visible: boolean): void {
+        if (!visible && this.isSaving()) {
+            this.dialogVisible.set(true);
+            return;
+        }
+        if (!visible) {
+            this.handleDialogCancel();
+            return;
+        }
+        this.dialogVisible.set(true);
     }
 
     onSort(event: TumUiTableSortEvent): void {
@@ -161,6 +182,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         }
 
         this.isSaving.set(true);
+        const requestId = this.dialogRequestId;
         const formAssessment = result.presentationAssessment;
         const presentationAssessment = {
             id: formAssessment.id,
@@ -179,9 +201,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
         request.pipe(finalize(() => this.isSaving.set(false))).subscribe({
             next: () => {
-                this.dialogVisible.set(false);
-                this.alertService.success(isUpdate ? 'artemisApp.presentationAssessment.updated' : 'artemisApp.presentationAssessment.created');
-                this.loadAll();
+                if (requestId === this.dialogRequestId) {
+                    this.dialogVisible.set(false);
+                    this.alertService.success(isUpdate ? 'artemisApp.presentationAssessment.updated' : 'artemisApp.presentationAssessment.created');
+                    this.loadAll();
+                }
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });

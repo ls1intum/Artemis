@@ -88,11 +88,11 @@
     }
 
     <div class="flex flex-col-reverse gap-2 min-[40rem]:flex-row min-[40rem]:justify-end">
-        <tum-ui-button severity="secondary" type="button" (clicked)="cancel()">
+        <tum-ui-button severity="secondary" type="button" [disabled]="isSaving()" (clicked)="cancel()">
             <fa-icon [icon]="faBan" />
             <span jhiTranslate="entity.action.cancel"></span>
         </tum-ui-button>
-        <tum-ui-button type="submit">
+        <tum-ui-button type="submit" [disabled]="isSaving()">
             <fa-icon [icon]="faSave" />
             <span jhiTranslate="entity.action.save"></span>
         </tum-ui-button>

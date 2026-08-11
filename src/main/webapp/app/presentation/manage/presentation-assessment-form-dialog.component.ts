@@ -93,6 +93,7 @@ export class PresentationAssessmentFormDialogComponent {
     readonly course = input<Course>();
     readonly presentationAssessment = input<PresentationAssessment>();
     readonly initialAssignedStudents = input<User[]>([]);
+    readonly isSaving = input(false);
 
     readonly saved = output<PresentationAssessmentFormDialogResult>();
     readonly cancelled = output<void>();

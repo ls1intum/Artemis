@@ -181,6 +181,48 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.dialogVisible()).toBeFalsy();
     });
 
+    it('should keep dialog open and ignore cancel while save is in progress', () => {
+        const saveResponse = new Subject<HttpResponse<PresentationAssessment>>();
+        presentationAssessmentService.create.mockReturnValue(saveResponse);
+        component.startCreate();
+
+        component.handleDialogSave({
+            presentationAssessment: { title: 'New presentation', maxPoints: 25, courseId },
+            assignedStudents: [],
+            originalAssignedStudents: [],
+        });
+        component.handleDialogCancel();
+        component.handleDialogVisibleChange(false);
+
+        expect(component.dialogVisible()).toBeTruthy();
+        expect(component.isSaving()).toBeTruthy();
+
+        saveResponse.next(new HttpResponse({ body: presentationAssessment }));
+        saveResponse.complete();
+
+        expect(component.dialogVisible()).toBeFalsy();
+    });
+
+    it('should ignore create and edit attempts while save is in progress', () => {
+        const saveResponse = new Subject<HttpResponse<PresentationAssessment>>();
+        presentationAssessmentService.create.mockReturnValue(saveResponse);
+        component.startCreate();
+
+        component.handleDialogSave({
+            presentationAssessment: { title: 'New presentation', maxPoints: 25, courseId },
+            assignedStudents: [],
+            originalAssignedStudents: [],
+        });
+        component.startEdit(presentationAssessment);
+        component.startCreate();
+
+        expect(presentationAssessmentService.findStudents).not.toHaveBeenCalled();
+        expect(component.dialogPresentationAssessment()).toBeUndefined();
+
+        saveResponse.next(new HttpResponse({ body: presentationAssessment }));
+        saveResponse.complete();
+    });
+
     it('should not reload presentations when create fails', () => {
         presentationAssessmentService.create.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
         component.startCreate();
