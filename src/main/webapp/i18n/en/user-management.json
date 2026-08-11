@@ -104,6 +104,7 @@
             },
             "langKey": "Language",
             "passwordTooltip": "This setting can only be changed for new users. Notice, that you can only set or change passwords for internal users.",
+            "revokeCredentials": "Revoke passkeys, SSH keys, and VCS access tokens",
             "internal": "Internal",
             "createdBy": "Created by",
             "createdDate": "Created date",
