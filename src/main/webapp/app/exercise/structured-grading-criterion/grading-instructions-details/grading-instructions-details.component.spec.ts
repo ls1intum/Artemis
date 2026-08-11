@@ -125,9 +125,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         it('should not persist the display-only grading instruction placeholder while generating', () => {
             exercise.gradingInstructionFeedbackUsed = true;
             const markdownEditor = {
-                parseMarkdown: vi.fn(() =>
-                    component.setExerciseGradingInstructionText([{ text: '  Add Assessment Instruction text here  \n', action: undefined }]),
-                ),
+                parseMarkdown: vi.fn(() => component.setExerciseGradingInstructionText([{ text: '  Add Assessment Instruction text here  \n', action: undefined }])),
             };
             Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
             generationService.generate.mockReturnValue(of([]));
