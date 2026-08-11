@@ -57,8 +57,9 @@ export class CourseTutorialGroupsComponent {
     private courseTabRefreshService = inject(CourseTabRefreshService);
 
     courseId = this.getCurrentCourseIdSignal();
-    tutorialGroups = signal<TutorialGroup[]>([]);
-    tutorialLectures = signal<Lecture[]>([]);
+    // Undefined until loaded, so a refresh that legitimately returns nothing is distinguishable from the initial state
+    tutorialGroups = signal<TutorialGroup[] | undefined>(undefined);
+    tutorialLectures = signal<Lecture[] | undefined>(undefined);
     sidebarData = signal<SidebarData | undefined>(undefined);
     itemSelected = this.getItemSelectedSignal();
     readonly isCollapsed = signal(false);
@@ -95,10 +96,13 @@ export class CourseTutorialGroupsComponent {
         effect(() => {
             const tutorialGroups = this.tutorialGroups();
             const tutorialLectures = this.tutorialLectures();
-            if (tutorialGroups.length || tutorialLectures.length) {
-                this.prepareSidebarData(tutorialGroups, tutorialLectures);
-                this.autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups);
+            // Rebuild as soon as either side has loaded, empty result included. Skipping the rebuild when both came
+            // back empty left the previous course's — or a since-deleted group's — cards on screen after a refresh.
+            if (tutorialGroups === undefined && tutorialLectures === undefined) {
+                return;
             }
+            this.prepareSidebarData(tutorialGroups ?? [], tutorialLectures ?? []);
+            this.autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups ?? []);
         });
 
         effect(() => {

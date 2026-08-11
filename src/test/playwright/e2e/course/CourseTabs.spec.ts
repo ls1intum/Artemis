@@ -354,3 +354,52 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
         await expect(page.locator('jhi-course-settings')).toBeVisible();
     });
 });
+
+/**
+ * Regression coverage for a 500 on the exercises tab.
+ *
+ * A participation with no submission row at all is what broke it: the row projection reaches its submission columns
+ * through an outer join, and reading the submission's concrete type off that null row made Hibernate fail to map a null
+ * discriminator. Only programming exercises produce that state through the normal flow — starting a text, modeling,
+ * quiz or file upload exercise creates an initial empty submission along with the participation, so those never hit it.
+ *
+ * Separate from the suite above because creating a programming exercise needs repository infrastructure and is far too
+ * slow for the `@fast` budget.
+ */
+test.describe('Course overview tabs with a started programming exercise', { tag: '@slow' }, () => {
+    let course: Course;
+
+    test.beforeEach('Create a course with a programming exercise', async ({ login, courseManagementAPIRequests }) => {
+        await login(admin);
+        course = await courseManagementAPIRequests.createCourse();
+        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+    });
+
+    test.afterEach('Delete the course', async ({ login, courseManagementAPIRequests }) => {
+        await login(admin);
+        await courseManagementAPIRequests.deleteCourse(course, admin);
+    });
+
+    test('Exercises tab loads when a programming exercise was started and never submitted', async ({ page, login, exerciseAPIRequests, courseOverview }) => {
+        await login(admin);
+        const exercise = await exerciseAPIRequests.createProgrammingExercise({ course, releaseDate: dayjs().subtract(2, 'day'), dueDate: dayjs().add(2, 'day') });
+
+        await login(studentOne);
+        // Starting a programming exercise creates the participation and its repository, but no submission: the student
+        // has not pushed yet. That is the row shape the projection used to fail on.
+        const started = await page.request.post(`api/exercise/exercises/${exercise.id}/participations`);
+        expect(started.status(), 'the participation must be created for this test to mean anything').toBe(201);
+
+        const failedRequests: string[] = [];
+        page.on('response', (response) => {
+            if (response.url().includes(`courses/${course.id}/exercises-for-overview`) && !response.ok()) {
+                failedRequests.push(`${response.status()} ${response.url()}`);
+            }
+        });
+
+        await openCourseTab(page, course.id!, 'exercises');
+
+        await expect(courseOverview.getExercise(exercise.title!)).toBeVisible();
+        expect(failedRequests, `the exercises tab must not fail: ${JSON.stringify(failedRequests)}`).toHaveLength(0);
+    });
+});

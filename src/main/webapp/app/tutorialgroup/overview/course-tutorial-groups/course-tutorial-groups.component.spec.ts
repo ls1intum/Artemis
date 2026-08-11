@@ -95,6 +95,10 @@ describe('CourseTutorialGroupsComponent', () => {
     describe('sidebar toggle sync', () => {
         beforeEach(() => {
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [], lectures: [] });
+            // The cached course is empty, and the sidebar is now rebuilt for an empty result too, so these mappers are
+            // reached here. MockProvider returns undefined from them; the real ones return an empty array.
+            vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
+            vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
         });
 
         it('should sync the collapse state and a working toggle into an activated tutorial group detail', () => {
@@ -235,6 +239,32 @@ describe('CourseTutorialGroupsComponent', () => {
         await fixture.whenStable();
 
         expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+    });
+
+    it('should clear the sidebar when a refresh returns no groups and no lectures', async () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [tutorialGroup1], lectures: [tutorialLecture1] });
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([getSidebarCardElementForTutorialGroup(tutorialGroup1)]);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([getSidebarCardElementForTutorialLecture(tutorialLecture1)]);
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
+        vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.sidebarData()?.ungroupedData).toHaveLength(2);
+
+        // The group and the lecture are gone on the server; the refresh legitimately returns nothing. Keeping the old
+        // cards would leave the student clicking entries that no longer exist.
+        vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.mocked(courseOverviewService.mapTutorialGroupsToSidebarCardElements).mockReturnValue([]);
+        vi.mocked(courseOverviewService.mapLecturesToSidebarCardElements).mockReturnValue([]);
+
+        component.tutorialGroups.set([]);
+        component.tutorialLectures.set([]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.sidebarData()?.ungroupedData).toHaveLength(0);
     });
 
     it('should navigate to previously selected route', () => {

@@ -107,6 +107,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription?.unsubscribe();
         this.lecturesSubscription?.unsubscribe();
         this.multiLaunchLecturesSubscription?.unsubscribe();
+        // Switching course reuses this component instance, so the previous course's re-selection stream has to go with
+        // it. Leaving it subscribed made every later tab re-selection load the lectures once per course visited.
+        this.tabReselectionSubscription?.unsubscribe();
 
         this.courseId.set(courseId);
         this.course.set(this.courseStorageService.getCourse(courseId));
