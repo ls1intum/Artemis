@@ -38,12 +38,14 @@ artemis:
         result-parser-image: ghcr.io/ls1intum/hades/junit-result-parser:latest
       adapter:
         endpoint: http://host.docker.internal:8083/adapter/test-results
+        logs-endpoint: http://host.docker.internal:8083/adapter/logs
       auth-key: # Set this in production environment
 ```
 
 - `url` — where the Hades scheduler is reachable. Adjust the host/port to match your Hades scheduler deployment.
 - `hades.images.*` — the container images used for the pipeline steps that clone repositories and parse test results. These are public images maintained by the Hades project; you usually don't need to change them.
 - `hades.adapter.endpoint` — where the `hades-artemis-adapter` is reachable from inside the build containers. `host.docker.internal` lets containers managed by the Hades scheduler reach back out to the Docker host; adjust if the adapter runs elsewhere. The adapter receives parsed test results, combines them with the build logs, and forwards the combined result to Artemis' own result-ingestion endpoint.
+- `hades.adapter.logs-endpoint` — per-job callback URL that Artemis sends with each build job; the Hades scheduler's log manager POSTs the aggregated build logs there. This replaces the global `ARTEMIS_ADAPTER_URL` that Hades previously required and needs a Hades scheduler that includes [ls1intum/hades#452](https://github.com/ls1intum/hades/pull/452). Point it at the `hades-artemis-adapter` log route. Leave it empty to disable log forwarding (no `callback_url` is sent with the job).
 - `hades.auth-key` — Basic Auth password Artemis sends to the Hades scheduler (username `hades`). Must match the credential configured on the Hades scheduler side; set a strong value in production.
 
 You also still need `artemis.version-control` (LocalVC) configured, since builds are triggered against exercise repositories hosted there — see the

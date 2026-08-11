@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -99,6 +100,7 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
                     .getProgrammingExerciseBuildConfigElseThrow(participation.getProgrammingExercise());
             List<BuildPhaseDTO> activePhases = resolveActivePhases(buildConfig, participation, participation.getProgrammingExercise());
             String buildScript = buildScript(buildConfig, activePhases);
+            String dockerImage = resolveCustomDockerImage(buildConfig);
 
             String assignmentHash = (triggeredByPushTo == null || triggeredByPushTo == RepositoryType.USER) && commitHash != null ? commitHash
                     : gitService.getLastCommitHash(participation.getVcsRepositoryUri());
@@ -124,7 +126,7 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
             // Create the build trigger request DTO
             BuildTriggerRequestDTO buildTriggerRequest = new BuildTriggerRequestDTO(exerciseID, participationID, exerciseRepository, testRepository, auxiliaryRepository,
-                    buildScript, scriptType, participation.getProgrammingExercise().getProgrammingLanguage().toString(), additionalProperties);
+                    buildScript, scriptType, participation.getProgrammingExercise().getProgrammingLanguage().toString(), additionalProperties, dockerImage);
 
             // Delegate to Hades service
             hadesService.build(buildTriggerRequest);
@@ -185,6 +187,25 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
                 : buildPlanPhasesDTO.phases();
 
         return buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+    }
+
+    /**
+     * Resolves the custom Docker image configured on the exercise's build plan (windfile), if any. Returns {@code null} when no custom image is configured, in which case
+     * {@link HadesService} falls back to the language default. This mirrors how {@code LocalCITriggerService} honors the exercise-configured image, keeping the default as
+     * the single source of truth in {@link HadesService} to avoid divergence between the two services.
+     *
+     * @param buildConfig the build configuration of the exercise
+     * @return the custom Docker image, or {@code null} if none is configured
+     */
+    private String resolveCustomDockerImage(ProgrammingExerciseBuildConfig buildConfig) {
+        BuildPlanPhasesDTO buildPlanPhasesDTO;
+        try {
+            buildPlanPhasesDTO = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
+        }
+        catch (JsonProcessingException e) {
+            throw new LocalCIException("The build plan configuration is invalid for build config " + buildConfig.getId(), e);
+        }
+        return StringUtils.hasText(buildPlanPhasesDTO.dockerImage()) ? buildPlanPhasesDTO.dockerImage() : null;
     }
 
     private String resolveResultIngestDirectory(List<BuildPhaseDTO> activePhases, ProgrammingExerciseBuildConfig buildConfig, ProgrammingLanguage programmingLanguage,

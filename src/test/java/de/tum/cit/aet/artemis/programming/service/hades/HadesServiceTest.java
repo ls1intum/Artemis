@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -140,6 +142,74 @@ class HadesServiceTest {
     }
 
     @Test
+    void build_withCustomDockerImage_usesItForExecuteStep() throws ContinuousIntegrationException {
+        var dto = buildTriggerRequest(Map.of(), "ghcr.io/example/custom-image:1.0");
+        var expectedUuid = UUID.randomUUID();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(HadesBuildResponseDTO.class)))
+                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
+
+        hadesService.build(dto);
+
+        var executeStep = requestCaptor.getValue().getBody().steps().stream().filter(step -> "Execute".equals(step.name())).findFirst().orElseThrow();
+        assertThat(executeStep.image()).isEqualTo("ghcr.io/example/custom-image:1.0");
+        // the language default lookup must not be consulted when a custom image is provided
+        verify(programmingLanguageConfiguration, never()).getImage(any(), any());
+    }
+
+    @Test
+    void build_withBlankDockerImage_fallsBackToLanguageDefault() throws ContinuousIntegrationException {
+        var dto = buildTriggerRequest(Map.of(), "   ");
+        var expectedUuid = UUID.randomUUID();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(HadesBuildResponseDTO.class)))
+                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
+
+        hadesService.build(dto);
+
+        var executeStep = requestCaptor.getValue().getBody().steps().stream().filter(step -> "Execute".equals(step.name())).findFirst().orElseThrow();
+        assertThat(executeStep.image()).isEqualTo("java:21");
+    }
+
+    @Test
+    void build_withLogsCallbackConfigured_setsCallbackUrl() throws ContinuousIntegrationException {
+        ReflectionTestUtils.setField(hadesService, "logsCallbackUrl", "http://adapter:9090/logs");
+        var dto = buildTriggerRequest(Map.of());
+        var expectedUuid = UUID.randomUUID();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(HadesBuildResponseDTO.class)))
+                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
+
+        hadesService.build(dto);
+
+        assertThat(requestCaptor.getValue().getBody().callbackUrl()).isEqualTo("http://adapter:9090/logs");
+    }
+
+    @Test
+    void build_withoutLogsCallbackConfigured_omitsCallbackUrl() throws ContinuousIntegrationException {
+        var dto = buildTriggerRequest(Map.of());
+        var expectedUuid = UUID.randomUUID();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(HadesBuildResponseDTO.class)))
+                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
+
+        hadesService.build(dto);
+
+        assertThat(requestCaptor.getValue().getBody().callbackUrl()).isNull();
+    }
+
+    @Test
     void build_whenRestTemplateThrowsOnErrorStatus_wrapsWithStatusAndBody() {
         var dto = buildTriggerRequest(Map.of());
 
@@ -162,7 +232,11 @@ class HadesServiceTest {
     }
 
     private BuildTriggerRequestDTO buildTriggerRequest(Map<String, String> additionalProperties) {
+        return buildTriggerRequest(additionalProperties, null);
+    }
+
+    private BuildTriggerRequestDTO buildTriggerRequest(Map<String, String> additionalProperties, String dockerImage) {
         return new BuildTriggerRequestDTO(1L, 2L, new RepositoryDTO("http://example.com/exercise.git", "abc123", null, null),
-                new RepositoryDTO("http://example.com/test.git", "def456", null, null), List.of(), "mvn test", ScriptType.SHELL, "JAVA", additionalProperties);
+                new RepositoryDTO("http://example.com/test.git", "def456", null, null), List.of(), "mvn test", ScriptType.SHELL, "JAVA", additionalProperties, dockerImage);
     }
 }
