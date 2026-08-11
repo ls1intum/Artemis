@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -497,6 +498,10 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         // tests" and a failed build reads as a successful one
         assertThat(body).as("the result fields the exercise card's result string is built from").contains("\"testCaseCount\":", "\"passedTestCaseCount\":", "\"codeIssueCount\":",
                 "\"buildFailed\":");
+        // The client discriminates submissions on this, and it is derived from the exercise rather than read off the
+        // submission row. Only the programming submission is visible here: the text exercises' assessment due dates are
+        // still in the future, so the visibility rules withhold their submissions.
+        assertThat(body).as("a submission must carry the discriminator its exercise implies").contains("\"submissionExerciseType\":\"programming\"");
         // ...and the long tail it never reads must not be, especially the programming configuration
         assertThat(body).as("fields no overview consumer reads").doesNotContain("\"projectKey\":", "\"packageName\":", "\"programmingLanguage\":", "\"projectType\":",
                 "\"shortName\":", "\"buildAndTestStudentSubmissionsAfterDueDate\":", "\"allowOnlineIde\":", "\"showTestNamesToStudents\":", "\"testCasesChanged\":",
@@ -642,6 +647,77 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
                 .isEqualTo(fromDashboard.textScores().studentScores().absoluteScore());
         assertThat(fromOverview.totalScores().studentScores().absoluteScore()).as("and the totals must agree")
                 .isEqualTo(fromDashboard.totalScores().studentScores().absoluteScore());
+    }
+
+    /**
+     * A student who starts an exercise but never submits has a participation with no submissions at all. The row
+     * projection reaches its submission columns through a LEFT JOIN, so every one of them is null for such a
+     * participation — including the one the query selects the submission's concrete type from.
+     * <p>
+     * Regression test for a 500 on the exercises tab: selecting {@code TYPE(submission)} over that outer join made
+     * Hibernate try to map a null discriminator to an entity and fail with "Could not resolve discriminator value".
+     * It only showed up for users who actually had such a participation, so every seeded-and-submitted fixture passed.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldLoadTheOverviewWhenAnExerciseWasStartedButNeverSubmitted() throws Exception {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        TextExercise startedExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2),
+                ZonedDateTime.now().plusDays(4));
+
+        var participation = new StudentParticipation();
+        participation.setParticipant(student);
+        participation.setExercise(startedExercise);
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setInitializationDate(ZonedDateTime.now().minusHours(3));
+        participation = studentParticipationTestRepository.save(participation);
+        long participationId = participation.getId();
+
+        var overview = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+
+        var startedParticipations = overview.exercises().stream().filter(exercise -> exercise.id().equals(startedExercise.getId())).findFirst()
+                .orElseThrow(() -> new AssertionError("the started exercise must be part of the overview")).studentParticipations();
+        assertThat(startedParticipations).as("the participation must be reported so the card shows the exercise as started").extracting(ParticipationOverviewDTO::id)
+                .containsExactly(participationId);
+        assertThat(startedParticipations.iterator().next().submissions()).as("and it must carry no submission").isNullOrEmpty();
+
+        // The other half of the change: the submission type is now derived from the exercise, so an actual submission
+        // still has to come out as its own kind. Assessment already released, otherwise the submission stays hidden.
+        TextExercise assessedExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3),
+                ZonedDateTime.now().minusDays(2));
+        participationUtilService.createParticipationSubmissionAndResult(assessedExercise.getId(), student, 10.0, 0.0, 80, true);
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+
+        var withSubmission = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+
+        var assessedSubmissions = withSubmission.exercises().stream().filter(exercise -> exercise.id().equals(assessedExercise.getId())).findFirst()
+                .orElseThrow(() -> new AssertionError("the assessed exercise must be part of the overview")).studentParticipations().iterator().next().submissions();
+        assertThat(assessedSubmissions).as("the assessed submission must be visible").hasSize(1);
+        assertThat(assessedSubmissions.iterator().next().submissionExerciseType()).as("and it must carry the discriminator its exercise implies").isEqualTo("text");
+    }
+
+    /**
+     * The same outer-join hazard, reached through the test-run path: the overview always asks for test runs, so an
+     * instructor's untouched test run is enough to break the tab for them even when no student ever started anything.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldLoadTheOverviewWithATestRunThatHasNoSubmission() throws Exception {
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2),
+                ZonedDateTime.now().plusDays(4));
+
+        var testRun = new StudentParticipation();
+        testRun.setParticipant(instructor);
+        testRun.setExercise(exercise);
+        testRun.setTestRun(true);
+        testRun.setInitializationState(InitializationState.INITIALIZED);
+        testRun.setInitializationDate(ZonedDateTime.now().minusHours(2));
+        studentParticipationTestRepository.save(testRun);
+
+        var overview = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+
+        assertThat(overview.exercises()).as("the overview must still load for the instructor").isNotEmpty();
     }
 
 }

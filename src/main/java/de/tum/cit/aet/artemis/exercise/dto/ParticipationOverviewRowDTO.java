@@ -8,16 +8,11 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
-import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * One flat row of the user's course-overview participation projection. A participation and its latest submission can
@@ -28,23 +23,22 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 public record ParticipationOverviewRowDTO(long exerciseId, long participationId, String participationType, @Nullable InitializationState initializationState,
         @Nullable ZonedDateTime initializationDate, @Nullable Boolean testRun, @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore,
         @Nullable String repositoryUri, @Nullable Long submissionId, @Nullable ZonedDateTime submissionDate, @Nullable Boolean submitted, @Nullable SubmissionType submissionType,
-        @Nullable String submissionExerciseType, @Nullable Boolean submissionBuildFailed, @Nullable Long resultId, @Nullable ZonedDateTime resultCompletionDate,
-        @Nullable Double resultScore, @Nullable Boolean resultRated, @Nullable Boolean resultSuccessful, @Nullable AssessmentType resultAssessmentType,
-        @Nullable Integer resultCodeIssueCount, @Nullable Integer resultTestCaseCount, @Nullable Integer resultPassedTestCaseCount) {
+        @Nullable Boolean submissionBuildFailed, @Nullable Long resultId, @Nullable ZonedDateTime resultCompletionDate, @Nullable Double resultScore, @Nullable Boolean resultRated,
+        @Nullable Boolean resultSuccessful, @Nullable AssessmentType resultAssessmentType, @Nullable Integer resultCodeIssueCount, @Nullable Integer resultTestCaseCount,
+        @Nullable Integer resultPassedTestCaseCount) {
 
     /**
-     * JPQL constructor accepting the entity classes produced by Hibernate's {@code TYPE(...)} function.
+     * JPQL constructor accepting the entity class produced by Hibernate's {@code TYPE(...)} function.
      */
     public ParticipationOverviewRowDTO(long exerciseId, long participationId, Class<? extends Participation> participationType, @Nullable InitializationState initializationState,
             @Nullable ZonedDateTime initializationDate, @Nullable Boolean testRun, @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore,
             @Nullable String repositoryUri, @Nullable Long submissionId, @Nullable ZonedDateTime submissionDate, @Nullable Boolean submitted,
-            @Nullable SubmissionType submissionType, @Nullable Class<? extends Submission> submissionExerciseType, @Nullable Boolean submissionBuildFailed, @Nullable Long resultId,
-            @Nullable ZonedDateTime resultCompletionDate, @Nullable Double resultScore, @Nullable Boolean resultRated, @Nullable Boolean resultSuccessful,
-            @Nullable AssessmentType resultAssessmentType, @Nullable Integer resultCodeIssueCount, @Nullable Integer resultTestCaseCount,
-            @Nullable Integer resultPassedTestCaseCount) {
+            @Nullable SubmissionType submissionType, @Nullable Boolean submissionBuildFailed, @Nullable Long resultId, @Nullable ZonedDateTime resultCompletionDate,
+            @Nullable Double resultScore, @Nullable Boolean resultRated, @Nullable Boolean resultSuccessful, @Nullable AssessmentType resultAssessmentType,
+            @Nullable Integer resultCodeIssueCount, @Nullable Integer resultTestCaseCount, @Nullable Integer resultPassedTestCaseCount) {
         this(exerciseId, participationId, participationTypeName(participationType), initializationState, initializationDate, testRun, individualDueDate, presentationScore,
-                repositoryUri, submissionId, submissionDate, submitted, submissionType, submissionTypeName(submissionExerciseType), submissionBuildFailed, resultId,
-                resultCompletionDate, resultScore, resultRated, resultSuccessful, resultAssessmentType, resultCodeIssueCount, resultTestCaseCount, resultPassedTestCaseCount);
+                repositoryUri, submissionId, submissionDate, submitted, submissionType, submissionBuildFailed, resultId, resultCompletionDate, resultScore, resultRated,
+                resultSuccessful, resultAssessmentType, resultCodeIssueCount, resultTestCaseCount, resultPassedTestCaseCount);
     }
 
     public boolean isTestRun() {
@@ -57,24 +51,26 @@ public record ParticipationOverviewRowDTO(long exerciseId, long participationId,
                         resultPassedTestCaseCount);
     }
 
-    public @Nullable SubmissionOverviewDTO toSubmissionOverviewDTO(List<ResultOverviewDTO> results) {
+    /**
+     * Projects the row's submission for the overview.
+     * <p>
+     * The client discriminates submissions on {@code submissionExerciseType}, which is taken from the exercise rather
+     * than read back from the submission row. Selecting {@code TYPE(submission)} would be the direct way, but the
+     * submission is reached through an outer join: a participation that was started and never submitted has no
+     * submission row, and Hibernate fails to map that null discriminator to an entity ("Could not resolve discriminator
+     * value") while reading the result set — before this record is ever constructed. A submission always belongs to an
+     * exercise of the matching kind, so the exercise type carries the same information without the outer-join hazard.
+     *
+     * @param results      the results to attach to the submission
+     * @param exerciseType the type of the exercise the participation belongs to
+     * @return the projected submission, or null if the row carries no submission
+     */
+    public @Nullable SubmissionOverviewDTO toSubmissionOverviewDTO(List<ResultOverviewDTO> results, ExerciseType exerciseType) {
         return submissionId == null ? null
-                : new SubmissionOverviewDTO(submissionId, submissionDate, Boolean.TRUE.equals(submitted), submissionType, submissionExerciseType, submissionBuildFailed, results);
+                : new SubmissionOverviewDTO(submissionId, submissionDate, Boolean.TRUE.equals(submitted), submissionType, exerciseType.getValue(), submissionBuildFailed, results);
     }
 
     private static String participationTypeName(Class<? extends Participation> participationType) {
         return participationType == ProgrammingExerciseStudentParticipation.class ? "programming" : "student";
-    }
-
-    private static @Nullable String submissionTypeName(@Nullable Class<? extends Submission> submissionType) {
-        return switch (submissionType) {
-            case Class<?> type when type == ProgrammingSubmission.class -> "programming";
-            case Class<?> type when type == ModelingSubmission.class -> "modeling";
-            case Class<?> type when type == QuizSubmission.class -> "quiz";
-            case Class<?> type when type == TextSubmission.class -> "text";
-            case Class<?> type when type == FileUploadSubmission.class -> "file-upload";
-            case null -> null;
-            default -> throw new IllegalArgumentException("Unsupported submission type: " + submissionType);
-        };
     }
 }

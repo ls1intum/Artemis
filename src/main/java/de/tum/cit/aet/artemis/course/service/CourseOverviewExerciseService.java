@@ -259,10 +259,10 @@ public class CourseOverviewExerciseService {
         if (exercise.type() == ExerciseType.QUIZ) {
             boolean quizEnded = exercise.dueDate() != null && calculationTime.isAfter(exercise.dueDate());
             if (!quizEnded) {
-                return Boolean.TRUE.equals(submissionRow.submitted()) ? Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of())) : Optional.empty();
+                return Boolean.TRUE.equals(submissionRow.submitted()) ? Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(), exercise.type())) : Optional.empty();
             }
             return latestResultRow != null && Boolean.TRUE.equals(latestResultRow.resultRated()) && latestResultRow.resultCompletionDate() != null
-                    ? Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestResultRow.toResultOverviewDTO())))
+                    ? Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestResultRow.toResultOverviewDTO()), exercise.type()))
                     : Optional.empty();
         }
 
@@ -273,24 +273,24 @@ public class CourseOverviewExerciseService {
                 // never hidden from the card that is supposed to show it
                 ZonedDateTime latestAccepted = dueDate == null ? null : dueDate.plusSeconds(Constants.PROGRAMMING_GRACE_PERIOD_SECONDS);
                 boolean submittedInTime = latestAccepted == null || submissionRow.submissionDate() != null && !submissionRow.submissionDate().isAfter(latestAccepted);
-                return submittedInTime ? Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of())) : Optional.empty();
+                return submittedInTime ? Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(), exercise.type())) : Optional.empty();
             }
             if (!Boolean.TRUE.equals(latestResultRow.resultRated())) {
                 return Optional.empty();
             }
             if (!isManual(latestResultRow.resultAssessmentType()) || isAssessmentDone(exercise, calculationTime) && latestResultRow.resultCompletionDate() != null) {
-                return Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestResultRow.toResultOverviewDTO())));
+                return Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestResultRow.toResultOverviewDTO()), exercise.type()));
             }
             ParticipationOverviewRowDTO latestAutomaticResult = submissionRows.stream().filter(CourseOverviewExerciseService::isAutomatic)
                     .max(Comparator.comparingLong(ParticipationOverviewRowDTO::resultId)).orElse(null);
             return latestAutomaticResult == null ? Optional.empty()
-                    : Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestAutomaticResult.toResultOverviewDTO())));
+                    : Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestAutomaticResult.toResultOverviewDTO()), exercise.type()));
         }
 
         if (latestResultRow == null || !Boolean.TRUE.equals(latestResultRow.resultRated()) || !isAssessmentDone(exercise, calculationTime)) {
             return Optional.empty();
         }
-        return Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestResultRow.toResultOverviewDTO())));
+        return Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of(latestResultRow.toResultOverviewDTO()), exercise.type()));
     }
 
     private Set<ParticipationResultDTO> buildParticipationResults(Map<Long, List<ParticipationOverviewRowDTO>> rowsByParticipationId, Collection<CourseGradeScoreDTO> gradeScores) {
