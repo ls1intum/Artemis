@@ -1,6 +1,7 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faBan, faExclamationCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -11,6 +12,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'jhi-form-footer',
@@ -24,14 +26,16 @@ import { ButtonModule } from 'primeng/button';
         TranslateDirective,
         FaIconComponent,
         ButtonModule,
+        TooltipModule,
         ArtemisTranslatePipe,
     ],
 })
 export class FormFooterComponent {
+    private readonly translateService = inject(TranslateService);
+
     protected readonly ButtonSize = ButtonSize;
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
-    protected readonly faExclamationCircle = faExclamationCircle;
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     isSaving = input(false);
@@ -52,6 +56,15 @@ export class FormFooterComponent {
     onCancel = output<void>();
 
     saveTitle = computed<string>(() => (this.isImport() ? 'entity.action.import' : this.isCreation() ? 'entity.action.generate' : 'entity.action.save'));
+
+    isSubmitDisabled = computed<boolean>(() => !!this.invalidReasons().length || this.isDisabled() || this.isSaving() || this.isGeneratingWithAi());
+
+    /** One reason per line, rendered on the wrapper around the submit buttons so it stays reachable while they are disabled. */
+    invalidReasonsTooltip = computed<string>(() =>
+        this.invalidReasons()
+            .map((reason) => this.translateService.instant(reason.translateKey, reason.translateValues))
+            .join('\n'),
+    );
 
     onSwitchEditMode() {
         this.switchEditMode()?.();

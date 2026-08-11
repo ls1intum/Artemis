@@ -7,6 +7,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
+import { Tooltip } from 'primeng/tooltip';
 
 describe('FormFooterComponent', () => {
     let fixture: ComponentFixture<FormFooterComponent>;
@@ -57,11 +58,53 @@ describe('FormFooterComponent', () => {
         expect(notificationComponent).toBeNull();
     });
 
-    it('should display invalid input badge when there are invalid reasons', () => {
-        fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: 'test.value' }]);
+    it('should not render an invalid input badge', () => {
+        fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
         fixture.detectChanges();
-        const invalidBadge = fixture.debugElement.query(By.css('.badge.bg-danger'));
-        expect(invalidBadge).toBeTruthy();
+
+        expect(fixture.debugElement.query(By.css('.badge.bg-danger'))).toBeNull();
+    });
+
+    it('should list every invalid reason in the submit tooltip', () => {
+        fixture.componentRef.setInput('invalidReasons', [
+            { translateKey: 'first.reason', translateValues: {} },
+            { translateKey: 'second.reason', translateValues: {} },
+        ]);
+        fixture.detectChanges();
+
+        expect(comp.invalidReasonsTooltip()).toBe('first.reason\nsecond.reason');
+    });
+
+    // A disabled button emits no mouse events, so the tooltip must sit on the wrapper. Attaching it to the button
+    // itself renders it unreachable exactly when it has something to say.
+    it('should attach the tooltip to the wrapper rather than the disabled button', () => {
+        fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
+        fixture.detectChanges();
+
+        const tooltipHosts = fixture.debugElement.queryAll(By.directive(Tooltip));
+        const submitTooltip = tooltipHosts.find((host) => (host.nativeElement as HTMLElement).classList.contains('submit-tooltip-host'));
+
+        expect(submitTooltip).toBeTruthy();
+        expect((submitTooltip!.nativeElement as HTMLElement).tagName).not.toBe('BUTTON');
+        expect((submitTooltip!.nativeElement as HTMLElement).querySelector('#save-entity')).toBeTruthy();
+    });
+
+    it('should disable the submit tooltip when the form is valid', () => {
+        fixture.componentRef.setInput('invalidReasons', []);
+        fixture.detectChanges();
+
+        const submitTooltip = fixture.debugElement.queryAll(By.directive(Tooltip)).find((host) => (host.nativeElement as HTMLElement).classList.contains('submit-tooltip-host'));
+
+        expect(submitTooltip!.injector.get(Tooltip).disabled).toBeTruthy();
+    });
+
+    it('should disable the save button when there are invalid reasons', () => {
+        fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
+        fixture.componentRef.setInput('isDisabled', false);
+        fixture.detectChanges();
+
+        const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
+        expect(saveButton.disabled).toBeTruthy();
     });
 
     it('should enable save button when form is valid', () => {

@@ -1647,6 +1647,13 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     white-space: pre-line;
 }
 
+// Tooltip listing why a submit button is disabled, on exercise and quiz forms (portaled to <body>).
+.invalid-reasons-tooltip .p-tooltip-text {
+    max-width: 420px;
+    white-space: pre-line;
+    text-align: left;
+}
+
 // Tooltip for the generative AI disclaimer icon in the feedback suggestions banner.
 .feedback-suggestions-ai-tooltip,
 .feedback-suggestions-ai-tooltip .p-tooltip-text {
