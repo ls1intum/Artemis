@@ -122,6 +122,8 @@ export class FileUploadAssessmentComponent implements OnInit {
         return [...this.unreferencedFeedback()];
     }
 
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
     public ngOnInit(): void {
         this.busy.set(true);
 
