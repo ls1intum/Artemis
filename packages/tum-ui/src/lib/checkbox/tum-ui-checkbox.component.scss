@@ -3,6 +3,11 @@
     display: inline-flex;
     width: calc(var(--tumaet-ui-spacing) * 5);
     height: calc(var(--tumaet-ui-spacing) * 5);
+
+    // A checkbox next to its label is usually a flex item, and flex items shrink by default. The height is fixed while
+    // the width is not, so as soon as the row runs out of space - a long label, a narrow column, or the page zoomed in -
+    // the box is squeezed into a rectangle. Matches tum-ui-toggle-switch, which is fixed-size for the same reason.
+    flex-shrink: 0;
     vertical-align: bottom;
     user-select: none;
 }

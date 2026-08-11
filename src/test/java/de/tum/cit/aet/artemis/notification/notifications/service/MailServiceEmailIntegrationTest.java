@@ -146,6 +146,28 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(body).contains("account/reset/finish");
     }
 
+    /**
+     * The reset mail is the one a user is most likely to distrust, because it arrives unprompted whenever someone else
+     * enters their address. Looking like every other Artemis mail is what makes it credible rather than suspicious, so
+     * this pins the shared chrome: it used to render as an unstyled document in the browser's default serif font.
+     * <p>
+     * The absence of the footer is asserted too. That footer links to the notification settings, and a password reset
+     * cannot be switched off there, so the link would point at a setting that does not exist for this mail.
+     */
+    @Test
+    void passwordResetEmail_shouldUseTheSharedArtemisLayout() throws Exception {
+        recipient.setResetKey("styled-reset-key-345");
+
+        testMailService.sendPasswordResetMail(MailRecipientDTO.from(recipient));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).as("the Artemis header with the logo").contains("<header>").contains("id=\"logo\"");
+        assertThat(body).as("the shared stylesheet, which sets the sans-serif font").contains("<style>").contains("font-family");
+        assertThat(body).as("the message body wrapper the shared css styles").contains("id=\"message-body\"");
+        assertThat(body).as("the favicon, at the path it is actually served from").contains("/logo/favicon.svg");
+        assertThat(body).as("no notification-settings footer on a mail that cannot be switched off").doesNotContain("<footer>");
+    }
+
     // -- SAML2 set password email --
 
     @Test

@@ -133,7 +133,8 @@
 <!-- Fragment containing Head meta data & icon link -->
 <th:block th:fragment="headMetaDataAndIconLink">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/favicon.svg|}" />
+    <!-- The favicon lives under /logo, as the transactional mail templates have always referenced it. -->
+    <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/logo/favicon.svg|}" />
 </th:block>
 
 <!-- Fragment containing Artemis Logo email header -->

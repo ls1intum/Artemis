@@ -3,6 +3,9 @@
     display: inline-flex;
     width: calc(var(--tumaet-ui-spacing) * 5);
     height: calc(var(--tumaet-ui-spacing) * 5);
+
+    // Same as tum-ui-checkbox: a fixed-height flex item whose width may shrink turns into an oval when the row is tight.
+    flex-shrink: 0;
     vertical-align: bottom;
     user-select: none;
 }
