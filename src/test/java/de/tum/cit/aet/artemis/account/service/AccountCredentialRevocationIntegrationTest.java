@@ -513,7 +513,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         // Read through AuditEventService: it loads `data` through an entity graph, while findAll() leaves that collection
         // lazy and unreadable outside a session.
         assertThat(auditEventService.findAll(Pageable.unpaged())).anySatisfy(event -> {
-            assertThat(event.getType()).isEqualTo(Constants.ADMIN_CHANGE_USER_PASSWORD);
+            assertThat(event.getType()).isEqualTo(Constants.ADMIN_USER_PASSWORD_CHANGED);
             assertThat(event.getData()).containsEntry("revokedPasskeys", "true").containsEntry("revokedSshKeys", "true").containsEntry("revokedVcsAccessTokens", "true");
         });
     }
