@@ -29,16 +29,8 @@ import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyServic
  * {@code softDeleteUser}. Keeping the list in one place means a new credential type has exactly one place to be
  * registered, and every lifecycle transition picks it up.
  * <p>
- * <b>What this deliberately does not do.</b> It does not invalidate issued JWTs: those are validated from their claims
- * alone ({@code JWTFilter} performs no per-request user lookup), so revoking them would require a new check on the
- * authentication path of every request. What this service removes is every credential that would let an intruder mint
- * <em>new</em> sessions or keep repository access after the password changed - which is what makes the remediation a user
- * is told to perform ("reset your password") actually mean something.
- * <p>
- * That leaves a gap worth naming rather than glossing over: a session that is already authenticated is not bounded by its
- * token lifetime, because the holder can use it to enroll a fresh passkey, SSH key or VCS access token, and those outlive
- * the token. Closing it needs a revocation epoch per user that credential-creating endpoints compare against the token's
- * issue time, which is a change to the authentication path and is tracked separately in issue #13407.
+ * <b>Scope.</b> This service removes credentials that are stored on the account, so that a credential which existed
+ * before the transition cannot be used again afterwards. It does not touch the authentication path.
  */
 @Profile(PROFILE_CORE)
 @Lazy
