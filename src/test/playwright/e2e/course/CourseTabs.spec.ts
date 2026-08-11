@@ -339,6 +339,7 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
         await expect(sidebar.locator(`a[href="/courses/${course.id}/communication"]`)).toBeVisible();
         await expect(sidebar.locator(`a[href="/courses/${course.id}/statistics"]`)).toBeVisible();
         await expect(sidebar.locator(`a[href="/courses/${course.id}/calendar"]`)).toBeVisible();
+        await expect(sidebar.locator(`a[href="/courses/${course.id}/settings"]`)).toBeVisible();
 
         // Withheld because the course has no such content — the availability endpoint decides this, not the client
         await expect(sidebar.locator(`a[href="/courses/${course.id}/exams"]`)).toHaveCount(0);
@@ -347,5 +348,9 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
         await expect(sidebar.locator(`a[href="/courses/${course.id}/faq"]`)).toHaveCount(0);
         await expect(sidebar.locator(`a[href="/courses/${course.id}/tutorial-groups"]`)).toHaveCount(0);
         await expect(sidebar.locator(`a[href="/courses/${course.id}/training"]`)).toHaveCount(0);
+
+        // The settings entry is not a content tab and loads nothing from the course, but it still has to open
+        await selectTab(page, course.id!, 'settings');
+        await expect(page.locator('jhi-course-settings')).toBeVisible();
     });
 });
