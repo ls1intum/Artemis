@@ -258,21 +258,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     void unsetIrisAssessmentInClassByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
-     * Finds Iris assessment participation projections for participations whose latest result has a positive score.
-     *
-     * @param exerciseId the exercise id
-     * @return matching participation projections
-     */
-    default Set<IrisAssessmentProgrammingStudentParticipationProjectionDTO> findAllNonPracticeIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
-            long exerciseId) {
-        var participationIds = findParticipationIdsWithLatestResultScoreGreaterThanZeroAndNotPractice(exerciseId);
-        if (participationIds.isEmpty()) {
-            return Set.of();
-        }
-        return findAllIrisAssessmentParticipationProjectionsByIdIn(participationIds);
-    }
-
-    /**
      * Finds in-class Iris assessment participation projections for participations whose latest result has a positive score.
      *
      * @param exerciseId the exercise id
@@ -294,7 +279,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * @param exerciseId the exercise id
      * @return the ids of the matching participations
      */
-    private Set<Long> findParticipationIdsWithLatestResultScoreGreaterThanZeroAndNotPractice(long exerciseId) {
+    default Set<Long> findParticipationIdsWithLatestResultScoreGreaterThanZeroAndNotPractice(long exerciseId) {
         var latestSubmissionIds = findLatestSubmissionIdsByExerciseId(exerciseId);
         if (latestSubmissionIds.isEmpty()) {
             return Set.of();
@@ -371,7 +356,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             FROM Result result
             WHERE result.id IN :resultIds
                 AND result.score > 0
-                AND result.submission.participation.testRun = false
+                AND result.submission.participation.testRun = FALSE
             """)
     Set<Long> findParticipationIdsByResultIdsAndScoreGreaterThanZeroAndNotPractice(@Param("resultIds") Set<Long> resultIds);
 
@@ -454,7 +439,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 LEFT JOIN participation.irisAssessment assessment
                 LEFT JOIN participation.irisAssessmentInClass inClassAssessment
             WHERE participation.exercise.course.id = :courseId
-                AND (participation.testRun IS NULL OR participation.testRun = false)
+                AND (participation.testRun IS NULL OR participation.testRun = FALSE)
                 AND (:searchPattern IS NULL
                     OR LOWER(student.login) LIKE :searchPattern ESCAPE '\\'
                     OR LOWER(CONCAT(CONCAT(COALESCE(student.firstName, ''), ' '), COALESCE(student.lastName, ''))) LIKE :searchPattern ESCAPE '\\')
@@ -485,22 +470,22 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                                 AND newerLatestResult.score > 0
                         )
                 )
-                AND (:hasSelectedFilter = false
-                    OR (:acceptedSelected = true
-                        AND ((:inClass = false AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)
-                            OR (:inClass = true AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)))
-                    OR (:rejectedSelected = true
-                        AND ((:inClass = false AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)
-                            OR (:inClass = true AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)))
-                    OR (:unsuspiciousSelected = true
-                        AND ((:inClass = false AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND assessment.verdictReview IS NULL)
-                            OR (:inClass = true AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
-                    OR (:suspiciousSelected = true
-                        AND ((:inClass = false AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND assessment.verdictReview IS NULL)
-                            OR (:inClass = true AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
-                    OR (:missingSelected = true
-                        AND ((:inClass = false AND (assessment.id IS NULL OR assessment.verdict IS NULL))
-                            OR (:inClass = true AND (inClassAssessment.id IS NULL OR inClassAssessment.verdict IS NULL)))))
+                AND (:hasSelectedFilter = FALSE
+                    OR (:acceptedSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)
+                            OR (:inClass = TRUE AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)))
+                    OR (:rejectedSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)
+                            OR (:inClass = TRUE AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)))
+                    OR (:unsuspiciousSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND assessment.verdictReview IS NULL)
+                            OR (:inClass = TRUE AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
+                    OR (:suspiciousSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND assessment.verdictReview IS NULL)
+                            OR (:inClass = TRUE AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
+                    OR (:missingSelected = TRUE
+                        AND ((:inClass = FALSE AND (assessment.id IS NULL OR assessment.verdict IS NULL))
+                            OR (:inClass = TRUE AND (inClassAssessment.id IS NULL OR inClassAssessment.verdict IS NULL)))))
             ORDER BY participation.exercise.title ASC, student.lastName ASC, student.firstName ASC, participation.id ASC
             """, countQuery = """
             SELECT COUNT(participation.id)
@@ -509,7 +494,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 LEFT JOIN participation.irisAssessment assessment
                 LEFT JOIN participation.irisAssessmentInClass inClassAssessment
             WHERE participation.exercise.course.id = :courseId
-                AND (participation.testRun IS NULL OR participation.testRun = false)
+                AND (participation.testRun IS NULL OR participation.testRun = FALSE)
                 AND (:searchPattern IS NULL
                     OR LOWER(student.login) LIKE :searchPattern ESCAPE '\\'
                     OR LOWER(CONCAT(CONCAT(COALESCE(student.firstName, ''), ' '), COALESCE(student.lastName, ''))) LIKE :searchPattern ESCAPE '\\')
@@ -540,22 +525,22 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                                 AND newerLatestResult.score > 0
                         )
                 )
-                AND (:hasSelectedFilter = false
-                    OR (:acceptedSelected = true
-                        AND ((:inClass = false AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)
-                            OR (:inClass = true AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)))
-                    OR (:rejectedSelected = true
-                        AND ((:inClass = false AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)
-                            OR (:inClass = true AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)))
-                    OR (:unsuspiciousSelected = true
-                        AND ((:inClass = false AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND assessment.verdictReview IS NULL)
-                            OR (:inClass = true AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
-                    OR (:suspiciousSelected = true
-                        AND ((:inClass = false AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND assessment.verdictReview IS NULL)
-                            OR (:inClass = true AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
-                    OR (:missingSelected = true
-                        AND ((:inClass = false AND (assessment.id IS NULL OR assessment.verdict IS NULL))
-                            OR (:inClass = true AND (inClassAssessment.id IS NULL OR inClassAssessment.verdict IS NULL)))))
+                AND (:hasSelectedFilter = FALSE
+                    OR (:acceptedSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)
+                            OR (:inClass = TRUE AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)))
+                    OR (:rejectedSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)
+                            OR (:inClass = TRUE AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)))
+                    OR (:unsuspiciousSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND assessment.verdictReview IS NULL)
+                            OR (:inClass = TRUE AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
+                    OR (:suspiciousSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND assessment.verdictReview IS NULL)
+                            OR (:inClass = TRUE AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
+                    OR (:missingSelected = TRUE
+                        AND ((:inClass = FALSE AND (assessment.id IS NULL OR assessment.verdict IS NULL))
+                            OR (:inClass = TRUE AND (inClassAssessment.id IS NULL OR inClassAssessment.verdict IS NULL)))))
             """)
     Page<Long> findIrisAssessmentReviewParticipationIds(@Param("courseId") long courseId, @Param("searchPattern") String searchPattern, @Param("inClass") boolean inClass,
             @Param("hasSelectedFilter") boolean hasSelectedFilter, @Param("acceptedSelected") boolean acceptedSelected, @Param("rejectedSelected") boolean rejectedSelected,

@@ -804,57 +804,61 @@ public class GitService extends AbstractGitService {
      */
     public Repository copyBareRepositoryWithoutHistory(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
         log.debug("copy bare repository without history from {} to {} for source branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
-        Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch);
+        // Closing the source repository (rather than leaking it, as before) is required so its pack files can be deleted
+        // afterwards, e.g. when self-healing a broken target repository re-copies from this same source.
+        try (Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch)) {
 
-        logCommits(sourceRepoUri, sourceBranch, sourceRepo);
+            logCommits(sourceRepoUri, sourceBranch, sourceRepo);
 
-        // Initialize new bare repository
-        var localTargetRepoUri = new LocalVCRepositoryUri(targetRepoUri.toString());
-        var localTargetPath = localTargetRepoUri.getLocalRepositoryPath(localVCBasePath);
-        try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(localTargetPath.toFile())) {
+            // Initialize new bare repository
+            var localTargetRepoUri = new LocalVCRepositoryUri(targetRepoUri.toString());
+            var localTargetPath = localTargetRepoUri.getLocalRepositoryPath(localVCBasePath);
+            try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(localTargetPath.toFile())) {
 
-            targetRepo.create(true); // true for bare
-            ObjectInserter inserter = targetRepo.newObjectInserter();
+                targetRepo.create(true); // true for bare
+                ObjectInserter inserter = targetRepo.newObjectInserter();
 
-            // Get the HEAD tree of the source
-            ObjectId commitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
-            if (commitId == null) {
-                throw new IOException("Branch " + sourceBranch + " not found in " + sourceRepoUri);
+                // Get the HEAD tree of the source
+                ObjectId commitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
+                if (commitId == null) {
+                    throw new IOException("Branch " + sourceBranch + " not found in " + sourceRepoUri);
+                }
+
+                RevTree headTree;
+                try (RevWalk walk = new RevWalk(sourceRepo)) {
+                    RevCommit headCommit = walk.parseCommit(commitId);
+                    walk.markStart(headCommit);
+                    headTree = headCommit.getTree();
+                }
+
+                // Get PersonIdent from the very first commit
+                ObjectId branchHead = sourceRepo.resolve("refs/heads/" + sourceBranch);
+                // TODO: consider to have a back up here, e.g. the first instructor of the course
+                PersonIdent personIdent = getFirstCommitPersonIdent(sourceRepo, branchHead);
+
+                // Walk the tree, insert blobs into target repo, and build a new tree
+                ObjectId newTreeId = buildCleanTreeFromSource(sourceRepo, inserter, headTree);
+                log.debug("found newTreeId {} for target repository {}", newTreeId, targetRepoUri);
+                inserter.flush();
+
+                // Create commit with the clean tree
+                CommitBuilder commitBuilder = new CommitBuilder();
+                commitBuilder.setTreeId(newTreeId);
+                commitBuilder.setMessage(de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
+
+                // Set author and committer information based on the first commit in the source repo
+                commitBuilder.setAuthor(personIdent);
+                commitBuilder.setCommitter(personIdent);
+                ObjectId newCommitId = inserter.insert(commitBuilder);
+                inserter.flush();
+
+                // Update refs/heads/main in new bare repo
+                RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
+                refUpdate.setNewObjectId(newCommitId);
+                refUpdate.setForceUpdate(true);
+                verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
+                return getBareRepository(targetRepoUri, true);
             }
-
-            RevWalk walk = new RevWalk(sourceRepo);
-            RevCommit headCommit = walk.parseCommit(commitId);
-            walk.markStart(headCommit);
-
-            RevTree headTree = headCommit.getTree();
-
-            // Get PersonIdent from the very first commit
-            ObjectId branchHead = sourceRepo.resolve("refs/heads/" + sourceBranch);
-            // TODO: consider to have a back up here, e.g. the first instructor of the course
-            PersonIdent personIdent = getFirstCommitPersonIdent(sourceRepo, branchHead);
-
-            // Walk the tree, insert blobs into target repo, and build a new tree
-            ObjectId newTreeId = buildCleanTreeFromSource(sourceRepo, inserter, headTree);
-            log.debug("found newTreeId {} for target repository {}", newTreeId, targetRepoUri);
-            inserter.flush();
-
-            // Create commit with the clean tree
-            CommitBuilder commitBuilder = new CommitBuilder();
-            commitBuilder.setTreeId(newTreeId);
-            commitBuilder.setMessage(de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
-
-            // Set author and committer information based on the first commit in the source repo
-            commitBuilder.setAuthor(personIdent);
-            commitBuilder.setCommitter(personIdent);
-            ObjectId newCommitId = inserter.insert(commitBuilder);
-            inserter.flush();
-
-            // Update refs/heads/main in new bare repo
-            RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
-            refUpdate.setNewObjectId(newCommitId);
-            refUpdate.setForceUpdate(true);
-            verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
-            return getBareRepository(targetRepoUri, true);
         }
     }
 
@@ -875,68 +879,71 @@ public class GitService extends AbstractGitService {
      */
     public Repository copyBareRepositoryWithHistory(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
         log.debug("Copying full history from {} to {} for branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
-        Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch);
+        // Closing the source repository (rather than leaking it, as before) is required so its pack files can be deleted
+        // afterwards, e.g. when self-healing a broken target repository re-copies from this same source.
+        try (Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch)) {
 
-        logCommits(sourceRepoUri, sourceBranch, sourceRepo);
+            logCommits(sourceRepoUri, sourceBranch, sourceRepo);
 
-        // Resolve the HEAD commit of the branch
-        ObjectId headCommitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
-        if (headCommitId == null) {
-            throw new IOException("Source branch " + sourceBranch + " not found in " + sourceRepoUri);
-        }
+            // Resolve the HEAD commit of the branch
+            ObjectId headCommitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
+            if (headCommitId == null) {
+                throw new IOException("Source branch " + sourceBranch + " not found in " + sourceRepoUri);
+            }
 
-        // Create new bare repository
-        var localTargetRepoUri = new LocalVCRepositoryUri(targetRepoUri.toString());
-        var localTargetPath = localTargetRepoUri.getLocalRepositoryPath(localVCBasePath);
-        try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(localTargetPath.toFile())) {
-            targetRepo.create(true); // bare = true
+            // Create new bare repository
+            var localTargetRepoUri = new LocalVCRepositoryUri(targetRepoUri.toString());
+            var localTargetPath = localTargetRepoUri.getLocalRepositoryPath(localVCBasePath);
+            try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(localTargetPath.toFile())) {
+                targetRepo.create(true); // bare = true
 
-            try (ObjectInserter inserter = targetRepo.newObjectInserter(); RevWalk revWalk = new RevWalk(sourceRepo)) {
+                try (ObjectInserter inserter = targetRepo.newObjectInserter(); RevWalk revWalk = new RevWalk(sourceRepo)) {
 
-                Set<ObjectId> copiedObjects = new HashSet<>();
-                Deque<ObjectId> toProcess = new ArrayDeque<>();
-                toProcess.add(headCommitId);
+                    Set<ObjectId> copiedObjects = new HashSet<>();
+                    Deque<ObjectId> toProcess = new ArrayDeque<>();
+                    toProcess.add(headCommitId);
 
-                while (!toProcess.isEmpty()) {
-                    ObjectId current = toProcess.poll();
-                    if (!copiedObjects.add(current)) {
-                        continue; // already processed
-                    }
-
-                    ObjectLoader loader = sourceRepo.open(current);
-                    inserter.insert(loader.getType(), loader.getSize(), loader.openStream());
-
-                    // If this is a commit, enqueue parents and tree
-                    if (loader.getType() == Constants.OBJ_COMMIT) {
-                        RevCommit commit = revWalk.parseCommit(current);
-                        toProcess.add(commit.getTree().getId());
-                        for (RevCommit parent : commit.getParents()) {
-                            toProcess.add(parent.getId());
+                    while (!toProcess.isEmpty()) {
+                        ObjectId current = toProcess.poll();
+                        if (!copiedObjects.add(current)) {
+                            continue; // already processed
                         }
-                    }
 
-                    // If this is a tree, enqueue its entries (subtrees and blobs)
-                    if (loader.getType() == Constants.OBJ_TREE) {
-                        try (TreeWalk treeWalk = new TreeWalk(sourceRepo)) {
-                            treeWalk.addTree(current);
-                            treeWalk.setRecursive(false);
-                            while (treeWalk.next()) {
-                                toProcess.add(treeWalk.getObjectId(0));
+                        ObjectLoader loader = sourceRepo.open(current);
+                        inserter.insert(loader.getType(), loader.getSize(), loader.openStream());
+
+                        // If this is a commit, enqueue parents and tree
+                        if (loader.getType() == Constants.OBJ_COMMIT) {
+                            RevCommit commit = revWalk.parseCommit(current);
+                            toProcess.add(commit.getTree().getId());
+                            for (RevCommit parent : commit.getParents()) {
+                                toProcess.add(parent.getId());
+                            }
+                        }
+
+                        // If this is a tree, enqueue its entries (subtrees and blobs)
+                        if (loader.getType() == Constants.OBJ_TREE) {
+                            try (TreeWalk treeWalk = new TreeWalk(sourceRepo)) {
+                                treeWalk.addTree(current);
+                                treeWalk.setRecursive(false);
+                                while (treeWalk.next()) {
+                                    toProcess.add(treeWalk.getObjectId(0));
+                                }
                             }
                         }
                     }
+
+                    inserter.flush();
+
+                    // Update target HEAD ref
+                    RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
+                    refUpdate.setNewObjectId(headCommitId);
+                    refUpdate.setForceUpdate(true);
+                    verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
                 }
 
-                inserter.flush();
-
-                // Update target HEAD ref
-                RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
-                refUpdate.setNewObjectId(headCommitId);
-                refUpdate.setForceUpdate(true);
-                verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
+                return getBareRepository(targetRepoUri, true);
             }
-
-            return getBareRepository(targetRepoUri, true);
         }
     }
 

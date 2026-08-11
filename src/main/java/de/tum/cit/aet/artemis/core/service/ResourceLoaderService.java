@@ -164,8 +164,9 @@ public class ResourceLoaderService {
     }
 
     private String getFileSystemResourceLocation(final Path resourcePath, final String pathPattern) {
-        final String systemPathPattern = File.separator + adaptPathPatternToSystem(pathPattern);
-        return "file:" + resolveResourcePath(resourcePath).toString() + systemPathPattern;
+        // Spring's resource pattern matcher (AntPathMatcher) always splits on "/", regardless of OS, so the location
+        // must use forward slashes even on Windows, where Path::toString and File.separator use backslashes.
+        return "file:" + ensureUnixPath(resolveResourcePath(resourcePath).toString() + "/" + pathPattern);
     }
 
     private String getClassPathResourceLocation(final Path resourcePath) {
@@ -174,15 +175,6 @@ public class ResourceLoaderService {
 
     private String getClassPathResourceLocation(final Path resourcePath, final String pathPattern) {
         return "classpath:/" + ensureUnixPath(resourcePath.toString() + "/" + pathPattern);
-    }
-
-    private String adaptPathPatternToSystem(final String pathPattern) {
-        if ("/".equals(File.separator)) {
-            return ensureUnixPath(pathPattern);
-        }
-        else {
-            return pathPattern.replace("/", "\\");
-        }
     }
 
     private String ensureUnixPath(final String pathPattern) {

@@ -169,7 +169,9 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentBa
     @EnumSource(ExerciseType.class)
     void shouldGetTheLatestSubmission(ExerciseType exerciseType) {
         var exercise = exerciseByType.get(exerciseType);
-        exercise.setDueDate(ZonedDateTime.now());
+        // A one-second margin (rather than exactly "now") avoids flakiness from coarse system clock resolution: QuizExercise.isQuizEnded()
+        // compares ZonedDateTime.now() against this due date, and on some platforms both calls can return the same millisecond.
+        exercise.setDueDate(ZonedDateTime.now().minusSeconds(1));
         var participation = new StudentParticipation().exercise(exercise);
         Set<Submission> submissions = new java.util.HashSet<>();
         Submission expectedLatestSubmission = null;

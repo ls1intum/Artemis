@@ -57,7 +57,7 @@ public class IrisAssessment extends DomainObject {
     @Column(name = "reason", columnDefinition = "TEXT", nullable = false)
     private List<String> reasoning = new ArrayList<>();
 
-    protected IrisAssessment() {
+    public IrisAssessment() {
     }
 
     public IrisAssessment(User student, Exercise exercise) {
