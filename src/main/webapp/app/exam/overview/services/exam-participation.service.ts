@@ -8,7 +8,7 @@ import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/ex
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { StudentExamDTO, StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { toSubmitStudentExamDTO } from 'app/exam/overview/services/submit-student-exam-dto.mapper';
 import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -41,7 +41,7 @@ export class ExamParticipationService {
     private examEndViewSubject = new BehaviorSubject<boolean>(false);
     endViewDisplayed$ = this.examEndViewSubject.asObservable();
 
-    readonly testStudentExams = signal<StudentExam[]>([]);
+    readonly testStudentExams = signal<StudentExamOrDTO[]>([]);
 
     constructor() {
         this.currentlyLoadedStudentExam.pipe(filter((studentExam) => !!studentExam?.submitted && !!studentExam.exam && !isRealExam(studentExam.exam))).subscribe((latestExam) => {
@@ -197,16 +197,16 @@ export class ExamParticipationService {
     }
 
     /**
-     * Loads {@link StudentExamDTO} objects linked to a test exam per user and per course from server
+     * Loads {@link StudentExamDTO} objects linked to a test exam per user and per course from server and stores them in the service.
      * @param courseId the id of the course we are interested
-     * @returns a List of all StudentExams without Exercises per User and Course. Each includes a nested `exam`
-     * (id, title, testExam, workingTime, course{id, groupNames}) but no `user`, `exercises`, or `examSessions`.
      */
-    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExamDTO[]> {
+    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<void> {
         const url = `api/exam/courses/${courseId}/test-exams-per-user`;
-        return this.httpClient
-            .get<StudentExamDTO[]>(url, { observe: 'response' })
-            .pipe(map((studentExam: HttpResponse<StudentExamDTO[]>) => this.processListOfStudentExamsFromServer(studentExam)));
+        return this.httpClient.get<StudentExamDTO[]>(url, { observe: 'response' }).pipe(
+            map((studentExam: HttpResponse<StudentExamDTO[]>) => this.processListOfStudentExamsFromServer(studentExam)),
+            tap((studentExams) => this.testStudentExams.set(studentExams)),
+            map(() => {}),
+        );
     }
 
     /**

@@ -6,7 +6,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { cloneDeep } from 'lodash-es';
@@ -146,7 +146,7 @@ export class CourseExamsComponent {
      * @param examId the examId for which the StudentExams should be retrieved
      * @return a by id descending ordered list of studentExams
      */
-    protected getStudentExamForExamIdOrderedByIdReverse(studentExams: StudentExam[], examId: number): StudentExam[] {
+    protected getStudentExamForExamIdOrderedByIdReverse(studentExams: StudentExamOrDTO[], examId: number): StudentExamOrDTO[] {
         if (!studentExams) {
             return [];
         }
@@ -169,7 +169,7 @@ export class CourseExamsComponent {
         return 0;
     }
 
-    protected groupExamsByRealOrTestOrAttempt(realExams: Exam[], testExams: Exam[], testExamAttemptsMap: Map<number, StudentExam[]>): AccordionGroups {
+    protected groupExamsByRealOrTestOrAttempt(realExams: Exam[], testExams: Exam[], testExamAttemptsMap: Map<number, StudentExamOrDTO[]>): AccordionGroups {
         const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
 
         const realExamWorkingTimeByExamId = this.realExamWorkingTimeByExamId();
@@ -218,7 +218,7 @@ export class CourseExamsComponent {
         const sortedTestExams: Exam[] = [...this.testExamsOfCourse()].sort((a, b) => this.sortExamsByStartDate(a, b));
 
         const testExamAttempts = this.examParticipationService.testStudentExams();
-        const testExamAttemptsMap: Map<number, StudentExam[]> = new Map();
+        const testExamAttemptsMap: Map<number, StudentExamOrDTO[]> = new Map();
         for (const testExam of sortedTestExams) {
             const orderedTestExamAttempts = this.getStudentExamForExamIdOrderedByIdReverse(testExamAttempts, testExam.id!);
             const submittedAttempts = orderedTestExamAttempts.filter((attempt) => attempt.submitted);
