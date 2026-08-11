@@ -4,6 +4,7 @@ import { Course, CourseInformationSharingConfiguration } from 'app/course/shared
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import {
     DifficultyLevel,
@@ -13,10 +14,11 @@ import {
     IncludedInOverallScore,
     PlagiarismDetectionConfig,
 } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
+import { CompetencyDTO, CompetencyLinkDTO, GradingCriterionDTO, GradingInstructionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { parseJson } from 'app/foundation/util/json.util';
 
 export interface FileUploadTeamAssignmentConfigDto {
@@ -165,7 +167,7 @@ export function toFileUploadExerciseInputDTO(fileUploadExercise: FileUploadExerc
         courseId: fileUploadExercise.course?.id,
         exerciseGroupId: fileUploadExercise.exerciseGroup?.id,
         gradingCriteria: fileUploadExercise.gradingCriteria,
-        competencyLinks: (fileUploadExercise.competencyLinks ?? []).map((link) => toCompetencyLinkDTO(link)),
+        competencyLinks: (fileUploadExercise.competencyLinks ?? []).map((link) => toCompetencyLinkDTO(link, 1)),
         plagiarismDetectionConfig: toPlagiarismDetectionConfigDTO(fileUploadExercise.plagiarismDetectionConfig),
     };
 }
@@ -190,7 +192,7 @@ export function fromFileUploadExerciseDTO(dto: FileUploadExerciseDto): FileUploa
     exercise.assessmentType = dto.assessmentType;
     exercise.mode = dto.mode;
     exercise.teamMode = dto.teamMode;
-    exercise.teamAssignmentConfig = dto.teamAssignmentConfig ? Object.assign(new TeamAssignmentConfig(), dto.teamAssignmentConfig) : undefined;
+    exercise.teamAssignmentConfig = dto.teamAssignmentConfig ? fromTeamAssignmentConfigDTO(dto.teamAssignmentConfig) : undefined;
     exercise.allowComplaintsForAutomaticAssessments = dto.allowComplaintsForAutomaticAssessments;
     exercise.allowFeedbackRequests = dto.allowFeedbackRequests;
     exercise.presentationScoreEnabled = dto.presentationScoreEnabled;
@@ -206,16 +208,55 @@ export function fromFileUploadExerciseDTO(dto: FileUploadExerciseDto): FileUploa
     exercise.filePattern = dto.filePattern;
     exercise.gradingInstructionFeedbackUsed = dto.gradingInstructionFeedbackUsed;
     exercise.exerciseVariantGroup = dto.exerciseVariantGroup ? toExerciseVariantGroup(dto.exerciseVariantGroup) : undefined;
-    exercise.gradingCriteria = dto.gradingCriteria?.map((criterion) =>
-        Object.assign(new GradingCriterion(), {
-            id: criterion.id,
-            title: criterion.title ?? '',
-            structuredGradingInstructions: criterion.structuredGradingInstructions ?? [],
-        }),
-    );
-    exercise.competencyLinks = dto.competencyLinks?.map((link) => new CompetencyExerciseLink(Object.assign(new Competency(), link.competency), exercise, link.weight));
-    exercise.plagiarismDetectionConfig = dto.plagiarismDetectionConfig;
+    exercise.gradingCriteria = dto.gradingCriteria?.map(fromGradingCriterionDTO);
+    exercise.competencyLinks = dto.competencyLinks?.map((link) => fromCompetencyLinkDTO(link, exercise));
+    exercise.plagiarismDetectionConfig = dto.plagiarismDetectionConfig ? deepClone(dto.plagiarismDetectionConfig) : undefined;
     return exercise;
+}
+
+function fromTeamAssignmentConfigDTO(dto: FileUploadTeamAssignmentConfigDto): TeamAssignmentConfig {
+    const config = new TeamAssignmentConfig();
+    config.id = dto.id;
+    config.minTeamSize = dto.minTeamSize;
+    config.maxTeamSize = dto.maxTeamSize;
+    return config;
+}
+
+function fromGradingCriterionDTO(dto: GradingCriterionDTO): GradingCriterion {
+    const criterion = new GradingCriterion();
+    criterion.id = dto.id;
+    criterion.title = dto.title ?? '';
+    criterion.structuredGradingInstructions = (dto.structuredGradingInstructions ?? []).map(fromGradingInstructionDTO);
+    return criterion;
+}
+
+function fromGradingInstructionDTO(dto: GradingInstructionDTO): GradingInstruction {
+    const instruction = new GradingInstruction();
+    instruction.id = dto.id;
+    if (dto.credits !== undefined) {
+        instruction.credits = dto.credits;
+    }
+    if (dto.gradingScale !== undefined) {
+        instruction.gradingScale = dto.gradingScale;
+    }
+    if (dto.instructionDescription !== undefined) {
+        instruction.instructionDescription = dto.instructionDescription;
+    }
+    if (dto.feedback !== undefined) {
+        instruction.feedback = dto.feedback;
+    }
+    instruction.usageCount = dto.usageCount;
+    return instruction;
+}
+
+function fromCompetencyLinkDTO(dto: CompetencyLinkDTO, exercise: FileUploadExercise): CompetencyExerciseLink {
+    return new CompetencyExerciseLink(fromCompetencyDTO(dto.competency), exercise, dto.weight);
+}
+
+function fromCompetencyDTO(dto: CompetencyDTO): Competency {
+    const competency = new Competency();
+    competency.id = dto.id;
+    return competency;
 }
 
 function toTeamAssignmentConfigDTO(config?: TeamAssignmentConfig): FileUploadTeamAssignmentConfigDto | undefined {

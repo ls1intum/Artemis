@@ -261,6 +261,7 @@ public class FileUploadExerciseResource {
         }
         FileUploadExercise importedFileUploadExercise = inputDTO.toEntity();
         importedFileUploadExercise.setAssessmentType(AssessmentType.MANUAL);
+        // Resolve and attach the ID-only course or exercise-group reference from the DTO before authorization.
         courseService.retrieveCourseOverExerciseGroupOrCourseId(importedFileUploadExercise);
 
         final var user = userRepository.getUserWithAuthorities();
@@ -376,9 +377,13 @@ public class FileUploadExerciseResource {
         if (fileUploadExerciseBeforeUpdate.isCourseExercise() && !Objects.equals(course.getId(), updateFileUploadExerciseDTO.courseId())) {
             throw new BadRequestAlertException("The course can not be changed.", ENTITY_NAME, "courseIdInvalid");
         }
-        if (fileUploadExerciseBeforeUpdate.isExamExercise()
-                && !Objects.equals(fileUploadExerciseBeforeUpdate.getExerciseGroup().getId(), updateFileUploadExerciseDTO.exerciseGroupId())) {
-            throw new BadRequestAlertException("The exercise group can not be changed.", ENTITY_NAME, "exerciseGroupIdInvalid");
+        if (fileUploadExerciseBeforeUpdate.isExamExercise()) {
+            if (updateFileUploadExerciseDTO.courseId() != null && !Objects.equals(course.getId(), updateFileUploadExerciseDTO.courseId())) {
+                throw new BadRequestAlertException("The course can not be changed.", ENTITY_NAME, "courseIdInvalid");
+            }
+            if (!Objects.equals(fileUploadExerciseBeforeUpdate.getExerciseGroup().getId(), updateFileUploadExerciseDTO.exerciseGroupId())) {
+                throw new BadRequestAlertException("The exercise group can not be changed.", ENTITY_NAME, "exerciseGroupIdInvalid");
+            }
         }
 
         // Check that the user is authorized to update the exercise
@@ -472,7 +477,7 @@ public class FileUploadExerciseResource {
         // Create a version snapshot for history tracking
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
-        return ResponseEntity.ok(FileUploadExerciseDTO.of(persistedExercise));
+        return ResponseEntity.ok(loadFileUploadExerciseDTOForResponse(persistedExercise.getId()));
     }
 
     /**
@@ -540,8 +545,7 @@ public class FileUploadExerciseResource {
     public ResponseEntity<FileUploadExerciseDTO> getFileUploadExercise(@PathVariable Long exerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
-        var exercise = fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("FileUploadExercise", exerciseId));
+        var exercise = loadFileUploadExerciseForResponse(exerciseId);
         // If the exercise belongs to an exam, only editors or above are allowed to
         // access it, otherwise also TA have access
         if (exercise.isExamExercise()) {
@@ -550,6 +554,20 @@ public class FileUploadExerciseResource {
         else {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         }
+
+        return ResponseEntity.ok(FileUploadExerciseDTO.of(exercise));
+    }
+
+    /**
+     * Reloads a file upload exercise with every association required by the full response DTO.
+     * This avoids mapping the entity returned by {@code save()}, whose merged instance may not retain initialized lazy associations or transient channel data.
+     *
+     * @param exerciseId the exercise identifier
+     * @return the response-ready exercise
+     */
+    private FileUploadExercise loadFileUploadExerciseForResponse(Long exerciseId) {
+        FileUploadExercise exercise = fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("FileUploadExercise", exerciseId));
 
         if (exercise.isCourseExercise()) {
             Channel channel = channelRepository.findChannelByExerciseId(exercise.getId());
@@ -561,7 +579,11 @@ public class FileUploadExerciseResource {
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, exercise);
-        return ResponseEntity.ok(FileUploadExerciseDTO.of(exercise));
+        return exercise;
+    }
+
+    private FileUploadExerciseDTO loadFileUploadExerciseDTOForResponse(Long exerciseId) {
+        return FileUploadExerciseDTO.of(loadFileUploadExerciseForResponse(exerciseId));
     }
 
     /**
@@ -684,7 +706,7 @@ public class FileUploadExerciseResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedExercise));
         exerciseVersionService.createExerciseVersion(savedExercise);
 
-        return ResponseEntity.ok(FileUploadExerciseDTO.of(savedExercise));
+        return ResponseEntity.ok(loadFileUploadExerciseDTOForResponse(savedExercise.getId()));
     }
 
     /**

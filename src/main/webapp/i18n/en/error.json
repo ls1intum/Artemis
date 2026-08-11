@@ -216,10 +216,13 @@
         },
         "FileUploadExercise": {
             "isNull": "No fileUpload exercise was provided.",
+            "eitherCourseOrExerciseGroupSet": "Exactly one of courseId or exerciseGroupId must be set.",
+            "teamAssignmentConfigMissing": "A team exercise requires a team assignment configuration.",
             "courseIdMissing": "The courseId is required.",
             "courseIdInvalid": "The course can not be changed.",
             "courseOrExerciseGroupRequired": "Either courseId or exerciseGroupId must be set, but not both.",
-            "exerciseGroupIdMissing": "The exerciseGroupId is required for exam exercises."
+            "exerciseGroupIdMissing": "The exerciseGroupId is required for exam exercises.",
+            "exerciseGroupIdInvalid": "The exercise group can not be changed."
         },
         "ModelingExercise": {
             "isNull": "No modeling exercise was provided.",

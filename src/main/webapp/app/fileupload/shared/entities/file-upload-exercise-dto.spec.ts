@@ -12,8 +12,10 @@ import { parseJson } from 'app/foundation/util/json.util';
 
 describe('FileUploadExercise DTO adapters', () => {
     it('maps the component model to the scalar create and import contract', () => {
-        const course = Object.assign(new Course(), { id: 12 });
-        const competency = Object.assign(new Competency(), { id: 34 });
+        const course = new Course();
+        course.id = 12;
+        const competency = new Competency();
+        competency.id = 34;
         const exercise = new FileUploadExercise(course, undefined);
         exercise.title = 'Upload';
         exercise.releaseDate = dayjs('2026-01-02T10:00:00.000Z');
@@ -27,6 +29,17 @@ describe('FileUploadExercise DTO adapters', () => {
         expect(dto.releaseDate).toBe('2026-01-02T10:00:00.000Z');
         expect(dto.categories?.map((category) => parseJson(category))).toEqual([{ category: 'Files', color: '#123456' }]);
         expect(dto.competencyLinks).toEqual([{ competency: { id: 34 }, weight: 0.5 }]);
+    });
+
+    it('uses the update-compatible fallback for a competency link without a weight', () => {
+        const competency = new Competency();
+        competency.id = 34;
+        const exercise = new FileUploadExercise(undefined, undefined);
+        const link = new CompetencyExerciseLink(competency, exercise, 1);
+        Reflect.deleteProperty(link, 'weight');
+        exercise.competencyLinks = [link];
+
+        expect(toFileUploadExerciseInputDTO(exercise).competencyLinks).toEqual([{ competency: { id: 34 }, weight: 1 }]);
     });
 
     it('rejects a competency link that cannot be represented by the wire contract', () => {

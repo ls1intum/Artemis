@@ -216,10 +216,13 @@
         },
         "FileUploadExercise": {
             "isNull": "Es wurden keine File-Upload-Übungen übergeben.",
+            "eitherCourseOrExerciseGroupSet": "Es muss genau entweder courseId oder exerciseGroupId gesetzt sein.",
+            "teamAssignmentConfigMissing": "Eine Teamaufgabe benötigt eine Teamzuweisungskonfiguration.",
             "courseIdMissing": "Die courseId ist erforderlich.",
             "courseIdInvalid": "Der Kurs darf nicht geändert werden.",
             "courseOrExerciseGroupRequired": "Es muss entweder courseId oder exerciseGroupId gesetzt sein, aber nicht beides.",
-            "exerciseGroupIdMissing": "Die exerciseGroupId ist für Klausuraufgaben erforderlich."
+            "exerciseGroupIdMissing": "Die exerciseGroupId ist für Klausuraufgaben erforderlich.",
+            "exerciseGroupIdInvalid": "Die Aufgabengruppe darf nicht geändert werden."
         },
         "ModelingExercise": {
             "isNull": "Es wurde keine Modellierungsaufgabe übermittelt.",
