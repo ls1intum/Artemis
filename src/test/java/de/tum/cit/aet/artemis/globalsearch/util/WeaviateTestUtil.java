@@ -378,6 +378,15 @@ public final class WeaviateTestUtil {
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             var properties = queryExamProperties(weaviateService, examId);
             assertThat(properties).as("Exam %d should exist in Weaviate", examId).isNotNull();
+
+            String title = (String) properties.get(SearchableEntitySchema.Properties.TITLE);
+            if (title != null) {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var response = collection.query.bm25(title,
+                        builder -> builder.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.EXAM),
+                                Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(examId))).limit(1));
+                assertThat(response.objects()).as("Exam %d should be discoverable via BM25 search", examId).isNotEmpty();
+            }
         });
     }
 
