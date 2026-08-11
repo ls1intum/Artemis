@@ -99,6 +99,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private panelResizeObserver?: ResizeObserver;
     private fitViewFrame?: number;
     private lastReservedPanelWidth = -1;
+    /** Guards the one-off camera frame in {@link reserveRoomForPanel}. */
+    private hasFramedForPanelInset = false;
     private readonly observedChromeResizeTargets = new Set<HTMLElement>();
     private chromeMountObserver?: MutationObserver;
     private chromeResizeFrame?: number;
@@ -335,7 +337,16 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             // 'auto' alone measures only the in-flow trigger; the float needs saying.
             inset: width > 0 ? { right: width } : 'auto',
         });
-        this.scheduleFitView();
+        // The inset is layout and is kept current on every change; the camera is the reader's and is
+        // framed only once. Apollon already fits on mount, before this inset exists, so a single
+        // refit corrects that first frame for the reserved room. Refitting on every reservation
+        // meant each toggle of the panel threw away whatever zoom and pan the tutor had chosen —
+        // mid-assessment, while reading one element. Later reservations still update the inset, so a
+        // fit the reader actually asks for lays out clear of the panel.
+        if (!this.hasFramedForPanelInset) {
+            this.hasFramedForPanelInset = true;
+            this.scheduleFitView();
+        }
     }
 
     /** Two frames out: the overlay engine measures a region on the frame after it resizes, so refitting sooner uses the previous inset. */

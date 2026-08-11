@@ -44,6 +44,10 @@ const { MockApollonEditor } = vi.hoisted(() => {
             this._regionElements.delete(region);
         });
 
+        updateControl = vi.fn();
+
+        fitView = vi.fn();
+
         addOrUpdateAssessment = vi.fn((assessment: any) => {
             if (this._model) {
                 if (!this._model.assessments) {
@@ -586,5 +590,38 @@ describe('ModelingAssessmentComponent chrome regions', () => {
         const bareEditor = bare.debugElement.query(By.directive(ModelingAssessmentComponent)).componentInstance.apollonEditor as unknown as InstanceType<typeof MockApollonEditor>;
         expect(bareEditor._regionElements.get('top-left')!.contains(bare.debugElement.query(By.css('[data-testid="bare-notice"]')).nativeElement)).toBe(true);
         bare.destroy();
+    });
+
+    /**
+     * The reserved inset is layout and tracks the panel; the camera belongs to the reader. Refitting
+     * on every reservation threw away the tutor's zoom and pan each time they toggled "Your
+     * assessment" — mid-assessment, while reading a single element.
+     */
+    it('should reserve room for the panel on every change but frame the camera only once', () => {
+        const component = fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).componentInstance;
+        const panel = document.createElement('div');
+        // `reserveRoomForPanel` measures the open panel, and skips when the width is unchanged.
+        let panelWidth = 0;
+        const openPanel = document.createElement('div');
+        openPanel.className = 'apollon-rail-disclosure__panel';
+        openPanel.getBoundingClientRect = () => ({ width: panelWidth }) as DOMRect;
+        panel.appendChild(openPanel);
+
+        const scheduleFitView = vi.spyOn(component as any, 'scheduleFitView');
+        const reserve = () => (component as any).reserveRoomForPanel(panel);
+
+        panelWidth = 320;
+        reserve();
+        panelWidth = 0; // collapsed
+        reserve();
+        panelWidth = 280; // reopened at a different width
+        reserve();
+
+        // The inset follows the panel every time, so a fit the reader asks for still clears it.
+        expect(editor.updateControl).toHaveBeenCalledTimes(3);
+        expect(editor.updateControl).toHaveBeenLastCalledWith('apollon:host:right-rail', expect.objectContaining({ inset: { right: 280 } }));
+
+        // The camera is framed once and then left alone.
+        expect(scheduleFitView).toHaveBeenCalledTimes(1);
     });
 });
