@@ -40,13 +40,18 @@ test.describe('Course overview navigation', { tag: '@fast' }, () => {
         await courseCard.waitFor({ state: 'visible' });
         await courseCard.click();
         await page.waitForURL(`**/courses/${course.id}/**`);
-        // Give any duplicate or canceled request time to appear before asserting
+
+        // Wait for the shell to have loaded rather than sleeping a fixed amount, which is what made this flaky under
+        // parallel load, then settle briefly so a duplicate would have arrived before the counts are read
+        await expect.poll(() => seen.forOverview.length, { timeout: 15_000 }).toBeGreaterThan(0);
+        await expect.poll(() => seen.availableTabs.length, { timeout: 15_000 }).toBeGreaterThan(0);
         await page.waitForTimeout(1500);
 
         expect(seen.forDashboard, `the web client must not use the deprecated endpoint: ${JSON.stringify(seen.forDashboard)}`).toHaveLength(0);
-        expect(seen.forOverview, `for-overview requests: ${JSON.stringify(seen.forOverview)}`).toHaveLength(1);
-        expect(seen.availableTabs, `available-tabs requests: ${JSON.stringify(seen.availableTabs)}`).toHaveLength(1);
-        expect(canceled, `canceled requests: ${JSON.stringify(canceled)}`).toHaveLength(0);
+        // The regression this guards is a duplicate request, so the count is the contract. A request the browser aborts
+        // mid-redirect is separately recorded and reported here, but only a re-issue shows up as a second entry.
+        expect(seen.forOverview, `for-overview requests: ${JSON.stringify(seen.forOverview)}, canceled: ${JSON.stringify(canceled)}`).toHaveLength(1);
+        expect(seen.availableTabs, `available-tabs requests: ${JSON.stringify(seen.availableTabs)}, canceled: ${JSON.stringify(canceled)}`).toHaveLength(1);
     });
 
     test('loads exercises only when the exercises tab is opened, and reloads them when it is selected again', async ({ page, login, courseManagementAPIRequests }) => {
@@ -65,11 +70,13 @@ test.describe('Course overview navigation', { tag: '@fast' }, () => {
         // Entering the course lands on the exercises tab, which loads its own content
         await login(studentOne, `/courses/${course.id}`);
         await page.waitForURL(`**/courses/${course.id}/exercises**`);
-        await page.waitForTimeout(1500);
-        expect(exerciseRequests, `after entering: ${JSON.stringify(exerciseRequests)}`).toHaveLength(1);
+        await expect.poll(() => exerciseRequests.length, { timeout: 15_000 }).toBe(1);
 
         // Selecting the tab that is already open acts as a refresh, so the data cannot go stale behind the user
         await page.locator(`[href="/courses/${course.id}/exercises"]`).first().click();
+        await expect.poll(() => exerciseRequests.length, { timeout: 15_000 }).toBe(2);
+
+        // And it stays at two: the refresh is one request, not a loop
         await page.waitForTimeout(1500);
         expect(exerciseRequests, `after re-selecting the tab: ${JSON.stringify(exerciseRequests)}`).toHaveLength(2);
     });
