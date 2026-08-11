@@ -65,7 +65,8 @@ export class CredentialRevocationSettingsComponent implements OnDestroy {
         this.credentialRevocationService.revokeCredentials(choice).subscribe({
             next: () => {
                 this.isRevoking.set(false);
-                // Closes the confirmation dialog; a non-empty value would show it as an error inside the dialog instead.
+                // Closes the confirmation dialog. DeleteDialogService raises an alert for any non-empty value it sees
+                // here, so this must stay empty on both paths and the reporting is left to onError below.
                 this.dialogErrorSource.next('');
                 this.revokePasskeys.set(false);
                 this.revokeSshKeys.set(false);
@@ -74,7 +75,10 @@ export class CredentialRevocationSettingsComponent implements OnDestroy {
             },
             error: (error: HttpErrorResponse) => {
                 this.isRevoking.set(false);
-                this.dialogErrorSource.next(error.message);
+                // Empty, not the message: DeleteDialogService would otherwise raise its own alert with the raw
+                // HttpErrorResponse text on top of the translated one onError produces, showing the user two alerts for
+                // one failure. The dialog still needs a value to close.
+                this.dialogErrorSource.next('');
                 onError(this.alertService, error);
             },
         });

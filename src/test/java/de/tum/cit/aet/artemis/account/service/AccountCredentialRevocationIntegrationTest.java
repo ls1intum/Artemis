@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
+import de.tum.cit.aet.artemis.admin.service.AuditEventService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -61,6 +63,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private PersistenceAuditEventRepository persistenceAuditEventRepository;
+
+    @Autowired
+    private AuditEventService auditEventService;
 
     @Autowired
     private UserCreationService userCreationService;
@@ -483,6 +488,34 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         assertThat(reloadUser().getActivated()).isFalse();
         assertAllCredentialsRevoked();
+    }
+
+    /**
+     * Regression test: deactivating and changing the password in one update revokes everything through the deactivation
+     * branch, so the notification has to say so. Keying the message off the revoke-credentials checkbox alone told the
+     * user their keys and tokens had been kept while they had in fact just been deleted.
+     */
+    @Test
+    void deactivatingWhileChangingThePasswordReportsThatEverythingWasRevoked() {
+        giveUserCredentials();
+        persistenceAuditEventRepository.deleteAll();
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setActivated(false);
+        update.setPassword("new-Password-123");
+        // Deliberately not selected: the deactivation is what revokes here, and the report must follow the effect rather
+        // than the checkbox.
+        update.setRevokeCredentials(false);
+        userCreationService.updateUser(userWithAuthorities, update);
+
+        assertAllCredentialsRevoked();
+        // Read through AuditEventService: it loads `data` through an entity graph, while findAll() leaves that collection
+        // lazy and unreadable outside a session.
+        assertThat(auditEventService.findAll(Pageable.unpaged())).anySatisfy(event -> {
+            assertThat(event.getType()).isEqualTo(Constants.ADMIN_CHANGE_USER_PASSWORD);
+            assertThat(event.getData()).containsEntry("revokedPasskeys", "true").containsEntry("revokedSshKeys", "true").containsEntry("revokedVcsAccessTokens", "true");
+        });
     }
 
     /**

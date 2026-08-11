@@ -92,7 +92,9 @@ describe('CredentialRevocationSettingsComponent', () => {
 
         component.revokeSelectedCredentials();
 
-        await expect(dialogError).resolves.toBe(error.message);
+        // Empty on the failure path too: a non-empty value would make DeleteDialogService raise a second alert with the
+        // raw HttpErrorResponse text alongside the translated one below.
+        await expect(dialogError).resolves.toBe('');
         // Nothing was revoked, so the user's choice has to survive for them to retry.
         expect(component.revokeVcsAccessTokens()).toBe(true);
         expect(component.isRevoking()).toBe(false);

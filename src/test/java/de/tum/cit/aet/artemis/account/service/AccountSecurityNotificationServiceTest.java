@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -147,10 +148,14 @@ class AccountSecurityNotificationServiceTest {
     void shouldStillRecordTheEventWhenTheEmailCannotBeSent() {
         // The revocation has already happened by the time this runs. Letting a mail failure propagate would report the
         // whole request as failed and invite the user to repeat an action that already took effect.
-        when(globalNotificationSettingRepository.isNotificationEnabled(anyLong(), any())).thenThrow(new RuntimeException("mail backend unreachable"));
+        //
+        // The failure is thrown from the send itself rather than from the settings lookup: throwing from the lookup would
+        // mean the mail was never attempted, so the test would not cover the case it is named after.
+        doThrow(new RuntimeException("mail backend unreachable")).when(mailSendingService).buildAndSendAsync(any(), any(), any(), any());
 
         accountSecurityNotificationService.credentialsRevoked(user, new CredentialRevocationChoiceDTO(true, false, false));
 
+        verify(mailSendingService).buildAndSendAsync(any(), any(), any(), any());
         verify(auditEventRepository).add(any(AuditEvent.class));
     }
 

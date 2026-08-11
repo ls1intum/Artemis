@@ -256,7 +256,8 @@ public class UserCreationService {
 
         User savedUser = saveUser(user);
         boolean passwordChangedByAdministrator = user.isInternal() && updatedUserDTO.getPassword() != null;
-        if (isBeingDeactivated || revokeCredentialsAfterPasswordChange) {
+        boolean credentialsRevoked = isBeingDeactivated || revokeCredentialsAfterPasswordChange;
+        if (credentialsRevoked) {
             String reason = isBeingDeactivated ? "user deactivated by an administrator" : "password changed by an administrator";
             accountCredentialRevocationService.revokeAllCredentials(savedUser, reason);
         }
@@ -265,8 +266,11 @@ public class UserCreationService {
             // this email lets them tell an administrator's action apart from an intruder's. The acting administrator is
             // recorded in the audit event instead. Deactivation alone is not announced here - the user cannot sign in to act
             // on it, and #13404 already blocks authentication for inactive accounts.
-            CredentialRevocationChoiceDTO revoked = revokeCredentialsAfterPasswordChange ? new CredentialRevocationChoiceDTO(true, true, true)
-                    : CredentialRevocationChoiceDTO.none();
+            //
+            // Reported from what was actually revoked, not from the checkbox: deactivating and changing the password in one
+            // update revokes everything through `isBeingDeactivated`, so keying the message off the checkbox alone told the
+            // user their keys and tokens had been kept while they had in fact just been deleted.
+            CredentialRevocationChoiceDTO revoked = credentialsRevoked ? new CredentialRevocationChoiceDTO(true, true, true) : CredentialRevocationChoiceDTO.none();
             accountSecurityNotificationService.passwordChanged(savedUser, revoked, AccountSecurityNotificationService.PasswordChangeActor.ADMINISTRATOR);
         }
         return savedUser;
