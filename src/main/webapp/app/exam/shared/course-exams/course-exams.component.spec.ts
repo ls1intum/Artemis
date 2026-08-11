@@ -93,7 +93,7 @@ describe('CourseExamsComponent', () => {
 
     // The test-exams-per-user endpoint returns StudentExamDTO, whose nested `exam` is the slimmed
     // ExamForStudentExamDTO projection (id, title, testExam, workingTime) — not the full Exam entity.
-    const toExamForStudentExamDTO = (exam: Exam) => ({ id: exam.id!, title: exam.title, testExam: exam.examMode !== ExamMode.REAL, workingTime: exam.workingTime ?? 0 });
+    const toExamForStudentExamDTO = (exam: Exam) => ({ id: exam.id!, title: exam.title, examMode: exam.examMode ?? ExamMode.REAL, workingTime: exam.workingTime ?? 0 });
 
     const studentExamForExam3AndSubmitted: StudentExamDTO = {
         id: 11,
