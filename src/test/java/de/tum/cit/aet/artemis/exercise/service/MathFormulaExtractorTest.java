@@ -141,6 +141,36 @@ class MathFormulaExtractorTest {
         assertThat(result).isEqualTo("$$x^2$$\r\ntext");
     }
 
+    @Test
+    void shouldNotTreatTextAcrossABareCarriageReturnAsSurroundingText() {
+        // The formula is alone on its bare-CR line, so it is display math, and the compatibility pass must leave it be.
+        // Text on the other side of a CR is not "surrounding text": the client's regex says so with `.`, which matches no
+        // line terminator, and the display extraction downstream ends a line on a bare CR as well.
+        String result = MathFormulaExtractor.applyCompatibility("before\r$$x^2$$\rafter");
+
+        assertThat(result).isEqualTo("before\r$$x^2$$\rafter");
+    }
+
+    @Test
+    void shouldExtractDisplayMathFromABareCarriageReturnLineThroughTheWholePipeline() {
+        // Going through applyCompatibility rather than straight to extract: the compatibility pass runs first in the
+        // renderer, so a rewrite there decides what the extraction can still see.
+        StringBuilder result = new StringBuilder();
+        List<Formula> formulas = extract(MathFormulaExtractor.applyCompatibility("before\r$$x^2$$\rafter"), result);
+
+        assertThat(formulas).containsExactly(new Formula("x^2", true));
+        assertThat(result.toString()).startsWith("before\r").endsWith("\rafter");
+    }
+
+    @Test
+    void shouldStillRewriteAFormulaSharingItsBareCarriageReturnLine() {
+        // The mirror image: within one CR-delimited segment the convention still applies, and the whole LF line is
+        // rewritten, exactly as the client rewrites the whole line it tested.
+        String result = MathFormulaExtractor.applyCompatibility("before\rThe area $$x^2$$ is known\rafter");
+
+        assertThat(result).isEqualTo("before\rThe area $x^2$ is known\rafter");
+    }
+
     // --- Restoring ---
 
     @Test

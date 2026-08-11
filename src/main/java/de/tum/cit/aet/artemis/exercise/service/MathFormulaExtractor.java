@@ -45,8 +45,9 @@ public final class MathFormulaExtractor {
      * <p>
      * Split on LF alone, and the body of the formula may hold no dollar sign, because this mirrors the client's
      * {@code FormulaCompatibilityPlugin} - {@code text.split('\n')} and {@code /.+\$\$[^$]+\$\$|\$\$[^$]+\$\$.+/} - and
-     * the two renderers have to agree on what an author's markdown means. A trailing carriage return is ignored, which is
-     * what the client's {@code .} does with it as well.
+     * the two renderers have to agree on what an author's markdown means. Text on the other side of a bare carriage
+     * return does not count as surrounding text, because the client's {@code .} matches no line terminator either; see
+     * {@link #usesInlineConvention}.
      *
      * @param markdown the markdown source
      * @return the markdown with formula-authoring quirks normalized
@@ -56,10 +57,7 @@ public final class MathFormulaExtractor {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i];
-            String content = withoutCarriageReturn(line);
-            int[] span = findInlineConventionSpan(content);
-            // The inline convention means the formula shares its line with other text, i.e. the span does not cover it.
-            if (span != null && (span[0] > 0 || span[1] < content.length())) {
+            if (usesInlineConvention(withoutCarriageReturn(line))) {
                 line = line.replace("$$", "$");
             }
             if (line.contains("\\\\begin") || line.contains("\\\\end")) {
@@ -163,6 +161,33 @@ public final class MathFormulaExtractor {
         }
         int close = line.indexOf("$$", open + 2);
         return close < 0 ? null : new int[] { open, close + 2 };
+    }
+
+    /**
+     * Whether a line uses the inline convention, i.e. holds a {@code $$...$$} formula that shares its line with other
+     * text.
+     * <p>
+     * A bare carriage return ends the text that can surround a formula, even though the line was split on LF alone. The
+     * client's {@code /.+\$\$[^$]+\$\$|\$\$[^$]+\$\$.+/} says the same with {@code .}, which matches no line terminator in
+     * either language, so {@code before\r$$x^2$$\rafter} is not the inline convention for it either. It matters beyond
+     * matching the client: {@link #extractDisplayMath} ends a line on a bare CR, so rewriting such a formula to single
+     * dollars here would turn display math into inline math before the extraction ever saw it.
+     * <p>
+     * A match anywhere in the line rewrites the whole line, including across a carriage return, because that is what the
+     * client does with the line it tested.
+     *
+     * @param line the line to inspect, without a trailing carriage return
+     * @return true if any carriage-return-delimited segment of the line uses the inline convention
+     */
+    private static boolean usesInlineConvention(String line) {
+        for (String segment : line.split("\r", -1)) {
+            int[] span = findInlineConventionSpan(segment);
+            // The inline convention means the formula shares its segment with other text, i.e. the span does not cover it.
+            if (span != null && (span[0] > 0 || span[1] < segment.length())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

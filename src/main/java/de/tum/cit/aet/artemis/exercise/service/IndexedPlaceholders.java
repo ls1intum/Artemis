@@ -10,8 +10,11 @@ import java.util.function.IntFunction;
  * of placeholders: a 60 KB line of alternating dollar signs produces one formula per pair and took over two seconds to put
  * back, against eight milliseconds for every other input of that size. Scanning once is linear.
  * <p>
- * The placeholders are delimited by NUL, which {@code ProblemStatementRenderRequestDTO} rejects in the request, so a
- * document cannot bring its own.
+ * The code block and formula placeholders are delimited by NUL, which {@code ProblemStatementRenderRequestDTO} rejects in
+ * the request, so a document cannot bring its own. The PlantUML SVG placeholder is a plain {@code <span>} carrying
+ * {@code data-svg-index}, which the safelist keeps, so an author who writes that span by hand does get an SVG substituted
+ * into it. That is unchanged behaviour and bounded by {@code count}: an index that was never handed out stays as text, and
+ * a hand-written one can only reproduce a diagram that the same document already renders.
  */
 final class IndexedPlaceholders {
 
