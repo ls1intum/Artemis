@@ -1,58 +1,65 @@
-import { Injectable, inject } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { Observable, filter, map } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Observable, Subject, filter, map } from 'rxjs';
 
 /**
  * Tells a course tab when the user has selected it again while already on it.
  *
- * Selecting a different tab destroys the current tab component and creates the new one, so that tab loads its data
- * anyway. Selecting the tab you are already on is the case the router would otherwise swallow: the component is
- * reused, so nothing re-runs. Artemis enables `onSameUrlNavigation: 'reload'`, which makes the router emit a fresh
- * navigation for the identical URL, and this service turns that into a refresh signal.
+ * Driven by the sidebar reporting the click, not by watching the router. Inferring it from navigations does not work:
+ * a tab navigates to its own URL while rendering — the communication tab does so as it resolves which conversation to
+ * show — and a router-driven refresh cannot tell that apart from a user clicking the tab. Doing so made the tab refresh
+ * itself in an unbounded request loop.
  *
- * Navigating into a child route — opening a single lecture from the lectures tab — is deliberately not a refresh: the
- * tab component stays alive, but the user selected a lecture rather than the tab.
+ * Selecting a different tab destroys the current tab component and creates the new one, so that tab loads its data
+ * anyway. Only re-selecting the tab you are already on needs this signal.
  */
 @Injectable({ providedIn: 'root' })
 export class CourseTabRefreshService {
-    private readonly router = inject(Router);
+    private readonly tabSelections = new Subject<string>();
 
     /**
-     * Emits every time the user re-selects the given tab.
+     * Reports that the user clicked a sidebar tab.
      *
-     * Must be called during the navigation that opens the tab — from a component constructor or `ngOnInit` — because
-     * that navigation is excluded: the component loads once on its own, and emitting for it would load twice.
+     * @param routerLink the link of the clicked tab, as the sidebar holds it
+     */
+    notifyTabSelected(routerLink: string): void {
+        this.tabSelections.next(this.normalise(routerLink));
+    }
+
+    /**
+     * Emits every time the user selects the given tab.
      *
      * @param route the tab component's own activated route, whose URL the sidebar link points at
-     * @return an observable that emits on every re-selection of this tab
+     * @return an observable that emits on every selection of this tab
      */
     reselections(route: ActivatedRoute): Observable<void> {
-        const openingNavigationId = this.router.currentNavigation()?.id;
         const tabUrl = this.tabUrlOf(route);
-
-        return this.router.events.pipe(
-            filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-            filter((event) => event.id !== openingNavigationId && this.pathOf(event.urlAfterRedirects) === tabUrl),
+        return this.tabSelections.pipe(
+            filter((selected) => selected === tabUrl),
             map(() => undefined),
         );
     }
 
     /**
-     * The URL of the tab itself, without whatever child route happens to be open.
+     * The segment that identifies a tab, for example `lectures`.
      *
-     * Deriving this from the route rather than from the navigation that created the component matters for deep links:
-     * opening `/courses/1/lectures/7` directly creates the lectures tab too, and taking that navigation's URL would
-     * leave the tab waiting for a re-selection of a URL the sidebar link never produces.
+     * Compared on the segment rather than the whole URL because sidebar links are relative — `communication`, or
+     * `{courseId}/lectures` in the management sidebar — while the route knows its absolute path. Taking the last
+     * segment of each puts them on equal terms.
+     *
+     * Read from the route's ancestry rather than its own segments, because some tabs route through an empty-path child
+     * whose own URL is empty; and from the route rather than the current URL, so a tab showing a child — a single
+     * lecture, say — still recognises a click on its own link.
      */
     private tabUrlOf(route: ActivatedRoute): string {
-        // Angular always populates pathFromRoot; the fallback is for partial ActivatedRoute doubles in tests, which
-        // then simply never match a navigation and so never refresh
+        // Angular always populates pathFromRoot; the fallback is for partial ActivatedRoute doubles in tests
         const segments = (route.pathFromRoot ?? []).flatMap((ancestor) => ancestor.snapshot.url.map((segment) => segment.path));
-        return '/' + segments.join('/');
+        return this.normalise(segments.at(-1) ?? '');
     }
 
-    /** Drops query parameters and the fragment, which do not decide whether this is the same tab. */
-    private pathOf(url: string): string {
-        return url.split(/[?#]/)[0];
+    /** Reduces a link or path to the segment that names the tab. */
+    private normalise(url: string): string {
+        const path = url.split(/[?#]/)[0];
+        return path.split('/').filter(Boolean).at(-1) ?? '';
     }
 }
