@@ -186,7 +186,7 @@ describe('UserManagementComponent', () => {
             // Activating deletes nothing.
             const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
             const confirmSpy = vi.spyOn(confirmation, 'confirm');
-            vi.spyOn(userService, 'activate').mockReturnValue(of(new HttpResponse<void>()));
+            vi.spyOn(userService, 'activate').mockReturnValue(of(new HttpResponse<User>({ body: { id: 7, activated: true } as User })));
 
             await component.setActive({ id: 7, activated: false } as User, true);
 
