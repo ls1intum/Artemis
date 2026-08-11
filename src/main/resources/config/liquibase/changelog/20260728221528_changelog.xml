@@ -147,14 +147,61 @@ FOR EACH ROW EXECUTE FUNCTION team_student_sync_exercise_id()
         <rollback/>
     </changeSet>
 
-    <changeSet id="20260728221528-6-exercise-id-not-null" author="krusche">
+    <!-- MySQL and H2 keep the portable form. InnoDB runs both as online DDL, so they do not block
+         readers and writers the way the PostgreSQL equivalents would. -->
+    <changeSet id="20260728221528-6-exercise-id-not-null" author="krusche" dbms="!postgresql">
         <addNotNullConstraint tableName="team_student" columnName="exercise_id" columnDataType="bigint"/>
     </changeSet>
 
+    <!-- PostgreSQL takes an ACCESS EXCLUSIVE lock for the whole table scan of a plain SET NOT NULL, which
+         blocks reads and writes from the other nodes for the duration of a rolling deployment. Adding the
+         equivalent CHECK as NOT VALID takes that lock only briefly, validating it afterwards needs just
+         SHARE UPDATE EXCLUSIVE, and a validated CHECK then lets SET NOT NULL skip the scan entirely. -->
+    <changeSet id="20260728221528-6a-exercise-id-not-null-check-postgresql" author="krusche" dbms="postgresql">
+        <sql>ALTER TABLE team_student ADD CONSTRAINT team_student_exercise_id_not_null CHECK (exercise_id IS NOT NULL) NOT VALID</sql>
+        <rollback>
+            <sql>ALTER TABLE team_student DROP CONSTRAINT IF EXISTS team_student_exercise_id_not_null</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260728221528-6b-validate-exercise-id-check-postgresql" author="krusche" dbms="postgresql">
+        <sql>ALTER TABLE team_student VALIDATE CONSTRAINT team_student_exercise_id_not_null</sql>
+        <!-- Validation only flips a catalog flag; changeset 6a owns dropping the constraint again. -->
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260728221528-6c-exercise-id-not-null-postgresql" author="krusche" dbms="postgresql">
+        <sql>ALTER TABLE team_student ALTER COLUMN exercise_id SET NOT NULL</sql>
+        <!-- The CHECK has served its purpose once the column itself is NOT NULL. -->
+        <sql>ALTER TABLE team_student DROP CONSTRAINT team_student_exercise_id_not_null</sql>
+        <rollback>
+            <sql>ALTER TABLE team_student ALTER COLUMN exercise_id DROP NOT NULL</sql>
+        </rollback>
+    </changeSet>
+
     <!-- The actual guarantee. Fails loudly if any installation already violates the invariant. -->
-    <changeSet id="20260728221528-7-unique-exercise-student" author="krusche">
+    <changeSet id="20260728221528-7-unique-exercise-student" author="krusche" dbms="!postgresql">
         <addUniqueConstraint tableName="team_student" columnNames="exercise_id, student_id"
                              constraintName="uk_team_student_exercise_student"/>
+    </changeSet>
+
+    <!-- Same reasoning on PostgreSQL: building the unique index through ADD CONSTRAINT holds ACCESS
+         EXCLUSIVE for the whole build. CONCURRENTLY builds it without blocking writers, which cannot run
+         inside a transaction, hence runInTransaction="false". Attaching the finished index afterwards is a
+         catalog-only operation. A failed concurrent build leaves an invalid index behind, so the build is
+         idempotent and the rollback drops it either way. -->
+    <changeSet id="20260728221528-7a-unique-index-concurrently-postgresql" author="krusche" dbms="postgresql" runInTransaction="false">
+        <sql>CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS uk_team_student_exercise_student ON team_student (exercise_id, student_id)</sql>
+        <rollback>
+            <sql>DROP INDEX IF EXISTS uk_team_student_exercise_student</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260728221528-7b-attach-unique-constraint-postgresql" author="krusche" dbms="postgresql">
+        <sql>ALTER TABLE team_student ADD CONSTRAINT uk_team_student_exercise_student UNIQUE USING INDEX uk_team_student_exercise_student</sql>
+        <rollback>
+            <sql>ALTER TABLE team_student DROP CONSTRAINT IF EXISTS uk_team_student_exercise_student</sql>
+        </rollback>
     </changeSet>
 
     <!-- The legacy advisory trigger is now redundant: the unique index enforces the invariant
