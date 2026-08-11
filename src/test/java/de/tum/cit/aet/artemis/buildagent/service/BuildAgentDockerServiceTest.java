@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -14,11 +15,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -119,36 +122,87 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         BuildAgentDTO buildAgent = new BuildAgentDTO("buildagent1", "address1", "buildagent1");
         var build = new BuildJobQueueItem("1", "job1", buildAgent, 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
+        // This test only cares that a missing image drives the code into a pull. Bound the wait so it cannot depend on
+        // whatever the shared dockerClient mock still carries from another test: without a completing pull the service
+        // would now correctly wait out the stall budget before giving up.
+        int originalStallTimeout = (int) ReflectionTestUtils.getField(buildAgentDockerService, "imagePullStallTimeoutSeconds");
+        ReflectionTestUtils.setField(buildAgentDockerService, "imagePullStallTimeoutSeconds", 1);
         // Pull image
         try {
             buildAgentDockerService.pullDockerImage(build, new BuildLogsMap());
         }
         catch (LocalCIException e) {
-            // Expected exception
-            if (!(e.getCause() instanceof NotFoundException)) {
-                throw e;
-            }
+            // Expected: the image is missing, so either the pull itself reports the failure or it never gets through.
+        }
+        finally {
+            ReflectionTestUtils.setField(buildAgentDockerService, "imagePullStallTimeoutSeconds", originalStallTimeout);
         }
 
-        // Verify that pullImageCmd() was called.
-        verify(dockerClient, times(1)).pullImageCmd("test-image-name");
+        // Verify that a pull was attempted. The count is deliberately not pinned: the service retries a failed pull,
+        // so how often it gets here depends on how the pull fails rather than on what this test is about.
+        verify(dockerClient, atLeastOnce()).pullImageCmd("test-image-name");
     }
 
     @Test
-    void testPullDockerImageFailsWhenPullExceedsTimeout() throws InterruptedException {
+    void testPullDockerImageFailsFastWhenPullMakesNoProgress() throws InterruptedException, IOException {
         var build = mockPendingImagePull();
-        // Simulate a pull that never finishes: the timed await reports that the image did not arrive within the timeout.
+        // A pull that is not getting through at all: the await never completes and the daemon reports nothing, so the
+        // progress counter never moves.
         when(pullImageCallback.awaitCompletion(anyLong(), any(TimeUnit.class))).thenReturn(false);
+        when(pullImageCallback.progressCount()).thenReturn(0L);
+        int originalStallTimeout = (int) ReflectionTestUtils.getField(buildAgentDockerService, "imagePullStallTimeoutSeconds");
+        ReflectionTestUtils.setField(buildAgentDockerService, "imagePullStallTimeoutSeconds", 1);
 
         try {
-            assertThatThrownBy(() -> buildAgentDockerService.pullDockerImage(build, buildLogsMap)).isInstanceOf(LocalCIException.class);
+            // This must not wait for the full pull budget: an unreachable registry is recognisable from the silence alone.
+            assertThatThrownBy(() -> buildAgentDockerService.pullDockerImage(build, buildLogsMap)).isInstanceOf(LocalCIException.class).rootCause()
+                    .hasMessageContaining("reported no progress");
 
-            assertThat(buildLogsMap.getAndTruncateBuildLogs(build.id())).anyMatch(logEntry -> logEntry.log().contains("timed out after"));
+            assertThat(buildLogsMap.getAndTruncateBuildLogs(build.id())).anyMatch(logEntry -> logEntry.log().contains("reported no progress"));
             // The job must not stay registered as pulling, otherwise stale detection would never look at it again.
+            assertThat(buildAgentDockerService.isImagePullInProgress(build.id())).isFalse();
+            // The pull is abandoned rather than left running in the background.
+            verify(pullImageCallback).close();
+        }
+        finally {
+            ReflectionTestUtils.setField(buildAgentDockerService, "imagePullStallTimeoutSeconds", originalStallTimeout);
+            buildLogsMap.removeBuildLogs(build.id());
+        }
+    }
+
+    @Test
+    void testPullDockerImageFailsWhenAProgressingPullExceedsTheTotalTimeout() throws InterruptedException {
+        var build = mockPendingImagePull();
+        // A pull that keeps reporting progress but never arrives, so only the overall budget can stop it.
+        when(pullImageCallback.awaitCompletion(anyLong(), any(TimeUnit.class))).thenReturn(false);
+        AtomicLong reportedProgress = new AtomicLong();
+        when(pullImageCallback.progressCount()).thenAnswer(invocation -> reportedProgress.incrementAndGet());
+        int originalTimeout = (int) ReflectionTestUtils.getField(buildAgentDockerService, "imagePullTimeoutSeconds");
+        ReflectionTestUtils.setField(buildAgentDockerService, "imagePullTimeoutSeconds", 1);
+
+        try {
+            assertThatThrownBy(() -> buildAgentDockerService.pullDockerImage(build, buildLogsMap)).isInstanceOf(LocalCIException.class).rootCause()
+                    .hasMessageContaining("did not finish within");
+
+            assertThat(buildLogsMap.getAndTruncateBuildLogs(build.id())).anyMatch(logEntry -> logEntry.log().contains("did not finish within"));
             assertThat(buildAgentDockerService.isImagePullInProgress(build.id())).isFalse();
         }
         finally {
+            ReflectionTestUtils.setField(buildAgentDockerService, "imagePullTimeoutSeconds", originalTimeout);
             buildLogsMap.removeBuildLogs(build.id());
+        }
+    }
+
+    @Test
+    void testNonPositivePullStallTimeoutIsRejectedAtStartup() {
+        int originalStallTimeout = (int) ReflectionTestUtils.getField(buildAgentDockerService, "imagePullStallTimeoutSeconds");
+        try {
+            ReflectionTestUtils.setField(buildAgentDockerService, "imagePullStallTimeoutSeconds", 0);
+            assertThatThrownBy(() -> buildAgentDockerService.applicationReady()).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("image-pull-stall-timeout-seconds");
+        }
+        finally {
+            ReflectionTestUtils.setField(buildAgentDockerService, "imagePullStallTimeoutSeconds", originalStallTimeout);
         }
     }
 

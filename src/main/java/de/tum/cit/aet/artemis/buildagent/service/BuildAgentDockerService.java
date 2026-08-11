@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -16,6 +17,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -88,6 +90,9 @@ public class BuildAgentDockerService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentDockerService.class);
 
+    /** How often a running pull is re-examined while waiting, short enough to notice a stall promptly. */
+    private static final int PULL_PROGRESS_POLL_INTERVAL_SECONDS = 5;
+
     private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final DistributedDataAccessService distributedDataAccessService;
@@ -133,8 +138,19 @@ public class BuildAgentDockerService {
      * not on the exercise, so a slow registry must not eat into the time budget a student's build gets. Without this, a pull that never makes progress would block
      * the build thread indefinitely.
      */
-    @Value("${artemis.continuous-integration.image-pull-timeout-seconds:900}")
+    @Value("${artemis.continuous-integration.image-pull-timeout-seconds:300}")
     private int imagePullTimeoutSeconds;
+
+    /**
+     * Maximum time a Docker image pull may report no progress at all before it is aborted.
+     * <p>
+     * This separates the two ways a pull goes wrong. A large image over a slow link keeps emitting progress and is
+     * allowed to run until {@link #imagePullTimeoutSeconds}. A pull that is not getting through at all, because the
+     * registry is unreachable or a firewall silently drops the packets rather than refusing the connection, emits
+     * nothing, and there is no reason to hold a build thread and an agent slot for the full budget waiting for it.
+     */
+    @Value("${artemis.continuous-integration.image-pull-stall-timeout-seconds:60}")
+    private int imagePullStallTimeoutSeconds;
 
     /**
      * IDs of the build jobs that are currently pulling a Docker image, with the time the pull started.
@@ -171,6 +187,12 @@ public class BuildAgentDockerService {
         if (imagePullTimeoutSeconds <= 0) {
             String errorMessage = "The Docker image pull timeout must be a positive number of seconds, but was " + imagePullTimeoutSeconds
                     + ". It should be changed in the application properties under 'artemis.continuous-integration.image-pull-timeout-seconds'.";
+            log.error(errorMessage);
+            throw new IllegalArgumentException(errorMessage);
+        }
+        if (imagePullStallTimeoutSeconds <= 0) {
+            String errorMessage = "The Docker image pull stall timeout must be a positive number of seconds, but was " + imagePullStallTimeoutSeconds
+                    + ". It should be changed in the application properties under 'artemis.continuous-integration.image-pull-stall-timeout-seconds'.";
             log.error(errorMessage);
             throw new IllegalArgumentException(errorMessage);
         }
@@ -260,8 +282,27 @@ public class BuildAgentDockerService {
      */
     public static class MyPullImageResultCallback extends PullImageResultCallback {
 
+        /**
+         * How many updates the daemon has reported for this pull. Written from the docker-java callback thread and
+         * read by the waiting build thread, hence atomic.
+         * <p>
+         * A counter rather than a timestamp: the caller owns the clock, so "no progress yet" is measured from when
+         * the wait started rather than from when this object happened to be constructed.
+         */
+        private final AtomicLong progressCount = new AtomicLong();
+
+        /**
+         * How many updates the daemon has reported so far.
+         *
+         * @return the number of progress updates received for this pull
+         */
+        public long progressCount() {
+            return progressCount.get();
+        }
+
         @Override
         public void onNext(PullResponseItem item) {
+            progressCount.incrementAndGet();
             String msg = "~~~~~~~~~~~~~~~~~~~~ Pull image progress: " + item.getStatus() + " ~~~~~~~~~~~~~~~~~~~~";
             log.debug(msg);
             super.onNext(item);
@@ -421,14 +462,50 @@ public class BuildAgentDockerService {
      * @throws InterruptedException if the current thread is interrupted while waiting
      * @throws LocalCIException     if the pull does not finish within the configured timeout
      */
-    private void awaitPullCompletion(PullImageResultCallback callback, String imageName, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) throws InterruptedException {
-        if (callback.awaitCompletion(imagePullTimeoutSeconds, TimeUnit.SECONDS)) {
-            return;
+    private void awaitPullCompletion(MyPullImageResultCallback callback, String imageName, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) throws InterruptedException {
+        final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(imagePullTimeoutSeconds);
+        final long stallNanos = TimeUnit.SECONDS.toNanos(imagePullStallTimeoutSeconds);
+        long lastProgressAtNanos = System.nanoTime();
+        long lastProgressCount = callback.progressCount();
+
+        // Wait in slices rather than one long wait, so the pull can also be judged on whether it is still moving.
+        while (!callback.awaitCompletion(PULL_PROGRESS_POLL_INTERVAL_SECONDS, TimeUnit.SECONDS)) {
+            long progressCount = callback.progressCount();
+            if (progressCount != lastProgressCount) {
+                lastProgressCount = progressCount;
+                lastProgressAtNanos = System.nanoTime();
+            }
+            if (System.nanoTime() - lastProgressAtNanos > stallNanos) {
+                abortPull(callback, imageName, buildJob, buildLogsMap,
+                        "reported no progress for " + imagePullStallTimeoutSeconds + " seconds. The registry is most likely unreachable from this agent, for example "
+                                + "because a firewall drops the packets instead of refusing the connection");
+            }
+            if (System.nanoTime() - deadlineNanos >= 0) {
+                abortPull(callback, imageName, buildJob, buildLogsMap, "did not finish within " + imagePullTimeoutSeconds + " seconds");
+            }
         }
-        String msg = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " timed out after " + imagePullTimeoutSeconds + " seconds ~~~~~~~~~~~~~~~~~~~~";
+    }
+
+    /**
+     * Closes the callback so the pull is really abandoned rather than left running in the background, then fails the build job.
+     *
+     * @param callback     the callback of the running pull command
+     * @param imageName    the name of the Docker image being pulled
+     * @param buildJob     the build job the pull belongs to
+     * @param buildLogsMap a map for appending log entries related to the build process
+     * @param reason       what went wrong, phrased to continue "Pulling docker image <name> ..."
+     */
+    private static void abortPull(MyPullImageResultCallback callback, String imageName, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap, String reason) {
+        try {
+            callback.close();
+        }
+        catch (IOException e) {
+            log.warn("Could not close the callback of the aborted pull of docker image {}", imageName, e);
+        }
+        String msg = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " " + reason + " ~~~~~~~~~~~~~~~~~~~~";
         log.error(msg);
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
-        throw new LocalCIException("Timed out after " + imagePullTimeoutSeconds + " seconds while pulling docker image " + imageName);
+        throw new LocalCIException("Pulling docker image " + imageName + " " + reason);
     }
 
     /**
