@@ -5,11 +5,14 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * One generated structured grading instruction.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Generated structured grading instruction")
 public record GeneratedAssessmentInstructionDTO(@DecimalMin("0") @Schema(description = "Nonnegative credits awarded") double credits,
         @NotBlank @Size(max = 255) @Schema(description = "Grading scale label") String gradingScale,
