@@ -75,7 +75,7 @@
                 @if (!isSaving()) {
                     <fa-icon [fixedWidth]="true" [icon]="faSave" class="sm" />
                 }
-                <span class="d-none d-sm-inline">{{ saveTitle() | artemisTranslate }}</span>
+                <span class="d-none d-sm-inline" [jhiTranslate]="saveTitle()"></span>
             </button>
         </span>
     </div>

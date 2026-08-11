@@ -52,6 +52,15 @@ describe('FormFooterComponent', () => {
         expect(comp.saveTitle()).toBe('entity.action.save');
     });
 
+    it('should render the save button label from the resolved title', () => {
+        fixture.componentRef.setInput('isCreation', true);
+        fixture.componentRef.setInput('isImport', false);
+        fixture.detectChanges();
+
+        const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLElement;
+        expect(saveButton.querySelector('span')?.textContent).toBe('entity.action.generate');
+    });
+
     it('should display saving badge when isSaving is true', () => {
         fixture.componentRef.setInput('isSaving', true);
         fixture.detectChanges();
