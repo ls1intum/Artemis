@@ -4,6 +4,7 @@
  * organization management, and group assignment.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Observable, of, throwError } from 'rxjs';
@@ -77,7 +78,11 @@ describe('UserManagementUpdateComponent', () => {
         parentRoute.data = of({ user: testUser });
         await TestBed.configureTestingModule({
             imports: [UserManagementUpdateComponent],
-            providers: [{ provide: ActivatedRoute, useValue: mockRoute }, ...testBedProviders],
+            providers: [
+                { provide: CredentialRevocationConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
+                { provide: ActivatedRoute, useValue: mockRoute },
+                ...testBedProviders,
+            ],
         })
             .overrideTemplate(UserManagementUpdateComponent, '')
             .compileComponents();
@@ -257,7 +262,7 @@ describe('UserManagementUpdateComponent', () => {
             component.initializeForm();
             component.editForm.patchValue({ password: 'new-Password-123' });
 
-            component.save();
+            await component.save();
 
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 123, login: 'test_user', password: 'new-Password-123', revokeCredentials: false }));
@@ -278,13 +283,52 @@ describe('UserManagementUpdateComponent', () => {
             component.editForm.patchValue({ password: 'new-Password-123' });
             component.revokeCredentials.set(true);
 
-            component.save();
+            await component.save();
 
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 123, login: 'test_user', password: 'new-Password-123', revokeCredentials: true }));
             expect(createSpy).not.toHaveBeenCalled();
             expect(component.user().revokeCredentials).toBe(true);
             expect(component.isSaving()).toBe(false);
+        });
+
+        it("should ask before revoking another user's credentials, and not save when dismissed", async () => {
+            // The administrator is deleting someone else's authenticators and keys irreversibly, and unlike the owner they
+            // have no way to notice a mistyped click afterwards. Dismissing must leave the account untouched entirely.
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            const confirmSpy = vi.spyOn(confirmation, 'confirm').mockResolvedValue(false);
+            const updateSpy = vi.spyOn(adminUserService, 'update');
+            const existingUser = new User(123);
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            component.editForm.patchValue({ password: 'new-Password-123' });
+            component.revokeCredentials.set(true);
+
+            await component.save();
+
+            expect(confirmSpy).toHaveBeenCalledExactlyOnceWith({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            expect(updateSpy).not.toHaveBeenCalled();
+            // The spinner must not be left running by an aborted save.
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it('should not ask when a save revokes nothing', async () => {
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            const confirmSpy = vi.spyOn(confirmation, 'confirm');
+            const existingUser = new User(123);
+            vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: existingUser })));
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            component.editForm.patchValue({ password: 'new-Password-123' });
+            component.revokeCredentials.set(false);
+
+            await component.save();
+
+            expect(confirmSpy).not.toHaveBeenCalled();
         });
 
         it('should not submit a typed password after toggling back to keeping the existing one', async () => {
@@ -305,7 +349,7 @@ describe('UserManagementUpdateComponent', () => {
             component.revokeCredentials.set(true);
             component.shouldRandomizePassword(true);
 
-            component.save();
+            await component.save();
 
             expect(updateSpy).toHaveBeenCalledOnce();
             const submitted = updateSpy.mock.calls[0][0];
@@ -378,7 +422,7 @@ describe('UserManagementUpdateComponent', () => {
             component.editForm.patchValue({ password: undefined });
             component.revokeCredentials.set(true);
 
-            component.save();
+            await component.save();
 
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 123, login: 'test_user', password: undefined, revokeCredentials: false }));
@@ -396,7 +440,7 @@ describe('UserManagementUpdateComponent', () => {
             component.editForm.patchValue({ password: 'new-Password-123' });
             component.revokeCredentials.set(true);
 
-            component.save();
+            await component.save();
 
             expect(createSpy).toHaveBeenCalledOnce();
             expect(updateSpy).not.toHaveBeenCalled();
@@ -505,7 +549,7 @@ describe('UserManagementUpdateComponent', () => {
     });
 
     describe('save - additional coverage', () => {
-        it('should show Jenkins warning when login changes and no password set', () => {
+        it('should show Jenkins warning when login changes and no password set', async () => {
             const alertService = TestBed.inject(AlertService);
             const addAlertSpy = vi.spyOn(alertService, 'addAlert');
 
@@ -530,7 +574,7 @@ describe('UserManagementUpdateComponent', () => {
 
             vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: component.user() })));
 
-            component.save();
+            await component.save();
 
             expect(addAlertSpy).toHaveBeenCalledWith({
                 type: AlertType.WARNING,
@@ -540,7 +584,7 @@ describe('UserManagementUpdateComponent', () => {
             });
         });
 
-        it('should not show Jenkins warning when login stays the same', () => {
+        it('should not show Jenkins warning when login stays the same', async () => {
             const alertService = TestBed.inject(AlertService);
             const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile: string) => profile === PROFILE_JENKINS);
@@ -560,12 +604,12 @@ describe('UserManagementUpdateComponent', () => {
 
             vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: component.user() })));
 
-            component.save();
+            await component.save();
 
             expect(addAlertSpy).not.toHaveBeenCalled();
         });
 
-        it('should handle update error correctly', () => {
+        it('should handle update error correctly', async () => {
             const existingUser = new User(123);
             existingUser.login = 'test_user';
             vi.spyOn(adminUserService, 'update').mockReturnValue(throwError(() => new Error('Update failed')));
@@ -574,12 +618,12 @@ describe('UserManagementUpdateComponent', () => {
             component.initializeForm();
             component.isSaving.set(true);
 
-            component.save();
+            await component.save();
 
             expect(component.isSaving()).toBe(false);
         });
 
-        it('should handle create error correctly', () => {
+        it('should handle create error correctly', async () => {
             const newUser = new User();
             vi.spyOn(adminUserService, 'create').mockReturnValue(throwError(() => new Error('Create failed')));
             component.user.set(newUser);
@@ -587,12 +631,12 @@ describe('UserManagementUpdateComponent', () => {
             component.initializeForm();
             component.isSaving.set(true);
 
-            component.save();
+            await component.save();
 
             expect(component.isSaving()).toBe(false);
         });
 
-        it('should preserve organizations when saving', () => {
+        it('should preserve organizations when saving', async () => {
             const existingUser = new User(123);
             existingUser.login = 'test_user';
             existingUser.organizations = [{ id: 1 }] as Organization[];
@@ -601,7 +645,7 @@ describe('UserManagementUpdateComponent', () => {
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
 
-            component.save();
+            await component.save();
 
             expect(component.user().organizations).toEqual([{ id: 1 }]);
         });
@@ -763,7 +807,11 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
 
         await TestBed.configureTestingModule({
             imports: [UserManagementUpdateComponent],
-            providers: [{ provide: ActivatedRoute, useValue: route }, ...testBedProviders],
+            providers: [
+                { provide: CredentialRevocationConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
+                { provide: ActivatedRoute, useValue: route },
+                ...testBedProviders,
+            ],
         }).compileComponents();
 
         vi.spyOn(TestBed.inject(AdminUserService), 'authorities').mockReturnValue(of([]));
