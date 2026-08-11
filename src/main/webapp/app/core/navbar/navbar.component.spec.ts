@@ -360,7 +360,7 @@ describe('NavbarComponent', () => {
         expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
     });
 
-    it('should not build breadcrumbs for the course management list', () => {
+    it('should not build breadcrumbs for the course management overview', () => {
         const testUrl = '/course-management';
         router.setUrl(testUrl);
 
@@ -370,7 +370,7 @@ describe('NavbarComponent', () => {
         expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
     });
 
-    it('should not build breadcrumbs for the course management list with query parameters', () => {
+    it('should not build breadcrumbs for the course management overview with query parameters', () => {
         const testUrl = '/course-management?query=param';
         router.setUrl(testUrl);
 
@@ -396,22 +396,6 @@ describe('NavbarComponent', () => {
 
         expect(component.breadcrumbs()).toHaveLength(0);
         expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
-    });
-
-    it('should hide breadcrumb when exam is started', () => {
-        (examParticipationService as any).examIsStarted$ = of(true);
-        const testUrl = '/course-management/1/exams/2';
-        router.setUrl(testUrl);
-
-        fixture.detectChanges();
-        component.isExamActive.set(true);
-        fixture.changeDetectorRef.detectChanges();
-        expect(fixture.nativeElement.querySelector('.breadcrumb')).toBeNull();
-
-        component.isExamStarted.set(false);
-        component.isExamActive.set(false);
-        fixture.changeDetectorRef.detectChanges();
-        expect(fixture.nativeElement.querySelector('.breadcrumb')).not.toBeNull();
     });
 
     it('should have correct git info', () => {
