@@ -7,13 +7,17 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -25,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
+import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.dto.BuildJobStatisticsDTO;
@@ -37,13 +42,6 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.submission", "result.submission.participation", "result.submission.participation.exercise" })
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
-
-    @Query("""
-            SELECT b.id
-            FROM BuildJob b
-            WHERE b.buildStatus NOT IN (de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.QUEUED, de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.BUILDING)
-            """)
-    Slice<Long> findFinishedIds(Pageable pageable);
 
     /**
      * Retrieves all build job ids that were submitted before the given date.
@@ -58,28 +56,39 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     Set<Long> findAllIdsBeforeDate(@Param("date") ZonedDateTime date);
 
-    // Cast to string is necessary. Otherwise, the query will fail on PostgreSQL.
-    @Query("""
-            SELECT b.id
-            FROM BuildJob b
-                LEFT JOIN Course c ON b.courseId = c.id
-                WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
-                AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
-                AND (CAST(:startDate AS string) IS NULL OR b.buildSubmissionDate >= :startDate)
-                AND (CAST(:endDate AS string) IS NULL OR b.buildSubmissionDate <= :endDate)
-                AND (
-                  :searchTerm IS NULL
-                  OR b.repositoryName LIKE CONCAT('%', :searchTerm, '%')
-                  OR c.title LIKE CONCAT('%', :searchTerm, '%')
-                )
-                AND (:courseId IS NULL OR b.courseId = :courseId)
-                AND (:durationLower IS NULL OR (b.buildCompletionDate - b.buildStartDate) >= :durationLower)
-                AND (:durationUpper IS NULL OR (b.buildCompletionDate - b.buildStartDate) <= :durationUpper)
-
-            """)
-    Slice<Long> findFinishedIdsByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
-            @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("searchTerm") String searchTerm, @Param("courseId") Long courseId,
-            @Param("durationLower") Duration durationLower, @Param("durationUpper") Duration durationUpper, Pageable pageable);
+    /**
+     * Finds the ids of finished build jobs matching the given optional filters, ordered and paged according to {@code pageable}.
+     * <p>
+     * Built with the Criteria API rather than JPQL on purpose. The previous implementation expressed every optional filter as {@code (:param IS NULL OR column = :param)} in one
+     * statement; MySQL cannot fold those branches away, so it could not estimate the selectivity of any filter and instead satisfied the {@code ORDER BY} by scanning
+     * {@code idx_build_job_build_submission_date} in reverse over the whole table. On production a course-scoped call took 17 s and examined 1.83 M rows to return nothing.
+     * With {@link BuildJobSpecs} an absent filter contributes no SQL at all, so the optimizer sees a real {@code course_id = ?} and can use {@code idx_build_job_course_id}.
+     * <p>
+     * Uses {@code findBy(...).slice(...)} rather than {@code findAll(spec, pageable)} because the latter returns a {@code Page} and issues an additional {@code COUNT(*)} over
+     * the filtered set, which on a 1.8 M-row table would be a new slow query. Only the id is projected; callers load the entities via {@link #findWithDataByIdIn(List)}.
+     *
+     * @param buildStatus       filter by build status, or null
+     * @param buildAgentAddress filter by build agent address, or null
+     * @param startDate         earliest build submission date, or null
+     * @param endDate           latest build submission date, or null
+     * @param searchTerm        free-text match on repository name or course title, or null
+     * @param courseId          filter by course, or null
+     * @param durationLower     minimum build duration, or null
+     * @param durationUpper     maximum build duration, or null
+     * @param pageable          paging and sorting information
+     * @return a slice of matching build job ids
+     */
+    default Slice<Long> findFinishedIdsByFilterCriteria(@Nullable BuildStatus buildStatus, @Nullable String buildAgentAddress, @Nullable ZonedDateTime startDate,
+            @Nullable ZonedDateTime endDate, @Nullable String searchTerm, @Nullable Long courseId, @Nullable Duration durationLower, @Nullable Duration durationUpper,
+            Pageable pageable) {
+        // Specification.allOf rejects null elements, so absent filters are filtered out here rather than contributing an always-true predicate.
+        List<Specification<BuildJob>> specifications = Stream
+                .of(BuildJobSpecs.isFinished(), BuildJobSpecs.hasBuildStatus(buildStatus), BuildJobSpecs.hasBuildAgentAddress(buildAgentAddress),
+                        BuildJobSpecs.submittedFrom(startDate), BuildJobSpecs.submittedUntil(endDate), BuildJobSpecs.inCourse(courseId),
+                        BuildJobSpecs.matchesSearchTerm(searchTerm), BuildJobSpecs.durationAtLeast(durationLower), BuildJobSpecs.durationAtMost(durationUpper))
+                .filter(Objects::nonNull).toList();
+        return findBy(Specification.allOf(specifications), query -> query.project(DomainObject_.ID).slice(pageable)).map(BuildJob::getId);
+    }
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild(
