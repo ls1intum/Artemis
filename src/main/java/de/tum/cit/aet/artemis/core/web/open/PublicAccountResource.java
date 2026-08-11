@@ -338,7 +338,7 @@ public class PublicAccountResource {
         if (StringUtils.isEmpty(keyAndPassword.getKey()) || keyAndPassword.getKey().length() < 10) {
             throw new AccessForbiddenException("Invalid key for password reset");
         }
-        Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());
+        Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey(), keyAndPassword.revokeCredentialsOrAll());
 
         if (user.isEmpty()) {
             throw new AccessForbiddenException("No user was found for this reset key");
