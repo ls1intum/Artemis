@@ -28,11 +28,19 @@ import {
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
     templateUrl: './text-exercise-detail.component.html',
-    imports: [TranslateDirective, DocumentationButtonComponent, NonProgrammingExerciseDetailCommonActionsComponent, ExerciseDetailStatisticsComponent, DetailOverviewListComponent],
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        NonProgrammingExerciseDetailCommonActionsComponent,
+        ExerciseDetailStatisticsComponent,
+        DetailOverviewListComponent,
+        AtlasOrchestrationTriggerComponent,
+    ],
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

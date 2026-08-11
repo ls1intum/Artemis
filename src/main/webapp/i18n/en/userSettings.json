@@ -157,7 +157,22 @@
                 },
                 "setupLater": "Set Up Later",
                 "setupPasskey": "Set Up Passkey",
-                "remindMeIn30Days": "Remind Me in 30 Days"
+                "remindMeIn30Days": "Remind Me in 30 Days",
+                "heroTitle": "Set Up Your First Passkey on This Device",
+                "facts": {
+                    "faster": {
+                        "title": "Faster sign-in:",
+                        "desc": "skip repeated login screens after your device recognizes you"
+                    },
+                    "noPasswords": {
+                        "title": "No passwords needed:",
+                        "desc": "never forget or reset a password again"
+                    },
+                    "secure": {
+                        "title": "More secure than passwords:",
+                        "desc": "phishing-resistant and bound to your device"
+                    }
+                }
             },
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",
