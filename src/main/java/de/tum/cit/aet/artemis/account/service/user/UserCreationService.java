@@ -27,7 +27,9 @@ import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
+import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
@@ -48,13 +50,17 @@ public class UserCreationService {
 
     private final AccountCredentialRevocationService accountCredentialRevocationService;
 
+    private final AccountSecurityNotificationService accountSecurityNotificationService;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
-            OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService) {
+            OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService,
+            AccountSecurityNotificationService accountSecurityNotificationService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
         this.organizationRepository = organizationRepository;
         this.accountCredentialRevocationService = accountCredentialRevocationService;
+        this.accountSecurityNotificationService = accountSecurityNotificationService;
     }
 
     /**
@@ -249,9 +255,19 @@ public class UserCreationService {
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
+        boolean passwordChangedByAdministrator = user.isInternal() && updatedUserDTO.getPassword() != null;
         if (isBeingDeactivated || revokeCredentialsAfterPasswordChange) {
             String reason = isBeingDeactivated ? "user deactivated by an administrator" : "password changed by an administrator";
             accountCredentialRevocationService.revokeAllCredentials(savedUser, reason);
+        }
+        if (passwordChangedByAdministrator) {
+            // The affected user is told, not the administrator who did it: their credentials just stopped working, and only
+            // this email lets them tell an administrator's action apart from an intruder's. The acting administrator is
+            // recorded in the audit event instead. Deactivation alone is not announced here - the user cannot sign in to act
+            // on it, and #13404 already blocks authentication for inactive accounts.
+            CredentialRevocationChoiceDTO revoked = revokeCredentialsAfterPasswordChange ? new CredentialRevocationChoiceDTO(true, true, true)
+                    : CredentialRevocationChoiceDTO.none();
+            accountSecurityNotificationService.passwordChanged(savedUser, revoked, AccountSecurityNotificationService.PasswordChangeActor.ADMINISTRATOR);
         }
         return savedUser;
     }
