@@ -143,8 +143,20 @@ export class CourseUpdateComponent implements OnInit {
     private initialOrganizationIds = new Set<number>();
     readonly isAdmin = signal(false);
 
-    communicationEnabled = true;
-    messagingEnabled = true;
+    private readonly communicationEnabledSignal = signal(true);
+    private readonly messagingEnabledSignal = signal(true);
+    get communicationEnabled(): boolean {
+        return this.communicationEnabledSignal();
+    }
+    set communicationEnabled(value: boolean) {
+        this.communicationEnabledSignal.set(value);
+    }
+    get messagingEnabled(): boolean {
+        return this.messagingEnabledSignal();
+    }
+    set messagingEnabled(value: boolean) {
+        this.messagingEnabledSignal.set(value);
+    }
     readonly atlasEnabled = signal(false);
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
