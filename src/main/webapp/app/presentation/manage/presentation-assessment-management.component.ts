@@ -67,6 +67,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    private dialogRequestId = 0;
 
     ngOnInit(): void {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId') ?? this.route.parent?.snapshot.paramMap.get('courseId')));
@@ -82,6 +83,8 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     startCreate(): void {
+        this.dialogRequestId++;
+        this.isLoadingAssignedStudents.set(false);
         this.openPresentationDialog(undefined, []);
     }
 
@@ -90,13 +93,28 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             return;
         }
 
+        const requestId = ++this.dialogRequestId;
         this.isLoadingAssignedStudents.set(true);
         this.presentationAssessmentService
             .findStudents(this.courseId(), presentationAssessment.id)
-            .pipe(finalize(() => this.isLoadingAssignedStudents.set(false)))
+            .pipe(
+                finalize(() => {
+                    if (requestId === this.dialogRequestId) {
+                        this.isLoadingAssignedStudents.set(false);
+                    }
+                }),
+            )
             .subscribe({
-                next: (res: HttpResponse<User[]>) => this.openPresentationDialog(presentationAssessment, res.body ?? []),
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                next: (res: HttpResponse<User[]>) => {
+                    if (requestId === this.dialogRequestId) {
+                        this.openPresentationDialog(presentationAssessment, res.body ?? []);
+                    }
+                },
+                error: (res: HttpErrorResponse) => {
+                    if (requestId === this.dialogRequestId) {
+                        onError(this.alertService, res);
+                    }
+                },
             });
     }
 
@@ -122,11 +140,13 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     handleDialogSave(result: PresentationAssessmentFormDialogResult): void {
-        this.dialogVisible.set(false);
+        this.dialogRequestId++;
         this.save(result);
     }
 
     handleDialogCancel(): void {
+        this.dialogRequestId++;
+        this.isLoadingAssignedStudents.set(false);
         this.dialogVisible.set(false);
     }
 
@@ -136,6 +156,10 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     private save(result: PresentationAssessmentFormDialogResult): void {
+        if (this.isSaving()) {
+            return;
+        }
+
         this.isSaving.set(true);
         const formAssessment = result.presentationAssessment;
         const presentationAssessment = {
@@ -155,6 +179,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
         request.pipe(finalize(() => this.isSaving.set(false))).subscribe({
             next: () => {
+                this.dialogVisible.set(false);
                 this.alertService.success(isUpdate ? 'artemisApp.presentationAssessment.updated' : 'artemisApp.presentationAssessment.created');
                 this.loadAll();
             },

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -102,6 +102,35 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.dialogAssignedStudents()).toEqual([student]);
     });
 
+    it('should ignore stale assigned student responses when another dialog is opened', () => {
+        const firstStudentsResponse = new Subject<HttpResponse<User[]>>();
+        presentationAssessmentService.findStudents.mockReturnValue(firstStudentsResponse);
+        component.startEdit(presentationAssessment);
+
+        component.startCreate();
+        firstStudentsResponse.next(new HttpResponse({ body: [student] }));
+        firstStudentsResponse.complete();
+
+        expect(component.dialogVisible()).toBeTruthy();
+        expect(component.dialogPresentationAssessment()).toBeUndefined();
+        expect(component.dialogAssignedStudents()).toEqual([]);
+        expect(component.isLoadingAssignedStudents()).toBeFalsy();
+    });
+
+    it('should ignore stale assigned student responses after cancelling the dialog', () => {
+        const studentsResponse = new Subject<HttpResponse<User[]>>();
+        presentationAssessmentService.findStudents.mockReturnValue(studentsResponse);
+        component.startEdit(presentationAssessment);
+
+        component.handleDialogCancel();
+        studentsResponse.next(new HttpResponse({ body: [student] }));
+        studentsResponse.complete();
+
+        expect(component.dialogVisible()).toBeFalsy();
+        expect(component.dialogPresentationAssessment()).toBeUndefined();
+        expect(component.isLoadingAssignedStudents()).toBeFalsy();
+    });
+
     it('should create presentation with selected students after dialog save', () => {
         const savedAssessment: PresentationAssessment = { ...presentationAssessment, id: 43, title: 'New presentation' };
         presentationAssessmentService.create.mockReturnValue(of(new HttpResponse({ body: savedAssessment })));
@@ -165,6 +194,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.create).toHaveBeenCalledOnce();
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(1);
         expect(alertService.success).not.toHaveBeenCalledWith('artemisApp.presentationAssessment.created');
+        expect(component.dialogVisible()).toBeTruthy();
     });
 
     it('should delete a presentation assessment from the table', () => {
