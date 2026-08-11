@@ -13,6 +13,7 @@ import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-obser
 import { ChannelReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/channel-reference.action';
 import { UserMentionAction } from 'app/editor/monaco-editor/model/actions/communication/user-mention.action';
 import { ExerciseReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/exercise-reference.action';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisTutor, metisUser1, metisUser2 } from 'test/helpers/sample/metis-sample-data';
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import * as monaco from 'monaco-editor';
@@ -46,6 +47,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
     let channelReferenceAction: ChannelReferenceAction;
     let userMentionAction: UserMentionAction;
     let exerciseReferenceAction: ExerciseReferenceAction;
+    let exerciseService: ExerciseService;
     let faqReferenceAction: FaqReferenceAction;
 
     beforeEach(async () => {
@@ -56,6 +58,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(LectureService),
+                MockProvider(ExerciseService),
                 MockProvider(CourseManagementService),
                 MockProvider(ChannelService),
             ],
@@ -71,7 +74,12 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         channelService = TestBed.inject(ChannelService);
         channelReferenceAction = new ChannelReferenceAction(metisService, channelService);
         userMentionAction = new UserMentionAction(courseManagementService, metisService);
-        exerciseReferenceAction = new ExerciseReferenceAction(metisService);
+        exerciseService = TestBed.inject(ExerciseService);
+        // The action asks for the exercise titles instead of reading them off the course, which no longer carries them
+        vi.spyOn(exerciseService, 'getTitlesForCourse').mockReturnValue(
+            of((metisService.getCourse().exercises ?? []).map((exercise) => ({ id: exercise.id!, title: exercise.title, type: exercise.type }))),
+        );
+        exerciseReferenceAction = new ExerciseReferenceAction(metisService, exerciseService);
         faqReferenceAction = new FaqReferenceAction(metisService);
     });
 
@@ -247,11 +255,13 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
     });
 
     describe('ExerciseReferenceAction (edge cases)', () => {
-        it('should initialize with empty values if exercises are not available', () => {
-            vi.spyOn(metisService, 'getCourse').mockReturnValue({ exercises: undefined } as any);
+        it('should initialize with empty values if no exercise titles are available', async () => {
+            vi.spyOn(exerciseService, 'getTitlesForCourse').mockReturnValue(of([]));
+            const actionWithoutExercises = new ExerciseReferenceAction(metisService, exerciseService);
+            await firstValueFrom(exerciseService.getTitlesForCourse(1));
             fixture.detectChanges();
-            comp.registerAction(exerciseReferenceAction);
-            expect(exerciseReferenceAction.getValues()).toEqual([]);
+            comp.registerAction(actionWithoutExercises);
+            expect(actionWithoutExercises.getValues()).toEqual([]);
         });
 
         it('should insert / for faq references', () => {
