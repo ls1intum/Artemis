@@ -108,6 +108,37 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(component.canShowGenerationButton()).toBe(false);
         });
 
+        it('should gate generation for invalid bonus points and re-enable it for valid values', () => {
+            for (const bonusPoints of [-1, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+                exercise.bonusPoints = bonusPoints;
+
+                expect(component.isGenerationDisabled()).toBe(true);
+                expect(component.generationDisabledReason()).toBe('artemisApp.exercise.assessmentCriteriaGeneration.disabledBonusPoints');
+            }
+
+            exercise.bonusPoints = 0;
+
+            expect(component.isGenerationDisabled()).toBe(false);
+            expect(component.generationDisabledReason()).toBeUndefined();
+        });
+
+        it('should not persist the display-only grading instruction placeholder while generating', () => {
+            exercise.gradingInstructionFeedbackUsed = true;
+            const markdownEditor = {
+                parseMarkdown: vi.fn(() =>
+                    component.setExerciseGradingInstructionText([{ text: '  Add Assessment Instruction text here  \n', action: undefined }]),
+                ),
+            };
+            Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+            generationService.generate.mockReturnValue(of([]));
+
+            component.generateAssessmentCriteria();
+
+            expect(markdownEditor.parseMarkdown).toHaveBeenCalledOnce();
+            expect(exercise.gradingInstructions).toBeUndefined();
+            expect(generationService.generate).toHaveBeenCalledWith(exercise, { exampleSolution: undefined, additionalContext: undefined });
+        });
+
         it('should use the current user permissions for a new exam exercise without populated permission flags', () => {
             const examCourse = { id: 7, isAtLeastEditor: false };
             exercise.course = undefined;
@@ -511,6 +542,17 @@ describe('GradingInstructionsDetailsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(exercise.gradingInstructions).toEqual(markdownText);
+    });
+
+    it('should ignore the display-only grading instruction placeholder while preserving genuine text', () => {
+        component.setExerciseGradingInstructionText([{ text: '  Add Assessment Instruction text here  ', action: undefined }]);
+
+        expect(exercise.gradingInstructions).toBeUndefined();
+
+        const genuineInstructions = '  Assess the solution for correctness.  ';
+        component.setExerciseGradingInstructionText([{ text: genuineInstructions, action: undefined }]);
+
+        expect(exercise.gradingInstructions).toBe(genuineInstructions);
     });
 
     const getDomainActionArray = () => {

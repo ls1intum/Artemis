@@ -34,6 +34,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { AccountService } from 'app/core/auth/account.service';
 
+const GRADING_INSTRUCTION_PLACEHOLDER = 'Add Assessment Instruction text here';
+
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
@@ -97,6 +99,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         }
         if (exercise.maxPoints === undefined || !Number.isFinite(exercise.maxPoints) || exercise.maxPoints <= 0) {
             return 'artemisApp.exercise.assessmentCriteriaGeneration.disabledMaxPoints';
+        }
+        if (exercise.bonusPoints !== undefined && (!Number.isFinite(exercise.bonusPoints) || exercise.bonusPoints < 0)) {
+            return 'artemisApp.exercise.assessmentCriteriaGeneration.disabledBonusPoints';
         }
         if (this.isGenerating()) {
             return 'artemisApp.exercise.assessmentCriteriaGeneration.disabledGenerating';
@@ -268,7 +273,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     initializeExerciseGradingInstructionText(): string {
-        return `${this.exercise().gradingInstructions || 'Add Assessment Instruction text here'}\n\n`;
+        return `${this.exercise().gradingInstructions || GRADING_INSTRUCTION_PLACEHOLDER}\n\n`;
     }
 
     prepareForSave(): void {
@@ -603,7 +608,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             return;
         }
         const { text, action } = textWithDomainActions[0];
-        if (action === undefined && text.length > 0) {
+        if (action === undefined && text.length > 0 && text.trim() !== GRADING_INSTRUCTION_PLACEHOLDER) {
             this.exercise().gradingInstructions = text;
         }
     }

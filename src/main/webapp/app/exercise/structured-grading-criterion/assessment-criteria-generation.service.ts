@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { HyperionAssessmentCriteriaGenerationApi } from 'app/openapi/api/hyperion-assessment-criteria-generation-api';
 import { AssessmentCriteriaGenerationRequest } from 'app/openapi/model/assessment-criteria-generation-request';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
@@ -51,7 +51,7 @@ export class AssessmentCriteriaGenerationService {
         const request: AssessmentCriteriaGenerationRequest = {
             problemStatement: exercise.problemStatement?.trim() ?? '',
             maxPoints: exercise.maxPoints!,
-            bonusPoints: exercise.bonusPoints ?? 0,
+            bonusPoints: exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY ? (exercise.bonusPoints ?? 0) : 0,
         };
         const gradingInstructions = exercise.gradingInstructions?.trim();
         if (gradingInstructions) {

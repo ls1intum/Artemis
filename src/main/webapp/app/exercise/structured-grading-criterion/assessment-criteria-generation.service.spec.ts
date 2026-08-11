@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { of } from 'rxjs';
 import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
 import { HyperionAssessmentCriteriaGenerationApi } from 'app/openapi/api/hyperion-assessment-criteria-generation-api';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 
@@ -34,6 +35,7 @@ describe('AssessmentCriteriaGenerationService', () => {
         exercise.problemStatement = ' Upload a report ';
         exercise.maxPoints = 8;
         exercise.bonusPoints = 2;
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
         exercise.gradingInstructions = ' Accept only valid PDF files. ';
 
         const call = service.buildGenerationCall(exercise, {
@@ -52,6 +54,22 @@ describe('AssessmentCriteriaGenerationService', () => {
                 additionalContext: 'Accepted format: PDF',
             },
         });
+    });
+
+    it('should only send bonus points for exercises included completely in the overall score', () => {
+        const exercise = new TextExercise({ id: 55 }, undefined);
+        exercise.problemStatement = 'Problem';
+        exercise.maxPoints = 5;
+        exercise.bonusPoints = 2;
+
+        for (const [includedInOverallScore, expectedBonusPoints] of [
+            [IncludedInOverallScore.INCLUDED_COMPLETELY, 2],
+            [IncludedInOverallScore.INCLUDED_AS_BONUS, 0],
+            [IncludedInOverallScore.NOT_INCLUDED, 0],
+        ] as const) {
+            exercise.includedInOverallScore = includedInOverallScore;
+            expect(service.buildGenerationCall(exercise).request.bonusPoints).toBe(expectedBonusPoints);
+        }
     });
 
     it('should map generated DTOs to unsaved grading models', () => {

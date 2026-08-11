@@ -127,6 +127,7 @@
                 "success": "Assessment criteria generated.",
                 "disabledProblemStatement": "Add a problem statement before generating assessment criteria.",
                 "disabledMaxPoints": "Set a valid maximum score greater than zero before generating assessment criteria.",
+                "disabledBonusPoints": "Set bonus points to a finite value of zero or greater before generating assessment criteria.",
                 "disabledGenerating": "Assessment criteria are currently being generated.",
                 "invalidSyntax": "The assessment-instruction text could not be parsed. Correct its syntax before generating criteria.",
                 "confirmationHeader": "Replace assessment criteria?",
