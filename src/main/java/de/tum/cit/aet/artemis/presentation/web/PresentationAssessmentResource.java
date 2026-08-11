@@ -161,42 +161,6 @@ public class PresentationAssessmentResource {
                 .ok(presentationAssessmentRepository.findStudentsForPresentationAssessment(assessmentId, courseId).stream().map(PresentationAssessmentStudentDTO::of).toList());
     }
 
-    /**
-     * POST /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin} : add a student to a presentation assessment.
-     *
-     * @param courseId     the course id
-     * @param assessmentId the presentation assessment id
-     * @param studentLogin the login of the student to add
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PostMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin}")
-    @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> addStudentToPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable String studentLogin) {
-        log.debug("REST request to add student {} to presentation assessment {} in course {}", studentLogin, assessmentId, courseId);
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
-        presentationAssessmentService.addStudent(course, assessmentId, studentLogin);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * DELETE /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin} : remove a student from a presentation assessment.
-     *
-     * @param courseId     the course id
-     * @param assessmentId the presentation assessment id
-     * @param studentLogin the login of the student to remove
-     * @return the ResponseEntity with status 204 (No Content)
-     */
-    @DeleteMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin}")
-    @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> removeStudentFromPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable String studentLogin) {
-        log.debug("REST request to remove student {} from presentation assessment {} in course {}", studentLogin, assessmentId, courseId);
-        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
-        presentationAssessmentService.removeStudent(courseId, assessmentId, studentLogin);
-        return ResponseEntity.noContent().build();
-    }
-
     private Course findCourseAndCheckPresentationAssessmentsEnabled(long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!course.getPresentationAssessmentsEnabled()) {

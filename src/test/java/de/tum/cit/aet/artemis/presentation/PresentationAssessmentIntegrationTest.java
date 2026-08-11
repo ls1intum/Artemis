@@ -87,23 +87,6 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createPresentationAssessment_withInvalidTitle_shouldReturnBadRequest() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, " ", "Course-level presentation assessment", 30.0, 28.0, ZonedDateTime.now().plusDays(14), null, null);
-
-        request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createPresentationAssessment_withInvalidMaxPoints_shouldReturnBadRequest() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 0.0, 0.0,
-                ZonedDateTime.now().plusDays(14), null, null);
-
-        request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessment_withMissingResultPoints_shouldCreateAssessment() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.0, null,
                 ZonedDateTime.now().plusDays(14), null, null);
@@ -115,20 +98,18 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createPresentationAssessment_withResultPointsExceedingMaxPoints_shouldReturnBadRequest() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.0, 31.0,
-                ZonedDateTime.now().plusDays(14), null, null);
-
-        request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createPresentationAssessment_withMismatchedCourseId_shouldReturnBadRequest() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.0, 28.0,
-                ZonedDateTime.now().plusDays(14), otherCourse.getId(), null);
-
-        request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+    void createPresentationAssessment_withInvalidRequestData_shouldReturnBadRequest() throws Exception {
+        request.postWithResponseBody(getBaseUrl(course),
+                new PresentationAssessmentDTO(null, " ", "Course-level presentation assessment", 30.0, 28.0, ZonedDateTime.now().plusDays(14), null, null),
+                PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getBaseUrl(course),
+                new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 0.0, 0.0, ZonedDateTime.now().plusDays(14), null, null),
+                PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getBaseUrl(course),
+                new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.0, 31.0, ZonedDateTime.now().plusDays(14), null, null),
+                PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getBaseUrl(course), new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.0, 28.0,
+                ZonedDateTime.now().plusDays(14), otherCourse.getId(), null), PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -165,12 +146,6 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(result.id()).isEqualTo(presentationAssessment.getId());
         assertThat(result.title()).isEqualTo(presentationAssessment.getTitle());
         assertThat(result.courseId()).isEqualTo(course.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getPresentationAssessment_withWrongCourseId_shouldReturnNotFound() throws Exception {
-        request.get(getAssessmentUrl(otherCourse, presentationAssessment), HttpStatus.NOT_FOUND, PresentationAssessmentDTO.class);
     }
 
     @Test
@@ -253,61 +228,12 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void updatePresentationAssessment_asStudent_shouldReturnForbidden() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, 22.0,
-                ZonedDateTime.now().plusDays(21), course.getId(), null);
-
-        request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deletePresentationAssessment_shouldDeletePresentationAssessment() throws Exception {
         request.delete(getAssessmentUrl(course, presentationAssessment), HttpStatus.NO_CONTENT);
 
         Optional<PresentationAssessment> deletedAssessment = presentationAssessmentRepository.findById(presentationAssessment.getId());
         assertThat(deletedAssessment).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deletePresentationAssessment_withWrongCourseId_shouldReturnNotFound() throws Exception {
-        request.delete(getAssessmentUrl(otherCourse, presentationAssessment), HttpStatus.NOT_FOUND);
-
-        assertThat(presentationAssessmentRepository.findById(presentationAssessment.getId())).isPresent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void deletePresentationAssessment_asStudent_shouldReturnForbidden() throws Exception {
-        request.delete(getAssessmentUrl(course, presentationAssessment), HttpStatus.FORBIDDEN);
-
-        assertThat(presentationAssessmentRepository.findById(presentationAssessment.getId())).isPresent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void addStudentToPresentationAssessment_shouldAssignCourseStudent() throws Exception {
-        request.postWithoutLocation(getStudentsUrl(course, presentationAssessment) + "/" + TEST_PREFIX + "student1", null, HttpStatus.OK, null);
-
-        PresentationAssessment storedAssessment = presentationAssessmentRepository.findWithStudentsByIdAndCourseId(presentationAssessment.getId(), course.getId()).orElseThrow();
-        assertThat(storedAssessment.getStudents()).extracting(User::getLogin).containsExactly(TEST_PREFIX + "student1");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void addStudentToPresentationAssessment_withUserNotInStudentGroup_shouldReturnBadRequest() throws Exception {
-        request.postWithoutLocation(getStudentsUrl(course, presentationAssessment) + "/" + TEST_PREFIX + "tutor1", null, HttpStatus.BAD_REQUEST, null);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void addStudentToPresentationAssessment_withWrongCourseId_shouldReturnNotFound() throws Exception {
-        request.postWithoutLocation(getStudentsUrl(otherCourse, presentationAssessment) + "/" + TEST_PREFIX + "student1", null, HttpStatus.NOT_FOUND, null);
-
-        PresentationAssessment storedAssessment = presentationAssessmentRepository.findWithStudentsByIdAndCourseId(presentationAssessment.getId(), course.getId()).orElseThrow();
-        assertThat(storedAssessment.getStudents()).isEmpty();
     }
 
     @Test
@@ -323,41 +249,11 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getPresentationAssessmentStudents_withWrongCourseId_shouldReturnNotFound() throws Exception {
-        request.getList(getStudentsUrl(otherCourse, presentationAssessment), HttpStatus.NOT_FOUND, PresentationAssessmentStudentDTO.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getPresentationAssessments_withFeatureDisabled_shouldReturnForbidden() throws Exception {
         course.setPresentationAssessmentsEnabled(false);
         courseRepository.save(course);
 
         request.getList(getBaseUrl(course), HttpStatus.FORBIDDEN, PresentationAssessmentDTO.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void removeStudentFromPresentationAssessment_shouldRemoveAssignedStudent() throws Exception {
-        presentationAssessment.getStudents().add(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        presentationAssessmentRepository.save(presentationAssessment);
-
-        request.delete(getStudentsUrl(course, presentationAssessment) + "/" + TEST_PREFIX + "student1", HttpStatus.NO_CONTENT);
-
-        PresentationAssessment storedAssessment = presentationAssessmentRepository.findWithStudentsByIdAndCourseId(presentationAssessment.getId(), course.getId()).orElseThrow();
-        assertThat(storedAssessment.getStudents()).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void removeStudentFromPresentationAssessment_withWrongCourseId_shouldReturnNotFound() throws Exception {
-        presentationAssessment.getStudents().add(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        presentationAssessmentRepository.save(presentationAssessment);
-
-        request.delete(getStudentsUrl(otherCourse, presentationAssessment) + "/" + TEST_PREFIX + "student1", HttpStatus.NOT_FOUND);
-
-        PresentationAssessment storedAssessment = presentationAssessmentRepository.findWithStudentsByIdAndCourseId(presentationAssessment.getId(), course.getId()).orElseThrow();
-        assertThat(storedAssessment.getStudents()).extracting(User::getLogin).containsExactly(TEST_PREFIX + "student1");
     }
 
     @Test
@@ -369,6 +265,28 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
         assertThat(courseRepository.findById(course.getId())).isEmpty();
         assertThat(presentationAssessmentRepository.findById(presentationAssessmentId)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void presentationAssessmentRequests_withWrongCourseId_shouldReturnNotFound() throws Exception {
+        request.get(getAssessmentUrl(otherCourse, presentationAssessment), HttpStatus.NOT_FOUND, PresentationAssessmentDTO.class);
+        request.delete(getAssessmentUrl(otherCourse, presentationAssessment), HttpStatus.NOT_FOUND);
+        request.getList(getStudentsUrl(otherCourse, presentationAssessment), HttpStatus.NOT_FOUND, PresentationAssessmentStudentDTO.class);
+
+        assertThat(presentationAssessmentRepository.findById(presentationAssessment.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void presentationAssessmentWriteRequests_asStudent_shouldReturnForbidden() throws Exception {
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, 22.0,
+                ZonedDateTime.now().plusDays(21), course.getId(), null);
+
+        request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.FORBIDDEN);
+        request.delete(getAssessmentUrl(course, presentationAssessment), HttpStatus.FORBIDDEN);
+
+        assertThat(presentationAssessmentRepository.findById(presentationAssessment.getId())).isPresent();
     }
 
     private String getBaseUrl(Course course) {

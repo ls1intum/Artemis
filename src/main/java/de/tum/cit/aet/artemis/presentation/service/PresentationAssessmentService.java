@@ -83,36 +83,6 @@ public class PresentationAssessmentService {
         presentationAssessmentRepository.delete(presentationAssessment);
     }
 
-    /**
-     * Add a course student to a presentation assessment.
-     *
-     * @param course       the owning course
-     * @param assessmentId the presentation assessment id
-     * @param studentLogin the login of the student to add
-     */
-    public void addStudent(Course course, long assessmentId, String studentLogin) {
-        PresentationAssessment presentationAssessment = presentationAssessmentRepository.findWithStudentsByIdAndCourseIdElseThrow(assessmentId, course.getId());
-        Set<User> students = resolveAssignedCourseStudents(course, List.of(studentLogin));
-        if (students.isEmpty()) {
-            throw new BadRequestAlertException("The user is not a student in the course", PresentationAssessment.ENTITY_NAME, "studentNotInCourse");
-        }
-        presentationAssessment.getStudents().add(students.iterator().next());
-        presentationAssessmentRepository.save(presentationAssessment);
-    }
-
-    /**
-     * Remove a student from a presentation assessment.
-     *
-     * @param courseId     the course id
-     * @param assessmentId the presentation assessment id
-     * @param studentLogin the login of the student to remove
-     */
-    public void removeStudent(long courseId, long assessmentId, String studentLogin) {
-        PresentationAssessment presentationAssessment = presentationAssessmentRepository.findWithStudentsByIdAndCourseIdElseThrow(assessmentId, courseId);
-        presentationAssessment.getStudents().removeIf(student -> studentLogin.equals(student.getLogin()));
-        presentationAssessmentRepository.save(presentationAssessment);
-    }
-
     private void applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentDTO dto) {
         if (dto.resultPoints() != null && dto.resultPoints() > dto.maxPoints()) {
             throw new BadRequestAlertException("The achieved result points cannot exceed the maximum points", PresentationAssessment.ENTITY_NAME, "resultPointsExceedMaxPoints");

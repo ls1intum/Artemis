@@ -42,20 +42,6 @@ export class PresentationAssessmentService {
         return this.http.get<User[]>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students`, { observe: 'response' });
     }
 
-    addStudent(courseId: number, presentationAssessmentId: number, studentLogin: string): Observable<HttpResponse<void>> {
-        return this.http.post<void>(
-            `api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students/${studentLogin}`,
-            {},
-            { observe: 'response' },
-        );
-    }
-
-    removeStudent(courseId: number, presentationAssessmentId: number, studentLogin: string): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students/${studentLogin}`, {
-            observe: 'response',
-        });
-    }
-
     private convertDateFromClient(presentationAssessment: PresentationAssessment): PresentationAssessmentRest {
         const copy: PresentationAssessmentRest = {
             id: presentationAssessment.id,
