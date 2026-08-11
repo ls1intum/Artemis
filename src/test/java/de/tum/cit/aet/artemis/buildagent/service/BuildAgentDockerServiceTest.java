@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -73,6 +75,25 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
     @Autowired
     private BuildLogsMap buildLogsMap;
 
+    /**
+     * Puts the docker client back to a pull that simply succeeds.
+     * <p>
+     * The mock is built once per class in the base class {@code @BeforeAll} and is never reset, so a test that stubs
+     * the pull would otherwise keep deciding how the pull behaves for every test that runs after it. That coupling is
+     * invisible until one of those later tests reaches the pull without stubbing it, and it only shows up in a
+     * particular execution order. Re-establishing the default here makes every test start from the same state,
+     * whatever ran before it.
+     */
+    @BeforeEach
+    void resetPullBehaviour() throws InterruptedException {
+        PullImageCmd defaultPullImageCmd = mock(PullImageCmd.class);
+        doReturn(defaultPullImageCmd).when(dockerClient).pullImageCmd(anyString());
+        doReturn(defaultPullImageCmd).when(defaultPullImageCmd).withPlatform(anyString());
+        BuildAgentDockerService.MyPullImageResultCallback defaultCallback = mock(BuildAgentDockerService.MyPullImageResultCallback.class);
+        doReturn(defaultCallback).when(defaultPullImageCmd).exec(any(BuildAgentDockerService.MyPullImageResultCallback.class));
+        lenient().when(defaultCallback.awaitCompletion(anyLong(), any(TimeUnit.class))).thenReturn(true);
+    }
+
     @Test
     @Order(2)
     void testDeleteOldDockerImages() {
@@ -122,20 +143,15 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         BuildAgentDTO buildAgent = new BuildAgentDTO("buildagent1", "address1", "buildagent1");
         var build = new BuildJobQueueItem("1", "job1", buildAgent, 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
-        // This test only cares that a missing image drives the code into a pull. Bound the wait so it cannot depend on
-        // whatever the shared dockerClient mock still carries from another test: without a completing pull the service
-        // would now correctly wait out the stall budget before giving up.
-        int originalStallTimeout = (int) ReflectionTestUtils.getField(buildAgentDockerService, "imagePullStallTimeoutSeconds");
-        ReflectionTestUtils.setField(buildAgentDockerService, "imagePullStallTimeoutSeconds", 1);
         // Pull image
         try {
             buildAgentDockerService.pullDockerImage(build, new BuildLogsMap());
         }
         catch (LocalCIException e) {
-            // Expected: the image is missing, so either the pull itself reports the failure or it never gets through.
-        }
-        finally {
-            ReflectionTestUtils.setField(buildAgentDockerService, "imagePullStallTimeoutSeconds", originalStallTimeout);
+            // Expected exception
+            if (!(e.getCause() instanceof NotFoundException)) {
+                throw e;
+            }
         }
 
         // Verify that a pull was attempted. The count is deliberately not pinned: the service retries a failed pull,
