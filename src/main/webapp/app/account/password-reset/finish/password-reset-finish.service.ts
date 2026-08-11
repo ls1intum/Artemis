@@ -2,6 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+/** Which credentials the user chose to revoke alongside the reset. */
+export interface CredentialRevocationChoice {
+    passkeys: boolean;
+    sshKeys: boolean;
+    vcsAccessTokens: boolean;
+}
+
 /**
  * Service for completing password reset requests.
  * Validates the reset key and sets the new password.
@@ -16,9 +23,11 @@ export class PasswordResetFinishService {
      *
      * @param resetKey - The unique key from the password reset email
      * @param newPassword - The new password to set for the account
+     * @param revokeCredentials - which other credentials to revoke alongside the reset. Omitting it makes the server
+     *                            revoke all of them, which is the safe default for a flow that only proves mailbox access.
      * @returns Observable that completes on success, or errors if the key is invalid/expired
      */
-    completePasswordReset(resetKey: string, newPassword: string): Observable<object> {
-        return this.http.post('api/core/public/account/reset-password/finish', { key: resetKey, newPassword });
+    completePasswordReset(resetKey: string, newPassword: string, revokeCredentials?: CredentialRevocationChoice): Observable<object> {
+        return this.http.post('api/core/public/account/reset-password/finish', { key: resetKey, newPassword, revokeCredentials });
     }
 }
