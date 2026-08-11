@@ -54,6 +54,17 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     /** The reset key secret extracted from the URL query parameters */
     readonly resetKeySecret = signal('');
 
+    // Default to revoking, so the safe outcome needs no thought and keeping a credential is the deliberate act.
+    // A reset only proves the person controls the mailbox, which is a weaker claim to the account than knowing the
+    // current password - but forgetting a password is not the same as losing it, so re-enrolling every authenticator
+    // and key should not be forced on someone who simply forgot.
+    /** Whether all passkeys should be deleted as part of the reset */
+    readonly revokePasskeys = signal(true);
+    /** Whether all SSH keys should be deleted as part of the reset */
+    readonly revokeSshKeys = signal(true);
+    /** Whether the personal, participation and repository VCS access tokens should be deleted as part of the reset */
+    readonly revokeVcsAccessTokens = signal(true);
+
     readonly passwordForm = new FormGroup<PasswordResetForm>({
         newPassword: new FormControl('', {
             nonNullable: true,
@@ -99,10 +110,16 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
         if (newPassword.value !== confirmPassword.value) {
             this.doNotMatch.set(true);
         } else {
-            this.passwordResetFinishService.completePasswordReset(this.resetKeyId(), this.resetKeySecret(), newPassword.value).subscribe({
-                next: () => this.success.set(true),
-                error: () => this.error.set(true),
-            });
+            this.passwordResetFinishService
+                .completePasswordReset(this.resetKeyId(), this.resetKeySecret(), newPassword.value, {
+                    passkeys: this.revokePasskeys(),
+                    sshKeys: this.revokeSshKeys(),
+                    vcsAccessTokens: this.revokeVcsAccessTokens(),
+                })
+                .subscribe({
+                    next: () => this.success.set(true),
+                    error: () => this.error.set(true),
+                });
         }
     }
 }

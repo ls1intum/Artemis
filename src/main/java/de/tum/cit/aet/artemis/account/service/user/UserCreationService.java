@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -44,12 +45,15 @@ public class UserCreationService {
 
     private final OrganizationRepository organizationRepository;
 
+    private final AccountCredentialRevocationService accountCredentialRevocationService;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
-            OrganizationRepository organizationRepository) {
+            OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
         this.organizationRepository = organizationRepository;
+        this.accountCredentialRevocationService = accountCredentialRevocationService;
     }
 
     /**
@@ -135,9 +139,10 @@ public class UserCreationService {
 
         setUserAuthorities(userDTO, user);
 
-        String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
-        String passwordHash = passwordService.hashPassword(password);
-        user.setPassword(passwordHash);
+        if (userDTO.isInternal()) {
+            String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
+            user.setPassword(passwordService.hashPassword(password));
+        }
         try {
             Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
             user.setOrganizations(matchingOrganizations);
@@ -146,7 +151,7 @@ public class UserCreationService {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
         user.setActivated(true);
-        user.setInternal(true);
+        user.setInternal(userDTO.isInternal());
         user.setTestUser(userDTO.isTestUser());
         // an empty string is considered as null to satisfy the unique constraint on registration number
         if (StringUtils.hasText(userDTO.getVisibleRegistrationNumber())) {
@@ -225,9 +230,13 @@ public class UserCreationService {
         if (updatedUserDTO.getImageUrl() != null) {
             user.setImageUrl(updatedUserDTO.getImageUrl());
         }
+        // Captured before the flag is overwritten: the admin edit form reaches the same transition as deactivateUser, and
+        // it has to revoke the same credentials, otherwise an account the admin sees as deactivated keeps working over git.
+        boolean isBeingDeactivated = Boolean.TRUE.equals(user.getActivated()) && !updatedUserDTO.isActivated();
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
         user.setLangKey(updatedUserDTO.getLangKey());
+        boolean revokeCredentialsAfterPasswordChange = user.isInternal() && updatedUserDTO.getPassword() != null && updatedUserDTO.isRevokeCredentials();
         if (user.isInternal() && updatedUserDTO.getPassword() != null) {
             user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
         }
@@ -236,7 +245,12 @@ public class UserCreationService {
 
         log.debug("Changed Information for User: {}", user);
 
-        return saveUser(user);
+        User savedUser = saveUser(user);
+        if (isBeingDeactivated || revokeCredentialsAfterPasswordChange) {
+            String reason = isBeingDeactivated ? "user deactivated by an administrator" : "password changed by an administrator";
+            accountCredentialRevocationService.revokeAllCredentials(savedUser, reason);
+        }
+        return savedUser;
     }
 
     /**
@@ -259,6 +273,9 @@ public class UserCreationService {
     public void deactivateUser(User user) {
         user.setActivated(false);
         saveUser(user);
+        // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
+        // SSH key without consulting account state, so deactivation only takes effect once those credentials are gone.
+        accountCredentialRevocationService.revokeAllCredentials(user, "user deactivated");
         log.info("Deactivated user: {}", user);
     }
 

@@ -51,7 +51,6 @@ import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -79,6 +78,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
 import de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent;
+import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
@@ -93,10 +93,13 @@ import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.LockedExamSubmissionDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
+import de.tum.cit.aet.artemis.exam.dto.UpcomingExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
@@ -413,9 +416,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     private void verifyStudentsExamAndExercises(Exam exam) throws Exception {
-        List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        verifyStudentExams(studentExams, exam.getExamUsers().size());
-        verifyStudentExamsExercises(studentExams, exam.getNumberOfExercisesInExam());
+        List<StudentExamDTO> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
+        assertThat(studentExams).hasSize(exam.getExamUsers().size());
+        for (StudentExamDTO studentExam : studentExams) {
+            assertThat(studentExam.workingTime()).as("Working time is set correctly").isEqualTo(120 * 60);
+        }
+        verifyStudentExamsExercises(studentExams.stream().map(StudentExamDTO::id).toList(), exam.getNumberOfExercisesInExam());
     }
 
     private void verifyStudentExams(List<StudentExam> studentExams, int expectedNumberOfStudentExams) {
@@ -425,9 +432,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         }
     }
 
-    private void verifyStudentExamsExercises(List<StudentExam> studentExams, int expected) {
-        List<Long> ids = studentExams.stream().map(StudentExam::getId).toList();
+    private void verifyStudentExamsExercises(List<Long> ids, int expected) {
         List<StudentExam> studentExamsWithExercises = studentExamRepository.findAllWithEagerExercisesById(ids);
+        // Without this completeness check the loop below passes vacuously when the lookup returns nothing, so a
+        // response that carried the wrong ids (or none at all) would still be reported as green.
+        assertThat(studentExamsWithExercises).as("every requested student exam must be loaded").hasSize(ids.size());
+        assertThat(studentExamsWithExercises).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(ids);
         for (var studentExam : studentExamsWithExercises) {
             assertThat(studentExam.getExercises()).hasSize(expected);
         }
@@ -1158,37 +1168,48 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateTestRun_fromDetailedExamDtoEcho_deserializesQuizQuestions() throws Exception {
-        // Reproduces the create-test-run modal (CreateTestRunModalComponent): it builds a StudentExam whose exam and
-        // exercises are the objects it fetched from GET ?withExerciseGroups=true (the detailed ExamWithExerciseGroupsDTO)
-        // and POSTs it to test-runs. The quiz exercise's quizQuestions (and the programming build-plan participations) are
-        // echoed back; each polymorphic stub must carry its "type" discriminator or Spring rejects the whole body with 400
-        // (the CI regression, reproduced by the negative check below). This fixture carries all exercise types including a
-        // programming exercise with populated build-plan participations, so both echo hazards are exercised.
+    void testCreateTestRun_fromDetailedExamDto_createsTestRunFromExerciseIds() throws Exception {
+        // Reproduces the create-test-run modal (CreateTestRunModalComponent): it loads the detailed exam from
+        // GET ?withExerciseGroups=true and creates the test run from the exercises the instructor picked there.
+        // The modal no longer echoes the fetched graph back: the endpoint takes a CreateTestRunDTO carrying only the
+        // exam id, the ordered exercise ids and the working time, so the polymorphic quiz-question / participation
+        // stubs never travel on the request. The typed-stub guarantee the echo relied on is still asserted below,
+        // because the detailed GET response itself must keep carrying it (the exercise-groups page renders from it).
         Exam exam = examWithAllExerciseTypesAndQuizQuestions();
-        ObjectMapper mapper = request.getObjectMapper();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("withExerciseGroups", "true");
 
         JsonNode examJson = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, JsonNode.class, params);
-        // Sanity: the fetched graph actually carries a typed quiz-question stub (the thing the client echoes).
+        // The fetched graph still carries a typed quiz-question stub.
         JsonNode fetchedQuizQuestions = findQuizQuestions(examJson.get("exerciseGroups"));
         assertThat(fetchedQuizQuestions).isNotNull();
         assertThat(fetchedQuizQuestions.get(0).get("type").asText()).isNotBlank();
 
-        String createTestRunUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-runs";
+        List<Long> exerciseIds = new ArrayList<>();
+        for (JsonNode group : examJson.get("exerciseGroups")) {
+            JsonNode groupExercises = group.get("exercises");
+            if (groupExercises != null && !groupExercises.isEmpty()) {
+                exerciseIds.add(groupExercises.get(0).get("id").asLong());
+            }
+        }
+        assertThat(exerciseIds).isNotEmpty();
 
-        // FIX path: the echoed body (typed quiz-question + participation stubs) deserializes and the test run is created (200).
-        JsonNode createdTestRun = request.postWithResponseBody(createTestRunUrl, mapper.writeValueAsString(testRunBodyFrom(examJson, mapper)), true, JsonNode.class, HttpStatus.OK,
-                null, null, null);
+        StudentExamDTO createdTestRun = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-runs",
+                new CreateTestRunDTO(exam.getId(), exerciseIds, 6000), StudentExamDTO.class, HttpStatus.OK);
+
         assertThat(createdTestRun).isNotNull();
-        assertThat(createdTestRun.get("id").asLong()).isPositive();
+        assertThat(createdTestRun.id()).isPositive();
+        assertThat(createdTestRun.workingTime()).isEqualTo(6000);
+        // The test-run list template renders the owner, so the create response must carry it (StudentExamDTO.withUser).
+        assertThat(createdTestRun.testRun()).isTrue();
+        assertThat(createdTestRun.user()).isNotNull();
+        assertThat(createdTestRun.user().id()).isEqualTo(instructor.getId());
 
-        // Negative check (deterministic regression reproduction): strip the "type" discriminator from every quiz-question
-        // stub and the same body is rejected with 400, proving the discriminator is what makes the echo round-trip.
-        ObjectNode strippedBody = testRunBodyFrom(examJson, mapper);
-        stripQuizQuestionTypes(strippedBody);
-        request.postWithResponseBody(createTestRunUrl, mapper.writeValueAsString(strippedBody), true, JsonNode.class, HttpStatus.BAD_REQUEST, null, null, null);
+        // The request only carries exercise ids, so what actually matters is that the server resolved them into the
+        // persisted test run — in the order the instructor picked them, since that order drives the exam navigation.
+        StudentExam persistedTestRun = studentExamRepository.findWithExercisesById(createdTestRun.id()).orElseThrow();
+        assertThat(persistedTestRun.isTestRun()).isTrue();
+        assertThat(persistedTestRun.getExercises()).extracting(Exercise::getId).containsExactlyElementsOf(exerciseIds);
     }
 
     @Test
@@ -1228,24 +1249,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     /**
-     * Builds the request body the create-test-run modal sends: the whole fetched exam plus one exercise per group.
-     */
-    private static ObjectNode testRunBodyFrom(JsonNode examJson, ObjectMapper mapper) {
-        ObjectNode body = mapper.createObjectNode();
-        body.set("exam", examJson.deepCopy());
-        ArrayNode exercises = mapper.createArrayNode();
-        for (JsonNode group : examJson.get("exerciseGroups")) {
-            JsonNode groupExercises = group.get("exercises");
-            if (groupExercises != null && !groupExercises.isEmpty()) {
-                exercises.add(groupExercises.get(0).deepCopy());
-            }
-        }
-        body.set("exercises", exercises);
-        body.put("workingTime", 6000);
-        return body;
-    }
-
-    /**
      * Returns the first {@code quizQuestions} array found across the given exercise groups, or {@code null} if none carry one.
      */
     private static JsonNode findQuizQuestions(JsonNode exerciseGroups) {
@@ -1260,27 +1263,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
             }
         }
         return null;
-    }
-
-    /**
-     * Removes the polymorphic {@code type} discriminator from every {@code quizQuestions} element anywhere in the tree, so
-     * the resulting body reproduces the pre-fix id-only stub that fails polymorphic deserialization.
-     */
-    private static void stripQuizQuestionTypes(JsonNode node) {
-        if (node.isObject()) {
-            JsonNode quizQuestions = node.get("quizQuestions");
-            if (quizQuestions != null && quizQuestions.isArray()) {
-                for (JsonNode question : quizQuestions) {
-                    if (question.isObject()) {
-                        ((ObjectNode) question).remove("type");
-                    }
-                }
-            }
-            node.forEach(ExamIntegrationTest::stripQuizQuestionTypes);
-        }
-        else if (node.isArray()) {
-            node.forEach(ExamIntegrationTest::stripQuizQuestionTypes);
-        }
     }
 
     /**
@@ -1356,31 +1338,47 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetCurrentAndUpcomingExams() throws Exception {
-        var exams = request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, Exam.class);
+        // One query for the exams (the course is fetch-joined). Without the join, each row triggers a secondary
+        // select for its course, so this guards the data-economy fix rather than just the response shape.
+        var exams = assertThatDb(() -> request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, UpcomingExamDTO.class)).hasBeenCalledAtMostTimes(3);
         ZonedDateTime currentDay = now().truncatedTo(ChronoUnit.DAYS);
         for (int i = 0; i < exams.size(); i++) {
-            Exam exam = exams.get(i);
-            assertThat(exam.getEndDate()).as("for exam with index %d and id %d", i, exam.getId()).isAfterOrEqualTo(currentDay);
-            assertThat(exam.getCourse().isTestCourse()).as("for exam with index %d and id %d", i, exam.getId()).isFalse();
+            UpcomingExamDTO exam = exams.get(i);
+            // Every returned exam carries the fields the admin overview table renders, with real data.
+            assertThat(exam.id()).as("for exam with index %d", i).isNotNull();
+            assertThat(exam.title()).as("for exam with index %d and id %d", i, exam.id()).isNotBlank();
+            assertThat(exam.endDate()).as("for exam with index %d and id %d", i, exam.id()).isAfterOrEqualTo(currentDay);
+            assertThat(exam.course()).as("for exam with index %d and id %d", i, exam.id()).isNotNull();
+            assertThat(exam.course().id()).as("for exam with index %d and id %d", i, exam.id()).isNotNull();
+            // The DTO no longer carries isTestCourse, so verify the query's test-course exclusion against the database.
+            assertThat(examRepository.findByIdElseThrow(exam.id()).getCourse().isTestCourse()).as("for exam with index %d and id %d", i, exam.id()).isFalse();
         }
+        // The response content reflects a concrete created exam (title / course / dates), not just a 200 status.
+        UpcomingExamDTO createdExam = exams.stream().filter(exam -> exam.id().equals(exam1.getId())).findFirst().orElseThrow();
+        assertThat(createdExam.title()).isEqualTo(exam1.getTitle());
+        assertThat(createdExam.testExam()).isEqualTo(exam1.isTestExam());
+        assertThat(createdExam.course().id()).isEqualTo(course1.getId());
+        assertThat(createdExam.course().title()).isEqualTo(course1.getTitle());
+        assertThat(createdExam.visibleDate()).isNotNull();
+        assertThat(createdExam.startDate()).isNotNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "user", roles = "USER")
     void testGetCurrentAndUpcomingExamsForbiddenForUser() throws Exception {
-        request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+        request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, UpcomingExamDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCurrentAndUpcomingExamsForbiddenForInstructor() throws Exception {
-        request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+        request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, UpcomingExamDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetCurrentAndUpcomingExamsForbiddenForTutor() throws Exception {
-        request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+        request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, UpcomingExamDTO.class);
     }
 
     @Test
@@ -2562,8 +2560,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         ExerciseGroupImportResultDTO importResult = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 mapper.writeValueAsString(exerciseGroupsJson), true, ExerciseGroupImportResultDTO.class, HttpStatus.OK, null, null, null);
 
-        QuizExercise importedQuizStub = (QuizExercise) importResult.exerciseGroups().getFirst().getExercises().iterator().next();
-        QuizExercise importedQuiz = quizExerciseRepository.findByIdElseThrow(importedQuizStub.getId());
+        long importedQuizId = importResult.exerciseGroups().getFirst().exercises().getFirst().id();
+        QuizExercise importedQuiz = quizExerciseRepository.findByIdElseThrow(importedQuizId);
         assertThat(importedQuiz.isRandomizeQuestionOrder()).isFalse();
         assertThat(importedQuiz.getAllowedNumberOfAttempts()).isEqualTo(5);
         assertThat(importedQuiz.getDuration()).isEqualTo(999);
@@ -2884,10 +2882,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam targetExam = examUtilService.addExam(course1);
         examUtilService.addExamChannel(targetExam, "import-eg-content");
 
-        List<ExerciseGroup> importedGroups = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+        List<ExerciseGroupDTO> importedGroups = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 sourceExam.getExerciseGroups(), ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
 
-        List<Exercise> importedExercises = importedGroups.stream().filter(group -> !group.getExercises().isEmpty()).flatMap(group -> group.getExercises().stream()).toList();
+        // The response carries slim exercise summaries, so reload each imported exercise to assert on its content.
+        List<Exercise> importedExercises = importedGroups.stream().filter(group -> group.exercises() != null).flatMap(group -> group.exercises().stream())
+                .map(exercise -> exerciseRepository.findByIdElseThrow(exercise.id())).toList();
         assertThat(importedExercises).as("all four non-empty exercise groups imported an exercise").hasSize(4);
 
         Map<ExerciseType, Exercise> sourceByType = sourceExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())

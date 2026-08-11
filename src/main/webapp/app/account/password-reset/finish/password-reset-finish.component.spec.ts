@@ -87,7 +87,37 @@ describe('Component Tests', () => {
 
             comp.finishReset();
 
-            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'XYZSecret', 'password');
+            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'XYZSecret', 'password', {
+                passkeys: true,
+                sshKeys: true,
+                vcsAccessTokens: true,
+            });
+            expect(comp.success()).toBe(true);
+        });
+
+        it('should default to revoking every credential type', () => {
+            // The safe outcome needs no thought: completing a reset only proves control of the mailbox, so keeping a
+            // credential has to be the deliberate act rather than the default.
+            expect(comp.revokePasskeys()).toBe(true);
+            expect(comp.revokeSshKeys()).toBe(true);
+            expect(comp.revokeVcsAccessTokens()).toBe(true);
+        });
+
+        it('should send the credentials the user chose to keep', () => {
+            // Forgetting a password is not the same as losing it, so a user who kept their keys must not have them
+            // deleted anyway.
+            vi.spyOn(passwordResetFinishService, 'completePasswordReset').mockReturnValue(of({}));
+            comp.passwordForm.patchValue({ newPassword: 'password', confirmPassword: 'password' });
+            comp.revokeSshKeys.set(false);
+            comp.revokeVcsAccessTokens.set(false);
+
+            comp.finishReset();
+
+            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'XYZSecret', 'password', {
+                passkeys: true,
+                sshKeys: false,
+                vcsAccessTokens: false,
+            });
             expect(comp.success()).toBe(true);
         });
 
@@ -100,7 +130,11 @@ describe('Component Tests', () => {
 
             comp.finishReset();
 
-            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'XYZSecret', 'password');
+            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'XYZSecret', 'password', {
+                passkeys: true,
+                sshKeys: true,
+                vcsAccessTokens: true,
+            });
             expect(comp.success()).toBe(false);
             expect(comp.error()).toBe(true);
         });

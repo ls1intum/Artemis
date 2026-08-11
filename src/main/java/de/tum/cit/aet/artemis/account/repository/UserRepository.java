@@ -90,6 +90,41 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     Optional<User> findOneByLogin(String login);
 
+    /**
+     * Determines whether a user with the given login exists and, if so, whether that user is internal.
+     * <p>
+     * Only the {@code internal} flag is projected, so callers that just need to distinguish between "unknown", "internal" and "external" do not load the full user entity
+     * (and stay unaffected by columns or eagerly fetched associations that may be added to {@link User} later on).
+     *
+     * @param login the login to look up
+     * @return an {@link Optional} containing {@code true} if a non-deleted user exists and is internal, {@code false} if that user is external,
+     *         or an empty {@link Optional} if no such user exists
+     */
+    @Query("""
+            SELECT u.internal
+            FROM User u
+            WHERE u.login = :login
+                AND u.deleted = FALSE
+            """)
+    Optional<Boolean> isInternalUserByLogin(@Param("login") String login);
+
+    /**
+     * Determines whether a user with the given email exists (ignoring case) and, if so, whether that user is internal.
+     * <p>
+     * Projects only the {@code internal} flag, see {@link #isInternalUserByLogin}.
+     *
+     * @param email the email address to look up, matched case-insensitively
+     * @return an {@link Optional} containing {@code true} if a non-deleted user exists and is internal, {@code false} if that user is external,
+     *         or an empty {@link Optional} if no such user exists
+     */
+    @Query("""
+            SELECT u.internal
+            FROM User u
+            WHERE LOWER(u.email) = LOWER(:email)
+                AND u.deleted = FALSE
+            """)
+    Optional<Boolean> isInternalUserByEmailIgnoreCase(@Param("email") String email);
+
     Optional<User> findOneByActivationKey(String activationKey);
 
     @EntityGraph(type = LOAD, attributePaths = { "authorities" })

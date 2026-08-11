@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -445,5 +447,31 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isAtLeastTeachingAssistantInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
         assertThat(userRepository.isAtLeastEditorInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
         assertThat(userRepository.isAtLeastInstructorInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
+    }
+
+    @Test
+    void testIsInternalUserByLoginAndByEmail() {
+        User internalUser = userUtilService.createAndSaveUser(TEST_PREFIX + "internal");
+
+        User externalUser = UserFactory.generateActivatedUser(TEST_PREFIX + "external");
+        externalUser.setInternal(false);
+        externalUser = userRepository.save(externalUser);
+
+        User deletedUser = UserFactory.generateActivatedUser(TEST_PREFIX + "deleted");
+        deletedUser.setDeleted(true);
+        deletedUser = userRepository.save(deletedUser);
+
+        assertThat(userRepository.isInternalUserByLogin(internalUser.getLogin())).contains(true);
+        assertThat(userRepository.isInternalUserByLogin(externalUser.getLogin())).contains(false);
+        assertThat(userRepository.isInternalUserByLogin(TEST_PREFIX + "doesnotexist")).isEmpty();
+        // soft-deleted users must not be reported, following the convention documented on this repository
+        assertThat(userRepository.isInternalUserByLogin(deletedUser.getLogin())).isEmpty();
+
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(internalUser.getEmail())).contains(true);
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(externalUser.getEmail())).contains(false);
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(TEST_PREFIX + "doesnotexist@test.de")).isEmpty();
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(deletedUser.getEmail())).isEmpty();
+        // the lookup by email has to stay case-insensitive, just like the entity based findOneByEmailIgnoreCase it replaces
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(internalUser.getEmail().toUpperCase(Locale.ROOT))).contains(true);
     }
 }

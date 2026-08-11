@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -66,6 +65,12 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 public class PublicAccountResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicAccountResource.class);
+
+    /**
+     * Upper bound for the identifier accepted by {@link #getLoginOptions}. A login is at most {@link Constants#USERNAME_MAX_LENGTH} characters and an email address at most 100,
+     * so this is a generous outer bound that no legitimate identifier reaches. It exists to keep an unauthenticated caller from sending an arbitrarily long string.
+     */
+    private static final int MAX_LOGIN_IDENTIFIER_LENGTH = 255;
 
     @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
     private Optional<Pattern> allowedEmailPattern;
@@ -233,11 +238,16 @@ public class PublicAccountResource {
      *
      * @param usernameOrEmail the login or email address entered by the user
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the {@link LoginOptionsDTO}
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the identifier is longer than {@link #MAX_LOGIN_IDENTIFIER_LENGTH} characters
      */
     @GetMapping("login-options")
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.AUTHENTICATION)
-    public ResponseEntity<LoginOptionsDTO> getLoginOptions(@RequestParam("usernameOrEmail") @Size(max = 255) String usernameOrEmail) {
+    public ResponseEntity<LoginOptionsDTO> getLoginOptions(@RequestParam("usernameOrEmail") String usernameOrEmail) {
+        // checked here rather than with @Size, because this class is not annotated with @Validated and constraints on method parameters are only enforced when it is
+        if (usernameOrEmail != null && usernameOrEmail.length() > MAX_LOGIN_IDENTIFIER_LENGTH) {
+            throw new BadRequestAlertException("The provided username or email is too long", "Account", "usernameOrEmailTooLong");
+        }
         LoginOptionsDTO loginOptions = loginOptionsService.getLoginOptions(usernameOrEmail);
         return ResponseEntity.ok(loginOptions);
     }
@@ -281,8 +291,7 @@ public class PublicAccountResource {
                 throw new BadRequestAlertException("Email or username is not unique. Found multiple potential users", "Account", "usernameNotUnique");
             }
             var internalUser = internalUsers.getFirst();
-            userService.prepareUserForPasswordReset(internalUser)
-                .ifPresent(s -> mailService.sendPasswordResetMail(MailRecipientDTO.withResetSecretFrom(s, internalUser)));
+            userService.prepareUserForPasswordReset(internalUser).ifPresent(s -> mailService.sendPasswordResetMail(MailRecipientDTO.withResetSecretFrom(s, internalUser)));
         }
         else {
             // Pretend the request has been successful to prevent checking which emails or usernames really exist
@@ -307,14 +316,12 @@ public class PublicAccountResource {
         if (accountService.isPasswordLengthInvalid(keyAndPassword.newPassword())) {
             throw new PasswordViolatesRequirementsException();
         }
-        if (StringUtils.isEmpty(keyAndPassword.keyId())
-            || StringUtils.isEmpty(keyAndPassword.keySecret())
-            || keyAndPassword.keyId().length() < 10
-            || keyAndPassword.keySecret().length() < 10) {
+        if (StringUtils.isEmpty(keyAndPassword.keyId()) || StringUtils.isEmpty(keyAndPassword.keySecret()) || keyAndPassword.keyId().length() < 10
+                || keyAndPassword.keySecret().length() < 10) {
             throw new AccessForbiddenException("Invalid key for password reset");
         }
-        Optional<User> user = userService.completePasswordReset(keyAndPassword.newPassword(),
-            keyAndPassword.keyId(), keyAndPassword.keySecret());
+        Optional<User> user = userService.completePasswordReset(keyAndPassword.newPassword(), keyAndPassword.keyId(), keyAndPassword.keySecret(),
+                keyAndPassword.revokeCredentialsOrAll());
 
         if (user.isEmpty()) {
             throw new AccessForbiddenException("No user was found for this reset key");

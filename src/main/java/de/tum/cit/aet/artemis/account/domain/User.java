@@ -150,7 +150,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "reset_key_hash", length = 255)
     private String resetKeyHash;
 
-
     @Column(name = "reset_date")
     private Instant resetDate = null;
 
