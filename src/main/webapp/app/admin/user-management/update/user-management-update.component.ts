@@ -30,6 +30,7 @@ import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-f
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AccountService } from 'app/core/auth/account.service';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 
 @Component({
@@ -65,6 +66,7 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly fb = inject(FormBuilder);
     private readonly accountService = inject(AccountService);
+    private readonly credentialRevocationConfirmationService = inject(CredentialRevocationConfirmationService);
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faBan = faBan;
@@ -186,8 +188,7 @@ export class UserManagementUpdateComponent implements OnInit {
      * Saves the user (creates new or updates existing).
      * Shows a warning for Jenkins users when login changes.
      */
-    save(): void {
-        this.isSaving.set(true);
+    async save(): Promise<void> {
         // temporarily store the user organizations because they are not part of the edit form
         const userOrganizations = this.user().organizations;
         const updatedUser: User = this.editForm.getRawValue();
@@ -195,6 +196,24 @@ export class UserManagementUpdateComponent implements OnInit {
         if (updatedUser.id) {
             updatedUser.revokeCredentials = !!updatedUser.password && this.revokeCredentials();
         }
+
+        // Deactivating an active account also revokes every credential, in UserCreationService.updateUser and regardless
+        // of the checkbox, so clearing "Activated" and saving deletes all passkeys, keys and tokens too. Confirming only
+        // the checkbox left that path silent, which is the more surprising of the two: the administrator was not asked
+        // about credentials at all.
+        const deactivating = this.user().id !== undefined && this.user().activated && !updatedUser.activated;
+
+        // Confirmed before saving, and before the spinner starts, because this deletes another person's authenticators
+        // and keys irreversibly. An administrator has no way to notice a mistyped click here the way the owner would, so
+        // this is the site that most needs the question asked. A save that revokes nothing is not interrupted.
+        if (updatedUser.revokeCredentials || deactivating) {
+            const confirmed = await this.credentialRevocationConfirmationService.confirm({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        this.isSaving.set(true);
         this.user.set(updatedUser);
         if (updatedUser.id) {
             this.userService.update(updatedUser).subscribe({

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
@@ -38,17 +38,24 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
     let component: CourseExercisesComponent;
     let courseStorageService: CourseStorageService;
     let exerciseService: ExerciseService;
+    let router: MockRouter;
     let participationWebsocketBehaviorSubject: BehaviorSubject<Participation | undefined>;
+    let exerciseOverviewResponse: Subject<CourseExercisesForOverviewDTO>;
+    let loadExercisesForOverview: ReturnType<typeof vi.fn>;
 
     let course: Course;
     let exercise: Exercise;
@@ -59,10 +66,14 @@ describe('CourseExercisesComponent', () => {
     const route = {
         parent: parentRoute,
         queryParams: queryParamsSubject,
+        // Read by CourseTabRefreshService to work out the tab's own URL
+        pathFromRoot: [{ snapshot: { url: [{ path: 'courses' }, { path: '123' }] } }, { snapshot: { url: [{ path: 'exercises' }] } }],
     } as any as ActivatedRoute;
 
     beforeEach(async () => {
         participationWebsocketBehaviorSubject = new BehaviorSubject<Participation | undefined>(undefined);
+        exerciseOverviewResponse = new Subject<CourseExercisesForOverviewDTO>();
+        loadExercisesForOverview = vi.fn(() => exerciseOverviewResponse.asObservable());
         TestBed.configureTestingModule({
             imports: [
                 FormsModule,
@@ -103,6 +114,8 @@ describe('CourseExercisesComponent', () => {
                         resetLocalCache: vi.fn(),
                     },
                 },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: CourseOverviewExercisesService, useValue: { loadIfNeeded: loadExercisesForOverview } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -112,6 +125,7 @@ describe('CourseExercisesComponent', () => {
         component = fixture.componentInstance;
         courseStorageService = TestBed.inject(CourseStorageService);
         exerciseService = TestBed.inject(ExerciseService);
+        router = TestBed.inject(Router) as unknown as MockRouter;
 
         (component as any)._sidebarData.set({ groupByCategory: true, sidebarType: 'exercise', storageId: 'exercise' });
         course = new Course();
@@ -135,6 +149,7 @@ describe('CourseExercisesComponent', () => {
     });
 
     afterEach(() => {
+        exerciseOverviewResponse.complete();
         vi.restoreAllMocks();
     });
 
@@ -145,6 +160,41 @@ describe('CourseExercisesComponent', () => {
         expect(component.course()).toEqual(course);
         // Component should be properly initialized with the course
         expect(component.courseId()).toBe(course.id);
+    });
+
+    it('should navigate only after a cold exercise load has been published to the shared course', () => {
+        const leanCourse = { id: course.id } as Course;
+        const courseUpdates = new Subject<Course>();
+        vi.mocked(courseStorageService.getCourse).mockReturnValue(leanCourse);
+        vi.mocked(courseStorageService.subscribeToCourseUpdates).mockReturnValue(courseUpdates);
+        const navigateSpy = vi.spyOn(component, 'navigateToExercise');
+
+        (component as any).initializeAfterCourseIdSet();
+
+        expect(loadExercisesForOverview).toHaveBeenLastCalledWith(course.id);
+        expect(component.course()).toBe(leanCourse);
+        expect(navigateSpy).not.toHaveBeenCalled();
+
+        courseUpdates.next(course);
+        exerciseOverviewResponse.next({ exercises: [exercise] } as CourseExercisesForOverviewDTO);
+
+        expect(component.course()).toBe(course);
+        expect(component.course()?.exercises).toEqual([exercise]);
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        courseUpdates.complete();
+    });
+
+    it.each([
+        ['/courses/123/exercises/group/7', true],
+        ['/courses/123/exercises/456', true],
+    ])('should recognize an exercise selection already encoded in %s without redirecting', (url, expectedSelected) => {
+        router.setUrl(url);
+        router.navigate.mockClear();
+
+        component.navigateToExercise();
+
+        expect((component as any)._exerciseSelected()).toBe(expectedSelected);
+        expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should display sidebar when course is provided', () => {
