@@ -259,6 +259,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             // so it would stay set for good.
             this.feedbackSuggestions.set([]);
             this.loadingFeedbackSuggestions.set(false);
+            // The complaint belongs to the assessment being replaced too. getComplaint returns early on an empty
+            // response rather than clearing, so a target round without a complaint would keep showing the previous
+            // round's - disabling overrides and offering complaint actions for the wrong round. The other two editors
+            // clear it in their resetSubmissionState; this one has no such method, so it is cleared here.
+            this.complaint.set(undefined!);
 
             this.courseId = Number(params['courseId']);
             this.exerciseId = Number(params['exerciseId']);

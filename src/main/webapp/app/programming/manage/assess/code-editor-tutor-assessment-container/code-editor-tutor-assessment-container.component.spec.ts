@@ -536,6 +536,28 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.loadingFeedbackSuggestions()).toBe(false);
     });
 
+    it("should not keep the previous round's complaint when the replacement has none", async () => {
+        // getComplaint returns early on an empty response instead of clearing, so without the reset a round with no
+        // complaint inherits the previous one's - which disables overrides and offers complaint actions for the wrong round.
+        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
+        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
+        activatedRoute.params = new BehaviorSubject<Params>({ submissionId: 123 }).asObservable();
+        activatedRoute.queryParamMap = queryParamMap$.asObservable();
+        // First round carries a complaint, the replacement's lookup finds none.
+        findBySubmissionIdStub
+            .mockReturnValueOnce(of(new HttpResponse<ComplaintDTO>({ body: complaint as unknown as ComplaintDTO })))
+            .mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
+
+        comp.ngOnInit();
+        await flushMicrotasks();
+        expect(comp.complaint()).toBeDefined();
+
+        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+        await flushMicrotasks();
+
+        expect(comp.complaint()).toBeUndefined();
+    });
+
     it('should ignore a round response that arrives after a newer one', async () => {
         // Consecutive round changes each issue their own lock request and nothing cancels the earlier one, so the two
         // can complete in either order. The obsolete response must not win: the page would then show a participation for
