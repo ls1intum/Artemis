@@ -267,6 +267,27 @@ describe('CourseTutorialGroupsComponent', () => {
         expect(component.sidebarData()?.ungroupedData).toHaveLength(0);
     });
 
+    it('should drop deleted tutorial lectures from the stored course, so reopening the tab cannot resurrect them', async () => {
+        const nonTutorialLecture = { id: 99, isTutorialLecture: false } as Lecture;
+        const cachedCourse = { id: 1, tutorialGroups: [], lectures: [tutorialLecture1, nonTutorialLecture] };
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+        // The tutorial lecture was deleted on the server, so the refresh legitimately returns nothing
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        (component as any).loadAndSetTutorialLectures(1);
+        await fixture.whenStable();
+
+        expect(updateCourseSpy).toHaveBeenCalled();
+        // Merging by id could not express the deletion: nothing in the empty response matched, so the deleted lecture
+        // stayed cached and came straight back the next time the tab read it
+        expect(cachedCourse.lectures).toEqual([nonTutorialLecture]);
+    });
+
     it('should navigate to previously selected route', () => {
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [tutorialGroup1], lectures: [tutorialLecture1, tutorialLecture2] });
         vi.spyOn(sessionStorageService, 'retrieve').mockReturnValue('tutorial-lectures/7');

@@ -179,8 +179,13 @@ export class CourseTutorialGroupsComponent {
             return;
         }
         const existingLectures = course.lectures ?? [];
-        const remainingLectures = existingLectures.filter((existing) => !lecturesToUpdate.some((updated) => updated.id === existing.id));
-        course.lectures = [...remainingLectures, ...lecturesToUpdate];
+        // Replace the tutorial subset wholesale rather than merging by id. Merging cannot express a deletion: a refresh
+        // that returns nothing removed nothing, so a deleted tutorial lecture stayed in the stored course and came
+        // straight back the next time the tab read its cache. Non-tutorial lectures belong to the lectures tab and are
+        // kept, as is anything the fresh response re-supplies under a different flag.
+        const freshLectureIds = new Set(lecturesToUpdate.map((lecture) => lecture.id));
+        const retainedLectures = existingLectures.filter((existing) => !existing.isTutorialLecture && !freshLectureIds.has(existing.id));
+        course.lectures = [...retainedLectures, ...lecturesToUpdate];
         // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
         // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
         this.courseStorageService.updateCourse(course);

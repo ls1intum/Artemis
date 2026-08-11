@@ -38,6 +38,7 @@ import { Course, CourseInformationSharingConfiguration } from 'app/course/shared
 import { CourseOverviewComponent } from 'app/course/overview/course-overview/course-overview.component';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -148,6 +149,7 @@ describe('CourseOverviewComponent', () => {
     let findOneForRegistrationStub: ReturnType<typeof vi.spyOn>;
     let getCourseAvailableTabsStub: ReturnType<typeof vi.spyOn>;
     let availableTabsService: CourseAvailableTabsService;
+    let courseTabRefreshService: CourseTabRefreshService;
     let courseSidebarService: CourseSidebarService;
     let courseSidebarItemService: CourseSidebarItemService;
     let profileService: ProfileService;
@@ -253,6 +255,7 @@ describe('CourseOverviewComponent', () => {
             ),
         );
         availableTabsService = TestBed.inject(CourseAvailableTabsService);
+        courseTabRefreshService = TestBed.inject(CourseTabRefreshService);
         availableTabsService.clear();
         getCourseAvailableTabsStub = vi.spyOn(courseService, 'getCourseAvailableTabs').mockReturnValue(of(availableTabs()));
         // default for findOneForRegistrationStub is to return the course as well
@@ -320,6 +323,39 @@ describe('CourseOverviewComponent', () => {
 
         expect(getCourseAvailableTabsStub).not.toHaveBeenCalled();
         expect(component.availableTabs()?.lectures).toBe(true);
+    });
+
+    it('should reconcile the tabs when the user selected a tab and no guard answer survived the navigation', () => {
+        // A guard that denies a removed tab cancels its navigation and redirects, so the answer it fetched is filed
+        // under the cancelled navigation and the redirect cannot read it. Unguarded tabs fetch nothing at all. Without
+        // reconciling, the sidebar would keep offering a link that can never be opened.
+        component.courseId.set(1);
+        component.availableTabs.set(availableTabs({ lectures: true }));
+        availableTabsService.clear();
+        getCourseAvailableTabsStub.mockClear();
+        getCourseAvailableTabsStub.mockReturnValue(of(availableTabs({ lectures: false })));
+
+        courseTabRefreshService.notifyTabSelected('lectures');
+        (component as any).handleNavigationEndActions();
+
+        expect(getCourseAvailableTabsStub).toHaveBeenCalledOnce();
+        expect(component.availableTabs()?.lectures).toBe(false);
+    });
+
+    it('should reconcile only once per selection, so a chain of navigations still costs one request', () => {
+        component.courseId.set(1);
+        component.availableTabs.set(availableTabs({ lectures: true }));
+        availableTabsService.clear();
+        getCourseAvailableTabsStub.mockClear();
+        getCourseAvailableTabsStub.mockReturnValue(of(availableTabs({ lectures: false })));
+
+        courseTabRefreshService.notifyTabSelected('lectures');
+        // Selecting a tab is a chain: the tab, then whatever child it auto-selects
+        (component as any).handleNavigationEndActions();
+        availableTabsService.clear();
+        (component as any).handleNavigationEndActions();
+
+        expect(getCourseAvailableTabsStub).toHaveBeenCalledOnce();
     });
 
     it('should create sidebar items with default items', () => {

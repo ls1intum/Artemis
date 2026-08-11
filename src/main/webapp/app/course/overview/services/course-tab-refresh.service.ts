@@ -27,6 +27,19 @@ export class CourseTabRefreshService {
     }
 
     /**
+     * Emits every time the user selects any sidebar tab.
+     *
+     * Used by the course container to reconcile which tabs exist once per selection. It cannot infer that from the
+     * router either: a guard that denies a removed tab cancels its navigation and redirects, and the redirect is a
+     * fresh navigation that looks like any other.
+     *
+     * @return an observable that emits on every tab selection
+     */
+    selections(): Observable<void> {
+        return this.tabSelections.pipe(map(() => undefined));
+    }
+
+    /**
      * Emits every time the user selects the given tab.
      *
      * @param route the tab component's own activated route, whose URL the sidebar link points at

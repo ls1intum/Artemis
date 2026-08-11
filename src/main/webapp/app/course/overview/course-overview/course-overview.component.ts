@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CdkScrollable } from '@angular/cdk/scrolling';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -27,6 +28,7 @@ import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/cour
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 
 /**
  * Reads the collapsed state from a route-activated component that may expose `isCollapsed` either as a
@@ -55,6 +57,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private courseAvailableTabsService = inject(CourseAvailableTabsService);
     private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
     private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     /**
      * Every page that does not bring its own sidebar gets the shell title bar, so the student overview matches course
@@ -70,6 +73,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private toggleSidebarEventSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
     private availableTabsSubscription?: Subscription;
+    /** Set when the user selects a sidebar tab, so the navigation it causes reconciles which tabs exist. */
+    private reconcileTabsOnNextNavigation = false;
+    private readonly tabSelectionSubscription = this.courseTabRefreshService
+        .selections()
+        .pipe(takeUntilDestroyed())
+        .subscribe(() => (this.reconcileTabsOnNextNavigation = true));
 
     /**
      * Which course tabs are available to the user. Server-computed and shared with the {@link CourseOverviewGuard}
@@ -200,22 +209,54 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      * on entry while the guard decides each guarded navigation from a freshly fetched answer. The two could then
      * disagree: a tab removed since entry would still be offered, and one that became available would stay hidden.
      *
-     * Adopts the guard's answer rather than fetching its own. The tab service is scoped to the navigation, so if a
-     * guard ran, its response is still held and is free to read; if none ran, no guard has contradicted the current
-     * flags and there is nothing to reconcile. This costs no request at all — which matters because entering a course
-     * is a chain of navigations (course, then tab, then the auto-selected item), and refetching on each would undo
-     * what this endpoint was split out to achieve.
+     * Adopts the guard's answer whenever there is one: the tab service is scoped to the navigation, so a guard that ran
+     * for this navigation has left its response there, free to read. Entering a course is a chain of navigations
+     * (course, then tab, then the auto-selected item), and refetching on each would undo what this endpoint was split
+     * out to achieve, so nothing else fetches here.
+     *
+     * The exception is a navigation the user caused by selecting a sidebar tab. Adopting alone is not enough there:
+     * an unguarded tab (statistics, calendar, settings) fetches nothing at all, and a guard that *denies* a removed tab
+     * cancels its navigation and redirects, so the answer it fetched is filed under the cancelled navigation and the
+     * redirect can no longer see it. Either way the sidebar would keep offering a link that can never be opened, and no
+     * amount of clicking it would clear it. One selection therefore reconciles once, sharing the guard's request when
+     * the guard ran in the same navigation.
      */
     protected override handleNavigationEndActions(): void {
         const courseId = this.courseId();
         if (!courseId) {
             return;
         }
+        const causedBySidebarSelection = this.reconcileTabsOnNextNavigation;
+        this.reconcileTabsOnNextNavigation = false;
+
         const tabsFetchedByGuard = this.courseAvailableTabsService.tabsFor(courseId);
         if (tabsFetchedByGuard) {
             this.availableTabs.set(tabsFetchedByGuard);
             this.sidebarItems.set(this.getSidebarItems());
+            return;
         }
+        if (causedBySidebarSelection) {
+            this.reconcileAvailableTabs(courseId);
+        }
+    }
+
+    /**
+     * Refetches which tabs exist and adopts the answer, leaving the rendered sidebar in place meanwhile so it does not
+     * flicker. Unlike {@link loadAvailableTabs} this is a reconciliation of an already-rendered sidebar, not its
+     * initial load, so it neither clears the flags first nor reports an error the user cannot act on.
+     */
+    private reconcileAvailableTabs(courseId: number): void {
+        this.availableTabsSubscription?.unsubscribe();
+        this.availableTabsSubscription = this.courseAvailableTabsService.loadIfNeeded(courseId).subscribe({
+            next: (tabs) => {
+                // The user may have left for another course while this was in flight
+                if (this.courseId() === courseId) {
+                    this.availableTabs.set(tabs);
+                    this.sidebarItems.set(this.getSidebarItems());
+                }
+            },
+            error: () => {},
+        });
     }
 
     private loadAvailableTabs(): void {
@@ -412,6 +453,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     override ngOnDestroy() {
         super.ngOnDestroy();
         this.availableTabsSubscription?.unsubscribe();
+        this.tabSelectionSubscription.unsubscribe();
         // Drop what is held for the current navigation so nothing outlives the course being left
         this.courseAvailableTabsService.clear();
         this.courseOverviewExercisesService.clear();
