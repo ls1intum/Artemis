@@ -420,6 +420,11 @@ export class Commands {
         const startTime = Date.now();
         let lastSeenText: string | null = null;
         const matches = (text: string | null): boolean => text != null && (expectedText instanceof RegExp ? expectedText.test(text) : text.includes(expectedText));
+        // The route this loop is polling on, for the same reason as in reloadUntilFound: a reload that drifts to the
+        // /courses fallback is a dead end, because every later reload then reloads the fallback and the text being
+        // waited for lives on a route the page is no longer on.
+        const requestedUrl = page.url();
+        let failedRouteRestores = 0;
 
         while (Date.now() - startTime < timeout) {
             try {
@@ -438,13 +443,18 @@ export class Commands {
             }
 
             try {
-                await page.reload();
+                if (!(await Commands.reloadAndRestoreRoute(page, requestedUrl))) {
+                    failedRouteRestores++;
+                }
             } catch (reloadError) {
                 throw new Error(`Failed to reload page while waiting for text "${expectedText}": ${reloadError}`, { cause: reloadError });
             }
         }
 
-        throw new Error(`Timed out waiting for text "${expectedText}" in locator "${locator}" (URL: ${page.url()}). Last seen text: "${lastSeenText}"`);
+        const restoreNote = failedRouteRestores > 0 ? `, route restore failed ${failedRouteRestores} time(s)` : '';
+        throw new Error(
+            `Timed out waiting for text "${expectedText}" in locator "${locator}" (requested URL: ${requestedUrl}, final URL: ${page.url()}${restoreNote}). Last seen text: "${lastSeenText}"`,
+        );
     };
 
     /**
