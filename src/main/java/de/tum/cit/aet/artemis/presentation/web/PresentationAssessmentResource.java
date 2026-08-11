@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -85,7 +84,7 @@ public class PresentationAssessmentResource {
     public ResponseEntity<PresentationAssessmentDTO> getPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to get presentation assessment {} for course {}", assessmentId, courseId);
         findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        return ResponseEntity.ok(PresentationAssessmentDTO.of(findByIdAndCourseIdElseThrow(assessmentId, courseId)));
+        return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId)));
     }
 
     /**
@@ -124,7 +123,7 @@ public class PresentationAssessmentResource {
         validatePresentationAssessmentUpdateRequest(assessmentId, dto);
         validatePresentationAssessmentCourseId(courseId, dto);
         Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        findByIdAndCourseIdElseThrow(assessmentId, courseId);
+        presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
         return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentService.update(course, dto)));
     }
 
@@ -140,7 +139,7 @@ public class PresentationAssessmentResource {
     public ResponseEntity<Void> deletePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to delete presentation assessment {} for course {}", assessmentId, courseId);
         findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        findByIdAndCourseIdElseThrow(assessmentId, courseId);
+        presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
         presentationAssessmentService.delete(courseId, assessmentId);
         return ResponseEntity.noContent().build();
     }
@@ -157,7 +156,7 @@ public class PresentationAssessmentResource {
     public ResponseEntity<List<PresentationAssessmentStudentDTO>> getPresentationAssessmentStudents(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to get students for presentation assessment {} in course {}", assessmentId, courseId);
         findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        findByIdAndCourseIdElseThrow(assessmentId, courseId);
+        presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
         return ResponseEntity
                 .ok(presentationAssessmentRepository.findStudentsForPresentationAssessment(assessmentId, courseId).stream().map(PresentationAssessmentStudentDTO::of).toList());
     }
@@ -175,7 +174,7 @@ public class PresentationAssessmentResource {
     public ResponseEntity<Void> addStudentToPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable String studentLogin) {
         log.debug("REST request to add student {} to presentation assessment {} in course {}", studentLogin, assessmentId, courseId);
         Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        findByIdAndCourseIdElseThrow(assessmentId, courseId);
+        presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
         presentationAssessmentService.addStudent(course, assessmentId, studentLogin);
         return ResponseEntity.ok().build();
     }
@@ -193,7 +192,7 @@ public class PresentationAssessmentResource {
     public ResponseEntity<Void> removeStudentFromPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable String studentLogin) {
         log.debug("REST request to remove student {} from presentation assessment {} in course {}", studentLogin, assessmentId, courseId);
         findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        findByIdAndCourseIdElseThrow(assessmentId, courseId);
+        presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
         presentationAssessmentService.removeStudent(courseId, assessmentId, studentLogin);
         return ResponseEntity.noContent().build();
     }
@@ -204,15 +203,6 @@ public class PresentationAssessmentResource {
             throw new AccessForbiddenException("Presentation assessments are disabled for this course.");
         }
         return course;
-    }
-
-    private PresentationAssessment findByIdAndCourseIdElseThrow(long assessmentId, long courseId) {
-        PresentationAssessment presentationAssessment = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
-        Long presentationAssessmentCourseId = presentationAssessment.getCourse() != null ? presentationAssessment.getCourse().getId() : null;
-        if (!Long.valueOf(courseId).equals(presentationAssessmentCourseId)) {
-            throw new EntityNotFoundException(PresentationAssessment.ENTITY_NAME, assessmentId);
-        }
-        return presentationAssessment;
     }
 
     private void validatePresentationAssessmentUpdateRequest(long assessmentId, PresentationAssessmentDTO dto) {

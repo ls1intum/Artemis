@@ -64,6 +64,61 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         expect(savedSpy).not.toHaveBeenCalled();
     });
 
+    it('should accept missing result points', () => {
+        const savedSpy = vi.fn();
+        component.saved.subscribe(savedSpy);
+        component.editForm.controls.resultPoints.setValue(undefined);
+
+        component.save();
+
+        expect(component.editForm.controls.resultPoints.valid).toBe(true);
+        expect(savedSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                presentationAssessment: expect.objectContaining({
+                    resultPoints: undefined,
+                }),
+            }),
+        );
+    });
+
+    it('should reject non-numeric result points', () => {
+        const savedSpy = vi.fn();
+        component.saved.subscribe(savedSpy);
+        component.editForm.controls.resultPoints.setValue('not a number');
+
+        component.save();
+
+        expect(component.editForm.controls.resultPoints.hasError('numberRequired')).toBe(true);
+        expect(savedSpy).not.toHaveBeenCalled();
+    });
+
+    it('should reject non-numeric max points', () => {
+        const savedSpy = vi.fn();
+        component.saved.subscribe(savedSpy);
+        component.editForm.controls.maxPoints.setValue('not a number');
+
+        component.save();
+
+        expect(component.editForm.controls.maxPoints.hasError('numberRequired')).toBe(true);
+        expect(savedSpy).not.toHaveBeenCalled();
+    });
+
+    it('should save decimal comma result points as number', () => {
+        const savedSpy = vi.fn();
+        component.saved.subscribe(savedSpy);
+        component.editForm.controls.resultPoints.setValue('18,5');
+
+        component.save();
+
+        expect(savedSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                presentationAssessment: expect.objectContaining({
+                    resultPoints: 18.5,
+                }),
+            }),
+        );
+    });
+
     it('should reject invalid date picker input', () => {
         const savedSpy = vi.fn();
         component.saved.subscribe(savedSpy);

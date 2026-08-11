@@ -19,14 +19,46 @@ import { TumUiButtonComponent, TumUiInputDirective, TumUiMessageComponent } from
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-    const maxPoints = control.get('maxPoints')?.value;
-    const resultPoints = control.get('resultPoints')?.value;
+    const maxPoints = parseNumber(control.get('maxPoints')?.value);
+    const resultPoints = parseNumber(control.get('resultPoints')?.value);
 
     if (maxPoints === undefined || maxPoints === null || resultPoints === undefined || resultPoints === null) {
         return null;
     }
 
-    return Number(resultPoints) > Number(maxPoints) ? { resultPointsExceedMaxPoints: true } : null;
+    return resultPoints > maxPoints ? { resultPointsExceedMaxPoints: true } : null;
+};
+
+const numberRequired: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+    return parseNumber(control.value) === undefined ? { numberRequired: true } : null;
+};
+
+const optionalNumber: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (isBlank(value)) {
+        return null;
+    }
+    return parseNumber(value) === undefined ? { numberRequired: true } : null;
+};
+
+const numberMin =
+    (min: number): ValidatorFn =>
+    (control: AbstractControl): ValidationErrors | null => {
+        const value = parseNumber(control.value);
+        if (value === undefined) {
+            return null;
+        }
+        return value < min ? { min: true } : null;
+    };
+
+const isBlank = (value: unknown): boolean => value === undefined || value === null || value === '';
+
+const parseNumber = (value: unknown): number | undefined => {
+    if (isBlank(value)) {
+        return undefined;
+    }
+    const parsedValue = typeof value === 'string' ? Number(value.trim().replace(',', '.')) : Number(value);
+    return Number.isFinite(parsedValue) ? parsedValue : undefined;
 };
 
 export interface PresentationAssessmentFormDialogResult {
@@ -93,8 +125,8 @@ export class PresentationAssessmentFormDialogComponent {
         {
             title: ['', [Validators.required, Validators.maxLength(255)]],
             description: ['', [Validators.maxLength(1000)]],
-            maxPoints: [0, [Validators.required, Validators.min(0.01)]],
-            resultPoints: [undefined as number | undefined, [Validators.min(0)]],
+            maxPoints: [0 as number | string | undefined, [numberRequired, numberMin(0.01)]],
+            resultPoints: [undefined as number | string | undefined, [optionalNumber, numberMin(0)]],
             presentationDate: [undefined as dayjs.Dayjs | undefined],
         },
         { validators: resultPointsDoNotExceedMaxPoints },
@@ -153,8 +185,8 @@ export class PresentationAssessmentFormDialogComponent {
             id: this.presentationAssessment()?.id,
             title: formValue.title?.trim(),
             description: formValue.description ?? undefined,
-            maxPoints: formValue.maxPoints ?? undefined,
-            resultPoints: formValue.resultPoints ?? undefined,
+            maxPoints: parseNumber(formValue.maxPoints),
+            resultPoints: parseNumber(formValue.resultPoints),
             presentationDate: formValue.presentationDate ? dayjs(formValue.presentationDate) : undefined,
             courseId: this.courseId(),
         };

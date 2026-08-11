@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.course.service.CourseServiceUtil.removeUser
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -21,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
@@ -56,6 +58,8 @@ public class CourseAccessService {
 
     private final UserCourseRoleRepository userCourseRoleRepository;
 
+    private final UserRepository userRepository;
+
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final AuditEventRepository auditEventRepository;
@@ -65,13 +69,14 @@ public class CourseAccessService {
     private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
 
     public CourseAccessService(AuthorizationCheckService authCheckService, EnrollmentService enrollmentService, CourseRepository courseRepository, UserService userService,
-            UserCourseRoleRepository userCourseRoleRepository, Optional<LearnerProfileApi> learnerProfileApi, AuditEventRepository auditEventRepository,
-            Optional<LearningPathApi> learningPathApi, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
+            UserCourseRoleRepository userCourseRoleRepository, UserRepository userRepository, Optional<LearnerProfileApi> learnerProfileApi,
+            AuditEventRepository auditEventRepository, Optional<LearningPathApi> learningPathApi, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
         this.authCheckService = authCheckService;
         this.enrollmentService = enrollmentService;
         this.courseRepository = courseRepository;
         this.userService = userService;
         this.userCourseRoleRepository = userCourseRoleRepository;
+        this.userRepository = userRepository;
         this.learnerProfileApi = learnerProfileApi;
         this.auditEventRepository = auditEventRepository;
         this.learningPathApi = learningPathApi;
@@ -133,8 +138,7 @@ public class CourseAccessService {
         if (logins == null || logins.isEmpty()) {
             return Set.of();
         }
-        return userCourseRoleRepository.findUsersByCourse_IdAndRole(course.getId(), CourseRole.STUDENT).stream().filter(user -> logins.contains(user.getLogin()))
-                .collect(Collectors.toSet());
+        return new HashSet<>(userRepository.findAllByCourseIdAndRoleAndLoginIn(course.getId(), CourseRole.STUDENT, logins));
     }
 
     /**

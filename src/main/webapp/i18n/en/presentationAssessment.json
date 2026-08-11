@@ -14,6 +14,11 @@
             "maxPoints": "Max. points",
             "resultPoints": "Result",
             "resultPointsExceedMaxPoints": "Result points must not exceed max. points.",
+            "validation": {
+                "numberRequired": "Please enter a number.",
+                "maxPointsMin": "Max. points must be at least 0.01.",
+                "resultPointsMin": "Result must be at least 0."
+            },
             "presentationDate": "Presentation date",
             "noExisting": "There are no presentation assessments for this course yet.",
             "delete": {
