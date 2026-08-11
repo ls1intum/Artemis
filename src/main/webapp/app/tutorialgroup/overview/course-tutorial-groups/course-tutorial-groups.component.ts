@@ -78,14 +78,17 @@ export class CourseTutorialGroupsComponent {
             }
         });
 
-        // Selecting this tab while already on it acts as a refresh
+        // Selecting this tab while already on it acts as a refresh. It goes to the loaders directly rather than through
+        // setTutorialGroupsAndTutorialLectures, which prefers whatever the stored course already holds and would
+        // therefore make the refresh a no-op.
         this.courseTabRefreshService
             .reselections(this.activatedRoute)
             .pipe(takeUntilDestroyed())
             .subscribe(() => {
                 const courseId = this.courseId();
                 if (courseId) {
-                    this.setTutorialGroupsAndTutorialLectures(courseId);
+                    this.loadAndSetTutorialGroups(courseId);
+                    this.loadAndSetTutorialLectures(courseId);
                 }
             });
 
@@ -151,8 +154,6 @@ export class CourseTutorialGroupsComponent {
         const course = this.courseStorageService.getCourse(courseId);
         if (course) {
             course.tutorialGroups = tutorialGroups;
-            // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
-            // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
             this.courseStorageService.updateCourse(course);
         }
     }
