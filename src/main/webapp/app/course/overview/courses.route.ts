@@ -29,7 +29,7 @@ export enum CourseOverviewRoutePath {
 
 /**
  * The child route paths of /courses/:courseId that carry the {@link CourseOverviewGuard} in their
- * canActivate below — keep in sync with the route definitions. Note that the guard's handleReturn
+ * canActivate below — keep in sync with the route definitions. Note that the guard's decideAccess
  * contains rules for additional paths (e.g. communication) that are intentionally NOT guarded here.
  * Child routes outside this set (e.g. statistics, settings, calendar) have no access rule and must
  * never be subjected to the guard's access check.
@@ -107,7 +107,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.exercises',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService],
                 children: [
@@ -118,7 +117,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () =>
@@ -130,7 +128,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -142,7 +139,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -154,7 +150,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -166,7 +161,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -178,7 +172,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -190,7 +183,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
@@ -213,7 +205,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.lectures',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard, LectureGuard],
                 children: [
@@ -223,7 +214,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.lectures',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/lecture/overview/course-lectures/details/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
@@ -236,7 +226,6 @@ export const courseRoutes: Routes = [
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.statistics',
-                    showRefreshButton: true,
                 },
             },
 
@@ -245,7 +234,6 @@ export const courseRoutes: Routes = [
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.competencies',
-                    showRefreshButton: true,
                 },
                 canActivate: [CourseOverviewGuard],
                 children: [
@@ -288,7 +276,6 @@ export const courseRoutes: Routes = [
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.learningPath',
-                    showRefreshButton: true,
                 },
                 canActivate: [CourseOverviewGuard],
             },
@@ -300,7 +287,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.communication',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
             },
             {
@@ -311,7 +297,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.settings',
                     hasSidebar: false,
-                    showRefreshButton: true,
                 },
             },
             {
@@ -321,7 +306,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.tutorialGroups',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
@@ -331,7 +315,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.lectures',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () => import('app/lecture/overview/course-lectures/details/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
@@ -346,7 +329,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.tutorialGroups',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                     },
@@ -359,7 +341,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.exams',
                     hasSidebar: true,
-                    showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
@@ -370,7 +351,6 @@ export const courseRoutes: Routes = [
                             authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exams',
                             hasSidebar: true,
-                            showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
                         canDeactivate: [PendingChangesGuard],
@@ -395,7 +375,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.faq',
                     hasSidebar: false,
-                    showRefreshButton: true,
                 },
                 canActivate: [CourseOverviewGuard],
             },
@@ -406,7 +385,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.training',
                     hasSidebar: false,
-                    showRefreshButton: true,
                 },
                 canActivate: [CourseOverviewGuard],
             },
@@ -431,7 +409,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.calendar',
                     hasSidebar: false,
-                    showRefreshButton: true,
                 },
             },
         ],

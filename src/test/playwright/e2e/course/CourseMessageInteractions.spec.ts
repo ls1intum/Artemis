@@ -5,6 +5,7 @@ import { generateUUID } from '../../support/utils';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { SEED_COURSES, SEED_CHANNELS } from '../../support/seedData';
+import { Commands } from '../../support/commands';
 
 const writeCourse = { id: SEED_COURSES.channel2.id };
 // Use the pre-seeded "random" channel — students are already joined
@@ -51,9 +52,12 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             // re-activate from the conversationId query param after a reload (the conversations-cache activation race
             // that openConversation also works around), leaving an empty view in which the message never renders.
             // Retry the full reload until the message reappears so this assertion tests bookmark persistence rather
-            // than that unrelated activation race.
+            // than that unrelated activation race. Every retry returns to the route captured here: a reload that
+            // drifts to the bare /courses fallback would otherwise poison the remaining attempts, which would
+            // reload the fallback rather than the conversation.
+            const conversationUrl = page.url();
             for (let attempt = 0; attempt < 3; attempt++) {
-                await page.reload();
+                await Commands.reloadAndRestoreRoute(page, conversationUrl);
                 try {
                     await courseMessages.getSinglePost(message.id!).waitFor({ state: 'visible', timeout: 12000 });
                     break;
