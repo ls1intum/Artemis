@@ -69,8 +69,7 @@ class StubTitleChannelNameComponent {
     isValid = signal(true);
 }
 
-// Mock for TitleChannelNameComponent interface. channelFieldDisplayed/titleErrors are plain settable
-// fields so tests can drive both branches of getInvalidReasons per-test.
+// Settable stand-ins so each test can drive both branches of the title/channel wiring.
 class MockTitleChannelNameComponent {
     channelFieldDisplayed = true;
     isChannelFieldDisplayed = () => this.channelFieldDisplayed;
@@ -126,7 +125,6 @@ class StubMarkdownEditorMonacoComponent {
     markdownChange = output<string>();
 }
 
-// Stub for ExerciseFeedbackSuggestionOptionsComponent
 @Component({ selector: 'jhi-exercise-feedback-suggestion-options', template: '' })
 class StubExerciseFeedbackSuggestionOptionsComponent {
     exercise = input<ModelingExercise>();
@@ -713,10 +711,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            // The real viewChild(ExerciseTitleChannelNameComponent) query never matches
-            // StubExerciseTitleChannelNameComponent (a different class registered under the same selector), so it
-            // always resolves to undefined here. Overriding the signal directly - scoped to this describe block's
-            // own component instance only - lets getInvalidReasons() exercise the title/channel-name branches.
+            // The type-based viewChild never matches the selector-registered stub, so override the signal
+            // directly. Scoped to this block's own fixture.
             titleChannelNameComponentMock = new MockTitleChannelNameComponent();
             (comp as unknown as { exerciseTitleChannelNameComponent: unknown }).exerciseTitleChannelNameComponent = () => ({
                 titleChannelNameComponent: () => titleChannelNameComponentMock,

@@ -101,8 +101,6 @@ describe('ExerciseTimeline', () => {
         const status = component.timelineStatus();
 
         expect(status.valid).toBe(false);
-        // The release date is fine; start date is required-but-empty; the assessment due date is both
-        // before the release date and depends on an unset due date — order wins by precedence.
         expect(status.invalidItems).toEqual([
             {
                 labelStringKey: 'artemisApp.exercise.startDate',

@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseUpdateNotificationComponent } from 'app/exercise/exercise-update-notification/exercise-update-notification.component';
@@ -28,6 +29,14 @@ describe('FormFooterComponent', () => {
     afterEach(() => {
         vi.restoreAllMocks();
     });
+
+    const findSubmitTooltipHost = (): DebugElement => {
+        const host = fixture.debugElement.queryAll(By.directive(Tooltip)).find((candidate) => (candidate.nativeElement as HTMLElement).classList.contains('submit-tooltip-host'));
+        if (!host) {
+            throw new Error('expected a tooltip host wrapping the submit button');
+        }
+        return host;
+    };
 
     it('update title depending on input signals', () => {
         fixture.componentRef.setInput('isCreation', true);
@@ -75,27 +84,22 @@ describe('FormFooterComponent', () => {
         expect(comp.invalidReasonsTooltip()).toBe('first.reason\nsecond.reason');
     });
 
-    // A disabled button emits no mouse events, so the tooltip must sit on the wrapper. Attaching it to the button
-    // itself renders it unreachable exactly when it has something to say.
+    // A disabled button emits no mouse events, so attaching the tooltip to the button makes it unreachable.
     it('should attach the tooltip to the wrapper rather than the disabled button', () => {
         fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
         fixture.detectChanges();
 
-        const tooltipHosts = fixture.debugElement.queryAll(By.directive(Tooltip));
-        const submitTooltip = tooltipHosts.find((host) => (host.nativeElement as HTMLElement).classList.contains('submit-tooltip-host'));
+        const submitTooltipHost = findSubmitTooltipHost();
 
-        expect(submitTooltip).toBeTruthy();
-        expect((submitTooltip!.nativeElement as HTMLElement).tagName).not.toBe('BUTTON');
-        expect((submitTooltip!.nativeElement as HTMLElement).querySelector('#save-entity')).toBeTruthy();
+        expect((submitTooltipHost.nativeElement as HTMLElement).tagName).not.toBe('BUTTON');
+        expect((submitTooltipHost.nativeElement as HTMLElement).querySelector('#save-entity')).toBeTruthy();
     });
 
     it('should disable the submit tooltip when the form is valid', () => {
         fixture.componentRef.setInput('invalidReasons', []);
         fixture.detectChanges();
 
-        const submitTooltip = fixture.debugElement.queryAll(By.directive(Tooltip)).find((host) => (host.nativeElement as HTMLElement).classList.contains('submit-tooltip-host'));
-
-        expect(submitTooltip!.injector.get(Tooltip).disabled).toBeTruthy();
+        expect(findSubmitTooltipHost().injector.get(Tooltip).disabled).toBeTruthy();
     });
 
     it('should disable the save button when there are invalid reasons', () => {

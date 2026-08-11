@@ -20,10 +20,7 @@ export interface ExerciseValidationViewState {
     isExampleSolutionPublicationDateInputValid: boolean;
 }
 
-/**
- * Collects every reason the exercise cannot be saved, for the checks that apply to all exercise
- * types. Exercise-type-specific checks are added by the calling component.
- */
+/** The checks every exercise type shares; type-specific ones are added by the calling component. */
 export function getCommonExerciseInvalidReasons(exercise: Exercise, viewState: ExerciseValidationViewState): ValidationReason[] {
     const reasons: ValidationReason[] = [];
 
@@ -41,7 +38,6 @@ export function getCommonExerciseInvalidReasons(exercise: Exercise, viewState: E
     return reasons;
 }
 
-/** Mirrors the mapping used by the programming exercise form. */
 export function getPlagiarismInvalidReasons(plagiarismComponent: ExerciseUpdatePlagiarismComponent | undefined): ValidationReason[] {
     if (!plagiarismComponent || plagiarismComponent.isFormValid()) {
         return [];

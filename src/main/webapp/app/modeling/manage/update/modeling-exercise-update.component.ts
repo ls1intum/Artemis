@@ -268,10 +268,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         ]);
     }
 
-    /**
-     * Every reason the exercise cannot be saved. Drives both the invalid-input badge and the
-     * disabled state of the save button in the form footer.
-     */
+    /** Every reason the exercise cannot be saved; drives the footer's disabled state and its tooltip. */
     getInvalidReasons(): ValidationReason[] {
         if (!this.modelingExercise) {
             return [];
