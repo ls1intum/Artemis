@@ -55,6 +55,6 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
     @Override
     public @NonNull String toString() {
         return "MailRecipientDTO[" + "email='" + email + '\'' + ", langKey='" + langKey + '\'' + ", login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='"
-                + lastName + '\'' + ", activationKey='" + activationKey + '\'' + ", resetKeyId='" + resetKeyId + '\'' + ", resetKeySecret=***]";
+                + lastName + '\'' + ", activationKey=***, resetKeyId='" + resetKeyId + '\'' + ", resetKeySecret=***]";
     }
 }
