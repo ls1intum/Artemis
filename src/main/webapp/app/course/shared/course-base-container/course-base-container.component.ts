@@ -280,6 +280,10 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                         // service is fully set up, now we can subscribe to the respective observables
                         this.subscribeToHasUnreadMessages();
                     },
+                    error: () => {
+                        // Leave the service marked as not instantiated so that a later attempt sets it up again. The error
+                        // itself has already been shown to the user by the service.
+                    },
                 });
         } else if (!this.checkedForUnreadMessages() && isMessagingEnabled(currentCourse)) {
             this.metisConversationService.checkForUnreadMessages(currentCourse);
