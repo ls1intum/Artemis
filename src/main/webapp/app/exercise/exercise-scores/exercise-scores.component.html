@@ -6,7 +6,7 @@
     </ng-template>
 
     <ng-template titleBarActions>
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 border-end pe-2">
             @if (!exercise()!.exerciseGroup) {
                 <a [routerLink]="['/course-management', course()!.id, exercise()!.type + '-exercises', exercise()!.id, 'participations']" class="btn btn-primary btn-sm">
                     <fa-icon [icon]="faListAlt" />
@@ -69,6 +69,10 @@
                     <jhi-exercise-submission-export [exerciseId]="exercise()!.id!" [exerciseType]="exercise()!.type!" class="me-1" />
                 }
             </ng-template>
+            <button class="btn btn-primary btn-sm" (click)="refresh()">
+                <fa-icon [icon]="faSync" />
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh"></span>
+            </button>
         </div>
     </ng-template>
 

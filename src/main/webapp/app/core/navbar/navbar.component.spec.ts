@@ -46,8 +46,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { User } from 'app/account/user/user.model';
-import dayjs from 'dayjs/esm';
-import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
