@@ -32,7 +32,6 @@ describe('MetisConversationService', () => {
     let oneToOneChatService: OneToOneChatService;
     let channelService: ChannelService;
     let websocketService: WebsocketService;
-    let courseManagementService: CourseManagementService;
     let alertService: AlertService;
 
     const course = { id: 1 } as Course;
@@ -63,11 +62,9 @@ describe('MetisConversationService', () => {
         oneToOneChatService = TestBed.inject(OneToOneChatService);
         channelService = TestBed.inject(ChannelService);
         websocketService = TestBed.inject(WebsocketService);
-        courseManagementService = TestBed.inject(CourseManagementService);
         conversationService = TestBed.inject(ConversationService);
         alertService = TestBed.inject(AlertService);
 
-        vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse<Course>({ body: course })));
         vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel] })));
         vi.spyOn(conversationService, 'convertServerDates').mockImplementation((conversation) => conversation);
 

@@ -266,7 +266,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     loadCourse(): Observable<void> {
-        return this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
+        // The management shell only needs the course record. It used to take it from the course dashboard, which also
+        // loads every exercise, participation, submission and result for the requesting instructor and discards them.
+        return this.courseManagementService.find(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.course.set(res.body);

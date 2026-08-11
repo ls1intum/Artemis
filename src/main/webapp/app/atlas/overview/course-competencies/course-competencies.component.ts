@@ -5,6 +5,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Competency, CourseCompetencyType, compareSoftDueDate, getMastery } from 'app/atlas/shared/entities/competency.model';
 import { Subscription } from 'rxjs';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -38,6 +39,8 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     readonly competencies = signal<Competency[]>([]);
     readonly prerequisites = signal<Competency[]>([]);
     parentParamSubscription?: Subscription;
+    private tabReselectionSubscription?: Subscription;
+    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     isCollapsed = true;
     faAngleDown = faAngleDown;
@@ -60,9 +63,12 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         this.course = this.courseStorageService.getCourse(this.resolvedCourseId());
 
         this.loadData();
+        // Selecting this tab while already on it acts as a refresh
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.activatedRoute).subscribe(() => this.loadData());
     }
 
     ngOnDestroy(): void {
+        this.tabReselectionSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
     }
 

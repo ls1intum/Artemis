@@ -123,11 +123,15 @@ import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestReposit
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.dto.CourseAccessStateDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseCreateDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForImportDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.OnlineCourseDTO;
@@ -180,9 +184,11 @@ import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
+import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -1065,6 +1071,265 @@ public class CourseTestService {
         }
     }
 
+    // Test
+    public void testGetCourseAvailableTabs() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        CourseAvailableTabsDTO tabs = request.get("/api/course/courses/" + courses.getFirst().getId() + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class);
+
+        // The created course has lectures and competencies, but no exams visible to the student
+        assertThat(tabs.lectures()).as("lectures tab available").isTrue();
+        assertThat(tabs.competencies()).as("competencies tab available").isTrue();
+        assertThat(tabs.exams()).as("no exam is visible to the student").isFalse();
+        assertThat(tabs.tutorialGroups()).as("no tutorial groups").isFalse();
+        assertThat(tabs.faq()).as("no accepted FAQs").isFalse();
+    }
+
+    // Test
+    public void testGetCourseAvailableTabsWithVisibleExam() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course course = courses.getFirst();
+        // A visible exam the student is registered for must make the exams tab available (the user-scoped visibility check)
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        examUtilService.registerUsersForExamAndSaveExam(exam, userPrefix, 1, 1);
+
+        CourseAvailableTabsDTO tabs = request.get("/api/course/courses/" + course.getId() + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class);
+
+        assertThat(tabs.exams()).as("a visible exam the student is registered for makes the exams tab available").isTrue();
+    }
+
+    // Test
+    public void testGetCourseForOverviewIsLean() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course expected = courses.getFirst();
+
+        CourseForOverviewDTO overview = request.get("/api/course/courses/" + expected.getId() + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class);
+
+        assertThat(overview.id()).isEqualTo(expected.getId());
+        assertThat(overview.title()).isEqualTo(expected.getTitle());
+        // The whole point of this endpoint: it is a flat projection, so none of the expensive content can come along.
+        // Asserting on the serialized response rather than the record, because the record simply has no such fields.
+        String body = request.performMvcRequest(MockMvcRequestBuilders.get("/api/course/courses/" + expected.getId() + "/for-overview")).andReturn().getResponse()
+                .getContentAsString();
+        assertThat(body).as("no content collections are serialized").doesNotContain("\"exercises\":", "\"lectures\":", "\"exams\":", "\"competencies\":", "\"tutorialGroups\":");
+        assertThat(body).as("nor a nested course object").doesNotContain("\"course\":");
+    }
+
+    // Test
+    public void testGetCourseForOverviewForbidden() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(false);
+        unenrollStudent1FromAllCourses();
+        request.get("/api/course/courses/" + course.getId() + "/for-overview", HttpStatus.FORBIDDEN, CourseForOverviewDTO.class);
+    }
+
+    // Test
+    public void testGetCourseExercisesForOverview() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course course = courses.getFirst();
+        ZonedDateTime now = ZonedDateTime.now();
+        User student = userUtilService.getUserByLogin(userPrefix + "student1");
+
+        // Pin every programming action field read by the overview. The graded participation deliberately differs from
+        // the practice participation so the projection cannot accidentally copy the wrong repository.
+        ProgrammingExercise programmingExercise = course.getExercises().stream().filter(ProgrammingExercise.class::isInstance).map(ProgrammingExercise.class::cast).findFirst()
+                .orElseThrow();
+        programmingExercise.setAllowFeedbackRequests(true);
+        programmingExercise.setAllowOnlineEditor(true);
+        programmingExercise.setAllowOfflineIde(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        ProgrammingExerciseStudentParticipation gradedProgrammingParticipation = participationRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .filter(ProgrammingExerciseStudentParticipation.class::isInstance).map(ProgrammingExerciseStudentParticipation.class::cast)
+                .filter(participation -> student.getLogin().equals(participation.getParticipantIdentifier())).filter(participation -> !participation.isPracticeMode()).findFirst()
+                .orElseThrow();
+        String gradedRepositoryUri = "https://vcs.example.org/course/student1.git";
+        gradedProgrammingParticipation.setRepositoryUri(gradedRepositoryUri);
+        gradedProgrammingParticipation.setPresentationScore(100.0);
+        participationRepository.save(gradedProgrammingParticipation);
+
+        // Exercise both participation projections. The common fixture contains only individual exercises, while the
+        // endpoint also has a separate team query and must expose the requesting student's assigned team id.
+        TextExercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, now.minusDays(3), now.plusDays(1), now.plusDays(2));
+        User instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
+        var assignedTeam = teamUtilService.createTeam(Set.of(student), instructor, teamExercise, "overview-team");
+        Result teamRatedResult = participationUtilService.createParticipationSubmissionAndResult(teamExercise.getId(), assignedTeam, teamExercise.getMaxPoints(),
+                teamExercise.getBonusPoints(), 60, true);
+        course.addExercises(teamExercise);
+
+        // Result creation schedules participant-score updates. Let the initial updates finish before changing result
+        // dates, otherwise the rescheduling can interrupt a task while it holds a database connection.
+        await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
+
+        course.getExercises().forEach(exercise -> {
+            exercise.setReleaseDate(now.minusDays(3));
+            exercise.setDueDate(now.minusHours(6));
+            exercise.setAssessmentDueDate(now.minusHours(1));
+        });
+        exerciseRepo.saveAll(course.getExercises());
+        Set<Result> completedResults = course.getExercises().stream().flatMap(exercise -> resultRepo.findAllBySubmissionParticipationExerciseId(exercise.getId()).stream())
+                .collect(Collectors.toSet());
+        completedResults.forEach(result -> result.setCompletionDate(now.minusHours(12)));
+        resultRepo.saveAll(completedResults);
+        await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
+
+        CourseExercisesForOverviewDTO exercises = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+
+        assertThat(exercises.exercises()).as("the course exercises are returned").isNotEmpty();
+        assertThat(exercises.exercises()).allSatisfy(exercise -> {
+            assertThat(exercise.id()).isNotNull();
+            assertThat(exercise.title()).isNotNull();
+            assertThat(exercise.type()).isNotNull();
+        });
+        var projectedTeamExercise = exercises.exercises().stream().filter(exercise -> exercise.id().equals(teamExercise.getId())).findFirst().orElseThrow();
+        assertThat(projectedTeamExercise.teamMode()).isTrue();
+        assertThat(projectedTeamExercise.studentAssignedTeamId()).isEqualTo(assignedTeam.getId());
+        assertThat(projectedTeamExercise.studentAssignedTeamIdComputed()).isTrue();
+
+        var projectedProgrammingExercise = exercises.exercises().stream().filter(exercise -> exercise.id().equals(programmingExercise.getId())).findFirst().orElseThrow();
+        assertThat(projectedProgrammingExercise.allowFeedbackRequests()).as("manual feedback action remains available").isTrue();
+        assertThat(projectedProgrammingExercise.allowOnlineEditor()).as("online editor action remains available").isTrue();
+        assertThat(projectedProgrammingExercise.allowOfflineIde()).as("clone and offline IDE actions remain available").isTrue();
+        assertThat(projectedProgrammingExercise.studentParticipations()).as("graded and practice programming participations are projected").hasSize(2);
+        assertThat(projectedProgrammingExercise.studentParticipations()).filteredOn(participation -> Boolean.FALSE.equals(participation.testRun())).singleElement()
+                .satisfies(participation -> assertThat(participation.repositoryUri()).as("graded repository URI").isEqualTo(gradedRepositoryUri));
+        assertThat(projectedProgrammingExercise.studentParticipations()).filteredOn(participation -> Boolean.TRUE.equals(participation.testRun())).singleElement()
+                .satisfies(participation -> assertThat(participation.repositoryUri()).as("practice repository is not confused with the graded repository").isNull());
+
+        var projectedQuizExercise = exercises.exercises().stream().filter(exercise -> exercise.type() == ExerciseType.QUIZ).findFirst().orElseThrow();
+        assertThat(projectedQuizExercise.quizEnded()).as("past quiz is marked as ended").isTrue();
+        assertThat(projectedQuizExercise.quizBatches()).as("the requesting student's synchronized quiz batch is represented by one minimal marker").singleElement()
+                .satisfies(batch -> assertThat(batch.started()).isTrue());
+        assertThat(projectedQuizExercise.allowOnlineEditor()).as("programming-only fields do not leak onto quizzes").isNull();
+        assertThat(projectedQuizExercise.allowOfflineIde()).as("programming-only fields do not leak onto quizzes").isNull();
+
+        assertThat(exercises.totalScores()).as("the derived scores are returned").isNotNull();
+        assertThat(exercises.totalScores().studentScores().absoluteScore()).as("the projection-backed calculator evaluates a non-zero result").isPositive();
+        assertThat(exercises.totalScores().studentScores().presentationScore()).as("the stateless calculator counts projected basic presentation scores").isEqualTo(1.0);
+
+        // The new endpoint uses database projections and a stateless DTO calculator. Keep its score semantics pinned to
+        // the entity-based endpoint while native clients still use that path.
+        CourseForDashboardDTO dashboard = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        assertThat(exercises.totalScores()).isEqualTo(dashboard.totalScores());
+        assertThat(exercises.textScores()).isEqualTo(dashboard.textScores());
+        assertThat(exercises.programmingScores()).isEqualTo(dashboard.programmingScores());
+        assertThat(exercises.modelingScores()).isEqualTo(dashboard.modelingScores());
+        assertThat(exercises.fileUploadScores()).isEqualTo(dashboard.fileUploadScores());
+        assertThat(exercises.quizScores()).isEqualTo(dashboard.quizScores());
+        assertThat(exercises.participationResults()).containsExactlyInAnyOrderElementsOf(dashboard.participationResults());
+        assertThat(exercises.achievedPointsPerVariantGroup()).isEqualTo(dashboard.achievedPointsPerVariantGroup());
+
+        var programmingGradeBeforePendingSubmission = exercises.participationResults().stream()
+                .filter(result -> result.participationId().equals(gradedProgrammingParticipation.getId())).findFirst().orElseThrow();
+        assertThat(programmingGradeBeforePendingSubmission.score()).as("the existing individual grade is meaningful").isPositive();
+        assertThat(programmingGradeBeforePendingSubmission.rated()).as("the existing individual grade is rated").isTrue();
+        StudentParticipation teamParticipation = (StudentParticipation) teamRatedResult.getSubmission().getParticipation();
+        var teamGradeBeforePendingSubmission = exercises.participationResults().stream().filter(result -> result.participationId().equals(teamParticipation.getId())).findFirst()
+                .orElseThrow();
+        assertThat(teamGradeBeforePendingSubmission.score()).as("the existing team grade matches the fixture").isEqualTo(60.0);
+        assertThat(teamGradeBeforePendingSubmission.rated()).as("the existing team grade is rated").isTrue();
+
+        // A pending build or assessment must not erase the last grade. The newest submissions deliberately have no
+        // result; the score projection must still select the prior rated result for both individual and team modes.
+        ProgrammingSubmission pendingProgrammingSubmission = new ProgrammingSubmission();
+        pendingProgrammingSubmission.setSubmissionDate(now.minusHours(7));
+        pendingProgrammingSubmission.setSubmitted(true);
+        pendingProgrammingSubmission.setParticipation(gradedProgrammingParticipation);
+        Long pendingProgrammingSubmissionId = submissionRepository.save(pendingProgrammingSubmission).getId();
+
+        TextSubmission pendingTeamSubmission = new TextSubmission();
+        pendingTeamSubmission.setSubmissionDate(now.minusHours(7));
+        pendingTeamSubmission.setSubmitted(true);
+        pendingTeamSubmission.setParticipation(teamParticipation);
+        submissionRepository.save(pendingTeamSubmission);
+
+        CourseExercisesForOverviewDTO whileSubmissionsPending = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+
+        assertThat(whileSubmissionsPending.totalScores()).as("a pending submission does not change the total score").isEqualTo(exercises.totalScores());
+        assertThat(whileSubmissionsPending.programmingScores()).as("the individual programming score is retained").isEqualTo(exercises.programmingScores());
+        assertThat(whileSubmissionsPending.textScores()).as("the team text score is retained").isEqualTo(exercises.textScores());
+        assertThat(whileSubmissionsPending.participationResults()).filteredOn(result -> result.participationId().equals(gradedProgrammingParticipation.getId())).singleElement()
+                .as("the complete prior individual grade remains while the newest submission is pending").isEqualTo(programmingGradeBeforePendingSubmission);
+        assertThat(whileSubmissionsPending.participationResults()).filteredOn(result -> result.participationId().equals(teamParticipation.getId())).singleElement()
+                .as("the complete prior team grade remains while the newest submission is pending").isEqualTo(teamGradeBeforePendingSubmission);
+        var programmingWhilePending = whileSubmissionsPending.exercises().stream().filter(exercise -> exercise.id().equals(programmingExercise.getId())).findFirst().orElseThrow();
+        assertThat(programmingWhilePending.studentParticipations()).filteredOn(participation -> Boolean.FALSE.equals(participation.testRun())).singleElement()
+                .satisfies(participation -> assertThat(participation.submissions()).singleElement().satisfies(submission -> {
+                    assertThat(submission.id()).as("the UI still displays the newest pending submission").isEqualTo(pendingProgrammingSubmissionId);
+                    assertThat(submission.results()).as("the result collection is omitted while the newest submission is pending").isNull();
+                }));
+    }
+
+    // Test
+    public void testGetCourseExercisesForOverviewUsesCurrentStudentsQuizBatch() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        ZonedDateTime now = ZonedDateTime.now();
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(now.minusDays(1), now.plusDays(1), QuizMode.INDIVIDUAL, course);
+        quizExercise = exerciseRepo.save(quizExercise);
+        long quizExerciseId = quizExercise.getId();
+
+        QuizBatch otherStudentsStartedBatch = QuizExerciseFactory.generateQuizBatch(quizExercise, now.minusMinutes(5));
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(otherStudentsStartedBatch, quizExercise);
+        QuizSubmission otherStudentsSubmission = new QuizSubmission();
+        otherStudentsSubmission.setQuizBatch(otherStudentsStartedBatch.getId());
+        otherStudentsSubmission.setSubmissionDate(now.minusMinutes(4));
+        otherStudentsSubmission.setSubmitted(false);
+        quizExerciseUtilService.saveQuizSubmission(quizExercise, otherStudentsSubmission, userPrefix + "student2");
+
+        QuizBatch currentStudentsFutureBatch = QuizExerciseFactory.generateQuizBatch(quizExercise, now.plusMinutes(5));
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(currentStudentsFutureBatch, quizExercise);
+        QuizSubmission currentStudentsSubmission = new QuizSubmission();
+        currentStudentsSubmission.setQuizBatch(currentStudentsFutureBatch.getId());
+        currentStudentsSubmission.setSubmissionDate(now);
+        currentStudentsSubmission.setSubmitted(false);
+        quizExerciseUtilService.saveQuizSubmission(quizExercise, currentStudentsSubmission, userPrefix + "student1");
+
+        CourseExercisesForOverviewDTO beforeOwnBatchStarts = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+        var projectedQuizBeforeStart = beforeOwnBatchStarts.exercises().stream().filter(exercise -> exercise.id() == quizExerciseId).findFirst().orElseThrow();
+        assertThat(projectedQuizBeforeStart.quizEnded()).isFalse();
+        assertThat(projectedQuizBeforeStart.quizBatches()).as("another student's started batch is not exposed").isNullOrEmpty();
+        assertThat(projectedQuizBeforeStart.studentParticipations()).as("only the requesting student's participation is exposed").singleElement()
+                .satisfies(participation -> assertThat(participation.id()).isEqualTo(currentStudentsSubmission.getParticipation().getId()));
+
+        currentStudentsFutureBatch.setStartTime(now.minusMinutes(1));
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(currentStudentsFutureBatch, quizExercise);
+
+        CourseExercisesForOverviewDTO afterOwnBatchStarts = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+        var projectedQuizAfterStart = afterOwnBatchStarts.exercises().stream().filter(exercise -> exercise.id() == quizExerciseId).findFirst().orElseThrow();
+        assertThat(projectedQuizAfterStart.quizBatches()).as("the requesting student's started batch is exposed as one minimal marker").singleElement()
+                .satisfies(batch -> assertThat(batch.started()).isTrue());
+    }
+
+    // Test
+    public void testGetCourseExercisesForOverviewForbidden() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        unenrollStudent1FromAllCourses();
+        request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.FORBIDDEN, CourseExercisesForOverviewDTO.class);
+    }
+
+    // Test
+    public void testGetCourseAvailableTabsForbidden() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(false);
+        unenrollStudent1FromAllCourses();
+        request.get("/api/course/courses/" + course.getId() + "/available-tabs", HttpStatus.FORBIDDEN, CourseAvailableTabsDTO.class);
+    }
+
+    // Test
+    public void testGetCourseAvailableTabsForbiddenWithEnrollmentPossible() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        unenrollStudent1FromAllCourses();
+
+        // The container requests available-tabs and for-overview in parallel, so both have to refuse the same way. A
+        // plain access error here reached the user as a danger toast alongside the other request's silent one, and
+        // buried the enrollment offer that a shared course link is supposed to lead to.
+        var response = request.performMvcRequest(get("/api/course/courses/" + course.getId() + "/available-tabs")).andExpect(status().isForbidden()).andReturn().getResponse();
+
+        assertThat(response.getContentAsString()).as("the refusal must offer enrollment").contains("noAccessButCouldEnroll");
+        assertThat(response.getContentAsString()).as("and must stay silent so the client can redirect instead of alerting").contains("skipAlert");
+    }
+
     private Course createCourseWithEnrollmentEnabled(boolean enrollmentEnabled) throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         Course course = courses.getFirst();
@@ -1099,6 +1364,22 @@ public class CourseTestService {
         // remove student from course so that they are not already enrolled (UCR-based unenrollment)
         unenrollStudent1FromAllCourses();
         request.get("/api/course/courses/" + course.getId() + "/for-enrollment", HttpStatus.OK, Course.class);
+    }
+
+    // Test
+    public void testGetCourseAccessStateReportsAccessForEnrolledStudent() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        var accessState = request.get("/api/course/courses/" + course.getId() + "/access-state", HttpStatus.OK, CourseAccessStateDTO.class);
+        assertThat(accessState.hasAccess()).isTrue();
+    }
+
+    // Test
+    public void testGetCourseAccessStateReportsNoAccessWithoutEnrollment() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        unenrollStudent1FromAllCourses();
+        // Not being enrolled is the answer, not an error: the enrollment page asks precisely because it expects it.
+        var accessState = request.get("/api/course/courses/" + course.getId() + "/access-state", HttpStatus.OK, CourseAccessStateDTO.class);
+        assertThat(accessState.hasAccess()).isFalse();
     }
 
     // Test
