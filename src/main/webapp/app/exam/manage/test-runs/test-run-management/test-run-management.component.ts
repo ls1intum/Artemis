@@ -1,7 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
-import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -24,6 +23,8 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
+import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 
 @Component({
     selector: 'jhi-test-run-management',
@@ -54,7 +55,7 @@ export class TestRunManagementComponent implements OnInit {
     exam = signal<Exam | undefined>(undefined);
     isLoading = signal(false);
     isExamStarted = computed(() => this.exam()?.started || false);
-    testRuns = signal<StudentExam[]>([]);
+    testRuns = signal<StudentExamDTO[]>([]);
     instructor = signal<User | undefined>(undefined);
     predicate = signal<string>('id');
     ascending = signal<boolean>(true);
@@ -85,7 +86,7 @@ export class TestRunManagementComponent implements OnInit {
                 const course = this.course()!;
                 course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
                 this.examManagementService.findAllTestRunsForExam(course.id!, this.exam()!.id!).subscribe({
-                    next: (res: HttpResponse<StudentExam[]>) => {
+                    next: (res: HttpResponse<StudentExamDTO[]>) => {
                         this.testRuns.set(res.body!);
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -116,12 +117,12 @@ export class TestRunManagementComponent implements OnInit {
             },
         });
 
-        dialogRef?.onClose.subscribe((testRunConfiguration: StudentExam | undefined) => {
+        dialogRef?.onClose.subscribe((testRunConfiguration: CreateTestRunDTO | undefined) => {
             if (!testRunConfiguration) {
                 return;
             }
             this.examManagementService.createTestRun(this.course()!.id!, this.exam()!.id!, testRunConfiguration).subscribe({
-                next: (response: HttpResponse<StudentExam>) => {
+                next: (response: HttpResponse<StudentExamDTO>) => {
                     if (response.body != undefined) {
                         this.testRuns.update((current) => [...current, response.body!]);
                     }
@@ -152,7 +153,7 @@ export class TestRunManagementComponent implements OnInit {
      * @param _index
      * @param item
      */
-    trackId(_index: number, item: StudentExam) {
+    trackId(_index: number, item: StudentExamDTO) {
         return item.id;
     }
 
