@@ -187,10 +187,15 @@ describe('UserManagementComponent', () => {
             const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
             const confirmSpy = vi.spyOn(confirmation, 'confirm');
             vi.spyOn(userService, 'activate').mockReturnValue(of(new HttpResponse<User>({ body: { id: 7, activated: true } as User })));
+            // setActive reloads the list once the request answers, and the reload reads the search form. This component
+            // was never initialised here, so without stubbing the reload it throws after the test body has finished -
+            // which surfaces as an unhandled error rather than a failing assertion, and fails the whole vitest run.
+            const loadAllSpy = vi.spyOn(component, 'loadAll').mockImplementation(() => undefined);
 
             await component.setActive({ id: 7, activated: false } as User, true);
 
             expect(confirmSpy).not.toHaveBeenCalled();
+            expect(loadAllSpy).toHaveBeenCalledOnce();
         });
 
         it('should deactivate user and reload list', async () => {
