@@ -197,10 +197,16 @@ export class UserManagementUpdateComponent implements OnInit {
             updatedUser.revokeCredentials = !!updatedUser.password && this.revokeCredentials();
         }
 
+        // Deactivating an active account also revokes every credential, in UserCreationService.updateUser and regardless
+        // of the checkbox, so clearing "Activated" and saving deletes all passkeys, keys and tokens too. Confirming only
+        // the checkbox left that path silent, which is the more surprising of the two: the administrator was not asked
+        // about credentials at all.
+        const deactivating = this.user().id !== undefined && this.user().activated && !updatedUser.activated;
+
         // Confirmed before saving, and before the spinner starts, because this deletes another person's authenticators
         // and keys irreversibly. An administrator has no way to notice a mistyped click here the way the owner would, so
         // this is the site that most needs the question asked. A save that revokes nothing is not interrupted.
-        if (updatedUser.revokeCredentials) {
+        if (updatedUser.revokeCredentials || deactivating) {
             const confirmed = await this.credentialRevocationConfirmationService.confirm({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
             if (!confirmed) {
                 return;

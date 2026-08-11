@@ -314,6 +314,27 @@ describe('UserManagementUpdateComponent', () => {
             expect(component.isSaving()).toBe(false);
         });
 
+        it('should ask before deactivating an active user, because that revokes every credential', async () => {
+            // UserCreationService.updateUser revokes everything for a deactivation regardless of the checkbox, so a save
+            // with Activated cleared deletes all passkeys, keys and tokens. Confirming only the checkbox left that silent.
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            const confirmSpy = vi.spyOn(confirmation, 'confirm').mockResolvedValue(false);
+            const updateSpy = vi.spyOn(adminUserService, 'update');
+            const existingUser = new User(123);
+            existingUser.activated = true;
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            component.editForm.patchValue({ activated: false });
+
+            await component.save();
+
+            expect(confirmSpy).toHaveBeenCalledExactlyOnceWith({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(component.isSaving()).toBe(false);
+        });
+
         it('should not ask when a save revokes nothing', async () => {
             const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
             const confirmSpy = vi.spyOn(confirmation, 'confirm');

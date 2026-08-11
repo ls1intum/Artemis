@@ -3,6 +3,7 @@
  * Tests the main user management list view with filtering, sorting, and CRUD operations.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subscription, of } from 'rxjs';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -70,6 +71,7 @@ describe('UserManagementComponent', () => {
         await TestBed.configureTestingModule({
             imports: [UserManagementComponent],
             providers: [
+                { provide: CredentialRevocationConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
                 { provide: ActivatedRoute, useValue: mockRoute },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
@@ -153,7 +155,7 @@ describe('UserManagementComponent', () => {
             await vi.advanceTimersByTimeAsync(1000);
 
             const activateSpy = vi.spyOn(userService, 'activate').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
-            component.setActive(testUser, true);
+            await component.setActive(testUser, true);
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(userService.activate).toHaveBeenCalledWith(testUser.id);
@@ -167,6 +169,30 @@ describe('UserManagementComponent', () => {
     });
 
     describe('setInactive', () => {
+        it('should not deactivate a user when the credential-revocation confirmation is dismissed', async () => {
+            // Deactivating revokes every credential of the account, so a dismissal has to leave the account alone entirely.
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            vi.spyOn(confirmation, 'confirm').mockResolvedValue(false);
+            const deactivateSpy = vi.spyOn(userService, 'deactivate');
+            const user = { id: 7, activated: true } as User;
+
+            await component.setActive(user, false);
+
+            expect(deactivateSpy).not.toHaveBeenCalled();
+            expect(user.activated).toBe(true);
+        });
+
+        it('should not ask for confirmation when activating a user', async () => {
+            // Activating deletes nothing.
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            const confirmSpy = vi.spyOn(confirmation, 'confirm');
+            vi.spyOn(userService, 'activate').mockReturnValue(of(new HttpResponse<void>()));
+
+            await component.setActive({ id: 7, activated: false } as User, true);
+
+            expect(confirmSpy).not.toHaveBeenCalled();
+        });
+
         it('should deactivate user and reload list', async () => {
             vi.useFakeTimers();
 
@@ -187,7 +213,7 @@ describe('UserManagementComponent', () => {
             await vi.advanceTimersByTimeAsync(1000);
 
             const deactivateSpy = vi.spyOn(userService, 'deactivate').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
-            component.setActive(testUser, false);
+            await component.setActive(testUser, false);
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(userService.deactivate).toHaveBeenCalledWith(testUser.id);
