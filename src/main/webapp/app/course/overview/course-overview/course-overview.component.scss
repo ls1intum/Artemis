@@ -1,1 +1,5 @@
 @import '../../shared/course-base-container/course-base-container.component';
+
+.layout-container:not(.exam-wrapper) {
+    padding-top: var(--spacing-divider);
+}

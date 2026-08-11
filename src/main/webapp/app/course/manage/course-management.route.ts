@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TutorialGroupManagementCourseResolver } from 'app/tutorialgroup/manage/service/tutorial-group-management-course-resolver.service';
 import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
@@ -53,6 +53,13 @@ export const courseManagementRoutes: Routes = [
             usesModuleBackground: false,
         },
         children: [
+            {
+                path: ':courseId/exercises/:exerciseId/teams',
+                loadChildren: () => import('app/exercise/team/team.route').then((m) => m.teamRoute),
+                data: {
+                    authorities: IS_AT_LEAST_STUDENT,
+                },
+            },
             {
                 path: ':courseId',
                 loadComponent: () => import('./detail/course-detail.component').then((m) => m.CourseDetailComponent),
