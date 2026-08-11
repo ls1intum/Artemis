@@ -343,21 +343,6 @@
                             @if (isSaving()) {
                                 <span class="save-status save-status--pending" jhiTranslate="artemisApp.quizExercise.edit.saving"></span>
                             }
-                            <ng-template #tooltipTranslate>
-                                @for (reason of invalidReasons(); track reason) {
-                                    <div>
-                                        @if ((reason.translateValues | json) !== '{}') {
-                                            <p
-                                                jhiTranslate="{{ reason.translateKey }}"
-                                                [translateValues]="{ index: reason.translateValues.index, threshold: reason.translateValues.threshold }"
-                                            ></p>
-                                        }
-                                        @if ((reason.translateValues | json) === '{}') {
-                                            <p jhiTranslate="{{ reason.translateKey }}"></p>
-                                        }
-                                    </div>
-                                }
-                            </ng-template>
                             <ng-template #warningTranslate>
                                 @for (warning of invalidWarnings(); track warning) {
                                     <div>
@@ -370,13 +355,6 @@
                                     </div>
                                 }
                             </ng-template>
-                            @if (!quizIsValid()) {
-                                <span class="save-status save-status--invalid" [ngbTooltip]="tooltipTranslate" placement="top auto">
-                                    <fa-icon [icon]="faExclamationCircle" class="me-1" />
-                                    <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
-                                    <span>({{ invalidReasons().length }})</span>
-                                </span>
-                            }
                             @if (warningQuizCache()) {
                                 <span class="save-status save-status--warning" [ngbTooltip]="warningTranslate" placement="top auto">
                                     <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
@@ -412,18 +390,19 @@
                                     <span jhiTranslate="entity.action.re-evaluate"></span>
                                 </button>
                             }
-                            <button
-                                id="quiz-save"
-                                class="footer-save-btn"
-                                (click)="validateItemLimit()"
-                                [disabled]="isSaveDisabled()"
-                                [ngbTooltip]="!quizExercise().isEditable ? saveButtonTooltip : !quizIsValid() ? tooltipTranslate : ''"
-                                tooltip-placement="top-right auto"
-                                tooltip-class="invalid-reasons-tooltip"
+                            <!-- A disabled button emits no mouse events, so the tooltip has to live on this wrapper. -->
+                            <span
+                                class="submit-tooltip-host"
+                                [pTooltip]="saveTooltip()"
+                                [tooltipDisabled]="!saveTooltip()"
+                                tooltipPosition="top"
+                                tooltipStyleClass="invalid-reasons-tooltip"
                             >
-                                <fa-icon [icon]="faFloppyDisk" class="me-1" />
-                                <span jhiTranslate="entity.action.save"></span>
-                            </button>
+                                <button id="quiz-save" class="footer-save-btn" (click)="validateItemLimit()" [disabled]="isSaveDisabled()">
+                                    <fa-icon [icon]="faFloppyDisk" class="me-1" />
+                                    <span jhiTranslate="entity.action.save"></span>
+                                </button>
+                            </span>
                         </div>
                     </div>
                 </div>

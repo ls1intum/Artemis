@@ -2335,4 +2335,39 @@ describe('QuizExerciseUpdateComponent', () => {
             expect((comp.quizExercise().quizQuestions?.[3] as MultipleChoiceQuestion).singleChoice).toBe(true);
         });
     });
+    describe('saveTooltip', () => {
+        beforeEach(() => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.isEditable = true;
+            comp.quizExercise.set(exercise);
+        });
+
+        it('should be empty for a valid, editable quiz so the tooltip stays hidden', () => {
+            comp.quizIsValid.set(true);
+            comp.invalidReasons.set([]);
+
+            expect(comp.saveTooltip()).toBe('');
+        });
+
+        it('should list the validation reasons for an invalid quiz', () => {
+            comp.quizIsValid.set(false);
+            comp.invalidReasons.set([
+                { translateKey: 'first.reason', translateValues: {} },
+                { translateKey: 'second.reason', translateValues: {} },
+            ]);
+
+            expect(comp.saveTooltip()).toBe('first.reason\nsecond.reason');
+        });
+
+        it('should explain an uneditable quiz in preference to the validation reasons', () => {
+            const exercise = comp.quizExercise();
+            exercise.isEditable = false;
+            exercise.quizEnded = true;
+            comp.quizExercise.set(exercise);
+            comp.quizIsValid.set(false);
+            comp.invalidReasons.set([{ translateKey: 'first.reason', translateValues: {} }]);
+
+            expect(comp.saveTooltip()).toBe('artemisApp.quizExercise.edit.editNotPossibleAfterEnd');
+        });
+    });
 });

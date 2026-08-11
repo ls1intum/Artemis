@@ -280,7 +280,6 @@
             "cancel": "Cancel",
             "confirm": "Confirm",
             "refresh": "Refresh",
-            "invalidInput": "Invalid Input",
             "requiredLabel": "* required"
         },
         "messages": {

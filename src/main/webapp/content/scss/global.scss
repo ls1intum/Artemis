@@ -1647,6 +1647,11 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     white-space: pre-line;
 }
 
+// Wrapper that carries the tooltip for a submit button, because a disabled button emits no mouse events.
+.submit-tooltip-host {
+    display: inline-flex;
+}
+
 // Tooltip listing why a submit button is disabled, on exercise and quiz forms (portaled to <body>).
 .invalid-reasons-tooltip .p-tooltip-text {
     max-width: 420px;

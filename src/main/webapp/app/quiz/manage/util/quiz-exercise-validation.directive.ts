@@ -1,4 +1,5 @@
-import { Directive, inject, signal } from '@angular/core';
+import { Directive, computed, inject, signal } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -31,6 +32,15 @@ export abstract class QuizExerciseValidationDirective {
 
     readonly invalidReasons = signal<ValidationReason[]>([]);
     readonly invalidWarnings = signal<ValidationReason[]>([]);
+
+    private readonly validationTranslateService = inject(TranslateService);
+
+    /** One reason per line, rendered on the wrapper around the save button so it stays reachable while it is disabled. */
+    readonly invalidReasonsTooltip = computed<string>(() =>
+        this.invalidReasons()
+            .map((reason) => this.validationTranslateService.instant(reason.translateKey, reason.translateValues))
+            .join('\n'),
+    );
 
     protected invalidFlaggedQuestions: InvalidFlaggedQuestions = {};
     readonly pendingChangesCache = signal<boolean>(false);

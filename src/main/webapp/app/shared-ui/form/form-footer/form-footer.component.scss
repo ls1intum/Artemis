@@ -19,12 +19,6 @@
     min-width: 40px;
 }
 
-// The wrapper carries the tooltip because a disabled button emits no mouse events.
-// The tooltip itself is portaled to <body>, so it is styled in global.scss.
-.submit-tooltip-host {
-    display: inline-flex;
-}
-
 :host ::ng-deep .footer-action-button .p-button-loading-icon {
     align-self: center;
     line-height: 1;

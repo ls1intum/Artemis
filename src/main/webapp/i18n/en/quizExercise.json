@@ -109,7 +109,6 @@
             "edit": {
                 "title": "Edit Quiz Exercise for {{ param }}",
                 "addQuestion": "Add Question",
-                "invalidInput": "Invalid Input",
                 "warning": "Warning",
                 "pendingChanges": "Unsaved Changes",
                 "saving": "Saving...",

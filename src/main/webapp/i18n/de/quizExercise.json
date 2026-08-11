@@ -109,7 +109,6 @@
             "edit": {
                 "title": "Quiz für {{ param }} bearbeiten",
                 "addQuestion": "Frage hinzufügen",
-                "invalidInput": "Ungültige Eingabe",
                 "warning": "Warnung",
                 "pendingChanges": "Ungespeicherte Änderungen",
                 "saving": "Speichern...",

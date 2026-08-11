@@ -3,6 +3,7 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { QuizReEvaluateWarningComponent } from './warning/quiz-re-evaluate-warning.component';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
@@ -17,7 +18,7 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import { faExclamationCircle, faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -39,6 +40,7 @@ import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/quiz/manage/re-ev
         FaIconComponent,
         FormsModule,
         NgbTooltip,
+        TooltipModule,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
         ReEvaluateDragAndDropQuestionComponent,
@@ -65,7 +67,6 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
 
     // Icons
     faUndo = faUndo;
-    faExclamationCircle = faExclamationCircle;
     faExclamationTriangle = faExclamationTriangle;
 
     ngOnInit(): void {

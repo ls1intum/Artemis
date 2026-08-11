@@ -16,6 +16,7 @@ import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-qu
 import { TranslateService } from '@ngx-translate/core';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -39,7 +40,6 @@ import {
     faArrowLeft,
     faCircleNotch,
     faClock,
-    faExclamationCircle,
     faFloppyDisk,
     faGear,
     faGraduationCap,
@@ -97,6 +97,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
         CompetencySelectionPrimengComponent,
         QuizQuestionListEditComponent,
         NgbTooltip,
+        TooltipModule,
         FaIconComponent,
         ArtemisTranslatePipe,
         RouterLink,
@@ -178,7 +179,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     // Icons
     faPlus = faPlus;
     faXmark = faXmark;
-    faExclamationCircle = faExclamationCircle;
     faArrowLeft = faArrowLeft;
     faWrench = faWrench;
     faWandMagicSparkles = faWandMagicSparkles;
@@ -916,6 +916,14 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         }
         return '';
     }
+
+    /** Why the save button is disabled: an uneditable quiz takes precedence, otherwise the validation reasons. */
+    readonly saveTooltip = computed<string>(() => {
+        if (!this.quizExercise()?.isEditable) {
+            return this.saveButtonTooltip;
+        }
+        return this.quizIsValid() ? '' : this.invalidReasonsTooltip();
+    });
 
     hasErrorInQuizBatches(): boolean {
         return !!this.quizExercise()?.quizBatches?.some((batch) => batch.startTimeError);
