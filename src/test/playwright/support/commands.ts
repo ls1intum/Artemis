@@ -107,6 +107,23 @@ export class Commands {
     };
 
     /**
+     * Whether the page currently sits on the route that was asked for.
+     * <p>
+     * Only the path is compared. A reload re-bootstraps the app, and several pages rewrite their own query
+     * parameters afterwards, so requiring the full URL to match would report a failed restore for a page that
+     * did come back correctly. The path is what distinguishes the requested route from the `/courses`
+     * fallback, from an authentication redirect, and from anywhere else the router may land.
+     *
+     * @param requestedUrl the url the caller asked for, absolute or relative
+     * @param currentUrl   the url the page is on now
+     */
+    static isOnRequestedRoute(requestedUrl: string, currentUrl: string): boolean {
+        const withoutTrailingSlash = (path: string) => (path.length > 1 ? path.replace(/\/$/, '') : path);
+        const requestedAbsolute = requestedUrl.startsWith('http') ? new URL(requestedUrl) : new URL(requestedUrl, currentUrl);
+        return withoutTrailingSlash(requestedAbsolute.pathname) === withoutTrailingSlash(new URL(currentUrl).pathname);
+    }
+
+    /**
      * Detects the specific lazy-chunk-load fallback where Angular routes the page to a bare
      * `/courses` after a navigation to a different intended URL. Returns true only when
      * the caller-requested URL was NOT itself the bare `/courses` and the current URL has
@@ -290,13 +307,16 @@ export class Commands {
      * from a page that merely finished loading, so that is what this waits on.
      */
     static restoreRouteIfDrifted = async (page: Page, expectedUrl: string): Promise<boolean> => {
-        if (!Commands.driftedToCoursesFallback(expectedUrl, page.url())) {
+        if (Commands.isOnRequestedRoute(expectedUrl, page.url())) {
             return true;
         }
+        // Deliberately not "anything that is not the fallback": an authentication redirect, or any other route
+        // the app decides on, would otherwise be reported as a successful restore, and the caller would keep
+        // polling for route-specific content that cannot appear there.
         await page.goto(expectedUrl);
         await page.waitForLoadState('load');
         return page
-            .waitForURL((url) => !Commands.driftedToCoursesFallback(expectedUrl, url.toString()), { timeout: Commands.ROUTE_RESTORE_TIMEOUT })
+            .waitForURL((url) => Commands.isOnRequestedRoute(expectedUrl, url.toString()), { timeout: Commands.ROUTE_RESTORE_TIMEOUT })
             .then(() => true)
             .catch(() => false);
     };
