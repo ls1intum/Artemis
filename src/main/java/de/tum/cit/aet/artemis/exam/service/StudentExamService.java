@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
@@ -45,6 +46,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.util.SubmissionComparisonUtil;
@@ -53,6 +55,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -123,6 +126,8 @@ public class StudentExamService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final ExamRepository examRepository;
 
     private final CacheManager cacheManager;
@@ -130,6 +135,8 @@ public class StudentExamService {
     private final WebsocketMessagingService websocketMessagingService;
 
     private final TaskScheduler scheduler;
+
+    private final StudentExamSubmitMapper studentExamSubmitMapper;
 
     /**
      * Maximum number of Athena feedback requests a student may accumulate across all of their submitted test-exam
@@ -143,8 +150,8 @@ public class StudentExamService {
             Optional<ModelingSubmissionApi> modelingSubmissionApi, Optional<TextFeedbackApi> textFeedbackApi, Optional<ModelingFeedbackApi> modelingFeedbackApi,
             SubmissionVersionService submissionVersionService, SubmissionService submissionService, StudentParticipationRepository studentParticipationRepository,
             ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService,
-            ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            ExamService examService) {
+            ExerciseRepository exerciseRepository, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
+            @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -160,11 +167,30 @@ public class StudentExamService {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingTriggerService = programmingTriggerService;
+        this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.cacheManager = cacheManager;
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
         this.examService = examService;
+        this.studentExamSubmitMapper = studentExamSubmitMapper;
+    }
+
+    /**
+     * Reconstructs the transient submission graph from the slim client DTO onto the authoritative student exam and then
+     * submits it. This is the single service entry point for the hand-in endpoint, so the controller does not need to
+     * depend on the reconstruction mapper directly.
+     * <p>
+     * The per-exercise degrade semantics of the reconstruction are owned by {@link StudentExamSubmitMapper} and left
+     * unchanged: a broken exercise drops only its own last-second changes while the hand-in still succeeds.
+     *
+     * @param existingStudentExam  the student exam loaded from the database (with its exercises)
+     * @param submitStudentExamDTO the slim request body carrying the last-second submission changes
+     * @param currentUser          the current user
+     */
+    public void submitStudentExam(StudentExam existingStudentExam, SubmitStudentExamDTO submitStudentExamDTO, User currentUser) {
+        studentExamSubmitMapper.attachSubmissions(existingStudentExam, submitStudentExamDTO, currentUser);
+        submitStudentExam(existingStudentExam, currentUser);
     }
 
     /**
@@ -293,8 +319,13 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
+        // StudentExam.exercises is an @OrderColumn list, so Hibernate materializes a null for every gap in
+        // exercise_order. A null passes an `instanceof` filter, so without the explicit null check the gap would reach
+        // the participation query below (which is not covered by the per-exercise catch) and cost every exercise its
+        // last-second changes.
+        var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
         // we only need to save submissions for modeling, text and quiz exercises;
-        var relevantExercises = studentExam.getExercises().stream().filter(ex -> !(ex instanceof ProgrammingExercise) && !(ex instanceof FileUploadExercise)).toList();
+        var relevantExercises = exercises.stream().filter(ex -> !(ex instanceof ProgrammingExercise) && !(ex instanceof FileUploadExercise)).toList();
         if (relevantExercises.isEmpty()) {
             // nothing to save
             return;
@@ -302,7 +333,7 @@ public class StudentExamService {
         // 4. DB Call: read
         List<StudentParticipation> existingRelevantParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam, relevantExercises);
 
-        for (Exercise exercise : studentExam.getExercises()) {
+        for (Exercise exercise : exercises) {
             // we do not apply the following checks for programming exercises or file upload exercises
             try {
                 saveSubmission(currentUser, existingRelevantParticipations, exercise);
@@ -558,28 +589,59 @@ public class StudentExamService {
 
     /**
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
-     * Calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
+     * Resolves the exercise ids, then calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
      *
-     * @param testRunConfiguration the configured studentExam
+     * @param exam        the exam the test run belongs to
+     * @param exerciseIds the ids of the exercises to include in the test run, in the exact order they should be persisted
+     * @param workingTime the working time of the test run in seconds
      * @return the created testRun studentExam
      */
-    public StudentExam createTestRun(StudentExam testRunConfiguration) {
-        StudentExam testRun = generateTestRun(testRunConfiguration);
+    public StudentExam createTestRun(Exam exam, List<Long> exerciseIds, Integer workingTime) {
+        List<Exercise> exercises = resolveExamExercises(exam, exerciseIds);
+        StudentExam testRun = generateTestRun(exam, exercises, workingTime);
         setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
         return testRun;
     }
 
     /**
+     * Loads the given exercises with a single query and returns them in the order of the given ids
+     * (StudentExam.exercises is an @OrderColumn list, so the order must be preserved).
+     * A test run may only contain exercises of the exam it belongs to; any other exercise id is rejected.
+     *
+     * @param exam        the exam the exercises must belong to
+     * @param exerciseIds the ordered ids of the exercises to load
+     * @return the exercises in the order of the given ids
+     */
+    private List<Exercise> resolveExamExercises(Exam exam, List<Long> exerciseIds) {
+        Map<Long, Exercise> exercisesById = exerciseRepository.findAllById(exerciseIds).stream().collect(Collectors.toMap(Exercise::getId, Function.identity()));
+        List<Exercise> exercises = new ArrayList<>(exerciseIds.size());
+        for (Long exerciseId : exerciseIds) {
+            Exercise exercise = exercisesById.get(exerciseId);
+            if (exercise == null) {
+                throw new EntityNotFoundException("Exercise", exerciseId);
+            }
+            Exam exerciseExam = exercise.getExam();
+            if (exerciseExam == null || !exerciseExam.getId().equals(exam.getId())) {
+                throw new ConflictException("The exercise does not belong to the exam", "Exercise", "exerciseExamConflict");
+            }
+            exercises.add(exercise);
+        }
+        return exercises;
+    }
+
+    /**
      * Create TestRun student exam based on the configuration provided.
      *
-     * @param testRunConfiguration Contains the exercises and working time for this test run
+     * @param exam        the exam the test run belongs to
+     * @param exercises   the exercises to include in the test run, in the exact order they should be persisted
+     * @param workingTime the working time of the test run in seconds
      * @return The created test run
      */
-    private StudentExam generateTestRun(StudentExam testRunConfiguration) {
+    private StudentExam generateTestRun(Exam exam, List<Exercise> exercises, Integer workingTime) {
         StudentExam testRun = new StudentExam();
-        testRun.setExercises(testRunConfiguration.getExercises());
-        testRun.setExam(testRunConfiguration.getExam());
-        testRun.setWorkingTime(testRunConfiguration.getWorkingTime());
+        testRun.setExercises(exercises);
+        testRun.setExam(exam);
+        testRun.setWorkingTime(workingTime);
         testRun.setUser(userRepository.getUser());
         testRun.setTestRun(true);
         testRun.setSubmitted(false);

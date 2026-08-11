@@ -283,4 +283,16 @@ public class StudentExam extends AbstractAuditingEntity {
         }
     }
 
+    /**
+     * The single gate for whether quiz solutions may go on the wire for this student exam: test runs are exempt from
+     * masking (the instructor testing the exam already knows the solutions), otherwise solutions are revealed only
+     * once the results are published (see {@link #areResultsPublishedYet()}).
+     *
+     * @return true if quiz solutions may be revealed
+     */
+    @JsonIgnore
+    public boolean shouldRevealQuizSolutions() {
+        return isTestRun() || areResultsPublishedYet();
+    }
+
 }

@@ -13,6 +13,7 @@ import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/exercise/shar
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -471,6 +472,13 @@ export class CourseOverviewService {
         return conversations.map((conversation) => this.mapConversationToSidebarCardElement(course, conversation));
     }
 
+    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExamOrDTO[], indices?: number[]) {
+        if (attempts && indices) {
+            return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
+        }
+        return undefined;
+    }
+
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {
         return {
             title: lecture.title ?? '',
@@ -580,7 +588,7 @@ export class CourseOverviewService {
         };
     }
 
-    mapAttemptToSidebarCardElement(attempt: StudentExam, index: number): SidebarCardElement {
+    mapAttemptToSidebarCardElement(attempt: StudentExamOrDTO, index: number): SidebarCardElement {
         return {
             title: attempt.exam!.title ?? '',
             id: attempt.exam!.id + '/test-exam/' + attempt.id,
@@ -692,7 +700,7 @@ export class CourseOverviewService {
         this.localStorageService.store<boolean>('sidebar.collapseState.' + storageId, isCollapsed);
     }
 
-    calculateUsedWorkingTime(studentExam: StudentExam): number {
+    calculateUsedWorkingTime(studentExam: StudentExamOrDTO): number {
         let usedWorkingTime = 0;
         if (!isRealExam(studentExam.exam) && studentExam.started && studentExam.submitted && studentExam.workingTime && studentExam.startedDate && studentExam.submissionDate) {
             const regularExamDuration = studentExam.workingTime;

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exam.util.SubmissionComparisonUtil;
+import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -41,14 +41,14 @@ class ModelingComparisonTest {
         var submission5 = ModelingExerciseFactory.generateModelingExerciseSubmission(modelingExercise, null, null);
         var submission6 = ModelingExerciseFactory.generateModelingExerciseSubmission(modelingExercise, null, null);
 
-        assertThat(SubmissionComparisonUtil.isContentEqualTo(submission1, submission2)).isTrue();  // submission with same model and explanation
-        assertThat(SubmissionComparisonUtil.isContentEqualTo(submission1, submission3)).isFalse(); // submission with different model, but the same explanation
-        assertThat(SubmissionComparisonUtil.isContentEqualTo(submission3, submission4)).isFalse(); // submission with same model, but different explanation
-        assertThat(SubmissionComparisonUtil.isContentEqualTo(submission3, submission5)).isFalse();
-        assertThat(SubmissionComparisonUtil.isContentEqualTo(submission5, submission6)).isTrue();  // both submission with null model
+        assertThat(ExamSubmissionService.isContentEqualTo(submission1, submission2)).isTrue();  // submission with same model and explanation
+        assertThat(ExamSubmissionService.isContentEqualTo(submission1, submission3)).isFalse(); // submission with different model, but the same explanation
+        assertThat(ExamSubmissionService.isContentEqualTo(submission3, submission4)).isFalse(); // submission with same model, but different explanation
+        assertThat(ExamSubmissionService.isContentEqualTo(submission3, submission5)).isFalse();
+        assertThat(ExamSubmissionService.isContentEqualTo(submission5, submission6)).isTrue();  // both submission with null model
 
-        assertThat(SubmissionComparisonUtil.isContentEqualTo(submission2, null)).isFalse(); // one submission null
-        assertThat(SubmissionComparisonUtil.isContentEqualTo(null, submission5)).isFalse();  // one submission null, other null model
-        assertThat(SubmissionComparisonUtil.isContentEqualTo((ModelingSubmission) null, null)).isTrue(); // both submissions null
+        assertThat(ExamSubmissionService.isContentEqualTo(submission2, null)).isFalse(); // one submission null
+        assertThat(ExamSubmissionService.isContentEqualTo(null, submission5)).isFalse();  // one submission null, other null model
+        assertThat(ExamSubmissionService.isContentEqualTo((ModelingSubmission) null, null)).isTrue(); // both submissions null
     }
 }
