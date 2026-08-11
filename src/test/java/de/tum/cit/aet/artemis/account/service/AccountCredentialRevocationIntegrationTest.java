@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -22,6 +23,10 @@ import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
+import de.tum.cit.aet.artemis.admin.service.AuditEventService;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.config.audit.AuditLogType;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -56,6 +61,12 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private SecurityAuditEventRepository securityAuditEventRepository;
+
+    @Autowired
+    private AuditEventService auditEventService;
 
     @Autowired
     private UserCreationService userCreationService;
@@ -140,6 +151,60 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     /**
      * Gives the account one of each persisted credential category this service revokes.
      */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void revokingThroughTheEndpointRemovesOnlyTheSelectedTypes() throws Exception {
+        giveUserCredentials();
+
+        request.postWithoutLocation("/api/account/revoke-credentials", new CredentialRevocationChoiceDTO(false, true, false), HttpStatus.OK, null);
+
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+        assertVcsAccessTokensKept();
+        assertPasskeyKept();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void anExternalUserCanRevokeTheirOwnCredentials() throws Exception {
+        // The reason this endpoint exists. An external user cannot change their password here at all, so the revocation
+        // offered alongside a password change is unreachable for them and this is their only route to it.
+        giveUserCredentials();
+        user.setInternal(false);
+        userRepository.save(user);
+
+        request.postWithoutLocation("/api/account/revoke-credentials", new CredentialRevocationChoiceDTO(true, true, true), HttpStatus.OK, null);
+
+        assertAllCredentialsRevoked();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void revokingNothingIsRejected() throws Exception {
+        // A request that selects nothing is a client defect rather than a no-op worth accepting silently.
+        giveUserCredentials();
+
+        request.postWithoutLocation("/api/account/revoke-credentials", CredentialRevocationChoiceDTO.none(), HttpStatus.BAD_REQUEST, null);
+
+        assertAllCredentialsKept();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void revokingThroughTheEndpointIsRecordedForAdministrators() throws Exception {
+        giveUserCredentials();
+        securityAuditEventRepository.deleteAll();
+
+        request.postWithoutLocation("/api/account/revoke-credentials", new CredentialRevocationChoiceDTO(true, false, false), HttpStatus.OK, null);
+
+        // The audit event is how an administrator reconstructs afterwards that the owner did this to their own account.
+        // Only the type and the principal are asserted here: `data` is a lazy element collection that cannot be read
+        // outside a session, and AccountSecurityNotificationServiceTest already pins its contents exactly.
+        assertThat(securityAuditEventRepository.findAll()).anySatisfy(event -> {
+            assertThat(event.getAuditEventType()).isEqualTo(Constants.REVOKE_OWN_CREDENTIALS);
+            assertThat(event.getPrincipal()).isEqualTo(user.getLogin());
+        });
+    }
+
     private void giveUserCredentials() {
         // Cleared first: the fixture user is reused across the tests in this class, so a test that deliberately leaves a
         // credential in place would otherwise make a later test see two of them.
@@ -424,6 +489,35 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         assertThat(reloadUser().getActivated()).isFalse();
         assertAllCredentialsRevoked();
+    }
+
+    /**
+     * Regression test: deactivating and changing the password in one update revokes everything through the deactivation
+     * branch, so the notification has to say so. Keying the message off the revoke-credentials checkbox alone told the
+     * user their keys and tokens had been kept while they had in fact just been deleted.
+     */
+    @Test
+    void deactivatingWhileChangingThePasswordReportsThatEverythingWasRevoked() {
+        giveUserCredentials();
+        securityAuditEventRepository.deleteAll();
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setActivated(false);
+        update.setPassword("new-Password-123");
+        // Deliberately not selected: the deactivation is what revokes here, and the report must follow the effect rather
+        // than the checkbox.
+        update.setRevokeCredentials(false);
+        userCreationService.updateUser(userWithAuthorities, update);
+
+        assertAllCredentialsRevoked();
+        // Read through AuditEventService: it loads `data` through an entity graph, while findAll() leaves that collection
+        // lazy and unreadable outside a session. The log to read from is the security one, because a password change is
+        // a credential change (see AuditEventConstants.SECURITY_EVENT_TYPES).
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged())).anySatisfy(event -> {
+            assertThat(event.getType()).isEqualTo(Constants.ADMIN_CHANGE_USER_PASSWORD);
+            assertThat(event.getData()).containsEntry("revokedPasskeys", "true").containsEntry("revokedSshKeys", "true").containsEntry("revokedVcsAccessTokens", "true");
+        });
     }
 
     /**

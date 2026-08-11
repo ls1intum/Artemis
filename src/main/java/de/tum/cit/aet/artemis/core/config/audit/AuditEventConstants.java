@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.config.audit;
 
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
+
 /**
  * Audit event type constants and the taxonomy that maps each type to one of the three audit logs.
  * <p>
@@ -79,9 +81,18 @@ public class AuditEventConstants {
      * Security event types: changes to an account's credentials or identity. Routed to {@code security_audit_event} and
      * retained for years, because they are exactly what an investigation into account provenance (e.g. an exam dispute)
      * reconstructs a timeline from, and such investigations often start long after the fact.
+     * <p>
+     * The four password and credential events are declared in {@link Constants} rather than here, because they are
+     * recorded by {@code AccountSecurityNotificationService} alongside the mail it sends and predate this taxonomy.
+     * They belong in this set for the same reason as the rest: each one replaces or destroys a credential, which is
+     * precisely what such an investigation asks about. Without them a password change would land in the application
+     * log, where the admin view's security filter would not show it.
+     * <p>
+     * Keep in sync with the event type lists in {@code 20260803140000_changelog.xml}, which migrates existing rows.
      */
     public static final Set<String> SECURITY_EVENT_TYPES = Set.of(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED, ACCOUNT_EMAIL_CHANGED,
-            ACCOUNT_REGISTERED, SAML2_ACCOUNT_CREATE, AUTHENTICATION_SWITCH);
+            ACCOUNT_REGISTERED, SAML2_ACCOUNT_CREATE, AUTHENTICATION_SWITCH, Constants.CHANGE_OWN_PASSWORD, Constants.COMPLETE_PASSWORD_RESET, Constants.ADMIN_CHANGE_USER_PASSWORD,
+            Constants.REVOKE_OWN_CREDENTIALS);
 
     /**
      * @deprecated use {@link #SECURITY_EVENT_TYPES}. Retained as an alias so existing references keep compiling.

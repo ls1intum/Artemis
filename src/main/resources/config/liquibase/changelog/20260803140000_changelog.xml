@@ -262,7 +262,8 @@
             SELECT event_id, principal, event_date, event_type
             FROM jhi_persistent_audit_event
             WHERE event_type IN ('PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET_REQUEST_REJECTED', 'PASSWORD_RESET_COMPLETED',
-                                 'ACCOUNT_EMAIL_CHANGED', 'ACCOUNT_REGISTERED', 'SAML2_ACCOUNT_CREATE', 'AUTHENTICATION_SWITCH');
+                                 'ACCOUNT_EMAIL_CHANGED', 'ACCOUNT_REGISTERED', 'SAML2_ACCOUNT_CREATE', 'AUTHENTICATION_SWITCH',
+                                 'CHANGE_OWN_PASSWORD', 'COMPLETE_PASSWORD_RESET', 'ADMIN_CHANGE_USER_PASSWORD', 'REVOKE_OWN_CREDENTIALS');
         </sql>
         <sql>
             INSERT INTO security_audit_evt_data (event_id, name, event_data)
@@ -270,7 +271,8 @@
             FROM jhi_persistent_audit_evt_data d
             JOIN jhi_persistent_audit_event e ON e.event_id = d.event_id
             WHERE e.event_type IN ('PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET_REQUEST_REJECTED', 'PASSWORD_RESET_COMPLETED',
-                                   'ACCOUNT_EMAIL_CHANGED', 'ACCOUNT_REGISTERED', 'SAML2_ACCOUNT_CREATE', 'AUTHENTICATION_SWITCH');
+                                   'ACCOUNT_EMAIL_CHANGED', 'ACCOUNT_REGISTERED', 'SAML2_ACCOUNT_CREATE', 'AUTHENTICATION_SWITCH',
+                                   'CHANGE_OWN_PASSWORD', 'COMPLETE_PASSWORD_RESET', 'ADMIN_CHANGE_USER_PASSWORD', 'REVOKE_OWN_CREDENTIALS');
         </sql>
     </changeSet>
 
@@ -282,7 +284,8 @@
             WHERE event_type IS NULL
                OR event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS',
                                      'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET_REQUEST_REJECTED', 'PASSWORD_RESET_COMPLETED',
-                                     'ACCOUNT_EMAIL_CHANGED', 'ACCOUNT_REGISTERED', 'SAML2_ACCOUNT_CREATE', 'AUTHENTICATION_SWITCH');
+                                     'ACCOUNT_EMAIL_CHANGED', 'ACCOUNT_REGISTERED', 'SAML2_ACCOUNT_CREATE', 'AUTHENTICATION_SWITCH',
+                                     'CHANGE_OWN_PASSWORD', 'COMPLETE_PASSWORD_RESET', 'ADMIN_CHANGE_USER_PASSWORD', 'REVOKE_OWN_CREDENTIALS');
         </sql>
         <sql>
             INSERT INTO application_audit_evt_data (event_id, name, event_data)
@@ -292,7 +295,8 @@
             WHERE e.event_type IS NULL
                OR e.event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS',
                                        'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET_REQUEST_REJECTED', 'PASSWORD_RESET_COMPLETED',
-                                       'ACCOUNT_EMAIL_CHANGED', 'ACCOUNT_REGISTERED', 'SAML2_ACCOUNT_CREATE', 'AUTHENTICATION_SWITCH');
+                                       'ACCOUNT_EMAIL_CHANGED', 'ACCOUNT_REGISTERED', 'SAML2_ACCOUNT_CREATE', 'AUTHENTICATION_SWITCH',
+                                       'CHANGE_OWN_PASSWORD', 'COMPLETE_PASSWORD_RESET', 'ADMIN_CHANGE_USER_PASSWORD', 'REVOKE_OWN_CREDENTIALS');
         </sql>
     </changeSet>
 
