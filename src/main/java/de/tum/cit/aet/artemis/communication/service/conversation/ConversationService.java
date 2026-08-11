@@ -498,7 +498,9 @@ public class ConversationService {
         ZonedDateTime now = ZonedDateTime.now();
         var userId = requestingUser.getId();
         List<Long> conversationIds = conversationParticipantRepository.findConversationIdsByUserIdAndCourseId(userId, courseId);
-        conversationParticipantRepository.updateMultipleLastReadAsync(userId, conversationIds, now);
+        if (!conversationIds.isEmpty()) {
+            conversationParticipantRepository.updateMultipleLastReadAsync(userId, conversationIds, now);
+        }
 
         log.debug("Marking all conversations with existing participants as read took {} ms", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();

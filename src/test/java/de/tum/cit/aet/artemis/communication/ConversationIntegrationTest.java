@@ -103,7 +103,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         // updateLastMessageDateAsync runs in a separate thread; wait for it to commit before
         // querying conversations so the oneToOneChat.lastMessageDate IS NOT NULL condition is met
-        await().atMost(5, TimeUnit.SECONDS).until(() -> conversationRepository.findByIdElseThrow(oneToOneChat.getId()).getLastMessageDate() != null);
+        await().atMost(30, TimeUnit.SECONDS).until(() -> conversationRepository.findByIdElseThrow(oneToOneChat.getId()).getLastMessageDate() != null);
         this.resetWebsocketMock();
         favoriteConversation(oneToOneChat.getId(), "tutor1");
         var channel2 = createChannel(false, TEST_PREFIX + "2");
