@@ -18,14 +18,16 @@ overrides:
   body-parser: '1.20.6'
   brace-expansion: '5.0.9'
   # Kept on the 3.x line (consumers require ^3).
-  fast-uri: '3.1.4'
+  fast-uri: '3.1.5'
   follow-redirects: '1.16.0'
   http-proxy-middleware: '3.0.7'
   joi: '17.13.4'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
-  js-yaml: '4.3.0'
+  js-yaml: '4.3.1'
   launch-editor: '2.14.1'
   minimatch: '10.2.6'
+  # Reached via postcss, whose range allows the patched 3.3.17.
+  nanoid: '3.3.17'
   postcss: '8.5.25'
   qs: '6.15.3'
   serialize-javascript: '7.0.7'

@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { EMPTY, Observable, ReplaySubject, Subject, Subscription, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, ReplaySubject, Subject, Subscription, catchError, finalize, map, of, switchMap, tap, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -134,6 +134,10 @@ export class MetisConversationService implements OnDestroy {
                 type: AlertType.WARNING,
                 message: 'artemisApp.metis.channel.notAMember',
             });
+            // Keep whatever is currently open instead of closing it. Replacing it with nothing empties the view, and the
+            // active conversation subscriber reacts to that by removing the conversationId from the URL, so a reload can
+            // no longer restore the conversation either. Clearing on purpose stays possible by passing undefined.
+            return;
         }
         if (this.activeConversation?.id !== conversationId) {
             this.updateConversationAsRead();
@@ -214,7 +218,13 @@ export class MetisConversationService implements OnDestroy {
             catchError((res: HttpErrorResponse) => {
                 onError(this.alertService, res);
                 this.setIsLoading(false);
-                return of([]);
+                // Do not continue into the mapping below with an empty list. Treating a failed request as "the user has no
+                // conversations" would drop the cached conversations, reset the active conversation and, through the
+                // active conversation subscriber, strip the conversationId from the URL. A reload could then not restore
+                // the conversation any more, because the identifier it needs is gone. Keep the last known state instead.
+                // The error is passed on rather than swallowed, so that subscribers acting in their completion handler
+                // do not mistake a failed refresh for an up to date list.
+                return throwError(() => res);
             }),
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
@@ -297,7 +307,11 @@ export class MetisConversationService implements OnDestroy {
                 onError(this.alertService, res);
                 this.setIsLoading(false);
                 this._isServiceSetup$.next(false);
-                return of([]);
+                // Stop here instead of running the setup below with an empty list, which would announce the service as
+                // ready while no conversation is known. Every conversation opened from the URL would then be reported
+                // as one the user is not a member of, and the view would stay empty. The error is passed on so that the
+                // caller does not record the service as instantiated and can set it up again later.
+                return throwError(() => res);
             }),
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;

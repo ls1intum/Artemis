@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * Planning orchestrator tool: lists the whole competency index for the current course so the LLM can
@@ -102,7 +103,7 @@ public class OrchestratorPlanningToolsService {
 
     /**
      * Projects a competency onto its index entry. Linked exercises are ordered by exercise id and lecture units by
-     * name, so the rendered index the LLM sees is stable across runs — an unstable ordering would change the prompt
+     * name with the id as tiebreaker, so the rendered index the LLM sees is stable across runs — an unstable ordering would change the prompt
      * (and therefore the model's plan) for an unchanged course. Lecture units without a name are dropped, mirroring
      * the equivalent projection in {@link OrchestratorReadToolsService} so both tools expose the same set.
      *
@@ -114,8 +115,11 @@ public class OrchestratorPlanningToolsService {
                 .sorted(Comparator.comparing((CompetencyExerciseLink link) -> link.getExercise().getId()))
                 .map(link -> new CompetencyIndexDTO.ExerciseLinkRefDTO(link.getExercise().getTitle(), exerciseType(link.getExercise()), link.getWeight())).toList();
         List<CompetencyIndexDTO.LectureUnitRefDTO> lectureUnits = competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit)
-                .filter(lu -> lu.getName() != null).sorted(Comparator.comparing(lu -> lu.getName())).map(lu -> new CompetencyIndexDTO.LectureUnitRefDTO(lu.getName(), lu.getType()))
-                .toList();
+                .filter(lu -> lu.getName() != null)
+                // Name alone is not a total order — two units may share a name, and the JPA set's iteration order is
+                // not stable, so the id breaks ties and keeps the rendered index identical across runs.
+                .sorted(Comparator.comparing(LectureUnit::getName).thenComparing(LectureUnit::getId))
+                .map(lu -> new CompetencyIndexDTO.LectureUnitRefDTO(lu.getName(), lu.getType())).toList();
         return new CompetencyIndexDTO(competency.getId(), competency.getTitle(), competency.getTaxonomy(), competency.getType(), exercises, lectureUnits);
     }
 }

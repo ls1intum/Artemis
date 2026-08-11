@@ -4,14 +4,11 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.belon
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.courseIdFromContext;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerciseBelongsToCourse;
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerciseType;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -35,7 +32,6 @@ import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Read-only orchestrator tools that let the LLM inspect a single competency or an exercise's content.
@@ -52,6 +48,17 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 public class OrchestratorReadToolsService {
 
     private static final Logger log = LoggerFactory.getLogger(OrchestratorReadToolsService.class);
+
+    /**
+     * Hard cap on the learning text returned by {@link #getExerciseContent}. Mirrors the
+     * {@code PROBLEM_STATEMENT_MAX} the batch path applies via {@code sanitizeForPrompt}, so a single
+     * oversized exercise (e.g. a quiz whose assembled questions + answers are large) cannot inflate
+     * per-call tokens now that this tool extracts real content for every exercise type.
+     */
+    private static final int MAX_EXERCISE_CONTENT_LENGTH = 8_000;
+
+    /** Cap on the title returned by {@link #getExerciseContent}; matches the batch path's {@code EXERCISE_TITLE_MAX}. */
+    private static final int MAX_EXERCISE_TITLE_LENGTH = 200;
 
     private final ObjectMapper objectMapper;
 
@@ -112,9 +119,10 @@ public class OrchestratorReadToolsService {
      * @param toolContext carries the current course id
      * @return the JSON-serialized content, or a JSON error
      */
-    @Tool(description = "Extract the learning-relevant content (title, problem statement text, and metadata) for an exercise that belongs to the current course. "
-            + "Only programming exercises are text-extractable; for quiz, text, modeling, or file-upload exercises this returns a stub with the title and type "
-            + "(no problem statement) — judge their fit by title alone in that case, don't call this tool repeatedly for the same non-programming id.")
+    @Tool(description = "Extract the learning-relevant content for an exercise that belongs to the current course. Returns a title, the learning text, and metadata. "
+            + "For programming, text, modeling and file-upload exercises the learning text is the problem statement (plus example solution where available); for quizzes "
+            + "it is the assembled questions with their correct answers/solutions. Metadata always carries the exercise type and, when set, difficulty / maxPoints "
+            + "(plus type-specific keys such as questionCount for quizzes). The content is extracted fresh on every call, so don't call this tool repeatedly for the same exercise id.")
     public String getExerciseContent(@ToolParam(description = "id of the exercise whose content should be extracted") Long exerciseId, ToolContext toolContext) {
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
@@ -133,14 +141,16 @@ public class OrchestratorReadToolsService {
         if (!exerciseBelongsToCourse(exercise, courseId)) {
             return errorJson(objectMapper, "Exercise " + exerciseId + " does not belong to the current course.");
         }
-        if (!(exercise instanceof ProgrammingExercise)) {
-            String title = Objects.requireNonNullElse(exercise.getTitle(), "");
-            return toJson(objectMapper, Map.of("id", exerciseId, "title", title, "type", exerciseType(exercise), "textExtractable", false, "note",
-                    "Content extraction is only available for programming exercises. Use the title and type to decide fit."));
-        }
         try {
-            ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
-            return toJson(objectMapper, extracted);
+            // Skip the LLM flavor-strip on this read path: it costs an extra model round-trip per call, so a repeated
+            // lookup would burn tokens on the strip model. The raw problem statement is complete enough for the
+            // orchestrator to judge fit; the batch's system prompt already carries the stripped versions.
+            ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise, false);
+            // Neutralize prompt-injection fences and cap length before this instructor-authored content re-enters the
+            // model as a tool result — the same hardening the batch path applies via CompetencyOrchestrationService.sanitizeForPrompt.
+            String safeTitle = CompetencyOrchestrationService.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);
+            String safeText = CompetencyOrchestrationService.sanitizeForPrompt(extracted.extractedLearningText(), MAX_EXERCISE_CONTENT_LENGTH);
+            return toJson(objectMapper, new ExtractedContentDTO(safeTitle, safeText, extracted.metadata()));
         }
         catch (RuntimeException ex) {
             // Generic message — raw exception text could leak Hibernate/SQL detail into the LLM's summary.
