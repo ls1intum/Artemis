@@ -276,15 +276,15 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     /**
      * Regression test for issue #13046: a metadata-only update (e.g. editing just the categories) must never delete the problem statement. The problem statement is owned by the
      * collaborative (Yjs) editor and its dedicated PATCH endpoint, so a blank or absent value in the metadata update reflects an editor whose initial sync has not finished yet and
-     * must be treated as "unchanged" rather than wiping the persisted statement. A non-empty value can also be stale relative to the collaborative editor. The cases below
-     * therefore cover the empty string (the original race payload), a whitespace-only value, a stale value, and a completely absent attribute.
+     * must be treated as "unchanged" rather than wiping the persisted statement. During the race the client sends the field present-but-empty ("problemStatement": ""); the cases
+     * below therefore cover the empty string (the real payload), a whitespace-only value, and a completely absent attribute.
      *
      * @param problemStatementValue the value sent for {@code problemStatement} in the request body, or {@code null} to omit the attribute entirely
      */
     @ParameterizedTest(name = "problemStatement=[{0}]")
-    @CsvSource(value = { "''", "'   '", "'stale client statement'", "MISSING" }, nullValues = "MISSING")
+    @CsvSource(value = { "''", "'   '", "MISSING" }, nullValues = "MISSING")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateProgrammingExercise_metadataProblemStatement_keepsExistingProblemStatement(String problemStatementValue) throws Exception {
+    void testUpdateProgrammingExercise_blankOrMissingProblemStatement_keepsExistingProblemStatement(String problemStatementValue) throws Exception {
         // Arrange: persist a known, non-empty problem statement via the dedicated endpoint, as the collaborative editor would.
         final String existingStatement = "This problem statement must survive a metadata-only update";
         final var problemStatementEndpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
