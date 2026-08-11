@@ -17,7 +17,7 @@
         @if (isEditFieldDisplayedRecord().points) {
             <div class="col">
                 <div class="form-group">
-                    <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
+                    <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label><span class="text-state-danger" aria-hidden="true">*</span>
                     <input
                         [required]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED"
                         type="number"

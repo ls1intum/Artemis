@@ -24,7 +24,8 @@
             @if (isEditFieldDisplayedRecord().shortName) {
                 <div class="form-group col-lg-6">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label
+                        ><span class="text-state-danger" aria-hidden="true">*</span>
                         <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip" />
                     </div>
                     <input
