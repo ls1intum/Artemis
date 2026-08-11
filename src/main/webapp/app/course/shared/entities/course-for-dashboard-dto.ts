@@ -17,6 +17,12 @@ export class CourseForDashboardDTO {
 
     courseNotificationCount!: number;
     irisEnabledInCourse?: boolean;
+
+    /**
+     * Points the student earns per variant group, keyed by group id, already capped and plagiarism-adjusted by the
+     * server. Absent or empty only when no group contributes.
+     */
+    achievedPointsPerVariantGroup?: { [groupId: number]: number };
 }
 
 /** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) marker. */

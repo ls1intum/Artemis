@@ -474,6 +474,15 @@ public class LocalVCServletService {
             throw new LocalVCAuthException(e.getMessage(), missingPassword);
         }
 
+        // Account state is checked here, before any credential is compared, because it has to hold for every credential
+        // type. Only the password fall-through below goes through the authenticationManager, which checks `activated`
+        // itself; the three token branches return the user directly, so without this a deactivated or soft-deleted user
+        // kept full repository access through any token they had been issued earlier.
+        if (!user.getActivated() || user.isDeleted()) {
+            log.warn("Git authentication attempt for user {} whose account is deactivated or deleted", username);
+            throw new LocalVCAuthException("Account is not active");
+        }
+
         // check user VCS access token
         if (user.getVcsAccessTokenExpiryDate() != null
             && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())

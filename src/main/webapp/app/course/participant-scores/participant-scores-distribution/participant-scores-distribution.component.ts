@@ -8,6 +8,7 @@ import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-o
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { TranslateService } from '@ngx-translate/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -41,7 +42,29 @@ export class ParticipantScoresDistributionComponent implements OnInit {
 
     readonly scoreToHighlight = input<number>();
 
+    /**
+     * Accessible name for the chart canvas. Set it whenever a page shows more than one distribution (the exam
+     * scores page renders one before and one after the bonus), so screen-reader users can tell them apart.
+     * Defaults to a generic course/exam-agnostic description.
+     */
+    readonly ariaLabel = input<string>();
+
     readonly onSelect = output<ChartClickEvent>();
+
+    /**
+     * Falls back to the generic description when the page does not provide a more specific one. Reads
+     * `languageChange` so the fallback is re-translated on a language switch — `instant()` is not reactive.
+     */
+    protected readonly chartAriaLabel = computed(() => {
+        const provided = this.ariaLabel()?.trim();
+        if (provided) {
+            return provided;
+        }
+        this.languageChange();
+        return this.translateService.instant('statistics.scoreDistributionChartAriaLabel');
+    });
+
+    private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
 
     readonly gradingScaleExists = signal(false);
     readonly isBonus = signal<boolean | undefined>(undefined);
@@ -127,9 +150,9 @@ export class ParticipantScoresDistributionComponent implements OnInit {
     }
 
     /**
-     * fill ngxData with a default configuration. The assignment of the names is only a placeholder,
+     * Fills `entries` with a default configuration. The assignment of the names is only a placeholder,
      * they will be set to default labels in createChart.
-     * If a grading key exists, ngxData gets reset according to it in calculateFilterDependentStatistics.
+     * If a grading key exists, `entries` gets reset according to it in calculateFilterDependentStatistics.
      * If no grading key exists, this default configuration is presented to the user.
      */
     private generateDefaultChartSetting(): void {

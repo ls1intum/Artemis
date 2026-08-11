@@ -157,6 +157,17 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         expect(findConfigurationSpy).toHaveBeenCalledWith(courseId);
     });
 
+    it('should write the reloaded configuration back to the course resolved by the parent route', () => {
+        expect(course.tutorialGroupsConfiguration?.tutorialGroupFreePeriods?.map((freePeriod) => freePeriod.id)).toEqual([3, 2, 1]);
+
+        configuration.tutorialGroupFreePeriods = [firstOfJanuaryPeriod];
+        findConfigurationSpy.mockReturnValue(of(new HttpResponse({ body: tutorialGroupConfigurationDtoFromEntity(configuration) })));
+
+        component.onFreePeriodCreated();
+
+        expect(course.tutorialGroupsConfiguration?.tutorialGroupFreePeriods?.map((freePeriod) => freePeriod.id)).toEqual([1]);
+    });
+
     it('should pass free days to the table component', () => {
         // All three periods are "free days" (start at 00:00, end at 23:59 on the same day)
         expect(component.freeDays).toHaveLength(3);
