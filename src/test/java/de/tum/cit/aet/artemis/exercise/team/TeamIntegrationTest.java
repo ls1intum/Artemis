@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -91,6 +92,19 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         exercise = exerciseRepository.save(exercise);
         students = new HashSet<>(userTestRepository.findAllByUserPrefix(TEST_PREFIX + "student"));
         tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+    }
+
+    /**
+     * The triggers that fill {@code team_student.exercise_id} and the unique constraint built on it are created on MySQL
+     * and PostgreSQL only, the databases Artemis is deployed on. H2 exists for quick local iteration
+     * ({@code ./gradlew test -x webapp -Dzonky.test.database.type=H2}) and deliberately keeps the plain nullable column,
+     * because {@code Team} maps {@code team_student} through a two-column {@code @JoinTable} that Hibernate would never
+     * fill. The tests that assert the database itself rejects a duplicate therefore have nothing to assert on H2.
+     *
+     * @return true if the tests run against H2, in which case the schema carries no team-student constraint
+     */
+    static boolean runsOnH2() {
+        return "H2".equalsIgnoreCase(System.getProperty("zonky.test.database.type"));
     }
 
     private String resourceUrl() {
@@ -177,6 +191,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
      * This test deliberately bypasses the application-level check by using the plain repository save,
      * so it fails if only the application check remains.
      */
+    @DisabledIf(value = "runsOnH2", disabledReason = "The team-student uniqueness constraint is not created on H2")
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDatabaseRejectsStudentInTwoTeamsOfSameExercise() {
@@ -204,6 +219,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
      * {@code TeamStudentUniquenessViolationTest}, and this test remains the end-to-end guarantee that a concurrent loser
      * never surfaces a raw integrity violation.
      */
+    @DisabledIf(value = "runsOnH2", disabledReason = "The team-student uniqueness constraint is not created on H2")
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testConcurrentTeamCreationReportsAConflictInsteadOfAnIntegrityViolation() throws Exception {
@@ -268,6 +284,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
      * exercise the team left would stay blocked, and a genuine conflict in the exercise it moved into would slip through.
      * Asserted through the constraint rather than by reading the denormalised column, since that is what it is for.
      */
+    @DisabledIf(value = "runsOnH2", disabledReason = "The team-student uniqueness constraint is not created on H2")
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testMovingATeamToAnotherExerciseKeepsTheDerivedExerciseIdInSync() {
@@ -296,6 +313,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
      * invariant, so the unique constraint has to reject it instead of leaving two teams of the same exercise sharing a
      * student.
      */
+    @DisabledIf(value = "runsOnH2", disabledReason = "The team-student uniqueness constraint is not created on H2")
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testMovingATeamIntoAnExerciseWhereTheStudentIsAlreadyAssignedIsRejected() {
