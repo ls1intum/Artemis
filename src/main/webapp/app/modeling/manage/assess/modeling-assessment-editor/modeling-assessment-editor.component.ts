@@ -1,11 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { Subscription, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
-import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -29,6 +28,7 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -103,21 +103,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly hasAutomaticFeedback = signal(false);
     readonly hasAssessmentDueDatePassed = signal<boolean>(false);
     readonly correctionRound = signal(0);
-
-    /** Route parameters of the currently shown submission, so a round change can re-request the same submission. */
-    private lastRouteParams?: ParamMap;
-
-    /** Whether a round-only reload is queued, so a path change in the same navigation can cancel it. */
-    private roundReloadPending = false;
-
-    /** Identity of the last request actually issued, making {@link loadSubmissionForRoute} idempotent. */
-    private lastLoadedRequestKey?: string;
-
-    /** Generation of the last load issued; see {@link isCurrentLoad}. */
-    private loadGeneration = 0;
-
-    /** The route subscriptions of the current initialisation, torn down when it runs again. */
-    private routeSubscriptions: Subscription[] = [];
     readonly resultId = signal<number>(0);
     readonly loadingInitialSubmission = signal(true);
     // Set when the server refuses to open the assessment because the exam is not over yet: the submission exists, so the
@@ -164,77 +149,17 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.userId = user!.id!;
         });
 
-        // A fresh initialisation must load again: the guard below only exists to dedupe the two route subscriptions
-        // against each other, not to suppress a genuine re-init. The previous pair is torn down first, so a re-init
-        // cannot leave an earlier subscription listening and reloading with the route it captured.
-        this.routeSubscriptions.forEach((subscription) => subscription.unsubscribe());
-        this.routeSubscriptions = [];
-        this.lastLoadedRequestKey = undefined;
-        this.lastRouteParams = undefined;
-        this.roundReloadPending = false;
-
-        this.routeSubscriptions.push(
-            this.route.queryParamMap.subscribe((queryParams) => {
-                this.isTestRun.set(queryParams.get('testRun') === 'true');
-                // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
-                // Number() alone will not do. This component both requests the submission with this signal and indexes the
-                // loaded results by it, so there is a single round either way.
-                this.correctionRound.set(parseCorrectionRound(queryParams.get('correction-round')));
-                // Angular does not re-emit unchanged path parameters, so a navigation that changes only the round would
-                // otherwise leave the loaded submission on the previous round while this page indexes results and tags
-                // feedback with the new one. Re-request with the same parsed value the rest of the page now uses.
-                // Only once a submission is actually on screen: before that there is nothing to re-request, and the
-                // path subscription below is what performs the initial load.
-                // Defer, so a navigation that also changes the path can cancel this: the router emits the query and
-                // the path separately for one navigation, and these load paths lock a submission server-side, so the
-                // intermediate state (previous path, new round) must never reach the server. One navigation, one
-                // request, for the final combination of path and round.
-                if (this.lastRouteParams?.get('submissionId')) {
-                    this.roundReloadPending = true;
-                    void Promise.resolve().then(() => {
-                        if (this.roundReloadPending && this.lastRouteParams) {
-                            this.roundReloadPending = false;
-                            this.loadSubmissionForRoute(this.lastRouteParams);
-                        }
-                    });
-                }
-            }),
-        );
-        this.routeSubscriptions.push(
-            this.route.paramMap.subscribe((params) => {
-                // This navigation changed the path too, so the deferred round reload above is redundant.
-                this.roundReloadPending = false;
-                this.loadSubmissionForRoute(params);
-            }),
-        );
-    }
-
-    /**
-     * Loads the submission the current route points at, for the round the page is currently showing.
-     * <p>
-     * Driven from both route subscriptions, so it is idempotent: a navigation that changes the path and the round
-     * together makes both of them fire, and this load path locks a submission server-side, so requesting twice is not
-     * merely wasteful.
-     */
-    private loadSubmissionForRoute(params: ParamMap): void {
-        const requestKey = `${params.get('submissionId')}|${params.get('exerciseId')}|${params.get('resultId')}|${this.correctionRound()}`;
-        if (requestKey === this.lastLoadedRequestKey) {
-            return;
-        }
-        // Whether an earlier load of this initialisation put an assessment on screen that this one replaces.
-        const replacesLoadedSubmission = this.lastLoadedRequestKey !== undefined;
-        this.lastLoadedRequestKey = requestKey;
-        this.lastRouteParams = params;
-        const generation = ++this.loadGeneration;
-        {
-            // this component is reused for param-only navigations (e.g. to the next submission) and for round-only
-            // ones, so the state of the previous submission has to be cleared before loading the next one. On the
-            // first load of an initialisation there is nothing on screen yet, so only the blocked state is reset.
-            if (replacesLoadedSubmission) {
-                this.resetSubmissionState();
-            } else {
-                this.assessmentNotPossibleYet.set(undefined);
-            }
+        this.route.queryParamMap.subscribe((queryParams) => {
+            this.isTestRun.set(queryParams.get('testRun') === 'true');
+            // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
+            // Number() alone will not do. This component requests the submission with this signal and indexes the
+            // loaded results by it, so there is a single round either way.
+            this.correctionRound.set(parseCorrectionRound(queryParams.get('correction-round')));
+        });
+        this.route.paramMap.subscribe((params) => {
+            // this component is reused for param-only navigations (e.g. to the next submission), so a blocked state from
+            // the previous submission has to be cleared before loading the next one
+            this.assessmentNotPossibleYet.set(undefined);
             this.courseId = Number(params.get('courseId'));
             this.exerciseId = Number(params.get('exerciseId'));
             if (params.has('examId')) {
@@ -247,23 +172,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             const submissionId = params.get('submissionId');
             this.resultId.set(Number(params.get('resultId')) || 0);
             if (submissionId === 'new') {
-                this.loadRandomSubmission(this.exerciseId, generation);
+                this.loadRandomSubmission(this.exerciseId);
             } else {
-                this.loadSubmission(Number(submissionId), generation);
+                this.loadSubmission(Number(submissionId));
             }
-        }
-    }
-
-    /**
-     * Whether the load that was issued as the given generation is still the latest one.
-     * <p>
-     * Consecutive round changes each issue their own request and nothing cancels the earlier one, so two loads can be
-     * in flight and complete in either order. Without this check the response of the obsolete request wins, leaving the
-     * page showing a submission for one round while {@link correctionRound} — which the url owns — names another, so
-     * result selection and feedback tagging use mismatched data.
-     */
-    private isCurrentLoad(generation: number): boolean {
-        return generation === this.loadGeneration;
+        });
     }
 
     /**
@@ -284,30 +197,21 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * Load the modeling submission for a given ID
      * @param submissionId The ID of the modeling submission that should be loaded
      */
-    private loadSubmission(submissionId: number, generation: number): void {
+    private loadSubmission(submissionId: number): void {
         this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound(), this.resultId()).subscribe({
             next: (submission: ModelingSubmission) => {
-                if (!this.isCurrentLoad(generation)) {
-                    return;
-                }
-                this.handleReceivedSubmission(submission, generation);
+                this.handleReceivedSubmission(submission);
                 this.validateFeedback();
             },
             error: (error: HttpErrorResponse) => {
-                if (!this.isCurrentLoad(generation)) {
-                    return;
-                }
                 this.handleErrorResponse(error);
             },
         });
     }
 
-    private loadRandomSubmission(exerciseId: number, generation: number): void {
+    private loadRandomSubmission(exerciseId: number): void {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound()).subscribe({
             next: (submission?: ModelingSubmission) => {
-                if (!this.isCurrentLoad(generation)) {
-                    return;
-                }
                 if (!submission) {
                     // there are no unassessed submissions — leave the loading state the request entered, so the page
                     // says so instead of staying blank behind the loading flags
@@ -317,7 +221,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     return;
                 }
 
-                this.handleReceivedSubmission(submission, generation);
+                this.handleReceivedSubmission(submission);
                 this.validateFeedback();
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -325,15 +229,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.location.go(newUrl);
             },
             error: (error: HttpErrorResponse) => {
-                if (!this.isCurrentLoad(generation)) {
-                    return;
-                }
                 this.handleErrorResponse(error);
             },
         });
     }
 
-    private handleReceivedSubmission(submission: ModelingSubmission, generation: number): void {
+    private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.loadingInitialSubmission.set(false);
         this.submission.set(submission);
         const studentParticipation = this.submission()!.participation as StudentParticipation;
@@ -356,7 +257,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
 
         this.checkPermissions();
-        this.getComplaint(generation);
+        this.getComplaint();
 
         if (this.result() && this.submission()) {
             this.submission()!.results = [this.result()!];
@@ -430,28 +331,18 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.validateFeedback();
     }
 
-    /**
-     * Loads the complaint of the submission the given load put on screen.
-     * <p>
-     * Gated by the load generation like the submission request itself: this lookup outlives the load that started it,
-     * so an obsolete response would otherwise attach a complaint of the previous round to the current result, and an
-     * obsolete failure would clear the replacement assessment through {@link onError}.
-     */
-    private getComplaint(generation: number): void {
+    private getComplaint(): void {
         if (!this.submission()) {
             return;
         }
         this.complaintService.findBySubmissionId(this.submission()!.id!).subscribe({
             next: (res) => {
-                if (!this.isCurrentLoad(generation) || !res.body) {
+                if (!res.body) {
                     return;
                 }
                 this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.result()));
             },
             error: () => {
-                if (!this.isCurrentLoad(generation)) {
-                    return;
-                }
                 this.onError();
             },
         });
@@ -549,31 +440,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingExercise.set(undefined);
         this.result.set(undefined);
         this.model.set(undefined);
-    }
-
-    /**
-     * Returns the editor to its loading state before a replacement submission is requested.
-     * <p>
-     * A round change re-requests the submission while {@link correctionRound} — which the url owns — already names
-     * the new round. Without this, the assessment of the previous round stays on screen and interactive until the
-     * response arrives, so a tutor could edit or submit it from a page whose url and header name another round.
-     * Clearing the submission takes the editor and its feedback out of the template, and `isLoading` disables the
-     * save and submit controls of the assessment layout.
-     */
-    private resetSubmissionState(): void {
-        this.loadingInitialSubmission.set(true);
-        this.isLoading.set(true);
-        this.assessmentNotPossibleYet.set(undefined);
-        this.resetAssessmentState();
-        this.referencedFeedback = [];
-        this.unreferencedFeedback.set([]);
-        this.complaint.set(undefined!);
-        // Athena suggestions belong to the assessment that was on screen. The replacement skips the fetch entirely when
-        // it already carries manual feedback, so leaving these would expose the previous round's suggestions through
-        // unreferencedFeedbackSuggestions; and the guarded `finally` of an in-flight fetch no longer recognises this
-        // submission, so it would leave the loading flag set for good.
-        this.feedbackSuggestions = [];
-        this.loadingFeedbackSuggestions.set(false);
     }
 
     onError(): void {

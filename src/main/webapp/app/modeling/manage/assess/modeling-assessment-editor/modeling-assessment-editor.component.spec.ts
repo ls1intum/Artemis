@@ -24,7 +24,7 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
@@ -220,189 +220,17 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(2, expectedRound, 0);
         });
 
-        it('should reload the submission when only the round changes in the url', async () => {
-            // Angular does not re-emit unchanged path parameters, so a query-only navigation used to update the round
-            // signal without re-requesting anything: the page then indexed round-1 results and tagged feedback for
-            // round 1 while still holding the submission loaded for round 0.
-            const getSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
-            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
-            await fixture.whenStable();
-            expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(2, 0, 0);
+        it('should leave the loading state when there is no submission to assess', async () => {
+            // Both loading flags start out set, and the empty state only renders once they are cleared, so returning
+            // without clearing them left the page blank instead of saying that there is nothing to assess.
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
 
-            // Only the query changes; the path parameters stay exactly as they were.
-            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
-            // The reload is deferred by a microtask so a path change in the same navigation could cancel it.
-            await Promise.resolve();
+            paramMapSubject.next(convertToParamMap({ submissionId: 'new', courseId: '1', exerciseId: '1' }));
             await fixture.whenStable();
 
-            expect(component.correctionRound()).toBe(1);
-            expect(getSubmissionSpy).toHaveBeenLastCalledWith(2, 1, 0);
-            expect(getSubmissionSpy).toHaveBeenCalledTimes(2);
-        });
-
-        it('should request the submission once when the path and the round change together', async () => {
-            // The router emits the query and the path separately for one navigation, and this load path locks the
-            // submission server-side, so the intermediate state (previous submission, new round) must never reach the
-            // server: exactly one request, for the final combination.
-            const getSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
-            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
-            await fixture.whenStable();
-            getSubmissionSpy.mockClear();
-
-            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
-            paramMapSubject.next(convertToParamMap({ submissionId: '3', courseId: '1', exerciseId: '1' }));
-            await Promise.resolve();
-            await fixture.whenStable();
-
-            expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(3, 1, 0);
-        });
-
-        it('should ignore a round response that arrives after a newer one', async () => {
-            // Consecutive round changes each issue their own request and nothing cancels the earlier one, so the two can
-            // complete in either order. The obsolete response must not win: the page would then show a submission for
-            // one round while correctionRound — which the url owns — names another, so result selection and feedback
-            // tagging use mismatched data.
-            const pendingByRound = new Map<number, Subject<ModelingSubmission>>();
-            vi.spyOn(modelingSubmissionService, 'getSubmission').mockImplementation((_submissionId, correctionRound = 0) => {
-                const pending = new Subject<ModelingSubmission>();
-                pendingByRound.set(correctionRound, pending);
-                return pending.asObservable();
-            });
-            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
-            await fixture.whenStable();
-
-            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
-            await Promise.resolve();
-            expect([...pendingByRound.keys()]).toEqual([0, 1]);
-
-            // The round the url now names answers first, the obsolete one only afterwards.
-            const roundOneSubmission = getSubmissionWithData();
-            roundOneSubmission.id = 501;
-            pendingByRound.get(1)!.next(roundOneSubmission);
-            const roundZeroSubmission = getSubmissionWithData();
-            roundZeroSubmission.id = 502;
-            pendingByRound.get(0)!.next(roundZeroSubmission);
-            await fixture.whenStable();
-
-            expect(component.submission()?.id).toBe(501);
-        });
-
-        it('should not leave the previous assessment interactive while a round reload is pending', async () => {
-            // correctionRound follows the url immediately, but the submission only follows once the replacement request
-            // answers. In between, the assessment of the previous round must not stay on screen and editable: a tutor
-            // could otherwise save or submit it from a page whose url and header already name another round.
-            const pendingReload = new Subject<ModelingSubmission>();
-            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValueOnce(of(getSubmissionWithData())).mockReturnValueOnce(pendingReload.asObservable());
-            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
-            await fixture.whenStable();
-            expect(component.submission()).toBeDefined();
-            expect(component.isLoading()).toBe(false);
-
-            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
-            await Promise.resolve();
-            await fixture.whenStable();
-
-            // The replacement request is still in flight.
-            expect(component.correctionRound()).toBe(1);
-            expect(component.isLoading()).toBe(true);
-            expect(component.loadingInitialSubmission()).toBe(true);
             expect(component.submission()).toBeUndefined();
-            expect(component.result()).toBeUndefined();
-            expect(component.model()).toBeUndefined();
-            expect(component.unreferencedFeedback()).toEqual([]);
-
-            // ... and the new round's assessment appears once it answers.
-            const roundOneSubmission = getSubmissionWithData();
-            roundOneSubmission.id = 777;
-            pendingReload.next(roundOneSubmission);
-            await fixture.whenStable();
-
-            expect(component.submission()?.id).toBe(777);
+            expect(component.loadingInitialSubmission()).toBe(false);
             expect(component.isLoading()).toBe(false);
-        });
-
-        it('should ignore a complaint lookup that completes after a newer round loaded', async () => {
-            // The complaint lookup outlives the load that started it. An obsolete response would attach the previous
-            // round's complaint to the current result, and an obsolete failure would clear the replacement assessment
-            // through onError.
-            const pendingComplaint = new Subject<HttpResponse<ComplaintDTO>>();
-            const complaintLookup = vi
-                .spyOn(complaintService, 'findBySubmissionId')
-                .mockReturnValueOnce(pendingComplaint.asObservable())
-                .mockReturnValue(of({ body: undefined } as unknown as HttpResponse<ComplaintDTO>));
-            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
-            const onErrorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-
-            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
-            await fixture.whenStable();
-            expect(complaintLookup).toHaveBeenCalledOnce();
-
-            // A newer round supersedes the load whose complaint lookup is still open.
-            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
-            await Promise.resolve();
-            await fixture.whenStable();
-
-            pendingComplaint.next({ body: { id: 9, complaintText: 'Obsolete' } as ComplaintDTO } as HttpResponse<ComplaintDTO>);
-            pendingComplaint.error(new HttpErrorResponse({ status: 500 }));
-            await fixture.whenStable();
-
-            expect(component.complaint()?.id).not.toBe(9);
-            expect(onErrorSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not carry feedback suggestions of the previous round into a replacement', async () => {
-            // The replacement skips the Athena fetch when it already carries manual feedback, so suggestions left over
-            // from the previous round would stay visible through unreferencedFeedbackSuggestions. A fetch that is still
-            // in flight must not leave the loading flag set either: its guarded `finally` no longer recognises the
-            // submission once the reset cleared it, so nothing would ever clear the flag.
-            const withSuggestionModule = (submission: ModelingSubmission): ModelingSubmission => {
-                (submission.participation!.exercise as any).feedbackSuggestionModule = 'modeling';
-                return submission;
-            };
-            // Round 0 has no feedback yet, so loading it starts an Athena fetch — held open here.
-            const roundZero = withSuggestionModule(getSubmissionWithData());
-            roundZero.results![0]!.feedbacks = [];
-            // Round 1 is already assessed manually, so loading it does not fetch and cannot clear the flag itself.
-            const roundOne = withSuggestionModule(getSubmissionWithData());
-            roundOne.results = [
-                { id: 1, feedbacks: [] } as unknown as Result,
-                { id: 2, feedbacks: [{ id: 7, detailText: 'Manual', credits: 1, type: FeedbackType.MANUAL } as Feedback] } as unknown as Result,
-            ];
-            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValueOnce(of(roundZero)).mockReturnValueOnce(of(roundOne));
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: undefined } as unknown as HttpResponse<ComplaintDTO>));
-            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(new Subject<Feedback[]>().asObservable());
-
-            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
-            await fixture.whenStable();
-            expect(component.loadingFeedbackSuggestions()).toBe(true);
-            component.feedbackSuggestions = [{ id: 42, detailText: 'Stale suggestion' } as Feedback];
-            expect(component.unreferencedFeedbackSuggestions).toHaveLength(1);
-
-            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
-            await Promise.resolve();
-            await fixture.whenStable();
-
-            expect(component.feedbackSuggestions).toEqual([]);
-            expect(component.unreferencedFeedbackSuggestions).toEqual([]);
-            expect(component.loadingFeedbackSuggestions()).toBe(false);
-        });
-
-        it('should open the first round for a url without the parameter even on a reused component', async () => {
-            // Pins existing behaviour rather than a change: this editor already took the round from the url on every
-            // navigation. The same url has to open the same round, whether it is reached directly or through the next
-            // submission of a round that was not the first.
-            const getSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
-            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
-            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
-            await fixture.whenStable();
-            expect(component.correctionRound()).toBe(1);
-
-            queryParamMapSubject.next(convertToParamMap({}));
-            paramMapSubject.next(convertToParamMap({ submissionId: '3', courseId: '1', exerciseId: '1' }));
-            await fixture.whenStable();
-
-            expect(component.correctionRound()).toBe(0);
-            expect(getSubmissionSpy).toHaveBeenLastCalledWith(3, 0, 0);
         });
 
         it('wrongly call ngOnInit and throw exception', async () => {

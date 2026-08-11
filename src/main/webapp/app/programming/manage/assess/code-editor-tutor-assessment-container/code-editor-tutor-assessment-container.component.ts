@@ -5,7 +5,7 @@ import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedbac
 import { EMPTY, Observable, Subscription, firstValueFrom, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, CanDeactivateFn, Params, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
@@ -26,7 +26,7 @@ import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -98,18 +98,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly getCourseFromExercise = getCourseFromExercise;
 
     paramSub?: Subscription;
-
-    /** Route parameters of the currently shown submission, so a round change can re-request the same submission. */
-    private lastRouteParams?: Params;
-
-    /** Whether a round-only reload is queued, so a path change in the same navigation can cancel it. */
-    private roundReloadPending = false;
-
-    /** Identity of the last request actually issued, making {@link loadSubmissionForRoute} idempotent. */
-    private lastLoadedRequestKey?: string;
-
-    /** Generation of the last load issued; see {@link isCurrentLoad}. */
-    private loadGeneration = 0;
     // Template-read state written in async callbacks (route params subscription + HTTP loads) must be
     // signal-backed under zoneless change detection, otherwise the loaded assessment editor never renders.
     readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
@@ -207,63 +195,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             // Number() alone will not do. This round is sent to the server when the submission is locked, so `NaN` from
             // a hand-edited URL used to leave the tutor on an empty editor.
             this.correctionRound.set(parseCorrectionRound(queryParams.get('correction-round')));
-            // Angular does not re-emit unchanged path parameters, so a navigation that changes only the round would
-            // otherwise leave the locked participation on the previous round while this page indexes results and tags
-            // feedback with the new one. Only once a submission is on screen: before that the path subscription below
-            // performs the initial load.
-            // Defer, so a navigation that also changes the path can cancel this: the router emits the query and
-            // the path separately for one navigation, and these load paths lock a submission server-side, so the
-            // intermediate state (previous path, new round) must never reach the server. One navigation, one
-            // request, for the final combination of path and round.
-            if (this.lastRouteParams?.['submissionId']) {
-                this.roundReloadPending = true;
-                void Promise.resolve().then(() => {
-                    if (this.roundReloadPending && this.lastRouteParams) {
-                        this.roundReloadPending = false;
-                        this.loadSubmissionForRoute(this.lastRouteParams);
-                    }
-                });
-            }
         });
         this.paramSub = this.route.params.subscribe((params) => {
-            // This navigation changed the path too, so the deferred round reload above is redundant.
-            this.roundReloadPending = false;
-            this.loadSubmissionForRoute(params);
-        });
-    }
-
-    /**
-     * Loads the submission the current route points at, for the round the page is currently showing.
-     * <p>
-     * Driven from both route subscriptions, so it is idempotent: a navigation that changes the path and the round
-     * together makes both of them fire, and this load path locks a submission server-side, so requesting twice is not
-     * merely wasteful.
-     */
-    private loadSubmissionForRoute(params: Params): void {
-        const requestKey = `${params['submissionId']}|${params['exerciseId']}|${this.correctionRound()}`;
-        if (requestKey === this.lastLoadedRequestKey) {
-            return;
-        }
-        this.lastLoadedRequestKey = requestKey;
-        this.lastRouteParams = params;
-        const generation = ++this.loadGeneration;
-        {
             this.loadingParticipation.set(true);
             this.participationCouldNotBeFetched.set(false);
             // Angular reuses this component for param-only navigations (e.g. to the next submission), so both fatal
             // error states have to be cleared here — otherwise the panel of the previous submission hides the new one.
             this.assessmentNotPossibleYet.set(undefined);
-            // Athena state belongs to the assessment being replaced. A round that already carries manual feedback skips
-            // the fetch entirely, so leaving these would show the previous round's suggestion cards; and the
-            // generation-guarded `finally` of an in-flight fetch no longer clears the flag once this load supersedes it,
-            // so it would stay set for good.
-            this.feedbackSuggestions.set([]);
-            this.loadingFeedbackSuggestions.set(false);
-            // The complaint belongs to the assessment being replaced too. getComplaint returns early on an empty
-            // response rather than clearing, so a target round without a complaint would keep showing the previous
-            // round's - disabling overrides and offering complaint actions for the wrong round. The other two editors
-            // clear it in their resetSubmissionState; this one has no such method, so it is cleared here.
-            this.complaint.set(undefined!);
 
             this.courseId = Number(params['courseId']);
             this.exerciseId = Number(params['exerciseId']);
@@ -279,23 +217,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             const submissionObservable = submissionId === 'new' ? this.loadRandomSubmission(this.exerciseId) : this.loadSubmission(Number(submissionId));
             submissionObservable
                 .pipe(
-                    // Drop everything an obsolete load produces before it can touch the state of a newer one; see
-                    // isCurrentLoad. Filtering here also stops the chain, so none of the follow-up requests below run.
-                    filter(() => this.isCurrentLoad(generation)),
                     tap({
                         next: async (submission?: ProgrammingSubmission) => {
-                            await this.onSubmissionReceived(submissionId, submission, generation);
+                            await this.onSubmissionReceived(submissionId, submission);
                         },
-                        complete: () => {
-                            if (this.isCurrentLoad(generation)) {
-                                this.loadingParticipation.set(false);
-                            }
-                        },
+                        complete: () => this.loadingParticipation.set(false),
                     }),
                     catchError((error: HttpErrorResponse) => {
-                        if (this.isCurrentLoad(generation)) {
-                            this.handleErrorResponse(error);
-                        }
+                        this.handleErrorResponse(error);
                         // Stop the chain: without a participation the steps below cannot run anyway, and letting the
                         // error reach the subscriber would additionally report it as an uncaught exception — the very
                         // Sentry noise the explicit handling avoids.
@@ -303,10 +232,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     }),
                     // The following is needed for highlighting changed code lines
                     switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise().id!, false, true)),
-                    // Re-check after every request: the filter above only judged the lock response, while a newer load can
-                    // start while these follow-ups are still in flight. Without this the older answer overwrites the state
-                    // of the newer assessment.
-                    filter(() => this.isCurrentLoad(generation)),
                     tap((response) => {
                         const programmingExercise = response.body!;
                         this.templateParticipation = programmingExercise.templateParticipation!;
@@ -324,7 +249,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         );
                         return observable;
                     }),
-                    filter(() => this.isCurrentLoad(generation)),
                     tap((templateFilesObj) => {
                         if (templateFilesObj) {
                             this.templateFileSession = templateFilesObj;
@@ -332,19 +256,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     }),
                 )
                 .subscribe();
-        }
-    }
-
-    /**
-     * Whether the load that was issued as the given generation is still the latest one.
-     * <p>
-     * Consecutive round changes each issue their own request and nothing cancels the earlier one, so two loads can be
-     * in flight and complete in either order. Without this check the response of the obsolete request wins, leaving the
-     * page showing a participation for one round while {@link correctionRound} — which the url owns — names another, so
-     * result selection and feedback tagging use mismatched data.
-     */
-    private isCurrentLoad(generation: number): boolean {
-        return generation === this.loadGeneration;
+        });
     }
 
     /**
@@ -356,7 +268,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
-    private async onSubmissionReceived(submissionId: string, submission: ProgrammingSubmission | undefined, generation: number) {
+    private async onSubmissionReceived(submissionId: string, submission?: ProgrammingSubmission) {
         if (!submission) {
             // there are no unassessed submissions
             this.submission.set(submission);
@@ -365,11 +277,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         // validate feedback here already so that overrides are possible for assessment note changes
         // without touching the feedbacks
-        await this.handleReceivedSubmission(submission, generation).then(() => this.validateFeedback());
-        if (!this.isCurrentLoad(generation)) {
-            // a newer load took over while the steps above were awaited, so this one must not rewrite the url any more
-            return;
-        }
+        await this.handleReceivedSubmission(submission).then(() => this.validateFeedback());
         if (submissionId === 'new') {
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission()!.id}`);
@@ -393,7 +301,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, this.correctionRound());
     }
 
-    private async handleReceivedSubmission(submission: ProgrammingSubmission, generation: number): Promise<void> {
+    private async handleReceivedSubmission(submission: ProgrammingSubmission): Promise<void> {
         this.loadingInitialSubmission.set(false);
 
         // Set domain to correctly fetch data
@@ -422,12 +330,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         this.checkPermissions();
         this.handleFeedback();
-        this.getComplaint(generation);
+        this.getComplaint();
         this.calculateTotalScore();
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
         if ((this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
-            await this.loadFeedbackSuggestions(generation);
+            await this.loadFeedbackSuggestions();
         }
     }
 
@@ -451,15 +359,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /**
      * Load the feedback suggestions for the current submission from Athena.
      */
-    private async loadFeedbackSuggestions(generation: number = this.loadGeneration): Promise<void> {
+    private async loadFeedbackSuggestions(): Promise<void> {
         this.loadingFeedbackSuggestions.set(true);
         try {
             const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), this.submission()!.id!))) ?? [];
-            if (!this.isCurrentLoad(generation)) {
-                // Athena answered for a submission that is no longer shown. Keeping the suggestions would attach them to
-                // the assessment that replaced it.
-                return;
-            }
             const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback()];
             this.feedbackSuggestions.set(
                 feedbackSuggestions.filter((suggestion) =>
@@ -467,10 +370,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 ),
             );
         } finally {
-            if (this.isCurrentLoad(generation)) {
-                // an obsolete load must not clear the indicator of the one that superseded it
-                this.loadingFeedbackSuggestions.set(false);
-            }
+            this.loadingFeedbackSuggestions.set(false);
         }
     }
 
@@ -819,31 +719,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
-    /**
-     * Loads the complaint of the participation on screen.
-     * <p>
-     * Gated by the load generation like the lock request itself: this lookup outlives the load that started it, so an
-     * obsolete response would attach a complaint of the previous round to the current result, and an obsolete failure
-     * would report a problem the user cannot act on.
-     *
-     * @param generation the load this lookup belongs to
-     */
-    private getComplaint(generation: number): void {
+    private getComplaint(): void {
         const submission = this.submission();
         if (!submission) {
             return;
         }
         this.complaintService.findBySubmissionId(submission.id!).subscribe({
             next: (res) => {
-                if (!this.isCurrentLoad(generation) || !res.body) {
+                if (!res.body) {
                     return;
                 }
                 this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.manualResult()));
             },
             error: (err: HttpErrorResponse) => {
-                if (!this.isCurrentLoad(generation)) {
-                    return;
-                }
                 this.onError(err?.message);
             },
         });

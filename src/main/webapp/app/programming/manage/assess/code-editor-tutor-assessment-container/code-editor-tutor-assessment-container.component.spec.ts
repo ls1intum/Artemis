@@ -6,7 +6,6 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, Observable, Subject, asapScheduler, firstValueFrom, of, scheduled, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
@@ -33,7 +32,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { ActivatedRoute, ParamMap, Params, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -438,202 +437,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         expect(comp.correctionRound()).toBe(expectedRound);
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(123, expectedRound);
-    });
-
-    it('should re-lock the submission when only the round changes in the url', async () => {
-        // Angular does not re-emit unchanged path parameters, so a query-only navigation used to update the round
-        // signal without re-requesting anything: this page then locked round 0 while indexing results and tagging
-        // feedback for round 1. The route mock uses one-shot observables, so a writable view swaps in subjects for
-        // this test only, exactly as the round-parsing test above reaches queryParamMap.
-        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
-        const params$ = new BehaviorSubject<Params>({ submissionId: 123 });
-        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
-        activatedRoute.params = params$.asObservable();
-        activatedRoute.queryParamMap = queryParamMap$.asObservable();
-
-        comp.ngOnInit();
-        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(123, 0);
-
-        // Only the query changes; the path parameters stay exactly as they were.
-        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
-        // The reload is deferred by a microtask so a path change in the same navigation could cancel it.
-        await Promise.resolve();
-
-        expect(comp.correctionRound()).toBe(1);
-        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenLastCalledWith(123, 1);
-        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledTimes(2);
-    });
-
-    it('should lock the submission once when the path and the round change together', async () => {
-        // The router emits the query and the path separately for one navigation, and locking is a server-side side
-        // effect, so the intermediate state (previous submission, new round) must never reach the server.
-        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
-        const params$ = new BehaviorSubject<Params>({ submissionId: 123 });
-        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
-        activatedRoute.params = params$.asObservable();
-        activatedRoute.queryParamMap = queryParamMap$.asObservable();
-        comp.ngOnInit();
-        lockAndGetProgrammingSubmissionParticipationStub.mockClear();
-
-        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
-        params$.next({ submissionId: 456 });
-        await Promise.resolve();
-
-        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(456, 1);
-    });
-
-    it('should ignore a complaint lookup that completes after a newer round loaded', async () => {
-        // The complaint lookup outlives the load that started it: an obsolete response would attach the previous round's
-        // complaint to the current result, and an obsolete failure would report a problem the user cannot act on.
-        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
-        const params$ = new BehaviorSubject<Params>({ submissionId: 123 });
-        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
-        activatedRoute.params = params$.asObservable();
-        activatedRoute.queryParamMap = queryParamMap$.asObservable();
-        const pendingComplaint = new Subject<HttpResponse<ComplaintDTO>>();
-        findBySubmissionIdStub.mockReturnValueOnce(pendingComplaint.asObservable()).mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
-        const onErrorSpy = vi.spyOn(TestBed.inject(AlertService), 'error').mockImplementation(() => undefined!);
-
-        comp.ngOnInit();
-        await flushMicrotasks();
-
-        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
-        await flushMicrotasks();
-
-        pendingComplaint.next(new HttpResponse<ComplaintDTO>({ body: { id: 9, complaintText: 'Obsolete' } as ComplaintDTO }));
-        pendingComplaint.error(new HttpErrorResponse({ status: 400 }));
-        await flushMicrotasks();
-
-        expect(comp.complaint()?.id).not.toBe(9);
-        expect(onErrorSpy).not.toHaveBeenCalled();
-    });
-
-    it("should clear the previous round's Athena state when a replacement load begins", async () => {
-        // Asserted while the replacement lock request is still pending, which is what isolates the reset: once a
-        // replacement response arrives it runs its own fetch and sets both values itself, so a later assertion passes
-        // whether or not the reset exists. Holding the response open leaves the reset as the only thing that could have
-        // cleared them - and it is what the previous round's cards and stuck loading flag depend on, because the
-        // generation-guarded finally of the superseded fetch no longer recognises this load.
-        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
-        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
-        activatedRoute.params = new BehaviorSubject<Params>({ submissionId: 123 }).asObservable();
-        activatedRoute.queryParamMap = queryParamMap$.asObservable();
-        lockAndGetProgrammingSubmissionParticipationStub
-            .mockReturnValueOnce(scheduled([submission], asapScheduler))
-            .mockReturnValue(new Subject<ProgrammingSubmission>().asObservable());
-        vi.spyOn(TestBed.inject(AthenaService), 'getProgrammingFeedbackSuggestions').mockReturnValue(new Subject<Feedback[]>().asObservable());
-
-        comp.ngOnInit();
-        await flushMicrotasks();
-        comp.feedbackSuggestions.set([{ id: 42, detailText: 'Stale suggestion' } as Feedback]);
-        comp.loadingFeedbackSuggestions.set(true);
-
-        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
-        await Promise.resolve();
-
-        expect(comp.feedbackSuggestions()).toEqual([]);
-        expect(comp.unreferencedFeedbackSuggestions()).toEqual([]);
-        expect(comp.loadingFeedbackSuggestions()).toBe(false);
-    });
-
-    it("should not keep the previous round's complaint when the replacement has none", async () => {
-        // getComplaint returns early on an empty response instead of clearing, so without the reset a round with no
-        // complaint inherits the previous one's - which disables overrides and offers complaint actions for the wrong round.
-        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
-        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
-        activatedRoute.params = new BehaviorSubject<Params>({ submissionId: 123 }).asObservable();
-        activatedRoute.queryParamMap = queryParamMap$.asObservable();
-        // First round carries a complaint, the replacement's lookup finds none.
-        findBySubmissionIdStub
-            .mockReturnValueOnce(of(new HttpResponse<ComplaintDTO>({ body: complaint as unknown as ComplaintDTO })))
-            .mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
-
-        comp.ngOnInit();
-        await flushMicrotasks();
-        expect(comp.complaint()).toBeDefined();
-
-        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
-        await flushMicrotasks();
-
-        expect(comp.complaint()).toBeUndefined();
-    });
-
-    it('should ignore a round response that arrives after a newer one', async () => {
-        // Consecutive round changes each issue their own lock request and nothing cancels the earlier one, so the two
-        // can complete in either order. The obsolete response must not win: the page would then show a participation for
-        // one round while correctionRound — which the url owns — names another, so result selection and feedback
-        // tagging use mismatched data.
-        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
-        const params$ = new BehaviorSubject<Params>({ submissionId: 123 });
-        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
-        activatedRoute.params = params$.asObservable();
-        activatedRoute.queryParamMap = queryParamMap$.asObservable();
-        const pendingByRound = new Map<number, Subject<ProgrammingSubmission>>();
-        lockAndGetProgrammingSubmissionParticipationStub.mockImplementation((_submissionId: number, correctionRound = 0) => {
-            const pending = new Subject<ProgrammingSubmission>();
-            pendingByRound.set(correctionRound, pending);
-            return pending.asObservable();
-        });
-
-        comp.ngOnInit();
-        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
-        await Promise.resolve();
-        expect([...pendingByRound.keys()]).toEqual([0, 1]);
-
-        // The round the url now names answers first, the obsolete one only afterwards.
-        const roundOneSubmission = deepClone(submission);
-        roundOneSubmission.id = 501;
-        pendingByRound.get(1)!.next(roundOneSubmission);
-        await firstValueFrom(scheduled([null], asapScheduler));
-        const roundZeroSubmission = deepClone(submission);
-        roundZeroSubmission.id = 502;
-        pendingByRound.get(0)!.next(roundZeroSubmission);
-        await firstValueFrom(scheduled([null], asapScheduler));
-
-        expect(comp.submission()?.id).toBe(501);
-    });
-
-    it('should ignore a follow up request of a load that was superseded after its lock response', async () => {
-        // The lock response of the obsolete load already passed the generation check, so its follow-up requests were
-        // issued. If one of them answers after a newer load has taken over, it must not write the template of the
-        // superseded assessment over the current one.
-        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
-        const params$ = new BehaviorSubject<Params>({ submissionId: 123 });
-        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
-        activatedRoute.params = params$.asObservable();
-        activatedRoute.queryParamMap = queryParamMap$.asObservable();
-
-        const pendingTemplateByRound = new Map<number, Subject<HttpResponse<ProgrammingExercise>>>();
-        let currentRound = 0;
-        lockAndGetProgrammingSubmissionParticipationStub.mockImplementation((_submissionId: number, correctionRound = 0) => {
-            currentRound = correctionRound;
-            return of(deepClone(submission));
-        });
-        findWithParticipationsStub.mockImplementation(() => {
-            const pending = new Subject<HttpResponse<ProgrammingExercise>>();
-            pendingTemplateByRound.set(currentRound, pending);
-            return pending.asObservable();
-        });
-
-        comp.ngOnInit();
-        await firstValueFrom(scheduled([null], asapScheduler));
-        // the second round supersedes the first one, both are waiting for their template request
-        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
-        await firstValueFrom(scheduled([null], asapScheduler));
-        expect([...pendingTemplateByRound.keys()]).toEqual([0, 1]);
-
-        const currentExercise = deepClone(exercise);
-        currentExercise.templateParticipation!.id = 777;
-        pendingTemplateByRound.get(1)!.next(new HttpResponse({ body: currentExercise }));
-        await firstValueFrom(scheduled([null], asapScheduler));
-
-        // the superseded load answers last
-        const supersededExercise = deepClone(exercise);
-        supersededExercise.templateParticipation!.id = 888;
-        pendingTemplateByRound.get(0)!.next(new HttpResponse({ body: supersededExercise }));
-        await firstValueFrom(scheduled([null], asapScheduler));
-
-        expect(comp.templateParticipation.id).toBe(777);
     });
 
     it('should not show complaint when participation contains no complaint', async () => {

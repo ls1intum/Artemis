@@ -1,12 +1,12 @@
 import { Location, UpperCasePipe } from '@angular/common';
-import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
-import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -97,18 +97,6 @@ export class FileUploadAssessmentComponent implements OnInit {
     courseId!: number; // set in ngOnInit() from route params
     readonly hasAssessmentDueDatePassed = signal<boolean>(undefined!);
     readonly correctionRound = signal(0);
-
-    /** Route parameters of the currently shown submission, so a round change can re-request the same submission. */
-    private lastRouteParams?: Params;
-
-    /** Whether a round-only reload is queued, so a path change in the same navigation can cancel it. */
-    private roundReloadPending = false;
-
-    /** Identity of the last request actually issued, making {@link loadSubmissionForRoute} idempotent. */
-    private lastLoadedRequestKey?: string;
-
-    /** Generation of the last load issued; see {@link isCurrentLoad}. */
-    private loadGeneration = 0;
     resultId!: number; // set in ngOnInit() from route params
     examId = 0;
     exerciseGroupId?: number;
@@ -144,62 +132,15 @@ export class FileUploadAssessmentComponent implements OnInit {
                 this.userId = user.id;
             }
         });
-        // A fresh initialisation must load again: the guard below only exists to dedupe the two route subscriptions
-        // against each other, not to suppress a genuine re-init.
-        this.lastLoadedRequestKey = undefined;
-        this.lastRouteParams = undefined;
-        this.roundReloadPending = false;
-
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
             // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
-            // Number() alone will not do. This component both requests the submission with this signal and indexes the
+            // Number() alone will not do. This component requests the submission with this signal and indexes the
             // loaded results by it, so there is a single round either way.
             this.correctionRound.set(parseCorrectionRound(queryParams.get('correction-round')));
-            // Angular does not re-emit unchanged path parameters, so a navigation that changes only the round would
-            // otherwise leave the loaded submission on the previous round while this page indexes results and tags
-            // feedback with the new one. Re-request with the same parsed value the rest of the page now uses.
-            // Only once a submission is actually on screen: before that there is nothing to re-request, and the path
-            // subscription below is what performs the initial load.
-            // Defer, so a navigation that also changes the path can cancel this: the router emits the query and
-            // the path separately for one navigation, and these load paths lock a submission server-side, so the
-            // intermediate state (previous path, new round) must never reach the server. One navigation, one
-            // request, for the final combination of path and round.
-            if (this.lastRouteParams?.['submissionId']) {
-                this.roundReloadPending = true;
-                void Promise.resolve().then(() => {
-                    if (this.roundReloadPending && this.lastRouteParams) {
-                        this.roundReloadPending = false;
-                        this.loadSubmissionForRoute(this.lastRouteParams);
-                    }
-                });
-            }
         });
 
         this.route.params.subscribe((params) => {
-            // This navigation changed the path too, so the deferred round reload above is redundant.
-            this.roundReloadPending = false;
-            this.loadSubmissionForRoute(params);
-        });
-    }
-
-    /**
-     * Loads the submission the current route points at, for the round the page is currently showing.
-     * <p>
-     * Driven from both route subscriptions, so it is idempotent: a navigation that changes the path and the round
-     * together makes both of them fire, and these load paths lock a submission server-side, so requesting twice is not
-     * merely wasteful. The guard keys on everything the request depends on, which makes a repeat call a no-op while a
-     * genuine change still reloads.
-     */
-    private loadSubmissionForRoute(params: Params): void {
-        const requestKey = `${params['submissionId']}|${params['exerciseId']}|${params['resultId']}|${this.correctionRound()}`;
-        if (requestKey === this.lastLoadedRequestKey) {
-            return;
-        }
-        this.lastLoadedRequestKey = requestKey;
-        this.lastRouteParams = params;
-        const generation = ++this.loadGeneration;
-        {
             this.resetSubmissionState();
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
@@ -217,23 +158,11 @@ export class FileUploadAssessmentComponent implements OnInit {
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
             if (submissionValue === 'new') {
-                this.loadOptimalSubmission(this.exerciseId, generation);
+                this.loadOptimalSubmission(this.exerciseId);
             } else {
-                this.loadSubmission(submissionId, generation);
+                this.loadSubmission(submissionId);
             }
-        }
-    }
-
-    /**
-     * Whether the load that was issued as the given generation is still the latest one.
-     * <p>
-     * Consecutive round changes each issue their own request and nothing cancels the earlier one, so two loads can be
-     * in flight and complete in either order. Without this check the response of the obsolete request wins, leaving the
-     * page showing a submission for one round while {@link correctionRound} — which the url owns — names another, so
-     * result selection and feedback tagging use mismatched data.
-     */
-    private isCurrentLoad(generation: number): boolean {
-        return generation === this.loadGeneration;
+        });
     }
 
     attachmentExtension(filePath: string): string {
@@ -244,12 +173,9 @@ export class FileUploadAssessmentComponent implements OnInit {
         return filePath.split('.').pop() ?? 'N/A';
     }
 
-    private loadOptimalSubmission(exerciseId: number, generation: number): void {
+    private loadOptimalSubmission(exerciseId: number): void {
         this.fileUploadSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound()).subscribe({
             next: (submission?: FileUploadSubmission) => {
-                if (!this.isCurrentLoad(generation)) {
-                    return;
-                }
                 if (!submission) {
                     // there is no submission waiting for assessment at the moment
                     this.navigateBack();
@@ -257,7 +183,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                     return;
                 }
 
-                this.initializePropertiesFromSubmission(submission, generation);
+                this.initializePropertiesFromSubmission(submission);
                 this.validateAssessment();
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const submissionId = this.submission()?.id;
@@ -267,9 +193,6 @@ export class FileUploadAssessmentComponent implements OnInit {
                 }
             },
             error: (error: HttpErrorResponse) => {
-                if (!this.isCurrentLoad(generation)) {
-                    return;
-                }
                 this.loadingInitialSubmission.set(false);
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
@@ -280,24 +203,18 @@ export class FileUploadAssessmentComponent implements OnInit {
         });
     }
 
-    private loadSubmission(submissionId: number, generation: number): void {
+    private loadSubmission(submissionId: number): void {
         this.fileUploadSubmissionService
             .get(submissionId, this.correctionRound(), this.resultId)
             .pipe(filter((res) => !!res.body))
             .subscribe({
                 next: (res) => {
-                    if (!this.isCurrentLoad(generation)) {
-                        return;
-                    }
                     if (res.body) {
-                        this.initializePropertiesFromSubmission(res.body, generation);
+                        this.initializePropertiesFromSubmission(res.body);
                         this.validateAssessment();
                     }
                 },
                 error: (error: HttpErrorResponse) => {
-                    if (!this.isCurrentLoad(generation)) {
-                        return;
-                    }
                     this.loadingInitialSubmission.set(false);
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                         this.navigateBack();
@@ -341,7 +258,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         return true;
     }
 
-    private initializePropertiesFromSubmission(submission: FileUploadSubmission, generation?: number): void {
+    private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
         this.loadingInitialSubmission.set(false);
         this.submission.set(submission);
         const participation = submission.participation as StudentParticipation;
@@ -366,7 +283,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         } else {
             this.result.set(getLatestSubmissionResult(submission));
         }
-        this.getComplaint(generation);
+        this.getComplaint();
 
         const result = this.result();
         if (result) {
@@ -547,17 +464,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.submission.update((submission) => ({ ...submission!, results: [this.result()!, ...(submission!.results?.slice(1) ?? [])] }));
     }
 
-    /**
-     * Loads the complaint of the submission on screen.
-     * <p>
-     * Gated by the load generation when one is given, like the submission request itself: this lookup outlives the load
-     * that started it, so an obsolete response would attach a complaint of the previous round to the current result, and
-     * an obsolete failure would report a problem the user cannot act on. Callers outside a load pass nothing and are
-     * never stale.
-     *
-     * @param generation the load this lookup belongs to, or undefined when called outside a load
-     */
-    getComplaint(generation?: number): void {
+    getComplaint(): void {
         const submissionId = this.submission()?.id;
         if (!submissionId) {
             return;
@@ -565,23 +472,15 @@ export class FileUploadAssessmentComponent implements OnInit {
 
         this.complaintService.findBySubmissionId(submissionId).subscribe({
             next: (res) => {
-                if (this.isStaleLoad(generation) || !res.body) {
+                if (!res.body) {
                     return;
                 }
                 this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.result()));
             },
             error: (err: HttpErrorResponse) => {
-                if (this.isStaleLoad(generation)) {
-                    return;
-                }
                 onError(this.alertService, err);
             },
         });
-    }
-
-    /** Whether a callback belongs to a load that has since been superseded. */
-    private isStaleLoad(generation?: number): boolean {
-        return generation !== undefined && !this.isCurrentLoad(generation);
     }
 
     navigateBack() {
