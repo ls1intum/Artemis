@@ -46,7 +46,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { User } from 'app/account/user/user.model';
-import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -84,7 +83,6 @@ describe('NavbarComponent', () => {
     let component: NavbarComponent;
     let entityTitleServiceStub: ReturnType<typeof vi.spyOn>;
     let entityTitleService: EntityTitleService;
-    let examParticipationService: ExamParticipationService;
     let currentCourseContextService: CurrentCourseContextService;
 
     const router = new MockRouter();
@@ -160,7 +158,6 @@ describe('NavbarComponent', () => {
         component = fixture.componentInstance;
         router.navigate.mockClear();
         router.navigateByUrl.mockClear();
-        examParticipationService = TestBed.inject(ExamParticipationService);
         entityTitleService = TestBed.inject(EntityTitleService);
         currentCourseContextService = TestBed.inject(CurrentCourseContextService);
         currentCourseContextService.clearCourse();
@@ -413,22 +410,12 @@ describe('NavbarComponent', () => {
     it('should set the exam active state correctly', async () => {
         vi.useFakeTimers();
         const now = dayjs();
-        const examParticipationService = TestBed.inject(ExamParticipationService);
         const activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
 
         fixture.detectChanges();
         activatedRoute.setParameters({ examId: 1 });
         router.setUrl('/course/2/exams/1');
 
-        examParticipationService.currentlyLoadedStudentExam.next({
-            workingTime: 60,
-            exam: {
-                id: 1,
-                startDate: now.add(1, 'minute'),
-                endDate: now.add(2, 'minutes'),
-                gracePeriod: 180,
-            },
-        } as StudentExam);
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.isExamActive()).toBe(false);
