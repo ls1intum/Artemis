@@ -3723,7 +3723,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(dtoForTestExam2.exam().id()).isEqualTo(testExam2.getId());
         assertThat(studentExamListReceived).allSatisfy(dto -> {
             assertThat(dto.exam()).isNotNull();
-            assertThat(dto.exam().testExam()).isTrue();
+            assertThat(!dto.exam().examMode().isReal()).isTrue();
             assertThat(dto.exam().course()).isNotNull();
             assertThat(dto.exam().course().id()).isEqualTo(course1.getId());
             // user is intentionally omitted from this endpoint's response (see StudentExamDTO#withExam)
