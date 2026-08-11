@@ -1357,6 +1357,17 @@ components:
         started: {type: boolean}
         ended: {type: boolean}
         password: {type: string}
+    ExerciseVariantGroupReference:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        maxPoints: {type: number, format: double}
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
     QuizQuestionRefinementSuccess:
       description: Successful refinement result containing the refined question and
         an explanation of the changes
@@ -1938,6 +1949,7 @@ components:
           enum: [INDIVIDUAL, TEAM]
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
+        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
         quizQuestions:
           type: array
           items: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
@@ -2110,6 +2122,7 @@ components:
           enum: [INDIVIDUAL, TEAM]
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
+        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
         quizQuestions:
           type: array
           items: {$ref: '#/components/schemas/QuizQuestionWithoutSolution'}
@@ -2557,6 +2570,7 @@ components:
           enum: [INDIVIDUAL, TEAM]
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
+        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
     StudentQuizParticipationWithQuestions:
       required: [quizQuestionsType]
       type: object
