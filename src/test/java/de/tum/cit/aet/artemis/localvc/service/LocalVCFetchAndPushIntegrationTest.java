@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -1435,10 +1436,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             examRepository.save(exam);
 
             // Create an instructor exam test run, including its participation and repository.
-            StudentExam testRunConfiguration = new StudentExam();
-            testRunConfiguration.setExam(exam);
-            testRunConfiguration.setExercises(List.of(examProgrammingExercise));
-            testRunConfiguration.setWorkingTime(3600);
+            CreateTestRunDTO testRunConfiguration = new CreateTestRunDTO(exam.getId(), List.of(examProgrammingExercise.getId()), 3600);
             StudentExam instructorTestRunExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/test-runs", testRunConfiguration,
                     StudentExam.class, HttpStatus.OK);
 
