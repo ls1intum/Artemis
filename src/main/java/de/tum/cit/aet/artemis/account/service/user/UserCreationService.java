@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -46,12 +47,15 @@ public class UserCreationService {
 
     private final OrganizationRepository organizationRepository;
 
+    private final AccountCredentialRevocationService accountCredentialRevocationService;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
-            OrganizationRepository organizationRepository) {
+            OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
         this.organizationRepository = organizationRepository;
+        this.accountCredentialRevocationService = accountCredentialRevocationService;
     }
 
     /**
@@ -230,13 +234,17 @@ public class UserCreationService {
         if (updatedUserDTO.getImageUrl() != null) {
             user.setImageUrl(updatedUserDTO.getImageUrl());
         }
-        // Captured before the flag is overwritten: the admin edit form reaches the same two transitions as
-        // deactivateUser and a password reset do, and a session established earlier has to stop being extended for both.
+        // Captured before the flag is overwritten: the admin edit form reaches the same two transitions as deactivateUser
+        // and a password reset do. A session established earlier has to stop being extended for both, and the credentials
+        // have to be revoked as well, otherwise an account the admin sees as deactivated keeps working over git.
         boolean isBeingDeactivated = Boolean.TRUE.equals(user.getActivated()) && !updatedUserDTO.isActivated();
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
         user.setLangKey(updatedUserDTO.getLangKey());
         boolean isPasswordBeingChanged = user.isInternal() && updatedUserDTO.getPassword() != null;
+        // Bumping the changed date always stops an earlier session from being extended; revoking the other credentials on
+        // top of that stays opt-in, because the admin form asks for it separately.
+        boolean revokeCredentialsAfterPasswordChange = isPasswordBeingChanged && updatedUserDTO.isRevokeCredentials();
         if (isPasswordBeingChanged) {
             user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
         }
@@ -248,7 +256,12 @@ public class UserCreationService {
 
         log.debug("Changed Information for User: {}", user);
 
-        return saveUser(user);
+        User savedUser = saveUser(user);
+        if (isBeingDeactivated || revokeCredentialsAfterPasswordChange) {
+            String reason = isBeingDeactivated ? "user deactivated by an administrator" : "password changed by an administrator";
+            accountCredentialRevocationService.revokeAllCredentials(savedUser, reason);
+        }
+        return savedUser;
     }
 
     /**
@@ -273,6 +286,9 @@ public class UserCreationService {
         // Stops sessions established before the deactivation from being extended any further.
         user.setCredentialsChangedDate(ZonedDateTime.now());
         saveUser(user);
+        // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
+        // SSH key without consulting account state, so deactivation only takes effect once those credentials are gone.
+        accountCredentialRevocationService.revokeAllCredentials(user, "user deactivated");
         log.info("Deactivated user: {}", user);
     }
 
