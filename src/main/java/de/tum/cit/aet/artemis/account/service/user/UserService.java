@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
+import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
@@ -120,6 +121,8 @@ public class UserService {
 
     private final AccountCredentialRevocationService accountCredentialRevocationService;
 
+    private final AccountSecurityNotificationService accountSecurityNotificationService;
+
     private final CourseNotificationSettingService courseNotificationSettingService;
 
     private final UserCourseNotificationStatusService userCourseNotificationStatusService;
@@ -130,8 +133,9 @@ public class UserService {
             AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
             ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
-            AccountCredentialRevocationService accountCredentialRevocationService, CourseNotificationSettingService courseNotificationSettingService,
-            UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
+            AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
+            CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
+            GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
@@ -146,6 +150,7 @@ public class UserService {
         this.learnerProfileApi = learnerProfileApi;
         this.savedPostRepository = savedPostRepository;
         this.accountCredentialRevocationService = accountCredentialRevocationService;
+        this.accountSecurityNotificationService = accountSecurityNotificationService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
         this.globalNotificationSettingService = globalNotificationSettingService;
@@ -285,6 +290,7 @@ public class UserService {
             // defaults to revoking everything (see KeyAndPasswordVM#revokeCredentialsOrAll), because completing one
             // only proves control of the mailbox.
             accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password reset completed");
+            accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.RESET);
             return user;
         });
     }
@@ -578,6 +584,7 @@ public class UserService {
             // What else is revoked is the user's decision: only they know whether the old password may have been seen by
             // someone else, and that is what decides whether losing their enrolled authenticators and keys is warranted.
             accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password changed");
+            accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.OWNER);
 
             log.debug("Changed password for User: {}", user);
         });
