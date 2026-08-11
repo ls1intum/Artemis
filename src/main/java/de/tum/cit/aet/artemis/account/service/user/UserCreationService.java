@@ -245,11 +245,25 @@ public class UserCreationService {
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
         user.setLangKey(updatedUserDTO.getLangKey());
+
+        // if user was external and becomes internal - it's important to make sure that user still has a password
+        boolean wasInternal = user.isInternal();
         user.setInternal(updatedUserDTO.isInternal());
         boolean revokeCredentialsAfterPasswordChange = user.isInternal() && updatedUserDTO.getPassword() != null && updatedUserDTO.isRevokeCredentials();
-        if (user.isInternal() && updatedUserDTO.getPassword() != null) {
-            user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
+
+        if (user.isInternal()) {
+            if (updatedUserDTO.getPassword() != null) {
+                user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
+            }
+            else if (!wasInternal || user.getPassword() == null) {
+                // If user becomes internal user and got no password, generate the random password
+                String newPassword = RandomUtil.generatePassword();
+                user.setPassword(passwordService.hashPassword(newPassword));
+            }
         }
+        // if (user.isInternal() && updatedUserDTO.getPassword() != null) {
+        // user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
+        // }
         user.setOrganizations(updatedUserDTO.getOrganizations());
         setUserAuthorities(updatedUserDTO, user);
 

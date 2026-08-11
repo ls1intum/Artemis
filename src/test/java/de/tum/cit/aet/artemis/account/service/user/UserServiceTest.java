@@ -178,22 +178,47 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     }
 
     @Test
-    void testUpdateUser_withManagedUserVM_respectsIsInternalFlag() {
-        String login = TEST_PREFIX + "internal_to_external_user";
-        User user = userCreationService.createUser(login, "password123", "Internal", "User", "internal_test@example.com", null, null, "en", true);
-        assertThat(user.isInternal()).as("created user should be internal initially").isTrue();
+    void testUpdateUser_externalToInternal_generatesPasswordIfNull() {
+        String login = TEST_PREFIX + "ext_to_int";
+        ManagedUserVM externalUserDTO = new ManagedUserVM();
+        externalUserDTO.setLogin(login);
+        externalUserDTO.setFirstName("External");
+        externalUserDTO.setLastName("User");
+        externalUserDTO.setEmail("ext_to_int@example.com");
+        externalUserDTO.setInternal(false);
+
+        User user = userCreationService.createUser(externalUserDTO);
+        assertThat(user.isInternal()).isFalse();
+
+        // Set external to internal and provide no password
+        ManagedUserVM updateDTO = new ManagedUserVM(user);
+        updateDTO.setInternal(true);
+        updateDTO.setPassword(null);
+
+        userCreationService.updateUser(user, updateDTO);
+
+        User reloadedUser = userRepository.findOneByLogin(login).orElseThrow();
+        assertThat(reloadedUser.isInternal()).isTrue();
+        assertThat(reloadedUser.getPassword()).isNotNull().isNotEmpty();
+
+        userRepository.delete(reloadedUser);
+    }
+
+    @Test
+    void testUpdateUser_internalToExternal_reverseTransition() {
+        String login = TEST_PREFIX + "int_to_ext";
+        User user = userCreationService.createUser(login, "password123", "Internal", "User", "int_to_ext@example.com", null, null, "en", true);
+        assertThat(user.isInternal()).isTrue();
 
         ManagedUserVM updateDTO = new ManagedUserVM(user);
         updateDTO.setInternal(false);
 
         userCreationService.updateUser(user, updateDTO);
 
-        Optional<User> reloadedUser = userRepository.findOneByLogin(login);
-        assertThat(reloadedUser).isPresent();
-        assertThat(reloadedUser.get().isInternal()).as("updated user should now be external").isFalse();
+        User reloadedUser = userRepository.findOneByLogin(login).orElseThrow();
+        assertThat(reloadedUser.isInternal()).isFalse();
 
-        // Cleanup
-        reloadedUser.ifPresent(userRepository::delete);
+        userRepository.delete(reloadedUser);
     }
 
     @Test
