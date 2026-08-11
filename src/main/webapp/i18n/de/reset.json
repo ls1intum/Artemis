@@ -31,6 +31,10 @@
                 "success-part2": "Bitte melde dich an.",
                 "keymissing": "Der Reset-Schlüssel fehlt.",
                 "error": "Dein Passwort konnte nicht zurückgesetzt werden. Der Link ist entweder ungültig, wurde bereits verwendet oder ist abgelaufen (24 Stunden gültig)."
+            },
+            "revocation": {
+                "title": "Andere Zugangsdaten widerrufen",
+                "explanation": "Wer Ihr altes Passwort gesehen hat, könnte weiterhin Ihre Passkeys, SSH-Schlüssel und Repository-Zugriffstokens verwenden, da jedes davon für sich allein funktioniert. Sie werden standardmäßig widerrufen. Wenn Sie Ihr Passwort nur vergessen haben und es niemand gesehen hat, können Sie sie behalten und müssen Ihre Geräte und Schlüssel nicht neu einrichten."
             }
         }
     }
