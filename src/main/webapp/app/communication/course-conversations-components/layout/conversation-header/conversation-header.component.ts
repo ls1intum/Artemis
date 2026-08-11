@@ -149,6 +149,8 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
             .subscribe(() => {
                 this.metisConversationService.forceRefresh().subscribe({
                     complete: () => {},
+                    // the service already reported the failure to the user, nothing is derived from the refresh here
+                    error: () => {},
                 });
             });
     }
@@ -170,7 +172,11 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
                     selectedTab,
                     onUserNameClicked: (userId: number) => {
                         ref?.destroy();
-                        this.metisConversationService.createOneToOneChatWithId(userId).subscribe();
+                        this.metisConversationService.createOneToOneChatWithId(userId).subscribe({
+                            // the chat is created before the conversations are reloaded, and a failed reload is already
+                            // reported by the service, so it must not surface as an unhandled error here
+                            error: () => {},
+                        });
                     },
                 },
             }),
@@ -184,6 +190,8 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
             .subscribe(() => {
                 this.metisConversationService.forceRefresh().subscribe({
                     complete: () => {},
+                    // the service already reported the failure to the user, nothing is derived from the refresh here
+                    error: () => {},
                 });
                 this.onUpdateSidebar.emit();
             });
