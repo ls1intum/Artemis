@@ -253,6 +253,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             // Angular reuses this component for param-only navigations (e.g. to the next submission), so both fatal
             // error states have to be cleared here — otherwise the panel of the previous submission hides the new one.
             this.assessmentNotPossibleYet.set(undefined);
+            // Athena state belongs to the assessment being replaced. A round that already carries manual feedback skips
+            // the fetch entirely, so leaving these would show the previous round's suggestion cards; and the
+            // generation-guarded `finally` of an in-flight fetch no longer clears the flag once this load supersedes it,
+            // so it would stay set for good.
+            this.feedbackSuggestions.set([]);
+            this.loadingFeedbackSuggestions.set(false);
 
             this.courseId = Number(params['courseId']);
             this.exerciseId = Number(params['exerciseId']);
@@ -411,7 +417,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         this.checkPermissions();
         this.handleFeedback();
-        this.getComplaint();
+        this.getComplaint(generation);
         this.calculateTotalScore();
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
@@ -808,19 +814,31 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
-    private getComplaint(): void {
+    /**
+     * Loads the complaint of the participation on screen.
+     * <p>
+     * Gated by the load generation like the lock request itself: this lookup outlives the load that started it, so an
+     * obsolete response would attach a complaint of the previous round to the current result, and an obsolete failure
+     * would report a problem the user cannot act on.
+     *
+     * @param generation the load this lookup belongs to
+     */
+    private getComplaint(generation: number): void {
         const submission = this.submission();
         if (!submission) {
             return;
         }
         this.complaintService.findBySubmissionId(submission.id!).subscribe({
             next: (res) => {
-                if (!res.body) {
+                if (!this.isCurrentLoad(generation) || !res.body) {
                     return;
                 }
                 this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.manualResult()));
             },
             error: (err: HttpErrorResponse) => {
+                if (!this.isCurrentLoad(generation)) {
+                    return;
+                }
                 this.onError(err?.message);
             },
         });

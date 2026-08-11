@@ -257,7 +257,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                     return;
                 }
 
-                this.initializePropertiesFromSubmission(submission);
+                this.initializePropertiesFromSubmission(submission, generation);
                 this.validateAssessment();
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const submissionId = this.submission()?.id;
@@ -290,7 +290,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                         return;
                     }
                     if (res.body) {
-                        this.initializePropertiesFromSubmission(res.body);
+                        this.initializePropertiesFromSubmission(res.body, generation);
                         this.validateAssessment();
                     }
                 },
@@ -341,7 +341,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         return true;
     }
 
-    private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
+    private initializePropertiesFromSubmission(submission: FileUploadSubmission, generation?: number): void {
         this.loadingInitialSubmission.set(false);
         this.submission.set(submission);
         const participation = submission.participation as StudentParticipation;
@@ -366,7 +366,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         } else {
             this.result.set(getLatestSubmissionResult(submission));
         }
-        this.getComplaint();
+        this.getComplaint(generation);
 
         const result = this.result();
         if (result) {
@@ -547,7 +547,17 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.submission.update((submission) => ({ ...submission!, results: [this.result()!, ...(submission!.results?.slice(1) ?? [])] }));
     }
 
-    getComplaint(): void {
+    /**
+     * Loads the complaint of the submission on screen.
+     * <p>
+     * Gated by the load generation when one is given, like the submission request itself: this lookup outlives the load
+     * that started it, so an obsolete response would attach a complaint of the previous round to the current result, and
+     * an obsolete failure would report a problem the user cannot act on. Callers outside a load pass nothing and are
+     * never stale.
+     *
+     * @param generation the load this lookup belongs to, or undefined when called outside a load
+     */
+    getComplaint(generation?: number): void {
         const submissionId = this.submission()?.id;
         if (!submissionId) {
             return;
@@ -555,15 +565,23 @@ export class FileUploadAssessmentComponent implements OnInit {
 
         this.complaintService.findBySubmissionId(submissionId).subscribe({
             next: (res) => {
-                if (!res.body) {
+                if (this.isStaleLoad(generation) || !res.body) {
                     return;
                 }
                 this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.result()));
             },
             error: (err: HttpErrorResponse) => {
+                if (this.isStaleLoad(generation)) {
+                    return;
+                }
                 onError(this.alertService, err);
             },
         });
+    }
+
+    /** Whether a callback belongs to a load that has since been superseded. */
+    private isStaleLoad(generation?: number): boolean {
+        return generation !== undefined && !this.isCurrentLoad(generation);
     }
 
     navigateBack() {

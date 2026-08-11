@@ -418,6 +418,33 @@ describe('FileUploadAssessmentComponent', () => {
             expect(getSpy).toHaveBeenCalledOnce();
         });
 
+        it('should ignore a complaint lookup that completes after a newer round loaded', async () => {
+            // The complaint lookup outlives the load that started it, so an obsolete response would attach the previous
+            // round's complaint to the current result and an obsolete failure would report a problem the user cannot act on.
+            const pendingComplaint = new Subject<HttpResponse<ComplaintDTO>>();
+            const complaintLookup = vi
+                .spyOn(complaintService, 'findBySubmissionId')
+                .mockReturnValueOnce(pendingComplaint.asObservable())
+                .mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            const errorSpy = vi.spyOn(alertService, 'error').mockImplementation(() => undefined!);
+
+            component.ngOnInit();
+            expect(complaintLookup).toHaveBeenCalledOnce();
+
+            // A newer round supersedes the load whose complaint lookup is still open.
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+            await Promise.resolve();
+
+            pendingComplaint.next(new HttpResponse<ComplaintDTO>({ body: { id: 9, complaintText: 'Obsolete' } as ComplaintDTO }));
+            pendingComplaint.error(new HttpErrorResponse({ status: 400 }));
+
+            expect(component.complaint()?.id).not.toBe(9);
+            expect(errorSpy).not.toHaveBeenCalled();
+        });
+
         it('should extract route params for course and exercise', () => {
             const submission = createSubmission();
             vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));

@@ -482,6 +482,60 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(456, 1);
     });
 
+    it('should ignore a complaint lookup that completes after a newer round loaded', async () => {
+        // The complaint lookup outlives the load that started it: an obsolete response would attach the previous round's
+        // complaint to the current result, and an obsolete failure would report a problem the user cannot act on.
+        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
+        const params$ = new BehaviorSubject<Params>({ submissionId: 123 });
+        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
+        activatedRoute.params = params$.asObservable();
+        activatedRoute.queryParamMap = queryParamMap$.asObservable();
+        const pendingComplaint = new Subject<HttpResponse<ComplaintDTO>>();
+        findBySubmissionIdStub.mockReturnValueOnce(pendingComplaint.asObservable()).mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
+        const onErrorSpy = vi.spyOn(TestBed.inject(AlertService), 'error').mockImplementation(() => undefined!);
+
+        comp.ngOnInit();
+        await flushMicrotasks();
+
+        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+        await flushMicrotasks();
+
+        pendingComplaint.next(new HttpResponse<ComplaintDTO>({ body: { id: 9, complaintText: 'Obsolete' } as ComplaintDTO }));
+        pendingComplaint.error(new HttpErrorResponse({ status: 400 }));
+        await flushMicrotasks();
+
+        expect(comp.complaint()?.id).not.toBe(9);
+        expect(onErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it("should clear the previous round's Athena state when a replacement load begins", async () => {
+        // Asserted while the replacement lock request is still pending, which is what isolates the reset: once a
+        // replacement response arrives it runs its own fetch and sets both values itself, so a later assertion passes
+        // whether or not the reset exists. Holding the response open leaves the reset as the only thing that could have
+        // cleared them - and it is what the previous round's cards and stuck loading flag depend on, because the
+        // generation-guarded finally of the superseded fetch no longer recognises this load.
+        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
+        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
+        activatedRoute.params = new BehaviorSubject<Params>({ submissionId: 123 }).asObservable();
+        activatedRoute.queryParamMap = queryParamMap$.asObservable();
+        lockAndGetProgrammingSubmissionParticipationStub
+            .mockReturnValueOnce(scheduled([submission], asapScheduler))
+            .mockReturnValue(new Subject<ProgrammingSubmission>().asObservable());
+        vi.spyOn(TestBed.inject(AthenaService), 'getProgrammingFeedbackSuggestions').mockReturnValue(new Subject<Feedback[]>().asObservable());
+
+        comp.ngOnInit();
+        await flushMicrotasks();
+        comp.feedbackSuggestions.set([{ id: 42, detailText: 'Stale suggestion' } as Feedback]);
+        comp.loadingFeedbackSuggestions.set(true);
+
+        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+        await Promise.resolve();
+
+        expect(comp.feedbackSuggestions()).toEqual([]);
+        expect(comp.unreferencedFeedbackSuggestions()).toEqual([]);
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+    });
+
     it('should ignore a round response that arrives after a newer one', async () => {
         // Consecutive round changes each issue their own lock request and nothing cancels the earlier one, so the two
         // can complete in either order. The obsolete response must not win: the page would then show a participation for
