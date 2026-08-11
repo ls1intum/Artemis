@@ -19,7 +19,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { GitCloneMethod } from '../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { SshEncryptionAlgorithm } from '../../support/pageobjects/exercises/programming/GitClient';
 import { SEED_COURSES } from '../../support/seedData';
-import { BUILD_RESULT_TIMEOUT } from '../../support/timeouts';
+import { BUILD_RESULT_TIMEOUT, RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -240,7 +240,10 @@ test.describe('Exam participation', () => {
 
             await page.reload();
 
-            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
+            // First assertion after the reload absorbs the full client re-bootstrap: the summary view lazy-loads its
+            // chunks and Playwright disables the HTTP cache per context, so the default 10s expect timeout is not
+            // enough under parallel CI load. checkExamTitle renders in the same pass and keeps the default.
+            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!, RELOAD_RENDER_TIMEOUT);
             await examParticipation.checkExamTitle(examTitle);
 
             await login(instructor);
