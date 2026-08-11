@@ -447,7 +447,7 @@ export class Commands {
                     failedRouteRestores++;
                 }
             } catch (reloadError) {
-                throw new Error(`Failed to reload page while waiting for text "${expectedText}": ${reloadError}`, { cause: reloadError });
+                throw new Error(`Failed to reload or restore the page while waiting for text "${expectedText}": ${reloadError}`, { cause: reloadError });
             }
         }
 
