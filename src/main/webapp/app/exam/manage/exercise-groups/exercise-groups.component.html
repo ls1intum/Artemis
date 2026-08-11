@@ -1,27 +1,25 @@
-<div class="d-flex pb-3 border-bottom mb-2">
-    <div class="d-flex flex-column justify-content-center">
-        <h4 class="mb-0" jhiTranslate="artemisApp.examManagement.exerciseGroups"></h4>
-    </div>
+<div *titleBarTitle class="d-flex align-items-center">
+    <h5 class="mb-0" id="exercise-groups-title">
+        <span><span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span> ({{ exerciseGroupCount() }})</span>
+    </h5>
+</div>
+
+<ng-template titleBarActions>
     @if (course()?.isAtLeastEditor) {
-        <div class="ms-auto d-flex flex-wrap gap-2">
-            <!-- Importing exercise groups requires picking a source exam, which is instructor-only (see the exam
-                 import endpoints); only instructors can complete this flow, so the button is instructor-gated. -->
-            @if (course()?.isAtLeastInstructor) {
-                <tum-ui-button id="import-group" severity="secondary" variant="outlined" (clicked)="openExerciseGroupImportModal()">
-                    <fa-icon [icon]="faFileImport" />
-                    <span class="ms-1" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"></span>
-                </tum-ui-button>
-            }
-            <tum-ui-button id="create-new-group" (clicked)="openCreateGroupModal()">
-                <fa-icon [icon]="faPlus" />
-                <span class="ms-1" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"></span>
+        <!-- Importing exercise groups requires picking a source exam, which is instructor-only (see the exam
+             import endpoints); only instructors can complete this flow, so the button is instructor-gated. -->
+        @if (course()?.isAtLeastInstructor) {
+            <tum-ui-button class="title-bar-optional-control" size="small" severity="secondary" variant="outlined" id="import-group" (clicked)="openExerciseGroupImportModal()">
+                <fa-icon [icon]="faFileImport" />
+                <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"></span>
             </tum-ui-button>
-        </div>
+        }
+        <tum-ui-button size="small" id="create-new-group" (clicked)="openCreateGroupModal()">
+            <fa-icon [icon]="faPlus" />
+            <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"></span>
+        </tum-ui-button>
     }
-</div>
-<div class="mt-3 mb-2 text-end small text-muted-color" id="number-groups">
-    {{ 'artemisApp.examManagement.numberOfExerciseGroups' | artemisTranslate }} {{ exerciseGroups() ? exerciseGroups()!.length : 0 }}
-</div>
+</ng-template>
 
 <div class="d-flex flex-column gap-3">
     @for (exerciseGroup of exerciseGroups(); track exerciseGroup.id; let i = $index) {

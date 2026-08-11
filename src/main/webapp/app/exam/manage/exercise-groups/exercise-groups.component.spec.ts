@@ -2,6 +2,8 @@ import { TumUiButtonComponent, TumUiPanelComponent } from '@tumaet/ui-angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { EmbeddedViewRef } from '@angular/core';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -112,8 +114,25 @@ describe('Exercise Groups Component', () => {
             });
     });
 
+    // The header buttons are projected into the shell title bar, so they are not part of this component's own view.
+    // Render the registered actions template to query them, and destroy the view afterwards.
+    const projectedViews: EmbeddedViewRef<unknown>[] = [];
+
+    function renderActions(): HTMLElement {
+        const service = TestBed.inject(CourseTitleBarService);
+        const template = service.actionsTemplate();
+        expect(template, 'the exercise-groups page does not project a title bar actions template').toBeDefined();
+        const view = template!.createEmbeddedView({});
+        projectedViews.push(view);
+        view.detectChanges();
+        const host = document.createElement('div');
+        view.rootNodes.forEach((node) => host.appendChild(node));
+        return host;
+    }
+
     afterEach(() => {
         vi.restoreAllMocks();
+        projectedViews.splice(0).forEach((view) => view.destroy());
     });
 
     it('loads the exercise groups', async () => {
@@ -388,8 +407,9 @@ describe('Exercise Groups Component', () => {
         editorCourse.isAtLeastInstructor = false;
         comp.course.set(editorCourse);
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('#import-group')).toBeNull();
-        expect(fixture.nativeElement.querySelector('#create-new-group')).not.toBeNull();
+        let actions = renderActions();
+        expect(actions.querySelector('#import-group')).toBeNull();
+        expect(actions.querySelector('#create-new-group')).not.toBeNull();
 
         const instructorCourse = new Course();
         instructorCourse.id = course.id;
@@ -397,6 +417,7 @@ describe('Exercise Groups Component', () => {
         instructorCourse.isAtLeastInstructor = true;
         comp.course.set(instructorCourse);
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('#import-group')).not.toBeNull();
+        actions = renderActions();
+        expect(actions.querySelector('#import-group')).not.toBeNull();
     });
 });

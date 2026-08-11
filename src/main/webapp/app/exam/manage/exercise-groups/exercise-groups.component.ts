@@ -1,5 +1,5 @@
 import { TumUiButtonComponent, TumUiPanelComponent } from '@tumaet/ui-angular';
-import { Component, OnInit, Type, inject, signal } from '@angular/core';
+import { Component, OnInit, Type, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -32,6 +32,8 @@ import { ExamExerciseTypePickerComponent, ExamExerciseTypePickerMode } from 'app
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -46,6 +48,8 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
         ExamExerciseTableComponent,
         ExamExerciseGroupEditModalComponent,
         ExamExerciseTypePickerComponent,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
     ],
 })
 export class ExerciseGroupsComponent implements OnInit {
@@ -65,6 +69,7 @@ export class ExerciseGroupsComponent implements OnInit {
     readonly examId = signal<number>(undefined!);
     exam = signal<Exam | undefined>(undefined);
     exerciseGroups = signal<ExerciseGroup[] | undefined>(undefined);
+    readonly exerciseGroupCount = computed(() => this.exerciseGroups()?.length ?? 0);
     dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
     latestIndividualEndDate = signal<dayjs.Dayjs | undefined>(undefined);
