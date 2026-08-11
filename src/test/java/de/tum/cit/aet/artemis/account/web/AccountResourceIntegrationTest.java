@@ -444,7 +444,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         String updatedPassword = "12345678";
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword, null);
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
@@ -461,7 +461,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userTestRepository.save(user);
 
         String updatedPassword = "12345678";
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword, null);
 
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
     }
@@ -471,7 +471,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void changePasswordInvalidPassword() throws Exception {
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         String updatedPassword = "";
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword, null);
 
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
@@ -480,7 +480,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changePasswordSamePassword() throws Exception {
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, UserFactory.USER_PASSWORD);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, UserFactory.USER_PASSWORD, null);
 
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
