@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -37,8 +36,7 @@ class DockerBuildJobRunnerTest {
         buildJobContainerService = mock(BuildJobContainerService.class);
         buildAgentDockerService = mock(BuildAgentDockerService.class);
         buildLogsMap = mock(BuildLogsMap.class);
-        runner = new DockerBuildJobRunner(mock(BuildAgentConfiguration.class), buildJobContainerService, buildAgentDockerService, buildLogsMap);
-        ReflectionTestUtils.setField(runner, "buildContainerPrefix", "local-ci-");
+        runner = new DockerBuildJobRunner(mock(BuildAgentConfiguration.class), buildJobContainerService, buildAgentDockerService, buildLogsMap, "local-ci-");
     }
 
     @Test

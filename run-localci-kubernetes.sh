@@ -284,9 +284,12 @@ verify_agent_placement() {
 }
 
 verify_authorization() {
+    # kubectl auth can-i answers "no" with exit status 1, so every one of these needs `|| true`: under
+    # `set -Eeuo pipefail` the assignment itself would otherwise end the script, and the caller would see a bare
+    # kubectl exit instead of the message explaining which permission is missing.
     local controller_can_create controller_can_exec workload_can_list
-    controller_can_create="$(kubectl auth can-i create jobs.batch --as "system:serviceaccount:${ARTEMIS_NAMESPACE}:artemis-localci-controller" --namespace "$BUILD_NAMESPACE")"
-    controller_can_exec="$(kubectl auth can-i get pods --subresource=exec --as "system:serviceaccount:${ARTEMIS_NAMESPACE}:artemis-localci-controller" --namespace "$BUILD_NAMESPACE")"
+    controller_can_create="$(kubectl auth can-i create jobs.batch --as "system:serviceaccount:${ARTEMIS_NAMESPACE}:artemis-localci-controller" --namespace "$BUILD_NAMESPACE" || true)"
+    controller_can_exec="$(kubectl auth can-i get pods --subresource=exec --as "system:serviceaccount:${ARTEMIS_NAMESPACE}:artemis-localci-controller" --namespace "$BUILD_NAMESPACE" || true)"
     workload_can_list="$(kubectl auth can-i list secrets --as "system:serviceaccount:${BUILD_NAMESPACE}:artemis-localci-workload" --namespace "$BUILD_NAMESPACE" || true)"
     [[ "$controller_can_create" == "yes" ]] || fail "The build controller cannot create Jobs in $BUILD_NAMESPACE"
     [[ "$controller_can_exec" == "yes" ]] || fail "The build controller cannot execute helper commands in $BUILD_NAMESPACE"

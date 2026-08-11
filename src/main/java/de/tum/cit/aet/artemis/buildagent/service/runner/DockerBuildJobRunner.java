@@ -47,15 +47,15 @@ public class DockerBuildJobRunner implements BuildJobRunner {
 
     private final BuildLogsMap buildLogsMap;
 
-    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
-    private String buildContainerPrefix;
+    private final String buildContainerPrefix;
 
     public DockerBuildJobRunner(BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildAgentDockerService buildAgentDockerService,
-            BuildLogsMap buildLogsMap) {
+            BuildLogsMap buildLogsMap, @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}") String buildContainerPrefix) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobContainerService = buildJobContainerService;
         this.buildAgentDockerService = buildAgentDockerService;
         this.buildLogsMap = buildLogsMap;
+        this.buildContainerPrefix = buildContainerPrefix;
     }
 
     @Override

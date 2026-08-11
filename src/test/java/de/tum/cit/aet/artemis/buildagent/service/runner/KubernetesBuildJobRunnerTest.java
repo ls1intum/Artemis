@@ -86,7 +86,7 @@ class KubernetesBuildJobRunnerTest {
 
         try (BuildJobRunnerResult result = runner.execute(buildJob, preparedBuildJob())) {
             assertThat(result.exitCode()).isZero();
-            assertThat(result.completedAt()).isEqualTo(ZonedDateTime.parse("2026-08-01T12:00:00Z"));
+            assertThat(result.completedAt().toInstant()).isEqualTo(ZonedDateTime.parse("2026-08-01T12:00:00Z").toInstant());
             assertThat(result.resultArchive()).isNotNull();
             assertThat(result.resultArchive().readAllBytes()).isNotEmpty();
             assertThat(Files.notExists(inputArchive)).isTrue();
@@ -217,7 +217,7 @@ class KubernetesBuildJobRunnerTest {
         ZonedDateTime fallback = ReflectionTestUtils.invokeMethod(runner, "parseCompletionDate", "not-a-date");
         Duration wait = ReflectionTestUtils.invokeMethod(runner, "effectiveExecutionWait", buildJob());
 
-        assertThat(completion).isEqualTo(ZonedDateTime.parse("2026-08-01T12:00:00Z"));
+        assertThat(completion.toInstant()).isEqualTo(ZonedDateTime.parse("2026-08-01T12:00:00Z").toInstant());
         assertThat(fallback).isBetween(ZonedDateTime.now().minusSeconds(1), ZonedDateTime.now().plusSeconds(1));
         assertThat(wait).isEqualTo(Duration.ofSeconds(75));
     }

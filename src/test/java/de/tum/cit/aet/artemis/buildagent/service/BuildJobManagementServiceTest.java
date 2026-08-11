@@ -7,6 +7,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -32,8 +34,19 @@ class BuildJobManagementServiceTest {
 
     private final ThreadPoolExecutor resultExecutor = executor();
 
+    /**
+     * Latches that keep a build callable parked, so a failing assertion cannot leave it blocked forever.
+     * <p>
+     * Interrupting through shutdownNow is not a reliable release signal here: the callable deliberately swallows the
+     * first interrupt to prove that cancellation waits for a real exit, so an assertion failing before the test
+     * releases the latch itself would leave the executor thread parked and hold up the whole suite.
+     */
+    private final List<CountDownLatch> latchesToRelease = new ArrayList<>();
+
     @AfterEach
     void tearDown() {
+        latchesToRelease.forEach(CountDownLatch::countDown);
+        latchesToRelease.clear();
         buildExecutor.shutdownNow();
         resultExecutor.shutdownNow();
     }
@@ -46,6 +59,7 @@ class BuildJobManagementServiceTest {
         CountDownLatch callableStarted = new CountDownLatch(1);
         CountDownLatch interruptionObserved = new CountDownLatch(1);
         CountDownLatch allowCallableExit = new CountDownLatch(1);
+        latchesToRelease.add(allowCallableExit);
         CountDownLatch callableExited = new CountDownLatch(1);
         when(executionService.runBuildJob(buildJob)).thenAnswer(invocation -> {
             callableStarted.countDown();
