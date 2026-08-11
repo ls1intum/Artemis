@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faBars } from '@fortawesome/free-solid-svg-icons';
 
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -75,6 +76,7 @@ export class ExamExerciseTableComponent {
     readonly exerciseDeleted = output<Exercise>();
 
     protected readonly exerciseType = ExerciseType;
+    protected readonly faBars = faBars;
 
     /** The exercise types present in this group's exercises — drives which type-specific columns are shown. */
     private readonly presentTypes = computed<Set<ExerciseType>>(() => new Set(this.exercises().map((exercise) => exercise.type!)));
