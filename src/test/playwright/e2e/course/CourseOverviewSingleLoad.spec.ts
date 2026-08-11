@@ -73,7 +73,9 @@ test.describe('Course overview navigation', { tag: '@fast' }, () => {
         await expect.poll(() => exerciseRequests.length, { timeout: 15_000 }).toBe(1);
 
         // Selecting the tab that is already open acts as a refresh, so the data cannot go stale behind the user
-        await page.locator(`[href="/courses/${course.id}/exercises"]`).first().click();
+        // Scoped to the sidebar: the refresh is driven by the sidebar reporting the click, so any other link to the
+        // same URL elsewhere on the page would navigate without being a tab selection
+        await page.locator(`jhi-course-sidebar a[href="/courses/${course.id}/exercises"]`).first().click();
         await expect.poll(() => exerciseRequests.length, { timeout: 15_000 }).toBe(2);
 
         // And it stays at two: the refresh is one request, not a loop
