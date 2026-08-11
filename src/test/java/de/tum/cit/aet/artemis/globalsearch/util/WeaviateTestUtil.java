@@ -371,7 +371,7 @@ public final class WeaviateTestUtil {
      * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
      * @param examId          the ID of the exam that should exist
      */
-    public static void assertExamExistsInWeaviate(WeaviateService weaviateService, long examId) throws Exception {
+    public static void assertExamExistsInWeaviate(WeaviateService weaviateService, long examId) {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
@@ -379,16 +379,16 @@ public final class WeaviateTestUtil {
             var properties = queryExamProperties(weaviateService, examId);
             assertThat(properties).as("Exam %d should exist in Weaviate", examId).isNotNull();
 
+            // get the title for the exam in question
             String title = (String) properties.get(SearchableEntitySchema.Properties.TITLE);
-            if (title != null) {
-                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-                var response = collection.query.bm25(title,
-                        builder -> builder.queryProperties(SearchableEntitySchema.Properties.TITLE)
-                                .filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.EXAM),
-                                        Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(examId)))
-                                .limit(1));
-                assertThat(response.objects()).as("Exam %d should be discoverable via BM25 search", examId).isNotEmpty();
-            }
+            assertThat(title).as("Exam %d title should not be null", examId).isNotNull();
+
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            var response = collection.query.bm25(title,
+                    builder -> builder.filters(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.EXAM)).limit(10));
+
+            boolean found = response.objects().stream().anyMatch(obj -> examId == ((Number) obj.properties().get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue());
+            assertThat(found).as("Exam %d should be discoverable via BM25 search", examId).isTrue();
         });
     }
 
