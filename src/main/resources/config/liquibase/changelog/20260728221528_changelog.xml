@@ -147,9 +147,14 @@ FOR EACH ROW EXECUTE FUNCTION team_student_sync_exercise_id()
         <rollback/>
     </changeSet>
 
-    <!-- MySQL and H2 keep the portable form. InnoDB runs both as online DDL, so they do not block
-         readers and writers the way the PostgreSQL equivalents would. -->
-    <changeSet id="20260728221528-6-exercise-id-not-null" author="krusche" dbms="!postgresql">
+    <!-- MySQL keeps the portable form, where InnoDB runs both as online DDL and does not block readers and
+         writers the way the PostgreSQL equivalents would.
+         H2 is excluded on purpose. Only MySQL and PostgreSQL get the triggers above that fill exercise_id, and
+         Team maps team_student through a plain @JoinTable of team_id and student_id, so Hibernate never writes
+         the column itself. Applying NOT NULL on H2 would therefore fail every insert of a team with students
+         and break the documented H2 test mode. H2 keeps the nullable column; the invariant is a guarantee on
+         the databases Artemis actually runs on. -->
+    <changeSet id="20260728221528-6-exercise-id-not-null" author="krusche" dbms="mysql">
         <addNotNullConstraint tableName="team_student" columnName="exercise_id" columnDataType="bigint"/>
     </changeSet>
 
@@ -180,7 +185,7 @@ FOR EACH ROW EXECUTE FUNCTION team_student_sync_exercise_id()
     </changeSet>
 
     <!-- The actual guarantee. Fails loudly if any installation already violates the invariant. -->
-    <changeSet id="20260728221528-7-unique-exercise-student" author="krusche" dbms="!postgresql">
+    <changeSet id="20260728221528-7-unique-exercise-student" author="krusche" dbms="mysql">
         <addUniqueConstraint tableName="team_student" columnNames="exercise_id, student_id"
                              constraintName="uk_team_student_exercise_student"/>
     </changeSet>
@@ -188,10 +193,15 @@ FOR EACH ROW EXECUTE FUNCTION team_student_sync_exercise_id()
     <!-- Same reasoning on PostgreSQL: building the unique index through ADD CONSTRAINT holds ACCESS
          EXCLUSIVE for the whole build. CONCURRENTLY builds it without blocking writers, which cannot run
          inside a transaction, hence runInTransaction="false". Attaching the finished index afterwards is a
-         catalog-only operation. A failed concurrent build leaves an invalid index behind, so the build is
-         idempotent and the rollback drops it either way. -->
+         catalog-only operation.
+         A cancelled build, or one that finds duplicate rows, leaves an invalid index behind. Guarding the create
+         with IF NOT EXISTS would then see that leftover and skip the rebuild, so changeset 7b could never attach
+         it and the rollout would stay stuck even once the cause was fixed. Drop any unattached leftover first
+         instead, and create unconditionally. Once 7b has attached the index the constraint owns it, and this
+         changeset has already been recorded, so the drop can only ever hit a leftover. -->
     <changeSet id="20260728221528-7a-unique-index-concurrently-postgresql" author="krusche" dbms="postgresql" runInTransaction="false">
-        <sql>CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS uk_team_student_exercise_student ON team_student (exercise_id, student_id)</sql>
+        <sql>DROP INDEX CONCURRENTLY IF EXISTS uk_team_student_exercise_student</sql>
+        <sql>CREATE UNIQUE INDEX CONCURRENTLY uk_team_student_exercise_student ON team_student (exercise_id, student_id)</sql>
         <rollback>
             <sql>DROP INDEX IF EXISTS uk_team_student_exercise_student</sql>
         </rollback>
