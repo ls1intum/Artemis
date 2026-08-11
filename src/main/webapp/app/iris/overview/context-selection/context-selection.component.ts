@@ -4,6 +4,7 @@ import { faChalkboardUser, faComments, faPlus, faXmark } from '@fortawesome/free
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -64,6 +65,7 @@ export class ContextSelectionComponent {
     private readonly lectureService = inject(LectureService);
     private readonly exerciseService = inject(ExerciseService);
     private readonly entityTitleService = inject(EntityTitleService);
+    private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faPlus = faPlus;
@@ -103,6 +105,13 @@ export class ContextSelectionComponent {
             }
             // Do not keep showing the previous entity's title while the current one is being resolved.
             this.activeContextName.set('');
+            // A tutor suggestion is keyed by the id of the communication post it was raised from, not by an exercise.
+            // Resolving that id as an exercise title labels the chip with whichever unrelated exercise happens to share
+            // the number, and leaves it blank when none does.
+            if (context.mode === ChatServiceMode.TUTOR_SUGGESTION) {
+                this.activeContextName.set(this.translateService.instant('artemisApp.iris.contextSelection.tutorSuggestionContext'));
+                return;
+            }
             const entityType = context.mode === ChatServiceMode.LECTURE ? EntityType.LECTURE : EntityType.EXERCISE;
             const subscription = this.entityTitleService.getTitle(entityType, [context.entityId]).subscribe((title) => this.activeContextName.set(title));
             // Effects can rerun many times during the component lifetime. Cancel the previous lookup so a slower

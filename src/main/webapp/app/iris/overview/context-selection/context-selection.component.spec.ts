@@ -161,6 +161,19 @@ describe('ContextSelectionComponent', () => {
             expect(component.activeChip()?.label).toBe('Named Lecture');
         });
 
+        it('should label a tutor suggestion without resolving its post id as an exercise', async () => {
+            // The tutor suggestion context is keyed by the id of the communication post it was raised from. Resolving
+            // that as an exercise title labelled the chip with whichever unrelated exercise shared the number, and left
+            // it blank when none did.
+            chatServiceMock.displayContext.set({ mode: ChatServiceMode.TUTOR_SUGGESTION, entityId: 1 });
+            fixture = TestBed.createComponent(ContextSelectionComponent);
+            component = fixture.componentInstance;
+            await fixture.whenStable();
+
+            expect(entityTitleServiceMock.getTitle).not.toHaveBeenCalled();
+            expect(component.activeChip()?.label).toBe('artemisApp.iris.contextSelection.tutorSuggestionContext');
+        });
+
         it('should cancel an old title lookup so it cannot overwrite a newer context', () => {
             const firstLookup = new Subject<string>();
             const secondLookup = new Subject<string>();
