@@ -917,13 +917,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         return '';
     }
 
-    /** Why the save button is disabled: an uneditable quiz takes precedence, otherwise the validation reasons. */
-    readonly saveTooltip = computed<string>(() => {
-        if (!this.quizExercise()?.isEditable) {
-            return this.saveButtonTooltip;
-        }
-        return this.quizIsValid() ? '' : this.invalidReasonsTooltip();
-    });
+    /** Set only while the quiz cannot be edited at all; takes precedence over the validation reasons. */
+    readonly uneditableReason = computed<string>(() => (this.quizExercise()?.isEditable ? '' : this.saveButtonTooltip));
+
+    readonly isSaveTooltipDisabled = computed<boolean>(() => !this.uneditableReason() && this.quizIsValid());
 
     hasErrorInQuizBatches(): boolean {
         return !!this.quizExercise()?.quizBatches?.some((batch) => batch.startTimeError);

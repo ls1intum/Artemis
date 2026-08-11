@@ -180,9 +180,16 @@
                         ></button>
                         <button class="btn btn-secondary" (click)="back()" jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"></button>
                         <!-- A disabled button emits no mouse events, so the tooltip has to live on this wrapper. -->
+                        <ng-template #invalidReasonsContent>
+                            <ul class="invalid-reasons-list">
+                                @for (reason of invalidReasons(); track $index) {
+                                    <li [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></li>
+                                }
+                            </ul>
+                        </ng-template>
                         <span
                             class="submit-tooltip-host"
-                            [pTooltip]="invalidReasonsTooltip()"
+                            [pTooltip]="invalidReasonsContent"
                             [tooltipDisabled]="quizIsValid()"
                             tooltipPosition="top"
                             tooltipStyleClass="invalid-reasons-tooltip"

@@ -21,6 +21,13 @@
     @if (!isCreation() && !isImport()) {
         <jhi-exercise-update-notification class="flex-grow-1 w-100" [notificationText]="notificationText()" (notificationTextChange)="notificationTextChange.emit($event)" />
     }
+    <ng-template #invalidReasonsContent>
+        <ul class="invalid-reasons-list">
+            @for (reason of invalidReasons(); track $index) {
+                <li [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></li>
+            }
+        </ul>
+    </ng-template>
     <div class="d-flex gap-2 text-end">
         @if (isSaving()) {
             <span jhiTranslate="entity.action.saving" class="badge bg-secondary align-content-center"></span>
@@ -33,7 +40,7 @@
             <!-- A disabled button emits no mouse events, so the tooltip has to live on this wrapper. -->
             <span
                 class="submit-tooltip-host"
-                [pTooltip]="invalidReasonsTooltip()"
+                [pTooltip]="invalidReasonsContent"
                 [tooltipDisabled]="!invalidReasons().length"
                 tooltipPosition="top"
                 tooltipStyleClass="invalid-reasons-tooltip"
@@ -57,7 +64,7 @@
         }
         <span
             class="submit-tooltip-host"
-            [pTooltip]="invalidReasonsTooltip()"
+            [pTooltip]="invalidReasonsContent"
             [tooltipDisabled]="!invalidReasons().length"
             tooltipPosition="top"
             tooltipStyleClass="invalid-reasons-tooltip"

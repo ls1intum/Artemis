@@ -83,14 +83,19 @@ describe('FormFooterComponent', () => {
         expect(fixture.debugElement.query(By.css('.badge.bg-danger'))).toBeNull();
     });
 
-    it('should list every invalid reason in the submit tooltip', () => {
+    it('should render every invalid reason as its own list item', () => {
         fixture.componentRef.setInput('invalidReasons', [
             { translateKey: 'first.reason', translateValues: {} },
             { translateKey: 'second.reason', translateValues: {} },
         ]);
         fixture.detectChanges();
 
-        expect(comp.invalidReasonsTooltip()).toBe('first.reason\nsecond.reason');
+        const host = findSubmitTooltipHost();
+        host.injector.get(Tooltip).activate();
+        fixture.detectChanges();
+
+        const items = Array.from(document.querySelectorAll('.invalid-reasons-tooltip .invalid-reasons-list li'));
+        expect(items.map((item) => item.textContent)).toEqual(['first.reason', 'second.reason']);
     });
 
     // A disabled button emits no mouse events, so attaching the tooltip to the button makes it unreachable.

@@ -1,5 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { Component, computed, input, output } from '@angular/core';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
@@ -31,8 +30,6 @@ import { TooltipModule } from 'primeng/tooltip';
     ],
 })
 export class FormFooterComponent {
-    private readonly translateService = inject(TranslateService);
-
     protected readonly ButtonSize = ButtonSize;
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
@@ -58,13 +55,6 @@ export class FormFooterComponent {
     saveTitle = computed<string>(() => (this.isImport() ? 'entity.action.import' : this.isCreation() ? 'entity.action.generate' : 'entity.action.save'));
 
     isSubmitDisabled = computed<boolean>(() => !!this.invalidReasons().length || this.isDisabled() || this.isSaving() || this.isGeneratingWithAi());
-
-    /** One reason per line, rendered on the wrapper around the submit buttons so it stays reachable while they are disabled. */
-    invalidReasonsTooltip = computed<string>(() =>
-        this.invalidReasons()
-            .map((reason) => this.translateService.instant(reason.translateKey, reason.translateValues))
-            .join('\n'),
-    );
 
     onSwitchEditMode() {
         this.switchEditMode()?.();

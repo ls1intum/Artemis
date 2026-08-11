@@ -2335,28 +2335,30 @@ describe('QuizExerciseUpdateComponent', () => {
             expect((comp.quizExercise().quizQuestions?.[3] as MultipleChoiceQuestion).singleChoice).toBe(true);
         });
     });
-    describe('saveTooltip', () => {
+    describe('save tooltip', () => {
         beforeEach(() => {
             const exercise = new QuizExercise(undefined, undefined);
             exercise.isEditable = true;
             comp.quizExercise.set(exercise);
         });
 
-        it('should be empty for a valid, editable quiz so the tooltip stays hidden', () => {
+        it('should be disabled for a valid, editable quiz', () => {
             comp.quizIsValid.set(true);
             comp.invalidReasons.set([]);
 
-            expect(comp.saveTooltip()).toBe('');
+            expect(comp.isSaveTooltipDisabled()).toBe(true);
+            expect(comp.uneditableReason()).toBe('');
         });
 
-        it('should list the validation reasons for an invalid quiz', () => {
+        it('should be enabled with no uneditable reason for an invalid quiz, so the reason list shows', () => {
             comp.quizIsValid.set(false);
             comp.invalidReasons.set([
                 { translateKey: 'first.reason', translateValues: {} },
                 { translateKey: 'second.reason', translateValues: {} },
             ]);
 
-            expect(comp.saveTooltip()).toBe('first.reason\nsecond.reason');
+            expect(comp.isSaveTooltipDisabled()).toBe(false);
+            expect(comp.uneditableReason()).toBe('');
         });
 
         it('should explain an uneditable quiz in preference to the validation reasons', () => {
@@ -2367,7 +2369,8 @@ describe('QuizExerciseUpdateComponent', () => {
             comp.quizIsValid.set(false);
             comp.invalidReasons.set([{ translateKey: 'first.reason', translateValues: {} }]);
 
-            expect(comp.saveTooltip()).toBe('artemisApp.quizExercise.edit.editNotPossibleAfterEnd');
+            expect(comp.uneditableReason()).toBe('artemisApp.quizExercise.edit.editNotPossibleAfterEnd');
+            expect(comp.isSaveTooltipDisabled()).toBe(false);
         });
     });
 });
