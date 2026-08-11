@@ -1,5 +1,5 @@
 import { UserCredentials } from './users';
-import { Locator, Page, expect } from '@playwright/test';
+import { Locator, Page, errors, expect } from '@playwright/test';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 import { BUILD_FINISH_TIMEOUT, POLLING_INTERVAL } from './timeouts';
@@ -292,6 +292,43 @@ export class Commands {
     private static readonly ROUTE_RESTORE_TIMEOUT = 15_000;
 
     /**
+     * How long the page has to stay on a route before it counts as restored.
+     * <p>
+     * The drift this whole mechanism guards against happens *after* the document has loaded: the router
+     * resolves the lazy route, the chunk fails, and only then does the URL change to `/courses`. Reading the
+     * URL once therefore reports success for a page that is about to leave the route again.
+     * <p>
+     * Kept short because a healthy reload pays it too, and because the fallback redirect follows the load
+     * closely rather than arbitrarily later.
+     */
+    private static readonly ROUTE_SETTLE_TIMEOUT = 1_000;
+
+    /**
+     * Whether the page is on the requested route and is still on it {@link ROUTE_SETTLE_TIMEOUT} later.
+     * <p>
+     * `waitForURL` resolves the moment its predicate holds, so it cannot express "and keeps holding". Waiting
+     * for the opposite does: a redirect away resolves the wait, and nothing happening times out. Playwright
+     * reports the router's same-document navigation, so the fallback redirect is observed rather than missed.
+     *
+     * @param page        the page to observe
+     * @param expectedUrl the url the caller asked for
+     */
+    private static holdsRequestedRoute = async (page: Page, expectedUrl: string): Promise<boolean> => {
+        if (!Commands.isOnRequestedRoute(expectedUrl, page.url())) {
+            return false;
+        }
+        try {
+            await page.waitForURL((url) => !Commands.isOnRequestedRoute(expectedUrl, url.toString()), { timeout: Commands.ROUTE_SETTLE_TIMEOUT });
+            return false;
+        } catch (error) {
+            // Only the timeout means the route held. Anything else — a closed page above all — is not a
+            // restored route, and reporting one would send the caller back to polling for content it can
+            // never see.
+            return error instanceof errors.TimeoutError;
+        }
+    };
+
+    /**
      * Re-navigates to {@link expectedUrl} if the page has landed on the bare `/courses` fallback instead,
      * and reports whether the page is on the expected route afterwards.
      * <p>
@@ -304,10 +341,11 @@ export class Commands {
      * The document being loaded is not the readiness signal to wait for: `load` fires once the shell and
      * its resources have arrived, while the router may still be resolving the lazy route — and it lands
      * back on the fallback when that resolution fails again. The URL is what separates a restored route
-     * from a page that merely finished loading, so that is what this waits on.
+     * from a page that merely finished loading, so that is what this waits on, and it has to still be the
+     * requested one a moment later rather than only at the instant it is read.
      */
     static restoreRouteIfDrifted = async (page: Page, expectedUrl: string): Promise<boolean> => {
-        if (Commands.isOnRequestedRoute(expectedUrl, page.url())) {
+        if (await Commands.holdsRequestedRoute(page, expectedUrl)) {
             return true;
         }
         // Deliberately not "anything that is not the fallback": an authentication redirect, or any other route
@@ -315,10 +353,13 @@ export class Commands {
         // polling for route-specific content that cannot appear there.
         await page.goto(expectedUrl);
         await page.waitForLoadState('load');
-        return page
+        const arrived = await page
             .waitForURL((url) => Commands.isOnRequestedRoute(expectedUrl, url.toString()), { timeout: Commands.ROUTE_RESTORE_TIMEOUT })
             .then(() => true)
             .catch(() => false);
+        // Arriving is not the same as staying: the re-navigation can hit the same lazy-chunk failure and drop
+        // back to the fallback, which is precisely the case the caller needs reported as a failed restore.
+        return arrived && (await Commands.holdsRequestedRoute(page, expectedUrl));
     };
 
     /**
