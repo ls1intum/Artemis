@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -407,7 +409,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
                     return EXIT_SUCCESS;
                 }
                 """;
-        Files.writeString(studentRepository.workingCopyGitRepoFile.toPath().resolve("helloWorld.c"), submission);
+        FileUtils.writeStringToFile(studentRepository.workingCopyGitRepoFile.toPath().resolve("helloWorld.c").toFile(), submission, StandardCharsets.UTF_8);
         studentRepository.workingCopyGitRepo.add().addFilepattern(".").call();
         GitService.commit(studentRepository.workingCopyGitRepo).setMessage("Exercise the kill shadow from the submission").call();
         studentRepository.workingCopyGitRepo.push().call();
