@@ -321,6 +321,72 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.isLoading()).toBe(false);
         });
 
+        it('should ignore a complaint lookup that completes after a newer round loaded', async () => {
+            // The complaint lookup outlives the load that started it. An obsolete response would attach the previous
+            // round's complaint to the current result, and an obsolete failure would clear the replacement assessment
+            // through onError.
+            const pendingComplaint = new Subject<HttpResponse<ComplaintDTO>>();
+            const complaintLookup = vi
+                .spyOn(complaintService, 'findBySubmissionId')
+                .mockReturnValueOnce(pendingComplaint.asObservable())
+                .mockReturnValue(of({ body: undefined } as unknown as HttpResponse<ComplaintDTO>));
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
+            const onErrorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+            expect(complaintLookup).toHaveBeenCalledOnce();
+
+            // A newer round supersedes the load whose complaint lookup is still open.
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
+            await Promise.resolve();
+            await fixture.whenStable();
+
+            pendingComplaint.next({ body: { id: 9, complaintText: 'Obsolete' } as ComplaintDTO } as HttpResponse<ComplaintDTO>);
+            pendingComplaint.error(new HttpErrorResponse({ status: 500 }));
+            await fixture.whenStable();
+
+            expect(component.complaint()?.id).not.toBe(9);
+            expect(onErrorSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not carry feedback suggestions of the previous round into a replacement', async () => {
+            // The replacement skips the Athena fetch when it already carries manual feedback, so suggestions left over
+            // from the previous round would stay visible through unreferencedFeedbackSuggestions. A fetch that is still
+            // in flight must not leave the loading flag set either: its guarded `finally` no longer recognises the
+            // submission once the reset cleared it, so nothing would ever clear the flag.
+            const withSuggestionModule = (submission: ModelingSubmission): ModelingSubmission => {
+                (submission.participation!.exercise as any).feedbackSuggestionModule = 'modeling';
+                return submission;
+            };
+            // Round 0 has no feedback yet, so loading it starts an Athena fetch — held open here.
+            const roundZero = withSuggestionModule(getSubmissionWithData());
+            roundZero.results![0]!.feedbacks = [];
+            // Round 1 is already assessed manually, so loading it does not fetch and cannot clear the flag itself.
+            const roundOne = withSuggestionModule(getSubmissionWithData());
+            roundOne.results = [
+                { id: 1, feedbacks: [] } as unknown as Result,
+                { id: 2, feedbacks: [{ id: 7, detailText: 'Manual', credits: 1, type: FeedbackType.MANUAL } as Feedback] } as unknown as Result,
+            ];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValueOnce(of(roundZero)).mockReturnValueOnce(of(roundOne));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: undefined } as unknown as HttpResponse<ComplaintDTO>));
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(new Subject<Feedback[]>().asObservable());
+
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+            expect(component.loadingFeedbackSuggestions()).toBe(true);
+            component.feedbackSuggestions = [{ id: 42, detailText: 'Stale suggestion' } as Feedback];
+            expect(component.unreferencedFeedbackSuggestions).toHaveLength(1);
+
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
+            await Promise.resolve();
+            await fixture.whenStable();
+
+            expect(component.feedbackSuggestions).toEqual([]);
+            expect(component.unreferencedFeedbackSuggestions).toEqual([]);
+            expect(component.loadingFeedbackSuggestions()).toBe(false);
+        });
+
         it('should open the first round for a url without the parameter even on a reused component', async () => {
             // Pins existing behaviour rather than a change: this editor already took the round from the url on every
             // navigation. The same url has to open the same round, whether it is reached directly or through the next

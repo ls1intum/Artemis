@@ -290,7 +290,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 if (!this.isCurrentLoad(generation)) {
                     return;
                 }
-                this.handleReceivedSubmission(submission);
+                this.handleReceivedSubmission(submission, generation);
                 this.validateFeedback();
             },
             error: (error: HttpErrorResponse) => {
@@ -317,7 +317,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     return;
                 }
 
-                this.handleReceivedSubmission(submission);
+                this.handleReceivedSubmission(submission, generation);
                 this.validateFeedback();
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -333,7 +333,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    private handleReceivedSubmission(submission: ModelingSubmission): void {
+    private handleReceivedSubmission(submission: ModelingSubmission, generation: number): void {
         this.loadingInitialSubmission.set(false);
         this.submission.set(submission);
         const studentParticipation = this.submission()!.participation as StudentParticipation;
@@ -356,7 +356,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
 
         this.checkPermissions();
-        this.getComplaint();
+        this.getComplaint(generation);
 
         if (this.result() && this.submission()) {
             this.submission()!.results = [this.result()!];
@@ -430,18 +430,28 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.validateFeedback();
     }
 
-    private getComplaint(): void {
+    /**
+     * Loads the complaint of the submission the given load put on screen.
+     * <p>
+     * Gated by the load generation like the submission request itself: this lookup outlives the load that started it,
+     * so an obsolete response would otherwise attach a complaint of the previous round to the current result, and an
+     * obsolete failure would clear the replacement assessment through {@link onError}.
+     */
+    private getComplaint(generation: number): void {
         if (!this.submission()) {
             return;
         }
         this.complaintService.findBySubmissionId(this.submission()!.id!).subscribe({
             next: (res) => {
-                if (!res.body) {
+                if (!this.isCurrentLoad(generation) || !res.body) {
                     return;
                 }
                 this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.result()));
             },
             error: () => {
+                if (!this.isCurrentLoad(generation)) {
+                    return;
+                }
                 this.onError();
             },
         });
@@ -558,6 +568,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.referencedFeedback = [];
         this.unreferencedFeedback.set([]);
         this.complaint.set(undefined!);
+        // Athena suggestions belong to the assessment that was on screen. The replacement skips the fetch entirely when
+        // it already carries manual feedback, so leaving these would expose the previous round's suggestions through
+        // unreferencedFeedbackSuggestions; and the guarded `finally` of an in-flight fetch no longer recognises this
+        // submission, so it would leave the loading flag set for good.
+        this.feedbackSuggestions = [];
+        this.loadingFeedbackSuggestions.set(false);
     }
 
     onError(): void {
