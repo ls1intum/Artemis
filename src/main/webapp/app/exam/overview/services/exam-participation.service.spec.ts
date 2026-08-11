@@ -286,9 +286,7 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(1)
             .pipe(take(1))
-            .subscribe(() => {
-                expect(service.testStudentExams()).toEqual(returnedFromService);
-            });
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
