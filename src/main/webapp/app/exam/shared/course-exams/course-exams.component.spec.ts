@@ -172,9 +172,7 @@ describe('CourseExamsComponent', () => {
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
             exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, visibleTestExamWithSimulation, notVisibleTestExam],
         });
-        vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
-            of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]),
-        );
+        vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(of(undefined));
         vi.spyOn(examParticipationService, 'getRealExamWorkingTimes').mockReturnValue(of([]));
 
         componentFixture = TestBed.createComponent(CourseExamsComponent);
@@ -245,7 +243,7 @@ describe('CourseExamsComponent', () => {
     });
 
     it('should render selected real exam routes before test exam attempts are loaded', () => {
-        const testExamAttemptsSubject = new Subject<StudentExamDTO[]>();
+        const testExamAttemptsSubject = new Subject<void>();
         const activatedRoute = TestBed.inject(ActivatedRoute);
         (activatedRoute as any).firstChild = {
             snapshot: {
@@ -264,7 +262,7 @@ describe('CourseExamsComponent', () => {
     });
 
     it('should render selected plain test exam routes before test exam attempts are loaded', () => {
-        const testExamAttemptsSubject = new Subject<StudentExamDTO[]>();
+        const testExamAttemptsSubject = new Subject<void>();
         const activatedRoute = TestBed.inject(ActivatedRoute);
         (activatedRoute as any).firstChild = {
             snapshot: {
@@ -283,7 +281,7 @@ describe('CourseExamsComponent', () => {
     });
 
     it('should render selected simulation test exam routes only after test exam attempts are loaded', () => {
-        const testExamAttemptsSubject = new Subject<StudentExamDTO[]>();
+        const testExamAttemptsSubject = new Subject<void>();
         const activatedRoute = TestBed.inject(ActivatedRoute);
         (activatedRoute as any).firstChild = {
             snapshot: {
@@ -300,7 +298,7 @@ describe('CourseExamsComponent', () => {
         expect(component.testStudentExamsLoaded()).toBe(false);
         expect(componentFixture.nativeElement.querySelector('router-outlet')).toBeNull();
 
-        testExamAttemptsSubject.next([]);
+        testExamAttemptsSubject.next();
         componentFixture.detectChanges();
 
         expect(component.testStudentExamsLoaded()).toBe(true);
