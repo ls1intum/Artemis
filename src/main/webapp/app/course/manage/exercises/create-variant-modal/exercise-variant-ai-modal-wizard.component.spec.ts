@@ -59,7 +59,7 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
         })
             .overrideComponent(ExerciseVariantAiModalWizardComponent, {
                 remove: { imports: [ArtemisTranslatePipe] },
-                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key)] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? '')] },
             })
             .compileComponents();
 
@@ -157,7 +157,7 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
         })
             .overrideComponent(ExerciseVariantAiModalWizardComponent, {
                 remove: { imports: [ArtemisTranslatePipe] },
-                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key)] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? '')] },
             })
             .compileComponents();
 
@@ -262,7 +262,7 @@ describe('ExerciseVariantAiModalWizardComponent (storytelling)', () => {
         })
             .overrideComponent(ExerciseVariantAiModalWizardComponent, {
                 remove: { imports: [ArtemisTranslatePipe] },
-                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key)] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? '')] },
             })
             .compileComponents();
 
@@ -366,7 +366,7 @@ describe('ExerciseVariantAiModalWizardComponent (step-output history)', () => {
         })
             .overrideComponent(ExerciseVariantAiModalWizardComponent, {
                 remove: { imports: [ArtemisTranslatePipe] },
-                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key)] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? '')] },
             })
             .compileComponents();
 
@@ -439,7 +439,7 @@ describe('ExerciseVariantAiModalWizardComponent (fresh reopen for parallel gener
         })
             .overrideComponent(ExerciseVariantAiModalWizardComponent, {
                 remove: { imports: [ArtemisTranslatePipe] },
-                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key)] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? '')] },
             })
             .compileComponents();
 
@@ -515,7 +515,7 @@ describe('ExerciseVariantAiModalWizardComponent (open in editor & flagged drafts
         })
             .overrideComponent(ExerciseVariantAiModalWizardComponent, {
                 remove: { imports: [ArtemisTranslatePipe] },
-                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key)] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? '')] },
             })
             .compileComponents();
 

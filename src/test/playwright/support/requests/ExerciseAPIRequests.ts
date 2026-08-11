@@ -32,6 +32,7 @@ import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -632,6 +633,44 @@ export class ExerciseAPIRequests {
             multipart: multipartData,
         });
         return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
+    }
+
+    /**
+     * Reads the current user's file upload submission for a participation.
+     *
+     * Recovery path for a submission made through the UI: the upload is a file-backed multipart POST, so
+     * its response body cannot be held in Node and Chrome can drop it from its bounded network buffer
+     * before the test reads it (see readResponseJson). This GET re-derives the same submission without
+     * repeating the upload. It is the endpoint the file upload editor itself loads, so a student may call
+     * it for their own participation.
+     *
+     * @param participationId - The ID of the student's participation in the file upload exercise.
+     */
+    async getFileUploadSubmissionForParticipation(participationId: number): Promise<FileUploadSubmission> {
+        const response = await this.page.request.get(`api/fileupload/participations/${participationId}/file-upload-editor`);
+        return await response.json();
+    }
+
+    /**
+     * Looks a quiz exercise up by its title within a course.
+     *
+     * Recovery path for a quiz created through the UI: that POST carries a disk-backed background image,
+     * so its response body cannot be held in Node and Chrome discards it when the editor navigates away
+     * on save (see readResponseJson). This GET re-derives the created quiz without repeating the create.
+     *
+     * @param courseId - The ID of the course the quiz belongs to.
+     * @param title - The exact title the quiz was created with.
+     * @throws if no quiz with that title exists in the course, which would otherwise surface later as a
+     *         confusing "undefined id" failure.
+     */
+    async getQuizExerciseByTitle(courseId: number, title: string): Promise<QuizExercise> {
+        const response = await this.page.request.get(`api/quiz/courses/${courseId}/quiz-exercises`);
+        const quizzes: QuizExercise[] = await response.json();
+        const quiz = quizzes.find((candidate) => candidate.title === title);
+        if (!quiz) {
+            throw new Error(`No quiz titled "${title}" found in course ${courseId}. Available titles: ${quizzes.map((candidate) => candidate.title).join(', ') || '(none)'}`);
+        }
+        return quiz;
     }
 
     /**

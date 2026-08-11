@@ -1,3 +1,4 @@
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { AfterViewInit, Component, computed, forwardRef, input, output, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faClock, faGlobe, faLock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
@@ -7,7 +8,6 @@ import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fo
 // variant-group lock overlay uses the tum-ui kit tooltip.
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { DatePicker, DatePickerModule } from 'primeng/datepicker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

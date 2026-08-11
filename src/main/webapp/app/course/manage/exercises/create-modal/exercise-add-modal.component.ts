@@ -1,3 +1,4 @@
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, Type, computed, effect, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -7,7 +8,7 @@ import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
@@ -23,7 +24,6 @@ interface ExerciseTypeCard {
     labelKey: string;
     descriptionKey: string;
     icon: typeof faKeyboard;
-    accentClass: string;
     routeSegment: string;
 }
 
@@ -33,7 +33,6 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
         labelKey: 'artemisApp.exerciseManagement.type.PROGRAMMING',
         descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.PROGRAMMING',
         icon: faKeyboard,
-        accentClass: 'card--programming',
         routeSegment: 'programming-exercises/new',
     },
     {
@@ -41,7 +40,6 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
         labelKey: 'artemisApp.exerciseManagement.type.QUIZ',
         descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.QUIZ',
         icon: faCheckDouble,
-        accentClass: 'card--quiz',
         routeSegment: 'quiz-exercises/new',
     },
     {
@@ -49,7 +47,6 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
         labelKey: 'artemisApp.exerciseManagement.type.MODELING',
         descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.MODELING',
         icon: faProjectDiagram,
-        accentClass: 'card--modeling',
         routeSegment: 'modeling-exercises/new',
     },
     {
@@ -57,7 +54,6 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
         labelKey: 'artemisApp.exerciseManagement.type.TEXT',
         descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.TEXT',
         icon: faFont,
-        accentClass: 'card--text',
         routeSegment: 'text-exercises/new',
     },
     {
@@ -65,7 +61,6 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
         labelKey: 'artemisApp.exerciseManagement.type.FILE_UPLOAD',
         descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.FILE_UPLOAD',
         icon: faFileUpload,
-        accentClass: 'card--fileupload',
         routeSegment: 'file-upload-exercises/new',
     },
 ];

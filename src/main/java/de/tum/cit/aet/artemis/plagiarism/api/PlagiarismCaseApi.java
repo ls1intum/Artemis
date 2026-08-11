@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.api;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -56,5 +57,25 @@ public class PlagiarismCaseApi extends AbstractPlagiarismApi {
 
     public List<PlagiarismCase> findByExamIdAndStudentId(Long examId, Long studentId) {
         return plagiarismCaseRepository.findByExamIdAndStudentId(examId, studentId);
+    }
+
+    /**
+     * Deletes all plagiarism cases of course exercises whose course ended before the given date (data-privacy cleanup).
+     *
+     * @param endDateBefore only cases of courses that ended strictly before this are deleted
+     * @return the number of deleted plagiarism cases
+     */
+    public int deletePlagiarismCasesOfCoursesEndedBefore(ZonedDateTime endDateBefore) {
+        return plagiarismCaseService.deletePlagiarismCasesOfCoursesEndedBefore(endDateBefore);
+    }
+
+    /**
+     * Counts the plagiarism cases of course exercises whose course ended before the given date.
+     *
+     * @param endDateBefore only cases of courses that ended strictly before this are counted
+     * @return the number of matching plagiarism cases
+     */
+    public int countPlagiarismCasesOfCoursesEndedBefore(ZonedDateTime endDateBefore) {
+        return plagiarismCaseService.countPlagiarismCasesOfCoursesEndedBefore(endDateBefore);
     }
 }

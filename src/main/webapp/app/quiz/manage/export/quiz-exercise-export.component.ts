@@ -1,3 +1,4 @@
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
@@ -15,7 +16,6 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { ButtonModule } from 'primeng/button';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',
@@ -106,9 +106,7 @@ export class QuizExerciseExportComponent {
         });
     }
 
-    /**
-     * Exports selected questions into json file.
-     */
+    /** Exports selected questions into a json file. */
     exportQuiz() {
         this.quizExerciseService.exportQuiz(this.questions(), false);
         // Close once the export has been triggered.

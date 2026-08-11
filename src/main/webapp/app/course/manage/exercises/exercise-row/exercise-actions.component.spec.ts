@@ -242,13 +242,13 @@ describe('ExerciseActionsComponent', () => {
 
     describe('hasQuizButtons', () => {
         it('is false for non-quiz exercises', () => {
-            expect(component.hasQuizButtons()).toBe(false);
+            expect(component['hasQuizButtons']()).toBe(false);
         });
 
         it('is true when the quiz is invisible and editor can make it visible', () => {
             const quiz = { id: 2, type: ExerciseType.QUIZ, status: QuizStatus.INVISIBLE, isAtLeastEditor: true, visibleToStudents: false } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
-            expect(component.hasQuizButtons()).toBe(true);
+            expect(component['hasQuizButtons']()).toBe(true);
         });
 
         it('is true when a synchronized quiz can be started', () => {
@@ -261,13 +261,13 @@ describe('ExerciseActionsComponent', () => {
                 quizStarted: false,
             } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
-            expect(component.hasQuizButtons()).toBe(true);
+            expect(component['hasQuizButtons']()).toBe(true);
         });
 
         it('is true for a batched quiz that can show batches', () => {
             const quiz = { id: 2, type: ExerciseType.QUIZ, status: QuizStatus.ACTIVE, quizMode: QuizMode.BATCHED } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
-            expect(component.hasQuizButtons()).toBe(true);
+            expect(component['hasQuizButtons']()).toBe(true);
         });
 
         it('is true when an unsynchronized quiz can be ended by an instructor', () => {
@@ -280,13 +280,13 @@ describe('ExerciseActionsComponent', () => {
                 quizEnded: false,
             } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
-            expect(component.hasQuizButtons()).toBe(true);
+            expect(component['hasQuizButtons']()).toBe(true);
         });
 
         it('is false when none of the button conditions apply', () => {
             const quiz = { id: 2, type: ExerciseType.QUIZ, status: QuizStatus.OPEN_FOR_PRACTICE } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
-            expect(component.hasQuizButtons()).toBe(false);
+            expect(component['hasQuizButtons']()).toBe(false);
         });
     });
 

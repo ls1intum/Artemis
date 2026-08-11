@@ -241,7 +241,7 @@ public class ModelingExerciseResource {
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 
@@ -264,7 +264,7 @@ public class ModelingExerciseResource {
                 .findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(updateModelingExerciseDTO.id());
 
         // Check that the user is authorized to update the exercise
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         // Important: use the original exercise for permission check
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalExercise, user);
         // Forbid changing the course the exercise belongs to.
@@ -395,7 +395,7 @@ public class ModelingExerciseResource {
         log.info("REST request to delete ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         // Notify AtlasML about the modeling exercise deletion before actual deletion
         atlasMLApi.ifPresent(api -> {
             try {
@@ -442,7 +442,7 @@ public class ModelingExerciseResource {
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }
         importedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var originalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(sourceExerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
@@ -451,7 +451,7 @@ public class ModelingExerciseResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(importedExercise, ENTITY_NAME);
 
-        final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
+        final var newModelingExercise = modelingExerciseImportService.importModelingExercise(importedExercise, originalModelingExercise);
         modelingExerciseRepository.save(newModelingExercise);
         // Notify AtlasML about the imported exercise
         atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newModelingExercise));
@@ -517,7 +517,7 @@ public class ModelingExerciseResource {
                 ? existingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet())
                 : Set.of();
 
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         ModelingExercise exerciseForReevaluation = update(updateModelingExerciseDTO, existingExercise);
         var course = courseRepository.findByIdElseThrow(exerciseForReevaluation.getCourseViaExerciseGroupOrCourseMember().getId());

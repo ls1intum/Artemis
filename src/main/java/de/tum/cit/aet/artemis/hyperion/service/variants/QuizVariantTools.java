@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,10 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
-import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionComponent;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
@@ -339,9 +336,11 @@ class QuizVariantTools implements VariantToolset {
     }
 
     /**
-     * Restores the @JsonIgnore'd child-to-parent pointers of one deserialized question so the child-owned
-     * FKs are written correctly on save — the per-question subset of
-     * {@code QuizConfiguration.reconnectJSONIgnoreAttributes}.
+     * Restores the @JsonIgnore'd child-to-parent pointer of one deserialized question so it is written correctly on
+     * save. Answer options / drop locations / drag items / correct mappings / spots / solutions no longer carry a
+     * back-reference (they are stored id-based inside the question's {@code content} JSON column, see
+     * {@code QuizConfiguration.reconnectJSONIgnoreAttributes}); only the question's own statistic and its parent
+     * exercise still need reconnecting.
      */
     private static void reconnectReplacedQuestion(QuizExercise quiz, QuizQuestion question) {
         question.setExercise(quiz);
@@ -349,18 +348,7 @@ class QuizVariantTools implements VariantToolset {
             question.getQuizQuestionStatistic().setQuestion(question);
         }
         switch (question) {
-            case MultipleChoiceQuestion mcQuestion -> reconnectComponents(mcQuestion.getAnswerOptions(), mcQuestion);
-            case DragAndDropQuestion dndQuestion -> {
-                reconnectComponents(dndQuestion.getDropLocations(), dndQuestion);
-                reconnectComponents(dndQuestion.getDragItems(), dndQuestion);
-                reconnectComponents(dndQuestion.getCorrectMappings(), dndQuestion);
-            }
-            case ShortAnswerQuestion saQuestion -> {
-                reconnectComponents(saQuestion.getSpots(), saQuestion);
-                reconnectComponents(saQuestion.getSolutions(), saQuestion);
-                reconnectComponents(saQuestion.getCorrectMappings(), saQuestion);
-                reconnectShortAnswerMappings(saQuestion);
-            }
+            case ShortAnswerQuestion saQuestion -> reconnectShortAnswerMappings(saQuestion);
             default -> {
             }
         }
@@ -406,7 +394,6 @@ class QuizVariantTools implements VariantToolset {
             ShortAnswerMapping mapping = new ShortAnswerMapping();
             mapping.setSpot(spot);
             mapping.setSolution(solution);
-            mapping.setQuestion(question);
             mapping.setInvalid(incoming.isInvalid());
             rebuilt.add(mapping);
         }
@@ -429,12 +416,6 @@ class QuizVariantTools implements VariantToolset {
         }
         return solutions.stream().filter(solution -> target.getId() != null && Objects.equals(solution.getId(), target.getId())).findFirst()
                 .or(() -> solutions.stream().filter(solution -> Objects.equals(solution.getText(), target.getText())).findFirst()).orElse(null);
-    }
-
-    private static <Q extends QuizQuestion> void reconnectComponents(Collection<? extends QuizQuestionComponent<Q>> components, Q question) {
-        if (components != null) {
-            components.forEach(component -> component.setQuestion(question));
-        }
     }
 
     /**

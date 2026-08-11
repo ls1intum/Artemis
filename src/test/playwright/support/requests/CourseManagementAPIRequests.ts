@@ -23,7 +23,6 @@ export class CourseManagementAPIRequests {
     /**
      * Creates a course with the specified title and short name.
      * @param options An object containing the options for creating the course
-     *   - customizeGroups: whether the predefined groups should be used (so we don't have to wait more than a minute between course and programming exercise creation)
      *   - courseName: the title of the course (will generate default name if not provided)
      *   - courseShortName: the short name (will generate default name if not provided)
      *   - start: the start date of the course (default: now() - 2 hours)
@@ -36,7 +35,6 @@ export class CourseManagementAPIRequests {
      */
     async createCourse(
         options: {
-            customizeGroups?: boolean;
             courseName?: string;
             courseShortName?: string;
             start?: dayjs.Dayjs;
@@ -48,7 +46,6 @@ export class CourseManagementAPIRequests {
         } = {},
     ): Promise<Course> {
         const {
-            customizeGroups = false,
             courseName = 'Course ' + generateUUID(),
             courseShortName = 'playwright' + generateUUID(),
             start = dayjs().subtract(2, 'hours'),
@@ -73,14 +70,6 @@ export class CourseManagementAPIRequests {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         } else {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
-        }
-
-        const allowGroupCustomization: boolean = process.env.ALLOW_GROUP_CUSTOMIZATION === 'true';
-        if (customizeGroups && allowGroupCustomization) {
-            course.studentGroupName = process.env.STUDENT_GROUP_NAME;
-            course.teachingAssistantGroupName = process.env.TUTOR_GROUP_NAME;
-            course.editorGroupName = process.env.EDITOR_GROUP_NAME;
-            course.instructorGroupName = process.env.INSTRUCTOR_GROUP_NAME;
         }
 
         const iconBuffer = await new Response(iconFile).arrayBuffer();
@@ -230,18 +219,19 @@ export class CourseManagementAPIRequests {
     }
 
     async createExamTestRun(exam: Exam, exercises: Array<Exercise>) {
-        // 1080s (18 min) matches ExamAPIRequests.createExamTestRun's default. The old 120s
-        // budget routinely expired mid-test under heavy parallel multi-node load — four
-        // sequential exercise submissions (TEXT + PROGRAMMING + QUIZ + MODELING) plus the
-        // navigation between them can easily exceed two minutes when the cluster is busy,
-        // causing the exam clock to hit zero before the test finishes submitting and
-        // dropping the page on the end-of-exam screen.
+        // 1080s (18 min) matches the previous default here. The old 120s budget routinely
+        // expired mid-test under heavy parallel multi-node load — four sequential exercise
+        // submissions (TEXT + PROGRAMMING + QUIZ + MODELING) plus the navigation between them
+        // can easily exceed two minutes when the cluster is busy, causing the exam clock to
+        // hit zero before the test finishes submitting and dropping the page on the
+        // end-of-exam screen.
+        // Flat CreateTestRunDTO(examId, exerciseIds, workingTime) — matches the server's
+        // request shape post-DTO-migration (StudentExamResource#createTestRun); the server
+        // never reads exam/exercise objects wholesale, only examId + exercise ids + workingTime.
         const data = {
+            examId: exam.id,
+            exerciseIds: exercises.map((exercise) => exercise.id),
             workingTime: 1080,
-            exam,
-            exercises,
-            ended: false,
-            numberOfExamSessions: 0,
         };
         const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
         return response.json();

@@ -1,14 +1,12 @@
+import { TumUiButtonComponent, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiPopoverComponent, TumUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faCheck, faCircleCheck, faExclamation, faSpinner, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
-import { TumUiConfirmDialogComponent } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirm-dialog.component';
-import { TumUiConfirmationService } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirmation.service';
+
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
-import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
+
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 import { isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';

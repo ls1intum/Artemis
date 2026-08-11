@@ -1,8 +1,9 @@
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+
 import { vi } from 'vitest';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -40,7 +41,7 @@ describe('ExamExerciseTypePickerComponent', () => {
     });
 
     it('shows a card for every exercise type by default', () => {
-        expect(component.typeCards().map((card) => card.type)).toEqual([
+        expect(component['typeCards']().map((card) => card.type)).toEqual([
             ExerciseType.PROGRAMMING,
             ExerciseType.QUIZ,
             ExerciseType.MODELING,
@@ -53,7 +54,7 @@ describe('ExamExerciseTypePickerComponent', () => {
         fixture.componentRef.setInput('disabledExerciseTypes', [ExerciseType.MODELING, ExerciseType.FILE_UPLOAD]);
         fixture.detectChanges();
 
-        expect(component.typeCards().map((card) => card.type)).toEqual([ExerciseType.PROGRAMMING, ExerciseType.QUIZ, ExerciseType.TEXT]);
+        expect(component['typeCards']().map((card) => card.type)).toEqual([ExerciseType.PROGRAMMING, ExerciseType.QUIZ, ExerciseType.TEXT]);
     });
 
     it('on the create tab, navigates to the create route for the chosen type and closes', () => {

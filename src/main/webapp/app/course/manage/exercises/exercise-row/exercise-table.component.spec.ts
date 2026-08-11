@@ -420,7 +420,7 @@ describe('ExerciseTableComponent', () => {
             await fixture.whenStable();
             fixture.detectChanges();
 
-            const label = element.querySelector('[data-testid="tum-ui-select-label"]');
+            const label = element.querySelector('tum-ui-select button[role="combobox"] span');
             expect(label?.textContent).toContain('artemisApp.exerciseManagement.table.noGroup');
         });
 
@@ -439,14 +439,15 @@ describe('ExerciseTableComponent', () => {
             // emits (field, order) and this component must apply it to sortColumn/sortAsc.
             renderRows([quiz]);
             const pointsHeader = fixture.nativeElement.querySelector('th[tumUiSortableColumn="points"]') as HTMLElement;
+            const pointsSortButton = pointsHeader.querySelector('button') as HTMLElement;
 
-            pointsHeader.click();
+            pointsSortButton.click();
             fixture.detectChanges();
             expect(component.sortColumn()).toBe('points');
             expect(component.sortAsc()).toBe(true);
             expect(pointsHeader.getAttribute('aria-sort')).toBe('ascending');
 
-            pointsHeader.click();
+            pointsSortButton.click();
             fixture.detectChanges();
             expect(component.sortAsc()).toBe(false);
             expect(pointsHeader.getAttribute('aria-sort')).toBe('descending');

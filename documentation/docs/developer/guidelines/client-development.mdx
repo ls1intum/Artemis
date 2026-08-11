@@ -14,7 +14,7 @@ Key principles:
 - Use lazy loading to keep the initial bundle size small.
 - Prioritize code quality and test coverage. Reuse code and avoid duplication. Write meaningful tests.
 
-**Angular 21 Best Practices**
+**Angular best practices**
 
 <Callout variant={CalloutVariant.danger}>
     **Legacy Angular decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code.** Use Angular's signal-based
@@ -68,32 +68,33 @@ Key principles:
 - Prefer `OnPush` change detection for components: https://blog.angular-university.io/onpush-change-detection-how-it-works
 - See the migration example: https://github.com/ls1intum/Artemis/pull/9299
 
-**UI Component Library: our own `tum-ui` kit (PrimeNG and Bootstrap are deprecated)**
+### UI components
 
 <Callout variant={CalloutVariant.danger}>
-    **Bootstrap and PrimeNG are deprecated.** The long-term direction is to migrate the client **entirely** onto our own [tum-ui component kit](/developer/guidelines/tum-ui-kit)
-    (built on Angular CDK + Tailwind tokens) and drop Bootstrap, PrimeNG, and ng-bootstrap. They coexist only for the duration of the migration: **prefer a `tum-ui-*` component when one
-    exists**, and use PrimeNG only for widgets the kit does not provide yet. The PrimeNG guidance in this section applies to that shrinking fallback set — do not read it as "PrimeNG is
-    the end target". Never introduce new Bootstrap.
+    **TUM UI is the target Artemis component system; Bootstrap, ng-bootstrap, and PrimeNG are deprecated migration dependencies.** Prefer a component from
+    [`@tumaet/ui-angular`](/developer/tum-ui-reference) whenever one exists. The long-term direction is to migrate the client entirely to the [TUM UI component
+    kit](/developer/guidelines/tum-ui-kit), built on Angular CDK and Tailwind tokens. Use PrimeNG only for capabilities TUM UI does not yet provide, and do not introduce Bootstrap
+    or ng-bootstrap in new work.
 </Callout>
 
-<Callout variant={CalloutVariant.danger}>
-    **`@ng-bootstrap/ng-bootstrap` is deprecated.** Do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, or any other ng-bootstrap component in new
-    code. ng-bootstrap is incompatible with Angular signal inputs (`input()`/`input.required()`) — assigning to a signal input via `modalRef.componentInstance.X = Y` silently
-    fails. We are removing the dependency entirely; existing usages are being migrated to PrimeNG incrementally.
-</Callout>
+Choose the smallest stable abstraction that meets the requirement:
 
-<Callout variant={CalloutVariant.info}>
-    **We are migrating from Bootstrap to [Tailwind CSS v4](https://tailwindcss.com/) (utilities) + [PrimeNG](https://primeng.org/) (components).** All new UI elements must use
-    PrimeNG components for behavior and Tailwind utilities for layout/spacing/color. Do not introduce new Bootstrap components or Bootstrap CSS classes. Existing Bootstrap usage is
-    migrated module by module.
-</Callout>
+1. Use semantic native HTML when the platform already supplies the required behavior.
+2. Use an existing TUM UI component for a reusable control or visual pattern.
+3. If a reusable pattern is missing, add or evolve a TUM UI component around native HTML and stable
+   Angular CDK primitives. The pull request must include a concrete Artemis consumer; a second
+   application is not required.
+4. Keep domain-specific composition, routing, requests, and application translations in Artemis.
+   Compose those features from TUM UI primitives instead of exporting application policy as a
+   package API.
+5. Use PrimeNG only when the TUM UI gap cannot reasonably be closed in the same change. State the
+   missing capability and migration path in the pull request, and isolate the fallback so it can be
+   replaced.
 
-- Use PrimeNG components (buttons, tables, dialogs, inputs, etc.) for all new UI development.
-- For modals/dialogs, use PrimeNG's `DialogService` (`primeng/dynamicdialog`) — see `src/main/webapp/app/exam/manage/exam-management/exam-management.component.ts` for a reference implementation.
-- Use Tailwind utilities (not Bootstrap classes) for layout, spacing, and color; bind colors to semantic tokens only. See [Styling](#styling) for the decision rule, the Bootstrap→Tailwind/PrimeNG quick reference, and the coexistence rules.
-- In a module not yet migrated off Bootstrap, keep its existing Bootstrap classes consistent rather than mixing in Tailwind piecemeal — migrate the module as a unit (a Tailwind utility cannot reliably override an unlayered Bootstrap rule during coexistence).
-- Refer to the PrimeNG documentation for available components and usage: https://primeng.org/
+Do not reimplement keyboard navigation, focus management, overlays, selection, or virtual scrolling
+when native HTML or Angular CDK already provides the behavior. Follow the
+[TUM UI package guide](/developer/guidelines/tum-ui-kit) for ownership, public API, stories, and
+validation.
 
 <Callout variant={CalloutVariant.danger}>
 **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
@@ -197,7 +198,7 @@ set course(course: Course) {
 
 **Never navigate, and avoid writing template-bound signals, from an `effect()` — it can crash the client.** Both are imperative side effects that feed back into change detection and can form an infinite loop:
 
-- **`Router.navigate()` / `navigateByUrl()` inside an effect is the most dangerous.** Navigation destroys and re-creates components and rewrites their signals, which re-triggers the effect, which navigates again. This crashed the online code editor: an incoming result replaced a participation object (same id, new reference), re-running a navigation `effect`, which re-navigated and re-created the whole subtree — flooding the server with thousands of requests until the tab ran out of memory ([PR #12976](https://github.com/ls1intum/Artemis/pull/12976)). Drive navigation from explicit user actions, route guards/resolvers, or `ngOnChanges`. If reactive navigation is genuinely unavoidable, depend on a **stable `computed()` key** (so a replaced object with an unchanged id does not re-run the effect) and wrap the `navigate(...)` call in `untracked()`. The `localRules/no-navigation-in-effect` ESLint rule enforces this — navigation in an effect that is not wrapped in `untracked()` is an error.
+- **`Router.navigate()` / `navigateByUrl()` inside an effect is the most dangerous.** Navigation destroys and re-creates components and rewrites their signals, which re-triggers the effect, which navigates again. This crashed the online code editor: an incoming result replaced a participation object (same id, new reference), re-running a navigation `effect`, which re-navigated and re-created the whole subtree — flooding the server with thousands of requests until the tab ran out of memory ([PR #12976](https://github.com/ls1intum/Artemis/pull/12976)). Drive navigation from explicit user actions or route guards/resolvers. If reactive navigation is genuinely unavoidable, depend on a **stable `computed()` key** (so a replaced object with an unchanged id does not re-run the effect) and wrap the `navigate(...)` call in `untracked()`. The `localRules/no-navigation-in-effect` ESLint rule enforces this — navigation in an effect that is not wrapped in `untracked()` is an error.
 - **Writing a signal in an effect** carries the same loop risk (an effect that writes a signal it also reads re-triggers itself forever). Prefer `computed()` for derived state; if a write is truly necessary, never write a signal the effect reads and wrap the write in `untracked()`. This case cannot be linted reliably (`.set()` / `.update()` are indistinguishable from `Map`/`Set` mutations at the syntax level), so it is on the author and reviewer to avoid it.
 
 ```ts
@@ -237,9 +238,11 @@ Reference migration: [PR #12872 (zoneless migration)](https://github.com/ls1intu
 Prefer reactive primitives over the `ngOnChanges` lifecycle hook in signal-based components.
 
 <Callout variant={CalloutVariant.info}>
-**`ngOnChanges` is _not_ dead code in Angular 21 — but `computed()` / `effect()` are the preferred, more consistent choice.**
+**`ngOnChanges` is not dead code for signal inputs, but `computed()` and `effect()` are usually the clearer choice.**
 
-A belief carried over from Angular 17–18 holds that `ngOnChanges` is never called for signal inputs. **That is no longer true.** In Angular 21, `ngOnChanges` **does** fire for signal inputs (`input()` / `input.required()` / `model()`) with a full `SimpleChanges` record, and the first `ngOnChanges` still runs before `ngOnInit`. (Internally, signal-input writes are routed through `NgOnChangesFeature` → `ngOnChangesSetInput`, which records a `SimpleChange` and applies the value to the input signal; `ngOnChanges` is registered as a per-change-detection pre-order check hook. See [`OnChanges`](https://angular.dev/api/core/OnChanges).)
+In the Angular version supported by Artemis, `ngOnChanges` receives a `SimpleChanges` record for
+signal inputs and its first call still precedes `ngOnInit`. See
+[`OnChanges`](https://angular.dev/api/core/OnChanges).
 
 So `ngOnChanges` is functional and not a correctness bug — but the Angular docs still recommend `computed`/`effect`, and a signal-first code base avoids a whole class of "I forgot to keep the derived field in sync" bugs.
 
@@ -247,19 +250,17 @@ So `ngOnChanges` is functional and not a correctness bug — but the Angular doc
 
 **Pick the right reactive primitive.** Angular's guidance is `computed` first, `effect` last — [effects are for syncing signals to non-reactive APIs](https://angular.dev/guide/signals/effect), not for general reactivity:
 
-| Old `ngOnChanges` shape                                          | Idiomatic signal replacement                                                                                                                       |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Recompute a value derived from inputs/state                      | `computed()` — lazy, memoised, cannot go stale                                                                                                     |
-| Derived value that can also be set locally                       | `linkedSignal()`                                                                                                                                   |
-| Genuine side effect (subscribe, imperative / 3rd-party API, DOM) | `effect()` — use sparingly; it is the _last_ API to reach for                                                                                      |
-| Need `SimpleChanges.previousValue` or `isFirstChange()`          | keep `ngOnChanges` for now — signals don't expose these directly; document why with a comment (still a future-removal target)                      |
-| Logic that must run **before** child components initialise       | keep `ngOnChanges` for now — it runs before `ngOnInit`, an `effect()` runs afterwards; document why with a comment (still a future-removal target) |
+| Old `ngOnChanges` shape                                          | Idiomatic signal replacement                                                                                                           |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Recompute a value derived from inputs/state                      | `computed()` — lazy, memoised, cannot go stale                                                                                         |
+| Derived value that can also be set locally                       | `linkedSignal()`                                                                                                                       |
+| Genuine side effect (subscribe, imperative / 3rd-party API, DOM) | `effect()` — use sparingly; it is the _last_ API to reach for                                                                          |
+| Need `SimpleChanges.previousValue` or `isFirstChange()`          | exceptional `ngOnChanges` use with a justified line-level lint disable; signals do not expose these directly                           |
+| Logic that must run **before** child components initialise       | exceptional `ngOnChanges` use with a justified line-level lint disable; it runs before `ngOnInit`, while an `effect()` runs afterwards |
 
 ```ts
 // Don't - derive state imperatively in ngOnChanges (has to be kept in sync by hand)
-@Component({
-    /* ... */
-})
+@Component({/* ... */})
 export class ExampleComponent implements OnChanges {
     value = input.required<number>();
     doubled = 0;
@@ -269,18 +270,18 @@ export class ExampleComponent implements OnChanges {
 }
 
 // Do - derive declaratively; it can never go stale
-@Component({
-    /* ... */
-})
+@Component({/* ... */})
 export class ExampleComponent {
     value = input.required<number>();
     doubled = computed(() => this.value() * 2);
 }
 ```
 
-An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **warns** on `ngOnChanges` in `@Component` / `@Directive` classes across Angular client files that have a clean baseline. Known migration-backlog files are temporarily excluded in `eslint.config.mjs` so `pnpm run lint` stays warning-clean for unchanged code; remove an entry as soon as its hook is migrated or explicitly justified. The rule is intentionally a warning, not an error.
+An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **errors** on `ngOnChanges` across `src/main/webapp/app`, `packages/tum-ui/src/lib`, and `src/test/javascript`, including specs. The checked paths are free of the hook, and error severity prevents an accidental reintroduction from passing CI.
 
-The goal is to **remove `ngOnChanges` entirely**: migrate every usage to `computed()` (derived state) or `effect()` (genuine side effects). For the rare cases that still genuinely need `ngOnChanges` (the bottom two rows above — `SimpleChanges.previousValue` / `isFirstChange()`, or logic that must run before child components initialise), add a **detailed comment** explaining why a signal-based replacement is not yet possible. If a covered file must keep `ngOnChanges`, use a narrowly scoped `eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges` with a justification that references why `computed()` or `effect()` would change the behavior; do not blanket-disable the rule for a file.
+The rule deliberately does **not** require an `@Component` / `@Directive` decorator. Angular invokes `ngOnChanges` on the component _instance_, so a hook inherited from an undecorated base class runs exactly like one declared on the component — requiring the decorator would leave that route open. Type-only declarations (`interface X { ngOnChanges(...) }`), object-literal properties, and `static ngOnChanges` helpers are not flagged, because Angular never calls those.
+
+Use `computed()` for derived state and `effect()` for genuine side effects. For a rare case that genuinely needs `ngOnChanges` (the bottom two rows above), add a **detailed comment** explaining why a signal-based replacement is not possible and use a narrowly scoped `eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges`; do not blanket-disable the rule for a file.
 
 `ngOnInit` and `ngOnDestroy` are **not** affected by signals — they fire regardless of the input mechanism and remain valid. For teardown, prefer `DestroyRef` + `takeUntilDestroyed()` or an `effect()` (which cleans itself up) over manual `ngOnDestroy` bookkeeping where practical; the `localRules/enforce-cleanup-on-destroy` rule already guards subscription cleanup.
 
@@ -517,6 +518,57 @@ Do one of these:
 - `else` goes on the same line from the closing curly brace.
 - Use 4 spaces per indentation.
 
+### Cloning objects
+
+Copy objects with `deepClone` from `app/foundation/util/deep-clone.util` (a thin wrapper over lodash `cloneDeep`). **Never** use `structuredClone()`, object spread (`{ ...obj }`), or `Object.assign({}, obj)` to copy an entity-like object — anything that may hold a `dayjs` date, a nested object, a `Map`/`Set`, or a circular reference.
+
+```ts
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+
+// Don't - structuredClone() does not preserve prototypes, so `startDate` loses every dayjs
+// method and `copy.startDate.format(...)` throws at runtime. Worse, `dayjs.isDayjs(copy.startDate)`
+// still returns true (an internal data flag survives the clone), so a guard does not catch it.
+const copy = structuredClone(lecture);
+
+// Don't - shallow: `copy.course` is the SAME object as `lecture.course`, so editing the copy
+// silently edits the original too.
+const copy = { ...lecture };
+const copy = Object.assign({}, lecture);
+
+// Do
+const copy = deepClone(lecture);
+copy.title = 'New title';
+```
+
+Why each alternative fails:
+
+| Approach                 | Problem                                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `structuredClone()`      | Drops prototypes — `dayjs` dates (and other class instances) lose their methods, while `isDayjs()` still says true |
+| `{ ...obj }`             | One level deep only — nested objects/arrays stay shared with the original                                          |
+| `Object.assign({}, obj)` | Same shallow-copy problem, and it reads as if the result were independent when it is not                           |
+
+This matters most for **signals**, which only notify when the reference changes (see [Zoneless change detection & signal-based state](#zoneless-change-detection--signal-based-state)). Replace the object instead of mutating it:
+
+```ts
+// Do - a new reference, with the nested state safely detached
+this.userIdentity.update((current) => {
+    if (!current) {
+        return current;
+    }
+    const updated = deepClone(current);
+    updated.imageUrl = url;
+    return updated;
+});
+```
+
+`AccountService.setImageUrl` and `AccountService.setUserEnabledMemiris` are the canonical examples.
+
+Two things this rule does **not** cover:
+
+- **Arrays.** Array spread is the documented way to append immutably: `this.items.update((items) => [...items, newItem])`. Reach for `deepClone` only when you need the array's _elements_ detached as well.
+- **Merging a couple of primitive fields onto a fresh literal.** Writing the literal out is clearer than cloning; the rule targets copies of existing entity objects.
+
 ### Prettier and ESLint
 
 - We use `prettier` to style code automatically and `eslint` to find additional issues.
@@ -559,22 +611,24 @@ RXJS subscriptions not being unsubscribed: https://www.twilio.com/blog/prevent-m
 
 Ensure that the layout of your page or component shrinks accordingly and adapts to all display sizes (responsive design).
 
-Prefer using the `.container` class (https://getbootstrap.com/docs/5.3/layout/containers/) when you want to limit the page width on extra-large screens.
-Do not use the following for this purpose if it can be avoided:
+In a migrated module, use explicit Tailwind width, maximum-width, and logical-spacing utilities.
+Avoid the bare `.container` class while Bootstrap and Tailwind coexist because both frameworks own
+that selector.
 
 ```html
-<div class="row justify-content-center">
-    <div class="col-12 col-lg-8">
-        <!-- Do not do this -->
-    </div>
+<div class="mx-auto w-full max-w-7xl px-4 sm:px-6">
+    <main>…</main>
 </div>
 ```
 
 ### Styling
 
-We are using [Scss](https://sass-lang.com) to write modular, reusable css. We have a couple of global scss files in `webapp/content/scss`, but encourage component dependent css using [Angular styleUrls](https://angular.dev/guide/components/styling).
+Use Tailwind for application layout and TUM UI for reusable component styling. Add component SCSS
+only when semantic utilities and component contracts cannot express a genuinely component-specific
+rule. Keep global styles in `src/main/webapp/content/scss` limited to application-wide foundations
+and legacy integration.
 
-From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/introduction/):
+When an application component needs owned class selectors, use [BEM](https://getbem.com/introduction/):
 
 ```scss
 .my-container {
@@ -588,67 +642,63 @@ From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/int
 }
 ```
 
-We are migrating off Bootstrap onto **[Tailwind CSS v4](https://tailwindcss.com/) (utilities) + [PrimeNG](https://primeng.org/) (components)**. Tailwind is wired app-wide (`src/main/webapp/tailwind.css`, see below); apply it module by module.
+**Bootstrap → TUM UI/Tailwind quick reference** (apply when migrating a module):
 
-**Decision rule — what to reach for:**
-
-- **Tailwind utility** for pure presentation: layout, flexbox/grid, spacing, sizing, typography, and color application (`flex`, `grid grid-cols-12`, `gap-2`, `mb-3`, `text-end`, `font-semibold`, `w-full`).
-- **PrimeNG component** for anything with behavior, state, accessibility semantics, or that Bootstrap modeled as a _component_: `p-button`, `p-tag` (badges), `p-message` (alerts), `p-card`, `p-table`, `p-tabs`, `p-paginator`, `p-tooltip`, `p-progressbar`, dialogs (`DialogService`), form inputs (`pInputText`/`p-select`/`p-checkbox`), `p-menu`, `p-datepicker`.
-- **A small owned helper** only when neither fits and it recurs.
-
-**Bootstrap → Tailwind/PrimeNG quick reference** (apply when migrating a module):
-
-| Bootstrap                                                       | Replacement                                                                                                                                                                                                                                                       |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group`    | `p-button` (`severity`, `size="small"`, `[outlined]`, `<p-buttonGroup>`)                                                                                                                                                                                          |
-| `badge` / `bg-success` badge                                    | `p-tag` (`severity`, `[rounded]`)                                                                                                                                                                                                                                 |
-| `alert alert-*`                                                 | `p-message` (`severity`)                                                                                                                                                                                                                                          |
-| `card`                                                          | `p-card` (or a Tailwind `rounded-lg border p-4` box for a static panel)                                                                                                                                                                                           |
-| `table table-striped table-responsive`                          | `p-table`                                                                                                                                                                                                                                                         |
-| `form-control` / `form-group` / `form-check`                    | PrimeNG inputs + `<div class="flex flex-col gap-2">` + `p-checkbox`/`p-radiobutton`                                                                                                                                                                               |
-| `row` + `col-md-*`                                              | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-*` (or flex)                                                                                                                                                                                                    |
-| `d-flex` / `d-none`                                             | `flex` / `hidden`                                                                                                                                                                                                                                                 |
-| `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col`                                                                                                                                                                                                                    |
-| `text-right` / `text-left`                                      | `text-end` / `text-start` (logical)                                                                                                                                                                                                                               |
-| `text-muted`                                                    | `text-muted-color`                                                                                                                                                                                                                                                |
-| `text-danger` / `text-success` / `text-warning` / `text-info`   | `text-state-danger` / `text-state-success` / `text-state-warning` / `text-state-info` (named state tokens — see **Colors** below)                                                                                                                                 |
-| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*`                      | same-named Tailwind utilities, but **the numeric scales differ** — Bootstrap's steps are rem-fixed (`mb-3` = 1rem) while Tailwind's are `0.25rem × n` (`mb-3` = 0.75rem). Convert by target rem (Bootstrap `mb-3` → Tailwind `mb-4`), never by copying the index. |
+| Bootstrap                                                       | Target                                                                                                                                     |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group`    | `tum-ui-button` or `[tumUiButton]` with `severity`, `size`, and `variant`; `tum-ui-button-group`                                           |
+| `badge` / `bg-success` badge                                    | `tum-ui-tag` with a semantic `severity`                                                                                                    |
+| `alert alert-*`                                                 | `tum-ui-message` with a semantic `severity`                                                                                                |
+| `card` / collapsible panel                                      | `tum-ui-card` / `tum-ui-panel`; a semantic element with Tailwind utilities for a presentation-only box                                     |
+| `table table-striped table-responsive`                          | `tum-ui-table`, native `<table tumUiTable>`, or `tum-ui-table-virtual-scroll` when virtualization is justified                             |
+| `form-control` / `form-group` / `form-check`                    | `[tumUiInput]`, `tum-ui-select`, `tum-ui-checkbox`, or `tum-ui-radio-button`, composed with Tailwind layout                                |
+| tabs / pagination / progress / tooltip / date picker            | `tum-ui-tabs`, `tum-ui-paginator`, TUM UI progress components, `[tumUiTooltip]`, or `tum-ui-date-picker`                                   |
+| modal                                                           | `tum-ui-dialog`; keep feature state and result handling in the Artemis host                                                                |
+| `row` + `col-md-*`                                              | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-*`, or flexbox                                                                           |
+| `d-flex` / `d-none`                                             | `flex` / `hidden`                                                                                                                          |
+| `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col`                                                                                             |
+| `text-right` / `text-left`                                      | `text-end` / `text-start`                                                                                                                  |
+| `text-muted`                                                    | an application style using the semantic `--text-body-secondary` property                                                                   |
+| `text-danger` / `text-success` / `text-warning` / `text-info`   | `text-state-danger` / `text-state-success` / `text-state-warning` / `text-state-info`                                                      |
+| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*`                      | Tailwind logical spacing; convert by target size because the numeric scales differ (`Bootstrap mb-3` is `1rem`, Tailwind `mb-4` is `1rem`) |
 
 **Colors — use semantic tokens, never primitives.** Color follows the three-tier design-token model (primitive → semantic → component): a _primitive_ token names a value (`red-500`); a _semantic_ token names intent (`danger`). Always apply a **semantic** token; never apply a primitive directly — naming the value to express a role drifts and reads inconsistently (the documented design-token anti-pattern). Pick by what you are styling:
 
-| Need                                    | Use                                                                                                                           | Never                                                                                                         |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| brand / neutral / surface               | `text-primary`, `text-color`, `text-muted-color`, `bg-surface-*`, `border-surface-*` (tailwindcss-primeui — always available) | `text-blue-500`, `bg-[#…]`                                                                                    |
-| state on a **PrimeNG component**        | the `severity` prop: `p-message` / `p-tag` / `p-button` `severity="error \| warn \| success \| info"`                         | a color class on the component                                                                                |
-| state on **plain markup** (static)      | the named state utility `text-state-danger` / `bg-state-success` / `border-state-warning` / `text-state-info`                 | `text-danger` (Bootstrap), `text-(--danger)` (superseded arbitrary form), or `text-(--p-red-500)` (primitive) |
-| state that is **dynamic / conditional** | `[style.color]="cond ? 'var(--danger)' : undefined"`                                                                          | `[class.text-danger]`, `[style.color]="'var(--p-red-500)'"`                                                   |
+| Need                                    | Use                                                                                                           | Never                                                                             |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| brand / neutral / surface               | an Artemis semantic property, or an app-owned semantic utility when one is defined                            | `text-blue-500`, `bg-surface-200`, `bg-[#…]`, or a framework-owned primitive      |
+| state on a **TUM UI component**         | the component's semantic `severity`, such as `tum-ui-message`, `tum-ui-tag`, or `tum-ui-button`               | a color class that overrides the component                                        |
+| state on **plain markup** (static)      | `text-state-danger`, `bg-state-success`, `border-state-warning`, or `text-state-info`                         | `text-danger` (Bootstrap), `text-(--danger)`, or `text-(--p-red-500)`             |
+| state that is **dynamic / conditional** | a semantic component input, or `[style.color]="cond ? 'var(--danger)' : undefined"` for irreducible inline UI | `[class.text-danger]`, `[style.color]="'var(--p-red-500)'"`, or a raw color value |
 
-The Artemis state tokens are `--danger` (red), `--success` (green), `--warning` (yellow) and `--info` (**cyan — never blue**). They are theme-aware (regenerated for light **and** dark by the `generate-css-vars` mixin) and are the same tokens `AuraArtemis` feeds into the PrimeNG palette, so plain markup, PrimeNG components and the theme share one source of truth — no `dark:` variant needed.
+The Artemis state tokens are `--danger`, `--success`, `--warning`, and `--info`. They are generated
+for light and dark mode and feed the TUM UI host-token adapter. Legacy PrimeNG also receives these
+roles during migration, but it does not own them. Semantic markup and TUM UI therefore share one
+source of truth without component-level `dark:` color branches.
 
-Why the **named** `state-*` form (`text-state-danger`) rather than a bare `text-danger`? A `text-danger` utility would collide with Bootstrap's still-loaded **unlayered** `.text-danger { … !important }`, which beats any layered Tailwind utility unconditionally (an unlayered `!important` rule wins over any layered rule regardless of layer order — so even wrapping Bootstrap in a `@layer` does not help). The `state-` namespace shares no selector with Bootstrap, so it sidesteps the collision **and** needs no rename when Bootstrap is eventually removed — it is the permanent, idiomatic form, not a transitional one. The tokens are defined once, in `tailwind.css`:
+The `state-*` names are Artemis's semantic namespace and avoid collisions with Bootstrap's
+unlayered color utilities during migration. `@theme inline` maps them directly to Artemis theme
+properties in `src/main/webapp/tailwind.css`.
 
-```css
-@theme inline {
-    --color-state-danger: var(--danger);
-    --color-state-success: var(--success);
-    --color-state-warning: var(--warning);
-    --color-state-info: var(--info);
-}
-```
-
-`@theme inline` emits each utility as a direct `var(--danger)` **reference** (e.g. `.text-state-danger { color: var(--danger) }`) instead of also creating a redundant `--color-state-*` global. Both `@theme` and `@theme inline` are dark-mode-correct — CSS variables resolve lazily at the element, so `--danger`'s dark value wins either way — so `inline` is a cleanliness choice (no extra indirection), not a correctness one. There is no exit-gate rename — these tokens survive Bootstrap removal as-is.
-
-**Pick the tool by shape, not by syntax.** When status is a **labelled pill/badge** (the graded/practice result badge, …), render it with a PrimeNG `severity` component (`p-tag` / `p-badge` / `p-message`) — it carries its own dark-mode-correct colour and a11y, and needs no colour utility at all. The `text-state-*` utility (or `[style.color]="…var(--state)…"` when the colour is a multi-state enum) is for **irreducible inline colour** with no component host: a translated validation `<small>`, a required-field asterisk, or a lone state-coloured `<fa-icon>` status glyph. Don't wrap a bare colour in a `severity` component just to avoid the utility — that adds markup for no gain.
+**Pick the tool by meaning, not by syntax.** Render a labelled status with `tum-ui-tag` or
+`tum-ui-message` and its semantic `severity`; the component owns the theme-aware visual treatment.
+Use `text-state-*` only for irreducible inline color with no suitable component host, such as a
+translated validation hint or a state-colored status glyph. Do not add a component wrapper solely
+to avoid an otherwise appropriate semantic utility.
 
 Accessibility: color is never the only signal (WCAG 1.4.1) — pair `--danger` / `--warning` with an icon or text cue.
 
-Enforced by `localRules/no-raw-tailwind-color-palette` across all templates — it bans raw palette and hex in `class`/`[class]`, primitive `--p-<color>-<n>` tokens used for meaning (both as utilities `text-(--p-red-500)` and as `var(--p-…)` inside `[style.*]`/`[color]` bindings; a bare hex inside a style binding is **not** caught), and the superseded arbitrary brand-state form (`text-(--danger)` → use `text-state-danger`). Hand-written PrimeNG component **root** classes (e.g. `class="p-button"`) are banned across all templates by `localRules/no-primeng-component-classes`: PrimeNG injects each component's CSS lazily, so a bare element carrying a root class renders non-deterministically — render the real component (`<button pButton>`, `<input pInputText>`, `<p-tag>`) instead; modifier classes (`p-button-sm`) on a real component are fine. Bootstrap colour/component classes (e.g. named `text-danger`) are banned by `localRules/no-bootstrap-classes`, applied to the fully-migrated modules listed in the `files` array of its block in `eslint.config.mjs` (extend that array as each module is finished); the same class stays legitimate in not-yet-migrated modules. A matching stylelint hex/`--bs-` ban covers the SCSS of those same modules (see the scoped override in `.stylelintrc.json`).
+`localRules/no-raw-tailwind-color-palette` rejects raw palette and hexadecimal classes, primitive
+PrimeUI color properties used for meaning, and superseded arbitrary state forms. The
+`no-primeng-component-classes` rule prevents hand-painted PrimeNG root classes in remaining legacy
+uses. Bootstrap component and color classes are rejected by `no-bootstrap-classes` in fully
+migrated modules; the matching Stylelint override rejects hexadecimal and `--bs-*` values there.
+Keep the ESLint, Stylelint, and Tailwind source lists synchronized as described below.
 
 ```html
-<!-- layout/spacing in Tailwind, the button as a PrimeNG component -->
 <div class="flex items-center justify-between gap-2">
     <h5 class="mb-0" jhiTranslate="..."></h5>
-    <p-button severity="primary" size="small" (onClick)="save()" [label]="'entity.action.save' | artemisTranslate" />
+    <tum-ui-button size="small" (clicked)="save()"> {{ 'entity.action.save' | artemisTranslate }} </tum-ui-button>
 </div>
 ```
 
@@ -658,112 +708,143 @@ Enforced by `localRules/no-raw-tailwind-color-palette` across all templates — 
 
 1. **Closure first, not directory.** Map what actually _renders_: the section's component tree **plus** the global shell (footer, navbar, alert overlay) and any runtime dialogs (`jhiDeleteButton → delete-dialog → confirm-entity-name`). For each shared/leaf component in that closure — if already locked, reuse it; if small and section-local, migrate it first as its own locked unit; if app-wide and not yet migrated, **leave it Bootstrap and do not put a Tailwind utility on its host** (a half-migrated shared component loses the cascade everywhere it renders).
 2. **Enumerate + triage.** Grep the closure's `.html` for Bootstrap classes and its `.scss`/`.ts` for hex / `var(--bs-*)` / class-strings. Discount false positives (shared spacing `mb-*`/`me-*`/`gap-*` are allowed; many `row`/`table` hits are `p-table` `styleClass` or custom classes).
-3. **Convert templates fully** (never half). Utilities via the quick-reference table above — but **convert spacing by target rem, not by index** (Bootstrap `mb-3` = 1rem → Tailwind `mb-4`; the lint is blind to this by design). Components via PrimeNG (`btn`→`pButton`, `table`→`p-table`, …); never hand-paint a `p-*` root class (lazy CSS → non-deterministic render) — render the real component.
-4. **Convert ng-bootstrap → PrimeNG** (`NgbModal`→`DialogService`, `NgbTooltip`→`pTooltip`). Pass modal data via the `DialogService` `data` config — assigning `modalRef.componentInstance.X` silently no-ops for signal inputs.
-5. **Convert colours in `.html` AND `.scss` AND `.ts`.** The template lint is HTML-only, so colours set in TypeScript (`buttonClassName`, `[ngClass]` keys) or SCSS (hex, `--bs-*`) are invisible to it — grep them. `text-danger`→`text-state-danger`, `text-muted`→`text-muted-color`, SCSS hex → `var(--p-*)` / state tokens.
+3. **Convert templates fully** (never half). Use the TUM UI and Tailwind quick-reference table above,
+   and convert spacing by target size rather than copying the class index. Import package symbols
+   from `@tumaet/ui-angular`, never through a deep path.
+4. **Replace legacy behavior with the target primitive.** Use `tum-ui-dialog` for modal presentation,
+   `[tumUiTooltip]` for tooltips, and the corresponding TUM UI control where it exists. Keep
+   application state and results in the Artemis component. If TUM UI lacks a capability, either add
+   the reusable contract or document a contained PrimeNG fallback.
+5. **Convert colors in `.html`, `.scss`, and `.ts`.** Template lint cannot see every color in
+   TypeScript class maps or SCSS. Replace Bootstrap classes and raw values with TUM UI inputs,
+   Tailwind semantic utilities, or Artemis semantic properties.
 6. **Strip dead SCSS** — prefer deleting component SCSS in favour of utilities; remove `::ng-deep` bandaids.
 7. **Drive Bootstrap hits to zero** across the closure — a module must be 100% converted before it renders correctly. Run `pnpm migrate:check <path>` to list what Bootstrap remains in a path and whether it is ready to lock; `pnpm migrate:status` shows the remaining-Bootstrap burndown by section to pick the next one.
-8. **Lock it** — add the path to the three lists the `migration-source-coverage` test keeps consistent (see above). `no-raw-tailwind-color-palette` and `no-primeng-component-classes` are already app-wide and need no per-section wiring.
+8. **Lock it** — add the path to the three lists the `migration-source-coverage` test keeps
+   consistent. `no-raw-tailwind-color-palette` and `no-primeng-component-classes` are app-wide and
+   need no per-section wiring.
 9. **Prove it** — `pnpm run test:rules && pnpm run lint && pnpm run stylelint && pnpm run prettier:check`.
 10. **Restart the dev server + verify light AND dark.** `@source` changes need a fresh Tailwind scan (`ng serve` does not reliably HMR `tailwind.css`); also check a _not-yet-migrated_ page that shares the same closure components, for spillover.
 
-| Symptom                                          | Cause                                                      | Fix                                |
-| ------------------------------------------------ | ---------------------------------------------------------- | ---------------------------------- |
-| Styles absent in the build                       | path missing from `@source`                                | add it (step 8)                    |
-| Spacing shifted ~4×                              | copied the class index instead of converting by rem        | step 3                             |
-| A control renders grey/unstyled                  | a `p-*` root class hand-painted on a bare element          | render the real component (step 3) |
-| A migrated element still shows Bootstrap styling | a half-migrated ancestor/shared component wins the cascade | convert the whole closure (step 1) |
+| Symptom                                          | Cause                                                      | Fix                                         |
+| ------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------- |
+| Styles absent in the build                       | path missing from `@source`                                | add it (step 8)                             |
+| Spacing shifted ~4×                              | copied the class index instead of converting by rem        | step 3                                      |
+| A legacy control renders grey or unstyled        | a `p-*` root class hand-painted on a bare element          | use TUM UI or the actual fallback component |
+| A migrated element still shows Bootstrap styling | a half-migrated ancestor/shared component wins the cascade | convert the whole closure (step 1)          |
 
-**Exit criteria (global Bootstrap removal — separate effort).** Once Bootstrap is removed app-wide: switch `tailwind.css` to `@import 'tailwindcss';` (re-enables Preflight), configure the PrimeNG `cssLayer` ordering (`tailwind-base, primeng, tailwind-utilities`) in `app.config.ts`, drop `source(none)` + the `@source` allowlist, and remove the `bootstrap` dependency. The brand state-color tokens need no exit work — they are collision-free and permanent.
+**Exit criteria.** Bootstrap can be removed after every rendering closure is migrated and locked.
+That removal enables Tailwind Preflight, removes the source allowlist and Bootstrap dependency, and
+drops Bootstrap-specific token aliases. PrimeNG can be removed after its remaining capability gaps
+have TUM UI replacements and all imports, theme setup, and PrimeUI-specific utilities are gone. The
+TUM UI host adapter keeps these migrations behind one boundary, so package component APIs and
+semantic tokens do not need to change as either legacy framework leaves.
 
 ### Chart Instantiation
 
-We are using the framework [ngx-charts](https://github.com/swimlane/ngx-charts) in order to instantiate charts and diagrams in Artemis.
+Charts and diagrams are instantiated with PrimeNG's [`p-chart`](https://primeng.org/chart), which wraps
+[Chart.js](https://www.chartjs.org/docs/latest/). Persistent value labels on top of the marks come from
+[`chartjs-plugin-datalabels`](https://chartjs-plugin-datalabels.netlify.app/).
 
-The following is an example HTML template for a vertical bar chart:
+Do not hand-write Chart.js option objects. `app/shared-ui/chart` holds the shared layer that keeps every chart
+consistent, and you should build on it:
+
+| Helper                                                                                                | Purpose                                                                                |
+| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `barChartOptions`, `lineChartOptions`, `doughnutChartOptions` (`chart-options.ts`)                    | Option factories: axes, legend, tooltips, data labels, percent scales                  |
+| `singleSeriesChartData`, `multiSeriesToStackedBarData`, `multiSeriesToLineData` (`chart-adapters.ts`) | Turn Artemis' `ChartSeriesEntry` / `ChartMultiSeriesEntry` models into Chart.js `data` |
+| `ChartColorService.resolvedColors` (`chart-color.service.ts`)                                         | Resolves CSS custom properties to concrete colors and re-resolves on theme switch      |
+| `toChartSelectEvent` (`chart-options.ts`)                                                             | Maps a `(onDataSelect)` payload back to the entry that was clicked                     |
+
+A typical component looks like this — a signal for the data, `computed` option and data objects, and an explicit
+height on the chart's container:
 
 ```html
-<div #containerRef class="col-md-9">
-    <ngx-charts-bar-vertical
-        [view]="[containerRef.offsetWidth, 300]"
-        [results]="ngxData"
-        [scheme]="color"
-        [legend]="false"
-        [xAxis]="true"
-        [yAxis]="true"
-        [yScaleMax]="20"
-        [roundEdges]="true"
-        [showDataLabel]="true"
-    >
-        <ng-template #tooltipTemplate let-model="model"> {{ labelTitle }}: {{ round((model.value / totalValue) * 100, 1) }}% </ng-template>
-    </ngx-charts-bar-vertical>
+<h4 id="score-distribution-heading" jhiTranslate="statistics.score_distribution"></h4>
+<div style="height: 250px">
+    <p-chart
+        type="bar"
+        [data]="chartData()"
+        [options]="chartOptions()"
+        [plugins]="dataLabelsPlugin"
+        (onDataSelect)="onSelect($event)"
+        [ariaLabel]="'statistics.score_distribution' | artemisTranslate"
+    />
 </div>
 ```
 
-Here are a few tips when using this framework:
+```ts
+private readonly resolvedColors = inject(ChartColorService).resolvedColors(() => this.chartColors());
 
-1. In order to configure the content of the tooltips in the chart, declare a [ng-template](https://angular.dev/api/core/ng-template) with the reference `#tooltipTemplate`
-   containing the desired content within the selector. The framework dynamically recognizes this template. In the example above,
-   the tooltips are configured in order to present the percentage value corresponding to the absolute value represented by the bar.
-   Depending on the chart type, there is more than one type of tooltip configurable.
-   For more information visit https://swimlane.gitbook.io/ngx-charts/
+readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
+readonly chartOptions = computed(() =>
+    barChartOptions({
+        percentScale: true,
+        xAxis: { label: this.xAxisLabel() },
+        yAxis: { max: this.yScaleMax() },
+        tooltip: { label: (item) => `${this.translateService.instant('statistics.amountOfStudents')}: ${item.parsed.y}` },
+        dataLabels: { formatter: (value) => `${value}%` },
+    }),
+);
+readonly dataLabelsPlugin = [ChartDataLabels];
+```
 
-2. In order to manipulate the content of the data label (e.g. the text floating above a chart bar), the framework provides a `[dataLabelFormatting]` property in the
-   HTML template that can be assigned to a method. For example:
+Here are the rules to follow when adding a chart:
 
-    ```html
-    [dataLabelFormatting]="formatDataLabel"
-    ```
-
-    with
-
-    ```ts
-    formatDataLabel(averageScore: number): string {
-        return averageScore + '%';
-    }
-    ```
-
-    appends a percentage sign to the data label.
-
-    <Callout variant={CalloutVariant.info}>
-        The method is passed to the framework itself and executed there. This means that at runtime it does not have access to global variables of the component it is originally
-        implemented in. If this access is necessary, create a (readonly) variable assigned to this method and bind it to the component: `readonly bindFormatting =
-        this.formatDataLabel.bind(this);`
-    </Callout>
-
-3. Some design properties are not directly configurable via the framework (e.g. the font-size and weight of the data labels).
-   The tool `::ng-deep` is useful in these situations as it allows to change some of these properties by overwriting them in
-   a corresponding style sheet. Adapting the font-size and weight of data labels would look like this:
-
-    <Callout variant={CalloutVariant.danger}>
-        `::ng-deep` **is deprecated**. Therefore, you should not use this tool anymore. For more information, refer to the [Angular
-        documentation](https://angular.dev/guide/components/styling#ng-deep).
-    </Callout>
-
-4. In order to make the chart responsive in width, bind it to the width of its parent container.
-   First, annotate the parent container with a reference (in the example `#containerRef`).
-   Then, when configuring the dimensions of the chart in `[view]`, insert `containerRef.offsetWidth` instead
-   of an specific value for the width.
-
-5. There are two ways to keep axis labels and axis ticks translation-sensitive if they contain natural language:
-
-    - Axis labels are passed directly as property in the HTML template. Simply insert the translation string together with the translate pipe:
-
-    ```html
-    [xAxisLabel]="'artemisApp.exam.charts.xAxisLabel' | artemisTranslate" [yAxisLabel]="'artemisApp.exam.charts.yAxisLabel' | artemisTranslate"
-    ```
-
-    - For some chart types, the framework derives the ticks of one axis from the name property of the passed data objects.
-      So, these names have to be translated every time the user switches the language settings.
-      In this case, inject the `TranslateService` to the underlying component and subscribe to the `onLangChange` event emitter:
+1. **Give the chart's container an explicit height.** Chart.js is configured with `maintainAspectRatio: false`, so
+   it sizes the canvas from its parent. A parent without a definite height leaves the canvas at its 150px default,
+   which overflows the box and overlaps whatever follows. If the parent is a flex item, `flex: 1; min-height: 0`
+   works too; a plain block needs `style="height: …"` or a `[style.height.px]` binding. For a horizontal bar chart,
+   derive the height from the number of bars so each one stays readable:
 
     ```ts
-    constructor(private translateService: TranslateService) {
-        this.translateService.onLangChange.subscribe(() => {
-            this.updateXAxisLabel(); // a method re-assigning the names of the objects to the translated string
-        });
-    }
+    readonly chartHeight = computed(() => AXIS_AND_PADDING_HEIGHT_PX + this.chartEntries().length * BAR_HEIGHT_PX);
     ```
+
+2. **Every chart needs an accessible name.** `p-chart` renders into a `<canvas role="img">`. Everything Chart.js
+   draws — axis labels, data labels, the values themselves — is rasterised pixels: it cannot be selected, copied,
+   searched, or read. Without an accessible name, assistive technology announces nothing but an unlabelled image,
+   so the whole chart is silent. Supply one of:
+
+    ```html
+    <!-- Preferred: reuse the translation key of the chart's own visible heading -->
+    <p-chart type="line" [data]="chartData()" [ariaLabel]="'artemisApp.courseStatistics.activeStudents' | artemisTranslate" />
+
+    <!-- Or name it from the visible heading, when that heading has a stable unique id -->
+    <p-chart type="bar" [data]="chartData()" [ariaLabelledBy]="'active-students-heading'" />
+
+    <!-- Or, ONLY if the chart is decorative because every figure it shows is also rendered as text next to it -->
+    <p-chart type="doughnut" [data]="chartData()" aria-hidden="true" />
+    ```
+
+    The `localRules/require-chart-accessible-name` ESLint rule enforces this for external templates and inline
+    `template:` strings alike. When one page renders several instances of the same chart component, pass the name
+    in per instance (see `ParticipantScoresDistributionComponent`'s `ariaLabel` input) so they can be told apart.
+
+    Note that `aria-label` is a _name_, not a _description_: it says what the chart is, not what it shows. Chart.js
+    has no SVG renderer, so exposing the actual figures still requires a DOM text alternative — prefer rendering the
+    key numbers as text next to the chart.
+
+3. **Resolve colors through `ChartColorService`, never inline hex values.** Chart.js needs concrete colors, but
+   canvas cannot read CSS custom properties. `resolvedColors` resolves the tokens you pass and re-resolves them when
+   the user switches between the light and the dark theme; a hardcoded color would break one of the two.
+
+4. **Keep axis labels, ticks and tooltips translation-sensitive.** Anything drawn inside the canvas is set from
+   TypeScript, so it does not re-render on a language change by itself. Either build the option object in a
+   `computed` that reads a signal fed by `onLangChange`, or subscribe and recompute:
+
+    ```ts
+    private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
+
+    protected readonly chartData = computed(() => {
+        this.languageChange();
+        return this.buildTranslatedChartData();
+    });
+    ```
+
+5. **Do not override library internals with `::ng-deep`.** Use the documented `p-chart` inputs, the shared option
+   factories, or CSS custom properties. If there is no supported customization point, reconsider the requirement or
+   contribute one upstream instead of coupling Artemis to private markup.
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
 
@@ -825,6 +906,6 @@ Use `placeholder="{{ 'global.form.newpassword.placeholder' | artemisTranslate }}
 
 **Use ArtemisTimeAgoPipe instead of TimeAgoPipe**
 
-Do not use `<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>`
+Do not use `<span [tumUiTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>`
 
-Use `<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>`
+Use `<span [tumUiTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>`

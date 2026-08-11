@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -20,7 +21,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
+import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO.LoginMethod;
 import de.tum.cit.aet.artemis.account.service.AccountService;
+import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
@@ -44,8 +48,15 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     public static final String AUTHENTICATEDUSER = "authenticateduser";
 
+    private static final String TEST_PREFIX = "loginoptions";
+
+    private static final String EXTERNAL_IDP_NAME = "Test University Login";
+
     @Autowired
     private PublicAccountResource publicAccountResource;
+
+    @Autowired
+    private LoginOptionsService loginOptionsService;
 
     @Autowired
     private AccountService accountService;
@@ -277,7 +288,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userTestRepository.addOrganizationToUser(user.getId(), organization);
 
         // Load user exactly as the account endpoint does — organizations are NOT in the entity graph
-        User lazyUser = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(AUTHENTICATEDUSER).orElseThrow();
+        User lazyUser = userTestRepository.findOneWithAuthoritiesByLogin(AUTHENTICATEDUSER).orElseThrow();
 
         // Build DTO outside the transaction (session is closed because open-in-view=false)
         UserDTO dto = new UserDTO(lazyUser);
@@ -433,7 +444,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         String updatedPassword = "12345678";
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword, null);
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
@@ -450,7 +461,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userTestRepository.save(user);
 
         String updatedPassword = "12345678";
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword, null);
 
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
     }
@@ -460,7 +471,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void changePasswordInvalidPassword() throws Exception {
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         String updatedPassword = "";
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword, null);
 
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
@@ -469,7 +480,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changePasswordSamePassword() throws Exception {
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, UserFactory.USER_PASSWORD);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, UserFactory.USER_PASSWORD, null);
 
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
@@ -687,5 +698,147 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             // The endpoint must still return 200 so the language preference can be saved
             request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.OK);
         });
+    }
+
+    /**
+     * Requests the login options for the given identifier. The endpoint is public, so no authentication is set up.
+     *
+     * @param usernameOrEmail the login or email address to ask for
+     * @return the login options returned by the server
+     */
+    private LoginOptionsDTO getLoginOptions(String usernameOrEmail) throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("usernameOrEmail", usernameOrEmail);
+        return request.get("/api/core/public/login-options", HttpStatus.OK, LoginOptionsDTO.class, params);
+    }
+
+    /**
+     * Runs the given test with an external identity provider enabled and a known display name, restoring both afterwards.
+     *
+     * @param enabledFlagName the name of the provider flag on the service, either oidcEnabled or samlEnabled
+     * @param displayNameName the name of the display name attribute belonging to that provider
+     * @param test            the test to execute
+     */
+    private void testWithExternalIdpEnabled(String enabledFlagName, String displayNameName, Executable test) throws Throwable {
+        ConfigUtil.testWithChangedConfig(loginOptionsService, enabledFlagName, true,
+                () -> ConfigUtil.testWithChangedConfig(loginOptionsService, displayNameName, EXTERNAL_IDP_NAME, test));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForInternalUserByLoginReturnsPassword() throws Exception {
+        User internalUser = userUtilService.createAndSaveUser(TEST_PREFIX + "internal");
+
+        LoginOptionsDTO loginOptions = getLoginOptions(internalUser.getLogin());
+
+        assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.PASSWORD);
+        assertThat(loginOptions.idpName()).isNull();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForInternalUserByEmailReturnsPassword() throws Exception {
+        User internalUser = userUtilService.createAndSaveUser(TEST_PREFIX + "internalbymail");
+
+        // the client sends whatever the user typed, so the upper case variant has to resolve to the same account
+        LoginOptionsDTO loginOptions = getLoginOptions(internalUser.getEmail().toUpperCase(Locale.ROOT));
+
+        assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.PASSWORD);
+        assertThat(loginOptions.idpName()).isNull();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForExternalUserWithOidcEnabledReturnsOidc() throws Throwable {
+        User externalUser = UserFactory.generateActivatedUser(TEST_PREFIX + "externaloidc");
+        externalUser.setInternal(false);
+        userTestRepository.save(externalUser);
+
+        testWithExternalIdpEnabled("oidcEnabled", "oidcDisplayName", () -> {
+            LoginOptionsDTO loginOptions = getLoginOptions(externalUser.getLogin());
+
+            assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.OIDC);
+            assertThat(loginOptions.idpName()).isEqualTo(EXTERNAL_IDP_NAME);
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForExternalUserWithSaml2EnabledReturnsSaml2() throws Throwable {
+        User externalUser = UserFactory.generateActivatedUser(TEST_PREFIX + "externalsaml");
+        externalUser.setInternal(false);
+        userTestRepository.save(externalUser);
+
+        testWithExternalIdpEnabled("samlEnabled", "samlDisplayName", () -> {
+            LoginOptionsDTO loginOptions = getLoginOptions(externalUser.getEmail());
+
+            assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.SAML2);
+            assertThat(loginOptions.idpName()).isEqualTo(EXTERNAL_IDP_NAME);
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForExternalUserWithoutExternalIdpReturnsPassword() throws Exception {
+        User externalUser = UserFactory.generateActivatedUser(TEST_PREFIX + "externalnoidp");
+        externalUser.setInternal(false);
+        userTestRepository.save(externalUser);
+
+        LoginOptionsDTO loginOptions = getLoginOptions(externalUser.getLogin());
+
+        assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.PASSWORD);
+        assertThat(loginOptions.idpName()).isNull();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForUnknownUserReturnsOidcForJustInTimeProvisioning() throws Throwable {
+        testWithExternalIdpEnabled("oidcEnabled", "oidcDisplayName", () -> {
+            LoginOptionsDTO loginOptions = getLoginOptions(TEST_PREFIX + "doesnotexist");
+
+            assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.OIDC);
+            assertThat(loginOptions.idpName()).isEqualTo(EXTERNAL_IDP_NAME);
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForSoftDeletedUserTreatsThemAsUnknown() throws Throwable {
+        User deletedUser = UserFactory.generateActivatedUser(TEST_PREFIX + "softdeleted");
+        deletedUser.setDeleted(true);
+        userTestRepository.save(deletedUser);
+
+        // with an external provider enabled, a known internal account would answer PASSWORD, so OIDC proves the account was not found
+        testWithExternalIdpEnabled("oidcEnabled", "oidcDisplayName", () -> {
+            assertThat(getLoginOptions(deletedUser.getLogin()).loginMethod()).isEqualTo(LoginMethod.OIDC);
+            assertThat(getLoginOptions(deletedUser.getEmail()).loginMethod()).isEqualTo(LoginMethod.OIDC);
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForBlankIdentifierReturnsPassword() throws Exception {
+        LoginOptionsDTO loginOptions = getLoginOptions("   ");
+
+        assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.PASSWORD);
+        assertThat(loginOptions.idpName()).isNull();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForOverlyLongIdentifierReturnsBadRequest() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("usernameOrEmail", "a".repeat(256));
+
+        request.get("/api/core/public/login-options", HttpStatus.BAD_REQUEST, LoginOptionsDTO.class, params);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getLoginOptionsForIdentifierAtTheLengthLimitIsAccepted() throws Exception {
+        // the limit itself has to stay valid, so only what exceeds it is rejected
+        LoginOptionsDTO loginOptions = getLoginOptions("a".repeat(255));
+
+        assertThat(loginOptions.loginMethod()).isEqualTo(LoginMethod.PASSWORD);
     }
 }

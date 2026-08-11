@@ -84,7 +84,7 @@ public class HyperionExerciseVariantResource {
         log.debug("REST request to generate a variant for exercise [{}]", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         validateRequest(exercise, request);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         VariantJob job = jobService.startJob(user, exercise, request);
         taskService.runJobAsync(job);
         log.info("Started variant generation job [{}] for exercise [{}]", job.getJobId(), exerciseId);
@@ -100,7 +100,7 @@ public class HyperionExerciseVariantResource {
     @GetMapping("variant-jobs")
     @EnforceAtLeastEditor
     public ResponseEntity<List<VariantJobDTO>> getJobsOfCurrentUser() {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         return ResponseEntity.ok(jobService.getJobsOfUser(user.getLogin()).stream().map(VariantJobDTO::of).toList());
     }
 
@@ -115,7 +115,7 @@ public class HyperionExerciseVariantResource {
     @GetMapping("variant-jobs/{jobId}")
     @EnforceAtLeastEditor
     public ResponseEntity<VariantJobDetailDTO> getJobDetail(@PathVariable String jobId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         return jobService.getJob(jobId, user.getLogin()).map(job -> ResponseEntity.ok(VariantJobDetailDTO.of(job))).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -129,7 +129,7 @@ public class HyperionExerciseVariantResource {
     @DeleteMapping("variant-jobs/{jobId}")
     @EnforceAtLeastEditor
     public ResponseEntity<Void> cancelJob(@PathVariable String jobId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         jobService.requestCancel(jobId, user.getLogin());
         log.info("Cancellation requested for variant generation job [{}]", jobId);
         return ResponseEntity.noContent().build();

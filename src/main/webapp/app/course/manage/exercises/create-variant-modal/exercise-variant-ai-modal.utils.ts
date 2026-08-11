@@ -1,8 +1,8 @@
+import { TumUiTagSeverity } from '@tumaet/ui-angular';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-request';
-import { TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
 
 export type PlacementChoice = 'existing-group' | 'new-group' | 'standalone';
 

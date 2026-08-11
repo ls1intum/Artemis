@@ -1,8 +1,9 @@
+import { TumUiConfirmationService } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { computed, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiConfirmationService } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirmation.service';
+
 import { of } from 'rxjs';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -74,7 +75,7 @@ describe('VariantGenerationTrayComponent', () => {
         })
             .overrideComponent(VariantGenerationTrayComponent, {
                 remove: { imports: [ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent] },
-                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key), MockComponent(ExerciseVariantAiModalWizardComponent)] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? ''), MockComponent(ExerciseVariantAiModalWizardComponent)] },
             })
             .compileComponents();
 

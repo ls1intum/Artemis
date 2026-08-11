@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
@@ -43,11 +44,15 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
     private final AuditEventConverter auditEventConverter;
 
+    private final UserRepository userRepository;
+
     private static final Logger log = LoggerFactory.getLogger(CustomAuditEventRepository.class);
 
-    public CustomAuditEventRepository(Environment environment, PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter) {
+    public CustomAuditEventRepository(Environment environment, PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter,
+            UserRepository userRepository) {
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
         this.auditEventConverter = auditEventConverter;
+        this.userRepository = userRepository;
         this.isSaml2Active = new ArtemisConfigHelper().isSaml2Enabled(environment);
     }
 
@@ -80,6 +85,34 @@ public class CustomAuditEventRepository implements AuditEventRepository {
             Map<String, String> eventData = auditEventConverter.convertDataToStrings(event.getData());
             persistentAuditEvent.setData(truncate(eventData));
             persistenceAuditEventRepository.save(persistentAuditEvent);
+
+            if (isLoginSuccess(eventType)) {
+                recordLastLogin(event.getPrincipal(), event.getTimestamp());
+            }
+        }
+    }
+
+    /**
+     * @return whether the given audit event type represents a successful login (internal/LDAP, passkey, or SAML2)
+     */
+    private static boolean isLoginSuccess(String eventType) {
+        return AuditEventConstants.AUTHENTICATION_SUCCESS.equals(eventType) || AuditEventConstants.AUTHENTICATION_PASSKEY_SUCCESS.equals(eventType)
+                || AuditEventConstants.SAML2_AUTHENTICATION_SUCCESS.equals(eventType);
+    }
+
+    /**
+     * Records the user's last login (used as the activity signal for the data-privacy not-enrolled-user cleanup) on a
+     * best-effort basis: a failure here must never break authentication or audit logging.
+     *
+     * @param principal the login of the authenticated user
+     * @param timestamp the login timestamp
+     */
+    private void recordLastLogin(String principal, Instant timestamp) {
+        try {
+            userRepository.updateLastLoginDate(principal, timestamp);
+        }
+        catch (Exception e) {
+            log.warn("Could not record last login date for principal {}", principal, e);
         }
     }
 

@@ -1,7 +1,6 @@
 <tum-ui-dialog
     [(visible)]="visible"
     [header]="'artemisApp.examManagement.exerciseGroup.update' | artemisTranslate"
-    [modal]="true"
     [closable]="true"
     [closeOnEscape]="true"
     [dismissableMask]="false"
@@ -21,7 +20,7 @@
             />
         </div>
         <div class="flex items-center gap-2">
-            <tum-ui-checkbox inputId="exam-group-edit-mandatory" [binary]="true" [ngModel]="draftIsMandatory()" (ngModelChange)="draftIsMandatory.set($event)" />
+            <tum-ui-checkbox inputId="exam-group-edit-mandatory" [ngModel]="draftIsMandatory()" (ngModelChange)="draftIsMandatory.set($event)" />
             <label for="exam-group-edit-mandatory" jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"></label>
         </div>
     </div>

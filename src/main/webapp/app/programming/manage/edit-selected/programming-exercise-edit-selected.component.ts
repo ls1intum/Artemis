@@ -1,3 +1,4 @@
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -14,7 +15,6 @@ import { ProgrammingExerciseUpdateTimelineComponent } from '../../shared/program
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',

@@ -107,7 +107,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
     }
 

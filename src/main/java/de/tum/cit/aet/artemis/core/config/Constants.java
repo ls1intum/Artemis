@@ -33,6 +33,8 @@ public final class Constants {
 
     public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
 
+    public static final int MAX_PACKAGE_NAME_LENGTH = 100;
+
     /**
      * The default REST/URL-path prefix for accessing file uploads.
      * Don't use this constant elsewhere than in the Presentation-Layer to reduce
@@ -87,6 +89,18 @@ public final class Constants {
 
     // Must be consistent with the exam.title varchar(255) database column.
     public static final int EXAM_TITLE_MAX_LENGTH = 255;
+
+    // Upper bound for configurable max-points values in a course or exam grading configuration (int database columns).
+    // Keep in sync with MAX_GRADING_POINTS in input.constants.ts.
+    public static final int MAX_GRADING_POINTS = 9999;
+
+    // Upper bound for the course presentation score. Must stay <= 127 because course.presentation_score is a tinyint column.
+    // Keep in sync with MAX_PRESENTATION_SCORE in input.constants.ts.
+    public static final int MAX_PRESENTATION_SCORE = 100;
+
+    // Upper bound for the number of graded presentations in a course. A domain limit, not a database constraint.
+    // Keep in sync with MAX_PRESENTATION_COUNT in input.constants.ts.
+    public static final int MAX_PRESENTATION_COUNT = 100;
 
     public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
 

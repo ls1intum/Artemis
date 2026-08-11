@@ -222,7 +222,7 @@ public class ProgrammingExerciseUpdateResource {
         programmingExerciseValidationService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
 
         // Fetch course from database to make sure client didn't change groups
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
@@ -327,7 +327,8 @@ public class ProgrammingExerciseUpdateResource {
 
     /**
      * Updates the existing ProgrammingExercise entity with values from the DTO.
-     * This includes updating competency links using the proper mechanism.
+     * This includes updating competency links using the proper mechanism and restoring the timeline of an owning
+     * variant group, so every caller persists a member with the group's dates.
      *
      * @param dto      the DTO containing updated values
      * @param exercise the existing exercise entity to update
@@ -421,6 +422,11 @@ public class ProgrammingExerciseUpdateResource {
 
         // Update competency links using the proper mechanism
         competencyExerciseLinkService.updateCompetencyLinks(dto, exercise);
+
+        // A variant group owns its members' shared dates, so pin those back to the group. The build-and-test date stays
+        // per exercise and is only re-derived from the shared due date. The dedicated timeline endpoint rejects group
+        // members outright instead.
+        exerciseVariantGroupService.applyOwningGroupTimeline(exercise);
 
         return exercise;
     }
@@ -516,7 +522,7 @@ public class ProgrammingExerciseUpdateResource {
         }
 
         // Fetch course from database to make sure client didn't change groups
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 

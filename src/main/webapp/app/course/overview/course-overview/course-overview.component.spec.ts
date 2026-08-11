@@ -761,10 +761,21 @@ describe('CourseOverviewComponent', () => {
             expect(setPageTitle).toHaveBeenCalledWith('overview.lectures');
         });
 
-        it('should only show the title bar when a page projects title-bar content', () => {
+        it('should show the title bar on every page without its own sidebar', () => {
+            // Calendar, statistics, competencies, learning path and quiz training project nothing and previously had
+            // no bar at all, which left the student overview inconsistent with course management and administration.
+            component.hasSidebar.set(false);
+
+            expect(internals().showCourseTitleBar()).toBe(true);
+        });
+
+        it('should leave the title bar to a sidebar page unless it projects content', () => {
             const titleBarService = TestBed.inject(CourseTitleBarService);
+            // A sidebar page carries the page identity in its sidebar header, so a second bar would only repeat it.
+            component.hasSidebar.set(true);
             expect(internals().showCourseTitleBar()).toBe(false);
 
+            // Projecting content still opens the bar — this is what keeps the communication search visible.
             titleBarService.setActionsTemplate({} as TemplateRef<unknown>);
             expect(internals().showCourseTitleBar()).toBe(true);
 

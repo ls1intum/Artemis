@@ -92,39 +92,39 @@ describe('ExamExerciseTableComponent', () => {
         fixture.componentRef.setInput('exercises', [{ id: 1, type: ExerciseType.QUIZ } as Exercise]);
         fixture.detectChanges();
 
-        expect(component.hasQuiz()).toBe(true);
-        expect(component.hasProgramming()).toBe(false);
-        expect(component.hasModeling()).toBe(false);
-        expect(component.hasFileUpload()).toBe(false);
-        expect(component.hasAssessmentModeColumn()).toBe(false);
+        expect(component['hasQuiz']()).toBe(true);
+        expect(component['hasProgramming']()).toBe(false);
+        expect(component['hasModeling']()).toBe(false);
+        expect(component['hasFileUpload']()).toBe(false);
+        expect(component['hasAssessmentModeColumn']()).toBe(false);
     });
 
     it('shows the assessment-mode column for programming, modeling, and text exercises', () => {
         for (const type of [ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT]) {
             fixture.componentRef.setInput('exercises', [{ id: 1, type } as Exercise]);
             fixture.detectChanges();
-            expect(component.hasAssessmentModeColumn()).toBe(true);
+            expect(component['hasAssessmentModeColumn']()).toBe(true);
         }
         fixture.componentRef.setInput('exercises', [{ id: 1, type: ExerciseType.QUIZ } as Exercise]);
         fixture.detectChanges();
-        expect(component.hasAssessmentModeColumn()).toBe(false);
+        expect(component['hasAssessmentModeColumn']()).toBe(false);
     });
 
     it('only shows the drag handle with more than one group', () => {
         fixture.componentRef.setInput('groups', [group1]);
         fixture.detectChanges();
-        expect(component.showDragHandle()).toBe(false);
+        expect(component['showDragHandle']()).toBe(false);
 
         fixture.componentRef.setInput('groups', [group1, group2]);
         fixture.detectChanges();
-        expect(component.showDragHandle()).toBe(true);
+        expect(component['showDragHandle']()).toBe(true);
     });
 
     it('builds group dropdown options from the groups input, falling back to #id when untitled', () => {
         fixture.componentRef.setInput('groups', [group1, { id: 3 } as ExerciseGroup]);
         fixture.detectChanges();
 
-        expect(component.groupOptions()).toEqual([
+        expect(component['groupOptions']()).toEqual([
             { label: 'Group 1', value: 1 },
             { label: '#3', value: 3 },
         ]);

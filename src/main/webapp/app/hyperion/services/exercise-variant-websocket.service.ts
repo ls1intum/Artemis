@@ -3,17 +3,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 
 export type VariantJobPhase =
-    | 'ANALYZING'
-    | 'PLANNING'
-    | 'PROVISIONING'
-    | 'TRANSFORMING'
-    | 'VERIFYING'
-    | 'REPAIRING'
-    | 'FINALIZING'
-    | 'COMPLETED'
-    | 'DRAFT_WITH_WARNINGS'
-    | 'FAILED'
-    | 'CANCELLED';
+    'ANALYZING' | 'PLANNING' | 'PROVISIONING' | 'TRANSFORMING' | 'VERIFYING' | 'REPAIRING' | 'FINALIZING' | 'COMPLETED' | 'DRAFT_WITH_WARNINGS' | 'FAILED' | 'CANCELLED';
 
 /** Mirror of the server's VariantGenerationEventDTO. */
 export interface VariantGenerationEvent {

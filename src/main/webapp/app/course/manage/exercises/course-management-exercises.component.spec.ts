@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
@@ -34,7 +34,6 @@ describe('Course Management Exercises Component', () => {
     let courseManagementService: CourseManagementService;
     let alertService: AlertService;
     let deleteDialogService: DeleteDialogService;
-    const routerMock = { navigate: vi.fn() };
 
     const buildExercises = (): Exercise[] => [
         { id: 1, title: 'Intro Programming', type: ExerciseType.PROGRAMMING } as Exercise,
@@ -57,7 +56,6 @@ describe('Course Management Exercises Component', () => {
             imports: [CourseManagementExercisesComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useValue: routerMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 MockProvider(DeleteDialogService),

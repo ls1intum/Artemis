@@ -1,3 +1,4 @@
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -8,7 +9,6 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -100,17 +100,14 @@ export class ExerciseTimelineComponent {
             this.setDateIfChanged(item, undefined);
             this.setInvalidInput(item, false);
         }
-        // A non-empty, not-yet-parseable value is left untouched while the user is still typing; it is
-        // only flagged as invalid once they leave the field (see handleBlur).
+        // A not-yet-parseable value is left alone while typing and only flagged on blur (see handleBlur).
     }
 
     handleBlur(item: TimelineItem, event: Event) {
         const input = (event.target as HTMLInputElement).value;
         const inputWasCleared = input === '';
         const currentInputIsInvalidDate = this.parseManualInput(input) === undefined;
-        // Previously an invalid entry was silently reverted to the last valid value, leaving the user
-        // unaware of the mistake (PR #13009 review). Instead keep the entered text (keepInvalid) and flag
-        // the field invalid so the red border + tooltip explain the problem and the form blocks saving.
+        // Keep the entered text (keepInvalid) and flag it instead of silently reverting it (PR #13009 review).
         this.setInvalidInput(item, currentInputIsInvalidDate && !inputWasCleared);
     }
 

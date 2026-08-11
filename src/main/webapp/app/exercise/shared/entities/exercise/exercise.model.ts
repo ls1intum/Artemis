@@ -142,6 +142,9 @@ export abstract class Exercise implements BaseEntity {
     public numberOfRatings?: number;
     public channelName?: string;
     public completed?: boolean;
+    // only sent for exam exercises on the assessment dashboard, see ExerciseResource.getExerciseForAssessmentDashboard
+    public latestExamEndDate?: dayjs.Dayjs;
+    public assessmentPossibleFrom?: dayjs.Dayjs;
 
     // helper attributes
     public secondCorrectionEnabled = false;

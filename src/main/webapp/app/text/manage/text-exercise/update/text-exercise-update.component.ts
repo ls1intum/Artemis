@@ -46,10 +46,13 @@ import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
+    styleUrl: './text-exercise-update.component.scss',
     imports: [
         FormsModule,
         TranslateDirective,
@@ -72,6 +75,7 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedbac
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
         ExerciseFeedbackSuggestionOptionsComponent,
+        TextExerciseTimelineComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -95,10 +99,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     bonusPoints = viewChild<NgModel>('bonusPoints');
     points = viewChild<NgModel>('points');
     solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
-    releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
-    startDateField = viewChild<FormDateTimePickerComponent>('startDate');
-    dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
-    assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
     exerciseUpdatePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
     exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     teamConfigFormGroupComponent = viewChild.required<TeamConfigFormGroupComponent>('teamConfigFormGroup');
@@ -121,6 +121,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
     backupExercise!: TextExercise; // set in ngOnInit() from the route-resolved exercise before save() reads it
     readonly isSaving = signal(false);
+    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false });
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);
     readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;
@@ -137,6 +138,12 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     constructor() {
         effect(() => {
             this.updateFormSectionsOnIsValidChange();
+        });
+        effect(() => {
+            this.timelineStatus();
+            if (this._textExercise()) {
+                this.validateDate();
+            }
         });
     }
 
@@ -262,23 +269,9 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                     valid: Boolean(
                         this.points()?.valid &&
                         this.bonusPoints()?.valid &&
-                        (this.isExamMode() ||
-                            (this.exerciseUpdatePlagiarismComponent()?.isFormValid() &&
-                                !this.textExercise.startDateError &&
-                                !this.textExercise.dueDateError &&
-                                !this.textExercise.assessmentDueDateError &&
-                                this.releaseDateField()?.dateInput.valid &&
-                                this.startDateField()?.dateInput.valid &&
-                                this.dueDateField()?.dateInput.valid &&
-                                this.assessmentDateField()?.dateInput.valid)),
+                        (this.isExamMode() || (this.exerciseUpdatePlagiarismComponent()?.isFormValid() && this.timelineStatus().valid)),
                     ),
-                    empty:
-                        !this.isExamMode() &&
-                        // if a dayjs object contains an empty date, it is considered "invalid"
-                        (!this.textExercise.startDate?.isValid() ||
-                            !this.textExercise.dueDate?.isValid() ||
-                            !this.textExercise.assessmentDueDate?.isValid() ||
-                            !this.textExercise.releaseDate?.isValid()),
+                    empty: !this.isExamMode() && this.timelineStatus().empty,
                 },
             ]);
         }

@@ -1,3 +1,4 @@
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
@@ -8,7 +9,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 
 @Component({

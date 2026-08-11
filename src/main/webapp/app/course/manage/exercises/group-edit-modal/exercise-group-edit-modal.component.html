@@ -1,7 +1,6 @@
 <tum-ui-dialog
     [(visible)]="visible"
-    [header]="'artemisApp.exerciseManagement.groupEdit.header' | artemisTranslate"
-    [modal]="true"
+    [header]="(isNew() ? 'artemisApp.exerciseManagement.groupEdit.headerCreate' : 'artemisApp.exerciseManagement.groupEdit.header') | artemisTranslate"
     [closable]="true"
     [closeOnEscape]="true"
     [dismissableMask]="false"

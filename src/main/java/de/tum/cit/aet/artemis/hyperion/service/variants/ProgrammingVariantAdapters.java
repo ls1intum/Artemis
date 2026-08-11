@@ -236,7 +236,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     public VariantToolset createTools(Exercise variant, VariantJob job) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(variant.getId());
         ProgrammingExercise sourceExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(job.getSourceExerciseId());
-        User user = userRepository.getUserWithGroupsAndAuthorities(job.getInitiatorLogin());
+        User user = userRepository.getUserWithCourseRolesAndAuthorities(job.getInitiatorLogin());
         return new ProgrammingVariantTools(exercise, user, job.getJobId(), jobService, gitService, repositoryService, programmingExerciseRepository, programmingExerciseTaskService,
                 defaultBranch, sourceExercise, programmingExerciseTestCaseRepository, this::runSolutionBuildForTestDiscovery);
     }

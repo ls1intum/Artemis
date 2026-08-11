@@ -7,7 +7,13 @@ export type OperationName =
     | 'deleteNonRatedResults'
     | 'deleteOldRatedResults'
     | 'deleteOldSubmissionVersions'
-    | 'deleteOldFeedback';
+    | 'deleteOldFeedback'
+    | 'warnOldCoursesReset'
+    | 'resetOldCourses'
+    | 'deleteOldCourseSubmissionVersions'
+    | 'warnNotEnrolledUsers'
+    | 'deleteNotEnrolledUsers'
+    | 'deletePlagiarismCases';
 
 /** Instantiated in code; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class CleanupOperation {
@@ -22,4 +28,7 @@ export class CleanupOperation {
     // destructive Execute button. Default true; only the two dated pickers ever flip these.
     deleteFromValid!: WritableSignal<boolean>;
     deleteToValid!: WritableSignal<boolean>;
+    // Age-based operations use configurable server-side cutoffs instead of an admin-picked date range, so they render
+    // without date pickers (like deleteOrphans) and are always "valid".
+    ageBased?: boolean;
 }

@@ -1,0 +1,52 @@
+<nav
+    [attr.aria-label]="ariaLabel() ?? ('tumUi.paginator.ariaLabel' | tumUiTranslate)"
+    class="tum:flex tum:flex-wrap tum:items-center tum:justify-center tum:gap-1 tum:border-t tum:border-border tum:pt-2 tum:text-sm tum:text-muted"
+>
+    @if (showCurrentPageReport()) {
+        <span class="tum:px-2" aria-live="polite">
+            {{ 'tumUi.paginator.currentPageReport' | tumUiTranslate: { first: rangeBegin(), second: rangeEnd(), total: totalRecords() } }}
+        </span>
+    }
+
+    <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isFirst()" (click)="goToFirst()" [attr.aria-label]="'tumUi.paginator.first' | tumUiTranslate">
+        <fa-icon [icon]="firstPageIcon()" />
+    </button>
+    <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isFirst()" (click)="goToPrevious()" [attr.aria-label]="'tumUi.paginator.previous' | tumUiTranslate">
+        <fa-icon [icon]="previousPageIcon()" />
+    </button>
+
+    @for (p of visiblePages(); track p) {
+        <button
+            type="button"
+            [class]="p === clampedPage() ? selectedPageClasses : navButtonClasses"
+            [disabled]="disabled()"
+            (click)="goToPage(p)"
+            [attr.aria-current]="p === clampedPage() ? 'page' : null"
+        >
+            {{ p + 1 }}
+        </button>
+    }
+
+    <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isLast()" (click)="goToNext()" [attr.aria-label]="'tumUi.paginator.next' | tumUiTranslate">
+        <fa-icon [icon]="nextPageIcon()" />
+    </button>
+    <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isLast()" (click)="goToLast()" [attr.aria-label]="'tumUi.paginator.last' | tumUiTranslate">
+        <fa-icon [icon]="lastPageIcon()" />
+    </button>
+
+    @if (showRowsPerPage()) {
+        <label class="tum:ms-2 tum:flex tum:items-center tum:gap-2 tum:whitespace-nowrap">
+            <span>{{ 'tumUi.paginator.rowsPerPage' | tumUiTranslate }}</span>
+            <select
+                class="tum:box-border tum:h-9 tum:cursor-pointer tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:px-2.5 tum:text-sm tum:text-text tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus tum:focus-visible:outline-offset-2"
+                [ngModel]="pageSize()"
+                [disabled]="disabled()"
+                (ngModelChange)="onPageSizeChange($event)"
+            >
+                @for (option of pageSizeOptions(); track option) {
+                    <option [ngValue]="option">{{ option }}</option>
+                }
+            </select>
+        </label>
+    }
+</nav>

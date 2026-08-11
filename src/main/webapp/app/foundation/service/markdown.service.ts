@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
-import type { PluginSimple } from 'markdown-it';
+import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisMarkdownService {
@@ -11,14 +11,14 @@ export class ArtemisMarkdownService {
      * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
      *
      * @param {string} markdownText the original markdown text
-     * @param {PluginSimple[]} extensions to use for markdown parsing
+     * @param {MarkdownItPlugin[]} extensions to use for markdown parsing
      * @param {string[]} allowedHtmlTags to allow during sanitization
      * @param {string[]} allowedHtmlAttributes to allow during sanitization
      * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
      */
     safeHtmlForMarkdown(
         markdownText?: string,
-        extensions: PluginSimple[] = [],
+        extensions: MarkdownItPlugin[] = [],
         allowedHtmlTags: string[] | undefined = undefined,
         allowedHtmlAttributes: string[] | undefined = undefined,
         lineBreaks: boolean = false,

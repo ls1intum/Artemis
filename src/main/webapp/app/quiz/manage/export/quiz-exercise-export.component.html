@@ -1,13 +1,4 @@
-<tum-ui-dialog
-    [(visible)]="visible"
-    [header]="'artemisApp.exercise.exportAction' | artemisTranslate"
-    [modal]="true"
-    [closable]="true"
-    [closeOnEscape]="true"
-    [draggable]="false"
-    [style]="{ width: '60rem', height: '40rem' }"
-    [contentStyle]="{ overflow: 'hidden', display: 'flex', 'flex-direction': 'column', 'padding-bottom': '0' }"
->
+<tum-ui-dialog [(visible)]="visible" [header]="'artemisApp.exercise.exportAction' | artemisTranslate" [closable]="true" [closeOnEscape]="true" size="large">
     <div class="d-flex flex-column flex-grow-1 overflow-hidden">
         <h2>
             @if (course(); as course) {

@@ -41,6 +41,10 @@ export interface QuizLiveHeaderInfo {
     /** Whether the "results available" date should be shown (after submit / once time is up). */
     showResultsAvailable: boolean;
     resultsAvailableDate?: dayjs.Dayjs;
+    /** Whether the quiz's total duration should be shown (waiting to start, before the countdown begins). */
+    showDuration?: boolean;
+    /** Humanized duration text, e.g. "45min". */
+    durationText?: string;
 }
 
 /** Field-wise equality for {@link QuizLiveHeaderInfo}, used as the signal's `equal` so the per-tick rebuild only notifies when a displayed value changes. */
@@ -56,7 +60,9 @@ export function quizLiveHeaderInfoEqual(a: QuizLiveHeaderInfo | undefined, b: Qu
         a.remainingTimeText === b.remainingTimeText &&
         a.remainingTimeColor === b.remainingTimeColor &&
         a.showResultsAvailable === b.showResultsAvailable &&
-        (a.resultsAvailableDate === b.resultsAvailableDate || (!!a.resultsAvailableDate && !!b.resultsAvailableDate && a.resultsAvailableDate.isSame(b.resultsAvailableDate)))
+        (a.resultsAvailableDate === b.resultsAvailableDate || (!!a.resultsAvailableDate && !!b.resultsAvailableDate && a.resultsAvailableDate.isSame(b.resultsAvailableDate))) &&
+        a.showDuration === b.showDuration &&
+        a.durationText === b.durationText
     );
 }
 
@@ -204,10 +210,13 @@ export class ExerciseHeadersInformationComponent {
     getDueDateItems(): InformationBox[] {
         const items: InformationBox[] = [];
         // During a running live/practice quiz the remaining-time countdown takes the place of the due date.
-        const quizRemainingTimeItem = this.getQuizRemainingTimeItem();
-        if (quizRemainingTimeItem) {
-            items.push(quizRemainingTimeItem);
-        } else {
+        // While the quiz participation component hasn't mounted yet, quizLiveHeaderInfo is still undefined; skip the
+        // due-date fallback for that brief window too, otherwise the due date flashes before being replaced once the
+        // quiz-specific box resolves (the exercise's own due date is known immediately, the quiz box lags behind it).
+        const quizTimeItem = this.getQuizTimeItem();
+        if (quizTimeItem) {
+            items.push(quizTimeItem);
+        } else if (!(this.exercise().type === ExerciseType.QUIZ && this.quizLiveHeaderInfo() === undefined)) {
             const dueDateItem = this.getDueDateItem();
             if (dueDateItem) {
                 items.push(dueDateItem);
@@ -412,19 +421,28 @@ export class ExerciseHeadersInformationComponent {
         };
     }
 
-    getQuizRemainingTimeItem(): InformationBox | undefined {
+    getQuizTimeItem(): InformationBox | undefined {
         const info = this.quizLiveHeaderInfo();
-        if (!info?.showRemainingTime) {
-            return undefined;
+        if (info?.showRemainingTime) {
+            return {
+                title: 'artemisApp.quizExercise.remainingTime',
+                content: {
+                    type: 'string',
+                    value: info.remainingTimeText ?? '',
+                },
+                contentColor: info.remainingTimeColor,
+            };
         }
-        return {
-            title: 'artemisApp.quizExercise.remainingTime',
-            content: {
-                type: 'string',
-                value: info.remainingTimeText ?? '',
-            },
-            contentColor: info.remainingTimeColor,
-        };
+        if (info?.showDuration) {
+            return {
+                title: 'artemisApp.quizExercise.duration',
+                content: {
+                    type: 'string',
+                    value: info.durationText ?? '',
+                },
+            };
+        }
+        return undefined;
     }
 
     getQuizLiveInfoItems(): InformationBox[] {

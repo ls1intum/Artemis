@@ -1,3 +1,4 @@
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, DestroyRef, EnvironmentInjector, afterNextRender, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -24,7 +25,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 
 @Component({
     selector: 'jhi-course-exercise-group-detail',

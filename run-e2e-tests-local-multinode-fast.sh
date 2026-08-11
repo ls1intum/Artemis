@@ -95,7 +95,16 @@ kill_tree() {
     kill "$pid" 2>/dev/null || true
 }
 
-# Free a port if a leftover process holds it. Mirrors run-e2e-tests-local-fast.sh:92-117.
+# How long to wait for a killed process to release its listening socket before giving up.
+# Validated rather than trusted: a non-numeric value would otherwise blow up the integer comparison below with a
+# bash arithmetic error, in a pre-flight step whose whole job is to get out of the developer's way.
+PORT_RELEASE_TIMEOUT="${PORT_RELEASE_TIMEOUT:-30}"
+if ! [[ "$PORT_RELEASE_TIMEOUT" =~ ^[0-9]+$ ]]; then
+    echo "Ignoring PORT_RELEASE_TIMEOUT='${PORT_RELEASE_TIMEOUT}': expected a non-negative integer number of seconds. Using 30."
+    PORT_RELEASE_TIMEOUT=30
+fi
+
+# Free a port if a leftover process holds it. Mirrors run-e2e-tests-local-fast.sh.
 check_port_available() {
     local port=$1
     local service_name=$2
@@ -109,14 +118,31 @@ check_port_available() {
             echo "  Killing PID $pid..."
             kill_tree "$pid"
         done
-        sleep 2
-        listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+        # Poll for the port to be released instead of sleeping a fixed 2s and checking once. A JVM
+        # shutting down can hold its listening socket noticeably longer than that, and the single
+        # check then aborts the whole run over a port that frees a moment later.
+        #
+        # Shaped so the check always happens at least once and always happens *after* the last sleep: a
+        # pre-kill `lsof` result must never be what decides the error, otherwise PORT_RELEASE_TIMEOUT=0
+        # skips the loop entirely and a port released during the final second is still reported as busy.
+        local waited=0
+        while true; do
+            listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+            if [ -z "$listeners" ]; then
+                break
+            fi
+            if [ "$waited" -ge "$PORT_RELEASE_TIMEOUT" ]; then
+                break
+            fi
+            sleep 1
+            waited=$((waited + 1))
+        done
         if [ -n "$listeners" ]; then
-            echo -e "${RED}ERROR: Port ${port} is still in use after killing processes.${NC}"
+            echo -e "${RED}ERROR: Port ${port} is still in use ${PORT_RELEASE_TIMEOUT}s after killing processes.${NC}"
             echo "$listeners"
             exit 1
         fi
-        echo -e "${GREEN}Port ${port} is now free.${NC}"
+        echo -e "${GREEN}Port ${port} is now free (released after ${waited}s).${NC}"
     fi
 }
 
@@ -196,8 +222,9 @@ echo -e "${GREEN}Prerequisites OK${NC}"
 # directories:
 #   pnpm run webapp:prod      -> build/resources/main/static/   (Angular bundle)
 #   ./gradlew compileJava     -> build/classes/                  (.class files)
-# Then re-enter Gradle for the assembly step with `-x webapp` so Gradle just runs
-# processResources + bootWar against the Angular bundle already on disk.
+# The bundle is then moved to build/webapp-dist and Gradle is re-entered for the assembly step, where
+# the copy-only `webapp` task puts it back inside the tracked task graph (see the comment at that
+# step for why handing it over through build/resources/main/static directly does not work).
 #
 # SBOM generation (server cyclonedxBom + client cdxgen + filter-shipped) is opt-in
 # via `-Psbom`. The E2E path does not need an SBOM in the WAR, so we omit it here.
@@ -232,9 +259,32 @@ if [ "$SKIP_BUILD" = false ]; then
         exit 1
     fi
     echo -e "${GREEN}  ✓ client + server built; assembling WAR...${NC}"
+    # Hand the bundle to Gradle via build/webapp-dist instead of leaving it at the Angular config's
+    # default build/resources/main/static. That directory is processResources' declared output, and
+    # Gradle deletes every declared task-output directory it does not already recognize from a previous
+    # build in this workspace *before* any task runs. In a fresh worktree (or any workspace where no
+    # build has run processResources yet) that wiped the bundle we had just built, and bootWar then
+    # produced a WAR with no client — the sanity check below caught it, costing a full rebuild cycle.
+    # build/webapp-dist is not declared as any task's output, so it survives the cleanup, and the
+    # `webapp` task (gradle/profile_prod.gradle registers a copy-only variant when that directory
+    # exists) materialises it into place as part of the tracked task graph. This mirrors what CI's
+    # build-war job does; note the deliberate absence of `-x webapp` below, which is what lets that
+    # copy run. See .github/workflows/ci-build.yml and gradle/profile_prod.gradle for the rationale.
+    rm -rf build/webapp-dist
+    mv build/resources/main/static build/webapp-dist
+    # The handoff directory must not outlive this build, on ANY exit path. gradle/profile_prod.gradle
+    # picks the copy-only `webapp` task at CONFIGURATION time based on build/webapp-dist existing, so a
+    # leftover copy would (a) make any later `-Pprod` build silently package this stale bundle instead of
+    # rebuilding the client, and (b) break `./gradlew -Pprod -Pwar clean bootWar` — which
+    # run-e2e-tests-local-multinode.sh and the documented production build both use — because `clean`
+    # deletes the task's declared input. A trap rather than a trailing `rm` because `set -e` would skip
+    # the latter whenever the assembly below fails, which is exactly when the stale copy is left behind.
+    trap 'rm -rf build/webapp-dist' EXIT
     # bootWar without `-Psbom` skips the SBOM dependency chain entirely; the
     # cyclonedxBom and generateClientSbom tasks are not wired into copySbomsToResources.
-    ./gradlew -Pprod -Pwar bootWar -x test -x webapp
+    ./gradlew -Pprod -Pwar bootWar -x test
+    rm -rf build/webapp-dist
+    trap - EXIT
 else
     echo ""
     echo -e "${YELLOW}Step 1: Skipping WAR build (--skip-build)${NC}"
