@@ -64,7 +64,7 @@ public class AccountSecurityNotificationService {
         /**
          * The owner changed it from inside their account, having supplied the current one.
          */
-        OWNER(Constants.OWN_PASSWORD_CHANGED),
+        OWNER(Constants.CHANGE_OWN_PASSWORD),
         /**
          * The owner completed a password reset from an emailed link.
          */
@@ -72,7 +72,7 @@ public class AccountSecurityNotificationService {
         /**
          * An administrator replaced it through the user management form.
          */
-        ADMINISTRATOR(Constants.ADMIN_USER_PASSWORD_CHANGED);
+        ADMINISTRATOR(Constants.ADMIN_CHANGE_USER_PASSWORD);
 
         private final String auditEventType;
 

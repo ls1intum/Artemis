@@ -69,7 +69,7 @@ class AccountSecurityNotificationServiceTest {
 
         AuditEvent event = captureAuditEvent();
         assertThat(event.getPrincipal()).isEqualTo("affected-user");
-        assertThat(event.getType()).isEqualTo(Constants.OWN_PASSWORD_CHANGED);
+        assertThat(event.getType()).isEqualTo(Constants.CHANGE_OWN_PASSWORD);
     }
 
     @Test
@@ -86,7 +86,7 @@ class AccountSecurityNotificationServiceTest {
         accountSecurityNotificationService.passwordChanged(user, new CredentialRevocationChoiceDTO(true, true, true), PasswordChangeActor.ADMINISTRATOR);
 
         AuditEvent event = captureAuditEvent();
-        assertThat(event.getType()).isEqualTo(Constants.ADMIN_USER_PASSWORD_CHANGED);
+        assertThat(event.getType()).isEqualTo(Constants.ADMIN_CHANGE_USER_PASSWORD);
         assertThat(event.getData()).containsEntry("user", "affected-user").containsEntry("revokedPasskeys", true).containsEntry("revokedSshKeys", true)
                 .containsEntry("revokedVcsAccessTokens", true);
     }
