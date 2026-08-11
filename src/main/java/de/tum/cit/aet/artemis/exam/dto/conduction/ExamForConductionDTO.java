@@ -35,7 +35,7 @@ public record ExamForConductionDTO(long id, String title, String moduleNumber, S
         if (exam == null) {
             return null;
         }
-        return new ExamForConductionDTO(exam.getId(), exam.getTitle(), exam.getModuleNumber(), exam.getCourseName(), exam.getExaminer(), exam.isTestExam(),
+        return new ExamForConductionDTO(exam.getId(), exam.getTitle(), exam.getModuleNumber(), exam.getCourseName(), exam.getExaminer(), !exam.getExamMode().isReal(),
                 exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(),
                 exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(),
                 exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), CourseForStudentExamDTO.of(exam.getCourse()));
