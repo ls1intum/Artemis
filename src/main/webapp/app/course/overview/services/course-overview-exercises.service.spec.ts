@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { MockProvider } from 'ng-mocks';
@@ -31,10 +32,14 @@ describe('CourseOverviewExercisesService', () => {
     let teamUpdates: Subject<TeamAssignmentPayload>;
     let convertExerciseDatesFromServer: ReturnType<typeof vi.fn>;
 
+    /** The navigation the service sees; the real Router in this TestBed cannot navigate. */
+    let navigationId: number;
+
     const exercise = { id: 42 } as Exercise;
     const data = { exercises: [exercise] } as CourseExercisesForOverviewDTO;
 
     beforeEach(() => {
+        navigationId = 1;
         teamUpdates = new Subject<TeamAssignmentPayload>();
         convertExerciseDatesFromServer = vi.fn((updatedExercise: Exercise) => updatedExercise);
         TestBed.configureTestingModule({
@@ -43,6 +48,7 @@ describe('CourseOverviewExercisesService', () => {
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: TeamService, useValue: { teamAssignmentUpdates: Promise.resolve(teamUpdates) } },
                 { provide: CourseExerciseService, useValue: { convertExerciseDatesFromServer } },
+                { provide: Router, useValue: { currentNavigation: () => undefined, lastSuccessfulNavigation: () => ({ id: navigationId }) } },
                 provideHttpClient(),
                 MockProvider(AlertService),
             ],
@@ -111,6 +117,19 @@ describe('CourseOverviewExercisesService', () => {
 
         expect(updateSpy).toHaveBeenCalledTimes(2);
         expect(updateSpy.mock.calls[1][0]).toEqual({ ...storedCourse, exercises: [exercise] });
+        expect(courseStorageService.getCourse(1)?.exercises).toEqual([exercise]);
+    });
+
+    it('should publish the exercises even when a navigation happened before the lean course arrived', () => {
+        // The exercise request wins the race, so the merge waits for the course. Meanwhile the exercises tab
+        // auto-selects an exercise, and that is a new navigation. Reading the held data through the navigation-scoped
+        // accessor then found nothing and the merge was skipped, so a cold entry that raced this way showed an empty
+        // exercises tab until the student selected it again.
+        service.load(1).subscribe();
+
+        navigationId = 7;
+        courseStorageService.updateCourse({ id: 1, title: 'Course' } as Course);
+
         expect(courseStorageService.getCourse(1)?.exercises).toEqual([exercise]);
     });
 

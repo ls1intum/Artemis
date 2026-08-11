@@ -159,15 +159,25 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      * course to a single round trip of latency.
      */
     loadCourse(): Observable<void> {
+        // The course this call is for. The very first load is subscribed by the base class through firstValueFrom and
+        // is therefore not held in loadCourseSubscription, so an in-place switch to another course cannot cancel it.
+        // Every emission below is checked against this id: otherwise the slower of two overlapping loads wins and
+        // restores the course the user has already left, and its 403 branch would redirect using the new course's id.
+        const requestedCourseId = this.courseId();
+        const isStale = () => this.courseId() !== requestedCourseId;
+
         this.loadAvailableTabs();
-        const observable = this.courseManagementService.findCourseForOverview(this.courseId()).pipe(
+        const observable = this.courseManagementService.findCourseForOverview(requestedCourseId).pipe(
             map((res: HttpResponse<Course>) => {
-                if (res.body) {
+                if (res.body && !isStale()) {
                     this.course.set(res.body);
                 }
             }),
             // catch 403 errors where registration is possible
             catchError((error: HttpErrorResponse) => {
+                if (isStale()) {
+                    return of(undefined);
+                }
                 if (error.status === 403) {
                     this.redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error);
                     // Emit a default value, for example `undefined`
@@ -267,8 +277,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.availableTabsSubscription?.unsubscribe();
         this.availableTabsSubscription = tabs$.subscribe({
             next: (tabs) => {
-                this.availableTabs.set(tabs);
-                this.sidebarItems.set(this.getSidebarItems());
+                // The user may have switched to another course while this was in flight
+                if (this.courseId() === courseId) {
+                    this.availableTabs.set(tabs);
+                    this.sidebarItems.set(this.getSidebarItems());
+                }
             },
             error: () => {},
         });

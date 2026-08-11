@@ -358,6 +358,24 @@ describe('CourseOverviewComponent', () => {
         expect(getCourseAvailableTabsStub).toHaveBeenCalledOnce();
     });
 
+    it('should ignore a course load that lands after the user switched course', () => {
+        // The very first load is subscribed by the base class through firstValueFrom and is not held in
+        // loadCourseSubscription, so an in-place switch cannot cancel it. Without discarding it, the slower of the two
+        // overlapping loads wins and restores the course the user has already left.
+        const slowFirstCourse = new Subject<HttpResponse<Course>>();
+        findCourseForOverviewStub.mockReturnValue(slowFirstCourse);
+        component.courseId.set(1);
+        component.loadCourse().subscribe({ error: () => {} });
+
+        // The user switches to course 2 before course 1 answers
+        component.courseId.set(2);
+        component.course.set(course2);
+        slowFirstCourse.next(new HttpResponse({ body: course1 }));
+        slowFirstCourse.complete();
+
+        expect(component.course()?.id).toBe(2);
+    });
+
     it('should create sidebar items with default items', () => {
         component.lectureEnabled = true;
         component.availableTabs.set(availableTabs({ lectures: true }));

@@ -77,9 +77,22 @@ export class CourseOverviewExercisesService implements OnDestroy {
      */
     dataFor(courseId: number): CourseExercisesForOverviewDTO | undefined {
         const current = this.state();
+        return current && current.navigationId === currentNavigationId(this.router) ? this.heldDataFor(courseId) : undefined;
+    }
+
+    /**
+     * The exercise data held for the given course, whichever navigation fetched it.
+     *
+     * Only for publishing data that has already been fetched. Deciding whether to fetch must go through
+     * {@link dataFor}, which additionally requires the data to belong to the current navigation.
+     *
+     * @param courseId the course to read the exercise data for
+     */
+    private heldDataFor(courseId: number): CourseExercisesForOverviewDTO | undefined {
+        const current = this.state();
         // Guard on `current` itself: with optional chaining alone, an undefined courseId would compare equal to the
         // undefined of an empty state and wrongly report a hit
-        return current && current.courseId === courseId && current.navigationId === currentNavigationId(this.router) ? current.data : undefined;
+        return current && current.courseId === courseId ? current.data : undefined;
     }
 
     /**
@@ -124,8 +137,16 @@ export class CourseOverviewExercisesService implements OnDestroy {
     }
 
     /**
-     * Returns the held exercise data when it belongs to the given course and fetches it otherwise, so the exercises tab
-     * and the statistics tab together cost a single request per course visit.
+     * Returns the held exercise data when it belongs to the given course *and* to the current navigation, and fetches
+     * it otherwise.
+     * <p>
+     * Sharing is per navigation, not per course visit: the exercises tab and the statistics tab share one response when
+     * a single tab selection needs it twice, but selecting either tab again fetches. Moving between the two therefore
+     * costs this endpoint each time — it is the heaviest of the overview endpoints, and this is the price of the
+     * guarantee that selecting a tab shows current data. If that proves too expensive, the hold has to become
+     * time-based rather than navigation-based; it cannot simply be widened back to the whole visit without losing the
+     * guarantee.
+     *
      * @param courseId the course to get the exercise data for
      */
     loadIfNeeded(courseId: number): Observable<CourseExercisesForOverviewDTO> {
@@ -182,7 +203,11 @@ export class CourseOverviewExercisesService implements OnDestroy {
             if (this.activeCourseId !== courseId) {
                 return;
             }
-            const data = this.dataFor(courseId);
+            // Deliberately not the navigation-scoped read: by the time the lean course arrives, the exercises tab has
+            // usually auto-selected an exercise, and that navigation would make the data we are here to publish look
+            // absent. The merge would then be skipped and the exercises already fetched would be lost until the tab was
+            // selected again, leaving a cold entry that raced this way showing an empty exercises tab.
+            const data = this.heldDataFor(courseId);
             if (!data) {
                 return;
             }
