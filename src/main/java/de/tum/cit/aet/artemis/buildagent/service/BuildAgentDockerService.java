@@ -463,19 +463,26 @@ public class BuildAgentDockerService {
      * @throws LocalCIException     if the pull does not finish within the configured timeout
      */
     private void awaitPullCompletion(MyPullImageResultCallback callback, String imageName, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) throws InterruptedException {
+        final long pollIntervalNanos = TimeUnit.SECONDS.toNanos(PULL_PROGRESS_POLL_INTERVAL_SECONDS);
         final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(imagePullTimeoutSeconds);
         final long stallNanos = TimeUnit.SECONDS.toNanos(imagePullStallTimeoutSeconds);
         long lastProgressAtNanos = System.nanoTime();
         long lastProgressCount = callback.progressCount();
 
-        // Wait in slices rather than one long wait, so the pull can also be judged on whether it is still moving.
-        while (!callback.awaitCompletion(PULL_PROGRESS_POLL_INTERVAL_SECONDS, TimeUnit.SECONDS)) {
+        while (true) {
+            // Wait in slices rather than one long wait, so the pull can also be judged on whether it is still moving. A slice never reaches beyond the next deadline, so a
+            // timeout shorter than the poll interval is honoured just as precisely as a longer one.
+            long nowNanos = System.nanoTime();
+            long sliceNanos = Math.max(0, Math.min(pollIntervalNanos, Math.min(lastProgressAtNanos + stallNanos - nowNanos, deadlineNanos - nowNanos)));
+            if (callback.awaitCompletion(sliceNanos, TimeUnit.NANOSECONDS)) {
+                return;
+            }
             long progressCount = callback.progressCount();
             if (progressCount != lastProgressCount) {
                 lastProgressCount = progressCount;
                 lastProgressAtNanos = System.nanoTime();
             }
-            if (System.nanoTime() - lastProgressAtNanos > stallNanos) {
+            if (System.nanoTime() - lastProgressAtNanos >= stallNanos) {
                 abortPull(callback, imageName, buildJob, buildLogsMap,
                         "reported no progress for " + imagePullStallTimeoutSeconds + " seconds. The registry is most likely unreachable from this agent, for example "
                                 + "because a firewall drops the packets instead of refusing the connection");
