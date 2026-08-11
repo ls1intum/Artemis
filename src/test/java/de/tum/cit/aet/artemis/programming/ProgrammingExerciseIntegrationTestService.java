@@ -2209,11 +2209,12 @@ public class ProgrammingExerciseIntegrationTestService {
      * {@link UpdateProgrammingExerciseDTO#of} needs.
      * <p>
      * The exercise is looked up through the course it was just created in, rather than by taking an element out of
-     * {@code findAll()}. The setup of this class already puts two programming exercises in the database - one in a
-     * course and one in an exam - and {@code findAll()} has no {@code ORDER BY}, so its row order is whatever the
-     * database returns. When the exam exercise came first, the request ran against an exercise whose course is only
-     * reachable through its exercise group, {@code getCourseViaExerciseGroupOrCourseMember()} returned null, and the
-     * endpoint answered 500 instead of the expected status.
+     * {@link ProgrammingExerciseTestRepository#findAllWithEagerTemplateAndSolutionParticipations()}. The setup of this
+     * class already puts two programming exercises in the database - one in a course and one in an exam - and that
+     * query has no {@code ORDER BY}, so its row order is whatever the database returns. When the exam exercise came
+     * first, the request ran against an exercise whose course is only reachable through its exercise group,
+     * {@code getCourseViaExerciseGroupOrCourseMember()} returned null, and the endpoint answered 500 instead of the
+     * expected status.
      *
      * @return the programming exercise of the newly created course
      */
