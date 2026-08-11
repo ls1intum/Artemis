@@ -192,6 +192,10 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(body).as("the message body wrapper the shared css styles").contains("id=\"message-body\"");
         assertThat(body).as("the favicon, at the path it is actually served from").contains("/logo/favicon.svg");
         assertThat(body).as("no notification-settings footer on a mail that cannot be switched off").doesNotContain("<footer>");
+        // The logo has to come from this installation. It is a documented customization point, and pointing at the TUM
+        // deployment would both ignore a custom logo and make every recipient's mail client fetch an image from there.
+        assertThat(body).as("the logo, served by this installation so a custom one is used").contains("src=\"http://localhost:9000/public/images/logo.png\"");
+        assertThat(body).as("no request to the TUM deployment").doesNotContain("artemis.tum.de");
     }
 
     // -- SAML2 set password email --
