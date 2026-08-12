@@ -31,6 +31,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     programmingExercise = input<ProgrammingExercise>();
     dockerImage = input.required<string>();
+    // the language default image, shown as a placeholder while the field is empty instead of being written into it
+    dockerImagePlaceholder = input<string>('');
     dockerImageChange = output<string>();
 
     timeout = input<number>();
@@ -51,6 +53,11 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     readonly timeoutMinValue = signal<number | undefined>(undefined);
     readonly timeoutMaxValue = signal<number | undefined>(undefined);
     readonly timeoutDefaultValue = signal<number | undefined>(undefined);
+
+    // a stored timeout of 0 means "use the global default", which the slider (bounded by the profile minimum) cannot
+    // represent, so render it at the default position while leaving the bound value at 0 until the instructor drags it
+    readonly usesDefaultTimeout = computed(() => !this.timeout());
+    readonly displayTimeout = computed(() => (this.usesDefaultTimeout() ? (this.timeoutDefaultValue() ?? 0) : this.timeout()!));
 
     readonly isLanguageSupported = signal(false);
 
@@ -105,9 +112,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
             this.allowedCustomNetworks.set(profileInfo.allowedCustomDockerNetworks);
 
-            if (!this.timeout()) {
-                this.timeoutChange.emit(timeoutDefaultValue);
-            }
+            // intentionally do not emit the default timeout into the model: a stored 0 means "use the global default", and
+            // writing 120 here would pin that value on the next save so the exercise stops following default changes
 
             if (!this.cpuCount()) {
                 this.cpuCount.set(profileInfo.defaultContainerCpuCount);

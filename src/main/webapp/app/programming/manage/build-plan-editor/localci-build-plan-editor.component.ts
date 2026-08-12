@@ -55,6 +55,9 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
 
     readonly phases = signal<BuildPhase[]>([]);
     readonly dockerImage = signal<string>('');
+    // the language default image shown as a placeholder while the field is empty, so the instructor sees what the build
+    // falls back to without the value being seeded into the field and pinned on the next save
+    readonly defaultDockerImage = signal<string>('');
     readonly timeout = signal<number>(0);
 
     readonly isExamMode = computed(() => !!this.programmingExercise()?.exerciseGroup);
@@ -76,10 +79,15 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
     readonly timeoutMaxValue = computed(() => this.buildConfigurationComponent()?.timeoutMaxValue());
 
     readonly isTimeoutValid = computed(() => {
+        const timeout = this.timeout();
+        // 0 is the "use the global default timeout" sentinel (see BuildJobManagementService), so it is always valid and
+        // must not be measured against the profile bounds
+        if (timeout === 0) {
+            return true;
+        }
         // before the build configuration component has initialized its bounds from the profile info, do not block saving
         const min = this.timeoutMinValue();
         const max = this.timeoutMaxValue();
-        const timeout = this.timeout();
         return (min === undefined || timeout >= min) && (max === undefined || timeout <= max);
     });
 
@@ -94,21 +102,29 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
         this.activatedRoute.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ exercise }) => {
             this.initEditingState(exercise);
             this.programmingExercise.set(exercise);
-            this.seedDefaultDockerImageIfMissing(exercise);
+            this.seedDefaultsFromTemplate(exercise);
             this.loadParticipationsWithResults(exercise);
         });
     }
 
     /**
-     * Fetches the language default Docker image and applies it when the exercise configured none, so an exercise stored
-     * without an image (the windfile migration did this for every exercise that relied on the language default) opens
-     * with a usable image instead of an empty field and a dead submit button. Does nothing when the image is already set
-     * or the exercise has no programming language. The response is tied to the exercise it was requested for, so a slow
-     * response for a previously opened exercise never overwrites the image of the one now on screen.
+     * Fetches the language default template to fill in what the exercise left implicit, without pinning those defaults on
+     * the next save:
+     * <ul>
+     * <li>when the exercise configured no image, the default is shown only as a placeholder ({@link defaultDockerImage}),
+     * so the field stays empty and {@code submit} keeps sending no image (the exercise follows future default bumps);</li>
+     * <li>when the exercise has no structured phases (a null configuration builds on the language default at build time),
+     * the default phases are seeded into the editor so it opens with the real default plan instead of an empty list.</li>
+     * </ul>
+     * Does nothing when neither is needed or the exercise has no programming language. The response is tied to the
+     * exercise it was requested for, so a slow response for a previously opened exercise never leaks into the one now on
+     * screen.
      */
-    private seedDefaultDockerImageIfMissing(exercise: ProgrammingExercise): void {
+    private seedDefaultsFromTemplate(exercise: ProgrammingExercise): void {
         const programmingLanguage = exercise.programmingLanguage;
-        if (!programmingLanguage || this.dockerImage().trim().length > 0) {
+        const needsImagePlaceholder = this.dockerImage().trim().length === 0;
+        const needsPhases = this.phases().length === 0;
+        if (!programmingLanguage || (!needsImagePlaceholder && !needsPhases)) {
             return;
         }
         this.buildPhasesTemplateService
@@ -116,11 +132,17 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (template) => {
-                    if (this.programmingExercise()?.id === exercise.id && template.dockerImage && this.dockerImage().trim().length === 0) {
-                        this.dockerImage.set(template.dockerImage);
+                    if (this.programmingExercise()?.id !== exercise.id) {
+                        return;
+                    }
+                    if (needsImagePlaceholder && template.dockerImage) {
+                        this.defaultDockerImage.set(template.dockerImage);
+                    }
+                    if (needsPhases && template.phases?.length) {
+                        this.phases.set(template.phases);
                     }
                 },
-                // the editor stays usable without a seeded image; the instructor can still enter one manually
+                // the editor stays usable without the template; the instructor can still author the plan manually
                 error: () => {},
             });
     }

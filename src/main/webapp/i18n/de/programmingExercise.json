@@ -188,7 +188,8 @@
                 "title": "Maximale Build-Dauer in Sekunden ",
                 "customize": "Setze den Wert auf 0, um den Standardwert zu verwenden. Stelle sicher, dass du einen gültigen ganzzahligen Wert angibst. Die Einheit ist Sekunden. Beachte, dass dieser Wert durch das von den Administratoren festgelegte maximale Limit (Standard ist 240s) überschrieben werden kann.",
                 "alert": "Das Timeout muss ein gültiger ganzzahliger Wert sein.",
-                "outOfBounds": "Die Build-Dauer muss zwischen {{ min }} und {{ max }} Sekunden liegen."
+                "outOfBounds": "Die Build-Dauer muss zwischen {{ min }} und {{ max }} Sekunden liegen.",
+                "usesDefault": "(Standard)"
             },
             "workdir": "Verzeichnis",
             "allowOnlineEditor": {

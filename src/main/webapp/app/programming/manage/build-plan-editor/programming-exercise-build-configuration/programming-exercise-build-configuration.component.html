@@ -4,7 +4,15 @@
             <span jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>
         </label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeDockerImage" />
-        <input type="text" class="form-control" name="dockerImage" id="field_dockerImage" [ngModel]="dockerImage()" (ngModelChange)="dockerImageChange.emit($event)" />
+        <input
+            type="text"
+            class="form-control"
+            name="dockerImage"
+            id="field_dockerImage"
+            [ngModel]="dockerImage()"
+            [placeholder]="dockerImagePlaceholder()"
+            (ngModelChange)="dockerImageChange.emit($event)"
+        />
     </div>
     <div class="mb-2">
         <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.title"></span>
@@ -31,12 +39,15 @@
                 step="1"
                 value="{{ timeoutDefaultValue() }}"
                 id="field_timeout"
-                [ngModel]="timeout()"
+                [ngModel]="displayTimeout()"
                 (ngModelChange)="timeoutChange!.emit($event)"
             />
         </div>
         <span class="slider-label">
-            <span class="slider-value">{{ timeout() }} s</span>
+            <span class="slider-value">{{ displayTimeout() }} s</span>
+            @if (usesDefaultTimeout()) {
+                <span class="text-muted ms-1" jhiTranslate="artemisApp.programmingExercise.timeout.usesDefault"></span>
+            }
         </span>
     </div>
     @if (isLanguageSupported()) {

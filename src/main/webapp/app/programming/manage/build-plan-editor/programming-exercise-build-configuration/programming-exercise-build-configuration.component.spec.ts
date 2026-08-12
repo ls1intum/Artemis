@@ -102,6 +102,32 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.timeoutDefaultValue()).toBe(120);
     });
 
+    it('should not emit the default timeout when the stored timeout is 0', () => {
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            buildTimeoutMin: undefined,
+            buildTimeoutMax: undefined,
+            buildTimeoutDefault: undefined,
+        } as unknown as ProfileInfo);
+        fixture.componentRef.setInput('timeout', 0);
+        const emitStub = vi.spyOn(comp.timeoutChange, 'emit');
+
+        comp.ngOnInit();
+
+        // emitting the default here would pin it on the next save, so the model must stay at the 0 "use default" sentinel
+        expect(emitStub).not.toHaveBeenCalled();
+        expect(comp.usesDefaultTimeout()).toBe(true);
+        // the slider still renders at the default position even though the bound value is 0
+        expect(comp.displayTimeout()).toBe(120);
+    });
+
+    it('should display the concrete timeout when one is set', () => {
+        fixture.componentRef.setInput('timeout', 30);
+        comp.ngOnInit();
+
+        expect(comp.usesDefaultTimeout()).toBe(false);
+        expect(comp.displayTimeout()).toBe(30);
+    });
+
     it('should parse docker flags correctly', () => {
         comp.envVars.set([['key', 'value']]);
         comp.parseDockerFlagsToString();

@@ -40,6 +40,7 @@ import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/bui
 class StubProgrammingExerciseBuildConfigurationComponent {
     readonly programmingExercise = input<ProgrammingExercise>();
     readonly dockerImage = input<string>();
+    readonly dockerImagePlaceholder = input<string>();
     readonly timeout = input<number>();
     readonly dockerImageChange = output<string>();
     readonly timeoutChange = output<number>();
@@ -225,7 +226,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.timeout()).toBe(60);
     });
 
-    it('should seed the language default docker image when the exercise configured none', () => {
+    it('should show the language default docker image as a placeholder without seeding the field when the exercise configured none', () => {
         const exercise = {
             id: 7,
             programmingLanguage: ProgrammingLanguage.JAVA,
@@ -242,15 +243,41 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(getTemplateStub).toHaveBeenCalledWith(false, ProgrammingLanguage.JAVA, undefined);
         expect(comp.dockerImage()).toBe('');
 
-        // once the template resolves, its default image fills the empty field
+        // once the template resolves, its default image is offered only as a placeholder so submit keeps sending no image
+        // and the exercise keeps following default bumps
         getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
 
-        expect(comp.dockerImage()).toBe('language-default-image');
+        expect(comp.dockerImage()).toBe('');
+        expect(comp.defaultDockerImage()).toBe('language-default-image');
         // an empty image alone never blocked submitting, so the button is enabled with a valid plan
         expect(comp.canSubmit()).toBe(true);
     });
 
-    it('should not apply a resolved template image once a different exercise is open', () => {
+    it('should seed the default phases when the exercise stored no build plan configuration', () => {
+        const exercise = {
+            id: 7,
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            buildConfig: { timeoutSeconds: 60 },
+        } as unknown as ProgrammingExercise;
+        activatedRoute.data = of({ exercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        comp.ngOnInit();
+
+        // a null configuration builds on the language default, so the editor opens empty and asks for the template
+        expect(comp.phases()).toHaveLength(0);
+        expect(getTemplateStub).toHaveBeenCalledWith(false, ProgrammingLanguage.JAVA, undefined);
+
+        // the template's phases fill the editor so it shows the real default plan instead of an empty list
+        getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
+
+        expect(comp.phases()).toEqual(phases);
+        expect(comp.defaultDockerImage()).toBe('language-default-image');
+    });
+
+    it('should not apply a resolved template once a different exercise is open', () => {
         const exercise = {
             id: 7,
             programmingLanguage: ProgrammingLanguage.JAVA,
@@ -262,17 +289,17 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         );
 
         comp.ngOnInit();
-        expect(comp.dockerImage()).toBe('');
+        expect(comp.defaultDockerImage()).toBe('');
 
         // the instructor navigated on: a different exercise is now shown before the slow template response arrives
         comp.programmingExercise.set({ id: 8 } as unknown as ProgrammingExercise);
         getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
 
         // the late response belongs to exercise 7, not the one now on screen, so it is discarded
-        expect(comp.dockerImage()).toBe('');
+        expect(comp.defaultDockerImage()).toBe('');
     });
 
-    it('should not request a template when the exercise already has a docker image', () => {
+    it('should not request a template when the exercise already has both a docker image and phases', () => {
         const exercise = {
             id: 7,
             programmingLanguage: ProgrammingLanguage.JAVA,
@@ -285,8 +312,34 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         comp.ngOnInit();
 
+        // nothing is missing, so there is no reason to fetch the template
         expect(comp.dockerImage()).toBe('some-image');
+        expect(comp.phases()).toEqual(phases);
         expect(getTemplateStub).not.toHaveBeenCalled();
+    });
+
+    it('should treat a stored timeout of 0 as valid without pinning it', () => {
+        activatedRoute.data = of({ exercise: { id: 7, buildConfig: { buildPlanConfiguration } } as unknown as ProgrammingExercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        fixture.detectChanges();
+        const buildConfiguration = (comp as unknown as { buildConfigurationComponent: () => StubProgrammingExerciseBuildConfigurationComponent }).buildConfigurationComponent();
+        buildConfiguration.timeoutMinValue.set(10);
+        buildConfiguration.timeoutMaxValue.set(240);
+
+        // 0 means "use the global default", so even though it is below the minimum it must not block saving or show the error
+        expect(comp.timeout()).toBe(0);
+        expect(comp.isTimeoutValid()).toBe(true);
+        expect(comp.canSubmit()).toBe(true);
+        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.programmingExercise.timeout.outOfBounds"]'))).toBeNull();
+
+        const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(of(new HttpResponse<object>({ body: {} })));
+        comp.submit();
+
+        // the untouched default must be persisted as 0, not rewritten to a concrete value that stops following default bumps
+        expect(updateStub).toHaveBeenCalledWith(7, expect.objectContaining({ timeoutSeconds: 0 }));
     });
 
     it('should submit the build plan configuration and show a success alert', () => {

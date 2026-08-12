@@ -41,6 +41,7 @@
     <jhi-programming-exercise-build-configuration
         [programmingExercise]="programmingExercise()!"
         [dockerImage]="dockerImage()"
+        [dockerImagePlaceholder]="defaultDockerImage()"
         (dockerImageChange)="dockerImage.set($event)"
         [timeout]="timeout()"
         (timeoutChange)="timeout.set($event)"
