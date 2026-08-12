@@ -31,7 +31,7 @@ import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-edi
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
-import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
@@ -147,6 +147,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // all pending Athena feedback suggestions (neither accepted nor rejected yet)
     readonly feedbackSuggestions = signal<Feedback[]>([]);
     totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read
+
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
 
     isFirstAssessment = false;
     readonly lockLimitReached = signal(false);
@@ -795,32 +802,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
-        const maxPoints = getTotalMaxPoints(this.exercise());
-        let totalScore = 0.0;
-        let scoreAutomaticTests = 0.0;
-        const encounteredInstructions = new Map<number, number>(); // instructionId -> noOfEncounters
-
-        feedbacks.forEach((feedback) => {
-            // Check for feedback from automatic tests and store them separately
-            if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)) {
-                scoreAutomaticTests += feedback.credits!;
-            } else {
-                if (feedback.gradingInstruction) {
-                    totalScore = this.structuredGradingCriterionService.calculateScoreForGradingInstructions(feedback, totalScore, encounteredInstructions);
-                } else {
-                    totalScore += feedback.credits!;
-                }
-            }
-        });
-
-        // Cap automatic test feedback to maxScore + bonus points of exercise
-        if (scoreAutomaticTests > maxPoints) {
-            scoreAutomaticTests = maxPoints;
-        }
-        totalScore += scoreAutomaticTests;
-        totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
-
-        return totalScore;
+        // Shared with the score summary of the feedback list, so both can never disagree.
+        return this.structuredGradingCriterionService.computeAssessmentScore(feedbacks, getTotalMaxPoints(this.exercise()), true).total;
     }
 }
 

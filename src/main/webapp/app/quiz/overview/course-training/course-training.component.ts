@@ -1,7 +1,8 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY } from 'rxjs';
 import { LeaderboardService } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/service/leaderboard-service';
 import { LeaderboardEntry, LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
@@ -43,6 +44,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 export class CourseTrainingComponent {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
+    private readonly courseTabRefreshService = inject(CourseTabRefreshService);
     private readonly leaderboardService = inject(LeaderboardService);
     private readonly alertService = inject(AlertService);
 
@@ -155,6 +157,12 @@ export class CourseTrainingComponent {
     });
 
     constructor() {
+        // Selecting this tab while already on it acts as a refresh
+        this.courseTabRefreshService
+            .reselections(this.route)
+            .pipe(takeUntilDestroyed())
+            .subscribe(() => void this.loadLeaderboard(Number(this.courseId())));
+
         effect(() => {
             const id = this.courseId();
             if (id) {

@@ -127,6 +127,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
 
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return this.feedback;
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
     /**
      * Retrieve unreferenced entries from the feedback suggestions loaded from Athena.
      * The suggestions are displayed in cards underneath the modeling editor canvas.
