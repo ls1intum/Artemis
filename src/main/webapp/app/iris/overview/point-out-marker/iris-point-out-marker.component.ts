@@ -75,10 +75,21 @@ export class IrisPointOutMarkerComponent {
 
     /**
      * Navigates back to a marker's position, forcing the combined view open if the student closed it.
+     *
+     * The printed page number travels with the click as well: a click that turns synchronization off again names the
+     * position in the notice explaining the toggle, and that number has to be the one on this chip rather than the
+     * deck index behind it.
      * @param data the point-out target recorded on the marker
      */
     protected onMarkerClick(data: IrisPointOut): void {
-        this.chatService.navigateToPointOut({ lectureUnitId: data.lectureUnitId, lectureId: data.lectureId, page: data.page, timestamp: data.timestamp, forceOpen: true });
+        this.chatService.navigateToPointOut({
+            lectureUnitId: data.lectureUnitId,
+            lectureId: data.lectureId,
+            page: data.page,
+            displayPage: data.displayPage,
+            timestamp: data.timestamp,
+            forceOpen: true,
+        });
     }
 
     /**

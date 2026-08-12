@@ -119,19 +119,27 @@ describe('IrisPointOutMarkerComponent', () => {
     });
 
     it('should render one kit button per marker and navigate with forceOpen on click', async () => {
-        await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, lectureId: 27, page: 3, timestamp: 150 }));
+        await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, lectureId: 27, page: 3, displayPage: 9, timestamp: 150 }));
 
         const buttons = fixture.nativeElement.querySelectorAll('button[tumUiButton]');
         expect(buttons).toHaveLength(1);
         // Also the assertion that a marker naming both targets joins them into one label.
-        expect(buttons[0].textContent).toContain('Navigated to page 3 and timestamp 2:30');
+        expect(buttons[0].textContent).toContain('Navigated to page 9 and timestamp 2:30');
         // The visible label is the accessible name, so no aria-label may shadow it.
         expect(buttons[0].getAttribute('aria-label')).toBeNull();
 
         buttons[0].click();
 
-        // The marker's own lecture travels with the click; the chat's current context has no say in where it leads.
-        expect(chatServiceMock.navigateToPointOut).toHaveBeenCalledExactlyOnceWith({ lectureUnitId: 42, lectureId: 27, page: 3, timestamp: 150, forceOpen: true });
+        // The marker's own lecture travels with the click, as does the printed page number the chip is labelled with;
+        // the chat's current context has no say in where the click leads.
+        expect(chatServiceMock.navigateToPointOut).toHaveBeenCalledExactlyOnceWith({
+            lectureUnitId: 42,
+            lectureId: 27,
+            page: 3,
+            displayPage: 9,
+            timestamp: 150,
+            forceOpen: true,
+        });
     });
 
     it('should rebuild labels when the language changes', async () => {

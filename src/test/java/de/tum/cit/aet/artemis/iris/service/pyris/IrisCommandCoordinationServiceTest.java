@@ -33,6 +33,15 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCommandAckDTO;
 @ExtendWith(MockitoExtension.class)
 class IrisCommandCoordinationServiceTest {
 
+    // The service treats correlation ids as opaque keys, so fixed values keep the tests deterministic and let a
+    // failure name the same id on every run.
+    private static final String CORRELATION_ID = "00000000-0000-0000-0000-000000000001";
+
+    private static final String UNREGISTERED_CORRELATION_ID = "00000000-0000-0000-0000-000000000002";
+
+    // Hazelcast hands back a registration id when a listener is added; nothing here uses it.
+    private static final UUID LISTENER_REGISTRATION_ID = UUID.fromString("00000000-0000-0000-0000-0000000000ff");
+
     @Mock
     private HazelcastInstance hazelcastInstance;
 
@@ -51,7 +60,7 @@ class IrisCommandCoordinationServiceTest {
         when(hazelcastInstance.getTopic(any())).thenReturn((ITopic) ackTopic);
         doAnswer(invocation -> {
             listenerRef.set(invocation.getArgument(0));
-            return UUID.randomUUID();
+            return LISTENER_REGISTRATION_ID;
         }).when(ackTopic).addMessageListener(any());
         doAnswer(invocation -> {
             Object published = invocation.getArgument(0);
@@ -70,30 +79,28 @@ class IrisCommandCoordinationServiceTest {
 
     @Test
     void register_completesFutureWhenMatchingAckArrivesAndKeepsThatResult() throws Exception {
-        var correlationId = UUID.randomUUID().toString();
-        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(correlationId, "student1");
+        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(CORRELATION_ID, "student1");
 
-        coordinationService.handleAck(new IrisCommandAckDTO(correlationId, true), "student1");
+        coordinationService.handleAck(new IrisCommandAckDTO(CORRELATION_ID, true), "student1");
 
         var ack = future.get(1, TimeUnit.SECONDS);
-        assertThat(ack.correlationId()).isEqualTo(correlationId);
+        assertThat(ack.correlationId()).isEqualTo(CORRELATION_ID);
         assertThat(ack.applied()).isTrue();
 
         // A second ack for the same command — a duplicate, or one racing the timeout — must not flip or fail the
         // result the pipeline already acted on. Note this pins the outcome, not the mechanism: the entry is gone by
         // now, but even if it were not, completing an already-completed future is a no-op.
-        coordinationService.handleAck(new IrisCommandAckDTO(correlationId, false), "student1");
+        coordinationService.handleAck(new IrisCommandAckDTO(CORRELATION_ID, false), "student1");
         assertThat(future.get(1, TimeUnit.SECONDS).applied()).isTrue();
     }
 
     @Test
     void handleAck_thatMatchesNoPendingRegistrationIsIgnored() {
-        var correlationId = UUID.randomUUID().toString();
-        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(correlationId, "student1");
+        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(CORRELATION_ID, "student1");
 
-        coordinationService.handleAck(new IrisCommandAckDTO(correlationId, true), "attacker");
+        coordinationService.handleAck(new IrisCommandAckDTO(CORRELATION_ID, true), "attacker");
         // No pending registration on this node for that id: the broadcast must be ignored without throwing.
-        coordinationService.handleAck(new IrisCommandAckDTO(UUID.randomUUID().toString(), true), "student1");
+        coordinationService.handleAck(new IrisCommandAckDTO(UNREGISTERED_CORRELATION_ID, true), "student1");
 
         assertThat(future).isNotDone();
     }
