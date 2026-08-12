@@ -67,7 +67,6 @@ export interface ParticipationExerciseContextDTO {
         id: number;
         exam: {
             id: number;
-            course: { id: number };
         };
     };
 }
@@ -161,7 +160,7 @@ function fromExerciseGroupDTO(dto: NonNullable<ParticipationExerciseContextDTO['
     exerciseGroup.id = dto.id;
     exerciseGroup.exam = new Exam();
     exerciseGroup.exam.id = dto.exam.id;
-    exerciseGroup.exam.course = course ?? deepClone(dto.exam.course);
+    exerciseGroup.exam.course = course;
     return exerciseGroup;
 }
 

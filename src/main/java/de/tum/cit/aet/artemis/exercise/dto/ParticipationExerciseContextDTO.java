@@ -9,10 +9,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
@@ -35,7 +33,24 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ParticipationExerciseContextDTO(Long id, @Nullable String title, String type, ExerciseType exerciseType, @Nullable AssessmentType assessmentType,
         @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
-        @Nullable Double maxPoints, @Nullable ParticipationCourseContextDTO course, @Nullable ExerciseGroupWithIdAndExamDTO exerciseGroup) {
+        @Nullable Double maxPoints, @Nullable ParticipationCourseContextDTO course, @Nullable ParticipationExerciseGroupContextDTO exerciseGroup) {
+
+    /**
+     * Minimal exercise-group context required by participation clients.
+     *
+     * @param id   the unique identifier of the exercise group
+     * @param exam the minimal exam context
+     */
+    public record ParticipationExerciseGroupContextDTO(long id, ParticipationExamContextDTO exam) {
+    }
+
+    /**
+     * Minimal exam context required by participation clients.
+     *
+     * @param id the unique identifier of the exam
+     */
+    public record ParticipationExamContextDTO(long id) {
+    }
 
     /**
      * Creates a minimal exercise context after the caller has applied sensitive-information filtering.
@@ -45,7 +60,7 @@ public record ParticipationExerciseContextDTO(Long id, @Nullable String title, S
      */
     public static ParticipationExerciseContextDTO of(Exercise exercise) {
         ParticipationCourseContextDTO courseDTO = mapCourse(exercise);
-        ExerciseGroupWithIdAndExamDTO exerciseGroupDTO = mapExerciseGroup(exercise.getExerciseGroup());
+        ParticipationExerciseGroupContextDTO exerciseGroupDTO = mapExerciseGroup(exercise.getExerciseGroup());
         return new ParticipationExerciseContextDTO(exercise.getId(), exercise.getTitle(), exercise.getType(), exercise.getExerciseType(), exercise.getAssessmentType(),
                 exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), courseDTO, exerciseGroupDTO);
     }
@@ -71,7 +86,7 @@ public record ParticipationExerciseContextDTO(Long id, @Nullable String title, S
     }
 
     @Nullable
-    private static ExerciseGroupWithIdAndExamDTO mapExerciseGroup(@Nullable ExerciseGroup exerciseGroup) {
+    private static ParticipationExerciseGroupContextDTO mapExerciseGroup(@Nullable ExerciseGroup exerciseGroup) {
         if (exerciseGroup == null || !Hibernate.isInitialized(exerciseGroup)) {
             return null;
         }
@@ -83,6 +98,6 @@ public record ParticipationExerciseContextDTO(Long id, @Nullable String title, S
         if (course == null || !Hibernate.isInitialized(course)) {
             return null;
         }
-        return new ExerciseGroupWithIdAndExamDTO(exerciseGroup.getId(), new ExamWithIdAndCourseDTO(exam.getId(), new CourseWithIdDTO(course.getId())));
+        return new ParticipationExerciseGroupContextDTO(exerciseGroup.getId(), new ParticipationExamContextDTO(exam.getId()));
     }
 }
