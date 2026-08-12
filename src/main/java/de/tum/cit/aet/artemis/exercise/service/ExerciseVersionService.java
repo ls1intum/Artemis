@@ -143,25 +143,49 @@ public class ExerciseVersionService {
      * @param author         The user who created the version
      */
     public void createExerciseVersion(Exercise targetExercise, User author) {
-        createExerciseVersion(targetExercise, author, null);
+        createExerciseVersion(targetExercise, author, null, null);
     }
 
     /**
      * Requests the (asynchronous) creation of an exercise version for a repository commit, identifying that commit.
      * <p>
-     * The hash is what lets the resulting new commit alert be attributed to the client that made the commit, so that client
-     * can filter its own alert out instead of being warned about its own submit. Callers that do not create a commit pass
-     * nothing and no alert is ever attributed to them.
+     * The repository and the commit together are what let the resulting new commit alert be attributed to the client that made
+     * the commit, so that client can filter its own alert out instead of being warned about its own submit. Callers that do
+     * not create a commit pass nothing and no alert is ever attributed to them.
      *
-     * @param targetExercise       The exercise to create a version of
-     * @param author               The user who created the version
-     * @param triggeringCommitHash The commit this request created, or null when the request created no commit
+     * @param targetExercise           The exercise to create a version of
+     * @param author                   The user who created the version
+     * @param triggeringRepositoryType The repository this request committed to, or null when it committed to none
+     * @param triggeringCommitHash     The commit this request created, or null when the request created no commit
      */
-    public void createExerciseVersion(Exercise targetExercise, User author, @Nullable String triggeringCommitHash) {
+    public void createExerciseVersion(Exercise targetExercise, User author, @Nullable RepositoryType triggeringRepositoryType, @Nullable String triggeringCommitHash) {
         // Read on the calling thread for the same reason the author is: the client session id lives in the request, and the
         // executor thread has no request context.
         String clientSessionId = ExerciseEditorSyncService.getClientSessionId();
-        exerciseVersionExecutor.execute(() -> createExerciseVersionInternal(targetExercise, author, clientSessionId, triggeringCommitHash));
+        ExerciseEditorSyncTarget triggeringTarget = attributableTarget(triggeringRepositoryType);
+        exerciseVersionExecutor.execute(() -> createExerciseVersionInternal(targetExercise, author, clientSessionId, triggeringTarget, triggeringCommitHash));
+    }
+
+    /**
+     * Maps a committed repository to the synchronization target an alert about it would carry, for the repositories an alert
+     * can be attributed to.
+     * <p>
+     * Auxiliary repositories are deliberately excluded. An alert about one names a specific auxiliary repository by id, and
+     * that id is not resolved where a push is handled, so an auxiliary commit cannot be matched exactly. Returning null leaves
+     * those alerts unattributed, which warns everyone including the committer: the behaviour that existed before, rather than
+     * an attribution that might be wrong.
+     */
+    @Nullable
+    private static ExerciseEditorSyncTarget attributableTarget(@Nullable RepositoryType repositoryType) {
+        if (repositoryType == null) {
+            return null;
+        }
+        return switch (repositoryType) {
+            case TEMPLATE -> ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
+            case SOLUTION -> ExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
+            case TESTS -> ExerciseEditorSyncTarget.TESTS_REPOSITORY;
+            case AUXILIARY, USER -> null;
+        };
     }
 
     /**
@@ -171,9 +195,11 @@ public class ExerciseVersionService {
      * @param targetExercise       The exercise to create a version of
      * @param author               The user who created the version
      * @param clientSessionId      the session of the client that triggered this version, or null when no request did
+     * @param triggeringTarget     the repository that client committed to, or null when it committed to none
      * @param triggeringCommitHash the commit that client created, or null when it created none
      */
-    private void createExerciseVersionInternal(Exercise targetExercise, User author, @Nullable String clientSessionId, @Nullable String triggeringCommitHash) {
+    private void createExerciseVersionInternal(Exercise targetExercise, User author, @Nullable String clientSessionId, @Nullable ExerciseEditorSyncTarget triggeringTarget,
+            @Nullable String triggeringCommitHash) {
         if (author == null) {
             log.error("No active user during exercise version creation check");
             return;
@@ -208,7 +234,7 @@ public class ExerciseVersionService {
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
             ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
             this.determineSynchronizationForActiveEditors(exercise.getId(), exerciseSnapshot, previousVersion.map(ExerciseVersion::getExerciseSnapshot).orElse(null), author,
-                    savedExerciseVersion.getId(), clientSessionId, triggeringCommitHash);
+                    savedExerciseVersion.getId(), clientSessionId, triggeringTarget, triggeringCommitHash);
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
             previousVersion.ifPresent(prev -> {
                 try {
@@ -279,11 +305,13 @@ public class ExerciseVersionService {
      * @param newExerciseVersionId the id of the new exercise version
      * @param clientSessionId      the session of the client that triggered this version, so its own editor can filter the
      *                                 alert out again, or null when no request triggered it
+     * @param triggeringTarget     the repository that client committed to, checked against the repository this alert is
+     *                                 about before attributing it
      * @param triggeringCommitHash the commit that client created, used to check that the alert really is about its own
      *                                 commit before attributing it
      */
     private void determineSynchronizationForActiveEditors(Long exerciseId, ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot, User author,
-            Long newExerciseVersionId, @Nullable String clientSessionId, @Nullable String triggeringCommitHash) {
+            Long newExerciseVersionId, @Nullable String clientSessionId, @Nullable ExerciseEditorSyncTarget triggeringTarget, @Nullable String triggeringCommitHash) {
         if (previousSnapshot == null || newSnapshot == null) {
             return;
         }
@@ -335,7 +363,7 @@ public class ExerciseVersionService {
             // For problem statement changes, changes are broadcasted via client-to-client
             // messages.
             exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId,
-                    sessionOwningCommit(clientSessionId, triggeringCommitHash, changedCommitId));
+                    sessionOwningCommit(clientSessionId, triggeringTarget, triggeringCommitHash, target, changedCommitId));
         }
         if (!changedFields.isEmpty()) {
             exerciseEditorSyncService.broadcastNewExerciseVersionAlert(exerciseId, newExerciseVersionId, author, changedFields);
@@ -454,17 +482,25 @@ public class ExerciseVersionService {
      * warning is worse than the duplicate warning this attribution exists to remove. Whenever the identity cannot be
      * established the alert goes out unattributed, which warns everyone, including the committer.
      *
+     * The repository has to match as well as the commit. A commit id identifies an object, not a place: repositories of one
+     * exercise are seeded from each other, so the same commit legitimately exists in more than one of them, and an empty
+     * commit made in two of them by the same author in the same second is byte-identical and therefore has the same id.
+     * Matching on the id alone would let an alert about one repository be attributed to a client that committed to another.
+     *
      * @param clientSessionId      the session that queued this version, or null if no request did
+     * @param triggeringTarget     the repository that session committed to, or null if it committed to none
      * @param triggeringCommitHash the commit that session created, or null if it created none
+     * @param alertedTarget        the repository this alert is about
      * @param changedCommitId      the commit the alerted repository now stands at
      * @return the session to attribute the alert to, or null to attribute it to nobody
      */
     @Nullable
-    static String sessionOwningCommit(@Nullable String clientSessionId, @Nullable String triggeringCommitHash, @Nullable String changedCommitId) {
-        if (clientSessionId == null || triggeringCommitHash == null || changedCommitId == null) {
+    static String sessionOwningCommit(@Nullable String clientSessionId, @Nullable ExerciseEditorSyncTarget triggeringTarget, @Nullable String triggeringCommitHash,
+            @Nullable ExerciseEditorSyncTarget alertedTarget, @Nullable String changedCommitId) {
+        if (clientSessionId == null || triggeringTarget == null || triggeringCommitHash == null || alertedTarget == null || changedCommitId == null) {
             return null;
         }
-        return triggeringCommitHash.equals(changedCommitId) ? clientSessionId : null;
+        return triggeringTarget == alertedTarget && triggeringCommitHash.equals(changedCommitId) ? clientSessionId : null;
     }
 
     @Nullable

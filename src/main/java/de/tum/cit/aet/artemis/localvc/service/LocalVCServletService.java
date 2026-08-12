@@ -1001,7 +1001,7 @@ public class LocalVCServletService {
                 // The identified commit, not the repository head. Attribution has to name the commit this request created, and
                 // re-reading the head here would be a race: the online editor shares one working copy per repository, so a
                 // concurrent commit can move it and the alert would then be attributed to the wrong client.
-                exerciseVersionService.createExerciseVersion(exercise, user, triggeringCommitHash);
+                exerciseVersionService.createExerciseVersion(exercise, user, repositoryType, triggeringCommitHash);
             }
 
             if (repositoryType.equals(RepositoryType.TESTS)) {
