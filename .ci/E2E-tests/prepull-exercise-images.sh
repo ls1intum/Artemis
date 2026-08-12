@@ -36,20 +36,12 @@ IMAGES=(
 REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 CONFIG_FILE="${REPO_ROOT}/src/main/resources/config/application.yml"
 
-MAX_ATTEMPTS=3
+MAX_ATTEMPTS=2
 # Cold pulls of all four images together took 30 seconds on the CI runner, the Maven image 11 of them,
-# so these caps carry a large multiple of the real cost. They exist to stop a *stalled* pull: an
-# unbounded `docker pull` here would hang until the job timeout, which is the same undiagnosable
-# failure this script exists to remove, only moved earlier.
-PULL_TIMEOUT_SECONDS=300
-# `timeout` only terminates the `docker pull` client; the daemon keeps the pull going and the next
-# attempt attaches to it. Against a genuinely stalled daemon or registry every attempt would therefore
-# burn its full cap, so the retries need a shared ceiling as well — otherwise the step could outlive
-# the job timeout and be killed before it can report why.
-PULL_DEADLINE_SECONDS=600
-# Grace between SIGTERM and SIGKILL for a pull that will not stop on its own. Subtracted from each
-# attempt's cap rather than added to it, so the deadline stays a true ceiling.
-KILL_GRACE_SECONDS=30
+# so this cap carries a large multiple of the real cost while keeping the worst case bounded: two
+# attempts per image, so a totally unreachable registry costs about 8 minutes before the step reports
+# why rather than hanging until the job timeout.
+PULL_TIMEOUT_SECONDS=120
 
 # Prints every image configured for the build agent, one per line.
 #
@@ -146,51 +138,23 @@ for image in "${IMAGES[@]}"; do
     fi
 
     pulled=false
-    deadline=$((SECONDS + PULL_DEADLINE_SECONDS))
     for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-        remaining=$((deadline - SECONDS))
-        if [ "$remaining" -le 0 ]; then
-            echo "Giving up on ${image}: its ${PULL_DEADLINE_SECONDS}s budget is spent after $((attempt - 1)) attempt(s)."
-            break
-        fi
-
-        # Cap the attempt by whatever is left of the image's budget, not just by PULL_TIMEOUT_SECONDS.
-        # Checking the deadline only between attempts would let a single hanging pull overrun it by a
-        # further PULL_TIMEOUT_SECONDS, so the shared ceiling has to bound the pull itself.
-        attempt_cap=$((remaining < PULL_TIMEOUT_SECONDS ? remaining : PULL_TIMEOUT_SECONDS))
-
-        # The SIGKILL grace period has to come out of the attempt's own share of the budget, not be
-        # added to it: `timeout --kill-after=D T` sends SIGTERM at T and only escalates at T+D, so
-        # charging D on top would let a pull that ignores SIGTERM run past the deadline the comment
-        # above claims to hold. Below the grace period there is no room to be graceful, so kill outright.
-        pull=(docker pull --quiet "$image")
-        if [ "$attempt_cap" -gt "$KILL_GRACE_SECONDS" ]; then
-            pull=("$timeout_bin" --kill-after="${KILL_GRACE_SECONDS}s" "$((attempt_cap - KILL_GRACE_SECONDS))s" "${pull[@]}")
-        else
-            pull=("$timeout_bin" --signal=KILL "${attempt_cap}s" "${pull[@]}")
-        fi
-
-        echo "Pulling ${image} (attempt ${attempt}/${MAX_ATTEMPTS}, up to ${attempt_cap}s)..."
-        if "${pull[@]}"; then
+        echo "Pulling ${image} (attempt ${attempt}/${MAX_ATTEMPTS}, up to ${PULL_TIMEOUT_SECONDS}s)..."
+        # SIGKILL after a short grace, so a pull wedged badly enough to ignore SIGTERM cannot hold the
+        # step open either.
+        if "$timeout_bin" --kill-after=30s "${PULL_TIMEOUT_SECONDS}s" docker pull --quiet "$image"; then
             pulled=true
             break
         fi
-
-        # A pull that dies part-way leaves the partial layers behind; the next attempt resumes from
-        # them, so a plain retry after a short backoff is worth more than it looks. The backoff is
-        # bounded by the budget too, otherwise sleeping could push the loop past the deadline.
-        remaining=$((deadline - SECONDS))
-        if [ "$attempt" -lt "$MAX_ATTEMPTS" ] && [ "$remaining" -gt 0 ]; then
-            backoff=$((attempt * 10))
-            if [ "$backoff" -gt "$remaining" ]; then
-                backoff=$remaining
-            fi
-            sleep "$backoff"
+        # A pull that dies part-way leaves the partial layers behind, so the next attempt resumes from
+        # them rather than starting over.
+        if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+            sleep 10
         fi
     done
 
     if [ "$pulled" != true ]; then
-        echo "::error title=Could not provision E2E exercise image::Failed to pull ${image} within ${PULL_DEADLINE_SECONDS}s (up to ${MAX_ATTEMPTS} attempts). Programming-exercise builds cannot run without it, so every test asserting on a build result would fail with an unexplained 0% score. Check the runner's disk space and registry connectivity."
+        echo "::error title=Could not provision E2E exercise image::Failed to pull ${image} after ${MAX_ATTEMPTS} attempts of up to ${PULL_TIMEOUT_SECONDS}s. Programming-exercise builds cannot run without it, so every test asserting on a build result would fail with an unexplained 0% score. Check the runner's disk space and registry connectivity."
         exit 1
     fi
     echo "Pulled: ${image}"
