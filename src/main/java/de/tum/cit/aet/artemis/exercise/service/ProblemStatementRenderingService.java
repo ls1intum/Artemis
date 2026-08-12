@@ -324,7 +324,10 @@ public class ProblemStatementRenderingService {
             String taskName = matcher.group("name");
             String testsStr = matcher.group("tests");
 
-            boolean hasTestRefs = testsStr != null && !testsStr.isBlank();
+            // Separators alone are not a reference: "[task][Name](,)" names no test. Without stripping them the task
+            // would count as referencing tests, and with test results present computeTaskTestStatus would find nothing
+            // failed and nothing unexecuted among its (empty) ids and report success for a task that tests nothing.
+            boolean hasTestRefs = testsStr != null && !testsStr.replace(",", "").isBlank();
 
             List<Long> testIds = new ArrayList<>();
             if (testsStr != null && !testsStr.isEmpty()) {

@@ -249,6 +249,32 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowNoTestsForSeparatorOnlyRefsWithTestResults() throws Exception {
+        // A list of separators names no test, so the task must not be reported as passing just because results exist.
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](,)", testResults, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-no-tests");
+        assertThat(result.html()).contains("data-test-status=\"no-tests\"");
+        assertThat(result.html()).doesNotContain("artemis-task-success");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowNoTestsForSeparatorAndWhitespaceOnlyRefsWithTestResults() throws Exception {
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort]( , , )", testResults, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-no-tests");
+        assertThat(result.html()).doesNotContain("artemis-task-success");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldLocalizeNoResultInGerman() throws Exception {
         var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>)", null, null, "de", false, false, false, null);
 
