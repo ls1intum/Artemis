@@ -87,7 +87,7 @@ class LtiServiceTest {
         user = new User();
         user.setLogin("login");
         user.setPassword("password");
-        user.setLtiCreated(true);   // replaces legacy LTI_GROUP_NAME group
+        user.setLtiCreated(true);
     }
 
     @AfterEach

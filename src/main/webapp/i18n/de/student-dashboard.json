@@ -37,6 +37,7 @@
         },
         "courseOverview": {
             "noCourseIcon": "Kein Kurs Icon verfügbar",
+            "exerciseLoadFailed": "Die Übungen konnten nicht geladen werden. Bitte versuche es erneut.",
             "showMore": "Mehr anzeigen",
             "showLess": "Weniger anzeigen",
             "general": {

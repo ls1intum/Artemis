@@ -19,6 +19,7 @@ import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submissi
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
+import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 describe('ExamParticipationService', () => {
@@ -181,6 +182,38 @@ describe('ExamParticipationService', () => {
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
+    });
+
+    it('should load only the exam overview fields and convert all sidebar dates', () => {
+        const visibleDate = '2026-08-01T10:00:00.000Z';
+        const startDate = '2026-08-02T10:00:00.000Z';
+        const endDate = '2026-08-02T12:00:00.000Z';
+        const serverExam = {
+            id: 17,
+            title: 'Overview exam',
+            moduleNumber: 'M1',
+            visibleDate,
+            startDate,
+            endDate,
+            workingTime: 7200,
+            examMaxPoints: 100,
+            testExam: false,
+        };
+        let received: ExamForOverview[] | undefined;
+
+        service.getExamsForOverview(5).subscribe((exams) => (received = exams));
+        const request = httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/5/exams-for-overview' });
+        expect(request.request.params.keys()).toEqual([]);
+        request.flush([serverExam]);
+
+        expect(received).toHaveLength(1);
+        expect(received?.[0]).toMatchObject({ id: 17, title: 'Overview exam', moduleNumber: 'M1', workingTime: 7200, examMaxPoints: 100, testExam: false });
+        expect(dayjs.isDayjs(received?.[0].visibleDate)).toBe(true);
+        expect(dayjs.isDayjs(received?.[0].startDate)).toBe(true);
+        expect(dayjs.isDayjs(received?.[0].endDate)).toBe(true);
+        expect(received?.[0].visibleDate?.toISOString()).toBe(visibleDate);
+        expect(received?.[0].startDate?.toISOString()).toBe(startDate);
+        expect(received?.[0].endDate?.toISOString()).toBe(endDate);
     });
 
     it('should load a StudentExam for a TestExam by Id', async () => {

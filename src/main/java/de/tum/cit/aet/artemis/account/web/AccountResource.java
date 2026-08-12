@@ -29,9 +29,12 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
+import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -68,13 +71,20 @@ public class AccountResource {
 
     private final FileService fileService;
 
+    private final AccountCredentialRevocationService accountCredentialRevocationService;
+
+    private final AccountSecurityNotificationService accountSecurityNotificationService;
+
     private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
-    public AccountResource(UserRepository userRepository, UserService userService, AccountService accountService, FileService fileService) {
+    public AccountResource(UserRepository userRepository, UserService userService, AccountService accountService, FileService fileService,
+            AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.accountService = accountService;
         this.fileService = fileService;
+        this.accountCredentialRevocationService = accountCredentialRevocationService;
+        this.accountSecurityNotificationService = accountSecurityNotificationService;
     }
 
     /**
@@ -111,6 +121,35 @@ public class AccountResource {
         }
         userService.changePassword(passwordChangeDto.currentPassword(), passwordChangeDto.newPassword(), passwordChangeDto.revokeCredentialsOrNone());
 
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST /account/revoke-credentials} : revokes the selected credentials of the current user, without changing their password.
+     * <p>
+     * Deliberately available to external users as well. They cannot change their password here at all -- it lives in their identity provider -- so tying revocation to a
+     * password change left them with no way to withdraw a passkey, SSH key or access token in one step; they had to delete each one individually across three settings
+     * pages. The credentials being revoked are stored by Artemis either way, so who owns the password does not change what can be revoked.
+     * <p>
+     * Guarded like the per-credential delete endpoints it replaces in bulk ({@code DELETE passkey/{id}}, {@code DELETE user-vcs-access-token},
+     * {@code DELETE public-keys/{id}}), which require a session and nothing more. This endpoint therefore grants nobody a capability they did not already have; it only
+     * saves the owner from doing it one credential at a time.
+     *
+     * @param choice which credential types to revoke
+     * @return the ResponseEntity with status 200 (OK) when the selected credentials have been revoked
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the request selects no credential type
+     */
+    @PostMapping("revoke-credentials")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> revokeCredentials(@RequestBody CredentialRevocationChoiceDTO choice) {
+        if (!choice.revokesAnything()) {
+            throw new BadRequestAlertException("At least one credential type must be selected for revocation", ENTITY_NAME, "noCredentialTypeSelected");
+        }
+        User user = userRepository.getUser();
+        log.info("REST request to revoke the credentials of user {}: passkeys={}, sshKeys={}, vcsAccessTokens={}", user.getLogin(), choice.passkeys(), choice.sshKeys(),
+                choice.vcsAccessTokens());
+        accountCredentialRevocationService.revokeSelectedCredentials(user, choice, "revoked by the user");
+        accountSecurityNotificationService.credentialsRevoked(user, choice);
         return ResponseEntity.ok().build();
     }
 

@@ -273,6 +273,60 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseAvailableTabs() throws Exception {
+        courseTestService.testGetCourseAvailableTabs();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseAvailableTabsWithVisibleExam() throws Exception {
+        courseTestService.testGetCourseAvailableTabsWithVisibleExam();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForOverviewIsLean() throws Exception {
+        courseTestService.testGetCourseForOverviewIsLean();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForOverviewForbidden() throws Exception {
+        courseTestService.testGetCourseForOverviewForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseExercisesForOverview() throws Exception {
+        courseTestService.testGetCourseExercisesForOverview();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseExercisesForOverviewUsesCurrentStudentsQuizBatch() throws Exception {
+        courseTestService.testGetCourseExercisesForOverviewUsesCurrentStudentsQuizBatch();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseExercisesForOverviewForbidden() throws Exception {
+        courseTestService.testGetCourseExercisesForOverviewForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseAvailableTabsForbidden() throws Exception {
+        courseTestService.testGetCourseAvailableTabsForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseAvailableTabsForbiddenWithEnrollmentPossible() throws Exception {
+        courseTestService.testGetCourseAvailableTabsForbiddenWithEnrollmentPossible();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForRegistration() throws Exception {
         courseTestService.testGetCourseForEnrollment();
     }
@@ -281,6 +335,18 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForRegistrationAccessDenied() throws Exception {
         courseTestService.testGetCourseForEnrollmentAccessDenied();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseAccessStateReportsAccessForEnrolledStudent() throws Exception {
+        courseTestService.testGetCourseAccessStateReportsAccessForEnrolledStudent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseAccessStateReportsNoAccessWithoutEnrollment() throws Exception {
+        courseTestService.testGetCourseAccessStateReportsNoAccessWithoutEnrollment();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

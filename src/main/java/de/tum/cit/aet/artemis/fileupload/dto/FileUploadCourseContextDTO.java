@@ -12,9 +12,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * @param id                             the ID of the course
  * @param title                          the title of the course
  * @param shortName                      the short name of the course
- * @param teachingAssistantGroupName     the group name used to determine tutor access
- * @param editorGroupName                the group name used to determine editor access
- * @param instructorGroupName            the group name used to determine instructor access
  * @param accuracyOfScores               the accuracy of scores (number of decimal places) for the course
  * @param maxComplaints                  the maximum number of complaints per student
  * @param maxTeamComplaints              the maximum number of complaints per team
