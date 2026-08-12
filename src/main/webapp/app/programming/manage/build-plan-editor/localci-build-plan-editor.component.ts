@@ -203,7 +203,9 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
      */
     submit(): void {
         const exercise = this.programmingExercise();
-        if (!exercise?.id || !this.canSubmit()) {
+        // guard against a second in-flight save: a double click would otherwise send two identical PUTs and trigger the
+        // template and solution builds twice
+        if (!exercise?.id || !this.canSubmit() || this.isSaving()) {
             return;
         }
         this.isSaving.set(true);

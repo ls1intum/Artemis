@@ -374,6 +374,22 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(updateStub).toHaveBeenCalledWith(7, expect.objectContaining({ buildPlan: { phases, dockerImage: 'some-image' } }));
     });
 
+    it('should ignore a second submit while the first is still in flight', () => {
+        comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
+        comp.phases.set(phases);
+        comp.dockerImage.set('some-image');
+        comp.timeout.set(120);
+        // a subject that never emits keeps the first save in flight, so isSaving stays true across the second call
+        const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(new Subject<HttpResponse<object>>().asObservable());
+
+        comp.submit();
+        comp.submit();
+
+        // the double click must not send a second identical PUT
+        expect(updateStub).toHaveBeenCalledTimes(1);
+        expect(comp.isSaving()).toBe(true);
+    });
+
     it('should surface an error alert when saving fails', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
         comp.phases.set(phases);
