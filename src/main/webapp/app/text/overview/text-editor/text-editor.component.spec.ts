@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Test suite for TextEditorComponent.
  * Tests text submission, participation management, and editor functionality.
  */

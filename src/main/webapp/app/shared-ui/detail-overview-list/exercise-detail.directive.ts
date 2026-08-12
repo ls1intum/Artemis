@@ -23,11 +23,10 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
     private componentRef: ComponentRef<unknown> | undefined;
 
     async ngOnInit() {
-        const detail = this.detail();
-        if (!this.isShownDetail(detail)) {
+        const shownDetail = this.detail();
+        if (!this.isShownDetail(shownDetail)) {
             return;
         }
-        const shownDetail = detail as ShownDetail;
 
         // Guard: directive may be destroyed while the dynamic import below is
         // in flight (e.g. fast navigation away). Must be registered before the
@@ -64,9 +63,9 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
     }
 
     /**
-     * @return false if the detail is a {@link NotShownDetail}
+     * @return false if the detail is a {@link NotShownDetail}, narrowing to {@link ShownDetail} otherwise
      */
-    private isShownDetail(detail: Detail | undefined): boolean {
+    private isShownDetail(detail: Detail | undefined): detail is ShownDetail {
         return !!detail;
     }
 
@@ -89,7 +88,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
                     (m) => m.ProgrammingRepositoryButtonsDetailComponent,
                 );
             case DetailType.ProgrammingAuxiliaryRepositoryButtons:
-                return import('./components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component').then(
+                return import('app/shared-ui/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component').then(
                     (m) => m.ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
                 );
             case DetailType.ProgrammingTestStatus:

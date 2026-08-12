@@ -25,6 +25,8 @@
                                         [personalParticipation]="true"
                                     />
                                 </dd>
+                            } @placeholder {
+                                <dd class="p-3 border detail-defer-placeholder"></dd>
                             }
                         }
                     }
@@ -40,6 +42,8 @@
                                     [exampleSolutionPublicationDate]="detail.data.exercise.exampleSolutionPublicationDate"
                                 />
                             </dd>
+                        } @placeholder {
+                            <dd class="detail-defer-placeholder"></dd>
                         }
                     }
                     @case (DetailType.Markdown) {
@@ -56,6 +60,8 @@
                             <dd class="col-md-6 mt-4" id="detail-value-{{ detail.title }}">
                                 <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="detail.data.gradingCriteria || []" />
                             </dd>
+                        } @placeholder {
+                            <dd class="col-md-6 mt-4 detail-defer-placeholder"></dd>
                         }
                     }
                     @case (DetailType.ModelingEditor) {
@@ -75,6 +81,8 @@
                                         [diagramType]="detail.data.diagramType"
                                         [umlModel]="detail.data.umlModel"
                                     />
+                                } @placeholder {
+                                    <div class="detail-defer-placeholder-editor"></div>
                                 }
                             } @else {
                                 <ng-container *ngTemplateOutlet="noData" />
@@ -90,6 +98,8 @@
                                     [checkoutSolutionRepository]="detail.data.exercise.buildConfig?.checkoutSolutionRepository || false"
                                 />
                             </dd>
+                        } @placeholder {
+                            <dd class="detail-defer-placeholder"></dd>
                         }
                     }
                     @case (DetailType.ProgrammingBuildPhases) {
@@ -97,6 +107,8 @@
                             <dd id="detail-value-{{ detail.title }}">
                                 <jhi-build-phases-editor [phases]="detail.data.phases" [readonly]="true" [isExamMode]="detail.data.isExamMode ?? false" />
                             </dd>
+                        } @placeholder {
+                            <dd class="detail-defer-placeholder"></dd>
                         }
                     }
                     @case (DetailType.Image) {

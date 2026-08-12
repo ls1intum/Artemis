@@ -40,7 +40,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import { SidebarView, hasSidebar } from 'app/course/shared/sidebar-view.interface';
+import { SidebarView, isPageTitleView, isSidebarView } from 'app/course/shared/sidebar-view.interface';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { CourseOperationProgressDTO, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
@@ -51,13 +51,6 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
 import { Subscription } from 'rxjs';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
-
-/**
- * Duck-type guard for route-activated components that expose a `setPageTitle` method.
- */
-function hasSetPageTitle(componentRef: unknown): componentRef is { setPageTitle(title: string): void } {
-    return !!componentRef && typeof (componentRef as { setPageTitle?: unknown }).setPageTitle === 'function';
-}
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -258,13 +251,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     protected handleComponentActivation(componentRef: unknown): void {
-        const courseView = hasSidebar(componentRef) ? componentRef : undefined;
-        this.activatedComponentReference.set(courseView);
-        if (courseView) {
-            const isCollapsed = typeof courseView.isCollapsed === 'function' ? courseView.isCollapsed() : courseView.isCollapsed;
-            this.isSidebarCollapsed.set(isCollapsed ?? false);
+        const sidebarView = isSidebarView(componentRef) ? componentRef : undefined;
+        this.activatedComponentReference.set(sidebarView);
+        if (sidebarView) {
+            this.isSidebarCollapsed.set(sidebarView.isCollapsed());
         }
-        if (hasSetPageTitle(componentRef)) {
+        if (isPageTitleView(componentRef)) {
             // Show the page title inside the conversations sidebar header, mirroring the student overview.
             componentRef.setPageTitle(this.pageTitle());
         }
@@ -280,8 +272,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             return;
         }
         ref.toggleSidebar();
-        const isCollapsed = typeof ref.isCollapsed === 'function' ? ref.isCollapsed() : ref.isCollapsed;
-        this.isSidebarCollapsed.set(isCollapsed);
+        this.isSidebarCollapsed.set(ref.isCollapsed());
     }
 
     override getSidebarItems(): SidebarItem[] {

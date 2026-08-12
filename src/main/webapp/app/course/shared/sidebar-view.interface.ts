@@ -1,3 +1,5 @@
+import { Signal, isSignal } from '@angular/core';
+
 /**
  * Contract for child route components that own a collapsible inner sidebar panel.
  * Implemented by tab components of {@link CourseOverviewComponent} and
@@ -7,20 +9,41 @@
 export interface SidebarView {
     toggleSidebar(): void;
 
-    /**
-     * Current collapsed state. May be a plain boolean or a zero-argument function
-     * (e.g. an Angular Signal): read as typeof isCollapsed === 'function' ? isCollapsed() : isCollapsed.
-     */
-    isCollapsed: boolean | (() => boolean);
+    /** Current collapsed state of the component's own inner sidebar. */
+    readonly isCollapsed: Signal<boolean>;
 }
 
 /**
- * Runtime duck-type guard for {@link SidebarView}.
- * Returns true if the component exposes both {@code toggleSidebar} (a function) and
- * {@code isCollapsed} (a boolean or zero-argument function / Signal) — the full
- * shape of the {@link SidebarView} contract.
+ * Contract for child route components that render the container's page title themselves — inside
+ * their own sidebar header, mirroring the student overview — instead of leaving it to the container
+ * title bar. Kept separate from {@link SidebarView} because a component may own a sidebar without
+ * hosting the title (e.g. the Iris tab).
  */
-export function hasSidebar(component: unknown): component is SidebarView {
-    const c = component as SidebarView;
-    return !!component && typeof c.toggleSidebar === 'function' && (typeof c.isCollapsed === 'boolean' || typeof c.isCollapsed === 'function');
+export interface PageTitleView {
+    setPageTitle(pageTitle: string): void;
+}
+
+/**
+ * Runtime duck-type guard for {@link SidebarView}: the component exposes a {@code toggleSidebar}
+ * method and an {@code isCollapsed} signal. Used instead of {@code instanceof} so the container
+ * shells do not need a static import of every tab component, which would pull all of them into the
+ * shell's chunk and defeat the router's lazy {@code loadComponent}.
+ */
+export function isSidebarView(component: unknown): component is SidebarView {
+    return (
+        typeof component === 'object' &&
+        component !== null &&
+        'toggleSidebar' in component &&
+        typeof component.toggleSidebar === 'function' &&
+        'isCollapsed' in component &&
+        isSignal(component.isCollapsed)
+    );
+}
+
+/**
+ * Runtime duck-type guard for {@link PageTitleView}. See {@link isSidebarView} for why the check is
+ * structural rather than an {@code instanceof}.
+ */
+export function isPageTitleView(component: unknown): component is PageTitleView {
+    return typeof component === 'object' && component !== null && 'setPageTitle' in component && typeof component.setPageTitle === 'function';
 }

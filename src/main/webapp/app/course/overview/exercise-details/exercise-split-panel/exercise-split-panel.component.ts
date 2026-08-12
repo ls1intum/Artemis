@@ -5,7 +5,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { faAlignLeft, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
-import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
+import { isExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { QuizParticipationBase } from 'app/quiz/overview/participation/quiz-participation.base';
@@ -295,9 +295,13 @@ export class ExerciseSplitPanelComponent {
     });
 
     submitExercise(): void {
-        const context = this.childrenOutletContexts.getContext('primary');
-        if (context?.outlet?.isActivated) {
-            const component = context.outlet.component as ExerciseSubmission;
+        const outlet = this.childrenOutletContexts.getContext('primary')?.outlet;
+        // `outlet.component` throws when the outlet is not activated, so the guard order matters.
+        if (!outlet?.isActivated) {
+            return;
+        }
+        const component = outlet.component;
+        if (isExerciseSubmission(component)) {
             component.submitExercise();
         }
     }
