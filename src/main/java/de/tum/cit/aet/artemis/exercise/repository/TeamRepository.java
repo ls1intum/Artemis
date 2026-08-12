@@ -175,6 +175,11 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
     /**
      * Turns the integrity violation raised by the unique constraint on team_student into the client-facing error the
      * sequential case produces. The conflicts are looked up again because the concurrent winner is only visible now.
+     * <p>
+     * That second lookup requires the rejected {@code save} to have owned its transaction, which holds because nothing on
+     * the path {@code TeamResource} → {@code TeamService} → this repository is {@code @Transactional}. Annotating any of
+     * them would break this: the integrity violation marks the surrounding transaction rollback-only, the lookup below
+     * then fails instead of running, and the conflict escapes as the generic server error this method exists to prevent.
      *
      * @param exercise  Exercise which the team belongs to
      * @param team      Team whose save was rejected
