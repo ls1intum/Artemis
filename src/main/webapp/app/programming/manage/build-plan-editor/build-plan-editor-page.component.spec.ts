@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { describe, expect, it } from 'vitest';
+import { By } from '@angular/platform-browser';
+import { describe, expect, it, vi } from 'vitest';
 import { MockComponent } from 'ng-mocks';
 
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -37,5 +38,23 @@ describe('BuildPlanEditorPageComponent', () => {
         expect(fixture.componentInstance.isLocalCIActive()).toBe(false);
         expect(fixture.nativeElement.querySelector('jhi-build-plan-editor')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('jhi-localci-build-plan-editor')).toBeNull();
+    });
+
+    it('should delegate the unsaved-changes check to the active LocalCI editor', () => {
+        const fixture = createFixture(true);
+        const editor = fixture.debugElement.query(By.directive(LocalCIBuildPlanEditorComponent)).componentInstance as LocalCIBuildPlanEditorComponent;
+        const canDeactivateStub = vi.spyOn(editor, 'canDeactivate').mockReturnValue(false);
+
+        expect(fixture.componentInstance.canDeactivate()).toBe(false);
+
+        canDeactivateStub.mockReturnValue(true);
+        expect(fixture.componentInstance.canDeactivate()).toBe(true);
+    });
+
+    it('should allow leaving when the external CI editor is shown', () => {
+        const fixture = createFixture(false);
+
+        // the external CI editor keeps no editable state here, so there is nothing to guard
+        expect(fixture.componentInstance.canDeactivate()).toBe(true);
     });
 });

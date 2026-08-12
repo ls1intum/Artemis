@@ -626,6 +626,7 @@ export const examManagementRoutes: Routes = [
         },
         // the editor is a programming-exercise feature, so a direct URL must not load it when the feature is toggled off
         canActivate: [UserRouteAccessService, featureToggleGuard(FeatureToggle.ProgrammingExercises)],
+        canDeactivate: [PendingChangesGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/preview',

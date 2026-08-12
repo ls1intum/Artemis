@@ -446,6 +446,56 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(timeoutMessage()).toBeNull();
     });
 
+    it('should allow leaving with no edits and prompt once the plan is edited', () => {
+        activatedRoute.data = of({ exercise: { id: 7, buildConfig: { buildPlanConfiguration } } as unknown as ProgrammingExercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        comp.ngOnInit();
+
+        // the loaded state matches the persisted baseline, so leaving is free
+        expect(comp.canDeactivate()).toBe(true);
+
+        // an edit diverges from the baseline, so the guard must prompt
+        comp.phases.set([{ ...phases[0], name: 'renamed' }]);
+        expect(comp.canDeactivate()).toBe(false);
+    });
+
+    it('should allow leaving again after a successful save', () => {
+        comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
+        comp.phases.set(phases);
+        comp.dockerImage.set('some-image');
+        comp.timeout.set(120);
+        // nothing has been persisted as the baseline yet, so the unsaved state blocks leaving
+        expect(comp.canDeactivate()).toBe(false);
+        vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(of(new HttpResponse<object>({ body: {} })));
+
+        comp.submit();
+
+        // the save rebaselines the state, so leaving is free again
+        expect(comp.canDeactivate()).toBe(true);
+    });
+
+    it('should not treat seeded default phases as unsaved changes', () => {
+        const exercise = {
+            id: 7,
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            buildConfig: { timeoutSeconds: 60 },
+        } as unknown as ProgrammingExercise;
+        activatedRoute.data = of({ exercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        comp.ngOnInit();
+        expect(comp.canDeactivate()).toBe(true);
+
+        // seeding the default plan is not a user edit, so leaving must still be free
+        getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
+        expect(comp.canDeactivate()).toBe(true);
+    });
+
     const invalidConfigurations: [string, typeof phases, string][] = [
         ['duplicate phase names', [phases[0], { ...phases[0], name: 'Compile' }], 'some-image'],
         ['a reserved phase name', [{ ...phases[0], name: 'main' }], 'some-image'],

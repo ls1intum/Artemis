@@ -6,6 +6,7 @@ import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular'
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
@@ -38,7 +39,7 @@ import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-ed
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LocalCIBuildPlanEditorComponent implements OnInit {
+export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeactivate {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private buildPlanConfigurationService = inject(BuildPlanConfigurationService);
     private legacyBuildPlanConverterService = inject(LegacyBuildPlanConverterService);
@@ -61,6 +62,10 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
     readonly timeout = signal<number>(0);
 
     readonly isExamMode = computed(() => !!this.programmingExercise()?.exerciseGroup);
+
+    // a snapshot of the last persisted (or seeded) editor state; the editor is "dirty" when the current state differs, so
+    // navigating away without saving prompts a confirmation instead of silently discarding the edits
+    private readonly persistedSnapshot = signal<string>('');
 
     private readonly buildConfigurationComponent = viewChild(ProgrammingExerciseBuildConfigurationComponent);
 
@@ -102,6 +107,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
         this.activatedRoute.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ exercise }) => {
             this.initEditingState(exercise);
             this.programmingExercise.set(exercise);
+            this.captureBaseline();
             this.seedDefaultsFromTemplate(exercise);
             this.loadParticipationsWithResults(exercise);
         });
@@ -140,6 +146,8 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
                     }
                     if (needsPhases && template.phases?.length) {
                         this.phases.set(template.phases);
+                        // seeded defaults are not user edits, so fold them into the baseline to avoid a false "unsaved changes" prompt
+                        this.captureBaseline();
                     }
                 },
                 // the editor stays usable without the template; the instructor can still author the plan manually
@@ -220,6 +228,8 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
             .subscribe({
                 next: () => {
                     this.isSaving.set(false);
+                    // the current state is now persisted, so it becomes the new baseline and leaving no longer prompts
+                    this.captureBaseline();
                     this.alertService.success('artemisApp.programmingExercise.buildPlanConfiguration.saved');
                 },
                 error: (error) => {
@@ -227,5 +237,27 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
                     onError(this.alertService, error);
                 },
             });
+    }
+
+    /**
+     * Serializes the editable state (phases, Docker image, timeout) so it can be compared against the persisted baseline.
+     */
+    private snapshot(): string {
+        return JSON.stringify({ phases: this.phases(), dockerImage: this.dockerImage(), timeout: this.timeout() });
+    }
+
+    /**
+     * Records the current editable state as the persisted baseline, marking the editor clean.
+     */
+    private captureBaseline(): void {
+        this.persistedSnapshot.set(this.snapshot());
+    }
+
+    /**
+     * Allows leaving the page without a prompt only when there are no unsaved edits (the current state still matches the
+     * persisted baseline). The {@link PendingChangesGuard} shows the confirmation when this returns false.
+     */
+    canDeactivate(): boolean {
+        return this.snapshot() === this.persistedSnapshot();
     }
 }
