@@ -32,6 +32,14 @@ td.col-actions {
     overflow: hidden;
 }
 
+// The action bar overlays the cell (position: absolute), so it contributes no height and cannot push the row taller.
+// A row whose other cells are all single-line would therefore end up shorter than the buttons themselves and clip them
+// (the cell is overflow: hidden). `height` on a table cell acts as a minimum, so this floors every row at the button
+// height plus breathing room, matching rows that wrap to two lines.
+td.col-actions {
+    height: 3rem;
+}
+
 .drag-handle {
     cursor: grab;
     color: var(--text-color-secondary);
