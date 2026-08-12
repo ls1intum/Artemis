@@ -226,25 +226,28 @@ describe('MetisConversationService', () => {
     });
 
     it('should keep a conversation the user opened rather than the one the url asked for', () => {
-        // The user acting is the more recent intent, so a late arriving list must not pull them back to the
-        // conversation the url happened to carry.
-        return new Promise((done) => {
-            metisConversationService.setActiveConversation(9999);
+        // Both requests are made while the conversations are still in flight, which is the only window in which one can
+        // be pending: the url asks for one on load, and the user picks another before the answer arrives. The later
+        // request is the more recent intent and has to be the one that opens.
+        const conversationsResponse = new Subject<HttpResponse<ConversationDTO[]>>();
+        vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(conversationsResponse.asObservable());
 
+        return new Promise((done) => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
-                    metisConversationService.setActiveConversation(groupChat);
-
-                    metisConversationService.forceRefresh().subscribe({
-                        complete: () => {
-                            metisConversationService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
-                                expect(activeConversation?.id).toBe(groupChat.id);
-                                done({});
-                            });
-                        },
+                    metisConversationService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                        expect(activeConversation?.id).toBe(groupChat.id);
+                        done({});
                     });
                 },
             });
+
+            // Still loading: neither of these can be resolved against the cache yet.
+            metisConversationService.setActiveConversation(9999);
+            metisConversationService.setActiveConversation(groupChat.id);
+
+            conversationsResponse.next(new HttpResponse({ body: [groupChat, oneToOneChat, channel] }));
+            conversationsResponse.complete();
         });
     });
 
