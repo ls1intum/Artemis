@@ -5,6 +5,7 @@ import { lastValueFrom, map } from 'rxjs';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { Course } from 'app/course/shared/entities/course.model';
 import { LearningPathsStateComponent } from 'app/atlas/manage/learning-paths-state/learning-paths-state.component';
 import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-table/learning-paths-table.component';
@@ -44,7 +45,9 @@ export class LearningPathInstructorPageComponent {
     private async loadCourse(courseId: number): Promise<void> {
         try {
             this.isLoading.set(true);
-            const courseBody = await lastValueFrom(this.courseManagementService.findOneForDashboard(courseId));
+            // Only the course record is read here, so the plain course endpoint is enough; the dashboard variant would
+            // additionally load the instructor's exercises, participations and results for nothing.
+            const courseBody = await lastValueFrom(this.courseManagementService.find(courseId));
             this.course.set(courseBody.body!);
         } catch (error) {
             onError(this.alertService, error);
@@ -57,7 +60,12 @@ export class LearningPathInstructorPageComponent {
         try {
             this.isLoading.set(true);
             await this.learningPathApiService.enableLearningPaths(this.courseId());
-            this.course.update((course) => ({ ...course!, learningPathsEnabled: true }));
+            this.course.update((course) => {
+                // A different object has to be returned: a signal only notifies when the reference changes
+                const updatedCourse = deepClone(course!);
+                updatedCourse.learningPathsEnabled = true;
+                return updatedCourse;
+            });
         } catch (error) {
             onError(this.alertService, error);
         } finally {

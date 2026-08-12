@@ -1,9 +1,8 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Observable, Subscription, catchError, map, of, throwError } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CoursePrerequisitesButtonComponent } from '../course-prerequisites-button/course-prerequisites-button.component';
 import { CourseRegistrationButtonComponent } from '../course-registration-button/course-registration-button.component';
@@ -44,19 +43,16 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Determines whether the user is already registered for the course by trying to fetch the for-dashboard version
+     * Whether the user already has access to the course, and should therefore be sent into it rather than shown the
+     * enrollment form.
+     *
+     * This used to request the whole course dashboard and read its status code, which loaded every exercise,
+     * participation and result of the course only to throw the response away. The dedicated endpoint answers with a
+     * single boolean and, because not having access is the expected answer here rather than an error, without a 403
+     * that the global error handler would surface as an alert.
      */
     isCourseFullyAccessible(): Observable<boolean> {
-        return this.courseService.findOneForDashboard(this.courseId).pipe(
-            map(() => true),
-            catchError((res: HttpErrorResponse) => {
-                if (res.status === 403) {
-                    return of(false);
-                } else {
-                    return throwError(() => res);
-                }
-            }),
-        );
+        return this.courseService.hasAccessToCourse(this.courseId);
     }
 
     redirectIfCourseIsFullyAccessible() {

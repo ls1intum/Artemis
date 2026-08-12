@@ -14,11 +14,6 @@ services:
             # under the prod profile.
             # checkov:skip=CKV_SECRET_6: fixture credential of the local E2E/multi-node stacks, not a deployment secret
             ADMIN_PASSWORD: 'local-e2e-admin-not-a-deployment-credential'
-            ALLOW_GROUP_CUSTOMIZATION: 'true'
-            STUDENT_GROUP_NAME: 'artemis-e2etest-students'
-            TUTOR_GROUP_NAME: 'artemis-e2etest-tutors'
-            EDITOR_GROUP_NAME: 'artemis-e2etest-editors'
-            INSTRUCTOR_GROUP_NAME: 'artemis-e2etest-instructors'
             TEST_TIMEOUT_SECONDS: '${TEST_TIMEOUT_SECONDS}'
             TEST_RETRIES: '${TEST_RETRIES}'
             TEST_WORKER_PROCESSES: '${TEST_WORKER_PROCESSES}'

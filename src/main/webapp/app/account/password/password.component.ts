@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { CredentialRevocationChoice, PasswordService } from './password.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
@@ -33,6 +34,7 @@ interface PasswordForm {
 })
 export class PasswordComponent implements OnInit {
     private readonly passwordService = inject(PasswordService);
+    private readonly credentialRevocationConfirmationService = inject(CredentialRevocationConfirmationService);
     private readonly accountService = inject(AccountService);
 
     /** Minimum allowed password length exposed for template validation messages */
@@ -125,7 +127,7 @@ export class PasswordComponent implements OnInit {
      * Validates that new password and confirmation match before submitting.
      * Resets all status signals before attempting the change.
      */
-    changePassword() {
+    async changePassword(): Promise<void> {
         // Reset status signals before attempting password change
         this.error.set(false);
         this.success.set(false);
@@ -135,11 +137,19 @@ export class PasswordComponent implements OnInit {
 
         if (newPassword.value !== confirmPassword.value) {
             this.doNotMatch.set(true);
-        } else {
-            this.passwordService.changePassword(newPassword.value, currentPassword.value, this.revocationChoice()).subscribe({
-                next: () => this.success.set(true),
-                error: () => this.error.set(true),
-            });
+            return;
         }
+
+        // Deleting the authenticators and keys is irreversible, so it is confirmed first. A routine change that revokes
+        // nothing is not interrupted: the service resolves immediately when the choice is empty.
+        const revocationChoice = this.revocationChoice();
+        if (!(await this.credentialRevocationConfirmationService.confirm(revocationChoice))) {
+            return;
+        }
+
+        this.passwordService.changePassword(newPassword.value, currentPassword.value, revocationChoice).subscribe({
+            next: () => this.success.set(true),
+            error: () => this.error.set(true),
+        });
     }
 }
