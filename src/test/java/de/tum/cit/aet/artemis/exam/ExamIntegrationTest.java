@@ -627,7 +627,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam examI = ExamFactory.generateExam(course1);
         examI.setPublishResultsDate(examI.getEndDate().plusMinutes(30));
         examI.setExamSummaryPublicationDate(examI.getEndDate().plusMinutes(60));
-        return List.of(examA, examB, examC, examD, examE, examF, examG, examH, examI);
+        Exam examJ = ExamFactory.generateTestExam(course1);
+        examJ.setVisibleDate(examJ.getStartDate());
+        return List.of(examA, examB, examC, examD, examE, examF, examG, examH, examI, examJ);
     }
 
     @ParameterizedTest
