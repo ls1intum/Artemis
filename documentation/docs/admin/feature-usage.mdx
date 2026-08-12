@@ -34,6 +34,12 @@ Every endpoint is listed whether or not anyone instrumented it, which is what ma
 optionally be given a readable name with `@FeatureUsage`, in which case the several endpoints that make up one feature
 are reported as a single row.
 
+The inventory describes **this deployment**, not Artemis in general. A module that is not enabled here registers no
+endpoints, so its features are absent from the report rather than listed as unused. If the module was enabled earlier, its
+features keep their history and move to *No longer offered* a day after the last node stopped registering them. The
+complete list of what Artemis can track, independent of any deployment, is the
+[Feature Usage Catalogue](/developer/feature-usage-catalogue).
+
 ## Reading the page
 
 Pick a period of 7, 30, 90 or 180 days in the title bar. Four tabs then present the same data at different granularity:
