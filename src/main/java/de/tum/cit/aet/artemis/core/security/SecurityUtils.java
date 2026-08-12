@@ -217,6 +217,10 @@ public final class SecurityUtils {
      * <p>
      * This is a <i>global</i> authority, not a role within a particular course: a user who instructs any course carries
      * {@code ROLE_INSTRUCTOR} everywhere. Reads only the security context, so it costs no database access.
+     * <p>
+     * Written as a single pass over the authorities because the feature usage interceptor calls this on every API request.
+     * Asking "does the user hold this role" once per role walked the authority collection up to six times and built a stream
+     * for each, which is a lot of garbage to produce per request for a counter.
      *
      * @return the highest role held by the current user, or {@link Role#ANONYMOUS} if there is no authenticated user
      */
@@ -225,11 +229,24 @@ public final class SecurityUtils {
         if (authentication == null) {
             return Role.ANONYMOUS;
         }
-        for (Role role : ROLES_BY_PRECEDENCE) {
-            if (getAuthorities(authentication).anyMatch(role.getAuthority()::equals)) {
-                return role;
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        if (authorities == null) {
+            return Role.ANONYMOUS;
+        }
+        int highest = ROLES_BY_PRECEDENCE.length;
+        for (GrantedAuthority granted : authorities) {
+            String authority = granted.getAuthority();
+            // only the roles that would outrank what has already been found are still worth comparing
+            for (int candidate = 0; candidate < highest; candidate++) {
+                if (ROLES_BY_PRECEDENCE[candidate].getAuthority().equals(authority)) {
+                    highest = candidate;
+                    break;
+                }
+            }
+            if (highest == 0) {
+                break;
             }
         }
-        return Role.ANONYMOUS;
+        return highest == ROLES_BY_PRECEDENCE.length ? Role.ANONYMOUS : ROLES_BY_PRECEDENCE[highest];
     }
 }
