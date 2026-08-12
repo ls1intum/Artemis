@@ -69,16 +69,20 @@ Resolve them, then run the migration again. No schema change has been applied.">
 
     <!-- Keep exercise_id populated for inserts issued by Hibernate, which only writes two columns.
          splitStatements=false is required: the body contains semicolons. Note there is deliberately
-         no DELIMITER directive - that is a mysql client feature and is invalid over JDBC. -->
+         no DELIMITER directive - that is a mysql client feature and is invalid over JDBC.
+
+         The value is always derived from the team, never taken from the insert. Filling it only when the
+         caller left it NULL would let a direct SQL insert name any exercise it likes, and the unique index
+         would then guard that exercise instead of the one the team actually belongs to. Nothing in the
+         application supplies the column - Team maps team_student as a two-column @JoinTable - so overwriting
+         it costs the same lookup that already runs for every insert today. -->
     <changeSet id="20260728221528-2-set-exercise-id-trigger-mysql" author="krusche" dbms="mysql">
         <sql splitStatements="false"><![CDATA[
 CREATE TRIGGER team_student_set_exercise_id
 BEFORE INSERT ON team_student
 FOR EACH ROW
 BEGIN
-    IF NEW.exercise_id IS NULL THEN
-        SET NEW.exercise_id = (SELECT t.exercise_id FROM team t WHERE t.id = NEW.team_id);
-    END IF;
+    SET NEW.exercise_id = (SELECT t.exercise_id FROM team t WHERE t.id = NEW.team_id);
 END
         ]]></sql>
         <rollback>
@@ -92,10 +96,8 @@ CREATE OR REPLACE FUNCTION team_student_set_exercise_id() RETURNS TRIGGER AS $$
 DECLARE
     v_exercise_id BIGINT;
 BEGIN
-    IF NEW.exercise_id IS NULL THEN
-        SELECT t.exercise_id INTO v_exercise_id FROM team t WHERE t.id = NEW.team_id;
-        NEW.exercise_id := v_exercise_id;
-    END IF;
+    SELECT t.exercise_id INTO v_exercise_id FROM team t WHERE t.id = NEW.team_id;
+    NEW.exercise_id := v_exercise_id;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql
@@ -167,21 +169,24 @@ FOR EACH ROW EXECUTE FUNCTION team_student_sync_exercise_id()
         </rollback>
     </changeSet>
 
-    <!-- Keep exercise_id correct when a team_student row is repointed at another team. The insert trigger fills the
-         column and the trigger on team follows a moved team, but neither covers team_id changing on an existing row,
-         which would leave the old exercise in place and make the unique index guard the wrong one. Hibernate maps
-         Team.students as a plain @JoinTable and so deletes and re-inserts rather than updating, which is why this cannot
-         fire today; it is here for the same reason as the trigger above, so the derived column cannot silently stop
-         expressing the invariant if that ever changes. -->
+    <!-- Keep exercise_id correct on every update of a team_student row. The insert trigger fills the column and the
+         trigger on team follows a moved team, but neither covers an update of the row itself: repointing it at another
+         team would leave the old exercise in place, and writing the column directly would name an exercise the team does
+         not belong to. Either makes the unique index guard the wrong exercise. Recomputing unconditionally, rather than
+         only when team_id changes, leaves no update that can set the column to something the team does not say.
+
+         Hibernate maps Team.students as a plain @JoinTable and so deletes and re-inserts rather than updating, which is
+         why this cannot fire from the application at all. It is here so the derived column cannot silently stop
+         expressing the invariant, whether through a future mapping change or a manual statement. The one update that
+         does happen during the migration is the backfill in changeset 5, where this recomputes the same value the
+         backfill already selected. -->
     <changeSet id="20260728221528-4d-update-exercise-id-trigger-mysql" author="krusche" dbms="mysql">
         <sql splitStatements="false"><![CDATA[
 CREATE TRIGGER team_student_update_exercise_id
 BEFORE UPDATE ON team_student
 FOR EACH ROW
 BEGIN
-    IF NOT (NEW.team_id <=> OLD.team_id) THEN
-        SET NEW.exercise_id = (SELECT t.exercise_id FROM team t WHERE t.id = NEW.team_id);
-    END IF;
+    SET NEW.exercise_id = (SELECT t.exercise_id FROM team t WHERE t.id = NEW.team_id);
 END
         ]]></sql>
         <rollback>
@@ -195,10 +200,8 @@ CREATE OR REPLACE FUNCTION team_student_update_exercise_id() RETURNS TRIGGER AS 
 DECLARE
     v_exercise_id BIGINT;
 BEGIN
-    IF NEW.team_id IS DISTINCT FROM OLD.team_id THEN
-        SELECT t.exercise_id INTO v_exercise_id FROM team t WHERE t.id = NEW.team_id;
-        NEW.exercise_id := v_exercise_id;
-    END IF;
+    SELECT t.exercise_id INTO v_exercise_id FROM team t WHERE t.id = NEW.team_id;
+    NEW.exercise_id := v_exercise_id;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql
