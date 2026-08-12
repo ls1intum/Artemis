@@ -63,8 +63,6 @@ public class StudentExam extends AbstractAuditingEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
-    // No @Cache on exercises / examSessions / studentParticipations: all three are mutated during exam prep and conduct (session reconnects, participations grow
-    // as the student works); NONSTRICT would give monitoring reads on another node a stale view, same class of bug as #12574.
     @ManyToMany
     @JoinTable(name = "student_exam_exercise", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
     @OrderColumn(name = "exercise_order")
@@ -275,6 +273,18 @@ public class StudentExam extends AbstractAuditingEntity {
         else {
             return exam.resultsPublished();
         }
+    }
+
+    /**
+     * The single gate for whether quiz solutions may go on the wire for this student exam: test runs are exempt from
+     * masking (the instructor testing the exam already knows the solutions), otherwise solutions are revealed only
+     * once the results are published (see {@link #areResultsPublishedYet()}).
+     *
+     * @return true if quiz solutions may be revealed
+     */
+    @JsonIgnore
+    public boolean shouldRevealQuizSolutions() {
+        return isTestRun() || areResultsPublishedYet();
     }
 
 }

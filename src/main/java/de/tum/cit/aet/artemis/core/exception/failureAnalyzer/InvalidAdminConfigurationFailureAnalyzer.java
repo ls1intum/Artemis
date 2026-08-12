@@ -34,7 +34,9 @@ public class InvalidAdminConfigurationFailureAnalyzer extends AbstractFailureAna
         return ("Update your application configuration to fix the internal admin credentials:%n%n" + "Configuration locations (in order of precedence):%n"
                 + "  1. Environment variables: ARTEMIS_USER_MANAGEMENT_%s%n" + "  2. Command line arguments: --artemis.user-management.%s=<value>%n"
                 + "  3. application-*.yml files: artemis.user-management.%s%n%n" + "Required constraint: %s%n%n" + "Example configuration in application-artemis.yml:%n"
-                + "artemis:%n" + "  user-management:%n" + "    internal-admin:%n" + "      username: artemis_admin  # %s%n" + "      password: SecureP@ss123  # %s")
+                + "artemis:%n" + "  user-management:%n" + "    internal-admin:%n" + "      username: <choose-a-username>  # %s%n"
+                + "      password: <choose-a-strong-password>  # %s%n%n"
+                + "Do not reuse the example values from the Artemis repository: under the 'prod' profile they are rejected at startup.")
                 .formatted(cause.getPropertyPath().replace("artemis.user-management.", "").replace(".", "_").replace("-", "_").toUpperCase(),
                         cause.getPropertyPath().replace("artemis.user-management.", ""), cause.getPropertyPath().replace("artemis.user-management.", ""), cause.getConstraint(),
                         getConstraintForProperty("username"), getConstraintForProperty("password"));

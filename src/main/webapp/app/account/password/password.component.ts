@@ -2,12 +2,14 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 
-import { PasswordService } from './password.service';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
+import { CredentialRevocationChoice, PasswordService } from './password.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PasswordStrengthBarComponent } from './password-strength-bar.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiCheckboxComponent } from '@tumaet/ui-angular';
 
 /**
  * Type definition for the password change form controls.
@@ -27,11 +29,12 @@ interface PasswordForm {
 @Component({
     selector: 'jhi-password',
     templateUrl: './password.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisTranslatePipe, TumUiCheckboxComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PasswordComponent implements OnInit {
     private readonly passwordService = inject(PasswordService);
+    private readonly credentialRevocationConfirmationService = inject(CredentialRevocationConfirmationService);
     private readonly accountService = inject(AccountService);
 
     /** Minimum allowed password length exposed for template validation messages */
@@ -49,6 +52,18 @@ export class PasswordComponent implements OnInit {
     readonly user = signal<User | undefined>(undefined);
     /** Whether password reset is available (only for internal, non-SSO users) */
     readonly passwordResetEnabled = signal(false);
+
+    /**
+     * Whether the user indicated that the old password may have been leaked or stolen. Only they can answer that, and it
+     * is what decides whether losing the credentials enrolled on their devices is warranted.
+     */
+    readonly passwordMayBeCompromised = signal(false);
+
+    readonly revokePasskeys = signal(true);
+
+    readonly revokeSshKeys = signal(true);
+
+    readonly revokeVcsAccessTokens = signal(true);
 
     readonly passwordForm = new FormGroup<PasswordForm>({
         currentPassword: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -75,11 +90,44 @@ export class PasswordComponent implements OnInit {
     }
 
     /**
+     * Builds the revocation choice sent to the server. Nothing is revoked unless the user said the old password may have
+     * been compromised, so a routine rotation never costs them their authenticators, keys or tokens.
+     */
+    private revocationChoice(): CredentialRevocationChoice | undefined {
+        if (!this.passwordMayBeCompromised()) {
+            return undefined;
+        }
+        return {
+            passkeys: this.revokePasskeys(),
+            sshKeys: this.revokeSshKeys(),
+            vcsAccessTokens: this.revokeVcsAccessTokens(),
+        };
+    }
+
+    /**
+     * Toggles whether the old password is treated as possibly compromised.
+     *
+     * @param compromised what the user selected
+     */
+    onPasswordMayBeCompromisedChange(compromised: boolean): void {
+        this.passwordMayBeCompromised.set(compromised);
+        if (!compromised) {
+            // Restore the safe defaults rather than leaving the previous selection behind. The three options are
+            // rendered inside `@if (passwordMayBeCompromised())`, so a group deselected before closing the section
+            // would otherwise still be deselected when it is reopened - silently keeping a credential the user
+            // would reasonably expect to be revoked, having been shown these as selected by default.
+            this.revokePasskeys.set(true);
+            this.revokeSshKeys.set(true);
+            this.revokeVcsAccessTokens.set(true);
+        }
+    }
+
+    /**
      * Attempts to change the user's password after validation.
      * Validates that new password and confirmation match before submitting.
      * Resets all status signals before attempting the change.
      */
-    changePassword() {
+    async changePassword(): Promise<void> {
         // Reset status signals before attempting password change
         this.error.set(false);
         this.success.set(false);
@@ -89,11 +137,19 @@ export class PasswordComponent implements OnInit {
 
         if (newPassword.value !== confirmPassword.value) {
             this.doNotMatch.set(true);
-        } else {
-            this.passwordService.changePassword(newPassword.value, currentPassword.value).subscribe({
-                next: () => this.success.set(true),
-                error: () => this.error.set(true),
-            });
+            return;
         }
+
+        // Deleting the authenticators and keys is irreversible, so it is confirmed first. A routine change that revokes
+        // nothing is not interrupted: the service resolves immediately when the choice is empty.
+        const revocationChoice = this.revocationChoice();
+        if (!(await this.credentialRevocationConfirmationService.confirm(revocationChoice))) {
+            return;
+        }
+
+        this.passwordService.changePassword(newPassword.value, currentPassword.value, revocationChoice).subscribe({
+            next: () => this.success.set(true),
+            error: () => this.error.set(true),
+        });
     }
 }

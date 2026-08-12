@@ -1,5 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription, combineLatest, of, take } from 'rxjs';
@@ -44,15 +45,17 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { QuizParticipationBase } from './quiz-participation.base';
 
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz-participation.component.html',
-    providers: [ParticipationService],
+    providers: [ParticipationService, ArtemisDurationFromSecondsPipe],
     styleUrls: ['./quiz-participation.component.scss'],
     imports: [
         NgClass,
@@ -70,8 +73,9 @@ import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exerci
         ArtemisTranslatePipe,
     ],
 })
-export class QuizParticipationComponent implements OnInit, OnDestroy {
+export class QuizParticipationComponent extends QuizParticipationBase implements OnInit, OnDestroy, ExerciseSubmission {
     private websocketService = inject(WebsocketService);
+    private durationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private quizExerciseService = inject(QuizExerciseService);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
@@ -201,6 +205,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     protected readonly faCircleNotch = faCircleNotch;
 
     constructor() {
+        super();
         effect(() => {
             if (this.quizHeader() && this.stepWizard()) {
                 const headerHeight = this.quizHeader()!.nativeElement.offsetHeight;
@@ -405,7 +410,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // auto submit when time is up
         this.runningTimeouts.push(
             setTimeout(() => {
-                this.onSubmit();
+                this.submitExercise();
             }, quizExercise.duration! * 1000),
         );
     }
@@ -994,7 +999,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * This function is called when the user clicks the 'Submit' button
      */
-    onSubmit() {
+    submitExercise() {
         const translationBasePath = 'artemisApp.quizExercise.';
         this.applySelection();
         let confirmSubmit = true;
@@ -1270,6 +1275,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             } else if (this.quizExercise().dueDate && ((!this.quizExercise().quizEnded && this.submission().submitted) || (this.remainingTimeSeconds() < 0 && hasAnyAnswer))) {
                 info.showResultsAvailable = true;
                 info.resultsAvailableDate = this.quizExercise().dueDate;
+            } else if (this.waitingForQuizStart()) {
+                const duration = this.quizExercise().duration;
+                if (duration) {
+                    info.showDuration = true;
+                    info.durationText = this.durationFromSecondsPipe.transform(duration);
+                }
             }
         }
         this._liveHeaderInfo.set(info);
