@@ -18,6 +18,12 @@ compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
 repositories {
+    // %maven-central-mirror-start%
+    maven {
+        name 'artemisMavenCentralMirror'
+        url '${mavenCentralMirrorUrl}'
+    }
+    // %maven-central-mirror-stop%
     mavenCentral()
     mavenLocal()
 }
