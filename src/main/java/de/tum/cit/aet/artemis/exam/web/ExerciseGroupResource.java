@@ -5,6 +5,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -189,7 +191,7 @@ public class ExerciseGroupResource {
     @PutMapping("courses/{courseId}/exams/{examId}/exercises/{exerciseId}/exercise-group")
     @EnforceAtLeastEditor
     public ResponseEntity<Void> moveExerciseToGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseId,
-            @RequestBody ExamExerciseGroupAssignmentDTO assignmentDTO) {
+            @Valid @RequestBody ExamExerciseGroupAssignmentDTO assignmentDTO) {
         log.debug("REST request to move exercise {} in exam {} to exercise group {}", exerciseId, examId, assignmentDTO.exerciseGroupId());
 
         ExerciseGroup targetGroup = exerciseGroupRepository.findByIdElseThrow(assignmentDTO.exerciseGroupId());

@@ -1,7 +1,6 @@
-import { TumUiSelectComponent, TumUiTableDirective } from '@tumaet/ui-angular';
+import { TumUiTableDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBars } from '@fortawesome/free-solid-svg-icons';
@@ -36,10 +35,8 @@ export interface ExamTableGroupChange {
     host: { '[style.--actions-min-width]': 'actionsMinWidthVar()' },
     imports: [
         RouterLink,
-        FormsModule,
         FaIconComponent,
         TumUiTableDirective,
-        TumUiSelectComponent,
         CdkDropList,
         CdkDrag,
         CdkDragHandle,
@@ -87,10 +84,8 @@ export class ExamExerciseTableComponent {
     protected readonly hasFileUpload = computed(() => this.presentTypes().has(ExerciseType.FILE_UPLOAD));
     protected readonly hasAssessmentModeColumn = computed(() => this.hasProgramming() || this.presentTypes().has(ExerciseType.TEXT) || this.hasModeling());
 
-    /** Cross-group drag is only meaningful with at least one other group to drop into. */
-    protected readonly showDragHandle = computed(() => this.groups().length > 1);
-
-    protected readonly groupOptions = computed(() => this.groups().map((g) => ({ label: g.title ?? `#${g.id}`, value: g.id })));
+    /** Dragging an exercise out of this table is only meaningful with at least one other group to drop it into. */
+    protected readonly canMoveBetweenGroups = computed(() => this.groups().length > 1);
 
     /**
      * Largest actions-column width (px) any row has reported for its always-visible reserved content (the test-run
@@ -134,13 +129,6 @@ export class ExamExerciseTableComponent {
 
     titleLink(exercise: Exercise): (string | number)[] {
         return ['/course-management', this.courseId(), 'exams', this.examId(), 'exercise-groups', this.group().id!, exercise.type + '-exercises', exercise.id!];
-    }
-
-    onGroupSelect(exercise: Exercise, groupId: number | undefined): void {
-        const targetGroup = this.groups().find((g) => g.id === groupId);
-        if (targetGroup && targetGroup.id !== this.group().id) {
-            this.groupChange.emit({ exercise, group: targetGroup });
-        }
     }
 
     onDrop(event: CdkDragDrop<Exercise[]>): void {

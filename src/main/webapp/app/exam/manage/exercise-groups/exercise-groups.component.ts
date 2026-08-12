@@ -34,6 +34,7 @@ import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -82,10 +83,8 @@ export class ExerciseGroupsComponent implements OnInit {
     localCIEnabled = signal(true);
     disabledExerciseTypes: ExerciseType[] = [];
 
-    /** Ids (as strings) of every group's drop list, so exercises can be dragged between any two group tables. */
-    dropListIds(): string[] {
-        return (this.exerciseGroups() ?? []).map((group) => this.groupDropListId(group.id));
-    }
+    /** Ids of every group's drop list, so exercises can be dragged between any two group tables. */
+    readonly dropListIds = computed(() => (this.exerciseGroups() ?? []).map((group) => this.groupDropListId(group.id)));
 
     groupDropListId(groupId: number | undefined): string {
         return `exercise-group-${groupId}`;
@@ -165,15 +164,20 @@ export class ExerciseGroupsComponent implements OnInit {
      */
     removeExercise(exerciseId: number, exerciseGroupId: number) {
         const exerciseGroups = this.exerciseGroups();
-        if (exerciseGroups) {
-            exerciseGroups.forEach((exerciseGroup) => {
-                if (exerciseGroup.id === exerciseGroupId && exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
-                    exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
-                    // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
-                    this.exerciseGroups.set([...exerciseGroups]);
-                }
-            });
+        if (!exerciseGroups) {
+            return;
         }
+        // Replace the affected group with a clone rather than mutating it: the signal only notifies on a new reference.
+        this.exerciseGroups.set(
+            exerciseGroups.map((group) => {
+                if (group.id !== exerciseGroupId) {
+                    return group;
+                }
+                const updated = deepClone(group);
+                updated.exercises = (updated.exercises ?? []).filter((exercise) => exercise.id !== exerciseId);
+                return updated;
+            }),
+        );
     }
 
     /**
@@ -282,7 +286,10 @@ export class ExerciseGroupsComponent implements OnInit {
     /** Persists the group-edit dialog's result (create or update, per {@link groupEditIsNew}) and updates the local list. */
     onGroupEditSaved(edited: ExerciseGroup): void {
         if (this.groupEditIsNew()) {
-            const newGroup: ExerciseGroup = { ...edited, exam: this.exam() };
+            // Only the exam id is read server-side; sending the loaded exam would ship every group and exercise with it.
+            const exam = new Exam();
+            exam.id = this.examId();
+            const newGroup: ExerciseGroup = { title: edited.title, isMandatory: edited.isMandatory, exam };
             this.exerciseGroupService.create(this.courseId(), this.examId(), newGroup).subscribe({
                 next: (res) => this.exerciseGroups.set([...(this.exerciseGroups() ?? []), res.body!]),
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -292,7 +299,19 @@ export class ExerciseGroupsComponent implements OnInit {
         this.exerciseGroupService.update(this.courseId(), this.examId(), edited).subscribe({
             next: (res) => {
                 const saved = res.body!;
-                this.exerciseGroups.set((this.exerciseGroups() ?? []).map((g) => (g.id === saved.id ? { ...g, ...saved } : g)));
+                // The response carries the group without its exercises, so copy the two edited fields onto a clone of
+                // the local group rather than replacing it wholesale.
+                this.exerciseGroups.set(
+                    (this.exerciseGroups() ?? []).map((group) => {
+                        if (group.id !== saved.id) {
+                            return group;
+                        }
+                        const updated = deepClone(group);
+                        updated.title = saved.title;
+                        updated.isMandatory = saved.isMandatory;
+                        return updated;
+                    }),
+                );
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -347,7 +366,7 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
-     * Moves an exercise into a different exercise group, triggered by the table's drag-and-drop or group dropdown.
+     * Moves an exercise into a different exercise group, triggered by dragging its row into another group's table.
      * Rejected by the server once student exams have been generated for the exam.
      */
     onTableGroupChange(event: ExamTableGroupChange): void {
@@ -362,19 +381,21 @@ export class ExerciseGroupsComponent implements OnInit {
                 if (!exerciseGroups) {
                     return;
                 }
-                const moved = exerciseGroups.flatMap((g) => g.exercises ?? []).find((e) => e.id === exerciseId);
-                if (!moved) {
+                // Clone the whole list once, then move the exercise inside the clone: the signal only notifies on a new
+                // reference, and cloning keeps the detached exercises (with their dayjs dates) intact.
+                const updatedGroups = deepClone(exerciseGroups);
+                const moved = updatedGroups.flatMap((group) => group.exercises ?? []).find((exercise) => exercise.id === exerciseId);
+                const targetGroup = updatedGroups.find((group) => group.id === targetGroupId);
+                if (!moved || !targetGroup) {
                     return;
                 }
-                this.exerciseGroups.set(
-                    exerciseGroups.map((g) => {
-                        if (g.id === targetGroupId) {
-                            return { ...g, exercises: [...(g.exercises ?? []), moved] };
-                        }
-                        return { ...g, exercises: (g.exercises ?? []).filter((e) => e.id !== exerciseId) };
-                    }),
-                );
+                for (const group of updatedGroups) {
+                    group.exercises = (group.exercises ?? []).filter((exercise) => exercise.id !== exerciseId);
+                }
+                targetGroup.exercises!.push(moved);
+                this.exerciseGroups.set(updatedGroups);
             },
+            // Nothing is applied optimistically, so a rejected move leaves the groups untouched and only needs an alert.
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
     }

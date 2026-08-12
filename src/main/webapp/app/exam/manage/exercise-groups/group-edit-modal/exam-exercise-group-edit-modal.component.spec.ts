@@ -30,12 +30,30 @@ describe('ExamExerciseGroupEditModalComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('initializes the drafts from the input group', () => {
+    it('initializes the drafts from the input group when opened', () => {
         fixture.componentRef.setInput('group', buildGroup({ isMandatory: false }));
+        fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
 
         expect(component.draftTitle()).toBe('Group A');
         expect(component.draftIsMandatory()).toBe(false);
+    });
+
+    it('discards an abandoned draft when the same group is reopened', () => {
+        const group = buildGroup();
+        fixture.componentRef.setInput('group', group);
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+
+        component.draftTitle.set('Abandoned edit');
+        component.onCancel();
+        fixture.detectChanges();
+
+        // Same object reference, so only re-opening (not a changed input) can reset the draft.
+        component.visible.set(true);
+        fixture.detectChanges();
+
+        expect(component.draftTitle()).toBe('Group A');
     });
 
     it('marks the title invalid when blank', () => {

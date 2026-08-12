@@ -2,7 +2,6 @@
     background-color: var(--exercise-group-header-badge-color);
 }
 
-a.disabled {
-    pointer-events: none;
+.group-move:disabled {
     opacity: 0.4;
 }

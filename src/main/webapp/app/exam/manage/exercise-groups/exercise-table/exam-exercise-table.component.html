@@ -3,7 +3,7 @@
     [id]="dropListId()"
     [cdkDropListData]="exercises()"
     [cdkDropListConnectedTo]="connectedDropLists()"
-    [cdkDropListDisabled]="!showDragHandle()"
+    [cdkDropListDisabled]="!canMoveBetweenGroups()"
     cdkDropListSortingDisabled
     (cdkDropListDropped)="onDrop($event)"
 >
@@ -12,7 +12,7 @@
             <table tumUiTable size="small">
                 <thead>
                     <tr>
-                        @if (showDragHandle()) {
+                        @if (canMoveBetweenGroups()) {
                             <th class="col-icon"></th>
                         }
                         <th jhiTranslate="global.field.id"></th>
@@ -21,7 +21,6 @@
                         <th jhiTranslate="artemisApp.examManagement.exerciseGroup.points"></th>
                         <th jhiTranslate="artemisApp.exercise.bonus"></th>
                         <th jhiTranslate="artemisApp.exercise.includedCompletely"></th>
-                        <th jhiTranslate="artemisApp.exerciseManagement.table.group"></th>
                         @if (hasProgramming()) {
                             <th jhiTranslate="artemisApp.exercise.shortName"></th>
                             @if (!localCIEnabled()) {
@@ -46,12 +45,12 @@
                 </thead>
                 <tbody id="exercises">
                     @for (exercise of exercises(); track exercise.id) {
-                        <tr [attr.id]="'exercise-' + exercise.id" cdkDrag [cdkDragData]="exercise" [cdkDragDisabled]="!showDragHandle()">
+                        <tr [attr.id]="'exercise-' + exercise.id" cdkDrag [cdkDragData]="exercise" [cdkDragDisabled]="!canMoveBetweenGroups()">
                             <div *cdkDragPreview class="exercise-drag-preview">
                                 <fa-icon [icon]="icon(exercise)" [fixedWidth]="true" class="text-muted-color mr-1" />
                                 <span class="font-semibold">{{ exercise.title }}</span>
                             </div>
-                            @if (showDragHandle()) {
+                            @if (canMoveBetweenGroups()) {
                                 <td>
                                     <fa-icon cdkDragHandle [icon]="faBars" class="drag-handle" [title]="'artemisApp.exerciseManagement.table.dragTooltip' | artemisTranslate" />
                                 </td>
@@ -68,17 +67,6 @@
                             <td class="align-middle">{{ exercise.maxPoints }}</td>
                             <td class="align-middle">{{ exercise.bonusPoints }}</td>
                             <td class="align-middle">{{ isIncludedInScore(exercise) }}</td>
-                            <td class="align-middle col-group-select">
-                                <tum-ui-select
-                                    [options]="groupOptions()"
-                                    [ngModel]="group().id"
-                                    (ngModelChange)="onGroupSelect(exercise, $event)"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    size="small"
-                                    [disabled]="groups().length <= 1"
-                                />
-                            </td>
                             @if (hasProgramming()) {
                                 <td class="align-middle">
                                     @if (exercise.type === exerciseType.PROGRAMMING) {

@@ -1,6 +1,6 @@
 import { TumUiButtonComponent, TumUiPanelComponent } from '@tumaet/ui-angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EmbeddedViewRef } from '@angular/core';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
@@ -18,7 +18,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -376,6 +376,19 @@ describe('Exercise Groups Component', () => {
         expect(exerciseGroupService.moveExerciseToGroup).toHaveBeenCalledWith(course.id, exam.id, 3, 1);
         expect(comp.exerciseGroups()!.find((g) => g.id === 0)!.exercises).toHaveLength(1);
         expect(comp.exerciseGroups()!.find((g) => g.id === 1)!.exercises).toEqual([{ id: 3, type: ExerciseType.TEXT }]);
+    });
+
+    it('keeps the groups unchanged and alerts when the move is rejected', async () => {
+        comp.exerciseGroups.set(groups);
+        const before = comp.exerciseGroups();
+        vi.spyOn(exerciseGroupService, 'moveExerciseToGroup').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
+        const alertSpy = vi.spyOn(alertService, 'addAlert');
+
+        comp.onTableGroupChange({ exercise: { id: 3 } as Exercise, group: { id: 1 } as ExerciseGroup });
+        await Promise.resolve();
+
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(comp.exerciseGroups()).toBe(before);
     });
 
     it('opens the import modal for exercise groups', async () => {

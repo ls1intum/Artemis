@@ -110,41 +110,19 @@ describe('ExamExerciseTableComponent', () => {
         expect(component['hasAssessmentModeColumn']()).toBe(false);
     });
 
-    it('only shows the drag handle with more than one group', () => {
+    it('only allows dragging between groups with more than one group', () => {
         fixture.componentRef.setInput('groups', [group1]);
         fixture.detectChanges();
-        expect(component['showDragHandle']()).toBe(false);
+        expect(component['canMoveBetweenGroups']()).toBe(false);
 
         fixture.componentRef.setInput('groups', [group1, group2]);
         fixture.detectChanges();
-        expect(component['showDragHandle']()).toBe(true);
-    });
-
-    it('builds group dropdown options from the groups input, falling back to #id when untitled', () => {
-        fixture.componentRef.setInput('groups', [group1, { id: 3 } as ExerciseGroup]);
-        fixture.detectChanges();
-
-        expect(component['groupOptions']()).toEqual([
-            { label: 'Group 1', value: 1 },
-            { label: '#3', value: 3 },
-        ]);
+        expect(component['canMoveBetweenGroups']()).toBe(true);
     });
 
     it('builds the exam-scoped title link for an exercise', () => {
         fixture.detectChanges();
         expect(component.titleLink({ id: 42, type: ExerciseType.TEXT } as Exercise)).toEqual(['/course-management', 1, 'exams', 2, 'exercise-groups', 1, 'text-exercises', 42]);
-    });
-
-    it('emits groupChange only when a different group is selected', () => {
-        fixture.detectChanges();
-        const changes: unknown[] = [];
-        component.groupChange.subscribe((event) => changes.push(event));
-
-        component.onGroupSelect({ id: 5 } as Exercise, group1.id);
-        expect(changes).toHaveLength(0);
-
-        component.onGroupSelect({ id: 5 } as Exercise, group2.id);
-        expect(changes).toEqual([{ exercise: { id: 5 }, group: group2 }]);
     });
 
     it('emits groupChange only for cross-container drops', () => {

@@ -1,11 +1,4 @@
-<tum-ui-dialog
-    [(visible)]="visible"
-    [header]="'artemisApp.examManagement.exerciseGroup.update' | artemisTranslate"
-    [closable]="true"
-    [closeOnEscape]="true"
-    [dismissableMask]="false"
-    [style]="{ width: '480px' }"
->
+<tum-ui-dialog [(visible)]="visible" [header]="headerKey() | artemisTranslate" [closable]="true" [closeOnEscape]="true" [dismissableMask]="false" [style]="{ width: '480px' }">
     <div class="d-flex flex-column gap-3">
         <div>
             <label class="fw-semibold d-block mb-1" for="exam-group-edit-title" jhiTranslate="artemisApp.examManagement.exerciseGroup.title"></label>
@@ -29,7 +22,7 @@
         <tum-ui-button severity="secondary" variant="text" (clicked)="onCancel()">
             <span jhiTranslate="entity.action.cancel"></span>
         </tum-ui-button>
-        <tum-ui-button [disabled]="!isTitleValid()" (clicked)="onSave()">
+        <tum-ui-button id="save-group" [disabled]="!isTitleValid()" (clicked)="onSave()">
             <span jhiTranslate="entity.action.save"></span>
         </tum-ui-button>
     </ng-template>

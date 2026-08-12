@@ -14,6 +14,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
+import { TranslateService } from '@ngx-translate/core';
 import { faBook, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faSignal, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { PROFILE_LOCALCI } from 'app/app.constants';
@@ -44,6 +45,7 @@ export class ExamExerciseRowButtonsComponent {
     private exerciseService = inject(ExerciseService);
     private eventManager = inject(EventManager);
     private profileService = inject(ProfileService);
+    private translateService = inject(TranslateService);
 
     readonly course = input.required<Course>();
     readonly exercise = input.required<Exercise>();
@@ -95,9 +97,14 @@ export class ExamExerciseRowButtonsComponent {
         };
     });
 
+    /** Placeholders for the delete confirmation question (`{{ courseType }}` / `{{ courseTitle }}`). */
     private readonly deleteTranslateValues = computed<{ [key: string]: unknown }>(() => {
         const course = this.course();
-        return { courseTitle: course.title, courseType: course.testCourse ? 'artemisApp.exercise.delete.testCourse' : 'artemisApp.exercise.delete.realCourse' };
+        return {
+            courseTitle: course.title,
+            // The dialog interpolates these verbatim, so the course type must already be translated here.
+            courseType: this.translateService.instant(course.testCourse ? 'artemisApp.exercise.delete.testCourse' : 'artemisApp.exercise.delete.realCourse'),
+        };
     });
 
     readonly mainActions = computed<ActionItem[]>(() => {

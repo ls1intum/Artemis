@@ -19,10 +19,6 @@ tbody td {
     min-width: 14rem;
 }
 
-.col-group-select {
-    width: 10rem;
-}
-
 // Actions column takes the table's leftover width (capped by max-width), so it widens/narrows responsively and the
 // buttons collapse into the ellipsis as it shrinks. min-width floors that shrinking: the 4rem default lets it collapse
 // to just the ellipsis, but rows with reserved content (the test-run warning, which never folds in) set

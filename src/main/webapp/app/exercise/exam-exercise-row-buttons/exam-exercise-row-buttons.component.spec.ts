@@ -22,6 +22,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 const setExerciseInput = (fixture: ComponentFixture<ExamExerciseRowButtonsComponent>, exercise: Exercise) => {
     fixture.componentRef.setInput('exercise', exercise);
@@ -68,6 +70,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 MockProvider(QuizExerciseService),
                 MockProvider(ExerciseService),
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(EventManager),
             ],
         })

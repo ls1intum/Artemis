@@ -27,12 +27,24 @@
             <tum-ui-panel [toggleable]="true" [toggleAriaLabel]="exerciseGroup.title">
                 <div tumUiPanelHeader class="d-flex align-items-center gap-2 w-100">
                     <div class="d-flex flex-column">
-                        <a (click)="moveUp(i)" [class.disabled]="i === 0" class="border-0 p-0 bg-transparent lh-1">
+                        <button
+                            type="button"
+                            class="group-move border-0 p-0 bg-transparent lh-1"
+                            [disabled]="i === 0 || orderSavePending()"
+                            [attr.aria-label]="'artemisApp.examManagement.exerciseGroup.moveUp' | artemisTranslate"
+                            (click)="moveUp(i)"
+                        >
                             <fa-icon [icon]="faAngleUp" />
-                        </a>
-                        <a (click)="moveDown(i)" [class.disabled]="i >= exerciseGroups()!.length - 1" class="border-0 p-0 bg-transparent lh-1">
+                        </button>
+                        <button
+                            type="button"
+                            class="group-move border-0 p-0 bg-transparent lh-1"
+                            [disabled]="i >= exerciseGroupCount() - 1 || orderSavePending()"
+                            [attr.aria-label]="'artemisApp.examManagement.exerciseGroup.moveDown' | artemisTranslate"
+                            (click)="moveDown(i)"
+                        >
                             <fa-icon [icon]="faAngleDown" />
-                        </a>
+                        </button>
                     </div>
                     <fa-icon [icon]="faLayerGroup" [fixedWidth]="true" />
                     <span class="fw-semibold group-title">{{ exerciseGroup.title }} ({{ exerciseGroup.exercises?.length ?? 0 }})</span>
@@ -78,13 +90,13 @@
                         @if (course()?.isAtLeastEditor) {
                             <tum-ui-button severity="warn" variant="outlined" size="small" class="edit-group" (clicked)="openGroupEditModal(exerciseGroup.id!)">
                                 <fa-icon [icon]="faPen" />
-                                <span class="ms-1" jhiTranslate="entity.action.edit"></span>
+                                <span class="ms-1" jhiTranslate="artemisApp.examManagement.exerciseGroup.editGroup"></span>
                             </tum-ui-button>
                         }
                         @if (course()?.isAtLeastInstructor) {
                             <tum-ui-button severity="danger" variant="outlined" size="small" class="delete-group" (clicked)="confirmDeleteGroup(exerciseGroup)">
                                 <fa-icon [icon]="faTrash" />
-                                <span class="ms-1" jhiTranslate="entity.action.delete"></span>
+                                <span class="ms-1" jhiTranslate="artemisApp.examManagement.exerciseGroup.deleteGroup"></span>
                             </tum-ui-button>
                         }
                     </div>
@@ -107,5 +119,5 @@
 }
 
 @if (groupEditTarget(); as editTarget) {
-    <jhi-exam-exercise-group-edit-modal [(visible)]="groupEditVisible" [group]="editTarget" (saved)="onGroupEditSaved($event)" />
+    <jhi-exam-exercise-group-edit-modal [(visible)]="groupEditVisible" [group]="editTarget" [isNew]="groupEditIsNew()" (saved)="onGroupEditSaved($event)" />
 }

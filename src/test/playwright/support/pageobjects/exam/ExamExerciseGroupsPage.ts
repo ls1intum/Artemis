@@ -7,10 +7,6 @@ export class ExamExerciseGroupsPage {
         this.page = page;
     }
 
-    async clickCreateNewExerciseGroup() {
-        await this.page.click('#create-new-group');
-    }
-
     async shouldHaveTitle(groupID: number, groupTitle: string) {
         await expect(this.page.locator(`#group-${groupID} .group-title`).filter({ hasText: groupTitle })).toBeVisible();
     }
@@ -43,16 +39,14 @@ export class ExamExerciseGroupsPage {
     }
 
     /**
-     * Opens the per-group "Add Exercise" / "Import Exercise" type-picker modal and selects the exercise-type card.
-     * Mode is `create` or `import`; the type is the exercise-type route segment (e.g. `file-upload`, `text`).
+     * Opens the group's "Add Exercise" type-picker modal and selects the exercise-type card on its create tab.
+     * The type is the exercise-type route segment (e.g. `file-upload`, `text`).
      */
-    private async selectExerciseTypeCard(groupID: number, mode: 'create' | 'import', type: string) {
-        await this.page.locator(`#group-${groupID}`).getByTestId(`${mode}-exercise-button`).click();
-        await this.page.getByTestId(`${mode}-${type}-exercise`).click();
-    }
-
-    async clickEditGroupForTestExam() {
-        await this.page.getByRole('link', { name: 'Edit' }).click();
+    private async selectExerciseTypeCard(groupID: number, type: string) {
+        const addButton = this.page.locator(`#group-${groupID}`).getByTestId('add-exercise-button');
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
+        await this.page.getByTestId(`create-${type}-exercise`).click();
     }
 
     async clickDeleteGroup(groupID: number, groupName: string) {
@@ -78,19 +72,19 @@ export class ExamExerciseGroupsPage {
     }
 
     async clickAddTextExercise(groupID: number) {
-        await this.selectExerciseTypeCard(groupID, 'create', 'text');
+        await this.selectExerciseTypeCard(groupID, 'text');
     }
 
     async clickAddModelingExercise(groupID: number) {
-        await this.selectExerciseTypeCard(groupID, 'create', 'modeling');
+        await this.selectExerciseTypeCard(groupID, 'modeling');
     }
 
     async clickAddQuizExercise(groupID: number) {
-        await this.selectExerciseTypeCard(groupID, 'create', 'quiz');
+        await this.selectExerciseTypeCard(groupID, 'quiz');
     }
 
     async clickAddProgrammingExercise(groupID: number) {
-        await this.selectExerciseTypeCard(groupID, 'create', 'programming');
+        await this.selectExerciseTypeCard(groupID, 'programming');
     }
 
     async clickEditExercise(groupID: number, exerciseID: number) {
