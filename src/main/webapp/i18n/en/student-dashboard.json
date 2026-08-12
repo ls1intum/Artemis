@@ -37,6 +37,7 @@
         },
         "courseOverview": {
             "noCourseIcon": "No course icon available",
+            "exerciseLoadFailed": "The exercises could not be loaded. Please try again.",
             "showMore": "Show more",
             "showLess": "Show less",
             "general": {

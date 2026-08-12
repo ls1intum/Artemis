@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subject, Subscription, combineLatest } from 'rxjs';
@@ -153,6 +154,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     private readonly accountService = inject(AccountService);
     private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly credentialRevocationConfirmationService = inject(CredentialRevocationConfirmationService);
     private readonly router = inject(Router);
     private readonly eventManager = inject(EventManager);
     private readonly localStorageService = inject(LocalStorageService);
@@ -467,7 +469,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param user whose activation status should be changed
      * @param isActivated true if user should be activated, otherwise false
      */
-    setActive(user: User, isActivated: boolean) {
+    async setActive(user: User, isActivated: boolean): Promise<void> {
+        // Deactivating revokes every credential of the account, so it is confirmed like any other deletion. Activating
+        // deletes nothing and is not interrupted.
+        if (!isActivated) {
+            const confirmed = await this.credentialRevocationConfirmationService.confirm({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            if (!confirmed) {
+                return;
+            }
+        }
         const action = isActivated ? this.adminUserService.activate : this.adminUserService.deactivate;
         action.call(this.adminUserService, user.id!).subscribe({
             next: () => {

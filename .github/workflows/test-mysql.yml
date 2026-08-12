@@ -102,7 +102,7 @@ jobs:
         path: build/test-results/test/*.xml
     - name: Print failed tests
       if: failure()
-      run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
+      run: grep "Test >.* FAILED\$" tests.log | grep -v "Starting logs for" || echo "No failed tests."
     - name: Test Report
       # Renders the JUnit report as a check-run AND annotates failing tests in the PR diff.
       uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
