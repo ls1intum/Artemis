@@ -185,8 +185,6 @@ public class ProgrammingExerciseBuildPlanService {
             throw new BadRequestAlertException("The build plan configuration is too large to be processed", "buildConfig", "buildPlanConfigurationTooLarge");
         }
         buildConfig.setBuildPlanConfiguration(serializedBuildPlanConfiguration);
-        // buildScript is a transient field with no column, so this persists nothing; it only clears the field on the
-        // returned build config. The stored structured configuration supersedes any legacy build script at build time.
         buildConfig.setBuildScript(null);
         buildConfig.setTimeoutSeconds(buildPlanConfiguration.timeoutSeconds());
         buildConfig.setDockerFlags(buildPlanConfiguration.dockerFlags());
