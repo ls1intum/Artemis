@@ -67,8 +67,11 @@
 }
 
 .tum-ui-radio-button-icon {
-    width: calc(var(--tumaet-ui-spacing) * 3);
-    height: calc(var(--tumaet-ui-spacing) * 3);
+    // Same fallback as the host, and for a sharper reason: this element has no content, so an invalid calc leaves both
+    // dimensions at auto, which is zero. The ring would render while the dot inside it disappeared, and a selected
+    // radio would read as unselected.
+    width: calc(var(--tumaet-ui-spacing, 0.25rem) * 3);
+    height: calc(var(--tumaet-ui-spacing, 0.25rem) * 3);
     border-radius: 50%;
     visibility: hidden;
 }
