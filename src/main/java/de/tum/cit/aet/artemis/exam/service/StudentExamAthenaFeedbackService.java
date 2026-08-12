@@ -89,7 +89,12 @@ public class StudentExamAthenaFeedbackService {
 
         // Use studentExam exercises (course.athenaConfig eagerly loaded) to determine eligible exercise IDs,
         // avoiding lazy-load traversal through StudentParticipation.exercise.exerciseGroup.exam.course.athenaConfig.
-        Set<Long> eligibleExerciseIds = studentExam.getExercises().stream().filter(Exercise::getAllowFeedbackRequests).map(Exercise::getId).collect(Collectors.toSet());
+        // Only text and modeling exercises are dispatched below, so exclude other exercise types here even if their
+        // course has formative feedback enabled - otherwise a request could reserve a cap slot without ever
+        // generating feedback.
+        Set<Long> eligibleExerciseIds = studentExam.getExercises().stream()
+                .filter(exercise -> (exercise instanceof TextExercise || exercise instanceof ModelingExercise) && exercise.getAllowFeedbackRequests()).map(Exercise::getId)
+                .collect(Collectors.toSet());
         if (eligibleExerciseIds.isEmpty()) {
             throw new BadRequestAlertException("No exam exercises with course-level Athena formative feedback enabled", "StudentExam", "noCourseLevelAthenaFormativeEnabled", true);
         }
@@ -97,6 +102,10 @@ public class StudentExamAthenaFeedbackService {
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
         List<StudentParticipation> eligibleParticipations = participations.stream()
                 .filter(participation -> participation.getExercise() != null && eligibleExerciseIds.contains(participation.getExercise().getId())).toList();
+        if (eligibleParticipations.isEmpty()) {
+            throw new BadRequestAlertException("No exam exercises with course-level Athena formative feedback enabled", "StudentExam", "noCourseLevelAthenaFormativeEnabled", true);
+        }
+
         for (StudentParticipation participation : eligibleParticipations) {
             Exercise exercise = participation.getExercise();
             if (exercise instanceof TextExercise && textFeedbackApi.isEmpty()) {

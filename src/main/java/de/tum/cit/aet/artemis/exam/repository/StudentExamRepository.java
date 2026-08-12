@@ -445,8 +445,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
         if (alreadyReserved >= cap) {
             return 0;
         }
-        StudentExam targetAttempt = lockedAttempts.stream().filter(attempt -> attempt.getId().equals(studentExamId)).findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("StudentExam", studentExamId));
+        StudentExam targetAttempt = getValueElseThrow(lockedAttempts.stream().filter(attempt -> attempt.getId().equals(studentExamId)).findFirst(), studentExamId);
         if (targetAttempt.getAthenaFeedbackRequestedDate() != null) {
             return 0;
         }
