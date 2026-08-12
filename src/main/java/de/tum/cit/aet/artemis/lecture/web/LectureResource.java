@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -171,12 +172,10 @@ public class LectureResource {
                     channelName, course == null ? null : CourseDTO.from(course));
         }
 
-        public record CourseDTO(Long id, String title, String shortName, String semester, String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
-                String instructorGroupName) {
+        public record CourseDTO(Long id, String title, String shortName, String semester) {
 
             public static CourseDTO from(@NonNull Course course) {
-                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getSemester(), course.getStudentGroupName(),
-                        course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName());
+                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getSemester());
             }
         }
     }
@@ -268,7 +267,7 @@ public class LectureResource {
     @GetMapping("lectures")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<SimpleLectureDTO>> getAllLecturesOnPage(SearchTermPageableSearchDTO<String> search) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final SearchResultPageDTO<Lecture> lecturePage = lectureService.getAllOnPageWithSize(search, user);
         // The import search table only displays the lecture title and its course's title/semester; channel name is not needed here
         final List<SimpleLectureDTO> lectureDtos = lecturePage.getResultsOnPage().stream().map(lecture -> SimpleLectureDTO.from(lecture, null)).toList();
@@ -301,7 +300,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping("courses/{courseId}/tutorial-lectures")
-    @EnforceAtLeastEditorInCourse
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<SimpleLectureDTO>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
@@ -310,6 +309,24 @@ public class LectureResource {
         // While it would be enough to send it once separately, we keep it like this for now to avoid overengineering. Ideally, the course data is only sent once
         var lectureDtos = lectures.stream().map(lecture -> SimpleLectureDTO.from(lecture, null)).collect(Collectors.toSet());
         return ResponseEntity.ok().body(lectureDtos);
+    }
+
+    /**
+     * GET /courses/:courseId/lectures-for-overview : get the lectures of a course for the student course overview.
+     * <p>
+     * Projected to what the sidebar renders — title, dates and the tutorial flag. Attachments are not included: they are
+     * eagerly mapped on the entity, so returning whole lectures loaded and serialised them on every visit for nothing.
+     * Lecture visibility does not depend on attachments; the attachment filter only ever removed attachments, never
+     * lectures, so dropping them here does not change which lectures a student sees.
+     *
+     * @param courseId the courseId of the course for which the lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
+     */
+    @GetMapping("courses/{courseId}/lectures-for-overview")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<LectureForOverviewDTO>> getLecturesForCourseOverview(@PathVariable Long courseId) {
+        log.debug("REST request to get the lectures of course {} for the course overview", courseId);
+        return ResponseEntity.ok(lectureRepository.findAllForOverviewByCourseId(courseId));
     }
 
     /**
@@ -450,7 +467,7 @@ public class LectureResource {
     public ResponseEntity<SimpleLectureDTO> importLecture(@RequestParam(name = "sourceLectureId", required = false) Long sourceLectureIdQuery,
             @PathVariable(name = "sourceLectureId", required = false) Long sourceLectureIdPath, @RequestParam long courseId) throws URISyntaxException {
         long sourceLectureId = sourceLectureIdQuery != null ? sourceLectureIdQuery : (sourceLectureIdPath != null ? sourceLectureIdPath : -1L);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(sourceLectureId);
         final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);
 
@@ -480,7 +497,7 @@ public class LectureResource {
     @EnforceAtLeastStudentInLecture
     public ResponseEntity<LectureDetailsDTO> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         return ResponseEntity.ok(lectureService.getForDetails(lectureId, user));
     }
 

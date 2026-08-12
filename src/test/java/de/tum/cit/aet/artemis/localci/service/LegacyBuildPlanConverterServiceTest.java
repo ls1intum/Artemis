@@ -192,6 +192,32 @@ class LegacyBuildPlanConverterServiceTest {
                 """);
     }
 
+    @Test
+    void convertLegacyBuildPlanConfiguration_shouldRejectExcessivelyWideConfiguration() {
+        final ProgrammingExercise programmingExercise = createExercise(buildWideLegacyConfiguration(6_000), "echo hi");
+
+        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise);
+
+        // Parsing the oversized configuration is rejected during parsing, so the converter falls back to the build script
+        // and never reads the planted actions (which would otherwise contribute a result path and a docker image).
+        assertThat(buildPlanPhases).isPresent();
+        assertThat(buildPlanPhases.orElseThrow().dockerImage()).isNull();
+
+        var phase = buildPlanPhases.orElseThrow().phases().getFirst();
+        assertThat(phase.resultPaths()).isEmpty();
+        assertThat(phase.script()).contains("echo hi");
+    }
+
+    private static String buildWideLegacyConfiguration(int extraKeyCount) {
+        final StringBuilder builder = new StringBuilder(
+                "{\"metadata\":{\"docker\":{\"image\":\"my/legacy-image:1.0\"}},\"actions\":[{\"name\":\"compile\",\"results\":[{\"path\":\"planted.xml\"}]}]");
+        for (int i = 0; i < extraKeyCount; i++) {
+            builder.append(",\"pad").append(i).append("\":\"v\"");
+        }
+        builder.append('}');
+        return builder.toString();
+    }
+
     private static ProgrammingExercise createExercise(String buildPlanConfiguration, String buildScript) {
         final ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());

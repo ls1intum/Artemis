@@ -12,7 +12,7 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 
 /**
  * Type guard mirroring the domain rule that a student participation is any participation that is neither a
@@ -431,13 +431,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     const currentParticipations = this._studentParticipations();
                     let updatedParticipations: StudentParticipation[];
                     if (currentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
-                        // Keep the existing participation's fields (the websocket payload may only carry a result delta)
-                        // and merge in the changed submissions so prior attempts are not lost (see mergeSubmissions).
+                        // Keep the existing participation's fields, but accept a live transition to FINISHED so the
+                        // exercise header reflects text/modeling submissions without requiring a page reload.
+                        // Submissions are still merged so prior attempts are not lost (see mergeSubmissions).
                         updatedParticipations = currentParticipations.map((participation) => {
                             if (participation.id !== changedParticipation.id) {
                                 return participation;
                             }
                             const merged = deepClone(participation);
+                            if (changedParticipation.initializationState === InitializationState.FINISHED) {
+                                merged.initializationState = InitializationState.FINISHED;
+                            }
                             merged.submissions = this.mergeSubmissions(participation.submissions, changedParticipation.submissions);
                             return merged;
                         });
@@ -541,10 +545,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const course = this.courseStorageService.getCourse(this.courseId);
         const cachedExercise = course?.exercises?.find((exercise) => exercise.id === exerciseId);
         if (course && cachedExercise) {
+            // Mutated in place, and the same course object re-stored: the sidebar card renders this very exercise
+            // object, so replacing it with a copy would leave the card bound to the pre-update one.
             cachedExercise.studentParticipations = this._studentParticipations();
-            // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
-            // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
-            this.courseStorageService.updateCourse(course, this.courseStorageService.isCourseFullyLoaded(this.courseId));
+            this.courseStorageService.updateCourse(course);
         }
     }
 

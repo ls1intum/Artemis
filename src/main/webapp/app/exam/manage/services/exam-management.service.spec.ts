@@ -11,10 +11,13 @@ import dayjs from 'dayjs/esm';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
+import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -447,16 +450,17 @@ describe('Exam Management Service Tests', () => {
     it('should create test run', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockStudentExam: StudentExam = { exam: mockExam, numberOfExamSessions: 0 };
-        const expected: StudentExam = { exam: { id: 1 }, numberOfExamSessions: 0 };
+        const testRunConfiguration: CreateTestRunDTO = { examId: mockExam.id!, exerciseIds: [11, 12], workingTime: 600 };
+        const expected: StudentExamDTO = { id: 2, workingTime: 600, testRun: true, user: { id: 42 } };
         // WHEN
-        service.createTestRun(course.id!, mockExam.id!, mockStudentExam).subscribe((res) => expect(res.body).toEqual(mockStudentExam));
+        service.createTestRun(course.id!, mockExam.id!, testRunConfiguration).subscribe((res) => expect(res.body).toEqual(expected));
 
         // THEN
         const req = httpMock.expectOne({
             method: 'POST',
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/test-runs`,
         });
+        expect(req.request.body).toEqual(testRunConfiguration);
         req.flush(expected);
         await Promise.resolve();
     });
@@ -481,8 +485,8 @@ describe('Exam Management Service Tests', () => {
     it('should find all test runs for exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 2, numberOfExamSessions: 0 }];
-        const expected: StudentExam[] = [{ exam: mockExam, id: 2, numberOfExamSessions: 0 }];
+        const mockStudentExams: StudentExamDTO[] = [{ id: 2, testRun: true, user: { id: 42 } }];
+        const expected: StudentExamDTO[] = [{ id: 2, testRun: true, user: { id: 42 } }];
         // WHEN
         service.findAllTestRunsForExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockStudentExams));
 
@@ -570,18 +574,22 @@ describe('Exam Management Service Tests', () => {
     it('should update order', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockExerciseGroups: ExerciseGroup[] = [{ exam: mockExam, id: 1 }];
-        const expected: ExerciseGroup[] = [{ exam: mockExam, id: 1 }];
+        const mockExerciseGroups: ExerciseGroup[] = [
+            { exam: mockExam, id: 2 },
+            { exam: mockExam, id: 1 },
+        ];
 
         // WHEN
-        service.updateOrder(course.id!, mockExam.id!, mockExerciseGroups).subscribe((res) => expect(res.body).toEqual(mockExerciseGroups));
+        service.updateOrder(course.id!, mockExam.id!, mockExerciseGroups).subscribe((res) => expect(res.ok).toBe(true));
 
         // THEN
         const req = httpMock.expectOne({
             method: 'PUT',
             url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/exercise-groups-order`,
         });
-        req.flush(expected);
+        // Only the ordered group ids are sent, not the full exercise groups; the response carries no body.
+        expect(req.request.body).toEqual([2, 1]);
+        req.flush(null);
         await Promise.resolve();
     });
 
@@ -619,6 +627,32 @@ describe('Exam Management Service Tests', () => {
         });
         req.flush(mockResponse);
         await Promise.resolve();
+    });
+
+    it('should reconnect the last result of a locked submission as latestResult', async () => {
+        // GIVEN: the server's wire shape for a locked submission carries its result(s) as a plain list (the DTO the
+        // assessment-locks table reads); the client is expected to derive latestResult from it via reconnectSubmissions.
+        const mockExam: Exam = { id: 1 };
+        const lockedResult = { id: 99, score: 42, completionDate: undefined } as Result;
+        const mockResponse = [{ id: 7, submissionExerciseType: 'text', results: [lockedResult] } as TextSubmission];
+
+        // WHEN
+        let received: TextSubmission[] | undefined;
+        service.findAllLockedSubmissionsOfExam(course.id!, mockExam.id!).subscribe((res) => (received = res.body as TextSubmission[]));
+
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/locked-submissions`,
+        });
+        req.flush(mockResponse);
+        await Promise.resolve();
+
+        // THEN: reconnectSubmissions must have turned the last (and only) result into latestResult, with the
+        // back-reference to its submission restored, exactly as the assessment-locks component relies on.
+        expect(received).toBeDefined();
+        expect(received![0].latestResult?.id).toBe(lockedResult.id);
+        expect(received![0].latestResult?.score).toBe(lockedResult.score);
+        expect(received![0].latestResult?.submission).toBe(received![0]);
     });
 
     it('should download the exam from archive', async () => {

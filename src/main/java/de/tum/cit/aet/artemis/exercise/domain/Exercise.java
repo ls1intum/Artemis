@@ -143,13 +143,15 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @ManyToOne
     private ExerciseGroup exerciseGroup;
 
-    // No @Cache: instructors edit grading criteria while assessors read them during assessment; NONSTRICT produced
-    // stale cross-node reads, same class of bug as #12574 / #12584.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exercise_variant_group_id")
+    @JsonIgnoreProperties("exercises")
+    private ExerciseVariantGroup exerciseVariantGroup;
+
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     private Set<GradingCriterion> gradingCriteria = new HashSet<>();
 
-    // No @Cache: grows every time a student starts / submits the exercise; NONSTRICT caused stale reads for instructors and scoring paths, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<StudentParticipation> studentParticipations = new HashSet<>();
@@ -162,12 +164,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnoreProperties("exercise")
     private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
 
-    // No @Cache: instructors edit attachments while students are viewing the exercise page; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<Attachment> attachments = new HashSet<>();
 
-    // No @Cache: plagiarism cases are appended by detection runs while instructors read the list, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
@@ -225,6 +225,21 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      */
     @Transient
     private String channelNameTransient;
+
+    /**
+     * Only set for exam exercises on the assessment dashboard: the moment the exam is over for every student, i.e. the
+     * latest individual exam end date plus the grace period. Lets the client explain why assessment is not possible yet.
+     */
+    @Transient
+    private ZonedDateTime latestExamEndDateTransient;
+
+    /**
+     * Only set for exam exercises on the assessment dashboard: the moment from which on tutors can start assessing.
+     * Equals {@link #latestExamEndDateTransient}, except for programming exercises, which additionally wait for the
+     * tests to run once more on the final submissions.
+     */
+    @Transient
+    private ZonedDateTime assessmentPossibleFromTransient;
 
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
@@ -291,20 +306,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return studentParticipations;
     }
 
-    public Exercise participations(Set<StudentParticipation> participations) {
-        this.studentParticipations = participations;
-        return this;
-    }
-
     public Exercise addParticipation(StudentParticipation participation) {
         this.studentParticipations.add(participation);
         participation.setExercise(this);
         return this;
-    }
-
-    public void removeParticipation(StudentParticipation participation) {
-        this.studentParticipations.remove(participation);
-        participation.setExercise(null);
     }
 
     public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
@@ -352,6 +357,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.exerciseGroup = exerciseGroup;
     }
 
+    public @Nullable ExerciseVariantGroup getExerciseVariantGroup() {
+        return exerciseVariantGroup;
+    }
+
+    public void setExerciseVariantGroup(@Nullable ExerciseVariantGroup exerciseVariantGroup) {
+        this.exerciseVariantGroup = exerciseVariantGroup;
+    }
+
     @JsonIgnore
     @Override
     public boolean isExamExercise() {
@@ -372,7 +385,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnore
     public Course getCourseViaExerciseGroupOrCourseMember() {
         if (isExamExercise()) {
-            return this.getExerciseGroup().getExam().getCourse();
+            // Student-facing exam payloads mask the exam out (exerciseGroup.setExam(null)) before serialization, so the
+            // exam (and therefore its course) can be null here. Guard against the resulting NullPointerException by
+            // returning null instead of dereferencing a masked graph; callers that derive a course from an exam exercise
+            // on a masked graph must tolerate a null course (they cannot resolve one anyway).
+            var exam = this.getExerciseGroup().getExam();
+            return exam != null ? exam.getCourse() : null;
         }
         else {
             return this.getCourse();
@@ -652,6 +670,24 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     @Nullable
+    public ZonedDateTime getLatestExamEndDate() {
+        return latestExamEndDateTransient;
+    }
+
+    public void setLatestExamEndDate(@Nullable ZonedDateTime latestExamEndDateTransient) {
+        this.latestExamEndDateTransient = latestExamEndDateTransient;
+    }
+
+    @Nullable
+    public ZonedDateTime getAssessmentPossibleFrom() {
+        return assessmentPossibleFromTransient;
+    }
+
+    public void setAssessmentPossibleFrom(@Nullable ZonedDateTime assessmentPossibleFromTransient) {
+        this.assessmentPossibleFromTransient = assessmentPossibleFromTransient;
+    }
+
+    @Nullable
     public Boolean getPresentationScoreEnabled() {
         return presentationScoreEnabled;
     }
@@ -682,11 +718,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public Set<GradingCriterion> getGradingCriteria() {
         return gradingCriteria;
-    }
-
-    public void addGradingCriteria(GradingCriterion gradingCriterion) {
-        this.gradingCriteria.add(gradingCriterion);
-        gradingCriterion.setExercise(this);
     }
 
     public void setGradingCriteria(Set<GradingCriterion> gradingCriteria) {
@@ -814,12 +845,13 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(exampleSolutionPublicationDate);
     }
 
-    /**
-     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
-     *
-     * @throws BadRequestAlertException if the dates are not valid
-     */
+    /** Validates the dates of this exercise. Subclasses extend it with type-specific checks. */
     public void validateDates() {
+        validateBaseDates();
+    }
+
+    /** Validates the date ordering shared by every exercise type. {@code final} so it stays callable on a QuizExercise whose lazy {@code quizBatches} are uninitialized. */
+    public final void validateBaseDates() {
         // All fields are optional, so there is no error if none of them is set
         if (getReleaseDate() == null && getStartDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
             return;
@@ -934,20 +966,5 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             setGradingCriteria(managedCriteria);
         }
         return managedCriteria;
-    }
-
-    /**
-     * Ensures that the exercise has a mutable set for competency links.
-     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
-     *
-     * @return the non-null mutable set of competency links
-     */
-    public Set<CompetencyExerciseLink> ensureCompetencyLinksSet() {
-        Set<CompetencyExerciseLink> managedLinks = getCompetencyLinks();
-        if (managedLinks == null) {
-            managedLinks = new HashSet<>();
-            setCompetencyLinks(managedLinks);
-        }
-        return managedLinks;
     }
 }

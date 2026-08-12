@@ -2,8 +2,11 @@ package de.tum.cit.aet.artemis.communication.service.conversation;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.Persistence;
@@ -28,6 +31,7 @@ import de.tum.cit.aet.artemis.communication.dto.ConversationUserDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -49,13 +53,17 @@ public class ConversationDTOService {
 
     private final CourseRepository courseRepository;
 
+    private final ChannelRepository channelRepository;
+
     public ConversationDTOService(UserRepository userRepository, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, Optional<TutorialGroupCommunicationApi> tutorialGroupCommunicationApi, CourseRepository courseRepository) {
+            ChannelAuthorizationService channelAuthorizationService, Optional<TutorialGroupCommunicationApi> tutorialGroupCommunicationApi, CourseRepository courseRepository,
+            ChannelRepository channelRepository) {
         this.userRepository = userRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelAuthorizationService = channelAuthorizationService;
         this.tutorialGroupCommunicationApi = tutorialGroupCommunicationApi;
         this.courseRepository = courseRepository;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -96,6 +104,29 @@ public class ConversationDTOService {
             return convertGroupChatToDto(requestingUser, groupChat, summary);
         }
         throw new IllegalArgumentException("Conversation type not supported");
+    }
+
+    /**
+     * Fills in the dates of the exercise, lecture or exam each channel references.
+     *
+     * The conversation sidebar marks a channel as current from these dates. They are set separately, and for a whole
+     * collection at once, because taking them off {@code channel.getExercise()} would resolve one lazy proxy per
+     * channel — and every caller here produces channels in bulk.
+     *
+     * @param conversations the conversations to fill the reference dates in on; non-channels are ignored
+     */
+    public void fillSubTypeReferenceDates(Collection<? extends ConversationDTO> conversations) {
+        Map<Long, ChannelDTO> channelsById = conversations.stream().filter(ChannelDTO.class::isInstance).map(ChannelDTO.class::cast)
+                .collect(Collectors.toMap(ChannelDTO::getId, Function.identity(), (first, ignored) -> first));
+        if (channelsById.isEmpty()) {
+            return;
+        }
+        for (var referenceDates : channelRepository.findSubTypeReferenceDates(channelsById.keySet())) {
+            ChannelDTO channel = channelsById.get(referenceDates.channelId());
+            if (channel != null) {
+                channel.setSubTypeReferenceDates(referenceDates);
+            }
+        }
     }
 
     /**
@@ -281,9 +312,9 @@ public class ConversationDTOService {
             userDTO.setIsRequestingUser(user.getId().equals(requestingUser.getId()));
             userDTO.setIsChannelModerator(null); // not needed for one to one chats
             var userWithGroups = user;
-            var groupsInitialized = Persistence.getPersistenceUtil().isLoaded(user, "groups") && user.getGroups() != null;
-            if (!groupsInitialized) {
-                userWithGroups = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(user.getId());
+            var courseRolesInitialized = Persistence.getPersistenceUtil().isLoaded(user, "courseRoles") && user.getCourseRoles() != null;
+            if (!courseRolesInitialized) {
+                userWithGroups = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(user.getId());
             }
             UserPublicInfoDTO.assignRoleProperties(course, userWithGroups, userDTO);
             return userDTO;

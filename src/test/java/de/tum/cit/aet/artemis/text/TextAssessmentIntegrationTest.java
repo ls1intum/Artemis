@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -151,7 +152,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 3, 0, 1);
-        course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         textExercise = ExerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exerciseRepository.save(textExercise);
@@ -924,6 +925,51 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
                 expectedStatus, null);
     }
 
+    /**
+     * An Athena result is created after the tutor's assessment and therefore has a higher id, but it is not a correction
+     * round and carries no assessor. Cancelling used to resolve the submission's "latest" result by id, hit that Athena
+     * result, and fail before releasing anything, so the tutor's lock survived (issue #13396).
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void cancelAssessmentReleasesTheTutorsLockEvenWhenAnAthenaResultIsNewer() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        final long tutorResultId = textSubmission.getLatestResult().getId();
+        // Saved last, so it holds the highest id of the submission.
+        final long athenaResultId = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now(), textSubmission).getId();
+        assertThat(athenaResultId).as("setup: the Athena result is the newest by id").isGreaterThan(tutorResultId);
+
+        request.postWithoutLocation("/api/text/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/cancel-assessment", null,
+                HttpStatus.OK, null);
+
+        // Deleting an entry of an @OrderColumn list leaves a null hole behind, which getResultForCorrectionRound also
+        // documents, so the raw list is filtered before comparing ids.
+        var remainingResults = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission.getId()).orElseThrow().getResults();
+        var remainingResultIds = remainingResults.stream().filter(Objects::nonNull).map(Result::getId).toList();
+        assertThat(remainingResultIds).as("the tutor's assessment is released and the Athena result is kept").containsExactly(athenaResultId);
+    }
+
+    /**
+     * Naming a result explicitly must not reach a correction round that is already submitted. Without a result id only
+     * the newest manual result is ever released, so an id is the only way to reach an older finished round, and
+     * deleting a finished result requires an instructor through the dedicated endpoints.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void cancelAssessmentRejectsAFinishedCorrectionRoundNamedByResultId() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        final Result finishedResult = textSubmission.getLatestResult();
+        assertThat(finishedResult.getCompletionDate()).as("setup: the assessment is submitted").isNotNull();
+
+        request.postWithoutLocation("/api/text/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId()
+                + "/cancel-assessment?resultId=" + finishedResult.getId(), null, HttpStatus.BAD_REQUEST, null);
+
+        var remainingResults = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission.getId()).orElseThrow().getResults();
+        assertThat(remainingResults.stream().filter(Objects::nonNull).map(Result::getId)).as("the submitted assessment is untouched").containsExactly(finishedResult.getId());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void cancelOwnAssessmentAsStudent() throws Exception {
@@ -1349,10 +1395,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // check properties set
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("withExerciseGroups", "true");
-        Exam examReturned = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        examReturned.getExerciseGroups().getFirst().getExercises().forEach(exerciseExamReturned -> {
-            assertThat(exerciseExamReturned.getNumberOfParticipations()).isNotNull();
-            assertThat(exerciseExamReturned.getNumberOfParticipations()).isEqualTo(1);
+        ExamWithExerciseGroupsDTO examReturned = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK,
+                ExamWithExerciseGroupsDTO.class, params);
+        examReturned.exerciseGroups().getFirst().exercises().forEach(exerciseExamReturned -> {
+            assertThat(exerciseExamReturned.numberOfParticipations()).isNotNull();
+            assertThat(exerciseExamReturned.numberOfParticipations()).isEqualTo(1);
         });
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
@@ -1485,7 +1532,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.getFirst().id()).isEqualTo(submissionId(submissionWithoutSecondAssessment));
         // result for correction round 1 corresponds to the just-submitted second manual result
-        assertThat(assessedSubmissionList.getFirst().results()).extracting(ResultDTO::id).contains(secondSubmittedManualResult.id());
+        assertThat(assessedSubmissionList.getFirst().results()).hasSize(2);
+        assertThat(assessedSubmissionList.getFirst().results().getFirst()).isNull();
+        assertThat(assessedSubmissionList.getFirst().results().get(1)).isNotNull().extracting(ResultDTO::id).isEqualTo(secondSubmittedManualResult.id());
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();

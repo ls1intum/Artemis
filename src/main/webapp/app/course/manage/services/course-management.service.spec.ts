@@ -8,7 +8,8 @@ import { User } from 'app/account/user/user.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
-import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
+import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
+import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Organization } from 'app/admin/organization-management/organization.model';
@@ -30,6 +31,10 @@ import { createSampleCourse } from 'test/helpers/sample/course-sample-data';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { BehaviorSubject, distinctUntilChanged } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
+import { EntityTitleService } from 'app/core/navbar/entity-title.service';
+import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
+import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -39,13 +44,14 @@ describe('Course Management Service', () => {
     let courseStorageService: CourseStorageService;
     let scoresStorageService: ScoresStorageService;
     let localStorageService: LocalStorageService;
+    let courseNotificationService: CourseNotificationService;
+    let entityTitleService: EntityTitleService;
 
     let isAtLeastTutorInCourseSpy: ReturnType<typeof vi.spyOn>;
     let isAtLeastEditorInCourseSpy: ReturnType<typeof vi.spyOn>;
     let isAtLeastInstructorInCourseSpy: ReturnType<typeof vi.spyOn>;
     let convertExercisesDateFromServerSpy: ReturnType<typeof vi.spyOn>;
     let convertDatesForLecturesFromServerSpy: ReturnType<typeof vi.spyOn>;
-    let syncGroupsSpy: ReturnType<typeof vi.spyOn>;
 
     const resourceUrl = 'api/course/courses';
 
@@ -77,17 +83,18 @@ describe('Course Management Service', () => {
         courseStorageService = TestBed.inject(CourseStorageService);
         scoresStorageService = TestBed.inject(ScoresStorageService);
         localStorageService = TestBed.inject(LocalStorageService);
+        courseNotificationService = TestBed.inject(CourseNotificationService);
+        entityTitleService = TestBed.inject(EntityTitleService);
 
         isAtLeastTutorInCourseSpy = vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
         isAtLeastEditorInCourseSpy = vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
         isAtLeastInstructorInCourseSpy = vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
-        syncGroupsSpy = vi.spyOn(accountService, 'syncGroups').mockImplementation(() => undefined);
         convertDatesForLecturesFromServerSpy = vi.spyOn(lectureService, 'convertLectureArrayDatesFromServer');
         ({ course, exercises } = createSampleCourse());
 
         courseForDashboard = new CourseForDashboardDTO();
         courseForDashboard.course = course;
-        courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
+        courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, absoluteScoreTotal: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
         courseForDashboard.totalScores = courseScores;
         courseForDashboard.programmingScores = courseScores;
         courseForDashboard.modelingScores = courseScores;
@@ -257,6 +264,7 @@ describe('Course Management Service', () => {
         const setStoredTotalScoresSpy = vi.spyOn(scoresStorageService, 'setStoredTotalScores');
         const setStoredScoresPerExerciseTypeSpy = vi.spyOn(scoresStorageService, 'setStoredScoresPerExerciseType');
         const setParticipationResultsSpy = vi.spyOn(scoresStorageService, 'setStoredParticipationResults');
+        const setAchievedGroupPointsSpy = vi.spyOn(scoresStorageService, 'setStoredAchievedPointsPerVariantGroup');
         courseManagementService
             .findOneForDashboard(course.id!)
             .pipe(take(1))
@@ -264,6 +272,7 @@ describe('Course Management Service', () => {
                 expect(setStoredTotalScoresSpy).toHaveBeenCalledWith(course.id!, courseScores);
                 expect(setStoredScoresPerExerciseTypeSpy).toHaveBeenCalledWith(course.id!, scoresPerExerciseType);
                 expect(setParticipationResultsSpy).toHaveBeenCalledWith(courseForDashboard.participationResults);
+                expect(setAchievedGroupPointsSpy).toHaveBeenCalledWith(course.id!, courseForDashboard.achievedPointsPerVariantGroup);
             });
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
         req.flush(courseForDashboard);
@@ -330,25 +339,13 @@ describe('Course Management Service', () => {
     });
 
     it('should register for the course', () => {
-        const groups = ['student-group-name'];
-        courseManagementService
-            .registerForCourse(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(groups));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/enroll` });
-        req.flush(groups);
-        expect(syncGroupsSpy).toHaveBeenCalledWith(groups);
+        courseManagementService.registerForCourse(course.id!).pipe(take(1)).subscribe();
+        httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/enroll` }).flush(null);
     });
 
     it('should unenroll from the course', () => {
-        const groups = ['student-group-name'];
-        courseManagementService
-            .unenrollFromCourse(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(groups));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/unenroll` });
-        req.flush(groups);
-        expect(syncGroupsSpy).toHaveBeenCalledWith(groups);
+        courseManagementService.unenrollFromCourse(course.id!).pipe(take(1)).subscribe();
+        httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/unenroll` }).flush(null);
     });
 
     it('should get all courses with quiz exercises', () => {
@@ -416,12 +413,12 @@ describe('Course Management Service', () => {
     it('should find all users of course group', () => {
         const users = [new User(1, 'user1'), new User(2, 'user2')];
         returnedFromService = [...users];
-        const courseGroup = CourseGroup.STUDENTS;
+        const courseRoleSlug = CourseRoleSlug.STUDENTS;
         courseManagementService
-            .getAllUsersInCourseGroup(course.id!, courseGroup)
+            .getAllUsersInCourseRole(course.id!, courseRoleSlug)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(users));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/${courseGroup}` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/${courseRoleSlug}` });
         req.flush(returnedFromService);
     });
 
@@ -454,23 +451,23 @@ describe('Course Management Service', () => {
 
     it('should add user to course group', () => {
         const user = new User(1, 'name');
-        const courseGroup = CourseGroup.STUDENTS;
+        const courseRoleSlug = CourseRoleSlug.STUDENTS;
         courseManagementService
-            .addUserToCourseGroup(course.id!, courseGroup, user.login!)
+            .addUserToCourseRole(course.id!, courseRoleSlug, user.login!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/${courseGroup}/${user.login}` });
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/${courseRoleSlug}/${user.login}` });
         req.flush({});
     });
 
     it('should remove user from course group', () => {
         const user = new User(1, 'name');
-        const courseGroup = CourseGroup.STUDENTS;
+        const courseRoleSlug = CourseRoleSlug.STUDENTS;
         courseManagementService
-            .removeUserFromCourseGroup(course.id!, courseGroup, user.login!)
+            .removeUserFromCourseRole(course.id!, courseRoleSlug, user.login!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
-        const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}/${courseGroup}/${user.login}` });
+        const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}/${courseRoleSlug}/${user.login}` });
         req.flush({});
     });
 
@@ -510,6 +507,39 @@ describe('Course Management Service', () => {
         res.flush(expectedCount);
     });
 
+    it('should fetch a non-empty management detail response and filter an empty one', () => {
+        const detail = { numberOfStudents: 12 } as unknown as CourseManagementDetailViewDto;
+        const next = vi.fn();
+        courseManagementService.getCourseStatisticsForDetailView(7).subscribe(next);
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/management-detail` }).flush(detail);
+        expect(next).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ body: detail }));
+
+        courseManagementService.getCourseStatisticsForDetailView(8).subscribe(next);
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/8/management-detail` }).flush(null);
+        expect(next).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fetch a course with exercises, lectures, and competencies through its dedicated endpoint', () => {
+        courseManagementService.findWithExercisesAndLecturesAndCompetencies(course.id!).subscribe((response) => expect(response.body).toEqual(course));
+        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises-lectures-competencies`, returnedFromService, course);
+    });
+
+    it('should fetch the minimal course list for dropdowns', () => {
+        courseManagementService.findAllForDropdown().subscribe((response) => expect(response.body).toEqual([course]));
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-dropdown` }).flush([course]);
+    });
+
+    it('should fetch the limited course representation used by registration fallback', () => {
+        courseManagementService.findOneForRegistration(course.id!).subscribe((response) => expect(response.body).toEqual(course));
+        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-enrollment`, returnedFromService, course);
+    });
+
+    it('should fetch the course archive summaries without requesting full courses', () => {
+        const archives = [{ id: 7, title: 'Archived course' }];
+        courseManagementService.getCoursesForArchive().subscribe((response) => expect(response.body).toEqual(archives));
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-archive` }).flush(archives);
+    });
+
     describe('Semester collapse state storage', () => {
         it('should return false if no collapse state is stored', () => {
             const collapseState = courseManagementService.getSemesterCollapseStateFromStorage('2024');
@@ -526,6 +556,92 @@ describe('Course Management Service', () => {
             const retrieved = courseManagementService.getSemesterCollapseStateFromStorage(storageId);
             expect(retrieved).toBe(false);
         });
+    });
+
+    it('should not drop exercises a per-tab loader already published when the lean course lands afterwards', () => {
+        // The course record and the exercise list are separate requests that can finish in either order; the lean
+        // course must not wipe exercises that already arrived, or the exercises tab renders empty.
+        courseStorageService.updateCourse({ id: 7, exercises: [{ id: 99 }] } as Course);
+
+        const notificationSpy = vi.spyOn(courseNotificationService, 'updateNotificationCountMap');
+        let responseCourse: Course | null | undefined;
+        courseManagementService.findCourseForOverview(7).subscribe((response) => (responseCourse = response.body));
+        // The endpoint returns flat scalars now, not a nested course object
+        httpMock.expectOne({ method: 'GET', url: 'api/course/courses/7/for-overview' }).flush({ id: 7, title: 'Course', courseNotificationCount: 4 });
+
+        expect(responseCourse).toMatchObject({ id: 7, title: 'Course' });
+        expect(notificationSpy).toHaveBeenCalledExactlyOnceWith(7, 4);
+        expect(courseStorageService.getCourse(7)?.exercises).toHaveLength(1);
+        expect(courseStorageService.getCourse(7)?.exercises?.[0].id).toBe(99);
+        expect(courseStorageService.getCourse(7)?.title).toBe('Course');
+    });
+
+    it('should drop a stored course when the lean-course response is empty', () => {
+        const notificationSpy = vi.spyOn(courseNotificationService, 'updateNotificationCountMap');
+        // Seeded so the removal is observable: an empty response must not leave the previous course readable
+        courseStorageService.updateCourse({ id: 7, title: 'Course' } as Course);
+
+        courseManagementService.findCourseForOverview(7).subscribe((response) => expect(response.body).toBeNull());
+        httpMock.expectOne({ method: 'GET', url: 'api/course/courses/7/for-overview' }).flush(null);
+
+        expect(notificationSpy).not.toHaveBeenCalled();
+        expect(courseStorageService.getCourse(7)).toBeUndefined();
+    });
+
+    it('should convert and publish the exercise overview DTO and all score dimensions', () => {
+        const convertedExercise = { id: 42, title: 'Converted exercise', type: ExerciseType.TEXT } as Exercise;
+        const rawExercises = [{ id: 42, title: 'Raw exercise', type: ExerciseType.TEXT } as Exercise];
+        const overview = {
+            exercises: rawExercises,
+            totalScores: courseScores,
+            programmingScores: courseScores,
+            modelingScores: courseScores,
+            quizScores: courseScores,
+            textScores: courseScores,
+            fileUploadScores: courseScores,
+            participationResults: [participationResult],
+            achievedPointsPerVariantGroup: { 9: 7.5 },
+        } as CourseExercisesForOverviewDTO;
+        convertExercisesDateFromServerSpy.mockReturnValue([convertedExercise]);
+        const parseCategoriesSpy = vi.spyOn(ExerciseService, 'parseExerciseCategories');
+        const setTitleSpy = vi.spyOn(entityTitleService, 'setExerciseTitle');
+        const setTotalSpy = vi.spyOn(scoresStorageService, 'setStoredTotalScores');
+        const setTypesSpy = vi.spyOn(scoresStorageService, 'setStoredScoresPerExerciseType');
+        const setResultsSpy = vi.spyOn(scoresStorageService, 'setStoredParticipationResults');
+        const setGroupPointsSpy = vi.spyOn(scoresStorageService, 'setStoredAchievedPointsPerVariantGroup');
+
+        courseManagementService.findCourseExercisesForOverview(7).subscribe((response) => {
+            expect(response).toBe(overview);
+            expect(response.exercises).toEqual([convertedExercise]);
+        });
+        httpMock.expectOne({ method: 'GET', url: 'api/course/courses/7/exercises-for-overview' }).flush(overview);
+
+        expect(convertExercisesDateFromServerSpy).toHaveBeenCalledExactlyOnceWith(rawExercises);
+        expect(parseCategoriesSpy).toHaveBeenCalledExactlyOnceWith(convertedExercise);
+        expect(setTitleSpy).toHaveBeenCalledExactlyOnceWith(convertedExercise);
+        expect(setTotalSpy).toHaveBeenCalledExactlyOnceWith(7, courseScores);
+        expect(setTypesSpy).toHaveBeenCalledExactlyOnceWith(7, scoresPerExerciseType);
+        expect(setResultsSpy).toHaveBeenCalledExactlyOnceWith([participationResult]);
+        expect(setGroupPointsSpy).toHaveBeenCalledExactlyOnceWith(7, { 9: 7.5 });
+    });
+
+    it('should request the server-computed available tabs without deriving them on the client', () => {
+        const tabs: CourseAvailableTabs = {
+            lectures: true,
+            exams: false,
+            competencies: true,
+            tutorialGroups: false,
+            iris: true,
+            faq: false,
+            learningPaths: true,
+            communication: true,
+            training: false,
+        };
+
+        courseManagementService.getCourseAvailableTabs(7).subscribe((response) => expect(response).toEqual(tabs));
+        const request = httpMock.expectOne({ method: 'GET', url: 'api/course/courses/7/available-tabs' });
+        expect(request.request.params.keys()).toEqual([]);
+        request.flush(tabs);
     });
 });
 

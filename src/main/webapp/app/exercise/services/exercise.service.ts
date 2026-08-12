@@ -8,6 +8,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { map, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory, SerializedExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
@@ -72,6 +73,15 @@ export class ExerciseService {
     private entityTitleService = inject(EntityTitleService);
 
     public resourceUrl = 'api/exercise/exercises';
+
+    /**
+     * Fetches the id, title and type of the course exercises the user may see, for callers that only have to name
+     * exercises rather than show them.
+     * @param courseId the course to fetch the exercise titles for
+     */
+    getTitlesForCourse(courseId: number): Observable<ExerciseTitle[]> {
+        return this.http.get<ExerciseTitle[]>(`api/exercise/courses/${courseId}/exercise-titles`);
+    }
     public adminResourceUrl = 'api/exercise/admin/exercises';
     public courseResourceUrl = 'api/course/courses';
 
@@ -314,6 +324,17 @@ export class ExerciseService {
             exercise.dueDate = convertDateFromServer(exercise.dueDate);
             exercise.assessmentDueDate = convertDateFromServer(exercise.assessmentDueDate);
             exercise.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(exercise.studentParticipations);
+            // The embedded variant group carries the shared group timeline. Convert its dates too so the group-timeline
+            // lock dialog opens with real dayjs values; otherwise it would save the group back with missing dates and
+            // wipe the shared timeline.
+            const group = exercise.exerciseVariantGroup;
+            if (group) {
+                group.releaseDate = convertDateFromServer(group.releaseDate);
+                group.startDate = convertDateFromServer(group.startDate);
+                group.dueDate = convertDateFromServer(group.dueDate);
+                group.assessmentDueDate = convertDateFromServer(group.assessmentDueDate);
+                group.exampleSolutionPublicationDate = convertDateFromServer(group.exampleSolutionPublicationDate);
+            }
         }
         return exercise;
     }
@@ -361,6 +382,8 @@ export class ExerciseService {
             res.body.dueDate = convertDateFromServer(res.body.dueDate);
             res.body.assessmentDueDate = convertDateFromServer(res.body.assessmentDueDate);
             res.body.exampleSolutionPublicationDate = convertDateFromServer(res.body.exampleSolutionPublicationDate);
+            res.body.latestExamEndDate = convertDateFromServer(res.body.latestExamEndDate);
+            res.body.assessmentPossibleFrom = convertDateFromServer(res.body.assessmentPossibleFrom);
             res.body.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(res.body.studentParticipations);
         }
         return res;

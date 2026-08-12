@@ -32,6 +32,7 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
@@ -68,7 +69,7 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
         UnifiedFeedbackComponent,
     ],
 })
-export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {
     private websocketService = inject(WebsocketService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
@@ -136,7 +137,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     isAfterAssessmentDueDate = false;
     readonly isLoading = signal(true);
     readonly isLate = signal<boolean>(undefined!); // indicates if the submission is late
-    readonly isGeneratingFeedback = signal(false);
     ComplaintType = ComplaintType;
     readonly examMode = signal(false);
 
@@ -529,8 +529,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         } else if (result.successful === false) {
             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
         }
-
-        this.isGeneratingFeedback.set(false);
     }
 
     /**
@@ -628,7 +626,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    submit(): void {
+    submitExercise(): void {
         if (this.isSaving()) {
             // don't execute the function if it is already currently executing
             return;

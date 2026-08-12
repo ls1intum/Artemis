@@ -39,6 +39,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -246,13 +247,18 @@ public class LocalVCServletService {
 
         // The first request does not contain an authorizationHeader, the client expects this response
         if (authorizationHeader == null) {
-            throw new LocalVCAuthException("No authorization header provided");
+            throw new LocalVCAuthException("No authorization header provided", true);
         }
 
         // If it is a fetch request, we check if it is the build agent that is fetching the repository.
         if (repositoryAction == RepositoryActionType.READ) {
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
-            if (Objects.equals(usernameAndPassword.username(), buildAgentGitUsername) && Objects.equals(usernameAndPassword.password(), buildAgentGitPassword)) {
+            // A blank configured credential must never match: this shortcut returns ahead of the rate limit, the
+            // repository authorization checks and the access log, so an empty configured password would hand
+            // repository-wide read access to anyone presenting the build-agent username. ConfigurationValidator
+            // rejects that configuration under prod, but this path also runs where that validation does not.
+            if (StringUtils.hasText(buildAgentGitUsername) && StringUtils.hasText(buildAgentGitPassword) && Objects.equals(usernameAndPassword.username(), buildAgentGitUsername)
+                    && Objects.equals(usernameAndPassword.password(), buildAgentGitPassword)) {
                 // Authentication successful
                 return;
             }
@@ -458,13 +464,23 @@ public class LocalVCServletService {
         catch (AccessForbiddenException | AuthenticationException e) {
             // Git clients routinely send a request with an empty password (e.g. before a credential helper supplies one or when only the username is baked into the remote URL).
             // That is expected probing noise rather than a genuine failed login attempt, so log it at debug to keep the production logs focused on real credential issues.
-            if (passwordOrToken == null || passwordOrToken.isEmpty()) {
+            boolean missingPassword = passwordOrToken == null || passwordOrToken.isEmpty();
+            if (missingPassword) {
                 log.debug("Login attempt for user {} without a password; no credentials provided", username);
             }
             else {
                 log.warn("Failed login attempt for user {} due to issue: {}", username, e.getMessage());
             }
-            throw new LocalVCAuthException(e.getMessage());
+            throw new LocalVCAuthException(e.getMessage(), missingPassword);
+        }
+
+        // Account state is checked here, before any credential is compared, because it has to hold for every credential
+        // type. Only the password fall-through below goes through the authenticationManager, which checks `activated`
+        // itself; the three token branches return the user directly, so without this a deactivated or soft-deleted user
+        // kept full repository access through any token they had been issued earlier.
+        if (!user.getActivated() || user.isDeleted()) {
+            log.warn("Git authentication attempt for user {} whose account is deactivated or deleted", username);
+            throw new LocalVCAuthException("Account is not active");
         }
 
         // check user VCS access token
@@ -648,7 +664,7 @@ public class LocalVCServletService {
      */
     private UsernameAndPassword extractUsernameAndPassword(String authorizationHeader) throws LocalVCAuthException {
         if (authorizationHeader == null) {
-            throw new LocalVCAuthException("No authorization header provided");
+            throw new LocalVCAuthException("No authorization header provided", true);
         }
         String[] basicAuthCredentialsEncoded = authorizationHeader.split(" ");
 

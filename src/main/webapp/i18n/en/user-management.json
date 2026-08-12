@@ -91,6 +91,8 @@
             "registrationNumber": "Registration Number",
             "activated": "Activated",
             "deactivated": "Deactivated",
+            "isTestUser": "Test user",
+            "isTestUserTooltip": "Mark this account as a test or QA account. Test users are excluded from all usage statistics (e.g. the admin charts and the active-users counts). This flag is managed explicitly and is independent of the login.",
             "globalRoles": "Global Roles",
             "roles": {
                 "superAdmin": "Super Admin",
@@ -102,6 +104,7 @@
             },
             "langKey": "Language",
             "passwordTooltip": "This setting can only be changed for new users. Notice, that you can only set or change passwords for internal users.",
+            "revokeCredentials": "Revoke passkeys, SSH keys, and VCS access tokens",
             "internal": "Internal",
             "createdBy": "Created by",
             "createdDate": "Created date",

@@ -1,4 +1,4 @@
-import { Component, OnInit, Signal, computed, effect, inject, input, model, signal } from '@angular/core';
+import { Component, OnInit, Signal, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -51,6 +51,10 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     customizeBuildPlan = input<boolean | undefined>(undefined);
     skipAutomaticAfterDueDatePreview = input(false);
     exercise = input.required<ProgrammingExercise>();
+    /** When true the dates are governed by the exercise's variant group (see {@link ExerciseTimelineComponent}). */
+    lockedToGroup = input<boolean>(false);
+    /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
+    lockedClick = output<void>();
 
     releaseDate = model<Dayjs | undefined>();
     startDate = model<Dayjs | undefined>();

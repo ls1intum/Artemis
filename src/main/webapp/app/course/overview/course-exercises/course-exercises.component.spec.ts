@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
@@ -14,7 +14,7 @@ import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.componen
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
@@ -36,13 +36,25 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
     let component: CourseExercisesComponent;
     let courseStorageService: CourseStorageService;
     let exerciseService: ExerciseService;
+    let router: MockRouter;
+    let participationWebsocketBehaviorSubject: BehaviorSubject<Participation | undefined>;
+    let exerciseOverviewResponse: Subject<CourseExercisesForOverviewDTO>;
+    let loadExercisesForOverview: ReturnType<typeof vi.fn>;
 
     let course: Course;
     let exercise: Exercise;
@@ -53,9 +65,14 @@ describe('CourseExercisesComponent', () => {
     const route = {
         parent: parentRoute,
         queryParams: queryParamsSubject,
+        // Read by CourseTabRefreshService to work out the tab's own URL
+        pathFromRoot: [{ snapshot: { url: [{ path: 'courses' }, { path: '123' }] } }, { snapshot: { url: [{ path: 'exercises' }] } }],
     } as any as ActivatedRoute;
 
     beforeEach(async () => {
+        participationWebsocketBehaviorSubject = new BehaviorSubject<Participation | undefined>(undefined);
+        exerciseOverviewResponse = new Subject<CourseExercisesForOverviewDTO>();
+        loadExercisesForOverview = vi.fn(() => exerciseOverviewResponse.asObservable());
         TestBed.configureTestingModule({
             imports: [
                 FormsModule,
@@ -84,6 +101,20 @@ describe('CourseExercisesComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                {
+                    provide: ParticipationWebsocketService,
+                    useValue: {
+                        addParticipation: vi.fn(),
+                        getParticipationsForExercise: vi.fn(),
+                        subscribeForParticipationChanges: () => participationWebsocketBehaviorSubject,
+                        subscribeForLatestResultOfParticipation: vi.fn(() => new BehaviorSubject<Result | undefined>(undefined)),
+                        unsubscribeForLatestResultOfParticipation: vi.fn(),
+                        notifyAllResultSubscribers: vi.fn(),
+                        resetLocalCache: vi.fn(),
+                    },
+                },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: CourseOverviewExercisesService, useValue: { loadIfNeeded: loadExercisesForOverview } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -93,11 +124,13 @@ describe('CourseExercisesComponent', () => {
         component = fixture.componentInstance;
         courseStorageService = TestBed.inject(CourseStorageService);
         exerciseService = TestBed.inject(ExerciseService);
+        router = TestBed.inject(Router) as unknown as MockRouter;
 
         (component as any)._sidebarData.set({ groupByCategory: true, sidebarType: 'exercise', storageId: 'exercise' });
         course = new Course();
         course.id = 123;
         exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        exercise.id = 456;
         exercise.dueDate = dayjs('2021-01-13T16:11:00+01:00').add(1, 'days');
         exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
         course.exercises = [exercise];
@@ -115,6 +148,7 @@ describe('CourseExercisesComponent', () => {
     });
 
     afterEach(() => {
+        exerciseOverviewResponse.complete();
         vi.restoreAllMocks();
     });
 
@@ -125,6 +159,41 @@ describe('CourseExercisesComponent', () => {
         expect(component.course()).toEqual(course);
         // Component should be properly initialized with the course
         expect(component.courseId()).toBe(course.id);
+    });
+
+    it('should navigate only after a cold exercise load has been published to the shared course', () => {
+        const leanCourse = { id: course.id } as Course;
+        const courseUpdates = new Subject<Course>();
+        vi.mocked(courseStorageService.getCourse).mockReturnValue(leanCourse);
+        vi.mocked(courseStorageService.subscribeToCourseUpdates).mockReturnValue(courseUpdates);
+        const navigateSpy = vi.spyOn(component, 'navigateToExercise');
+
+        (component as any).initializeAfterCourseIdSet();
+
+        expect(loadExercisesForOverview).toHaveBeenLastCalledWith(course.id);
+        expect(component.course()).toBe(leanCourse);
+        expect(navigateSpy).not.toHaveBeenCalled();
+
+        courseUpdates.next(course);
+        exerciseOverviewResponse.next({ exercises: [exercise] } as CourseExercisesForOverviewDTO);
+
+        expect(component.course()).toBe(course);
+        expect(component.course()?.exercises).toEqual([exercise]);
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        courseUpdates.complete();
+    });
+
+    it.each([
+        ['/courses/123/exercises/group/7', true],
+        ['/courses/123/exercises/456', true],
+    ])('should recognize an exercise selection already encoded in %s without redirecting', (url, expectedSelected) => {
+        router.setUrl(url);
+        router.navigate.mockClear();
+
+        component.navigateToExercise();
+
+        expect((component as any)._exerciseSelected()).toBe(expectedSelected);
+        expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should display sidebar when course is provided', () => {
@@ -192,8 +261,7 @@ describe('CourseExercisesComponent', () => {
     });
 
     it('should provide sidebar toggle state to active exercise details', () => {
-        const exerciseDetails = Object.create(CourseExerciseDetailsComponent.prototype) as CourseExerciseDetailsComponent;
-        exerciseDetails.setSidebarToggle = vi.fn();
+        const exerciseDetails = { setSidebarToggle: vi.fn() };
         (component as any)._isCollapsed.set(false);
 
         component.onSubRouteActivate(exerciseDetails);
@@ -231,5 +299,131 @@ describe('CourseExercisesComponent', () => {
         expect(exerciseServiceStub).toHaveBeenCalledTimes(2);
         expect(exerciseServiceStub).toHaveBeenCalledWith(1);
         expect(exerciseServiceStub).toHaveBeenCalledWith(2);
+    });
+
+    it('should update sidebar participation data when a websocket participation change is received', () => {
+        const initialParticipation = new StudentParticipation();
+        initialParticipation.id = 1;
+        initialParticipation.testRun = false;
+        initialParticipation.initializationState = InitializationState.INITIALIZED;
+        initialParticipation.exercise = exercise;
+        exercise.studentParticipations = [initialParticipation];
+        (component as any)._course.set(course);
+        component.processExercises(course.exercises!);
+
+        const result = new Result();
+        result.id = 99;
+        const updatedParticipation = new StudentParticipation();
+        updatedParticipation.id = initialParticipation.id;
+        updatedParticipation.testRun = false;
+        updatedParticipation.initializationState = InitializationState.FINISHED;
+        updatedParticipation.exercise = exercise;
+        updatedParticipation.submissions = [{ id: 12, participation: updatedParticipation, results: [result] } as Submission];
+
+        participationWebsocketBehaviorSubject.next(updatedParticipation);
+
+        const ungroupedParticipation = component.sidebarData()?.ungroupedData?.[0].studentParticipation;
+        expect(ungroupedParticipation?.initializationState).toBe(InitializationState.FINISHED);
+        expect(ungroupedParticipation?.submissions?.[0].results?.[0]).toBe(result);
+
+        const groupedItems = Object.values(component.sidebarData()?.groupedData ?? {}).flatMap((group) => group.entityData);
+        const groupedParticipation = groupedItems.find((item) => item.id === exercise.id)?.studentParticipation;
+        expect(groupedParticipation?.initializationState).toBe(InitializationState.FINISHED);
+        expect(groupedParticipation?.submissions?.[0].results?.[0]).toBe(result);
+    });
+
+    it('should preserve an existing sidebar result when another exercise receives a websocket participation change', () => {
+        const textExercise = {
+            id: 789,
+            title: 'Text exercise',
+            type: ExerciseType.TEXT,
+            dueDate: dayjs('2021-01-13T16:11:00+01:00').add(1, 'days'),
+        } as Exercise;
+        const textResult = new Result();
+        textResult.id = 100;
+        const textParticipation = new StudentParticipation();
+        textParticipation.id = 10;
+        textParticipation.testRun = false;
+        textParticipation.initializationState = InitializationState.FINISHED;
+        textParticipation.exercise = textExercise;
+        textParticipation.submissions = [{ id: 20, participation: textParticipation, results: [textResult] } as Submission];
+        textExercise.studentParticipations = [textParticipation];
+
+        const modelingParticipation = new StudentParticipation();
+        modelingParticipation.id = 11;
+        modelingParticipation.testRun = false;
+        modelingParticipation.initializationState = InitializationState.INITIALIZED;
+        modelingParticipation.exercise = exercise;
+        exercise.studentParticipations = [modelingParticipation];
+
+        course.exercises = [textExercise, exercise];
+        (component as any)._course.set(course);
+        component.processExercises(course.exercises);
+
+        const staleTextExercise = {
+            ...textExercise,
+            studentParticipations: [
+                {
+                    id: textParticipation.id,
+                    testRun: false,
+                    initializationState: InitializationState.INITIALIZED,
+                    exercise: textExercise,
+                } as StudentParticipation,
+            ],
+        } as Exercise;
+        (component as any)._sortedExercises.set([staleTextExercise, exercise]);
+
+        const modelingResult = new Result();
+        modelingResult.id = 101;
+        const updatedModelingParticipation = new StudentParticipation();
+        updatedModelingParticipation.id = modelingParticipation.id;
+        updatedModelingParticipation.testRun = false;
+        updatedModelingParticipation.initializationState = InitializationState.FINISHED;
+        updatedModelingParticipation.exercise = exercise;
+        updatedModelingParticipation.submissions = [{ id: 21, participation: updatedModelingParticipation, results: [modelingResult] } as Submission];
+
+        participationWebsocketBehaviorSubject.next(updatedModelingParticipation);
+
+        const sidebarItems = component.sidebarData()?.ungroupedData ?? [];
+        const textSidebarParticipation = sidebarItems.find((item) => item.id === textExercise.id)?.studentParticipation;
+        expect(textSidebarParticipation?.initializationState).toBe(InitializationState.FINISHED);
+        expect(textSidebarParticipation?.submissions?.[0].results?.[0]).toBe(textResult);
+
+        const modelingSidebarParticipation = sidebarItems.find((item) => item.id === exercise.id)?.studentParticipation;
+        expect(modelingSidebarParticipation?.initializationState).toBe(InitializationState.FINISHED);
+        expect(modelingSidebarParticipation?.submissions?.[0].results?.[0]).toBe(modelingResult);
+    });
+
+    it('should not replace a different participation with the same test run flag', () => {
+        const firstParticipation = new StudentParticipation();
+        firstParticipation.id = 1;
+        firstParticipation.testRun = false;
+        firstParticipation.initializationState = InitializationState.FINISHED;
+        firstParticipation.exercise = exercise;
+
+        const secondParticipation = new StudentParticipation();
+        secondParticipation.id = 2;
+        secondParticipation.testRun = false;
+        secondParticipation.initializationState = InitializationState.INITIALIZED;
+        secondParticipation.exercise = exercise;
+
+        exercise.studentParticipations = [firstParticipation, secondParticipation];
+        (component as any)._course.set(course);
+        component.processExercises(course.exercises!);
+
+        const updatedSecondParticipation = new StudentParticipation();
+        updatedSecondParticipation.id = secondParticipation.id;
+        updatedSecondParticipation.testRun = false;
+        updatedSecondParticipation.initializationState = InitializationState.FINISHED;
+        updatedSecondParticipation.exercise = exercise;
+
+        participationWebsocketBehaviorSubject.next(updatedSecondParticipation);
+
+        const participations = (component as any)._sortedExercises()[0].studentParticipations as StudentParticipation[];
+        expect(participations).toHaveLength(2);
+        expect(participations[0].id).toBe(firstParticipation.id);
+        expect(participations[0].initializationState).toBe(InitializationState.FINISHED);
+        expect(participations[1].id).toBe(secondParticipation.id);
+        expect(participations[1].initializationState).toBe(InitializationState.FINISHED);
     });
 });

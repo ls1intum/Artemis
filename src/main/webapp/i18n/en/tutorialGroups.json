@@ -85,6 +85,8 @@
                 "freePeriodsButtons": "Holidays",
                 "creatTutorialGroupButton": "Create New Tutorial Group",
                 "editConfigurationButton": "Edit Global Configuration",
+                "configurationRequiredForTutor": "Tutorial group management is only available after an instructor has configured tutorial groups for this course.",
+                "notAuthorized": "You are not authorized to access the tutorial group management of this course.",
                 "deleteDialog": {
                     "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
                     "confirm": "Please enter the title of the tutorial group to confirm."
@@ -310,7 +312,6 @@
                 "explanation": "Define course wide days on which no tutorial groups should take place. This can be used to define holidays or other days on which no tutorial groups should take place.",
                 "title": "Tutorial Free Periods Management",
                 "createFreePeriodButton": "Add New Free Period",
-                "timeZoneExplanation": "Every day displayed in the time zone {{ timeZone }}",
                 "deleteDialog": {
                     "question": "Are you sure that you want to delete the tutorial group free day: {{ title }}?"
                 }
@@ -320,8 +321,7 @@
                 "edit": "Edit free day"
             },
             "tutorialGroupSessionManagement": {
-                "title": "Tutorial Group Session Management",
-                "timeZoneExplanation": "Every session displayed in the time zone {{ timeZone }}"
+                "title": "Tutorial Group Session Management"
             },
             "createTutorialGroupsConfiguration": {
                 "title": "Create global Tutorial Groups Configuration",

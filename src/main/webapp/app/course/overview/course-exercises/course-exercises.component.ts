@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
@@ -15,7 +16,31 @@ import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, Sideba
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+
+/**
+ * Minimal contract for exercise-details route components activated in the inner outlet.
+ * Using a duck-type guard instead of `instanceof CourseExerciseDetailsComponent` avoids
+ * a static import that would pull the entire ExerciseSplitPanel (+ Apollon + monaco) into
+ * the CourseExercisesComponent chunk, defeating the router's lazy `loadComponent`.
+ */
+interface ExerciseDetailsRef {
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void;
+}
+
+function isExerciseDetailsRef(component: unknown): component is ExerciseDetailsRef {
+    return !!component && typeof (component as ExerciseDetailsRef).setSidebarToggle === 'function';
+}
+
+function isStudentParticipationChange(participation: Participation | undefined): participation is StudentParticipation {
+    return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
+}
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -47,7 +72,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     styleUrls: ['../course-overview/course-overview.scss'],
     imports: [SidebarComponent, CourseSidebarToggleButtonComponent, NgStyle, RouterOutlet, TranslateDirective],
 })
-export class CourseExercisesComponent {
+export class CourseExercisesComponent implements SidebarView {
     private courseStorageService = inject(CourseStorageService);
     private route = inject(ActivatedRoute);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
@@ -56,8 +81,11 @@ export class CourseExercisesComponent {
     private ltiService = inject(LtiService);
     private exerciseService = inject(ExerciseService);
     private sessionStorageService = inject(SessionStorageService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
     private destroyRef = inject(DestroyRef);
     private changeDetectorRef = inject(ChangeDetectorRef);
+    private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     private readonly _course = signal<Course | undefined>(undefined);
     private readonly _courseId = signal<number>(0);
@@ -70,9 +98,10 @@ export class CourseExercisesComponent {
     private readonly _isShownViaLti = signal(false);
     private readonly _isMultiLaunch = signal(false);
     private readonly _multiLaunchExerciseIDs = signal<number[]>([]);
-    private readonly _activeExerciseDetails = signal<CourseExerciseDetailsComponent | undefined>(undefined);
+    private readonly _activeExerciseDetails = signal<ExerciseDetailsRef | undefined>(undefined);
     readonly pageTitle = signal<string>('');
     private courseUpdateSubscription?: Subscription;
+    private exercisesLoadSubscription?: Subscription;
 
     readonly course = this._course.asReadonly();
     readonly courseId = this._courseId.asReadonly();
@@ -91,6 +120,12 @@ export class CourseExercisesComponent {
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     constructor() {
+        // Selecting the exercises tab while already on it acts as a refresh
+        this.courseTabRefreshService
+            .reselections(this.route)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => this.loadExercises());
+
         this._isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('exercise'));
 
         this.route.parent!.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
@@ -112,8 +147,17 @@ export class CourseExercisesComponent {
             this._isMultiLaunch.set(isMultiLaunch);
         });
 
+        this.participationWebsocketService
+            .subscribeForParticipationChanges()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((changedParticipation) => this.handleParticipationChange(changedParticipation));
+
         effect(() => {
             this._activeExerciseDetails()?.setSidebarToggle(this._isCollapsed(), () => this.toggleSidebar());
+        });
+
+        this.destroyRef.onDestroy(() => {
+            this.exercisesLoadSubscription?.unsubscribe();
         });
     }
 
@@ -139,8 +183,23 @@ export class CourseExercisesComponent {
                 this.changeDetectorRef.markForCheck();
             });
 
-        // If no exercise is selected navigate to the lastSelected or upcoming exercise
-        this.navigateToExercise();
+        // The course container only loads the course itself; the exercises (with participations and scores) belong to
+        // this tab, so they are fetched here. Install the course-update subscription first: the overview service
+        // publishes the exercises there before emitting its response. Only then can last-selected/upcoming navigation
+        // reliably choose an exercise on a cold course entry. The statistics tab shares the same load.
+        this.loadExercises();
+    }
+
+    /**
+     * Fetches the exercises of the course without clearing what is on screen.
+     *
+     * Also the refresh path: selecting the exercises tab while already on it re-runs this, so a result that arrived or
+     * a due date that moved shows up without a page reload. The rendered list is replaced only once the response is
+     * in, so refreshing does not flash an empty tab.
+     */
+    private loadExercises(): void {
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(this._courseId()).subscribe(() => this.navigateToExercise());
     }
 
     navigateToExercise() {
@@ -153,15 +212,27 @@ export class CourseExercisesComponent {
             const url = this.router.url;
             const urlParts = url.split('/');
             const indexOfExercise = urlParts.indexOf('exercises');
-            if (indexOfExercise !== -1 && urlParts.length === indexOfExercise + 2) {
-                exerciseId = urlParts[indexOfExercise + 1];
+            if (indexOfExercise !== -1 && urlParts.length > indexOfExercise + 1) {
+                const segment = urlParts[indexOfExercise + 1];
+                // Already on a group detail page — treat as selected, no redirect needed.
+                if (segment === 'group') {
+                    this._exerciseSelected.set(true);
+                    return;
+                }
+                if (urlParts.length === indexOfExercise + 2) {
+                    exerciseId = segment;
+                }
             }
         }
 
         if (!exerciseId && lastSelectedExercise) {
             void this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
         } else if (!exerciseId && upcomingExercise) {
-            void this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
+            // A grouped upcoming exercise must open its group detail page, not a single raw variant, matching the
+            // sidebar's group route. Ungrouped exercises keep navigating directly to their exercise id.
+            const groupId = upcomingExercise.exerciseVariantGroup?.id;
+            const target = groupId !== undefined ? ['group', groupId] : [upcomingExercise.id];
+            void this.router.navigate(target, { relativeTo: this.route, replaceUrl: true });
         } else {
             this._exerciseSelected.set(!!exerciseId);
         }
@@ -204,11 +275,127 @@ export class CourseExercisesComponent {
     }
 
     processExercises(exercises: Exercise[]): void {
-        const sortedExercises = this.courseOverviewService.sortExercises(exercises);
+        const sortedExercises = this.courseOverviewService.sortExercises(this.preserveSidebarParticipationSnapshots(exercises));
         this._sortedExercises.set(sortedExercises);
-        this._sidebarExercises.set(this.courseOverviewService.mapExercisesToSidebarCardElements(sortedExercises));
-        this._accordionExerciseGroups.set(this.courseOverviewService.groupExercisesByDueDate(sortedExercises));
+        const { groupedData, ungroupedData } = this.courseOverviewService.buildGroupedExerciseData(sortedExercises, this._courseId());
+        this._sidebarExercises.set(ungroupedData);
+        this._accordionExerciseGroups.set(groupedData);
         this.updateSidebarData();
+    }
+
+    private preserveSidebarParticipationSnapshots(exercises: Exercise[]): Exercise[] {
+        const sidebarParticipationsByExerciseId = this.getSidebarParticipationsByExerciseId();
+        if (!sidebarParticipationsByExerciseId.size) {
+            return exercises;
+        }
+
+        let didUpdate = false;
+        const updatedExercises = exercises.map((exercise) => {
+            if (exercise.id === undefined) {
+                return exercise;
+            }
+
+            const sidebarParticipation = sidebarParticipationsByExerciseId.get(exercise.id);
+            if (!sidebarParticipation) {
+                return exercise;
+            }
+
+            const participations = exercise.studentParticipations ?? [];
+            const currentParticipation = participations.find((participation) => this.isSameParticipationSlot(participation, sidebarParticipation));
+            if (!this.shouldPreserveSidebarParticipation(sidebarParticipation, currentParticipation)) {
+                return exercise;
+            }
+
+            didUpdate = true;
+            const updatedParticipations = currentParticipation
+                ? participations.map((participation) => (this.isSameParticipationSlot(participation, sidebarParticipation) ? sidebarParticipation : participation))
+                : participations.concat(sidebarParticipation);
+            return { ...exercise, studentParticipations: updatedParticipations };
+        });
+        return didUpdate ? updatedExercises : exercises;
+    }
+
+    private getSidebarParticipationsByExerciseId(): Map<number, StudentParticipation> {
+        const sidebarParticipationsByExerciseId = new Map<number, StudentParticipation>();
+        this._sidebarExercises().forEach((sidebarExercise) => {
+            const exerciseId = sidebarExercise.exercise?.id ?? (typeof sidebarExercise.id === 'number' ? sidebarExercise.id : undefined);
+            if (exerciseId !== undefined && sidebarExercise.studentParticipation) {
+                sidebarParticipationsByExerciseId.set(exerciseId, sidebarExercise.studentParticipation);
+            }
+        });
+        return sidebarParticipationsByExerciseId;
+    }
+
+    private shouldPreserveSidebarParticipation(sidebarParticipation: StudentParticipation, currentParticipation: StudentParticipation | undefined): boolean {
+        if (!currentParticipation) {
+            return !!sidebarParticipation.initializationState || !!sidebarParticipation.submissions?.length;
+        }
+
+        const sidebarResultCount = getAllResultsOfAllSubmissions(sidebarParticipation.submissions).length;
+        const currentResultCount = getAllResultsOfAllSubmissions(currentParticipation.submissions).length;
+        return (
+            sidebarResultCount > currentResultCount ||
+            ((sidebarParticipation.submissions?.length ?? 0) > (currentParticipation.submissions?.length ?? 0) && sidebarResultCount >= currentResultCount) ||
+            (sidebarParticipation.initializationState === InitializationState.FINISHED && currentParticipation.initializationState !== InitializationState.FINISHED)
+        );
+    }
+
+    private handleParticipationChange(changedParticipation: Participation | undefined): void {
+        if (!isStudentParticipationChange(changedParticipation) || changedParticipation.exercise?.id === undefined) {
+            return;
+        }
+
+        this.updateCourseParticipationSnapshot(changedParticipation);
+        const sourceExercises = this._sortedExercises() ?? this._course()?.exercises;
+        const updatedExercises = this.updateExercisesWithParticipation(sourceExercises, changedParticipation);
+        if (!updatedExercises || updatedExercises === sourceExercises) {
+            return;
+        }
+        this.processExercises(updatedExercises);
+        this.changeDetectorRef.markForCheck();
+    }
+
+    private updateCourseParticipationSnapshot(changedParticipation: StudentParticipation): void {
+        const course = this._course();
+        const updatedCourseExercises = this.updateExercisesWithParticipation(course?.exercises, changedParticipation);
+        if (!course || !updatedCourseExercises || updatedCourseExercises === course.exercises) {
+            return;
+        }
+        // A different object has to be set: a signal only notifies when the reference changes. The exercise objects
+        // themselves are carried over by the assignment below, so live updates keep reaching what the cards render.
+        const updatedCourse = deepClone(course);
+        updatedCourse.exercises = updatedCourseExercises;
+        this._course.set(updatedCourse);
+    }
+
+    private updateExercisesWithParticipation(exercises: Exercise[] | undefined, changedParticipation: StudentParticipation): Exercise[] | undefined {
+        const exerciseId = changedParticipation.exercise?.id;
+        if (exerciseId === undefined || !exercises?.length) {
+            return exercises;
+        }
+
+        let didUpdate = false;
+        const updatedExercises = exercises.map((exercise) => {
+            if (exercise.id !== exerciseId) {
+                return exercise;
+            }
+
+            didUpdate = true;
+            const participations = exercise.studentParticipations ?? [];
+            const hasParticipation = participations.some((participation) => this.isSameParticipationSlot(participation, changedParticipation));
+            const updatedParticipations = hasParticipation
+                ? participations.map((participation) => (this.isSameParticipationSlot(participation, changedParticipation) ? changedParticipation : participation))
+                : participations.concat(changedParticipation);
+            return { ...exercise, studentParticipations: updatedParticipations };
+        });
+        return didUpdate ? updatedExercises : exercises;
+    }
+
+    private isSameParticipationSlot(participation: StudentParticipation, otherParticipation: StudentParticipation): boolean {
+        if (participation.id !== undefined && otherParticipation.id !== undefined) {
+            return participation.id === otherParticipation.id;
+        }
+        return !!participation.testRun === !!otherParticipation.testRun;
     }
 
     updateSidebarData() {
@@ -234,7 +421,7 @@ export class CourseExercisesComponent {
     }
 
     onSubRouteActivate(componentRef: unknown) {
-        if (componentRef instanceof CourseExerciseDetailsComponent) {
+        if (isExerciseDetailsRef(componentRef)) {
             this._activeExerciseDetails.set(componentRef);
         }
     }

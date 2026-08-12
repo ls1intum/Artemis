@@ -60,11 +60,16 @@
                     [readOnly]="readOnly"
                     [highlightDifferences]="highlightDifferences"
                     [resultId]="result()!.id!"
+                    [gradingCriteria]="exercise()?.gradingCriteria ?? []"
+                    [allFeedbacks]="assessments"
+                    [maxPoints]="getTotalMaxPoints(exercise())"
                 />
             }
         </div>
     } @else {
-        @if (!loadingInitialSubmission()) {
+        @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
+            <jhi-assessment-not-possible-yet [reason]="assessmentNotPossibleYetReason" />
+        } @else if (!loadingInitialSubmission()) {
             <div class="alert alert-warning text-center mt-4" role="alert">
                 <p jhiTranslate="artemisApp.fileUploadAssessment.notFound"></p>
                 <a [routerLink]="exerciseDashboardLink()" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
