@@ -95,18 +95,6 @@ class AccountSecurityEventServiceTest {
     }
 
     @Test
-    void testCompletedPasswordResetIsAuditedAndNotifiesTheAccountAddress() {
-        service.recordPasswordResetCompleted(user);
-
-        assertThat(capturedAuditEvent().getType()).isEqualTo(PASSWORD_RESET_COMPLETED);
-
-        ArgumentCaptor<MailRecipientDTO> recipient = ArgumentCaptor.forClass(MailRecipientDTO.class);
-        verify(mailSendingService).buildAndSendAsync(recipient.capture(), eq("email.notification.passwordResetCompleted.title"),
-                eq("mail/notification/passwordResetCompletedEmail"), anyMap());
-        assertThat(recipient.getValue().email()).isEqualTo("new@tum.de");
-    }
-
-    @Test
     void testEmailChangeNotifiesThePreviousAddressAndNotTheNewOne() {
         service.recordEmailChanged(user, "old@tum.de", "de");
 
@@ -137,8 +125,8 @@ class AccountSecurityEventServiceTest {
     void testAuditFailureDoesNotBreakTheAccountOperation() {
         doThrow(new RuntimeException("audit backend down")).when(auditEventRepository).add(any());
 
-        // A logging outage must not become an outage of password reset.
-        assertThatCode(() -> service.recordPasswordResetCompleted(user)).doesNotThrowAnyException();
+        // A logging outage must not become an outage of the account operation itself.
+        assertThatCode(() -> service.recordEmailChanged(user, "old@tum.de", "en")).doesNotThrowAnyException();
         // ... and the notification must still be attempted.
         verify(mailSendingService).buildAndSendAsync(any(), anyString(), anyString(), anyMap());
     }
@@ -157,6 +145,8 @@ class AccountSecurityEventServiceTest {
         // Routing and retention both key off the classifier: a type this service emits that is not classified as SECURITY
         // would be written to the wrong table and pruned on the short general schedule. The exact contents of the type
         // sets are asserted in AuditEventTypeClassifierTest; here the point is that this service's own events are covered.
+        // PASSWORD_RESET_COMPLETED is no longer emitted - passwordChanged(..., RESET) records a completed reset instead -
+        // but it stays in the list so rows written by an earlier build of this branch keep their security retention.
         for (String emittedType : List.of(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED, ACCOUNT_EMAIL_CHANGED, ACCOUNT_REGISTERED)) {
             assertThat(AuditEventTypeClassifier.classify(emittedType)).as("%s must be routed to the security audit log", emittedType).isEqualTo(AuditLogType.SECURITY);
             assertThat(SECURITY_EVENT_TYPES).contains(emittedType);

@@ -47,7 +47,13 @@ public class AuditEventConstants {
     /** A password reset was requested for an identifier that matches no account, or one that cannot be reset in Artemis. */
     public static final String PASSWORD_RESET_REQUEST_REJECTED = "PASSWORD_RESET_REQUEST_REJECTED";
 
-    /** A password reset was completed: an account's password was replaced using a reset key. */
+    /**
+     * A password reset was completed: an account's password was replaced using a reset key.
+     * <p>
+     * No longer written: a completed reset is recorded as {@link Constants#COMPLETE_PASSWORD_RESET} by
+     * {@code AccountSecurityNotificationService.passwordChanged}, which also reports what was revoked alongside it.
+     * Kept so that rows written by an earlier build of this branch are still classified as security events.
+     */
     public static final String PASSWORD_RESET_COMPLETED = "PASSWORD_RESET_COMPLETED";
 
     /** A user changed the e-mail address on their own account. */

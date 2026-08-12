@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.account.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_EMAIL_CHANGED;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_REGISTERED;
-import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_COMPLETED;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_REQUESTED;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_REQUEST_REJECTED;
 
@@ -88,16 +87,9 @@ public class AccountSecurityEventService {
         addAuditEvent(ANONYMOUS_PRINCIPAL, PASSWORD_RESET_REQUEST_REJECTED, Map.of("reason", reason));
     }
 
-    /**
-     * Records a completed password reset and tells the account owner that their password changed. The notice
-     * goes to the address currently on the account, so the owner learns about a reset they did not start.
-     *
-     * @param user the account whose password was reset
-     */
-    public void recordPasswordResetCompleted(User user) {
-        addAuditEvent(user.getLogin(), PASSWORD_RESET_COMPLETED, Map.of());
-        sendSecurityNotification(MailRecipientDTO.from(user), "email.notification.passwordResetCompleted.title", "mail/notification/passwordResetCompletedEmail", Map.of());
-    }
+    // A completed reset is recorded and announced by AccountSecurityNotificationService.passwordChanged with the RESET
+    // actor, called from UserService.completePasswordReset. That path also reports what was revoked alongside the reset,
+    // so a second notice here would only mean two audit rows and two near-identical emails for one reset.
 
     /**
      * Records a self-service e-mail change and notifies the <b>previous</b> address.

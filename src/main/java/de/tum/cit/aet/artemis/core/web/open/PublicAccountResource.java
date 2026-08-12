@@ -343,8 +343,9 @@ public class PublicAccountResource {
         if (user.isEmpty()) {
             throw new AccessForbiddenException("No user was found for this reset key");
         }
-        // Notifies the address currently on the account, so the owner learns about a reset they did not start.
-        accountSecurityEventService.recordPasswordResetCompleted(user.get());
+        // The completed reset is recorded and announced by UserService.completePasswordReset, through
+        // AccountSecurityNotificationService.passwordChanged with the RESET actor, which is also what carries the
+        // revocation summary. A second notice here would mean two audit rows and two near-identical emails per reset.
         return ResponseEntity.ok().build();
     }
 }
