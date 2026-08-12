@@ -31,6 +31,7 @@ import { FaqReferenceAction } from 'app/editor/monaco-editor/model/actions/commu
 import { UrlAction } from 'app/editor/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/editor/monaco-editor/model/actions/attachment.action';
 import { EmojiAction } from 'app/editor/monaco-editor/model/actions/emoji.action';
+import { EmojiCompletionAction } from 'app/editor/monaco-editor/model/actions/communication/emoji-completion.action';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
 import { ComponentPortal } from '@angular/cdk/portal';
@@ -195,6 +196,7 @@ describe('PostingsMarkdownEditor', () => {
                 expect.any(CodeAction),
                 expect.any(CodeBlockAction),
                 expect.any(EmojiAction),
+                expect.any(EmojiCompletionAction),
                 expect.any(UrlAction),
                 expect.any(AttachmentAction),
                 expect.any(ExerciseReferenceAction),
