@@ -191,6 +191,19 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     /**
+     * Stores the submission state of one exercise, then refreshes the result ETA.
+     *
+     * Assigning the entry keeps the outer map's identity — nothing observes it by reference, and copying it would
+     * duplicate every accumulated submission graph. The price is that this bypasses the {@link exerciseBuildState}
+     * setter, which is what recomputes the ETA, so it has to be recomputed here. Every direct write to the map goes
+     * through this method so the two cannot drift apart again.
+     */
+    private storeExerciseSubmissionState(exerciseId: number, exerciseSubmissionState: ExerciseSubmissionState): void {
+        this.exerciseBuildStateValue[exerciseId] = exerciseSubmissionState;
+        this.updateResultEta();
+    }
+
+    /**
      * Based on the number of building submissions, calculate the result eta.
      *
      */
@@ -752,10 +765,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 catchError(() => of({})),
             )
             .subscribe((exerciseBuildState: ExerciseSubmissionState) => {
-                // Assign the entry rather than copying the outer map: nothing observes that map by reference —
-                // subscribers receive the per-exercise state below — so cloning it would only duplicate every
-                // accumulated submission graph.
-                this.exerciseBuildState[exerciseId] = exerciseBuildState;
+                this.storeExerciseSubmissionState(exerciseId, exerciseBuildState);
                 this.exerciseBuildStateSubjects.get(exerciseId)?.next(exerciseBuildState);
             });
         return this.exerciseBuildStateSubjects
@@ -872,7 +882,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             // Now update the exercise build state object and start the build and result subscription regardless of the submission state.
             tap((submissionStateObj: ProgrammingSubmissionStateObj) => {
                 const exerciseSubmissionState = this.withSubmissionState(this.exerciseBuildState[exerciseId] ?? {}, participationId, submissionStateObj);
-                this.exerciseBuildState[exerciseId] = exerciseSubmissionState;
+                this.storeExerciseSubmissionState(exerciseId, exerciseSubmissionState);
                 this.subscribeForNewResult(participationId, exerciseId, personal);
             }),
         );
