@@ -208,6 +208,24 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
     }
 
     @Test
+    void generateAssessmentCriteriaRejectsInvalidRegularSubtotal() {
+        mockResponse(validBonusResponse());
+        var request = new AssessmentCriteriaGenerationRequestDTO("Explain idempotency.", 4.0, 2.0, "Be precise.", "An idempotent operation can be repeated.", null);
+
+        assertThatThrownBy(() -> service.generateAssessmentCriteria(course(1L), request)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("regular");
+    }
+
+    @Test
+    void generateAssessmentCriteriaRejectsInvalidBonusSubtotal() {
+        mockResponse(validBonusResponse());
+        var request = new AssessmentCriteriaGenerationRequestDTO("Explain idempotency.", 3.0, 1.0, "Be precise.", "An idempotent operation can be repeated.", null);
+
+        assertThatThrownBy(() -> service.generateAssessmentCriteria(course(1L), request)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("bonus");
+    }
+
+    @Test
     void generateAssessmentCriteriaRejectsGeneratedIds() {
         mockResponse(VALID_RESPONSE.replace("\"title\": \"Correctness\"", "\"id\": 123, \"title\": \"Correctness\""));
 
