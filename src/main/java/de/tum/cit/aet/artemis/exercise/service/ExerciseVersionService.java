@@ -143,17 +143,22 @@ public class ExerciseVersionService {
      * @param author         The user who created the version
      */
     public void createExerciseVersion(Exercise targetExercise, User author) {
-        exerciseVersionExecutor.execute(() -> createExerciseVersionInternal(targetExercise, author));
+        // Read on the calling thread for the same reason the author is: the client session id lives in the request, and the
+        // executor thread has no request context. Without it the new commit alert carries no origin, so the editor that
+        // caused the commit cannot recognise the alert as its own and warns the user about their own submit.
+        String clientSessionId = ExerciseEditorSyncService.getClientSessionId();
+        exerciseVersionExecutor.execute(() -> createExerciseVersionInternal(targetExercise, author, clientSessionId));
     }
 
     /**
      * Creates an exercise version: fetches the exercise eagerly for its type, initializes an {@link ExerciseSnapshotDTO}
      * and persists a new {@link ExerciseVersion}. Runs on the {@code exerciseVersionExecutor} thread.
      *
-     * @param targetExercise The exercise to create a version of
-     * @param author         The user who created the version
+     * @param targetExercise  The exercise to create a version of
+     * @param author          The user who created the version
+     * @param clientSessionId the session of the client that triggered this version, or null when no request did
      */
-    private void createExerciseVersionInternal(Exercise targetExercise, User author) {
+    private void createExerciseVersionInternal(Exercise targetExercise, User author, @Nullable String clientSessionId) {
         if (author == null) {
             log.error("No active user during exercise version creation check");
             return;
@@ -188,7 +193,7 @@ public class ExerciseVersionService {
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
             ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
             this.determineSynchronizationForActiveEditors(exercise.getId(), exerciseSnapshot, previousVersion.map(ExerciseVersion::getExerciseSnapshot).orElse(null), author,
-                    savedExerciseVersion.getId());
+                    savedExerciseVersion.getId(), clientSessionId);
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
             previousVersion.ifPresent(prev -> {
                 try {
@@ -257,9 +262,11 @@ public class ExerciseVersionService {
      * @param previousSnapshot     the previous snapshot (optional)
      * @param author               the author of the new version
      * @param newExerciseVersionId the id of the new exercise version
+     * @param clientSessionId      the session of the client that triggered this version, so its own editor can filter the
+     *                                 alert out again, or null when no request triggered it
      */
     private void determineSynchronizationForActiveEditors(Long exerciseId, ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot, User author,
-            Long newExerciseVersionId) {
+            Long newExerciseVersionId, @Nullable String clientSessionId) {
         if (previousSnapshot == null || newSnapshot == null) {
             return;
         }
@@ -304,7 +311,7 @@ public class ExerciseVersionService {
             // to refresh
             // For problem statement changes, changes are broadcasted via client-to-client
             // messages.
-            exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId);
+            exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId, clientSessionId);
         }
         if (!changedFields.isEmpty()) {
             exerciseEditorSyncService.broadcastNewExerciseVersionAlert(exerciseId, newExerciseVersionId, author, changedFields);
