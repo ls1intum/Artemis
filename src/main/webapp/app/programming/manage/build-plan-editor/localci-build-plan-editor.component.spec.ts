@@ -168,6 +168,33 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.phases()).toEqual(phasesB);
     });
 
+    it('should ignore a stale participation error once a different exercise is active', () => {
+        const exerciseA = { id: 7, buildConfig: { buildPlanConfiguration, timeoutSeconds: 60 } } as unknown as ProgrammingExercise;
+        const exerciseB = { id: 8, buildConfig: { buildPlanConfiguration, timeoutSeconds: 120 } } as unknown as ProgrammingExercise;
+
+        // exercise A's participation lookup is deferred so it can fail after B has become active; B's resolves at once
+        const participationResponseA = new Subject<HttpResponse<ProgrammingExercise>>();
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
+            .mockReturnValueOnce(participationResponseA.asObservable())
+            .mockReturnValueOnce(of(new HttpResponse<ProgrammingExercise>({ body: { id: 8 } as ProgrammingExercise })));
+        const errorStub = vi.spyOn(alertService, 'error');
+
+        const routeData = new Subject<{ exercise: ProgrammingExercise }>();
+        activatedRoute.data = routeData.asObservable();
+        comp.ngOnInit();
+
+        routeData.next({ exercise: exerciseA });
+        routeData.next({ exercise: exerciseB });
+        expect(comp.programmingExercise()?.id).toBe(8);
+
+        // A's lookup fails late; the stale error must not replace the active exercise nor surface an alert for the
+        // exercise that is no longer on screen (404 surfaces an alert via onError, unlike a 500)
+        participationResponseA.error(new HttpErrorResponse({ status: 404 }));
+
+        expect(comp.programmingExercise()?.id).toBe(8);
+        expect(errorStub).not.toHaveBeenCalled();
+    });
+
     it('should keep the editor usable and surface an alert when loading the participations fails', () => {
         const exercise = { id: 7, buildConfig: { buildPlanConfiguration, timeoutSeconds: 90 } } as unknown as ProgrammingExercise;
         activatedRoute.data = of({ exercise });

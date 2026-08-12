@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
-import { FormsModule, NgModel } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -42,8 +42,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     readonly memory = signal<number | undefined>(undefined);
     readonly memorySwap = signal<number | undefined>(undefined);
     dockerFlags: DockerFlags = {};
-
-    timeoutField = viewChild<NgModel>('timeoutField');
 
     readonly envVarKeyTemplate = viewChild<CellTemplateRef<[string, string]>>('envVarKeyTemplate');
     readonly envVarValueTemplate = viewChild<CellTemplateRef<[string, string]>>('envVarValueTemplate');

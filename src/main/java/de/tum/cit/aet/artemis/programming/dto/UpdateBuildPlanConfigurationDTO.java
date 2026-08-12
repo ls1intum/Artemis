@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.programming.dto;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_DOCKER_FLAGS_LENGTH;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
 
@@ -21,5 +24,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude()
-public record UpdateBuildPlanConfigurationDTO(@Valid @NotNull BuildPlanPhasesDTO buildPlan, @PositiveOrZero int timeoutSeconds, @Nullable String dockerFlags) {
+public record UpdateBuildPlanConfigurationDTO(@Valid @NotNull BuildPlanPhasesDTO buildPlan, @PositiveOrZero int timeoutSeconds,
+        @Nullable @Size(max = MAX_DOCKER_FLAGS_LENGTH) String dockerFlags) {
 }

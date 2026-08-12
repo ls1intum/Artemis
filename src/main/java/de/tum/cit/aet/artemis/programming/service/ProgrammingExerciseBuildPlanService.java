@@ -185,7 +185,8 @@ public class ProgrammingExerciseBuildPlanService {
             throw new BadRequestAlertException("The build plan configuration is too large to be processed", "buildConfig", "buildPlanConfigurationTooLarge");
         }
         buildConfig.setBuildPlanConfiguration(serializedBuildPlanConfiguration);
-        // the structured phases configuration supersedes any legacy build script
+        // buildScript is a transient field with no column, so this persists nothing; it only clears the field on the
+        // returned build config. The stored structured configuration supersedes any legacy build script at build time.
         buildConfig.setBuildScript(null);
         buildConfig.setTimeoutSeconds(buildPlanConfiguration.timeoutSeconds());
         buildConfig.setDockerFlags(buildPlanConfiguration.dockerFlags());
@@ -195,6 +196,8 @@ public class ProgrammingExerciseBuildPlanService {
         // regular editing path would reject. This runs before any save, so a rejected payload leaves the config unchanged.
         programmingExerciseValidationService.validateDockerFlags(programmingExercise);
 
+        // this endpoint is LocalCI-only, so updateBuildPlanForExercise never takes its non-LocalCI delete-and-recreate
+        // branch here; it is still called for parity with the shared full exercise update path
         updateBuildPlanForExercise(originalBuildPlanConfiguration, programmingExercise);
 
         return programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);

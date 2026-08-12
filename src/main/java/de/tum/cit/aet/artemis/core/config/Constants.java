@@ -33,6 +33,13 @@ public final class Constants {
 
     public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
 
+    /**
+     * Upper bound for the serialized Docker flags string of a build plan configuration. It mirrors the 1 MB cap the
+     * structured build plan is parsed under, so the whole build config payload is uniformly size bounded and an abusive
+     * flags string is rejected up front rather than persisted.
+     */
+    public static final int MAX_DOCKER_FLAGS_LENGTH = 1024 * 1024;
+
     public static final int MAX_PACKAGE_NAME_LENGTH = 100;
 
     /**
