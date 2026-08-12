@@ -64,7 +64,7 @@ public class StudentExamAthenaFeedbackService {
      * Rejects the request if the student has already reserved {@link #allowedFeedbackRequests} attempts against the
      * cross-attempt cap for this exam, or if no exercise in the attempt has Athena formative feedback enabled at the
      * course level. The cap check and the reservation of this attempt's slot happen atomically in a single database
-     * statement (see {@link StudentExamRepository#reserveAthenaFeedbackRequestIfBelowCap}), so concurrent requests -
+     * transaction (see {@link StudentExamRepository#reserveAthenaFeedbackRequestIfBelowCap}), so concurrent requests -
      * whether for this attempt or another attempt of the same user/exam - cannot both observe a cap that has not yet
      * been reached. Individual submissions that already have an Athena result are skipped silently inside the async
      * dispatch in {@code generateAutomaticFeedbackForTestExamAsync}, so remaining unassessed submissions in the same

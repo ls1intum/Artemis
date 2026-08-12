@@ -81,7 +81,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 exercise.mode,
                 exercise.includedInOverallScore,
                 exercise.presentationScoreEnabled,
-                exercise.allowFeedbackRequests,
+                COALESCE(athenaConfig.formativeFeedbackEnabled, FALSE),
                 programmingExercise.allowOnlineEditor,
                 programmingExercise.allowOfflineIde,
                 programmingExercise.staticCodeAnalysisEnabled,
@@ -97,6 +97,8 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise exercise
                 LEFT JOIN ProgrammingExercise programmingExercise ON exercise.id = programmingExercise.id
                 LEFT JOIN exercise.exerciseVariantGroup variantGroup
+                LEFT JOIN exercise.course course
+                LEFT JOIN course.athenaConfig athenaConfig
             WHERE exercise.course.id = :courseId
                 AND (:includeUnreleased = TRUE OR exercise.releaseDate IS NULL OR exercise.releaseDate <= :calculationTime)
                 AND (:requireLtiLaunch = FALSE OR EXISTS (

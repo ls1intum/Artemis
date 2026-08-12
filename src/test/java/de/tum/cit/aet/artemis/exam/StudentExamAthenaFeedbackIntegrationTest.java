@@ -9,6 +9,12 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -446,6 +452,58 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             assertThat(firstReserved).isEqualTo(1);
             assertThat(secondReserved).isZero();
+        }
+
+        @Test
+        void reserveAthenaFeedbackRequestIfBelowCap_shouldOnlyLetOneOfTwoConcurrentAttemptsForDifferentAttemptsThrough() throws Exception {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+
+            StudentExam firstAttempt = examUtilService.addStudentExamForTestExam(testExam, student);
+            StudentExam secondAttempt = examUtilService.addStudentExamForTestExam(testExam, student);
+
+            Long firstAttemptId = firstAttempt.getId();
+            Long secondAttemptId = secondAttempt.getId();
+            Long studentId = student.getId();
+            Long examId = testExam.getId();
+
+            // Genuine concurrency (separate threads, each opening its own transaction/connection) is required to expose
+            // the bug this test guards against: a plain "count reserved attempts, then update the target row" sequence
+            // lets two transactions targeting different attempt rows each lock only their own row, so both can observe
+            // the same pre-reservation count and both succeed past the cap. Calling the same method twice sequentially
+            // from one thread cannot reproduce this, since the first call's transaction always commits before the
+            // second one starts.
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+            CountDownLatch readyLatch = new CountDownLatch(2);
+            CountDownLatch startLatch = new CountDownLatch(1);
+            try {
+                Callable<Integer> reserveFirstAttempt = () -> {
+                    readyLatch.countDown();
+                    startLatch.await();
+                    return studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(firstAttemptId, studentId, examId, ZonedDateTime.now(), 1);
+                };
+                Callable<Integer> reserveSecondAttempt = () -> {
+                    readyLatch.countDown();
+                    startLatch.await();
+                    return studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(secondAttemptId, studentId, examId, ZonedDateTime.now(), 1);
+                };
+
+                Future<Integer> firstReservedFuture = executor.submit(reserveFirstAttempt);
+                Future<Integer> secondReservedFuture = executor.submit(reserveSecondAttempt);
+                assertThat(readyLatch.await(5, TimeUnit.SECONDS)).isTrue();
+                startLatch.countDown();
+
+                int firstReserved = firstReservedFuture.get(10, TimeUnit.SECONDS);
+                int secondReserved = secondReservedFuture.get(10, TimeUnit.SECONDS);
+
+                assertThat(firstReserved + secondReserved).isEqualTo(1);
+            }
+            finally {
+                executor.shutdownNow();
+            }
         }
     }
 

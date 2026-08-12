@@ -196,7 +196,6 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
                 exercise.setBonusPoints(0.0);
                 exercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
                 exercise.setDueDate(ZonedDateTime.now().plusDays(2));
-                exercise.setAllowFeedbackRequests(true);
                 ((ProgrammingExercise) exercise).setAllowOnlineEditor(true);
                 ((ProgrammingExercise) exercise).setAllowOfflineIde(true);
             }
