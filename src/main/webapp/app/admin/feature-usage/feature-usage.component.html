@@ -265,7 +265,7 @@
                         <td class="text-end">{{ row.callCount ? row.maxDurationMs : '-' }}</td>
                         <td>{{ row.lastUsedDay ?? '-' }}</td>
                         <td>
-                            @if (row.featureId !== undefined && row.callCount > 0) {
+                            @if (row.callCount > 0) {
                                 <button
                                     tumUiButton
                                     severity="secondary"

@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -94,12 +95,15 @@ public class FeatureUsageQueryService {
     /**
      * Returns the daily usage of one feature over the last {@code days} days.
      *
-     * @param featureId the feature to chart
-     * @param days      the length of the window
+     * @param featureIds the inventory rows behind the feature, summed per day
+     * @param days       the length of the window
      * @return the daily totals in chronological order, without the days that saw no usage
      */
-    public List<FeatureUsageTrendPointDTO> getTrend(long featureId, int days) {
-        return featureUsageStatisticsRepository.findDailyUsageSince(featureId, LocalDate.now(ZoneOffset.UTC).minusDays(days - 1L));
+    public List<FeatureUsageTrendPointDTO> getTrend(Collection<Long> featureIds, int days) {
+        if (featureIds.isEmpty()) {
+            return List.of();
+        }
+        return featureUsageStatisticsRepository.findDailyUsageSince(featureIds, LocalDate.now(ZoneOffset.UTC).minusDays(days - 1L));
     }
 
     /**

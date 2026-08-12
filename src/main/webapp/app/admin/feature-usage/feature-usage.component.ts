@@ -295,12 +295,12 @@ export class FeatureUsageComponent implements OnInit {
      * request per underlying endpoint, which is not worth it for a chart.
      */
     showTrend(row: FeatureUsageRow): void {
-        if (row.featureId === undefined) {
+        if (row.featureIds.length === 0) {
             return;
         }
         this.selectedTrendRow.set(row);
         this.trendPoints.set(undefined);
-        this.featureUsageService.getTrend(row.featureId, this.selectedWindow()).subscribe({
+        this.featureUsageService.getTrend(row.featureIds, this.selectedWindow()).subscribe({
             next: (points) => this.trendPoints.set(points),
             error: (error) => this.alertService.error(error.message),
         });
@@ -394,7 +394,7 @@ function toRow(key: string, entry: FeatureUsageEntry, labelled: boolean): Featur
         endpointCount: 1,
         identifiers: [entry.identifier],
         retired: !!entry.retired,
-        featureId: entry.featureId,
+        featureIds: [entry.featureId],
         callCount: entry.callCount ?? 0,
         errorCount: entry.errorCount ?? 0,
         errorRate: 0,
@@ -411,8 +411,7 @@ function mergeInto(row: FeatureUsageRow, entry: FeatureUsageEntry): void {
     row.identifiers.push(entry.identifier);
     // A label counts as retired only once every endpoint behind it is gone; while one remains, the feature still exists.
     row.retired = row.retired && !!entry.retired;
-    // An aggregated row has no single feature to chart.
-    row.featureId = undefined;
+    row.featureIds.push(entry.featureId);
     row.callCount += entry.callCount ?? 0;
     row.errorCount += entry.errorCount ?? 0;
     row.durationSumMs += entry.durationSumMs ?? 0;

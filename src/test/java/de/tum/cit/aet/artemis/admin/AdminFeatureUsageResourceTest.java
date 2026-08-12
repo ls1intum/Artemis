@@ -226,11 +226,32 @@ class AdminFeatureUsageResourceTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldReturnTheDailyTrendOfAFeature() throws Exception {
-        List<FeatureUsageTrendPointDTO> trend = request.get("/api/admin/feature-usage/trend?featureId=" + usedFeature.getId() + "&days=7", HttpStatus.OK, new TypeReference<>() {
+        List<FeatureUsageTrendPointDTO> trend = request.get("/api/admin/feature-usage/trend?featureIds=" + usedFeature.getId() + "&days=7", HttpStatus.OK, new TypeReference<>() {
         });
 
         assertThat(trend).hasSize(2).isSortedAccordingTo((first, second) -> first.usageDay().compareTo(second.usageDay()));
         assertThat(trend.getLast().callCount()).isEqualTo(10);
+    }
+
+    /**
+     * A labelled feature is served by several endpoints, so the chart has to sum them. Charting one of them would report a
+     * fraction of the feature's usage as the feature's usage.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldSumTheTrendAcrossEveryEndpointOfAFeature() throws Exception {
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        // the bucket is removed with its feature in the cleanup, the foreign key cascades
+        featureUsageDailyRepository.save(new FeatureUsageDaily(retiredFeature.getId(), today, Role.STUDENT, 7, 0, 70, 20));
+
+        List<FeatureUsageTrendPointDTO> trend = request.get(
+                "/api/admin/feature-usage/trend?featureIds=" + usedFeature.getId() + "&featureIds=" + retiredFeature.getId() + "&days=7", HttpStatus.OK, new TypeReference<>() {
+                });
+
+        assertThat(trend).isNotEmpty();
+        // 10 from one endpoint and 7 from the other, on the same day
+        assertThat(trend.getLast().usageDay()).isEqualTo(today);
+        assertThat(trend.getLast().callCount()).isEqualTo(17);
     }
 
     @Test

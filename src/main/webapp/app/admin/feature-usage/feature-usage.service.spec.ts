@@ -51,11 +51,12 @@ describe('FeatureUsageService', () => {
         request.flush({ days: 30, from: '2026-07-07', trackedFeatures: 0, unusedFeatures: 0, retiredFeatures: 0, totalCalls: 0 });
     });
 
-    it('should request the trend of a single feature', () => {
-        service.getTrend(42, 30).subscribe();
+    it('should request the trend of every endpoint behind a feature', () => {
+        service.getTrend([42, 43], 30).subscribe();
 
         const request = httpMock.expectOne((candidate) => candidate.url === 'api/admin/feature-usage/trend');
-        expect(request.request.params.get('featureId')).toBe('42');
+        // repeated rather than joined, so the server sees a list and can sum across the endpoints of one feature
+        expect(request.request.params.getAll('featureIds')).toEqual(['42', '43']);
         expect(request.request.params.get('days')).toBe('30');
         request.flush([]);
     });

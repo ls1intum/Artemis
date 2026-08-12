@@ -28,8 +28,9 @@ export class FeatureUsageService {
      * @param featureId the feature to chart
      * @param days length of the window in days
      */
-    getTrend(featureId: number, days: number): Observable<FeatureUsageTrendPoint[]> {
-        return this.http.get<FeatureUsageTrendPoint[]>(`${this.resourceUrl}/trend`, { params: { featureId, days } });
+    getTrend(featureIds: number[], days: number): Observable<FeatureUsageTrendPoint[]> {
+        // repeated rather than joined, because a labelled feature covers several endpoints and the chart sums all of them
+        return this.http.get<FeatureUsageTrendPoint[]>(`${this.resourceUrl}/trend`, { params: { featureIds, days } });
     }
 
     /**

@@ -148,8 +148,8 @@ describe('FeatureUsageComponent', () => {
         // days cannot be summed across endpoints, the largest is the correct lower bound
         expect(row!.activeDays).toBe(5);
         expect(row!.lastUsedDay).toBe('2026-08-05');
-        // an aggregated row has no single feature to chart
-        expect(row!.featureId).toBeUndefined();
+        // both endpoints stay addressable, so the chart can cover the whole feature
+        expect(row!.featureIds).toEqual([1, 2]);
     });
 
     it('should count the headline numbers in features rather than in endpoints', () => {
@@ -168,7 +168,7 @@ describe('FeatureUsageComponent', () => {
         const row = component.allRows().find((candidate) => candidate.feature === 'push/assignment');
         expect(row).toBeDefined();
         expect(row!.endpointCount).toBe(1);
-        expect(row!.featureId).toBe(3);
+        expect(row!.featureIds).toEqual([3]);
         expect(row!.featureKind).toBe(FeatureKind.GIT);
     });
 
@@ -304,19 +304,20 @@ describe('FeatureUsageComponent', () => {
 
         component.showTrend(component.allRows().find((row) => row.feature === 'push/assignment')!);
 
-        expect(trendSpy).toHaveBeenCalledWith(3, 30);
+        expect(trendSpy).toHaveBeenCalledWith([3], 30);
         expect(component.trendPoints()).toHaveLength(1);
         expect(component.trendChartData()).toBeDefined();
     });
 
-    it('should not attempt a trend for an aggregated row', () => {
+    it('should chart every endpoint of an aggregated row', () => {
         component.ngOnInit();
-        const trendSpy = vi.spyOn(featureUsageService, 'getTrend');
+        const trendSpy = vi.spyOn(featureUsageService, 'getTrend').mockReturnValue(of([{ usageDay: '2026-08-05', callCount: 40 }]));
 
         component.showTrend(component.allRows().find((row) => row.feature === 'static-code-analysis')!);
 
-        expect(trendSpy).not.toHaveBeenCalled();
-        expect(component.selectedTrendRow()).toBeUndefined();
+        // charting one of the two endpoints would report a fraction of the feature's usage as the feature's usage
+        expect(trendSpy).toHaveBeenCalledWith([1, 2], 30);
+        expect(component.selectedTrendRow()?.feature).toBe('static-code-analysis');
     });
 
     it('should filter the adoption entries as well', () => {

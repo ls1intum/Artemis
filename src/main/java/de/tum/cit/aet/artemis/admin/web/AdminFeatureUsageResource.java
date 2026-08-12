@@ -49,6 +49,9 @@ public class AdminFeatureUsageResource {
      */
     private static final List<Integer> ALLOWED_WINDOWS_IN_DAYS = List.of(7, 30, 90, 180);
 
+    /** Bounds the {@code IN} clause of the trend query. The largest labelled feature covers a few dozen endpoints. */
+    private static final int MAX_TREND_FEATURE_IDS = 200;
+
     private final FeatureUsageQueryService featureUsageQueryService;
 
     private final FeatureUsageDigestScheduleService featureUsageDigestScheduleService;
@@ -72,16 +75,23 @@ public class AdminFeatureUsageResource {
     }
 
     /**
-     * GET admin/feature-usage/trend : the daily usage of a single feature, for the trend chart.
+     * GET admin/feature-usage/trend : the daily usage of one feature, for the trend chart.
+     * <p>
+     * Takes a list of ids rather than one, because a feature is usually served by several endpoints and the chart has to
+     * cover all of them. Repeated as {@code featureIds=1&featureIds=2}.
      *
-     * @param featureId the feature to chart
-     * @param days      the length of the window, one of 7, 30, 90 or 180
+     * @param featureIds the inventory rows behind the feature, at most {@value #MAX_TREND_FEATURE_IDS}
+     * @param days       the length of the window, one of 7, 30, 90 or 180
      * @return the ResponseEntity with status 200 (OK) and the daily totals in the body
      */
     @GetMapping("feature-usage/trend")
-    public ResponseEntity<List<FeatureUsageTrendPointDTO>> getFeatureUsageTrend(@RequestParam long featureId, @RequestParam(defaultValue = "30") int days) {
-        log.debug("REST request to get the usage trend of feature {} over the last {} days", featureId, days);
-        return ResponseEntity.ok(featureUsageQueryService.getTrend(featureId, validateWindow(days)));
+    public ResponseEntity<List<FeatureUsageTrendPointDTO>> getFeatureUsageTrend(@RequestParam List<Long> featureIds, @RequestParam(defaultValue = "30") int days) {
+        log.debug("REST request to get the usage trend of {} features over the last {} days", featureIds.size(), days);
+        if (featureIds.size() > MAX_TREND_FEATURE_IDS) {
+            // the largest labelled feature covers a few dozen endpoints, so anything beyond this is not a real chart request
+            throw new BadRequestAlertException("At most " + MAX_TREND_FEATURE_IDS + " features can be charted at once", ENTITY_NAME, "tooManyFeatures");
+        }
+        return ResponseEntity.ok(featureUsageQueryService.getTrend(featureIds, validateWindow(days)));
     }
 
     /**

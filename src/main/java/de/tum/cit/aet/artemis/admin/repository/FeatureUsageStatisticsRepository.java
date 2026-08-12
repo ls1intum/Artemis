@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -159,17 +160,18 @@ public interface FeatureUsageStatisticsRepository extends ArtemisJpaRepository<T
     /**
      * Returns the daily calls of a single feature, for the trend chart. Days without usage are absent.
      *
-     * @param featureId the feature to chart
-     * @param from      the first day to include
+     * @param featureIds the inventory rows to chart, summed per day. A labelled feature usually covers several endpoints,
+     *                       and a chart of one of them would not be the chart of the feature.
+     * @param from       the first day to include
      * @return the daily totals in chronological order
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.admin.dto.FeatureUsageTrendPointDTO(bucket.usageDay, SUM(bucket.callCount))
             FROM FeatureUsageDaily bucket
-            WHERE bucket.featureId = :featureId
+            WHERE bucket.featureId IN :featureIds
                 AND bucket.usageDay >= :from
             GROUP BY bucket.usageDay
             ORDER BY bucket.usageDay ASC
             """)
-    List<FeatureUsageTrendPointDTO> findDailyUsageSince(@Param("featureId") long featureId, @Param("from") LocalDate from);
+    List<FeatureUsageTrendPointDTO> findDailyUsageSince(@Param("featureIds") Collection<Long> featureIds, @Param("from") LocalDate from);
 }

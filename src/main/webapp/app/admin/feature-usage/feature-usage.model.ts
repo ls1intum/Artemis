@@ -86,8 +86,8 @@ export interface FeatureUsageRow {
     identifiers: string[];
     /** True only when every endpoint behind the row is gone from this version. */
     retired: boolean;
-    /** The id of the single underlying feature, so the trend can be charted. Absent for aggregated rows. */
-    featureId?: number;
+    /** Every inventory row behind this feature, so the trend chart covers the whole feature and not one of its endpoints. */
+    featureIds: number[];
     callCount: number;
     errorCount: number;
     errorRate: number;
