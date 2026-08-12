@@ -799,39 +799,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
             @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
 
-    // Spring Data only allows void, int/Integer or long/Long here; moveToExerciseGroupIfNoStudentExams wraps the count.
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE Exercise e
-            SET e.exerciseGroup = (
-                    SELECT eg
-                    FROM ExerciseGroup eg
-                    WHERE eg.id = :exerciseGroupId
-                )
-            WHERE e.id = :exerciseId
-                  AND NOT EXISTS (
-                      SELECT 1
-                      FROM StudentExam se
-                      WHERE se.exam.id = :examId
-                  )
-            """)
-    int updateExerciseGroupIfNoStudentExams(@Param("exerciseId") long exerciseId, @Param("exerciseGroupId") long exerciseGroupId, @Param("examId") long examId);
-
-    /**
-     * Moves an exam exercise into a different exercise group, but only while the exam has no student exam at all.
-     * The guard sits inside the statement so a concurrent generation cannot commit between check and write. Being a
-     * bulk update, it bypasses the persistence context: a previously loaded {@code Exercise} keeps its old group.
-     *
-     * @param exerciseId      the id of the exercise to move
-     * @param exerciseGroupId the id of the target exercise group
-     * @param examId          the id of the exam the exercise belongs to
-     * @return whether the exercise was moved; false when a student exam already exists for the exam
-     */
-    default boolean moveToExerciseGroupIfNoStudentExams(long exerciseId, long exerciseGroupId, long examId) {
-        return updateExerciseGroupIfNoStudentExams(exerciseId, exerciseGroupId, examId) > 0;
-    }
-
     /**
      * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}
      *

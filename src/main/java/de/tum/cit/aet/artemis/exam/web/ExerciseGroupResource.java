@@ -196,7 +196,7 @@ public class ExerciseGroupResource {
             throw new BadRequestAlertException("The exercise does not belong to this exam", ENTITY_NAME, "examIdMismatch");
         }
         // The exercise was loaded above, so only the student-exam guard can reject the move.
-        if (!exerciseRepository.moveToExerciseGroupIfNoStudentExams(exerciseId, targetGroup.getId(), examId)) {
+        if (!exerciseGroupRepository.moveToExerciseGroupIfNoStudentExams(exerciseId, targetGroup.getId(), examId)) {
             throw new ConflictException("The exercise group cannot be changed after student exams have been generated for this exam", ENTITY_NAME, "studentExamsAlreadyGenerated");
         }
         return ResponseEntity.ok().build();
