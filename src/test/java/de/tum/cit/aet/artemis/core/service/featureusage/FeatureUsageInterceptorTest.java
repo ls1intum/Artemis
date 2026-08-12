@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.featureusage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -51,6 +52,23 @@ class FeatureUsageInterceptorTest {
         interceptor = interceptor(enabledProperties(), collector);
         handlerMethod = new HandlerMethod(new DummyResource(), DummyResource.class.getDeclaredMethod("handle"));
         when(registry.restFeatureId(any(Method.class))).thenReturn(FEATURE_ID);
+    }
+
+    /**
+     * The stated invariant of the whole write path: a usage counter must not be able to break the request it is measuring.
+     * The collector guards its own accumulation, but the two beans are resolved from the context on the first request, and
+     * that happens outside it.
+     */
+    @Test
+    void shouldNotLetAFailingBeanResolutionBreakTheRequest() {
+        var applicationContext = mock(ApplicationContext.class);
+        when(applicationContext.getBean(FeatureUsageRegistry.class)).thenThrow(new IllegalStateException("context not usable"));
+        var brokenInterceptor = new FeatureUsageInterceptor(enabledProperties(), applicationContext);
+        var request = new MockHttpServletRequest();
+        var response = new MockHttpServletResponse();
+        brokenInterceptor.preHandle(request, response, handlerMethod);
+
+        assertThatCode(() -> brokenInterceptor.afterCompletion(request, response, handlerMethod, null)).doesNotThrowAnyException();
     }
 
     @AfterEach

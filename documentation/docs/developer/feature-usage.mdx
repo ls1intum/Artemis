@@ -73,6 +73,13 @@ startup ──> FeatureUsageRegistry           (scan mappings, upsert inventory,
 Runs on `ApplicationReadyEvent` on every node. It reads
 `RequestMappingHandlerMapping.getHandlerMethods()`, keeps the handlers in Artemis packages, and derives per endpoint:
 
+:::note
+The mapping is looked up by the bean name `requestMappingHandlerMapping`, not by type. Spring Boot Actuator registers a
+second bean of the same type, `controllerEndpointHandlerMapping`, so a lookup by type fails as ambiguous. Because
+registration deliberately swallows its failures, the only symptom of getting this wrong is a page that stays empty
+forever, which is why `FeatureUsageRegistryTest` pins the resolution.
+:::
+
 * **identifier** as `VERB canonical/path`. For the 29 controllers that map a canonical prefix plus deprecated legacy
   aliases in one `@RequestMapping`, the first entry is canonical. Picking the wrong pattern would split one feature across
   two rows so that neither showed its real usage.
@@ -193,6 +200,16 @@ parameter.
 
 `COUNT(DISTINCT usage_day)` gives "active days", which is the antidote to a ranking dominated by polling endpoints: it
 separates a feature used steadily by many people from one hammered by a single client on one afternoon.
+
+The server returns one entry per inventory row, that is per endpoint, and the client groups them by label. Two consequences
+worth knowing before changing either side:
+
+* The **counts on the page are per feature**, computed on the client from the grouped rows, with the endpoint totals shown
+  as a secondary line. Taking the server's counts for the headline made the page contradict itself, reporting "895 unused"
+  above a list of 131 rows.
+* The **trend endpoint takes a list of ids**, `feature-usage/trend?featureIds=1&featureIds=2`, and sums them per day. A
+  feature is usually served by several endpoints, so charting one of them would report a fraction of the feature's usage as
+  the feature's usage. The list is bounded so the `IN` clause cannot grow arbitrarily.
 
 ## The curated taxonomy
 

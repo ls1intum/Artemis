@@ -36,7 +36,22 @@ are reported as a single row.
 
 ## Reading the page
 
-Pick a period of 7, 30, 90 or 180 days in the title bar. The report then shows:
+Pick a period of 7, 30, 90 or 180 days in the title bar. Four tabs then present the same data at different granularity:
+
+* **Explore** is the one to start from. It is a tree of module, then area, then feature, so you can see that
+  `programming` accounts for a third of all calls, open it to find that the traffic sits in `authoring` rather than in
+  `assessment`, and open that to reach the individual features. Every level aggregates the level below it, including the
+  count of unused features underneath, so a large "unused" number next to a collapsed area tells you where to look.
+* **All features** is the flat, sortable list, useful for questions like "which feature has the worst error rate" that
+  cut across modules. Click the chart icon on any used feature for its daily trend over the selected period.
+* **Unused** is the same list restricted to features nobody called, which is the list a decision is usually made from.
+* **Adoption** is not usage at all but configuration: how many courses, exercises, exams or quizzes have each optional
+  feature switched on.
+
+Counts are per feature, the unit the tables list. Since a feature is often served by several endpoints, each card also
+shows the endpoint total underneath in smaller type, and a grouped row carries a badge with how many endpoints it covers.
+
+The cards and columns mean:
 
 * **Unused in this period.** The headline number, and the most actionable one. Ranking popular features is easy;
   deciding what can be retired needs the other end of the list.
@@ -51,8 +66,7 @@ Pick a period of 7, 30, 90 or 180 days in the title bar. The report then shows:
 * **Errors**, **mean** and **max**. Useful for spotting a feature that is being used and is broken or slow. These come
   from the same counters, so they cost nothing extra, but they are not a replacement for proper monitoring: there are no
   percentiles here, and requests rejected by authentication before they reach a handler are not counted at all.
-* **Adoption.** How many exercises, courses, exams or quizzes have each optional feature switched on. This is what
-  separates "nobody enabled it" from "everybody enabled it and nobody uses it".
+* **Adoption**, on its own tab, is what separates "nobody enabled it" from "everybody enabled it and nobody uses it".
 
 Filter by **caller role** to ask the more precise question: which features do students actually use, and which
 instructor-facing features does nobody touch? A feature the selected role never called still appears, with zero counts,

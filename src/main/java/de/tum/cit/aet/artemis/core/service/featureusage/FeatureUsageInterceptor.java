@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -37,6 +39,8 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 @Component
 @Lazy
 public class FeatureUsageInterceptor implements HandlerInterceptor {
+
+    private static final Logger log = LoggerFactory.getLogger(FeatureUsageInterceptor.class);
 
     private static final String START_NANOS_ATTRIBUTE = FeatureUsageInterceptor.class.getName() + ".startNanos";
 
@@ -100,13 +104,20 @@ public class FeatureUsageInterceptor implements HandlerInterceptor {
         if (!(request.getAttribute(START_NANOS_ATTRIBUTE) instanceof Long startNanos)) {
             return;
         }
-        Long featureId = registry().restFeatureId(handlerMethod.getMethod());
-        if (featureId == null) {
-            // not part of the inventory, for instance a handler registered after the startup pass
-            return;
+        // Recording is not allowed to affect the request it measures. The collector guards its own accumulation, but
+        // resolving the two beans on the first request happens out here, so the whole block is guarded.
+        try {
+            Long featureId = registry().restFeatureId(handlerMethod.getMethod());
+            if (featureId == null) {
+                // not part of the inventory, for instance a handler registered after the startup pass
+                return;
+            }
+            Role callerRole = request.getAttribute(CALLER_ROLE_ATTRIBUTE) instanceof Role role ? role : Role.ANONYMOUS;
+            boolean failed = ex != null || response.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
+            collector().recordUsage(featureId, callerRole, failed, (System.nanoTime() - startNanos) / 1_000_000);
         }
-        Role callerRole = request.getAttribute(CALLER_ROLE_ATTRIBUTE) instanceof Role role ? role : Role.ANONYMOUS;
-        boolean failed = ex != null || response.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
-        collector().recordUsage(featureId, callerRole, failed, (System.nanoTime() - startNanos) / 1_000_000);
+        catch (Exception e) {
+            log.debug("Failed to record usage of {}", handlerMethod.getMethod(), e);
+        }
     }
 }
