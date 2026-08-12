@@ -36,7 +36,9 @@
         the NOT NULL constraint in changeset 6 fails. team.exercise_id is nullable in the schema, so this is possible.
 
     Failing here leaves the schema untouched, so the deployment can be retried unchanged once the data is corrected.
-    The queries in the message below are the ones an operator needs to find the offending rows.
+    The queries in the message below are the ones an operator needs to find the offending rows, and both run as written on
+    either database - the first lists the conflicting team ids through a row-value IN rather than an aggregate, because
+    GROUP_CONCAT does not exist on PostgreSQL and a diagnostic an operator cannot run is worse than none.
 
     Gated to the databases that actually receive the constraints: on H2 neither the NOT NULL constraint nor the unique
     index is applied, so there is nothing for this gate to protect and no reason to let it stop a schema build.
@@ -44,7 +46,7 @@
     <changeSet id="20260728221528-0-precheck-team-student-data" author="krusche" dbms="mysql,postgresql">
         <preConditions onFail="HALT"
                        onFailMessage="team_student cannot satisfy 'one team per student per exercise' yet. Find the rows with:
-  SELECT t.exercise_id, ts.student_id, COUNT(*), GROUP_CONCAT(ts.team_id) FROM team_student ts JOIN team t ON t.id = ts.team_id GROUP BY t.exercise_id, ts.student_id HAVING COUNT(*) > 1;
+  SELECT t.exercise_id, ts.student_id, ts.team_id FROM team_student ts JOIN team t ON t.id = ts.team_id WHERE (t.exercise_id, ts.student_id) IN (SELECT t2.exercise_id, ts2.student_id FROM team_student ts2 JOIN team t2 ON t2.id = ts2.team_id GROUP BY t2.exercise_id, ts2.student_id HAVING COUNT(*) > 1) ORDER BY t.exercise_id, ts.student_id, ts.team_id;
   SELECT ts.team_id, ts.student_id FROM team_student ts LEFT JOIN team t ON t.id = ts.team_id WHERE t.id IS NULL OR t.exercise_id IS NULL;
 Resolve them, then run the migration again. No schema change has been applied.">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM (SELECT 1 FROM team_student ts JOIN team t ON t.id = ts.team_id GROUP BY t.exercise_id, ts.student_id HAVING COUNT(*) > 1) duplicates</sqlCheck>
