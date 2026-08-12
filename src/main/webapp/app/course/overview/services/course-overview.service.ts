@@ -12,6 +12,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -72,6 +73,15 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     feedbackDiscussion: { entityData: [] },
     archivedChannels: { entityData: [] },
 };
+
+/**
+ * The lecture fields the sidebar renders. Structural on purpose: both the full `Lecture` entity (used for tutorial
+ * lectures) and the lighter `LectureForOverview` projection satisfy it, so the sidebar mapping works with either.
+ */
+export type SidebarLecture = Pick<Lecture, 'id' | 'title' | 'startDate' | 'endDate' | 'isTutorialLecture'>;
+
+/** The exam fields the sidebar renders; see {@link SidebarLecture}. */
+export type SidebarExam = Pick<Exam, 'id' | 'title' | 'moduleNumber' | 'startDate' | 'workingTime' | 'examMaxPoints' | 'testExam'>;
 
 @Injectable({
     providedIn: 'root',
@@ -366,7 +376,7 @@ export class CourseOverviewService {
 
         for (const conversation of conversations) {
             const conversationGroups = this.getConversationGroup(conversation);
-            const conversationCardItem = this.mapConversationToSidebarCardElement(course, conversation);
+            const conversationCardItem = this.mapConversationToSidebarCardElement(conversation);
             const isDmOrGroupChat = conversation.type === ConversationType.ONE_TO_ONE || conversation.type === ConversationType.GROUP_CHAT;
 
             const isUnreadDmOrGroupChat = (conversation.unreadMessagesCount ?? 0) > 0 && !conversation.isHidden && isDmOrGroupChat;
@@ -466,15 +476,14 @@ export class CourseOverviewService {
      * Maps an array of conversations to their respective sidebar card representations.
      * This is used to display conversation cards (channels, group chats, etc.) in the sidebar.
      *
-     * @param course - The course to which the conversations belong
      * @param conversations - The conversations to be mapped
      * @returns An array of SidebarCardElement objects
      */
-    mapConversationsToSidebarCardElements(course: Course, conversations: ConversationDTO[]) {
-        return conversations.map((conversation) => this.mapConversationToSidebarCardElement(course, conversation));
+    mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
+        return conversations.map((conversation) => this.mapConversationToSidebarCardElement(conversation));
     }
 
-    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExam[], indices?: number[]) {
+    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExamOrDTO[], indices?: number[]) {
         if (attempts && indices) {
             return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
         }
@@ -590,7 +599,7 @@ export class CourseOverviewService {
         };
     }
 
-    mapAttemptToSidebarCardElement(attempt: StudentExam, index: number): SidebarCardElement {
+    mapAttemptToSidebarCardElement(attempt: StudentExamOrDTO, index: number): SidebarCardElement {
         return {
             title: attempt.exam!.title ?? '',
             id: attempt.exam!.id + '/test-exam/' + attempt.id,
@@ -633,28 +642,17 @@ export class CourseOverviewService {
      * @param conversation - The conversation to map
      * @returns A SidebarCardElement representing the conversation
      */
-    mapConversationToSidebarCardElement(course: Course, conversation: ConversationDTO): SidebarCardElement {
-        let isCurrent = false;
+    mapConversationToSidebarCardElement(conversation: ConversationDTO): SidebarCardElement {
         const channelDTO = getAsChannelDTO(conversation);
-        const subTypeRefId = channelDTO?.subTypeReferenceId;
         const now = dayjs();
         const oneAndHalfWeekBefore = now.subtract(1.5, 'week');
         const oneAndHalfWeekLater = now.add(1.5, 'week');
-        // Determine relevance of conversation based on associated exercise, lecture, or exam
-        if (subTypeRefId && course.exercises && channelDTO?.subType === 'exercise') {
-            const exercise = course.exercises.find((exercise) => exercise.id === subTypeRefId);
-            const relevantDates = [exercise?.releaseDate, exercise?.dueDate].filter(Boolean);
-            // If any date is within ±1.5 weeks, mark as current
-            isCurrent = relevantDates.some((date) => dayjs(date).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]'));
-        } else if (subTypeRefId && course.lectures && channelDTO?.subType === 'lecture') {
-            const lecture = course.lectures.find((lecture) => lecture.id === subTypeRefId);
-            const relevantDate = lecture?.startDate;
-            isCurrent = relevantDate ? dayjs(relevantDate).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]') : false;
-        } else if (subTypeRefId && course.exams && channelDTO?.subType === 'exam') {
-            const exam = course.exams.find((exam) => exam.id === subTypeRefId);
-            const relevantDate = exam?.startDate;
-            isCurrent = relevantDate ? dayjs(relevantDate).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]') : false;
-        }
+        // A channel is current when the exercise, lecture or exam it belongs to is happening around now. The dates come
+        // with the channel itself: deriving them from the course's exercises, lectures and exams only worked while the
+        // course carried all of its content, and silently stopped marking anything once each tab loaded its own.
+        const relevantDates =
+            channelDTO?.subType === 'exercise' ? [channelDTO.subTypeReferenceStartDate, channelDTO.subTypeReferenceEndDate] : [channelDTO?.subTypeReferenceStartDate];
+        const isCurrent = relevantDates.filter(Boolean).some((date) => dayjs(date).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]'));
 
         return {
             title: this.conversationService.getConversationName(conversation) ?? '',
@@ -702,7 +700,7 @@ export class CourseOverviewService {
         this.localStorageService.store<boolean>('sidebar.collapseState.' + storageId, isCollapsed);
     }
 
-    calculateUsedWorkingTime(studentExam: StudentExam): number {
+    calculateUsedWorkingTime(studentExam: StudentExamOrDTO): number {
         let usedWorkingTime = 0;
         if (studentExam.exam!.testExam && studentExam.started && studentExam.submitted && studentExam.workingTime && studentExam.startedDate && studentExam.submissionDate) {
             const regularExamDuration = studentExam.workingTime;

@@ -95,7 +95,16 @@ kill_tree() {
     kill "$pid" 2>/dev/null || true
 }
 
-# Free a port if a leftover process holds it. Mirrors run-e2e-tests-local-fast.sh:92-117.
+# How long to wait for a killed process to release its listening socket before giving up.
+# Validated rather than trusted: a non-numeric value would otherwise blow up the integer comparison below with a
+# bash arithmetic error, in a pre-flight step whose whole job is to get out of the developer's way.
+PORT_RELEASE_TIMEOUT="${PORT_RELEASE_TIMEOUT:-30}"
+if ! [[ "$PORT_RELEASE_TIMEOUT" =~ ^[0-9]+$ ]]; then
+    echo "Ignoring PORT_RELEASE_TIMEOUT='${PORT_RELEASE_TIMEOUT}': expected a non-negative integer number of seconds. Using 30."
+    PORT_RELEASE_TIMEOUT=30
+fi
+
+# Free a port if a leftover process holds it. Mirrors run-e2e-tests-local-fast.sh.
 check_port_available() {
     local port=$1
     local service_name=$2
@@ -109,14 +118,31 @@ check_port_available() {
             echo "  Killing PID $pid..."
             kill_tree "$pid"
         done
-        sleep 2
-        listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+        # Poll for the port to be released instead of sleeping a fixed 2s and checking once. A JVM
+        # shutting down can hold its listening socket noticeably longer than that, and the single
+        # check then aborts the whole run over a port that frees a moment later.
+        #
+        # Shaped so the check always happens at least once and always happens *after* the last sleep: a
+        # pre-kill `lsof` result must never be what decides the error, otherwise PORT_RELEASE_TIMEOUT=0
+        # skips the loop entirely and a port released during the final second is still reported as busy.
+        local waited=0
+        while true; do
+            listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+            if [ -z "$listeners" ]; then
+                break
+            fi
+            if [ "$waited" -ge "$PORT_RELEASE_TIMEOUT" ]; then
+                break
+            fi
+            sleep 1
+            waited=$((waited + 1))
+        done
         if [ -n "$listeners" ]; then
-            echo -e "${RED}ERROR: Port ${port} is still in use after killing processes.${NC}"
+            echo -e "${RED}ERROR: Port ${port} is still in use ${PORT_RELEASE_TIMEOUT}s after killing processes.${NC}"
             echo "$listeners"
             exit 1
         fi
-        echo -e "${GREEN}Port ${port} is now free.${NC}"
+        echo -e "${GREEN}Port ${port} is now free (released after ${waited}s).${NC}"
     fi
 }
 
@@ -551,11 +577,6 @@ export PW_BROWSER_HOST_RESOLVER_RULES="MAP localhost 127.0.0.1"
 export NODE_TLS_REJECT_UNAUTHORIZED=0  # nginx self-signed cert
 export ADMIN_USERNAME="artemis_admin"
 export ADMIN_PASSWORD="artemis_admin"
-export ALLOW_GROUP_CUSTOMIZATION="true"
-export STUDENT_GROUP_NAME="students"
-export TUTOR_GROUP_NAME="tutors"
-export EDITOR_GROUP_NAME="editors"
-export INSTRUCTOR_GROUP_NAME="instructors"
 export EXERCISE_REPO_DIRECTORY="test-exercise-repos"
 export TEST_WORKERS="${TEST_WORKERS:-${FAST_SLOW_WORKERS:-4}}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"

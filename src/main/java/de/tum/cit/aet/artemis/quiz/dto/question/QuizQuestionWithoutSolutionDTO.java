@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
@@ -12,10 +13,15 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 
 // Note: Only one of the three questions will be non-null depending on the question type
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// Self-referencing override: Jackson inherits class-level annotations from implemented interfaces, so without this,
+// deserializing a declared QuizQuestionWithoutSolutionDTO target would pick up QuizQuestionForExamDTO's
+// @JsonDeserialize(as = QuizQuestionWithSolutionDTO.class) and fail ("not a subtype"). This restores the identity
+// mapping for this concrete type without touching the interface's default, which other sites still rely on.
+@JsonDeserialize(as = QuizQuestionWithoutSolutionDTO.class)
 public record QuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO,
         @Nullable @JsonUnwrapped MultipleChoiceQuestionWithoutSolutionDTO multipleChoiceQuestionWithoutSolutionDTO,
         @Nullable @JsonUnwrapped DragAndDropQuestionWithoutSolutionDTO dragAndDropQuestionWithoutSolutionDTO,
-        @Nullable @JsonUnwrapped ShortAnswerQuestionWithoutMappingDTO shortAnswerQuestionWithoutMappingDTO) {
+        @Nullable @JsonUnwrapped ShortAnswerQuestionWithoutMappingDTO shortAnswerQuestionWithoutMappingDTO) implements QuizQuestionForExamDTO {
 
     /**
      * Creates a QuizQuestionWithoutSolutionDTO object from a QuizQuestion object.
