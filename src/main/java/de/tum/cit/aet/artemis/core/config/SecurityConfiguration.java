@@ -80,8 +80,7 @@ public class SecurityConfiguration {
      * How often a "remember me" session may be silently extended, which bounds how many database lookups one session can
      * cause and forces a fresh sign-in in the end.
      */
-    @Value("${artemis.user-management.max-session-extensions:4}")
-    private int maxSessionExtensions;
+    private final int maxSessionExtensions;
 
     /**
      * The longest a "remember me" session may live, measured from the original login, regardless of how often it is
@@ -92,8 +91,7 @@ public class SecurityConfiguration {
      * reset or a deactivation performed in LDAP, SAML or OIDC leaves no trace in the local account fields they read. So an
      * absolute ceiling is what keeps a revoked external session from being extended past its former lifetime.
      */
-    @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}")
-    private long maxSessionLifetimeInSeconds;
+    private final long maxSessionLifetimeInSeconds;
 
     private final PasswordService passwordService;
 
@@ -123,7 +121,8 @@ public class SecurityConfiguration {
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
             PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            ModuleFeatureService moduleFeatureService) {
+            ModuleFeatureService moduleFeatureService, @Value("${artemis.user-management.max-session-extensions:4}") int maxSessionExtensions,
+            @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
@@ -132,6 +131,28 @@ public class SecurityConfiguration {
         this.jwtCookieService = jwtCookieService;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.moduleFeatureService = moduleFeatureService;
+        this.maxSessionExtensions = maxSessionExtensions;
+        this.maxSessionLifetimeInSeconds = requireUsableSessionLifetime(maxSessionLifetimeInSeconds);
+    }
+
+    /**
+     * Rejects a session lifetime that cannot be turned into milliseconds, at startup rather than per request.
+     * <p>
+     * {@link de.tum.cit.aet.artemis.core.security.jwt.JWTFilter} converts this ceiling with
+     * {@code Math.multiplyExact(sessionCeilingInSeconds, 1000)} while rotating a remember-me token, so a value above
+     * {@code Long.MAX_VALUE / 1000} would overflow and throw on every renewal, turning a configuration mistake into a
+     * request-time failure for the users it affects. A value below one second is rejected for the opposite reason: it
+     * expresses a session that is over before it begins, which is a typo rather than an intent.
+     *
+     * @param lifetimeInSeconds the configured lifetime
+     * @return the same value, once it is known to be usable
+     */
+    private static long requireUsableSessionLifetime(long lifetimeInSeconds) {
+        if (lifetimeInSeconds < 1 || lifetimeInSeconds > Long.MAX_VALUE / 1000) {
+            throw new IllegalStateException("artemis.user-management.max-session-lifetime-in-seconds must be between 1 and " + Long.MAX_VALUE / 1000
+                    + " seconds, so that it can be converted to milliseconds while a session is renewed, but it is " + lifetimeInSeconds);
+        }
+        return lifetimeInSeconds;
     }
 
     /**
