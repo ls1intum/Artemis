@@ -115,6 +115,9 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         attempt.addExercise(textExercise);
         attempt.setSubmitted(true);
         attempt.setSubmissionDate(ZonedDateTime.now().minusMinutes(30));
+        // the cap counts reserved attempts, not just successful results (see StudentExamAthenaFeedbackService), so a
+        // "prior attempt" fixture must reserve its slot the same way a real request would
+        attempt.setAthenaFeedbackRequestedDate(ZonedDateTime.now().minusMinutes(30));
 
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
         TextSubmission submission = new TextSubmission();
@@ -376,6 +379,73 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             StudentExam finalStudentExam = studentExam;
             assertThatExceptionOfType(BadRequestAlertException.class)
                     .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+        }
+    }
+
+    @Nested
+    class Idempotency {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void requestAthenaFeedback_shouldRejectDuplicateRequestForSameAttempt() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            TextExercise textExercise = addTextExerciseToExam(testExam);
+            enableAthenaForCourse();
+
+            athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
+
+            StudentParticipation textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
+            addTextSubmission(textParticipation, "Meaningful text answer from the student.");
+
+            studentExam.getStudentParticipations().add(textParticipation);
+            studentExam = studentExamRepository.save(studentExam);
+
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now());
+            studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+
+            detachExerciseParticipationsCollection(studentExam);
+
+            // the first request reserves the attempt's slot and dispatches
+            studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, student);
+            verify(resultWebsocketService, timeout(5000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
+
+            // a duplicate request for the very same attempt (e.g. a retried click, or a second concurrent request that read the
+            // same pre-reservation state) must be rejected rather than dispatching Athena generation a second time
+            StudentExam finalStudentExam = studentExam;
+            assertThatExceptionOfType(BadRequestAlertException.class)
+                    .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+
+            // still only the single dispatch from the first request
+            verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(eq(textParticipation), any(Result.class));
+        }
+
+        @Test
+        void reserveAthenaFeedbackRequestIfBelowCap_shouldOnlyLetOneOfTwoAttemptsRacingForTheLastSlotThrough() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+
+            StudentExam firstAttempt = examUtilService.addStudentExamForTestExam(testExam, student);
+            StudentExam secondAttempt = examUtilService.addStudentExamForTestExam(testExam, student);
+
+            ZonedDateTime now = ZonedDateTime.now();
+            // simulates two attempts racing for the last remaining slot of a cap of 1: without an atomic check-and-reserve,
+            // both could observe "0 used, cap 1" and both succeed
+            int firstReserved = studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(firstAttempt.getId(), student.getId(), testExam.getId(), now, 1);
+            int secondReserved = studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(secondAttempt.getId(), student.getId(), testExam.getId(), now, 1);
+
+            assertThat(firstReserved).isEqualTo(1);
+            assertThat(secondReserved).isZero();
         }
     }
 

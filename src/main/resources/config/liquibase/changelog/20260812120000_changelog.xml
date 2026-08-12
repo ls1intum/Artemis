@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20260812120000-1-add-student-exam-athena-feedback-requested-date" author="musaberkay">
+        <!-- Marks the moment a test-exam attempt reserved its slot against the cross-attempt Athena feedback request cap.
+             The reservation (not the eventual success of the generated feedback) is what counts toward the cap, and is set
+             atomically together with the cap check in a single UPDATE, so concurrent requests for the same or different
+             attempts of the same user/exam can no longer both observe a cap that has not yet been reached. -->
+        <addColumn tableName="student_exam">
+            <column name="athena_feedback_requested_date" type="datetime(3)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

@@ -375,29 +375,60 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     List<StudentExam> findStudentExamsForTestExamsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
 
     /**
-     * Counts the number of test-exam attempts in which the user has a successful Athena feedback result. Because one
-     * feedback request fans out to every text/modeling submission in the attempt, each attempt counts as one request
-     * regardless of how many exercises the exam contains. Used to enforce the cross-attempt feedback request limit
-     * configured via {@code artemis.athena.allowed-feedback-requests}.
+     * Counts the number of test-exam attempts for which the user has reserved an Athena feedback request (see
+     * {@link #reserveAthenaFeedbackRequestIfBelowCap}). Because one feedback request fans out to every text/modeling
+     * submission in the attempt, each attempt counts as one request regardless of how many exercises the exam contains.
+     * The reservation, not the eventual success of the generated feedback, is what is counted: a failed generation still
+     * consumes the attempt's slot, so a student cannot retry indefinitely by triggering failures.
      *
      * @param userId the id of the user
      * @param examId the id of the test exam
-     * @return the number of distinct test-exam attempts that produced at least one successful Athena result
+     * @return the number of distinct test-exam attempts that reserved an Athena feedback request
      */
     @Query("""
-            SELECT COUNT(DISTINCT se.id)
+            SELECT COUNT(se)
             FROM StudentExam se
-                JOIN se.studentParticipations p
-                JOIN p.submissions s
-                JOIN s.results r
             WHERE se.user.id = :userId
                 AND se.exam.id = :examId
                 AND se.exam.testExam = TRUE
                 AND se.testRun = FALSE
-                AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
-                AND r.successful = TRUE
+                AND se.athenaFeedbackRequestedDate IS NOT NULL
             """)
-    long countTestExamAttemptsWithAthenaResultByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
+    long countTestExamAttemptsWithAthenaFeedbackRequestedByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
+
+    /**
+     * Atomically reserves this test-exam attempt's slot against the cross-attempt Athena feedback request cap: sets
+     * {@code athenaFeedbackRequestedDate} only if it is not already set for this attempt AND the number of attempts this
+     * user has already reserved for this exam is below {@code cap}. Performing the check and the reservation as a single
+     * conditional UPDATE closes the race where two concurrent requests - for the same attempt (double-click, retried
+     * request) or for two different attempts of the same user/exam - could each observe a cap that has not yet been
+     * reached and both proceed to dispatch (potentially costly) Athena generation.
+     *
+     * @param studentExamId the id of the test-exam attempt to reserve
+     * @param userId        the id of the user the attempt belongs to
+     * @param examId        the id of the exam the attempt belongs to
+     * @param requestedDate the timestamp to record as the reservation time
+     * @param cap           the maximum number of reserved attempts allowed for this user/exam
+     * @return the number of rows updated: 1 if the reservation succeeded, 0 if the attempt was already reserved or the cap was reached
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE StudentExam se
+            SET se.athenaFeedbackRequestedDate = :requestedDate
+            WHERE se.id = :studentExamId
+                AND se.athenaFeedbackRequestedDate IS NULL
+                AND (
+                    SELECT COUNT(se2)
+                    FROM StudentExam se2
+                    WHERE se2.user.id = :userId
+                        AND se2.exam.id = :examId
+                        AND se2.testRun = FALSE
+                        AND se2.athenaFeedbackRequestedDate IS NOT NULL
+                ) < :cap
+            """)
+    int reserveAthenaFeedbackRequestIfBelowCap(@Param("studentExamId") Long studentExamId, @Param("userId") Long userId, @Param("examId") Long examId,
+            @Param("requestedDate") ZonedDateTime requestedDate, @Param("cap") int cap);
 
     @Query("""
             SELECT DISTINCT se

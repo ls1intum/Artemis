@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -60,11 +61,14 @@ public class StudentExamAthenaFeedbackService {
      * Requests Athena AI feedback for all text and modeling participations of a submitted test exam whose course
      * has Athena formative feedback enabled. Called explicitly by the student via the test exam summary button.
      * <p>
-     * Rejects the request if the student has already accumulated {@link #allowedFeedbackRequests} successful Athena
-     * results across all of their test-exam attempts for this exam (cross-attempt cap), or if no exercise in the
-     * attempt has Athena formative feedback enabled at the course level. Individual submissions that already have an
-     * Athena result are skipped silently inside the async dispatch in {@code generateAutomaticFeedbackForTestExamAsync},
-     * so remaining unassessed submissions in the same attempt still get processed.
+     * Rejects the request if the student has already reserved {@link #allowedFeedbackRequests} attempts against the
+     * cross-attempt cap for this exam, or if no exercise in the attempt has Athena formative feedback enabled at the
+     * course level. The cap check and the reservation of this attempt's slot happen atomically in a single database
+     * statement (see {@link StudentExamRepository#reserveAthenaFeedbackRequestIfBelowCap}), so concurrent requests -
+     * whether for this attempt or another attempt of the same user/exam - cannot both observe a cap that has not yet
+     * been reached. Individual submissions that already have an Athena result are skipped silently inside the async
+     * dispatch in {@code generateAutomaticFeedbackForTestExamAsync}, so remaining unassessed submissions in the same
+     * attempt still get processed.
      *
      * @param studentExam the submitted student exam
      * @param currentUser the user requesting feedback
@@ -81,12 +85,6 @@ public class StudentExamAthenaFeedbackService {
         }
         if (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty()) {
             throw new BadRequestAlertException("Athena feedback is not available", "StudentExam", "athenaNotAvailable");
-        }
-
-        // Approximate cap: count-and-dispatch is not transactional, so concurrent requests at used == cap - 1 can both pass and briefly exceed the cap by one.
-        long attemptsWithAthenaResult = studentExamRepository.countTestExamAttemptsWithAthenaResultByUserIdAndExamId(currentUser.getId(), studentExam.getExam().getId());
-        if (attemptsWithAthenaResult >= allowedFeedbackRequests) {
-            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "StudentExam", "maxAthenaResultsReached", true);
         }
 
         // Use studentExam exercises (course.athenaConfig eagerly loaded) to determine eligible exercise IDs,
@@ -108,6 +106,15 @@ public class StudentExamAthenaFeedbackService {
                 throw new BadRequestAlertException("Athena feedback for modeling exercises is not available", "StudentExam", "modelingAthenaNotAvailable");
             }
         }
+
+        // Reserve this attempt's slot only now that the request is known to actually dispatch generation: reserving any
+        // earlier would burn a cap slot on a request that fails validation and never generates anything.
+        int reserved = studentExamRepository.reserveAthenaFeedbackRequestIfBelowCap(studentExam.getId(), currentUser.getId(), studentExam.getExam().getId(), ZonedDateTime.now(),
+                allowedFeedbackRequests);
+        if (reserved == 0) {
+            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "StudentExam", "maxAthenaResultsReached", true);
+        }
+
         for (StudentParticipation participation : eligibleParticipations) {
             Exercise exercise = participation.getExercise();
             if (exercise instanceof TextExercise textExercise) {
@@ -120,15 +127,15 @@ public class StudentExamAthenaFeedbackService {
     }
 
     /**
-     * Returns how many test-exam attempts of the given user have produced a successful Athena feedback result, paired
-     * with the configured cap. Each attempt counts as one request regardless of how many exercises it contains.
+     * Returns how many test-exam attempts of the given user have reserved an Athena feedback request, paired with the
+     * configured cap. Each attempt counts as one request regardless of how many exercises it contains.
      *
      * @param userId the id of the student whose test-exam attempts should be counted
      * @param examId the id of the exam the attempts belong to
-     * @return the number of attempts that already produced an Athena result and the configured cap
+     * @return the number of attempts that already reserved an Athena feedback request and the configured cap
      */
     public AthenaFeedbackUsageDTO getAthenaFeedbackUsage(Long userId, Long examId) {
-        long used = studentExamRepository.countTestExamAttemptsWithAthenaResultByUserIdAndExamId(userId, examId);
+        long used = studentExamRepository.countTestExamAttemptsWithAthenaFeedbackRequestedByUserIdAndExamId(userId, examId);
         return new AthenaFeedbackUsageDTO(used, allowedFeedbackRequests);
     }
 }
