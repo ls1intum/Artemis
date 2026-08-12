@@ -4,51 +4,55 @@
 <!--- Template If Grading Instructions are not used in Assessment --->
 @if (!currentExercise.gradingInstructionFeedbackUsed) {
     <div class="edit-sqi">
-        <div class="col-12 col-sm-auto d-flex me-1 mb-1">
-            <button
-                id="edit-mode"
-                class="btn btn-block"
-                (click)="switchMode()"
-                [disabled]="!editable()"
-                [ngClass]="{ 'btn-secondary': showEditMode(), 'btn-default': !showEditMode() }"
-            >
-                <span jhiTranslate="entity.action.edit"></span>
-            </button>
-            <button
-                id="edit-text-mode"
-                class="btn btn-block"
-                (click)="switchMode()"
-                [disabled]="!editable()"
-                [ngClass]="{ 'btn-secondary': !showEditMode(), 'btn-default': showEditMode() }"
-            >
-                <span jhiTranslate="artemisApp.exercise.editText"></span>
-            </button>
-        </div>
-        @if (canShowGenerationButton()) {
-            <div class="assessment-criteria-generation__controls">
-                <tum-ui-button
-                    type="button"
-                    severity="secondary"
-                    data-testid="generate-assessment-criteria"
-                    [disabled]="isGenerationDisabled()"
-                    [loading]="isGenerating()"
-                    [icon]="facArtemisIntelligence"
-                    [ariaDescribedBy]="generationUnavailableReason ? 'assessment-criteria-generation-disabled-reason' : undefined"
-                    (clicked)="generateAssessmentCriteria()"
+        <div class="assessment-criteria-generation__header flex w-full flex-wrap items-start justify-between gap-2">
+            <div class="col-12 col-sm-auto d-flex me-1 mb-1">
+                <button
+                    id="edit-mode"
+                    class="btn btn-block"
+                    (click)="switchMode()"
+                    [disabled]="!editable()"
+                    [ngClass]="{ 'btn-secondary': showEditMode(), 'btn-default': !showEditMode() }"
                 >
-                    @if (isGenerating()) {
-                        <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
-                    } @else {
-                        <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
-                    }
-                </tum-ui-button>
-                @if (generationUnavailableReason) {
-                    <small id="assessment-criteria-generation-disabled-reason" class="assessment-criteria-generation__disabled-reason">
-                        {{ generationUnavailableReason | artemisTranslate }}
-                    </small>
-                }
+                    <span jhiTranslate="entity.action.edit"></span>
+                </button>
+                <button
+                    id="edit-text-mode"
+                    class="btn btn-block"
+                    (click)="switchMode()"
+                    [disabled]="!editable()"
+                    [ngClass]="{ 'btn-secondary': !showEditMode(), 'btn-default': showEditMode() }"
+                >
+                    <span jhiTranslate="artemisApp.exercise.editText"></span>
+                </button>
             </div>
-        }
+            @if (canShowGenerationButton()) {
+                <div class="min-w-fit flex-1">
+                    <div class="assessment-criteria-generation__controls">
+                        <tum-ui-button
+                            type="button"
+                            severity="secondary"
+                            data-testid="generate-assessment-criteria"
+                            [disabled]="isGenerationDisabled()"
+                            [loading]="isGenerating()"
+                            [icon]="facArtemisIntelligence"
+                            [ariaDescribedBy]="generationUnavailableReason ? 'assessment-criteria-generation-disabled-reason' : undefined"
+                            (clicked)="generateAssessmentCriteria()"
+                        >
+                            @if (isGenerating()) {
+                                <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
+                            }
+                        </tum-ui-button>
+                        @if (generationUnavailableReason) {
+                            <small id="assessment-criteria-generation-disabled-reason" class="assessment-criteria-generation__disabled-reason">
+                                {{ generationUnavailableReason | artemisTranslate }}
+                            </small>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
         <div class="grading-instructions-update-border">
             <!--- Edit Mode --->
             @if (showEditMode()) {

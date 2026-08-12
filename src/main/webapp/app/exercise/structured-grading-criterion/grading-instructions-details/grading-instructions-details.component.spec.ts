@@ -139,6 +139,16 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(reason.textContent).toContain('artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement');
         });
 
+        it('should render the edit controls and generation button in the same header', () => {
+            fixture.detectChanges();
+
+            const header = fixture.nativeElement.querySelector('.assessment-criteria-generation__header') as HTMLElement;
+
+            expect(header).not.toBeNull();
+            expect(header.querySelector('#edit-mode')).not.toBeNull();
+            expect(header.querySelector('[data-testid="generate-assessment-criteria"]')).not.toBeNull();
+        });
+
         it('should not persist the display-only grading instruction placeholder while generating', () => {
             exercise.gradingInstructionFeedbackUsed = true;
             const markdownEditor = {
