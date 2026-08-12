@@ -152,6 +152,16 @@ describe('FeatureUsageComponent', () => {
         expect(row!.featureId).toBeUndefined();
     });
 
+    it('should count the headline numbers in features rather than in endpoints', () => {
+        component.ngOnInit();
+
+        // five inventory rows, two of which share a label, so the page must lead with four features and not with five
+        expect(overview.trackedFeatures).toBe(5);
+        expect(component.trackedFeatureCount()).toBe(4);
+        expect(component.retiredFeatureCount()).toBe(1);
+        expect(component.unusedRows()).toHaveLength(1);
+    });
+
     it('should keep unlabelled features as their own rows', () => {
         component.ngOnInit();
 

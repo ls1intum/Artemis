@@ -150,6 +150,16 @@ export class FeatureUsageComponent implements OnInit {
         return [...rowsByKey.values()].map(finalizeDerivedValues);
     });
 
+    /**
+     * The headline counts, in features rather than endpoints.
+     * <p>
+     * The server counts inventory rows, which are endpoints. Reporting those next to tables that list grouped features made
+     * the page contradict itself: "895 unused" above a list of 131 rows.
+     */
+    readonly trackedFeatureCount = computed<number>(() => this.allRows().length);
+
+    readonly retiredFeatureCount = computed<number>(() => this.allRows().filter((row) => row.retired).length);
+
     readonly modules = computed<string[]>(() => [...new Set(this.allRows().map((row) => row.module))].sort((first, second) => first.localeCompare(second)));
 
     /** Resolved eagerly rather than through a pipe, because the select renders `optionLabel` verbatim. */

@@ -33,17 +33,23 @@
     <p class="text-muted-color text-sm mb-4" jhiTranslate="artemisApp.featureUsage.limitations"></p>
 
     <div class="grid gap-4 mb-4" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))">
+        <!-- Every count here is a feature, the same unit the tables below list, so the headline number and the rows an admin
+             then works through cannot disagree. The endpoint totals are kept as the smaller line, because they say how much
+             API surface a feature covers but are not what a decision is made about. -->
         <tum-ui-card data-testid="kpi-tracked-features">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.trackedFeatures"></div>
-            <div class="text-3xl font-semibold">{{ overview()?.trackedFeatures ?? 0 }}</div>
+            <div class="text-3xl font-semibold">{{ trackedFeatureCount() }}</div>
+            <div class="text-xs text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.endpointDetail" [translateValues]="{ count: overview()?.trackedFeatures ?? 0 }"></div>
         </tum-ui-card>
         <tum-ui-card data-testid="kpi-unused-features">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.unusedFeatures"></div>
-            <div class="text-3xl font-semibold" [class.text-state-warning]="(overview()?.unusedFeatures ?? 0) > 0">{{ overview()?.unusedFeatures ?? 0 }}</div>
+            <div class="text-3xl font-semibold" [class.text-state-warning]="unusedRows().length > 0">{{ unusedRows().length }}</div>
+            <div class="text-xs text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.endpointDetail" [translateValues]="{ count: overview()?.unusedFeatures ?? 0 }"></div>
         </tum-ui-card>
         <tum-ui-card data-testid="kpi-retired-features">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.retiredFeatures"></div>
-            <div class="text-3xl font-semibold">{{ overview()?.retiredFeatures ?? 0 }}</div>
+            <div class="text-3xl font-semibold">{{ retiredFeatureCount() }}</div>
+            <div class="text-xs text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.endpointDetail" [translateValues]="{ count: overview()?.retiredFeatures ?? 0 }"></div>
         </tum-ui-card>
         <tum-ui-card data-testid="kpi-total-calls">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.totalCalls"></div>

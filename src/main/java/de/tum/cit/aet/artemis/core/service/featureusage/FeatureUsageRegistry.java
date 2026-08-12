@@ -63,6 +63,9 @@ public class FeatureUsageRegistry {
 
     private static final String ARTEMIS_PACKAGE_PREFIX = "de.tum.cit.aet.artemis.";
 
+    /** The name Spring MVC gives its own {@link RequestMappingHandlerMapping}. See {@link #resolveHandlerMapping()}. */
+    private static final String MVC_HANDLER_MAPPING_BEAN_NAME = "requestMappingHandlerMapping";
+
     /**
      * Verb placeholder for a mapping that declares no HTTP method. An architecture rule forbids method level
      * {@code @RequestMapping}, so in practice this only guards against a mapping registered programmatically.
@@ -121,7 +124,7 @@ public class FeatureUsageRegistry {
             return;
         }
         try {
-            RequestMappingHandlerMapping handlerMapping = applicationContext.getBeanProvider(RequestMappingHandlerMapping.class).getIfAvailable();
+            RequestMappingHandlerMapping handlerMapping = resolveHandlerMapping();
             if (handlerMapping == null) {
                 log.warn("No RequestMappingHandlerMapping available, feature usage will not track any endpoint");
                 return;
@@ -131,6 +134,25 @@ public class FeatureUsageRegistry {
         catch (Exception e) {
             log.error("Failed to register the feature usage endpoint inventory, REST usage will not be recorded", e);
         }
+    }
+
+    /**
+     * Resolves Spring MVC's own handler mapping, the one holding the application's controllers.
+     * <p>
+     * Resolving it by type alone does not work in a running Artemis: Spring Boot Actuator contributes
+     * {@code controllerEndpointHandlerMapping}, a second bean of the same type, so a lookup by type fails as ambiguous and
+     * the inventory silently stays empty. The MVC mapping always carries the well known bean name declared by
+     * {@code WebMvcConfigurationSupport}, so it is addressed by that name, with a lookup by type left as the fallback for a
+     * context that does not use the standard configuration.
+     *
+     * @return the mapping to scan, or null if this context has none
+     */
+    @Nullable
+    private RequestMappingHandlerMapping resolveHandlerMapping() {
+        if (applicationContext.containsBean(MVC_HANDLER_MAPPING_BEAN_NAME)) {
+            return applicationContext.getBean(MVC_HANDLER_MAPPING_BEAN_NAME, RequestMappingHandlerMapping.class);
+        }
+        return applicationContext.getBeanProvider(RequestMappingHandlerMapping.class).getIfUnique();
     }
 
     /**

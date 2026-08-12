@@ -15,7 +15,8 @@
                 "unusedFeatures": "Unused in this period",
                 "totalCalls": "Total calls",
                 "retiredFeatures": "No longer offered",
-                "recordingSince": "Recording since"
+                "recordingSince": "Recording since",
+                "endpointDetail": "{{ count }} endpoints"
             },
             "tab": {
                 "tree": "Explore",

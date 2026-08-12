@@ -1,15 +1,27 @@
 package de.tum.cit.aet.artemis.core.service.featureusage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
+import org.springframework.context.ApplicationContext;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+
+import de.tum.cit.aet.artemis.core.config.FeatureUsageProperties;
+import de.tum.cit.aet.artemis.core.repository.TrackedFeatureRepository;
 
 /**
  * Tests how an endpoint is turned into an inventory identifier.
@@ -19,6 +31,46 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
  * and neither row would then show its real usage.
  */
 class FeatureUsageRegistryTest {
+
+    /**
+     * A running Artemis has two beans of type {@link RequestMappingHandlerMapping}: MVC's own and Actuator's
+     * {@code controllerEndpointHandlerMapping}. Resolving by type therefore fails as ambiguous, and because registration
+     * deliberately swallows its failures, the only symptom was an admin page that stayed empty forever. The mapping has to
+     * be addressed by its name.
+     */
+    @Test
+    void shouldResolveTheMvcMappingByNameWhenASecondMappingBeanExists() {
+        var repository = mock(TrackedFeatureRepository.class);
+        var applicationContext = mock(ApplicationContext.class);
+        when(applicationContext.containsBean("requestMappingHandlerMapping")).thenReturn(true);
+        when(applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class)).thenReturn(new RequestMappingHandlerMapping());
+        when(applicationContext.getBeanProvider(RequestMappingHandlerMapping.class))
+                .thenThrow(new NoUniqueBeanDefinitionException(RequestMappingHandlerMapping.class, List.of("requestMappingHandlerMapping", "controllerEndpointHandlerMapping")));
+        var registry = new FeatureUsageRegistry(repository, enabledProperties(), applicationContext);
+
+        registry.registerEndpoints();
+
+        verify(applicationContext).getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
+        verify(applicationContext, never()).getBeanProvider(RequestMappingHandlerMapping.class);
+        // the scan ran rather than aborting on the ambiguity, so it consulted the stored inventory
+        verify(repository).findAll();
+    }
+
+    @Test
+    void shouldNotTouchTheInventoryWhenTrackingIsDisabled() {
+        var repository = mock(TrackedFeatureRepository.class);
+        var applicationContext = mock(ApplicationContext.class);
+        var properties = new FeatureUsageProperties(false, 400, new FeatureUsageProperties.Digest(false, List.of()));
+
+        new FeatureUsageRegistry(repository, properties, applicationContext).registerEndpoints();
+
+        verify(repository, never()).findAll();
+        verify(applicationContext, never()).getBean(any(String.class), any(Class.class));
+    }
+
+    private static FeatureUsageProperties enabledProperties() {
+        return new FeatureUsageProperties(true, 400, new FeatureUsageProperties.Digest(false, List.of()));
+    }
 
     @Test
     void shouldUseTheCanonicalPrefixOfAControllerThatAlsoMapsALegacyAlias() {
