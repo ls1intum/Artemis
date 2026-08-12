@@ -32,6 +32,7 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
@@ -69,7 +70,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         UnifiedFeedbackComponent,
     ],
 })
-export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {
     private websocketService = inject(WebsocketService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
@@ -626,7 +627,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    submit(): void {
+    submitExercise(): void {
         if (this.isSaving()) {
             // don't execute the function if it is already currently executing
             return;

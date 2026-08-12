@@ -65,6 +65,7 @@ import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, S
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
@@ -149,7 +150,7 @@ const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
         FeatureActivationComponent,
     ],
 })
-export class CourseConversationsComponent implements OnInit, OnDestroy {
+export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarView {
     readonly isCommunicationEnabled = computed(() => {
         const currentCourse = this.course();
         return currentCourse ? isCommunicationEnabled(currentCourse) : false;

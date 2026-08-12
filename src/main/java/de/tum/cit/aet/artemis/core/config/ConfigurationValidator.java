@@ -7,9 +7,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer.TEXT2VEC_OPENAI;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
 
@@ -23,10 +26,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
+import de.tum.cit.aet.artemis.core.exception.InsecureDefaultCredentialException;
 import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConfigurationException;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.DecodingException;
+import net.sourceforge.plantuml.security.SecurityProfile;
+import net.sourceforge.plantuml.security.SecurityUtils;
 
 /**
  * Validates application configuration at startup.
@@ -37,6 +45,9 @@ import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConfigurationExcept
  * Currently validates:
  * <ul>
  * <li>Passkey configuration (conflicting settings)</li>
+ * <li>Internal admin credentials (username/password present together and within length bounds)</li>
+ * <li>Security-critical properties that still hold a shipped example value ({@code prod} profile only)</li>
+ * <li>Diagram rendering profile (pinned to the restrictive profile, which the library does not default to)</li>
  * <li>Weaviate configuration (required properties when enabled)</li>
  * </ul>
  */
@@ -54,6 +65,55 @@ public class ConfigurationValidator {
     public static final String HTTP_SCHEME = "http";
 
     public static final String HTTPS_SCHEME = "https";
+
+    private static final String JWT_SECRET_PROPERTY = "jhipster.security.authentication.jwt.secret";
+
+    private static final String JWT_BASE64_SECRET_PROPERTY = "jhipster.security.authentication.jwt.base64-secret";
+
+    private static final String INTERNAL_ADMIN_PASSWORD_PROPERTY = "artemis.user-management.internal-admin.password";
+
+    /**
+     * The name PlantUML reads its rendering profile from, as a JVM system property first and as an environment variable
+     * otherwise. It is not a Spring property, so it is not visible through {@link Environment}.
+     */
+    private static final String PLANTUML_SECURITY_PROFILE_PROPERTY = "PLANTUML_SECURITY_PROFILE";
+
+    /** HS512 requires a 512-bit key; {@code Keys.hmacShaKeyFor} rejects anything shorter. */
+    private static final int MIN_JWT_SECRET_LENGTH_IN_BYTES = 64;
+
+    /**
+     * JWT signing keys that Artemis has shipped as examples. Both the Base64 form found in the packaged
+     * configuration and its decoded plaintext are listed, because
+     * {@link de.tum.cit.aet.artemis.core.security.jwt.TokenProvider#init()} accepts either property.
+     * <p>
+     * Entries must never be removed: an operator who once copied a value needs it to keep failing.
+     */
+    private static final Set<String> KNOWN_DEFAULT_JWT_SECRETS = Set.of("bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=",
+            "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded\n", "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded",
+            // Briefly carried by the docker prod fixtures in a pre-merge revision of this change, so it is readable in
+            // this repository's history. The fixtures now generate a key per run instead.
+            "R6Mmos1yXM2Psu1SJ3wkTEM0g1r4w3EPcCS8CY6BvGllthhMfch6kp7/d3qJS4Nh+XE5ng9Eb6sE34ybi56f9A==");
+
+    /**
+     * The same shipped keys as plaintext, compared against the decoded key bytes.
+     * <p>
+     * Comparing spellings alone is not enough: a shipped key has more than one Base64 encoding - with or without the
+     * trailing newline, and padded or not - and only one of them is listed above, while all of them decode to a signing
+     * key that anyone can read in this repository. The byte comparison covers every representation at once.
+     */
+    private static final Set<String> KNOWN_DEFAULT_JWT_SECRET_PLAINTEXTS = Set.of("my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded\n",
+            "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded");
+
+    /**
+     * Internal-admin passwords that Artemis has shipped as examples: {@code artemis_admin} from
+     * {@code config/application-artemis.yml}, {@code artemis-admin} from the production-setup security documentation, and
+     * {@code SecureP@ss123}, which released versions of {@code InvalidAdminConfigurationFailureAnalyzer} printed as the
+     * example password to an operator whose admin configuration was rejected.
+     * <p>
+     * Entries must never be removed, for the same reason as in {@link #KNOWN_DEFAULT_JWT_SECRETS}: this analyzer no longer
+     * prints a concrete password, but an operator who copied it from an earlier release needs it to keep failing.
+     */
+    private static final Set<String> KNOWN_DEFAULT_ADMIN_PASSWORDS = Set.of("artemis_admin", "artemis-admin", "SecureP@ss123");
 
     private final Environment environment;
 
@@ -120,10 +180,216 @@ public class ConfigurationValidator {
      */
     @PostConstruct
     public void validateConfigurations() {
+        validateDiagramRenderingProfile();
         validateServerUrl();
         validatePasskeyConfiguration();
         validateAdminConfiguration();
+        validateNoShippedDefaultCredentials();
         validateWeaviateConfiguration();
+    }
+
+    /**
+     * Rejects security-critical properties that still hold a value Artemis ships as an example, but only
+     * under the {@code prod} profile so local development, tests and CI keep working with the packaged
+     * defaults.
+     * <p>
+     * Every value checked here is published in the Artemis repository. A known JWT signing key lets anyone
+     * forge a token for any user with any authority; a known internal-admin password or build-agent git
+     * password grants direct access. An <em>absent</em> JWT secret already fails the boot, so a committed
+     * default is strictly worse than no configuration at all: it turns a loud failure into a silent one.
+     * <p>
+     * This deliberately throws rather than warning. A warning in a startup log is routinely missed, and the
+     * entire purpose of the check is that the unsafe state must not reach a running production system.
+     */
+    private void validateNoShippedDefaultCredentials() {
+        if (!environment.matchesProfiles(ArtemisConstants.SPRING_PROFILE_PRODUCTION)) {
+            return;
+        }
+
+        validateJwtSecret();
+        validateProductionInternalAdminPassword();
+        // The build-agent git password is checked by BuildAgentGitPasswordValidator instead, which is also active on
+        // build-agent-only nodes. This validator is core-only, and those nodes are exactly the ones shipping the
+        // default it has to reject.
+
+        log.info("Production credential validation passed: no shipped example values are in use");
+    }
+
+    /**
+     * Validates the JWT signing key. {@link de.tum.cit.aet.artemis.core.security.jwt.TokenProvider#init()}
+     * prefers the plain {@code secret} property over {@code base64-secret} when both are set, so both are
+     * checked, and the effective one is length-checked after decoding.
+     */
+    private void validateJwtSecret() {
+        String plainSecret = environment.getProperty(JWT_SECRET_PROPERTY);
+        String base64Secret = environment.getProperty(JWT_BASE64_SECRET_PROPERTY);
+
+        // TokenProvider treats a non-empty plain secret as authoritative and uses its raw bytes.
+        boolean usesPlainSecret = StringUtils.hasLength(plainSecret);
+        String effectiveProperty = usesPlainSecret ? JWT_SECRET_PROPERTY : JWT_BASE64_SECRET_PROPERTY;
+        byte[] keyBytes;
+
+        if (usesPlainSecret) {
+            rejectIfKnownDefault(plainSecret, KNOWN_DEFAULT_JWT_SECRETS, effectiveProperty,
+                    "the configured signing key is a value published in the Artemis repository, so anyone can forge a token for any user with any authority",
+                    "Generate a fresh key, e.g. `openssl rand -base64 64`, and prefer the base64-secret property over the plain secret property.");
+            keyBytes = plainSecret.getBytes(StandardCharsets.UTF_8);
+        }
+        else {
+            if (!StringUtils.hasLength(base64Secret)) {
+                // Left to TokenProvider.init(), which fails on a null/blank base64 value; reported here for a clearer message.
+                throw new InsecureDefaultCredentialException(JWT_BASE64_SECRET_PROPERTY, "no JWT signing key is configured",
+                        "Generate a key with `openssl rand -base64 64` and supply it as the base64-secret property.");
+            }
+            rejectIfKnownDefault(base64Secret, KNOWN_DEFAULT_JWT_SECRETS, effectiveProperty,
+                    "the configured signing key is a value published in the Artemis repository, so anyone can forge a token for any user with any authority",
+                    "Generate a fresh key, e.g. `openssl rand -base64 64`.");
+            try {
+                keyBytes = Decoders.BASE64.decode(base64Secret);
+            }
+            catch (DecodingException e) {
+                throw new InsecureDefaultCredentialException(JWT_BASE64_SECRET_PROPERTY, "the value is not valid Base64 and cannot be decoded into a signing key",
+                        "Generate a key with `openssl rand -base64 64`.");
+            }
+        }
+
+        // Checked on the decoded bytes, so a re-encoding of a shipped key is rejected no matter how it was spelled.
+        rejectIfKeyIsAKnownDefault(keyBytes, effectiveProperty);
+
+        // HS512 needs a 512-bit key; Keys.hmacShaKeyFor would reject a shorter one, but with a stack trace rather than guidance.
+        if (keyBytes.length < MIN_JWT_SECRET_LENGTH_IN_BYTES) {
+            throw new InsecureDefaultCredentialException(effectiveProperty,
+                    "the signing key is only %d bytes; HS512 requires at least %d".formatted(keyBytes.length, MIN_JWT_SECRET_LENGTH_IN_BYTES),
+                    "Generate a longer key with `openssl rand -base64 64`.");
+        }
+    }
+
+    /**
+     * Rejects a signing key whose bytes are one of the shipped example keys, whatever spelling it arrived in.
+     *
+     * @param keyBytes     the decoded signing key
+     * @param propertyPath the configuration path the key came from, used in the error message
+     */
+    private static void rejectIfKeyIsAKnownDefault(byte[] keyBytes, String propertyPath) {
+        // Non-short-circuiting for the same reason as in rejectIfKnownDefault.
+        boolean matchesDefault = false;
+        for (String knownDefault : KNOWN_DEFAULT_JWT_SECRET_PLAINTEXTS) {
+            matchesDefault |= MessageDigest.isEqual(keyBytes, knownDefault.getBytes(StandardCharsets.UTF_8));
+        }
+        // The Base64 entries are compared here as well, decoded: a key re-encoded with different padding or line breaks
+        // is spelled differently but decodes to the same bytes, and a random key has no readable plaintext form to list.
+        for (String knownDefault : KNOWN_DEFAULT_JWT_SECRETS) {
+            byte[] decoded = decodeBase64OrNull(knownDefault);
+            matchesDefault |= decoded != null && MessageDigest.isEqual(keyBytes, decoded);
+        }
+        if (matchesDefault) {
+            throw new InsecureDefaultCredentialException(propertyPath,
+                    "the configured signing key decodes to a value published in the Artemis repository, so anyone can forge a token for any user with any authority",
+                    "Generate a fresh key, e.g. `openssl rand -base64 64`.");
+        }
+    }
+
+    /**
+     * @param value a known-default entry, which is either a Base64 spelling of a key or the key's plaintext
+     * @return the decoded bytes, or {@code null} when the entry is not Base64 and therefore has nothing to decode
+     */
+    private static byte[] decodeBase64OrNull(String value) {
+        try {
+            return Decoders.BASE64.decode(value);
+        }
+        catch (DecodingException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Rejects an internal-admin password that is a shipped example, or that equals the username. Length is
+     * already validated in {@link #validateAdminConfiguration()} for every profile; this adds the
+     * production-only content checks.
+     */
+    private void validateProductionInternalAdminPassword() {
+        if (!StringUtils.hasText(internalAdminPassword)) {
+            return;
+        }
+
+        rejectIfKnownDefault(internalAdminPassword, KNOWN_DEFAULT_ADMIN_PASSWORDS, INTERNAL_ADMIN_PASSWORD_PROPERTY,
+                "the internal admin password is a value published in the Artemis repository, and this account is granted SUPER_ADMIN on every startup",
+                "Choose a unique password, or leave both internal-admin properties empty to skip creating the account entirely.");
+
+        if (internalAdminUsername != null && constantTimeEquals(internalAdminPassword, internalAdminUsername)) {
+            throw new InsecureDefaultCredentialException(INTERNAL_ADMIN_PASSWORD_PROPERTY, "the internal admin password is identical to the internal admin username",
+                    "Choose a password unrelated to the username, or leave both internal-admin properties empty to skip creating the account entirely.");
+        }
+    }
+
+    /**
+     * Throws if {@code configuredValue} matches any known shipped default.
+     *
+     * @param configuredValue the value read from the environment
+     * @param knownDefaults   the shipped example values to reject
+     * @param propertyPath    the configuration path, used in the error message
+     * @param reason          operator-facing explanation; must not contain the value
+     * @param remediation     concrete instructions for choosing an acceptable value
+     */
+    private static void rejectIfKnownDefault(String configuredValue, Set<String> knownDefaults, String propertyPath, String reason, String remediation) {
+        // Non-short-circuiting on purpose, so that every candidate is compared regardless of where the match sits.
+        boolean matchesDefault = false;
+        for (String knownDefault : knownDefaults) {
+            matchesDefault |= constantTimeEquals(configuredValue, knownDefault);
+        }
+        if (matchesDefault) {
+            throw new InsecureDefaultCredentialException(propertyPath, reason, remediation);
+        }
+    }
+
+    /**
+     * Compares two secrets without leaking their relationship through timing. Startup is not a realistic
+     * timing-attack surface, but comparing secrets this way costs nothing and keeps the intent explicit.
+     *
+     * @param first  the first value
+     * @param second the second value
+     * @return whether the two values are equal
+     */
+    private static boolean constantTimeEquals(String first, String second) {
+        return MessageDigest.isEqual(first.getBytes(StandardCharsets.UTF_8), second.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Pins the diagram renderer to its most restrictive profile and refuses to start if it did not take effect.
+     * <p>
+     * Diagram sources reach the renderer straight from request bodies. The library resolves its profile from
+     * {@code PLANTUML_SECURITY_PROFILE} and falls back to a permissive one when that is unset or unrecognised, and in the
+     * permissive profiles a diagram may pull in local files and remote resources through directives such as
+     * {@code !include}. Artemis passes its own diagram theme as inline content, so nothing it renders needs those
+     * directives and there is no configuration in which loosening this buys anything.
+     * <p>
+     * The order matters. The library resolves the profile once, on the first read, and caches it for the life of the JVM,
+     * so the value has to be in place before anything reads it - hence setting it here, at startup, rather than only
+     * checking it. Reading it back afterwards is what makes the check meaningful: if something had already resolved the
+     * profile earlier, the value set here is ignored and the read returns the permissive one that is actually in effect.
+     * <p>
+     * An explicitly configured value is left alone and then rejected if it is permissive, so an operator gets a startup
+     * failure naming the property instead of a silently downgraded renderer. Like {@link #validateServerUrl()} this throws:
+     * a startup warning is routinely missed, and the point of the check is that the state must not reach a running system.
+     */
+    private void validateDiagramRenderingProfile() {
+        // Mirrors the library's own lookup order: the system property wins, the environment variable is the fallback.
+        boolean configuredExternally = StringUtils.hasText(System.getProperty(PLANTUML_SECURITY_PROFILE_PROPERTY))
+                || StringUtils.hasText(System.getenv(PLANTUML_SECURITY_PROFILE_PROPERTY));
+        if (!configuredExternally) {
+            System.setProperty(PLANTUML_SECURITY_PROFILE_PROPERTY, SecurityProfile.SANDBOX.name());
+        }
+
+        SecurityProfile profile = SecurityUtils.getSecurityProfile();
+        if (profile == SecurityProfile.SANDBOX || profile == SecurityProfile.ALLOWLIST) {
+            log.debug("Diagram rendering uses the {} profile", profile);
+            return;
+        }
+        String errorMessage = ("Diagram rendering resolved the %s profile, which allows a diagram to read local files and fetch remote resources. "
+                + "Unset %s so Artemis can pin %s, or set it to %s or %s explicitly.")
+                .formatted(profile, PLANTUML_SECURITY_PROFILE_PROPERTY, SecurityProfile.SANDBOX, SecurityProfile.SANDBOX, SecurityProfile.ALLOWLIST);
+        log.error(errorMessage);
+        throw new IllegalStateException(errorMessage);
     }
 
     /**

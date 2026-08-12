@@ -17,6 +17,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -45,7 +46,7 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     styleUrls: ['./course-exams.component.scss'],
     imports: [SidebarComponent, RouterOutlet, TranslateDirective],
 })
-export class CourseExamsComponent implements OnInit, OnDestroy {
+export class CourseExamsComponent implements OnInit, OnDestroy, SidebarView {
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private serverDateService = inject(ArtemisServerDateService);
