@@ -125,6 +125,102 @@ describe('ExamExerciseRowButtonsComponent', () => {
             expect(component.hasExamStarted()).toBe(false);
         });
     });
+    describe('mainActions', () => {
+        const idsFor = (exercise: Exercise, courseOverrides: Partial<Course> = {}): string[] => {
+            fixture.componentRef.setInput('course', { ...course, ...courseOverrides });
+            setExerciseInput(fixture, exercise);
+            return component.mainActions().map((action) => action.id);
+        };
+
+        it('offers participations, scores and delete only to instructors', () => {
+            const asInstructor = idsFor(textExercise, { isAtLeastInstructor: true, isAtLeastEditor: true });
+            expect(asInstructor).toEqual(expect.arrayContaining(['participations', 'scores', 'delete']));
+
+            const asEditor = idsFor(textExercise, { isAtLeastInstructor: false, isAtLeastEditor: true });
+            expect(asEditor).not.toEqual(expect.arrayContaining(['participations', 'scores', 'delete']));
+        });
+
+        it('adds grading and edit-in-editor only for programming exercises with editor rights', () => {
+            expect(idsFor(programmingExercise, { isAtLeastEditor: true })).toEqual(expect.arrayContaining(['grading', 'edit-in-editor']));
+            expect(idsFor(programmingExercise, { isAtLeastEditor: false })).not.toEqual(expect.arrayContaining(['grading', 'edit-in-editor']));
+            expect(idsFor(textExercise, { isAtLeastEditor: true })).not.toEqual(expect.arrayContaining(['grading', 'edit-in-editor']));
+        });
+
+        it('adds example submissions for text and modeling but not for quiz, programming or file upload', () => {
+            expect(idsFor(textExercise, { isAtLeastEditor: true })).toContain('examples');
+            expect(idsFor(modelingExercise, { isAtLeastEditor: true })).toContain('examples');
+            for (const exercise of [quizExercise, programmingExercise, fileUploadExercise]) {
+                expect(idsFor(exercise, { isAtLeastEditor: true })).not.toContain('examples');
+            }
+        });
+
+        it('adds quiz statistics, preview and solution, and a teams action for team exercises', () => {
+            const quizIds = idsFor(quizExercise, { isAtLeastEditor: true, isAtLeastInstructor: true });
+            expect(quizIds).toEqual(expect.arrayContaining(['statistics', 'preview', 'solution']));
+
+            expect(idsFor({ ...textExercise, teamMode: true } as Exercise, { isAtLeastInstructor: true })).toContain('teams');
+            expect(idsFor(textExercise, { isAtLeastInstructor: true })).not.toContain('teams');
+        });
+
+        it('swaps the quiz edit action for re-evaluate once the exam is over', () => {
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().add(1, 'hours'));
+            const during = idsFor(quizExercise, { isAtLeastEditor: true, isAtLeastInstructor: true });
+            expect(during).toContain('edit');
+            expect(during).not.toContain('re-evaluate');
+
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().subtract(1, 'hours'));
+            const after = idsFor(quizExercise, { isAtLeastEditor: true, isAtLeastInstructor: true });
+            expect(after).toContain('re-evaluate');
+            expect(after).not.toContain('edit');
+        });
+
+        it('disables the quiz edit action with an explanation once the exam has started', () => {
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().add(1, 'hours'));
+
+            fixture.componentRef.setInput('exam', { id: 4, startDate: dayjs().add(1, 'hours') } as Exam);
+            setExerciseInput(fixture, quizExercise);
+            fixture.componentRef.setInput('course', { ...course, isAtLeastEditor: true });
+            const beforeStart = component.mainActions().find((action) => action.id === 'edit');
+            expect(beforeStart!.disabled).toBe(false);
+            expect(beforeStart!.disabledTooltip).toBeUndefined();
+
+            fixture.componentRef.setInput('exam', { id: 4, startDate: dayjs().subtract(1, 'hours') } as Exam);
+            const afterStart = component.mainActions().find((action) => action.id === 'edit');
+            expect(afterStart!.disabled).toBe(true);
+            expect(afterStart!.disabledTooltip).toBe('artemisApp.examManagement.exerciseGroup.editNotPossibleExamStarted');
+        });
+
+        it('wires the delete action to the type-specific service and the repo checks for programming', () => {
+            deleteProgrammingExerciseStub.mockReturnValue(of({} as any));
+            expect(idsFor(programmingExercise, { isAtLeastInstructor: true })).toContain('delete');
+
+            const deleteAction = component.mainActions().find((action) => action.id === 'delete')!;
+            expect(deleteAction.delete!.deleteQuestion).toBe('artemisApp.programmingExercise.delete.question');
+            deleteAction.delete!.onDelete({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
+            expect(deleteProgrammingExerciseStub).toHaveBeenCalledWith(programmingExercise.id, true, false);
+
+            deleteTextExerciseStub.mockReturnValue(of({} as any));
+            idsFor(textExercise, { isAtLeastInstructor: true });
+            const textDelete = component.mainActions().find((action) => action.id === 'delete')!;
+            expect(textDelete.delete!.deleteQuestion).toBe('artemisApp.exercise.delete.question');
+            textDelete.delete!.onDelete({});
+            expect(deleteTextExerciseStub).toHaveBeenCalledWith(textExercise.id);
+        });
+
+        it('shows the test-run warning only for a quiz with test-run participations before the exam ends', () => {
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().add(1, 'hours'));
+            setExerciseInput(fixture, { ...quizExercise, testRunParticipationsExist: true } as Exercise);
+            expect(component['showTestRunWarning']()).toBe(true);
+
+            setExerciseInput(fixture, { ...quizExercise, testRunParticipationsExist: false } as Exercise);
+            expect(component['showTestRunWarning']()).toBe(false);
+
+            fixture.componentRef.setInput('latestIndividualEndDate', dayjs().subtract(1, 'hours'));
+            setExerciseInput(fixture, { ...quizExercise, testRunParticipationsExist: true } as Exercise);
+            expect(component['showTestRunWarning']()).toBe(false);
+        });
+    });
+
     describe('deleteExercise', () => {
         describe('deleteTextExercise', () => {
             it('should deleteTextExercise', () => {

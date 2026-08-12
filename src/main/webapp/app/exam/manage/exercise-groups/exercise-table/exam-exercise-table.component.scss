@@ -57,7 +57,8 @@ td.col-actions {
     background-color: var(--body-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--p-border-radius);
-    box-shadow: 0 5px 12px color-mix(in srgb, var(--black) 20%, transparent);
+    // Elevation comes from Tailwind's `shadow-lg` in the template: a shadow needs a colour, and there is no semantic
+    // shadow token to build one from here.
 }
 
 /* Gap where the dragged row sits. */

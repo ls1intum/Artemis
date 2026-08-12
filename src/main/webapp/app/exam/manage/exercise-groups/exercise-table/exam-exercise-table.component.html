@@ -46,7 +46,7 @@
                 <tbody id="exercises">
                     @for (exercise of exercises(); track exercise.id) {
                         <tr [attr.id]="'exercise-' + exercise.id" cdkDrag [cdkDragData]="exercise" [cdkDragDisabled]="!canMoveBetweenGroups()">
-                            <div *cdkDragPreview class="exercise-drag-preview">
+                            <div *cdkDragPreview class="exercise-drag-preview shadow-lg">
                                 <fa-icon [icon]="icon(exercise)" [fixedWidth]="true" class="text-muted-color mr-1" />
                                 <span class="font-semibold">{{ exercise.title }}</span>
                             </div>
