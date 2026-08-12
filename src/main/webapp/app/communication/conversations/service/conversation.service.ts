@@ -11,6 +11,7 @@ import { ConversationUserDTO } from 'app/communication/shared/entities/conversat
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
 type EntityArrayResponseType = HttpResponse<ConversationDTO[]>;
 
@@ -154,6 +155,11 @@ export class ConversationService {
         conversation.creationDate = convertDateFromServer(conversation.creationDate);
         conversation.lastMessageDate = convertDateFromServer(conversation.lastMessageDate);
         conversation.lastReadDate = convertDateFromServer(conversation.lastReadDate);
+        const channel = getAsChannelDTO(conversation);
+        if (channel) {
+            channel.subTypeReferenceStartDate = convertDateFromServer(channel.subTypeReferenceStartDate);
+            channel.subTypeReferenceEndDate = convertDateFromServer(channel.subTypeReferenceEndDate);
+        }
         return conversation;
     }
 

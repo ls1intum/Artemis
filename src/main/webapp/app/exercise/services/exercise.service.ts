@@ -8,6 +8,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { map, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory, SerializedExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
@@ -73,6 +74,15 @@ export class ExerciseService {
     private entityTitleService = inject(EntityTitleService);
 
     public resourceUrl = 'api/exercise/exercises';
+
+    /**
+     * Fetches the id, title and type of the course exercises the user may see, for callers that only have to name
+     * exercises rather than show them.
+     * @param courseId the course to fetch the exercise titles for
+     */
+    getTitlesForCourse(courseId: number): Observable<ExerciseTitle[]> {
+        return this.http.get<ExerciseTitle[]>(`api/exercise/courses/${courseId}/exercise-titles`);
+    }
     public adminResourceUrl = 'api/exercise/admin/exercises';
     public courseResourceUrl = 'api/course/courses';
 

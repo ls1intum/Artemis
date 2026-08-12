@@ -21,6 +21,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.GradedPresentationConfigDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -45,6 +46,36 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
             WHERE gradingScale.course.id = :courseId
             """)
     Optional<GradingScale> findByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Projects only the graded-presentation settings needed by the course score calculator.
+     *
+     * @param courseId the course whose grading scale is queried
+     * @return the presentation configuration, or empty if the course has no grading scale
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.assessment.dto.GradedPresentationConfigDTO(
+                COALESCE(gradingScale.presentationsNumber, 0),
+                COALESCE(gradingScale.presentationsWeight, 0.0))
+            FROM GradingScale gradingScale
+            WHERE gradingScale.course.id = :courseId
+            ORDER BY gradingScale.id ASC
+            """)
+    List<GradedPresentationConfigDTO> findPresentationConfigsByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * The graded-presentation settings of the course's grading scale.
+     * <p>
+     * A course is meant to have at most one grading scale, but a concurrent creation can briefly leave two behind — see
+     * {@link #findByCourseIdOrElseThrow}, which repairs that. A read on the course overview must not fail on it and must
+     * not repair data either, so it takes the oldest scale, which is the one that repair keeps.
+     *
+     * @param courseId the course whose grading scale is queried
+     * @return the presentation configuration, or empty if the course has no grading scale
+     */
+    default Optional<GradedPresentationConfigDTO> findPresentationConfigByCourseId(long courseId) {
+        return findPresentationConfigsByCourseId(courseId).stream().findFirst();
+    }
 
     /**
      * Find a grading scale for exam by id

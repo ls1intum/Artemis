@@ -17,6 +17,7 @@ import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } 
 import { filter, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { Observable, of } from 'rxjs';
@@ -111,6 +112,13 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private get assessments(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
+
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return this.assessments;
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
 
     /**
      * Reads route params and loads the example submission on initialWithContext.
