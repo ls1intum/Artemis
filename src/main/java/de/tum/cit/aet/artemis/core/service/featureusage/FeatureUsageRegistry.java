@@ -20,11 +20,9 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,8 +56,7 @@ import de.tum.cit.aet.artemis.core.repository.TrackedFeatureRepository;
  */
 @Profile(PROFILE_CORE)
 @Component
-// eager, so the @EventListener below is registered before the application ready event fires
-@Lazy(false)
+@Lazy
 public class FeatureUsageRegistry {
 
     private static final Logger log = LoggerFactory.getLogger(FeatureUsageRegistry.class);
@@ -111,10 +108,13 @@ public class FeatureUsageRegistry {
     /**
      * Registers every Artemis endpoint in the inventory and caches the resolved ids for the request path.
      * <p>
+     * Called by {@link FeatureUsageStartupListener} once the application is up, rather than from an {@code @EventListener}
+     * here, so that this bean stays lazy: making it eager pulled the repository and the JPA infrastructure behind it into
+     * the startup dependency graph.
+     * <p>
      * Failures are logged and swallowed: usage analysis is a reporting aid, and a server that refuses to finish starting
      * because it could not write its feature inventory would be a far worse outcome than a page with no data.
      */
-    @EventListener(ApplicationReadyEvent.class)
     public void registerEndpoints() {
         if (!properties.enabled()) {
             log.debug("Feature usage tracking is disabled, skipping the endpoint inventory");
