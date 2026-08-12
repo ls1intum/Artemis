@@ -26,6 +26,36 @@
     one landing between the backfill and the NOT NULL constraint would fail the migration itself.
     -->
 
+    <!--
+    Refuse to start the migration at all if the existing data cannot satisfy the invariant, rather than discovering it
+    several changesets in. Two conditions can do that, and both fail late and obscurely without this gate:
+
+      * two teams of the same exercise sharing a student - the unique index in changeset 7 fails, after the column, the
+        triggers, the backfill and the NOT NULL constraint have already been applied;
+      * a team_student row whose team is missing or whose team has no exercise - the backfill leaves exercise_id NULL and
+        the NOT NULL constraint in changeset 6 fails. team.exercise_id is nullable in the schema, so this is possible.
+
+    Failing here leaves the schema untouched, so the deployment can be retried unchanged once the data is corrected.
+    The queries in the message below are the ones an operator needs to find the offending rows.
+
+    Gated to the databases that actually receive the constraints: on H2 neither the NOT NULL constraint nor the unique
+    index is applied, so there is nothing for this gate to protect and no reason to let it stop a schema build.
+    -->
+    <changeSet id="20260728221528-0-precheck-team-student-data" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="HALT"
+                       onFailMessage="team_student cannot satisfy 'one team per student per exercise' yet. Find the rows with:
+  SELECT t.exercise_id, ts.student_id, COUNT(*), GROUP_CONCAT(ts.team_id) FROM team_student ts JOIN team t ON t.id = ts.team_id GROUP BY t.exercise_id, ts.student_id HAVING COUNT(*) > 1;
+  SELECT ts.team_id, ts.student_id FROM team_student ts LEFT JOIN team t ON t.id = ts.team_id WHERE t.id IS NULL OR t.exercise_id IS NULL;
+Resolve them, then run the migration again. No schema change has been applied.">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM (SELECT 1 FROM team_student ts JOIN team t ON t.id = ts.team_id GROUP BY t.exercise_id, ts.student_id HAVING COUNT(*) > 1) duplicates</sqlCheck>
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM team_student ts LEFT JOIN team t ON t.id = ts.team_id WHERE t.id IS NULL OR t.exercise_id IS NULL</sqlCheck>
+        </preConditions>
+        <!-- The preConditions above are the whole point of this changeset; Liquibase still requires a change, so this is
+             a statement with no effect. -->
+        <sql>SELECT 1</sql>
+        <rollback/>
+    </changeSet>
+
     <changeSet id="20260728221528-1-add-exercise-id-to-team-student" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not><columnExists tableName="team_student" columnName="exercise_id"/></not>
@@ -132,6 +162,58 @@ FOR EACH ROW EXECUTE FUNCTION team_student_sync_exercise_id()
         ]]></sql>
         <rollback>
             <sql>DROP TRIGGER IF EXISTS team_student_sync_exercise_id ON team</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Keep exercise_id correct when a team_student row is repointed at another team. The insert trigger fills the
+         column and the trigger on team follows a moved team, but neither covers team_id changing on an existing row,
+         which would leave the old exercise in place and make the unique index guard the wrong one. Hibernate maps
+         Team.students as a plain @JoinTable and so deletes and re-inserts rather than updating, which is why this cannot
+         fire today; it is here for the same reason as the trigger above, so the derived column cannot silently stop
+         expressing the invariant if that ever changes. -->
+    <changeSet id="20260728221528-4d-update-exercise-id-trigger-mysql" author="krusche" dbms="mysql">
+        <sql splitStatements="false"><![CDATA[
+CREATE TRIGGER team_student_update_exercise_id
+BEFORE UPDATE ON team_student
+FOR EACH ROW
+BEGIN
+    IF NOT (NEW.team_id <=> OLD.team_id) THEN
+        SET NEW.exercise_id = (SELECT t.exercise_id FROM team t WHERE t.id = NEW.team_id);
+    END IF;
+END
+        ]]></sql>
+        <rollback>
+            <sql>DROP TRIGGER IF EXISTS team_student_update_exercise_id</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260728221528-4e-update-exercise-id-function-postgresql" author="krusche" dbms="postgresql">
+        <sql splitStatements="false"><![CDATA[
+CREATE OR REPLACE FUNCTION team_student_update_exercise_id() RETURNS TRIGGER AS $$
+DECLARE
+    v_exercise_id BIGINT;
+BEGIN
+    IF NEW.team_id IS DISTINCT FROM OLD.team_id THEN
+        SELECT t.exercise_id INTO v_exercise_id FROM team t WHERE t.id = NEW.team_id;
+        NEW.exercise_id := v_exercise_id;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql
+        ]]></sql>
+        <rollback>
+            <sql>DROP FUNCTION IF EXISTS team_student_update_exercise_id()</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260728221528-4f-update-exercise-id-trigger-postgresql" author="krusche" dbms="postgresql">
+        <sql splitStatements="false"><![CDATA[
+CREATE TRIGGER team_student_update_exercise_id
+BEFORE UPDATE ON team_student
+FOR EACH ROW EXECUTE FUNCTION team_student_update_exercise_id()
+        ]]></sql>
+        <rollback>
+            <sql>DROP TRIGGER IF EXISTS team_student_update_exercise_id ON team_student</sql>
         </rollback>
     </changeSet>
 
