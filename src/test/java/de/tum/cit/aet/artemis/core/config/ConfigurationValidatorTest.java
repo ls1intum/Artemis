@@ -183,50 +183,6 @@ class ConfigurationValidatorTest {
                     .hasMessageContaining("identical to the internal admin username");
         }
 
-        /**
-         * A matching build-agent git password grants read access to every repository, so each value the repository
-         * publishes for it has to be rejected: the packaged {@code buildjob_password}, the {@code buildagent_password}
-         * of the production-setup security documentation, and the {@code artemis_admin} that the Jenkins LocalVC setup
-         * reuses here.
-         *
-         * @param publishedPassword a build-agent git password published in the repository
-         */
-        @ParameterizedTest
-        @ValueSource(strings = { "buildjob_password", "buildagent_password", "artemis_admin" })
-        void testShippedBuildAgentGitPasswordIsRejectedUnderProdProfile(String publishedPassword) {
-            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, null, null, publishedPassword);
-
-            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
-                    .hasMessageContaining("artemis.version-control.build-agent-git-password");
-        }
-
-        /**
-         * A configured but blank build-agent git password is not an unused property: {@code LocalVCServletService}
-         * compares the supplied Basic credentials against it directly, so the published build-agent username with an
-         * empty password would be accepted ahead of the rate limit, the authorization checks and the access log.
-         *
-         * @param blankPassword a configured value that carries no password
-         */
-        @ParameterizedTest
-        @ValueSource(strings = { "", " ", "\t" })
-        void testBlankBuildAgentGitPasswordIsRejectedUnderProdProfile(String blankPassword) {
-            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, null, null, blankPassword);
-
-            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
-                    .hasMessageContaining("artemis.version-control.build-agent-git-password");
-        }
-
-        /**
-         * Only the localvc and buildagent profiles define the property, so its absence means the instance has no
-         * build-agent shortcut to protect and must still start.
-         */
-        @Test
-        void testAbsentBuildAgentGitPasswordPassesValidation() {
-            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, null, null, null);
-
-            assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
-        }
-
         @Test
         void testAcceptableProductionCredentialsPassValidation() {
             ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, "operator_admin", "a-unique-strong-password",

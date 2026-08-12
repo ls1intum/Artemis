@@ -72,8 +72,6 @@ public class ConfigurationValidator {
 
     private static final String INTERNAL_ADMIN_PASSWORD_PROPERTY = "artemis.user-management.internal-admin.password";
 
-    private static final String BUILD_AGENT_GIT_PASSWORD_PROPERTY = "artemis.version-control.build-agent-git-password";
-
     /**
      * The name PlantUML reads its rendering profile from, as a JVM system property first and as an environment variable
      * otherwise. It is not a Spring property, so it is not visible through {@link Environment}.
@@ -116,16 +114,6 @@ public class ConfigurationValidator {
      * prints a concrete password, but an operator who copied it from an earlier release needs it to keep failing.
      */
     private static final Set<String> KNOWN_DEFAULT_ADMIN_PASSWORDS = Set.of("artemis_admin", "artemis-admin", "SecureP@ss123");
-
-    /**
-     * Build-agent git passwords that Artemis has shipped as examples: {@code buildjob_password} from
-     * {@code config/application-localvc.yml} and {@code config/application-buildagent.yml},
-     * {@code buildagent_password} from the production-setup security documentation, and {@code artemis_admin} from the
-     * Jenkins LocalVC setup, which reuses the internal-admin password here.
-     * <p>
-     * Entries must never be removed, for the same reason as in {@link #KNOWN_DEFAULT_JWT_SECRETS}.
-     */
-    private static final Set<String> KNOWN_DEFAULT_BUILD_AGENT_GIT_PASSWORDS = Set.of("buildjob_password", "buildagent_password", "artemis_admin");
 
     private final Environment environment;
 
@@ -220,7 +208,9 @@ public class ConfigurationValidator {
 
         validateJwtSecret();
         validateProductionInternalAdminPassword();
-        validateBuildAgentGitPassword();
+        // The build-agent git password is checked by BuildAgentGitPasswordValidator instead, which is also active on
+        // build-agent-only nodes. This validator is core-only, and those nodes are exactly the ones shipping the
+        // default it has to reject.
 
         log.info("Production credential validation passed: no shipped example values are in use");
     }
@@ -330,35 +320,6 @@ public class ConfigurationValidator {
             throw new InsecureDefaultCredentialException(INTERNAL_ADMIN_PASSWORD_PROPERTY, "the internal admin password is identical to the internal admin username",
                     "Choose a password unrelated to the username, or leave both internal-admin properties empty to skip creating the account entirely.");
         }
-    }
-
-    /**
-     * Rejects a shipped example build-agent git password. Matching credentials let a caller read every
-     * repository in the installation: {@code LocalVCServletService} returns early on a match, ahead of the
-     * rate limit, the repository authorization checks and the VCS access log.
-     */
-    private void validateBuildAgentGitPassword() {
-        String buildAgentGitPassword = environment.getProperty(BUILD_AGENT_GIT_PASSWORD_PROPERTY);
-        if (buildAgentGitPassword == null) {
-            // Only the localvc and buildagent profiles define the property at all, so an instance running neither has
-            // no build-agent shortcut to protect.
-            return;
-        }
-        if (!StringUtils.hasText(buildAgentGitPassword)) {
-            // A configured but blank value is worse than a shipped default: LocalVCServletService compares the supplied
-            // Basic credentials against it directly, so the published build-agent username with an empty password would
-            // pass, again ahead of the rate limit, the authorization checks and the access log.
-            throw new InsecureDefaultCredentialException(BUILD_AGENT_GIT_PASSWORD_PROPERTY,
-                    "the build-agent git password is configured but blank, and a caller presenting the build-agent username with an empty password can then read every "
-                            + "repository without any authorization check or access-log entry",
-                    "Set a unique, non-blank password and keep it in sync with the build agents' configuration. The property has to carry a value even when the agents "
-                            + "authenticate with an ssh key, because the localvc and buildagent profiles require it to resolve.");
-        }
-
-        rejectIfKnownDefault(buildAgentGitPassword, KNOWN_DEFAULT_BUILD_AGENT_GIT_PASSWORDS, BUILD_AGENT_GIT_PASSWORD_PROPERTY,
-                "the build-agent git password is a value published in the Artemis repository, and a caller presenting it can read every repository "
-                        + "without any authorization check or access-log entry",
-                "Choose a unique password, and keep it in sync with the build agents' configuration.");
     }
 
     /**
