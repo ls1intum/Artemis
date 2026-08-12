@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -700,9 +701,11 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         Map<String, Object> body = getJsonMap(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks?withSubmission=" + withSubmission);
 
-        assertThat(body).containsOnlyKeys("id", "exerciseId", "completionDate", "successful", "score", "rated", "submission", "feedbacks", "assessmentType", "testCaseCount",
-                "passedTestCaseCount", "codeIssueCount");
+        assertThat(body).containsOnlyKeys("id", "exerciseId", "completionDate", "successful", "score", "rated", "hasComplaint", "exampleResult", "submission", "feedbacks",
+                "assessmentType", "testCaseCount", "passedTestCaseCount", "codeIssueCount");
         assertThat(body.get("id")).isEqualTo(result.getId().intValue());
+        assertThat(body.get("hasComplaint")).isEqualTo(true);
+        assertThat(body.get("exampleResult")).isEqualTo(true);
         // exerciseId is a non-nullable column with a plain getter, so it was on the entity wire for every result
         assertThat(body.get("exerciseId")).isEqualTo(programmingExercise.getId().intValue());
         assertThat(body.get("assessmentType")).isEqualTo(AssessmentType.AUTOMATIC.name());
@@ -817,8 +820,11 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusDays(1));
+        result.setHasComplaint(true);
+        result.setExampleResult(true);
         var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
-        participation.setInitializationDate(ZonedDateTime.now().minusMinutes(30));
+        // Truncate to milliseconds so durationInMinutes stays deterministic across the datetime(3) round trip.
+        participation.setInitializationDate(ZonedDateTime.now().minusMinutes(30).truncatedTo(ChronoUnit.MILLIS));
         participation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
         participation.setInitializationState(InitializationState.INITIALIZED);
         participation.setRepositoryUri(SCORPIO_REPOSITORY_URI);
