@@ -356,6 +356,53 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
         });
     });
 
+    test.describe('Emoji shortcode autocomplete', () => {
+        test('Student can accept an emoji shortcode suggestion and send the message', async ({ login, courseMessages }) => {
+            await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=${seedChannelId}`);
+
+            await courseMessages.typeInMessageEditor('Nice :jo');
+
+            // The suggest widget opens after typing ":" plus at least one letter and offers a ":joy:" row.
+            // "jo" fuzzy-matches several shortcodes (":joystick:", ":banjo:", ...), so the row is selected
+            // explicitly by its shortcode rather than relying on whichever entry Monaco highlights by default.
+            // The accessible name of a row is the label plus a kind suffix (e.g. "😂 :joy:, Constant"), so the
+            // shortcode is matched as a substring; ":joy:" cannot collide with ":joy_cat:" or ":joystick:".
+            const suggestWidget = courseMessages.getSuggestWidget();
+            await expect(suggestWidget).toBeVisible({ timeout: 10000 });
+            const joySuggestion = suggestWidget.getByRole('option', { name: /:joy:/ });
+            await expect(joySuggestion).toBeVisible();
+
+            // Accepting the suggestion (click) replaces the shortcode with the native emoji glyph
+            await joySuggestion.click();
+            await expect(suggestWidget).toBeHidden();
+            const editorText = courseMessages.getMessageEditorText();
+            await expect(editorText).toContainText('😂');
+            await expect(editorText).not.toContainText(':jo');
+
+            // The editor propagates content to the send form with a 200ms debounce, and the Enter handler
+            // silently drops the submit while the form is still empty/invalid. The send button's enabled
+            // state mirrors form validity, so wait for it before sending (a real user is slower than 200ms).
+            await courseMessages.waitUntilSendEnabled();
+
+            const message = await courseMessages.sendMessageWithEnterKey();
+            expect(message.content!).toContain('😂');
+            await courseMessages.checkMessage(message.id!, '😂');
+        });
+
+        test('Typing a colon-separated number does not open the suggest widget', async ({ login, courseMessages }) => {
+            await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=${seedChannelId}`);
+
+            await courseMessages.typeInMessageEditor('10:30');
+
+            // The character before the trigger colon is a digit, not whitespace, so the word-boundary
+            // check rejects the trigger and the widget must stay closed. The editor text is asserted
+            // first: it waits until all keystrokes are rendered, so the hidden check afterwards is
+            // meaningful (a broken boundary check would have opened the widget while typing ":3").
+            await expect(courseMessages.getMessageEditorText()).toContainText('10:30');
+            await expect(courseMessages.getSuggestWidget()).toBeHidden();
+        });
+    });
+
     test.describe('Message forwarding', () => {
         // self-contained source + destination channels so membership and names are deterministic
         let sourceChannel: Channel;
