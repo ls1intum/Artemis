@@ -46,6 +46,7 @@ class StubProgrammingExerciseBuildConfigurationComponent {
     readonly timeoutChange = output<number>();
     readonly timeoutMinValue = signal<number | undefined>(undefined);
     readonly timeoutMaxValue = signal<number | undefined>(undefined);
+    readonly areDockerResourcesValid = signal(true);
 }
 
 describe('LocalCIBuildPlanEditorComponent', () => {
@@ -444,6 +445,24 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         fixture.detectChanges();
         expect(comp.canSubmit()).toBe(true);
         expect(timeoutMessage()).toBeNull();
+    });
+
+    it('should block submitting while a docker resource limit is invalid', () => {
+        activatedRoute.data = of({ exercise: { id: 7, buildConfig: { buildPlanConfiguration } } as unknown as ProgrammingExercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        fixture.detectChanges();
+        const buildConfiguration = (comp as unknown as { buildConfigurationComponent: () => StubProgrammingExerciseBuildConfigurationComponent }).buildConfigurationComponent();
+        expect(comp.canSubmit()).toBe(true);
+
+        // an invalid cpu, memory or memory swap value would be rejected by the server, so saving is blocked up front
+        buildConfiguration.areDockerResourcesValid.set(false);
+        expect(comp.canSubmit()).toBe(false);
+
+        buildConfiguration.areDockerResourcesValid.set(true);
+        expect(comp.canSubmit()).toBe(true);
     });
 
     it('should allow leaving with no edits and prompt once the plan is edited', () => {

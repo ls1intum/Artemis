@@ -80,7 +80,18 @@
             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.cpuCount.label"></span>
         </label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.cpuCount.help" />
-        <input type="text" class="form-control" name="cpuCount" id="field_dockerCpuCount" [value]="cpuCount()" (input)="onCpuCountChange($event)" />
+        <input
+            type="text"
+            class="form-control"
+            name="cpuCount"
+            id="field_dockerCpuCount"
+            [class.is-invalid]="!isCpuCountValid()"
+            [value]="cpuCount()"
+            (input)="onCpuCountChange($event)"
+        />
+        @if (!isCpuCountValid()) {
+            <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.dockerFlags.cpuCount.invalid"></div>
+        }
     </div>
 
     <div class="mb-2">
@@ -88,7 +99,10 @@
             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.memory.label"></span>
         </label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.memory.help" />
-        <input type="text" class="form-control" name="memory" id="field_memory" [value]="memory()" (input)="onMemoryChange($event)" />
+        <input type="text" class="form-control" name="memory" id="field_memory" [class.is-invalid]="!isMemoryValid()" [value]="memory()" (input)="onMemoryChange($event)" />
+        @if (!isMemoryValid()) {
+            <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.dockerFlags.memory.invalid"></div>
+        }
     </div>
 
     <div class="mb-2">
@@ -96,7 +110,18 @@
             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.memorySwap.label"></span>
         </label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.memorySwap.help" />
-        <input type="text" class="form-control" name="memorySwap" id="field_memorySwap" [value]="memorySwap()" (input)="onMemorySwapChange($event)" />
+        <input
+            type="text"
+            class="form-control"
+            name="memorySwap"
+            id="field_memorySwap"
+            [class.is-invalid]="!isMemorySwapValid()"
+            [value]="memorySwap()"
+            (input)="onMemorySwapChange($event)"
+        />
+        @if (!isMemorySwapValid()) {
+            <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.dockerFlags.memorySwap.invalid"></div>
+        }
     </div>
 </div>
 

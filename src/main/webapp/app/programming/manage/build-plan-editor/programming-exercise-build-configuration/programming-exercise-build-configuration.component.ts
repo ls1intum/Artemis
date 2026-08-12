@@ -12,6 +12,12 @@ import { parseJson } from 'app/foundation/util/json.util';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
 
+// the bounds the server applies in ProgrammingExerciseValidationService#validateDockerFlags, mirrored here so an invalid
+// value is caught inline instead of only by the save request
+const MIN_DOCKER_CPU_COUNT = 1;
+const MIN_DOCKER_MEMORY_MB = 6;
+const MIN_DOCKER_MEMORY_SWAP_MB = 0;
+
 interface DockerFlags {
     network?: string;
     env?: { [key: string]: string };
@@ -60,6 +66,13 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     readonly displayTimeout = computed(() => (this.usesDefaultTimeout() ? (this.timeoutDefaultValue() ?? 0) : this.timeout()!));
 
     readonly isLanguageSupported = signal(false);
+
+    readonly isCpuCountValid = signal(true);
+    readonly isMemoryValid = signal(true);
+    readonly isMemorySwapValid = signal(true);
+
+    // the editor page blocks saving while a resource limit is invalid, so the server never has to reject the payload
+    readonly areDockerResourcesValid = computed(() => this.isCpuCountValid() && this.isMemoryValid() && this.isMemorySwapValid());
 
     faPlus = faPlus;
     faTrash = faTrash;
@@ -159,22 +172,53 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         this.parseDockerFlagsToString();
     }
 
+    /**
+     * Parses a Docker resource limit entered as text into the whole number the server expects, or undefined when the input
+     * is not a whole number at or above the given minimum. The fields are free text, so without this a value such as "abc"
+     * would be packaged into the Docker flags verbatim and the save would fail with a dockerFlagsParsingError.
+     *
+     * @param value      the raw input value
+     * @param minimum    the smallest accepted value
+     * @returns the parsed value, or undefined when the input is invalid
+     */
+    private parseResourceLimit(value: string | number | undefined, minimum: number): number | undefined {
+        const trimmed = String(value ?? '').trim();
+        if (!trimmed) {
+            return undefined;
+        }
+        const parsed = Number(trimmed);
+        return Number.isInteger(parsed) && parsed >= minimum ? parsed : undefined;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onCpuCountChange(event: any) {
-        this.cpuCount.set(event.target.value);
-        this.parseDockerFlagsToString();
+        const parsed = this.parseResourceLimit(event.target.value, MIN_DOCKER_CPU_COUNT);
+        this.isCpuCountValid.set(parsed !== undefined);
+        // an invalid value is never written into the Docker flags, so the last valid configuration stays intact
+        if (parsed !== undefined) {
+            this.cpuCount.set(parsed);
+            this.parseDockerFlagsToString();
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onMemoryChange(event: any) {
-        this.memory.set(event.target.value);
-        this.parseDockerFlagsToString();
+        const parsed = this.parseResourceLimit(event.target.value, MIN_DOCKER_MEMORY_MB);
+        this.isMemoryValid.set(parsed !== undefined);
+        if (parsed !== undefined) {
+            this.memory.set(parsed);
+            this.parseDockerFlagsToString();
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onMemorySwapChange(event: any) {
-        this.memorySwap.set(event.target.value);
-        this.parseDockerFlagsToString();
+        const parsed = this.parseResourceLimit(event.target.value, MIN_DOCKER_MEMORY_SWAP_MB);
+        this.isMemorySwapValid.set(parsed !== undefined);
+        if (parsed !== undefined) {
+            this.memorySwap.set(parsed);
+            this.parseDockerFlagsToString();
+        }
     }
 
     onEnvVarsKeyChange(row: [string, string]) {

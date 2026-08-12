@@ -152,6 +152,57 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{},"network":"custom","cpuCount":1,"memory":1024,"memorySwap":2048}');
     });
 
+    it('should coerce numeric resource limits entered as text into numbers', () => {
+        // the fields are free text, so without coercion the flags would carry strings and the save would fail server-side
+        comp.onCpuCountChange({ target: { value: '2' } });
+        comp.onMemoryChange({ target: { value: ' 1024 ' } });
+        comp.onMemorySwapChange({ target: { value: '0' } });
+
+        expect(comp.cpuCount()).toBe(2);
+        expect(comp.memory()).toBe(1024);
+        expect(comp.memorySwap()).toBe(0);
+        expect(comp.areDockerResourcesValid()).toBe(true);
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toContain('"cpuCount":2');
+    });
+
+    const invalidResourceLimits: [string, string][] = [
+        ['a non-numeric value', 'abc'],
+        ['an empty value', ''],
+        ['a fractional value', '1.5'],
+    ];
+
+    it.each(invalidResourceLimits)('should flag %s for the cpu count and keep the last valid value', (_description, invalidValue) => {
+        comp.onCpuCountChange({ target: { value: '4' } });
+        const flagsAfterValidValue = comp.programmingExercise()?.buildConfig?.dockerFlags;
+
+        comp.onCpuCountChange({ target: { value: invalidValue } });
+
+        expect(comp.isCpuCountValid()).toBe(false);
+        expect(comp.areDockerResourcesValid()).toBe(false);
+        // the invalid input must not reach the docker flags, so the last valid configuration stays intact
+        expect(comp.cpuCount()).toBe(4);
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe(flagsAfterValidValue);
+    });
+
+    it('should reject resource limits below the server minimum', () => {
+        comp.onCpuCountChange({ target: { value: '0' } });
+        comp.onMemoryChange({ target: { value: '5' } });
+        comp.onMemorySwapChange({ target: { value: '-1' } });
+
+        // these mirror the bounds of ProgrammingExerciseValidationService#validateDockerFlags
+        expect(comp.isCpuCountValid()).toBe(false);
+        expect(comp.isMemoryValid()).toBe(false);
+        expect(comp.isMemorySwapValid()).toBe(false);
+    });
+
+    it('should accept resource limits exactly at the server minimum', () => {
+        comp.onCpuCountChange({ target: { value: '1' } });
+        comp.onMemoryChange({ target: { value: '6' } });
+        comp.onMemorySwapChange({ target: { value: '0' } });
+
+        expect(comp.areDockerResourcesValid()).toBe(true);
+    });
+
     it('should update environment variable rows with new array references when adding and removing rows', () => {
         comp.envVars.set([]);
 

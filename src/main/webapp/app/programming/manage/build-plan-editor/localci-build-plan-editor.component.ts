@@ -100,8 +100,11 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     // corrupts the whole plan on reopen, so block saving until every phase carries a script
     readonly areScriptsValid = computed(() => this.phases().every((phase) => phase.script.trim().length > 0));
 
+    // before the build configuration child exists, do not block saving on its resource limits
+    readonly areDockerResourcesValid = computed(() => this.buildConfigurationComponent()?.areDockerResourcesValid() ?? true);
+
     // an empty image is allowed: submit() sends no image and the server falls back to the exercise's language default
-    readonly canSubmit = computed(() => this.phases().length > 0 && this.arePhaseNamesValid() && this.areScriptsValid() && this.isTimeoutValid());
+    readonly canSubmit = computed(() => this.phases().length > 0 && this.arePhaseNamesValid() && this.areScriptsValid() && this.isTimeoutValid() && this.areDockerResourcesValid());
 
     ngOnInit(): void {
         this.activatedRoute.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ exercise }) => {

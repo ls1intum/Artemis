@@ -893,15 +893,18 @@
                 },
                 "cpuCount": {
                     "label": "Anzahl der CPUs bearbeiten",
-                    "help": "Die Anzahl der CPUs, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation."
+                    "help": "Die Anzahl der CPUs, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation.",
+                    "invalid": "Die Anzahl der CPUs muss eine ganze Zahl von mindestens 1 sein."
                 },
                 "memory": {
                     "label": "Maximale Arbeitsspeichergröße bearbeiten (in MB)",
-                    "help": "Die maximale Größe des Arbeitsspeichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation."
+                    "help": "Die maximale Größe des Arbeitsspeichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation.",
+                    "invalid": "Die Arbeitsspeichergröße muss eine ganze Zahl von mindestens 6 MB sein."
                 },
                 "memorySwap": {
                     "label": "Maximale Swap-Speichergröße bearbeiten (in MB)",
-                    "help": "Die maximale Größe des Swap-Speichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation."
+                    "help": "Die maximale Größe des Swap-Speichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation.",
+                    "invalid": "Die Swap-Speichergröße muss eine ganze Zahl von mindestens 0 MB sein."
                 }
             },
             "artemisIntelligence": {

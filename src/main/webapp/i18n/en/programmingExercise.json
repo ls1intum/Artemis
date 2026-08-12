@@ -893,15 +893,18 @@
                 },
                 "cpuCount": {
                     "label": "Edit CPU count",
-                    "help": "The number of CPUs that are available to the Docker container. For more information, refer to the Docker documentation."
+                    "help": "The number of CPUs that are available to the Docker container. For more information, refer to the Docker documentation.",
+                    "invalid": "The CPU count must be a whole number of at least 1."
                 },
                 "memory": {
                     "label": "Edit memory limit (in MB)",
-                    "help": "The maximum amount of memory that the Docker container can use. For more information, refer to the Docker documentation."
+                    "help": "The maximum amount of memory that the Docker container can use. For more information, refer to the Docker documentation.",
+                    "invalid": "The memory limit must be a whole number of at least 6 MB."
                 },
                 "memorySwap": {
                     "label": "Edit memory swap limit (in MB)",
-                    "help": "The maximum amount of memory and swap space that the Docker container can use. For more information, refer to the Docker documentation."
+                    "help": "The maximum amount of memory and swap space that the Docker container can use. For more information, refer to the Docker documentation.",
+                    "invalid": "The memory swap limit must be a whole number of at least 0 MB."
                 }
             },
             "artemisIntelligence": {
