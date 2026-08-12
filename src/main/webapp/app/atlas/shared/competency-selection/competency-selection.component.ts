@@ -215,7 +215,11 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         );
     }
 
-    /** Merges new competencies from the given links into the available list and rebuilds selection/checkbox state. */
+    /**
+     * Merges new competencies from the given links into the available list and rebuilds selection/checkbox state.
+     * This is a programmatic refresh, so it must not emit valueChange: the caller already knows the links, and
+     * echoing them back to a parent that refreshes on valueChange loops forever.
+     */
     refreshWithLinks(links: CompetencyLearningObjectLink[]): void {
         if (!links) return;
 
@@ -245,7 +249,6 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         if (this._onChange) {
             this._onChange(this.selectedCompetencyLinks);
         }
-        this.valueChange.emit(this.selectedCompetencyLinks);
     }
 
     registerOnChange(fn: (value: CompetencyLearningObjectLink[] | undefined) => void): void {

@@ -1,8 +1,8 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Competency, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
-import { of, throwError } from 'rxjs';
+import { Competency, CompetencyLearningObjectLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+import { Subject, of, throwError } from 'rxjs';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -205,6 +205,52 @@ describe('CompetencySelection', () => {
         component.disabled.set(true);
         component.setDisabledState?.(false);
         expect(component.disabled()).toBeFalsy();
+    });
+
+    describe('refreshWithLinks', () => {
+        const competency1 = { id: 1, title: 'first' } as Competency;
+        const competency2 = { id: 2, title: 'second' } as Competency;
+
+        it('should not emit valueChange (regression: infinite valueChange loop with a parent that refreshes on valueChange)', () => {
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2] });
+            fixture.detectChanges();
+            const emitSpy = vi.spyOn(component.valueChange, 'emit');
+
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 0.5)]);
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+
+        it('should merge new competencies and update selection, checkbox states and the form control', () => {
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2] });
+            fixture.detectChanges();
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+            const createdCompetency = { id: 3, title: 'created by the checklist' } as Competency;
+
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 0.5), new CompetencyLearningObjectLink(createdCompetency, 1)]);
+
+            expect(component.competencyLinks()).toHaveLength(3);
+            expect(component.selectedCompetencyLinks).toHaveLength(2);
+            expect(component.selectedCompetencyLinks?.first()?.weight).toBe(0.5);
+            expect(component.checkboxStates()).toEqual({ 1: true, 2: false, 3: true });
+            expect(onChangeSpy).toHaveBeenCalledWith(component.selectedCompetencyLinks);
+        });
+
+        it('should apply links that arrived while loading without emitting valueChange (regression: infinite valueChange loop)', () => {
+            const competenciesLoaded = new Subject<HttpResponse<CourseCompetency[]>>();
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
+            vi.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(competenciesLoaded.asObservable());
+            fixture.detectChanges();
+            const emitSpy = vi.spyOn(component.valueChange, 'emit');
+
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 0.5)]);
+            competenciesLoaded.next(new HttpResponse({ body: [competency1, competency2] }));
+
+            expect(component.selectedCompetencyLinks).toHaveLength(1);
+            expect(component.checkboxStates()).toEqual({ 1: true, 2: false });
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
     });
 
     describe('AtlasML Competency Suggestions', () => {
