@@ -16,6 +16,15 @@ export class ExamTimelineComponent {
     readonly timelineStatusChange = output<TimelineStatus>();
     readonly datesChanged = output<void>();
 
+    private readonly visibleDateWarningStringKey = computed<string | undefined>(() => {
+        const visibleDate = this.visibleDate();
+        const startDate = this.startDate();
+        if (visibleDate === undefined || startDate === undefined) {
+            return undefined;
+        }
+        return startDate.diff(visibleDate, 'minute') > 240 ? 'entity.visibleDateWarningError' : undefined;
+    });
+
     readonly timelineItems = computed<TimelineItem[]>(() => {
         const testExamKeyPart = this.testExam() ? '.testExam' : '';
         return [
@@ -23,6 +32,7 @@ export class ExamTimelineComponent {
                 kind: 'required',
                 labelStringKey: 'artemisApp.examManagement.visibleDate',
                 date: this.visibleDate,
+                warningStringKey: this.visibleDateWarningStringKey,
             },
             {
                 kind: 'required',

@@ -56,6 +56,22 @@ describe('ExamTimelineComponent', () => {
         ]);
     });
 
+    it('should warn when the exam becomes visible more than four hours before it starts', () => {
+        const visibleDate = dayjs('2026-01-01T10:00:00Z');
+        component.visibleDate.set(visibleDate);
+        component.startDate.set(visibleDate.add(240, 'minutes'));
+
+        expect(component.timelineItems()[0].warningStringKey?.()).toBeUndefined();
+
+        component.startDate.set(visibleDate.add(241, 'minutes'));
+
+        expect(component.timelineItems()[0].warningStringKey?.()).toBe('entity.visibleDateWarningError');
+
+        component.visibleDate.set(undefined);
+
+        expect(component.timelineItems()[0].warningStringKey?.()).toBeUndefined();
+    });
+
     it('should forward timeline status changes', () => {
         fixture.detectChanges();
         const emitSpy = vi.spyOn(component.timelineStatusChange, 'emit');

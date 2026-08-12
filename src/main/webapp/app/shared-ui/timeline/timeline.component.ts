@@ -1,4 +1,4 @@
-import { Component, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, Signal, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -16,6 +16,7 @@ export interface TimelineItem {
     kind: 'required' | 'optional';
     labelStringKey: string;
     date: WritableSignal<Dayjs | undefined>;
+    warningStringKey?: Signal<string | undefined>;
     otherRequiredItem?: TimelineItem;
     /**
      * Restricts the ordering check to these items. The default (no item may precede any earlier one) is too strict for
@@ -35,6 +36,7 @@ type InternalTimelineItem = TimelineItem & {
     hasInvalidDateOrder: boolean;
     isOtherRequiredItemDateUndefined: boolean;
     isInvalidInput: boolean;
+    hasWarning: boolean;
     tooltip: string | undefined;
 };
 
@@ -153,6 +155,9 @@ export class TimelineComponent {
             const otherRequiredItem = item.otherRequiredItem;
             const isOtherRequiredItemDateUndefined = date !== undefined && otherRequiredItem !== undefined && otherRequiredItem.date() === undefined;
             const isInvalidInput = invalidInputKeys.has(item.labelStringKey);
+            const hasError = isInvalidInput || hasInvalidDateOrder || isInputRequiredButUndefined || isOtherRequiredItemDateUndefined;
+            const warningStringKey = item.warningStringKey?.();
+            const hasWarning = !hasError && warningStringKey !== undefined;
             let tooltip: string | undefined;
             if (isInvalidInput) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateInvalidTooltip');
@@ -167,6 +172,8 @@ export class TimelineComponent {
             } else if (isOtherRequiredItemDateUndefined && otherRequiredItem) {
                 const otherInputName = this.translateService.instant(otherRequiredItem.labelStringKey);
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineOtherRequiredDateTooltip', { otherInputName });
+            } else if (warningStringKey !== undefined) {
+                tooltip = this.translateService.instant(warningStringKey);
             }
 
             return {
@@ -179,6 +186,7 @@ export class TimelineComponent {
                 hasInvalidDateOrder,
                 isOtherRequiredItemDateUndefined,
                 isInvalidInput,
+                hasWarning,
                 tooltip,
             };
         });
