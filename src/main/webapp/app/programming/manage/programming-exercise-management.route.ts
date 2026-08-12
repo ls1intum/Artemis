@@ -3,6 +3,8 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { featureToggleGuard } from 'app/foundation/feature-toggle/feature-toggle.guard';
 import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
 import {
@@ -137,7 +139,8 @@ export const routes: Routes = [
             authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.programmingExercise.buildPlanEditor',
         },
-        canActivate: [UserRouteAccessService],
+        // the editor is a programming-exercise feature, so a direct URL must not load it when the feature is toggled off
+        canActivate: [UserRouteAccessService, featureToggleGuard(FeatureToggle.ProgrammingExercises)],
     },
     {
         path: 'programming-exercises/:exerciseId/repository/:repositoryType',
