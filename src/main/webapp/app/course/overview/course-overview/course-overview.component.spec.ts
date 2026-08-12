@@ -433,7 +433,7 @@ describe('CourseOverviewComponent', () => {
     it('should pass the page title to the exercises component', () => {
         const exercisesComponent = Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent;
         exercisesComponent.setPageTitle = vi.fn();
-        Object.defineProperty(exercisesComponent, 'isCollapsed', { value: true });
+        Object.defineProperty(exercisesComponent, 'isCollapsed', { value: signal(true) });
         component.pageTitle.set('overview.exercises');
 
         (component as any).handleComponentActivation(exercisesComponent);
