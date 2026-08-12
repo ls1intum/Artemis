@@ -32,7 +32,6 @@ describe('MetisConversationService', () => {
     let oneToOneChatService: OneToOneChatService;
     let channelService: ChannelService;
     let websocketService: WebsocketService;
-    let courseManagementService: CourseManagementService;
     let alertService: AlertService;
 
     const course = { id: 1 } as Course;
@@ -63,11 +62,9 @@ describe('MetisConversationService', () => {
         oneToOneChatService = TestBed.inject(OneToOneChatService);
         channelService = TestBed.inject(ChannelService);
         websocketService = TestBed.inject(WebsocketService);
-        courseManagementService = TestBed.inject(CourseManagementService);
         conversationService = TestBed.inject(ConversationService);
         alertService = TestBed.inject(AlertService);
 
-        vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse<Course>({ body: course })));
         vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel] })));
         vi.spyOn(conversationService, 'convertServerDates').mockImplementation((conversation) => conversation);
 
@@ -197,6 +194,60 @@ describe('MetisConversationService', () => {
                     });
                 },
             });
+        });
+    });
+
+    it('should open a conversation that was requested before the conversations were loaded', () => {
+        // The reload case. Opening the page with ?conversationId= asks for a conversation while the request that
+        // fetches them is still in flight, because the route emits its query parameters straight away. Dropping that
+        // request left the page on an empty view, because it is the only request that is ever made.
+        return new Promise((done) => {
+            metisConversationService.setActiveConversation(groupChat.id);
+
+            metisConversationService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    metisConversationService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                        expect(activeConversation?.id).toBe(groupChat.id);
+                        done({});
+                    });
+                },
+            });
+        });
+    });
+
+    it('should not warn about membership for a conversation requested before the conversations were loaded', () => {
+        // Whether the user is a member cannot be known while the list is still on its way, so claiming they are not is
+        // both wrong and, to the user, the only visible symptom of the race.
+        const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+
+        metisConversationService.setActiveConversation(4);
+
+        expect(addAlertSpy).not.toHaveBeenCalled();
+    });
+
+    it('should keep a conversation the user opened rather than the one the url asked for', () => {
+        // Both requests are made while the conversations are still in flight, which is the only window in which one can
+        // be pending: the url asks for one on load, and the user picks another before the answer arrives. The later
+        // request is the more recent intent and has to be the one that opens.
+        const conversationsResponse = new Subject<HttpResponse<ConversationDTO[]>>();
+        vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(conversationsResponse.asObservable());
+
+        return new Promise((done) => {
+            metisConversationService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    metisConversationService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                        expect(activeConversation?.id).toBe(groupChat.id);
+                        done({});
+                    });
+                },
+            });
+
+            // Still loading: neither of these can be resolved against the cache yet.
+            metisConversationService.setActiveConversation(9999);
+            metisConversationService.setActiveConversation(groupChat.id);
+
+            conversationsResponse.next(new HttpResponse({ body: [groupChat, oneToOneChat, channel] }));
+            conversationsResponse.complete();
         });
     });
 

@@ -342,8 +342,8 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         Set<ExerciseCourseScoreDTO> courseExercises = Set.of(variant1, variant2);
 
         // The student fully solved both variants (100% each), which would be 10 points without the cap.
-        var gradeScores = List.of(new CourseGradeScoreDTO(1L, student.getId(), 101L, 100.0, null, ExerciseType.TEXT),
-                new CourseGradeScoreDTO(2L, student.getId(), 102L, 100.0, null, ExerciseType.TEXT));
+        var gradeScores = List.of(new CourseGradeScoreDTO(1L, student.getId(), 101L, 100.0, true, null, ExerciseType.TEXT),
+                new CourseGradeScoreDTO(2L, student.getId(), 102L, 100.0, true, null, ExerciseType.TEXT));
 
         StudentScoresDTO studentScores = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), gradeScores,
                 new MaxAndReachablePointsDTO(5.0, 5.0, 0.0), List.of(), courseExercises);
@@ -366,8 +366,8 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
                 course.getId(), null, null);
         Set<ExerciseCourseScoreDTO> courseExercises = Set.of(exercise1, exercise2);
 
-        var gradeScores = List.of(new CourseGradeScoreDTO(1L, student.getId(), 101L, 100.0, null, ExerciseType.TEXT),
-                new CourseGradeScoreDTO(2L, student.getId(), 102L, 100.0, null, ExerciseType.TEXT));
+        var gradeScores = List.of(new CourseGradeScoreDTO(1L, student.getId(), 101L, 100.0, true, null, ExerciseType.TEXT),
+                new CourseGradeScoreDTO(2L, student.getId(), 102L, 100.0, true, null, ExerciseType.TEXT));
 
         StudentScoresDTO studentScores = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), gradeScores,
                 new MaxAndReachablePointsDTO(10.0, 10.0, 0.0), List.of(), courseExercises);

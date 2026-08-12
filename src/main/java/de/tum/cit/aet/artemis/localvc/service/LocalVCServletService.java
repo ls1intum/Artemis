@@ -43,6 +43,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -256,8 +257,14 @@ public class LocalVCServletService {
         // If it is a fetch request, we check if it is the build agent that is fetching the repository.
         if (repositoryAction == RepositoryActionType.READ) {
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
-            if (Objects.equals(usernameAndPassword.username(), buildAgentGitUsername)
-                && secretMatches(buildAgentGitPassword, usernameAndPassword.password())) {
+            // A blank configured credential must never match: this shortcut returns ahead of the rate limit, the
+            // repository authorization checks and the access log, so an empty configured password would hand
+            // repository-wide read access to anyone presenting the build-agent username. ConfigurationValidator
+            // rejects that configuration under prod, but this path also runs where that validation does not.
+            // The hasText guard is not made redundant by the constant-time comparison below: a blank configured
+            // password would still match an equally blank provided one.
+            if (StringUtils.hasText(buildAgentGitUsername) && StringUtils.hasText(buildAgentGitPassword) && Objects.equals(usernameAndPassword.username(), buildAgentGitUsername)
+                    && secretMatches(buildAgentGitPassword, usernameAndPassword.password())) {
                 // Authentication successful
                 return;
             }
@@ -430,8 +437,7 @@ public class LocalVCServletService {
         }
         if (localVCRepositoryUri != null) {
             var repositoryToken = repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), localVCRepositoryUri.toString());
-            if (repositoryToken.isPresent()
-                && secretMatches(repositoryToken.get().getVcsAccessToken(), password)) {
+            if (repositoryToken.isPresent() && secretMatches(repositoryToken.get().getVcsAccessToken(), password)) {
                 return AuthenticationMechanism.REPOSITORY_VCS_ACCESS_TOKEN;
             }
         }
@@ -484,9 +490,8 @@ public class LocalVCServletService {
         }
 
         // check user VCS access token
-        if (user.getVcsAccessTokenExpiryDate() != null
-            && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())
-            && secretMatches(user.getVcsAccessToken(), passwordOrToken)) {
+        if (user.getVcsAccessTokenExpiryDate() != null && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())
+                && secretMatches(user.getVcsAccessToken(), passwordOrToken)) {
             return user;
         }
 
@@ -536,8 +541,7 @@ public class LocalVCServletService {
                 }
                 if (studentParticipation.isPresent()) {
                     var storedToken = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), studentParticipation.get().getId());
-                    if (storedToken.isPresent()
-                        && secretMatches(storedToken.get().getVcsAccessToken(), providedToken)) {
+                    if (storedToken.isPresent() && secretMatches(storedToken.get().getVcsAccessToken(), providedToken)) {
                         user.setVcsAccessToken(storedToken.get().getVcsAccessToken());
                         return true;
                     }
@@ -556,14 +560,14 @@ public class LocalVCServletService {
      * guarantee nearly time-constant comparison.
      *
      * @param expectedSecret expected secret. May be null to allow for nullable types to be used with this.
-     *                       Since {@code providedSecret} is never {@code null}, this will result in {@code false.}
+     *                           Since {@code providedSecret} is never {@code null}, this will result in {@code false.}
      * @param providedSecret the value that was provided for the secret.
      * @return the result of {@code Objects.equals(expectedSecret, providedSecret)} but with a time-constant comparison.
      * @implNote The expected secret is allowed to be null to be compatible with {@link Objects#equals(Object, Object)}.
-     * Normally, a missing secret should raise some warning. However, the current usage of this method never passes
-     * {@code null} for {@code providedSecret}. Therefore, the result for such a case is always {@code false}.
-     * To reaffirm this, the {@code providedSecret} is expected to be non-null, making it obvious,
-     * that a {@code expectedSecret == null} will always result in {@code false}.
+     *           Normally, a missing secret should raise some warning. However, the current usage of this method never passes
+     *           {@code null} for {@code providedSecret}. Therefore, the result for such a case is always {@code false}.
+     *           To reaffirm this, the {@code providedSecret} is expected to be non-null, making it obvious,
+     *           that a {@code expectedSecret == null} will always result in {@code false}.
      */
     private boolean secretMatches(@Nullable String expectedSecret, @NonNull String providedSecret) {
         if (expectedSecret == null) {
@@ -588,8 +592,7 @@ public class LocalVCServletService {
     private boolean tryAuthenticationWithRepositoryVcsAccessToken(User user, String providedToken, LocalVCRepositoryUri localVCRepositoryUri) {
         if (providedToken.startsWith(TOKEN_PREFIX) && providedToken.length() == VCS_ACCESS_TOKEN_LENGTH) {
             var storedToken = repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), localVCRepositoryUri.toString());
-            if (storedToken.isPresent()
-                && secretMatches(storedToken.get().getVcsAccessToken(), providedToken)) {
+            if (storedToken.isPresent() && secretMatches(storedToken.get().getVcsAccessToken(), providedToken)) {
                 return true;
             }
         }
@@ -737,8 +740,7 @@ public class LocalVCServletService {
         if (checkAccessToStaffRepository(exercise, repositoryTypeOrUserName, repositoryActionType, user)) {
             // For tests and auxiliary repos, no participation is needed (they don't have dedicated participations).
             // For template and solution repos, load the participation so callers can use it for access logging.
-            if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())
-                || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
+            if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
                 try {
                     return Optional.of(tryToLoadParticipation(usingSSH, repositoryTypeOrUserName, localVCRepositoryUri, exercise));
                 }
@@ -837,8 +839,7 @@ public class LocalVCServletService {
             throws LocalVCForbiddenException {
 
         boolean isTemplateOrSolutionOrTestsRepo = repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())
-                || repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())
-                || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString());
+                || repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString());
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
