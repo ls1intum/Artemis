@@ -12,35 +12,18 @@ import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/cours
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { BaseCourseContainerComponent } from 'app/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
-import { CourseExercisesComponent } from 'app/course/overview/course-exercises/course-exercises.component';
-import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
-import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component';
-import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { Course } from 'app/course/shared/entities/course.model';
-import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
-import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
-import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseUnenrollmentModalComponent } from 'app/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
-import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
+import { SidebarView, isPageTitleView, isSidebarView } from 'app/course/shared/sidebar-view.interface';
+import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
+import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
-
-/**
- * Reads the collapsed state from a route-activated component that may expose `isCollapsed` either as a
- * method or as a boolean property. Returns undefined if the component does not provide the information.
- */
-function readComponentCollapsed(componentRef: unknown): boolean | undefined {
-    if (typeof componentRef !== 'object' || !componentRef) {
-        return undefined;
-    }
-    const isCollapsed = (componentRef as { isCollapsed?: (() => boolean) | boolean }).isCollapsed;
-    return typeof isCollapsed === 'function' ? isCollapsed.call(componentRef) : isCollapsed;
-}
 
 @Component({
     selector: 'jhi-course-overview',
@@ -88,9 +71,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     showUnenrollModal = signal<boolean>(false);
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
-    activatedComponentReference = signal<
-        CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | CourseIrisComponent | undefined
-    >(undefined);
+    activatedComponentReference = signal<SidebarView | undefined>(undefined);
 
     // Icons
     faTimes = faTimes;
@@ -105,11 +86,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
     override async ngOnInit() {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
-            this.isSidebarCollapsed.update((value) => {
-                const componentRef = this.activatedComponentReference();
-                const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : componentRef?.isCollapsed;
-                return componentCollapsed ?? !value;
-            });
+            this.isSidebarCollapsed.update((value) => this.activatedComponentReference()?.isCollapsed() ?? !value);
         });
 
         this.subscription = this.route?.params.subscribe((params: Params) => {
@@ -140,9 +117,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         });
 
         this.courseActionItems.set(this.getCourseActionItems());
-        const componentRef = this.activatedComponentReference();
-        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : componentRef?.isCollapsed;
-        this.isSidebarCollapsed.set(componentCollapsed ?? false);
+        this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed() ?? false);
         this.sidebarItems.set(this.getSidebarItems());
     }
 
@@ -304,39 +279,25 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     protected handleComponentActivation(componentRef: unknown): void {
-        if (
-            componentRef instanceof CourseExercisesComponent ||
-            componentRef instanceof CourseLecturesComponent ||
-            componentRef instanceof CourseTutorialGroupsComponent ||
-            componentRef instanceof CourseExamsComponent ||
-            componentRef instanceof CourseConversationsComponent ||
-            componentRef instanceof CourseIrisComponent
-        ) {
-            this.activatedComponentReference.set(componentRef);
+        const sidebarView = isSidebarView(componentRef) ? componentRef : undefined;
+        if (sidebarView) {
+            this.activatedComponentReference.set(sidebarView);
         }
 
-        if (
-            componentRef instanceof CourseExercisesComponent ||
-            componentRef instanceof CourseLecturesComponent ||
-            componentRef instanceof CourseTutorialGroupsComponent ||
-            componentRef instanceof CourseExamsComponent ||
-            componentRef instanceof CourseConversationsComponent
-        ) {
+        if (isPageTitleView(componentRef)) {
             componentRef.setPageTitle(this.pageTitle());
         }
 
-        const componentCollapsed = readComponentCollapsed(componentRef);
-        this.isSidebarCollapsed.set(componentCollapsed ?? false);
+        this.isSidebarCollapsed.set(sidebarView?.isCollapsed() ?? false);
     }
 
     handleToggleSidebar(): void {
-        if (!this.activatedComponentReference()) {
+        const childRouteComponent = this.activatedComponentReference();
+        if (!childRouteComponent) {
             return;
         }
-        const childRouteComponent = this.activatedComponentReference();
-        childRouteComponent?.toggleSidebar();
-        const componentCollapsed = typeof childRouteComponent!.isCollapsed === 'function' ? childRouteComponent!.isCollapsed() : childRouteComponent!.isCollapsed;
-        this.isSidebarCollapsed.set(componentCollapsed);
+        childRouteComponent.toggleSidebar();
+        this.isSidebarCollapsed.set(childRouteComponent.isCollapsed());
     }
 
     /**
