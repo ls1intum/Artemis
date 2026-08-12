@@ -132,7 +132,9 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
             return;
         }
         this.buildPhasesTemplateService
-            .getTemplate(!!exercise.exerciseGroup, programmingLanguage, exercise.projectType)
+            // the static analysis and sequential run settings select a different template file on the server, so they have
+            // to be passed here as well; otherwise a seeded plan differs from the one Local CI would build the exercise with
+            .getTemplate(!!exercise.exerciseGroup, programmingLanguage, exercise.projectType, exercise.staticCodeAnalysisEnabled, exercise.buildConfig?.sequentialTestRuns)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (template) => {

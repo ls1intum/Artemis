@@ -241,7 +241,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         comp.ngOnInit();
 
         // no image in the stored configuration, so the editor asks the template service for the language default
-        expect(getTemplateStub).toHaveBeenCalledWith(false, ProgrammingLanguage.JAVA, undefined);
+        expect(getTemplateStub).toHaveBeenCalledWith(false, ProgrammingLanguage.JAVA, undefined, undefined, undefined);
         expect(comp.dockerImage()).toBe('');
 
         // once the template resolves, its default image is offered only as a placeholder so submit keeps sending no image
@@ -269,13 +269,37 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         // a null configuration builds on the language default, so the editor opens empty and asks for the template
         expect(comp.phases()).toHaveLength(0);
-        expect(getTemplateStub).toHaveBeenCalledWith(false, ProgrammingLanguage.JAVA, undefined);
+        expect(getTemplateStub).toHaveBeenCalledWith(false, ProgrammingLanguage.JAVA, undefined, undefined, undefined);
 
         // the template's phases fill the editor so it shows the real default plan instead of an empty list
         getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
 
         expect(comp.phases()).toEqual(phases);
         expect(comp.defaultDockerImage()).toBe('language-default-image');
+    });
+
+    const templateFlagCases: [string, Partial<ProgrammingExercise>, boolean | undefined, boolean | undefined][] = [
+        ['static code analysis', { staticCodeAnalysisEnabled: true }, true, undefined],
+        ['sequential test runs', { buildConfig: { sequentialTestRuns: true } } as Partial<ProgrammingExercise>, undefined, true],
+    ];
+
+    it.each(templateFlagCases)('should request the template with the exercise %s setting', (_description, overrides, expectedStaticAnalysis, expectedSequentialRuns) => {
+        const exercise = {
+            id: 7,
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            ...overrides,
+            buildConfig: { timeoutSeconds: 60, ...(overrides.buildConfig ?? {}) },
+        } as unknown as ProgrammingExercise;
+        activatedRoute.data = of({ exercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        comp.ngOnInit();
+
+        // these settings select a different template file on the server, so omitting them would seed a plan the exercise
+        // would not otherwise be built with
+        expect(getTemplateStub).toHaveBeenCalledWith(false, ProgrammingLanguage.JAVA, undefined, expectedStaticAnalysis, expectedSequentialRuns);
     });
 
     it('should not overwrite phases authored while the template request was in flight', () => {
