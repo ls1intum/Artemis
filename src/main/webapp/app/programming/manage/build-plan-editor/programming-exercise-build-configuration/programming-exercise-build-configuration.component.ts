@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, OnInit, WritableSignal, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -173,52 +173,41 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     /**
-     * Parses a Docker resource limit entered as text into the whole number the server expects, or undefined when the input
-     * is not a whole number at or above the given minimum. The fields are free text, so without this a value such as "abc"
-     * would be packaged into the Docker flags verbatim and the save would fail with a dockerFlagsParsingError.
+     * Applies a Docker resource limit entered as text. The fields are free text, so the value is first parsed into the
+     * whole number the server expects; without that a value such as "abc" would be packaged into the Docker flags verbatim
+     * and the save would fail with a dockerFlagsParsingError. An invalid value only marks the field, it is never written
+     * into the Docker flags, so the last valid configuration stays intact.
      *
-     * @param value      the raw input value
-     * @param minimum    the smallest accepted value
-     * @returns the parsed value, or undefined when the input is invalid
+     * @param value   the raw input value
+     * @param minimum the smallest accepted value
+     * @param limit   the signal holding the limit to update
+     * @param isValid the signal telling the template whether the entered value is valid
      */
-    private parseResourceLimit(value: string | number | undefined, minimum: number): number | undefined {
+    private applyResourceLimit(value: string | number | undefined, minimum: number, limit: WritableSignal<number | undefined>, isValid: WritableSignal<boolean>): void {
         const trimmed = String(value ?? '').trim();
-        if (!trimmed) {
-            return undefined;
-        }
         const parsed = Number(trimmed);
-        return Number.isInteger(parsed) && parsed >= minimum ? parsed : undefined;
+        // an empty field parses as 0, so it has to be rejected before the bounds are checked
+        const valueIsValid = trimmed.length > 0 && Number.isInteger(parsed) && parsed >= minimum;
+        isValid.set(valueIsValid);
+        if (valueIsValid) {
+            limit.set(parsed);
+            this.parseDockerFlagsToString();
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onCpuCountChange(event: any) {
-        const parsed = this.parseResourceLimit(event.target.value, MIN_DOCKER_CPU_COUNT);
-        this.isCpuCountValid.set(parsed !== undefined);
-        // an invalid value is never written into the Docker flags, so the last valid configuration stays intact
-        if (parsed !== undefined) {
-            this.cpuCount.set(parsed);
-            this.parseDockerFlagsToString();
-        }
+        this.applyResourceLimit(event.target.value, MIN_DOCKER_CPU_COUNT, this.cpuCount, this.isCpuCountValid);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onMemoryChange(event: any) {
-        const parsed = this.parseResourceLimit(event.target.value, MIN_DOCKER_MEMORY_MB);
-        this.isMemoryValid.set(parsed !== undefined);
-        if (parsed !== undefined) {
-            this.memory.set(parsed);
-            this.parseDockerFlagsToString();
-        }
+        this.applyResourceLimit(event.target.value, MIN_DOCKER_MEMORY_MB, this.memory, this.isMemoryValid);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onMemorySwapChange(event: any) {
-        const parsed = this.parseResourceLimit(event.target.value, MIN_DOCKER_MEMORY_SWAP_MB);
-        this.isMemorySwapValid.set(parsed !== undefined);
-        if (parsed !== undefined) {
-            this.memorySwap.set(parsed);
-            this.parseDockerFlagsToString();
-        }
+        this.applyResourceLimit(event.target.value, MIN_DOCKER_MEMORY_SWAP_MB, this.memorySwap, this.isMemorySwapValid);
     }
 
     onEnvVarsKeyChange(row: [string, string]) {
