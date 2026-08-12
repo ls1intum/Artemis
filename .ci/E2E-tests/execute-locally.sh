@@ -58,6 +58,10 @@ echo "Compose file: $COMPOSE_FILE"
 # port 7921 is not exposed on the local machine.
 export HOST_HOSTNAME="nginx"
 
+# The prod-profile stacks need a JWT signing key. A key committed to the repository would be one anyone can use to forge
+# a token, so it is generated per run and shared by every service that reads docker/artemis/config/playwright.env.
+export ARTEMIS_E2E_JWT_SECRET="${ARTEMIS_E2E_JWT_SECRET:-$(openssl rand -base64 64 | tr -d '\n')}"
+
 # Set Docker tag (required by compose file, but we build locally so value doesn't matter)
 export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
 # Admin credentials configure the Artemis server (via docker/artemis/config/playwright.env)
