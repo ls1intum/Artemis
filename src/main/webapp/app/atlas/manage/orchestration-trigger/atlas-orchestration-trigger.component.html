@@ -1,12 +1,14 @@
-<button
-    type="button"
-    [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent"
-    (click)="triggerAtlasOrchestrator()"
-    [disabled]="orchestrationRunning()"
-    pTooltip="{{ 'artemisApp.atlasOrchestrator.tooltip' | artemisTranslate }}"
-    class="btn btn-outline-primary btn-sm me-1 mb-2"
->
-    <fa-icon [icon]="faWandMagicSparkles" />
-    <span jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.button"></span>
-</button>
-<jhi-orchestration-result-dialog [(visible)]="orchestrationDialogVisible" [summaryMessage]="orchestrationDialogMessage()" [appliedActions]="orchestrationDialogActions()" />
+@if (atlasModuleActive) {
+    <button
+        type="button"
+        [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent"
+        (click)="triggerAtlasOrchestrator()"
+        [disabled]="orchestrationRunning()"
+        pTooltip="{{ 'artemisApp.atlasOrchestrator.tooltip' | artemisTranslate }}"
+        [class]="buttonClass()"
+    >
+        <fa-icon [icon]="faWandMagicSparkles" />
+        <span jhiTranslate="artemisApp.atlasOrchestrator.button"></span>
+    </button>
+    <jhi-orchestration-result-dialog [(visible)]="orchestrationDialogVisible" [summaryMessage]="orchestrationDialogMessage()" [appliedActions]="orchestrationDialogActions()" />
+}

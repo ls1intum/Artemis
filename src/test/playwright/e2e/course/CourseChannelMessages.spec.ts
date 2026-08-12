@@ -6,6 +6,8 @@ import { Channel } from 'app/communication/shared/entities/conversation/channel.
 import { Post } from 'app/communication/shared/entities/post.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { SEED_COURSES } from '../../support/seedData';
+import { RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
+import { Commands } from '../../support/commands';
 
 // Use pre-seeded courses — no course creation needed
 const readOnlyCourse = { id: SEED_COURSES.channel1.id };
@@ -137,18 +139,38 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             await communicationAPIRequests.joinUserIntoChannel({ id: writeCourse.id } as any, channel.id!, instructor);
         });
 
-        test('Instructor should be able to edit a channel', async ({ login, courseMessages, page }) => {
+        test('Instructor should be able to edit a channel', async ({ login, courseMessages, page, communicationAPIRequests }) => {
+            // Login, three debounced edit flows, the server check and a full page reload share one test
+            // budget, and the @fast project caps that at 60s. Lift it so the post-reload wait below can
+            // actually run to completion instead of being cut short by the total timeout under CI load.
+            test.slow();
             await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${channel.id}`);
             const newName = 'new-' + generateUUID().slice(0, 8);
             const topic = 'test-topic';
+            const description = 'New Description';
 
             await courseMessages.editName(newName);
             await courseMessages.editTopic(topic);
-            await courseMessages.editDescription('New Description');
+            await courseMessages.editDescription(description);
 
-            await page.reload();
-            await page.locator('jhi-conversation-header').waitFor({ state: 'visible', timeout: 10000 });
-            await expect(courseMessages.getName()).toContainText(newName);
+            // Assert against the server first: this is what "the edits were saved" actually means, and it
+            // holds regardless of how fast the client re-renders.
+            const persisted = await communicationAPIRequests.getConversationById(writeCourse.id, channel.id!);
+            expect(persisted?.name).toBe(newName);
+            expect(persisted?.topic).toBe(topic);
+            expect(persisted?.description).toBe(description);
+
+            // Then confirm the reloaded UI shows them. A reload re-bootstraps the entire client, and
+            // Playwright disables the HTTP cache per context, so the bundle is re-fetched from scratch —
+            // on a loaded CI runner that can take longer than the default expect timeout. Wait on the
+            // assertions themselves (they poll) rather than gating on an intermediate element within a
+            // fixed window. Only the first assertion absorbs the re-bootstrap; the topic is rendered in
+            // the same pass, so it keeps the default timeout and the two budgets cannot stack.
+            // Restore the route after the reload: a lazy route chunk that fails to resolve sends the
+            // router to the bare /courses fallback, where the channel header does not exist at all and
+            // the assertion below waits out its whole budget on a page that can never satisfy it.
+            await Commands.reloadAndRestoreRoute(page);
+            await expect(courseMessages.getName()).toContainText(newName, { timeout: RELOAD_RENDER_TIMEOUT });
             await expect(courseMessages.getTopic()).toContainText(topic);
         });
     });

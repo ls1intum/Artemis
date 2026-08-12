@@ -67,7 +67,14 @@
                 "points": {
                     "one": "{{points}} Punkt",
                     "many": "{{points}} Punkte"
-                }
+                },
+                "otherFeedback": "Weiteres Feedback",
+                "feedbackSuggestions": "Feedback-Vorschläge",
+                "baseAward": "Vergebene Punkte",
+                "deductions": "Abzüge",
+                "finalScore": "Gesamt",
+                "pointsShort": "{{points}} Pkt.",
+                "pointsOfShort": "{{points}} / {{maxPoints}} Pkt."
             },
             "useAsExampleSubmissionVerificationQuestion": "Bist du dir sicher, dass du diese Abgabe als Beispielabgabe importieren möchtest?",
             "messages": {
