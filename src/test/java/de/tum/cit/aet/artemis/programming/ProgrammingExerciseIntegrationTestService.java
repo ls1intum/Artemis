@@ -2258,8 +2258,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
-        ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
+        ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExercise),
                 HttpStatus.FORBIDDEN);
     }
@@ -2269,13 +2268,31 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
-        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
-        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
-        ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
-        ProgrammingExercise programmingExerciseToBeConflicted = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().get(1);
+        ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
+        ProgrammingExercise programmingExerciseToBeConflicted = createCourseWithProgrammingExerciseForReEvaluation();
 
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExerciseToBeConflicted),
                 HttpStatus.CONFLICT);
+    }
+
+    /**
+     * Creates a course with one programming exercise and returns that exercise, loaded with the associations
+     * {@link UpdateProgrammingExerciseDTO#of} needs.
+     * <p>
+     * The exercise is looked up through the course it was just created in, rather than by taking an element out of
+     * {@link ProgrammingExerciseTestRepository#findAllWithEagerTemplateAndSolutionParticipations()}. The setup of this
+     * class already puts two programming exercises in the database - one in a course and one in an exam - and that
+     * query has no {@code ORDER BY}, so its row order is whatever the database returns. When the exam exercise came
+     * first, the request ran against an exercise whose course is only reachable through its exercise group,
+     * {@code getCourseViaExerciseGroupOrCourseMember()} returned null, and the endpoint answered 500 instead of the
+     * expected status.
+     *
+     * @return the programming exercise of the newly created course
+     */
+    private ProgrammingExercise createCourseWithProgrammingExerciseForReEvaluation() {
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
+        ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        return programmingExerciseTestRepository.findWithEagerTemplateAndSolutionParticipationsById(exercise.getId()).orElseThrow();
     }
 
     void testGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {
