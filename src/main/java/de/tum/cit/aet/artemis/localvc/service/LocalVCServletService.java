@@ -977,7 +977,12 @@ public class LocalVCServletService {
 
         try {
             if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
-                exerciseVersionService.createExerciseVersion(exercise, user);
+                // Identify the commit this push created, so the new commit alert can be attributed to the client that made it
+                // and to no other. Resolved here because the caller may not know the hash yet: a commit from the online editor
+                // arrives with a null hash and only the repository itself knows what was just written. Kept in a separate
+                // variable, because the build-triggering code below relies on commitHash staying null in that case.
+                String triggeringCommitHash = commitHash != null ? commitHash : getLatestCommitHash(repository);
+                exerciseVersionService.createExerciseVersion(exercise, user, triggeringCommitHash);
             }
 
             if (repositoryType.equals(RepositoryType.TESTS)) {

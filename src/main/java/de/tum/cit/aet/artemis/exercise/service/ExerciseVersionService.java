@@ -143,22 +143,37 @@ public class ExerciseVersionService {
      * @param author         The user who created the version
      */
     public void createExerciseVersion(Exercise targetExercise, User author) {
+        createExerciseVersion(targetExercise, author, null);
+    }
+
+    /**
+     * Requests the (asynchronous) creation of an exercise version for a repository commit, identifying that commit.
+     * <p>
+     * The hash is what lets the resulting new commit alert be attributed to the client that made the commit, so that client
+     * can filter its own alert out instead of being warned about its own submit. Callers that do not create a commit pass
+     * nothing and no alert is ever attributed to them.
+     *
+     * @param targetExercise       The exercise to create a version of
+     * @param author               The user who created the version
+     * @param triggeringCommitHash The commit this request created, or null when the request created no commit
+     */
+    public void createExerciseVersion(Exercise targetExercise, User author, @Nullable String triggeringCommitHash) {
         // Read on the calling thread for the same reason the author is: the client session id lives in the request, and the
-        // executor thread has no request context. Without it the new commit alert carries no origin, so the editor that
-        // caused the commit cannot recognise the alert as its own and warns the user about their own submit.
+        // executor thread has no request context.
         String clientSessionId = ExerciseEditorSyncService.getClientSessionId();
-        exerciseVersionExecutor.execute(() -> createExerciseVersionInternal(targetExercise, author, clientSessionId));
+        exerciseVersionExecutor.execute(() -> createExerciseVersionInternal(targetExercise, author, clientSessionId, triggeringCommitHash));
     }
 
     /**
      * Creates an exercise version: fetches the exercise eagerly for its type, initializes an {@link ExerciseSnapshotDTO}
      * and persists a new {@link ExerciseVersion}. Runs on the {@code exerciseVersionExecutor} thread.
      *
-     * @param targetExercise  The exercise to create a version of
-     * @param author          The user who created the version
-     * @param clientSessionId the session of the client that triggered this version, or null when no request did
+     * @param targetExercise       The exercise to create a version of
+     * @param author               The user who created the version
+     * @param clientSessionId      the session of the client that triggered this version, or null when no request did
+     * @param triggeringCommitHash the commit that client created, or null when it created none
      */
-    private void createExerciseVersionInternal(Exercise targetExercise, User author, @Nullable String clientSessionId) {
+    private void createExerciseVersionInternal(Exercise targetExercise, User author, @Nullable String clientSessionId, @Nullable String triggeringCommitHash) {
         if (author == null) {
             log.error("No active user during exercise version creation check");
             return;
@@ -193,7 +208,7 @@ public class ExerciseVersionService {
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
             ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
             this.determineSynchronizationForActiveEditors(exercise.getId(), exerciseSnapshot, previousVersion.map(ExerciseVersion::getExerciseSnapshot).orElse(null), author,
-                    savedExerciseVersion.getId(), clientSessionId);
+                    savedExerciseVersion.getId(), clientSessionId, triggeringCommitHash);
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
             previousVersion.ifPresent(prev -> {
                 try {
@@ -264,9 +279,11 @@ public class ExerciseVersionService {
      * @param newExerciseVersionId the id of the new exercise version
      * @param clientSessionId      the session of the client that triggered this version, so its own editor can filter the
      *                                 alert out again, or null when no request triggered it
+     * @param triggeringCommitHash the commit that client created, used to check that the alert really is about its own
+     *                                 commit before attributing it
      */
     private void determineSynchronizationForActiveEditors(Long exerciseId, ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot, User author,
-            Long newExerciseVersionId, @Nullable String clientSessionId) {
+            Long newExerciseVersionId, @Nullable String clientSessionId, @Nullable String triggeringCommitHash) {
         if (previousSnapshot == null || newSnapshot == null) {
             return;
         }
@@ -275,18 +292,23 @@ public class ExerciseVersionService {
         ProgrammingExerciseSnapshotDTO previousProgrammingData = previousSnapshot.programmingData();
         ExerciseEditorSyncTarget target = null;
         Long auxiliaryRepositoryId = null;
+        // The commit the detected repository now stands at, needed to decide whose commit this alert is about
+        String changedCommitId = null;
 
         // Repository commits cannot change simultaneously because each commit triggers a separate
         // version creation. The if-else chain intentionally detects only the first changed repository.
         if (newProgrammingData != null && previousProgrammingData != null) {
             if (participationCommitChanged(previousProgrammingData.templateParticipation(), newProgrammingData.templateParticipation())) {
                 target = ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
+                changedCommitId = participationCommitId(newProgrammingData.templateParticipation());
             }
             else if (participationCommitChanged(previousProgrammingData.solutionParticipation(), newProgrammingData.solutionParticipation())) {
                 target = ExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
+                changedCommitId = participationCommitId(newProgrammingData.solutionParticipation());
             }
             else if (!Objects.equals(previousProgrammingData.testsCommitId(), newProgrammingData.testsCommitId())) {
                 target = ExerciseEditorSyncTarget.TESTS_REPOSITORY;
+                changedCommitId = newProgrammingData.testsCommitId();
             }
             else {
                 Map<Long, String> previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream()
@@ -298,6 +320,7 @@ public class ExerciseVersionService {
                     if (!Objects.equals(previousCommitId, auxiliary.commitId())) {
                         target = ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
                         auxiliaryRepositoryId = auxiliary.id();
+                        changedCommitId = auxiliary.commitId();
                         break;
                     }
                 }
@@ -311,7 +334,8 @@ public class ExerciseVersionService {
             // to refresh
             // For problem statement changes, changes are broadcasted via client-to-client
             // messages.
-            exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId, clientSessionId);
+            exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId,
+                    sessionOwningCommit(clientSessionId, triggeringCommitHash, changedCommitId));
         }
         if (!changedFields.isEmpty()) {
             exerciseEditorSyncService.broadcastNewExerciseVersionAlert(exerciseId, newExerciseVersionId, author, changedFields);
@@ -421,6 +445,33 @@ public class ExerciseVersionService {
      * @param newParticipation      the new participation snapshot
      * @return true if the commit id changed
      */
+    /**
+     * The session an alert may be attributed to, which is only the session whose own commit the alert describes.
+     * <p>
+     * Version jobs run asynchronously on several workers and read the repository refs when they execute, not when they were
+     * queued. So a job queued by one client can snapshot a commit another client pushed in the meantime. Attributing that
+     * alert to the queueing client would make its editor filter out a warning about somebody else's commit, and a missing
+     * warning is worse than the duplicate warning this attribution exists to remove. Whenever the identity cannot be
+     * established the alert goes out unattributed, which warns everyone, including the committer.
+     *
+     * @param clientSessionId      the session that queued this version, or null if no request did
+     * @param triggeringCommitHash the commit that session created, or null if it created none
+     * @param changedCommitId      the commit the alerted repository now stands at
+     * @return the session to attribute the alert to, or null to attribute it to nobody
+     */
+    @Nullable
+    static String sessionOwningCommit(@Nullable String clientSessionId, @Nullable String triggeringCommitHash, @Nullable String changedCommitId) {
+        if (clientSessionId == null || triggeringCommitHash == null || changedCommitId == null) {
+            return null;
+        }
+        return triggeringCommitHash.equals(changedCommitId) ? clientSessionId : null;
+    }
+
+    @Nullable
+    private static String participationCommitId(ProgrammingExerciseSnapshotDTO.@Nullable ParticipationSnapshotDTO participation) {
+        return participation == null ? null : participation.commitId();
+    }
+
     private boolean participationCommitChanged(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previousParticipation,
             ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO newParticipation) {
         if (previousParticipation == null && newParticipation == null) {
