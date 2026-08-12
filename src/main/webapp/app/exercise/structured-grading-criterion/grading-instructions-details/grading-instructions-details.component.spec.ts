@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
@@ -241,6 +241,22 @@ describe('GradingInstructionsDetailsComponent', () => {
 
             component.generateAssessmentCriteria();
             exercise.maxPoints = 10;
+            response.next([generatedCriterion]);
+            response.complete();
+
+            expect(exercise.gradingCriteria).toBeUndefined();
+            expect(component.isGenerating()).toBe(false);
+            expect(alertService.success).not.toHaveBeenCalled();
+        });
+
+        it('should discard a response when the bonus-points policy changes while waiting', () => {
+            const response = new Subject<GradingCriterion[]>();
+            const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            generationService.generate.mockReturnValue(response);
+
+            component.generateAssessmentCriteria();
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
             response.next([generatedCriterion]);
             response.complete();
 
