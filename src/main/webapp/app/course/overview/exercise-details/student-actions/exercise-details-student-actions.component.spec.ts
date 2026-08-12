@@ -430,6 +430,28 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         },
     );
 
+    describe('assignedTeamId', () => {
+        it('should fall back to the exercise when the participation carries no team', () => {
+            // The course overview projects participations without their team, so branching on the participation
+            // produced undefined and the view-team link became /teams/undefined
+            fixture.componentRef.setInput('courseId', 1);
+            const exercise = { ...teamExerciseWithTeamAssigned, studentParticipations: [{ id: 7 } as StudentParticipation] };
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.detectChanges();
+
+            expect(comp.assignedTeamId).toBe(team.id);
+        });
+
+        it('should prefer the team on the participation when it has one', () => {
+            fixture.componentRef.setInput('courseId', 1);
+            const exercise = { ...teamExerciseWithTeamAssigned, studentParticipations: [{ id: 7, team: { id: 99 } } as StudentParticipation] };
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.detectChanges();
+
+            expect(comp.assignedTeamId).toBe(99);
+        });
+    });
+
     describe('effect on input changes', () => {
         it.each([
             [{ type: ExerciseType.QUIZ, quizBatches: [{ started: false }, { started: true }] } as QuizExercise, true],

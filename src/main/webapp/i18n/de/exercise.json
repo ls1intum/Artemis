@@ -410,7 +410,10 @@
             },
             "isUsedForTutorial": "Tutor:in muss überprüfen",
             "action": "Aktion",
-            "exerciseAssessmentDashboard": "Bewertungs-Dashboard"
+            "exerciseAssessmentDashboard": "Bewertungs-Dashboard",
+            "applyInstruction": "Diese Bewertungsanweisung anwenden",
+            "applyInstructionHint": "Hake eine Bewertungsanweisung an, um sie zum Feedback hinzuzufügen, oder ziehe sie per Drag & Drop auf ein Feedback-Element",
+            "instructionAppliedToReferencedElement": "Bereits auf ein Feedback-Element angewendet. Entferne sie dort, um den Haken zu lösen."
         }
     }
 }
