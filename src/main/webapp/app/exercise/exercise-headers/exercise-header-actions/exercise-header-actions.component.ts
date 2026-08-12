@@ -395,7 +395,9 @@ export class ExerciseHeaderActionsComponent {
 
     get assignedTeamId(): number | undefined {
         const participations = this._studentParticipations();
-        return participations?.length ? participations[0].team?.id : this.exercise().studentAssignedTeamId;
+        // Fall through rather than branch: the course overview projects the participation without its team, and even
+        // before that a team-mode participation could arrive without one. The exercise carries the resolved team id.
+        return participations?.[0]?.team?.id ?? this.exercise().studentAssignedTeamId;
     }
 
     get allowEditing(): boolean {

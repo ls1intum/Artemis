@@ -94,6 +94,7 @@
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/account/user/settings/user-settings-container/user-settings-container.component.html';
 @source './app/course/manage/update/course-update.component.html';
+@source './app/exercise/unreferenced-feedback';
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';
