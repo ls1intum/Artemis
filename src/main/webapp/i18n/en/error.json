@@ -311,6 +311,7 @@
         "noBuildPhases": "The build plan must contain at least one build phase.",
         "invalidBuildPhaseName": "A build phase name is invalid or uses a reserved name. Please choose a different name.",
         "duplicateBuildPhaseNames": "Build phase names must be unique.",
+        "blankBuildPhaseScript": "A build phase script must not be blank. Please enter a script for every build phase.",
         "buildPlanConfigurationTooLarge": "The build plan configuration is too large to be processed. Please reduce the size of your build phases.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
     }

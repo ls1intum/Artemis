@@ -105,6 +105,7 @@ export class BuildPhaseEditorComponent {
     );
 
     readonly shouldShowNameValidationError = computed(() => !this.isNameValid());
+    readonly shouldShowScriptValidationError = computed(() => this.phase().script.trim().length === 0);
     readonly shouldShowExamModeWarning = computed(() => this.isExamMode() && hasExpectedTestsBeforeDueDate(this.phase()));
     readonly readonlyScriptHtml = computed(() => this.artemisMarkdownService.safeHtmlForMarkdown(`\`\`\`bash\n${this.phase().script}\n\`\`\``));
 

@@ -166,6 +166,7 @@
                 "forceRunHelp": "If enabled, this phase runs at the end of the build even when earlier phases fail.",
                 "script": "Script",
                 "scriptHelp": "Enter the commands to execute in this phase of the build.",
+                "scriptRequired": "Script must not be empty",
                 "resultPaths": "Result Paths",
                 "resultPathsHelp": "Add glob patterns for test result files produced by this phase, for example JUnit XML reports.",
                 "testsExpected": "Tests expected",

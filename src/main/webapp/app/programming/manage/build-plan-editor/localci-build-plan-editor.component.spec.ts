@@ -369,6 +369,8 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         ['duplicate phase names', [phases[0], { ...phases[0], name: 'Compile' }], 'some-image'],
         ['a reserved phase name', [{ ...phases[0], name: 'main' }], 'some-image'],
         ['an invalid phase name', [{ ...phases[0], name: 'compile phase' }], 'some-image'],
+        ['an empty phase script', [{ ...phases[0], script: '' }], 'some-image'],
+        ['a whitespace-only phase script', [{ ...phases[0], script: '   ' }], 'some-image'],
         ['no phases', [], 'some-image'],
     ];
 

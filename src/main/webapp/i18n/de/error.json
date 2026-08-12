@@ -313,6 +313,7 @@
         "noBuildPhases": "Der Build-Plan muss mindestens eine Build-Phase enthalten.",
         "invalidBuildPhaseName": "Ein Build-Phasenname ist ungültig oder verwendet einen reservierten Namen. Bitte wähle einen anderen Namen.",
         "duplicateBuildPhaseNames": "Build-Phasennamen müssen eindeutig sein.",
+        "blankBuildPhaseScript": "Ein Build-Phasenskript darf nicht leer sein. Bitte gib für jede Build-Phase ein Skript ein.",
         "buildPlanConfigurationTooLarge": "Die Build-Plan-Konfiguration ist zu groß, um verarbeitet zu werden. Bitte reduziere die Größe deiner Build-Phasen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
     }

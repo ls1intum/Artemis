@@ -153,6 +153,7 @@
                 "forceRunHelp": "Wenn aktiviert, wird diese Phase am Ende des Builds ausgeführt, selbst wenn vorherige Phasen fehlschlagen.",
                 "script": "Skript",
                 "scriptHelp": "Gib die Befehle ein, die in dieser Phase des Builds ausgeführt werden sollen.",
+                "scriptRequired": "Skript darf nicht leer sein",
                 "resultPaths": "Ergebnispfade",
                 "resultPathsHelp": "Füge Glob-Muster für Testergebnisdateien hinzu, die in dieser Phase erzeugt werden, zum Beispiel JUnit-XML-Berichte.",
                 "testsExpected": "Tests erwartet",

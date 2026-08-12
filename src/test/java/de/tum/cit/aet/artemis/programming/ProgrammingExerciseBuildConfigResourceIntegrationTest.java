@@ -14,6 +14,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -225,6 +227,36 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
         // a blank image is not null, so it would be persisted verbatim and leave the exercise with an unusable image
         var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(phase("compile")), "   "), 60, DOCKER_FLAGS);
+        request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
+
+        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+    }
+
+    @ParameterizedTest(name = "[{index}] script=\"{0}\"")
+    @ValueSource(strings = { "", "   " })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsBlankBuildPhaseScript(String blankScript) throws Exception {
+        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
+
+        // a blank script is dropped by the NON_EMPTY serialization and corrupts the plan on reopen, so it must be rejected
+        var blankScriptPhase = new BuildPhaseDTO("compile", blankScript, null, false, List.of());
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(blankScriptPhase), DOCKER_IMAGE), 60, DOCKER_FLAGS);
+        request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
+
+        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsNullBuildPhaseScript() throws Exception {
+        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
+
+        var nullScriptPhase = new BuildPhaseDTO("compile", null, null, false, List.of());
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(nullScriptPhase), DOCKER_IMAGE), 60, DOCKER_FLAGS);
         request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
 
         var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();

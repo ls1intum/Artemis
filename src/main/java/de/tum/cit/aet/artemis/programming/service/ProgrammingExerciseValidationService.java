@@ -329,9 +329,10 @@ public class ProgrammingExerciseValidationService {
     }
 
     /**
-     * Validates a list of build phases: it must contain at least one phase, and every phase name must match the configured
-     * pattern, avoid the reserved names, and be unique case-insensitively. Shared by the full exercise update and the
-     * dedicated build plan editor so the same misconfiguration is rejected with the same error and key on both pages.
+     * Validates a list of build phases: it must contain at least one phase, every phase name must match the configured
+     * pattern, avoid the reserved names, and be unique case-insensitively, and every phase must carry a non-blank script.
+     * Shared by the full exercise update and the dedicated build plan editor so the same misconfiguration is rejected with
+     * the same error and key on both pages.
      *
      * @param phases the build phases to validate
      */
@@ -352,6 +353,13 @@ public class ProgrammingExerciseValidationService {
             }
             if (!normalizedNames.add(normalizedName)) {
                 throw new BadRequestAlertException("Build phase names must be unique", "programmingExercise", "duplicateBuildPhaseNames");
+            }
+
+            // BuildPhaseDTO is serialized with @JsonInclude(NON_EMPTY), so a blank script is dropped from the stored
+            // configuration; the client parser then rejects the whole plan on reopen. Reject it here instead of storing
+            // a phase that silently destroys the plan on the next read.
+            if (phase.script() == null || phase.script().isBlank()) {
+                throw new BadRequestAlertException("A build phase script must not be blank", "programmingExercise", "blankBuildPhaseScript");
             }
         }
     }
