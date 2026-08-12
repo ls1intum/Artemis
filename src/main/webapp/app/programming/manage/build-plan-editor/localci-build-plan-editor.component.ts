@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -46,6 +47,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
     private alertService = inject(AlertService);
     private activatedRoute = inject(ActivatedRoute);
+    private translateService = inject(TranslateService);
     private destroyRef = inject(DestroyRef);
 
     protected readonly farPlayCircle = faPlayCircle;
@@ -262,5 +264,19 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
      */
     canDeactivate(): boolean {
         return this.snapshot() === this.persistedSnapshot();
+    }
+
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     * NOTE: while the beforeunload event might be deprecated in the future, it is currently the only way to display a confirmation dialog when the user tries to leave the page
+     * @param event the beforeunload event
+     */
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: BeforeUnloadEvent) {
+        if (!this.canDeactivate()) {
+            event.preventDefault();
+            return this.translateService.instant('pendingChanges');
+        }
+        return true;
     }
 }

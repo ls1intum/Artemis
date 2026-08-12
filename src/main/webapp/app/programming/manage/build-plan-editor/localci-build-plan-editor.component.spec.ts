@@ -518,6 +518,25 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.canDeactivate()).toBe(false);
     });
 
+    it('should warn on closing or reloading the page only while there are unsaved changes', () => {
+        activatedRoute.data = of({ exercise: { id: 7, buildConfig: { buildPlanConfiguration } } as unknown as ProgrammingExercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+        const event = { preventDefault: vi.fn() } as unknown as BeforeUnloadEvent;
+
+        comp.ngOnInit();
+
+        // the router guard does not cover closing the tab or reloading, so the browser has to be asked to confirm as well
+        expect(comp.unloadNotification(event)).toBe(true);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+
+        comp.phases.set([{ ...phases[0], name: 'renamed' }]);
+
+        expect(comp.unloadNotification(event)).toBe('pendingChanges');
+        expect(event.preventDefault).toHaveBeenCalled();
+    });
+
     it('should allow leaving again after a successful save', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
         comp.phases.set(phases);
