@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -261,6 +262,18 @@ public class UserService {
     public User saveUser(User user) {
         log.debug("Save user {}", user);
         return userRepository.save(user);
+    }
+
+    /**
+     * Renames the science event identity if the persisted user login changes outside of the soft-delete anonymization flow.
+     *
+     * @param oldLogin the previous user login
+     * @param newLogin the new user login
+     */
+    public void renameScienceEventIdentityIfLoginChanged(String oldLogin, String newLogin) {
+        if (!Objects.equals(oldLogin, newLogin)) {
+            scienceEventApi.ifPresent(api -> api.renameIdentity(oldLogin, newLogin));
+        }
     }
 
     /**

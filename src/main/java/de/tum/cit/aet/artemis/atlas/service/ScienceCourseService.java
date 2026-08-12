@@ -244,8 +244,10 @@ public class ScienceCourseService {
             Course course = courseRepository.findByIdElseThrow(courseId);
             ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), courseId).orElse(null);
             checkMayDeleteScienceData(course, user, consent);
-            scienceEventRepository.deleteInteractionEventsByIdentityAndCourseId(user.getLogin(), courseId, ScienceEventService.SCIENCE_AUDIT_EVENT_TYPES);
-            scienceEventService.logAuditEvent(user.getLogin(), ScienceEventType.SCIENCE__DATA_DELETED, courseId);
+            int deletedEvents = scienceEventRepository.deleteInteractionEventsByIdentityAndCourseId(user.getLogin(), courseId, ScienceEventService.SCIENCE_AUDIT_EVENT_TYPES);
+            if (deletedEvents > 0) {
+                scienceEventService.logAuditEvent(user.getLogin(), ScienceEventType.SCIENCE__DATA_DELETED, courseId);
+            }
         });
     }
 

@@ -107,6 +107,28 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testDeleteScienceDataOnlyLogsAuditEventWhenDataWasDeleted() {
+        scienceCourseService.enableCourse(course.getId());
+        scienceCourseService.saveConsentForCurrentUser(course.getId(), true);
+
+        ScienceEvent scienceEvent = new ScienceEvent();
+        scienceEvent.setIdentity(TEST_PREFIX + "student1");
+        scienceEvent.setTimestamp(ZonedDateTime.now());
+        scienceEvent.setType(ScienceEventType.EXERCISE__OPEN);
+        scienceEvent.setResourceId(3L);
+        scienceEvent.setCourseId(course.getId());
+        scienceEvent = scienceEventRepository.save(scienceEvent);
+
+        scienceCourseService.deleteScienceDataForCurrentUser(course.getId());
+        scienceCourseService.deleteScienceDataForCurrentUser(course.getId());
+
+        assertThat(scienceEventRepository.existsById(scienceEvent.getId())).isFalse();
+        assertThat(scienceEventRepository.findAllByType(ScienceEventType.SCIENCE__DATA_DELETED).stream()
+                .filter(scienceEventEntry -> course.getId().equals(scienceEventEntry.getCourseId())).toList()).hasSize(1);
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetEnabledCourseHistoryLoadsCourseData() {
         scienceCourseService.enableCourse(course.getId());

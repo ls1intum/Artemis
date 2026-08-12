@@ -71,6 +71,6 @@ public interface ScienceEventRepository extends ArtemisJpaRepository<ScienceEven
                 AND se.courseId = :courseId
                 AND se.type NOT IN :retainedTypes
             """)
-    void deleteInteractionEventsByIdentityAndCourseId(@Param("identity") String identity, @Param("courseId") long courseId,
+    int deleteInteractionEventsByIdentityAndCourseId(@Param("identity") String identity, @Param("courseId") long courseId,
             @Param("retainedTypes") Set<ScienceEventType> retainedTypes);
 }

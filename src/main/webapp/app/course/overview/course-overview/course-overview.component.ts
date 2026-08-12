@@ -93,6 +93,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private quizExercisesSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
     private scienceFeatureToggleSubscription?: Subscription;
+    private scienceConsentLookupSubscription?: Subscription;
     private scienceFeatureActive = false;
 
     showUnenrollModal = signal<boolean>(false);
@@ -140,6 +141,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.scienceFeatureToggleSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((active) => {
             this.scienceFeatureActive = active;
             if (!active) {
+                this.scienceConsentLookupSubscription?.unsubscribe();
                 this.showScienceConsentModal.set(false);
                 this.scienceConsentCourse.set(undefined);
                 return;
@@ -303,10 +305,15 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
     private checkScienceConsent(courseId?: number): void {
         if (!courseId || !this.scienceFeatureActive) {
+            this.scienceConsentLookupSubscription?.unsubscribe();
             return;
         }
-        this.scienceSettingsService.getConsentForCourse(courseId).subscribe({
+        this.scienceConsentLookupSubscription?.unsubscribe();
+        this.scienceConsentLookupSubscription = this.scienceSettingsService.getConsentForCourse(courseId).subscribe({
             next: (consent) => {
+                if (consent.courseId !== this.course()?.id) {
+                    return;
+                }
                 this.scienceConsentCourse.set(consent);
                 this.showScienceConsentModal.set(consent.scienceEnabled && consent.active === undefined);
             },
@@ -525,5 +532,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.examStartedSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
         this.scienceFeatureToggleSubscription?.unsubscribe();
+        this.scienceConsentLookupSubscription?.unsubscribe();
     }
 }

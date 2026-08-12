@@ -235,8 +235,10 @@ public class AdminUserResource {
         checkSuperAdminAuthorizationToManageAdmin(editedUserIsAdmin || requestedAdminEscalation);
         checkCannotRemoveSuperAdminFromDefaultAdmin(existingUser.getLogin(), managedUserVM.getAuthorities());
 
+        final String oldLogin = existingUser.getLogin();
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
+        userService.renameScienceEventIdentityIfLoginChanged(oldLogin, updatedUser.getLogin());
 
         if (shouldActivateUser) {
             userService.activateUser(updatedUser);
