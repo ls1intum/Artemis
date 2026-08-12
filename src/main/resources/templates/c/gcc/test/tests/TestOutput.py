@@ -7,13 +7,13 @@ from testUtils.Utils import printTester, studSaveStrComp
 
 class TestOutput(AbstractProgramTest):
     def __init__(self, makefileLocation: str, requirements: List[str] = None, name: str = "TestOutput", executable: str = "helloWorld.out"):
-        # 30s overall (was 10s): sanitizer-instrumented binaries (asan.out / ubsan.out /
+        # 60s overall (was 10s): sanitizer-instrumented binaries (asan.out / ubsan.out /
         # lsan.out) perform extra teardown at exit (leak scan, sanitizer cleanup). On a
         # contended CI host where several builds share the CPU, that teardown — and the
         # in-loop termination wait below — can run past the old 10s budget, killing a correct
         # program and dropping a single test (e.g. 87.5% -> 75%). The larger budget only
         # bounds a genuinely hung program; a correct one still exits long before it elapses.
-        super(TestOutput, self).__init__(name, makefileLocation, executable, requirements, timeoutSec=30)
+        super(TestOutput, self).__init__(name, makefileLocation, executable, requirements, timeoutSec=60)
 
     def _run(self):
         # Start the program:

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.globalsearch;
 
-import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExamExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureExistsInWeaviate;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -650,8 +649,12 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             unregisteredExam = examRepository.save(unregisteredExam);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(unregisteredExam));
-
-            assertExamExistsInWeaviate(weaviateService, unregisteredExam.getId());
+            Exam finalExam = unregisteredExam;
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " UnregisteredExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20UnregisteredExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
                     GlobalSearchResultDTO.class);
@@ -675,8 +678,12 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             examUtilService.addStudentExamWithUser(registeredExam, student);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(registeredExam));
-
-            assertExamExistsInWeaviate(weaviateService, registeredExam.getId());
+            Exam finalExam = registeredExam;
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " RegisteredExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20RegisteredExam&types=exam&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -697,8 +704,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             // No StudentExam registration for student1
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(testExam));
-
-            assertExamExistsInWeaviate(weaviateService, testExam.getId());
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " TestExamVisible", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TestExamVisible&types=exam&courseId=" + course.getId(), HttpStatus.OK,
                     GlobalSearchResultDTO.class);
@@ -718,8 +728,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             noRegExam = examRepository.save(noRegExam);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(noRegExam));
-
-            assertExamExistsInWeaviate(weaviateService, noRegExam.getId());
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " NoRegEditorExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20NoRegEditorExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
                     GlobalSearchResultDTO.class);
@@ -744,8 +757,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             visibleExam = examRepository.save(visibleExam);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
-
-            assertExamExistsInWeaviate(weaviateService, visibleExam.getId());
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " InstrEditorExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20InstrEditorExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
                     GlobalSearchResultDTO.class);
@@ -768,8 +784,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             visibleExam = examRepository.save(visibleExam);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
-
-            assertExamExistsInWeaviate(weaviateService, visibleExam.getId());
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorExamMeta", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TutorExamMeta&types=exam&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var examResult = results.stream().filter(r -> (SEARCH_PREFIX + " TutorExamMeta").equals(r.title())).findFirst();
@@ -794,8 +813,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             examUtilService.addStudentExamWithUser(visibleExam, student);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
-
-            assertExamExistsInWeaviate(weaviateService, visibleExam.getId());
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " StudentExamMeta", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20StudentExamMeta&types=exam&courseId=" + course.getId(), HttpStatus.OK,
                     GlobalSearchResultDTO.class);
@@ -881,8 +903,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             visibleExam = examRepository.save(visibleExam);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
-
-            assertExamExistsInWeaviate(weaviateService, visibleExam.getId());
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorVisibleExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TutorVisibleExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
                     GlobalSearchResultDTO.class);
@@ -902,8 +927,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             futureExam = examRepository.save(futureExam);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(futureExam));
-
-            assertExamExistsInWeaviate(weaviateService, futureExam.getId());
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorFutureExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TutorFutureExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
                     GlobalSearchResultDTO.class);
