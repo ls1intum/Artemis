@@ -187,6 +187,13 @@ class ProgrammingExerciseDtoMappingTest {
         course.setTitle("Software Engineering");
         course.setShortName("SE");
         course.setPresentationScore(2);
+        course.setColor("#691b0b");
+        course.setCourseIcon("/api/core/files/course/icons/5/icon.png");
+        course.setEnrollmentConfirmationMessage("Welcome to the course");
+        course.setCourseArchivePath("Course-Archive-5.zip");
+        course.setMaxPoints(120);
+        course.setTimeZone("Europe/Berlin");
+        course.setCourseInformationSharingMessagingCodeOfConduct("Be excellent to each other");
 
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(6L);
@@ -202,6 +209,14 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(dto.course().title()).isEqualTo("Software Engineering");
         assertThat(dto.course().shortName()).isEqualTo("SE");
         assertThat(dto.course().presentationScore()).isEqualTo(2);
+        // The optional course columns the entity put on the wire whenever an instructor had set them.
+        assertThat(dto.course().color()).isEqualTo("#691b0b");
+        assertThat(dto.course().courseIcon()).isEqualTo("/api/core/files/course/icons/5/icon.png");
+        assertThat(dto.course().enrollmentConfirmationMessage()).isEqualTo("Welcome to the course");
+        assertThat(dto.course().courseArchivePath()).isEqualTo("Course-Archive-5.zip");
+        assertThat(dto.course().maxPoints()).isEqualTo(120);
+        assertThat(dto.course().timeZone()).isEqualTo("Europe/Berlin");
+        assertThat(dto.course().courseInformationSharingMessagingCodeOfConduct()).isEqualTo("Be excellent to each other");
         assertThat(dto.categories()).containsExactly("[\"easy\"]");
         assertThat(dto.gradingInstructionFeedbackUsed()).isTrue();
     }
@@ -247,10 +262,19 @@ class ProgrammingExerciseDtoMappingTest {
         exam.setTestExam(false);
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(1));
+        exam.setVisibleDate(ZonedDateTime.now().minusDays(1));
+        exam.setStartDate(ZonedDateTime.now());
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        exam.setWorkingTime(7200);
+        exam.setExamMaxPoints(37);
+        exam.setExaminer("Prof. Krusche");
+        exam.setModuleNumber("IN0006");
         exam.setCourse(course);
 
         ExerciseGroup exerciseGroup = new ExerciseGroup();
         exerciseGroup.setId(4L);
+        exerciseGroup.setTitle("Group 1");
+        exerciseGroup.setIsMandatory(true);
         exerciseGroup.setExam(exam);
 
         ProgrammingExercise exercise = new ProgrammingExercise();
@@ -263,12 +287,22 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(dto.course()).isNull();
         assertThat(dto.exerciseGroup()).isNotNull();
         assertThat(dto.exerciseGroup().id()).isEqualTo(4L);
+        assertThat(dto.exerciseGroup().title()).isEqualTo("Group 1");
+        assertThat(dto.exerciseGroup().isMandatory()).isTrue();
         assertThat(dto.exerciseGroup().exam()).isNotNull();
         assertThat(dto.exerciseGroup().exam().id()).isEqualTo(3L);
         assertThat(dto.exerciseGroup().exam().title()).isEqualTo("Endterm");
         assertThat(dto.exerciseGroup().exam().testExam()).isFalse();
         assertThat(dto.exerciseGroup().exam().numberOfCorrectionRoundsInExam()).isEqualTo(2);
         assertThat(dto.exerciseGroup().exam().exampleSolutionPublicationDate()).isEqualTo(exam.getExampleSolutionPublicationDate());
+        // The conduction dates and the exam metadata the IntelliJ plugin sees on the SCORPIO route.
+        assertThat(dto.exerciseGroup().exam().visibleDate()).isEqualTo(exam.getVisibleDate());
+        assertThat(dto.exerciseGroup().exam().startDate()).isEqualTo(exam.getStartDate());
+        assertThat(dto.exerciseGroup().exam().endDate()).isEqualTo(exam.getEndDate());
+        assertThat(dto.exerciseGroup().exam().workingTime()).isEqualTo(7200);
+        assertThat(dto.exerciseGroup().exam().examMaxPoints()).isEqualTo(37);
+        assertThat(dto.exerciseGroup().exam().examiner()).isEqualTo("Prof. Krusche");
+        assertThat(dto.exerciseGroup().exam().moduleNumber()).isEqualTo("IN0006");
         assertThat(dto.exerciseGroup().exam().course()).isNotNull();
         assertThat(dto.exerciseGroup().exam().course().id()).isEqualTo(9L);
         assertThat(dto.exerciseGroup().exam().course().title()).isEqualTo("Exam course");
@@ -297,6 +331,7 @@ class ProgrammingExerciseDtoMappingTest {
     void responseDtoOmitsTheExamWhenOnlyTheExerciseGroupIsLoaded() {
         ExerciseGroup exerciseGroup = new ExerciseGroup();
         exerciseGroup.setId(4L);
+        exerciseGroup.setTitle("Group 1");
         exerciseGroup.setExam(uninitializedProxy(Exam.class));
 
         ProgrammingExercise exercise = new ProgrammingExercise();
@@ -307,6 +342,9 @@ class ProgrammingExerciseDtoMappingTest {
 
         assertThat(dto.exerciseGroup()).isNotNull();
         assertThat(dto.exerciseGroup().id()).isEqualTo(4L);
+        // The group's own scalars survive the missing exam; only the exam sub-object drops out.
+        assertThat(dto.exerciseGroup().title()).isEqualTo("Group 1");
+        assertThat(dto.exerciseGroup().isMandatory()).isTrue();
         assertThat(dto.exerciseGroup().exam()).isNull();
     }
 

@@ -49,7 +49,10 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -69,6 +72,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
@@ -83,6 +87,42 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     private static final String TEST_PREFIX = "programmingexerciseparticipation";
 
     private static final String SCORPIO_REPOSITORY_URI = "http://artemis.local/git/TESTPROJECT/testproject-student1.git";
+
+    private static final String SCORPIO_STUDENT_IMAGE_URL = "/api/core/files/user/profile-picture/1/avatar.png";
+
+    private static final String COURSE_COLOR = "#691b0b";
+
+    private static final String COURSE_ICON_PATH = "/api/core/files/course/icons/1/icon.png";
+
+    private static final String COURSE_ENROLLMENT_CONFIRMATION_MESSAGE = "Welcome to the course";
+
+    private static final String COURSE_ARCHIVE_PATH = "Course-Archive-1.zip";
+
+    private static final String COURSE_TIME_ZONE = "Europe/Berlin";
+
+    private static final String COURSE_CODE_OF_CONDUCT = "Be excellent to each other";
+
+    private static final String COURSE_SEMESTER = "WS 2025/26";
+
+    private static final String COURSE_DESCRIPTION = "Everything about compilers";
+
+    private static final String EXAM_GROUP_TITLE = "Scorpio exercise group";
+
+    private static final String EXAM_START_TEXT = "Good luck";
+
+    private static final String EXAM_END_TEXT = "Well done";
+
+    private static final String EXAM_CONFIRMATION_START_TEXT = "I read the rules";
+
+    private static final String EXAM_CONFIRMATION_END_TEXT = "I submitted everything";
+
+    private static final String EXAM_EXAMINER = "Prof. Krusche";
+
+    private static final String EXAM_MODULE_NUMBER = "IN0006";
+
+    private static final String EXAM_COURSE_NAME = "Introduction to Software Engineering";
+
+    private static final String EXAM_ARCHIVE_PATH = "Exam-Archive-1.zip";
 
     private final String participationsBaseUrl = "/api/programming/programming-exercise-participations/";
 
@@ -783,14 +823,20 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(participationJson.get("userIndependentRepositoryUri")).isEqualTo(SCORPIO_REPOSITORY_URI);
         assertThat(participationJson.get("participantIdentifier")).isEqualTo(TEST_PREFIX + "student1");
 
+        // visibleRegistrationNumber is the one component missing here: it is a transient that only the exam and course
+        // management read paths unmask, so it was absent from the entity payload of this route as well.
         Map<String, Object> student = mapOf(participationJson, "student");
-        assertThat(student).containsOnlyKeys("id", "login", "name", "firstName", "lastName", "email", "langKey", "activated", "deleted", "internal", "testUser", "ltiCreated",
-                "memirisEnabled", "bot", "participantIdentifier", "selectedLLMUsage", "selectedLLMUsageTimestamp", "createdDate");
+        assertThat(student).containsOnlyKeys("id", "login", "name", "firstName", "lastName", "email", "imageUrl", "langKey", "activated", "deleted", "internal", "testUser",
+                "ltiCreated", "memirisEnabled", "bot", "participantIdentifier", "selectedLLMUsage", "selectedLLMUsageTimestamp", "createdDate");
         assertThat(student.get("login")).isEqualTo(TEST_PREFIX + "student1");
         assertThat(student.get("participantIdentifier")).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(student.get("imageUrl")).isEqualTo(SCORPIO_STUDENT_IMAGE_URL);
         assertThat(student.get("bot")).isEqualTo(false);
 
         // The exercise keeps its own response shape; only the members the entity computed on top of it are pinned here.
+        // Every exercise property the record does not carry is a @Transient that only a dashboard or statistics service
+        // fills in (numberOfSubmissions, averageRating, latestExamEndDate, ...) or a lazy relation this route never
+        // initializes, so none of them was on the entity payload of this route either.
         Map<String, Object> exercise = mapOf(participationJson, "exercise");
         assertThat(exercise).containsKeys("id", "type", "exerciseType", "visibleToStudents", "studentAssignedTeamIdComputed", "defaultTestCaseVisibility",
                 "gradingInstructionFeedbackUsed", "course");
@@ -798,8 +844,81 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(exercise.get("visibleToStudents")).isEqualTo(true);
         assertThat(exercise.get("studentAssignedTeamIdComputed")).isEqualTo(false);
         assertThat(exercise.get("defaultTestCaseVisibility")).isEqualTo(Visibility.ALWAYS.name());
-        assertThat(mapOf(exercise, "course")).containsKeys("enrollmentEnabled", "unenrollmentEnabled", "onboardingDone", "restrictedAthenaModulesAccess", "learningPathsEnabled",
-                "gradeRelevant", "dataRetentionHold", "trainingEnabled");
+        assertScorpioCourseKeySet(mapOf(exercise, "course"));
+    }
+
+    /**
+     * Asserts the nested course, which is the widest projection on this route and the one a wire dump is least able to
+     * check: most of its properties are optional columns that a course fixture leaves null, and {@code NON_EMPTY} then
+     * drops them from the entity payload and from the projection alike. {@link #populateEveryCourseScalar} therefore
+     * gives every nullable course scalar a value first, so the key set below is exact rather than incidental.
+     * <p>
+     * The keys are the complete serializable scalar set of the {@code Course} entity. Its associations and its
+     * {@code @Transient} dashboard counters are absent by design; see {@code ProgrammingExerciseCourseDTO}.
+     *
+     * @param course the parsed course node
+     */
+    private void assertScorpioCourseKeySet(Map<String, Object> course) {
+        assertThat(course).containsOnlyKeys("id", "title", "description", "shortName", "startDate", "endDate", "enrollmentStartDate", "enrollmentEndDate", "unenrollmentEndDate",
+                "semester", "testCourse", "language", "defaultProgrammingLanguage", "onlineCourse", "courseInformationSharingConfiguration", "maxComplaints", "maxTeamComplaints",
+                "maxComplaintTimeDays", "maxRequestMoreFeedbackTimeDays", "maxComplaintTextLimit", "maxComplaintResponseTextLimit", "complaintsEnabled",
+                "requestMoreFeedbackEnabled", "accuracyOfScores", "presentationScore", "enrollmentEnabled", "unenrollmentEnabled", "onboardingDone",
+                "restrictedAthenaModulesAccess", "learningPathsEnabled", "gradeRelevant", "dataRetentionHold", "trainingEnabled", "color", "courseIcon",
+                "enrollmentConfirmationMessage", "courseArchivePath", "maxPoints", "timeZone", "courseInformationSharingMessagingCodeOfConduct");
+        assertThat(course.get("color")).isEqualTo(COURSE_COLOR);
+        assertThat(course.get("courseIcon")).isEqualTo(COURSE_ICON_PATH);
+        assertThat(course.get("enrollmentConfirmationMessage")).isEqualTo(COURSE_ENROLLMENT_CONFIRMATION_MESSAGE);
+        assertThat(course.get("courseArchivePath")).isEqualTo(COURSE_ARCHIVE_PATH);
+        assertThat(course.get("maxPoints")).isEqualTo(120);
+        assertThat(course.get("timeZone")).isEqualTo(COURSE_TIME_ZONE);
+        assertThat(course.get("courseInformationSharingMessagingCodeOfConduct")).isEqualTo(COURSE_CODE_OF_CONDUCT);
+        assertThat(course.get("semester")).isEqualTo(COURSE_SEMESTER);
+        assertThat(course.get("description")).isEqualTo(COURSE_DESCRIPTION);
+        assertThat(course.get("language")).isEqualTo(Language.ENGLISH.name());
+        assertThat(course.get("defaultProgrammingLanguage")).isEqualTo(ProgrammingLanguage.JAVA.name());
+        assertThat(course.get("presentationScore")).isEqualTo(3);
+        assertThat(course.get("accuracyOfScores")).isEqualTo(2);
+    }
+
+    /**
+     * Gives every nullable scalar of a course a non-default value. Without it a dropped key and a key {@code NON_EMPTY}
+     * suppressed look the same on the wire, which is how the six optional course columns survived three rounds of
+     * payload diffing. The primitive scalars need no value: they are on the wire whatever they hold.
+     *
+     * @param course the course to populate
+     * @return the saved course
+     */
+    private Course populateEveryCourseScalar(Course course) {
+        course.setDescription(COURSE_DESCRIPTION);
+        course.setSemester(COURSE_SEMESTER);
+        course.setStartDate(ZonedDateTime.now().minusMonths(2));
+        course.setEndDate(ZonedDateTime.now().plusMonths(2));
+        course.setEnrollmentStartDate(ZonedDateTime.now().minusMonths(3));
+        course.setEnrollmentEndDate(ZonedDateTime.now().minusMonths(1));
+        course.setUnenrollmentEndDate(ZonedDateTime.now().plusMonths(1));
+        course.setLanguage(Language.ENGLISH);
+        course.setDefaultProgrammingLanguage(ProgrammingLanguage.JAVA);
+        course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        course.setMaxComplaints(5);
+        course.setMaxTeamComplaints(4);
+        course.setMaxComplaintTimeDays(9);
+        course.setMaxRequestMoreFeedbackTimeDays(8);
+        course.setMaxComplaintTextLimit(1500);
+        course.setMaxComplaintResponseTextLimit(1400);
+        course.setAccuracyOfScores(2);
+        course.setPresentationScore(3);
+        course.setEnrollmentEnabled(true);
+        course.setUnenrollmentEnabled(true);
+        course.setOnboardingDone(true);
+        course.setRestrictedAthenaModulesAccess(true);
+        course.setColor(COURSE_COLOR);
+        course.setCourseIcon(COURSE_ICON_PATH);
+        course.setEnrollmentConfirmationMessage(COURSE_ENROLLMENT_CONFIRMATION_MESSAGE);
+        course.setCourseArchivePath(COURSE_ARCHIVE_PATH);
+        course.setMaxPoints(120);
+        course.setTimeZone(COURSE_TIME_ZONE);
+        course.setCourseInformationSharingMessagingCodeOfConduct(COURSE_CODE_OF_CONDUCT);
+        return courseRepository.save(course);
     }
 
     /**
@@ -811,6 +930,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
      * @return the result the route serves
      */
     private Result setUpFullyPopulatedResult() {
+        populateEveryCourseScalar(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        student.setImageUrl(SCORPIO_STUDENT_IMAGE_URL);
+        userTestRepository.save(student);
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(5));
         programmingExercise.setStartDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(3));
@@ -871,6 +994,96 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         automaticFeedback.setVisibility(Visibility.ALWAYS);
         automaticFeedback.setTestCase(testCase);
         return participationUtilService.addFeedbackToResult(automaticFeedback, result);
+    }
+
+    /**
+     * The same route serves an exam exercise once the exam results are published, and then the nested exercise reaches
+     * the client through {@code exerciseGroup.exam.course} instead of the sibling {@code course} slot. That branch has
+     * its own three projections, so it needs its own exact key sets — the course-exercise test above never walks it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLatestResultWithFeedbacks_keepsTheScorpioExamKeySet() throws Exception {
+        var result = setUpFullyPopulatedExamResult();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+
+        Map<String, Object> body = getJsonMap(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks");
+
+        Map<String, Object> exercise = mapOf(mapOf(mapOf(body, "submission"), "participation"), "exercise");
+        // An exam exercise carries no course member, exactly as the entity did; the course hangs under the exam.
+        assertThat(exercise).doesNotContainKey("course");
+
+        Map<String, Object> exerciseGroup = mapOf(exercise, "exerciseGroup");
+        assertThat(exerciseGroup).containsOnlyKeys("id", "title", "isMandatory", "exam");
+        assertThat(exerciseGroup.get("title")).isEqualTo(EXAM_GROUP_TITLE);
+        assertThat(exerciseGroup.get("isMandatory")).isEqualTo(true);
+
+        // The exercises of the group are absent on purpose: the collection is lazy, never fetched here, and it would
+        // re-enter the very exercise this group hangs under.
+        Map<String, Object> exam = mapOf(exerciseGroup, "exam");
+        assertThat(exam).containsOnlyKeys("id", "title", "testExam", "examWithAttendanceCheck", "visibleDate", "startDate", "endDate", "publishResultsDate",
+                "examStudentReviewStart", "examStudentReviewEnd", "examSummaryPublicationDate", "exampleSolutionPublicationDate", "gracePeriod", "workingTime", "startText",
+                "endText", "confirmationStartText", "confirmationEndText", "examMaxPoints", "numberOfExercisesInExam", "numberOfCorrectionRoundsInExam", "randomizeExerciseOrder",
+                "examiner", "moduleNumber", "courseName", "examArchivePath", "course");
+        assertThat(exam.get("testExam")).isEqualTo(false);
+        assertThat(exam.get("examWithAttendanceCheck")).isEqualTo(true);
+        assertThat(exam.get("gracePeriod")).isEqualTo(210);
+        assertThat(exam.get("workingTime")).isEqualTo(7200);
+        assertThat(exam.get("startText")).isEqualTo(EXAM_START_TEXT);
+        assertThat(exam.get("endText")).isEqualTo(EXAM_END_TEXT);
+        assertThat(exam.get("confirmationStartText")).isEqualTo(EXAM_CONFIRMATION_START_TEXT);
+        assertThat(exam.get("confirmationEndText")).isEqualTo(EXAM_CONFIRMATION_END_TEXT);
+        assertThat(exam.get("examMaxPoints")).isEqualTo(37);
+        assertThat(exam.get("numberOfExercisesInExam")).isEqualTo(1);
+        assertThat(exam.get("numberOfCorrectionRoundsInExam")).isEqualTo(2);
+        assertThat(exam.get("randomizeExerciseOrder")).isEqualTo(true);
+        assertThat(exam.get("examiner")).isEqualTo(EXAM_EXAMINER);
+        assertThat(exam.get("moduleNumber")).isEqualTo(EXAM_MODULE_NUMBER);
+        assertThat(exam.get("courseName")).isEqualTo(EXAM_COURSE_NAME);
+        assertThat(exam.get("examArchivePath")).isEqualTo(EXAM_ARCHIVE_PATH);
+
+        // The exam's course is the same projection as the course-exercise slot, so it has to pass the same key set.
+        assertScorpioCourseKeySet(mapOf(exam, "course"));
+    }
+
+    /**
+     * Builds the exam counterpart of {@link #setUpFullyPopulatedResult}: an exam whose results are published, with
+     * every nullable scalar of the exercise group, the exam and the exam's course carrying a value.
+     *
+     * @return the result the route serves
+     */
+    private Result setUpFullyPopulatedExamResult() {
+        var result = setupExamExerciseWithParticipationAndResult(10, TEST_PREFIX + "student1");
+        Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(programmingExercise.getExerciseGroup().getExam().getId());
+        exam.setExamWithAttendanceCheck(true);
+        exam.setPublishResultsDate(ZonedDateTime.now().minusHours(1));
+        exam.setExamStudentReviewStart(ZonedDateTime.now().minusMinutes(30));
+        exam.setExamStudentReviewEnd(ZonedDateTime.now().plusDays(1));
+        exam.setExamSummaryPublicationDate(ZonedDateTime.now().minusHours(2));
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().minusMinutes(10));
+        exam.setGracePeriod(210);
+        // The default working time is its own column, not the exam duration; set it apart from the dates so the
+        // assertion below cannot pass on a value the projection derived instead of carried.
+        exam.setWorkingTime(7200);
+        exam.setStartText(EXAM_START_TEXT);
+        exam.setEndText(EXAM_END_TEXT);
+        exam.setConfirmationStartText(EXAM_CONFIRMATION_START_TEXT);
+        exam.setConfirmationEndText(EXAM_CONFIRMATION_END_TEXT);
+        exam.setExamMaxPoints(37);
+        exam.setNumberOfExercisesInExam(1);
+        exam.setNumberOfCorrectionRoundsInExam(2);
+        exam.setRandomizeExerciseOrder(true);
+        exam.setExaminer(EXAM_EXAMINER);
+        exam.setModuleNumber(EXAM_MODULE_NUMBER);
+        exam.setCourseName(EXAM_COURSE_NAME);
+        exam.setExamArchivePath(EXAM_ARCHIVE_PATH);
+        exam.getExerciseGroups().forEach(group -> {
+            group.setTitle(EXAM_GROUP_TITLE);
+            group.setIsMandatory(true);
+        });
+        examRepository.save(exam);
+        populateEveryCourseScalar(exam.getCourse());
+        return result;
     }
 
     @SuppressWarnings("unchecked")
