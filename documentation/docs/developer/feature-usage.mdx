@@ -78,7 +78,9 @@ Runs on `ApplicationReadyEvent` on every node. It reads
   two rows so that neither showed its real usage.
 * **module** from the controller's package, not from the path. The `api/<module>/` convention is enforced by an
   architecture rule so the two agree, and the package is the one that is always present.
-* **label** from `@FeatureUsage` on the method, else on the controller.
+* **label** from `@FeatureUsage` on the method, else on the controller. Every controller is required to carry one, enforced
+  by `FeatureUsageAnnotationTest` in the same way `everyRestEndpointMustBeAuthorized` requires an authorization annotation,
+  so a new controller cannot slip in without someone deciding which feature it belongs to.
 
 It then upserts the rows and caches `Map<Method, Long>`. Keyed on `java.lang.reflect.Method`, not on `HandlerMethod`,
 because the mapping hands the interceptor a different `HandlerMethod` instance (with the bean resolved) than the one in
@@ -192,6 +194,25 @@ parameter.
 `COUNT(DISTINCT usage_day)` gives "active days", which is the antidote to a ranking dominated by polling endpoints: it
 separates a feature used steadily by many people from one hammered by a single client on one afternoon.
 
+## The curated taxonomy
+
+The label is `area/feature`, which gives the page a three level tree: module (from the package) contains areas, an area
+contains features, a feature is served by one or more controllers. Currently 27 modules, 87 areas and 178 features over
+205 controllers.
+
+A feature is usually one controller. Where several are one thing to a user they share a label, so the five programming
+exercise CRUD controllers report as one `authoring/exercise-management`: that split is an implementation detail, not five
+things an instructor does.
+
+The annotation is the single source of truth, sitting next to the controller so that whoever changes one decides the label
+and a rename cannot leave a dangling reference. What an annotation cannot do alone is show the taxonomy as a whole, so
+`FeatureUsageAnnotationTest` renders it into [Feature Usage Catalogue](/developer/feature-usage-catalogue) and fails when
+that file drifts. Reviewing the diff of that file is how the shape of the taxonomy stays under control; regenerate it with:
+
+```bash
+./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true
+```
+
 ## The weekly digest email
 
 `FeatureUsageDigestService` builds the digest from `FeatureUsageQueryService.getOverview`, the same report the page shows,
@@ -229,6 +250,7 @@ cutoff into the future and delete buckets written minutes ago.
 Break any of these and the report quietly starts lying:
 
 1. The inventory is written for **all** endpoints at startup, not lazily on first call.
+2. Every controller carries a `@FeatureUsage`, and the generated catalogue document matches the annotations.
 2. Identifiers stay bounded. Never derive one from a user name, an entity id or a raw path.
 3. Counters are cumulative with a watermark; never reset them in place.
 4. Writes stay additive and dialect-neutral.

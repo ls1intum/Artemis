@@ -26,6 +26,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 
 /**
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
  */
 @Conditional(LtiEnabled.class)
 @Lazy
+@FeatureUsage("lti/launch")
 @RestController
 public class PublicLtiResource {
 

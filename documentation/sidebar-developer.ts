@@ -53,6 +53,7 @@ const sidebars: SidebarsConfig = {
         'open-source',
         'system-design',
         'feature-usage',
+        'feature-usage-catalogue',
         'test-servers',
         'builds-and-dependencies',
         'e2e-testing-playwright',

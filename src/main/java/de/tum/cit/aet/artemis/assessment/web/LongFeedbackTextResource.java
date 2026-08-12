@@ -17,11 +17,13 @@ import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("grading/long-feedback")
 @RestController
 @RequestMapping("api/assessment/")
 public class LongFeedbackTextResource {

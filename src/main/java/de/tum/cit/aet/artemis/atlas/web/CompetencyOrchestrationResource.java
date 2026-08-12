@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for the autonomous competency management orchestrator.
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
+@FeatureUsage("ai/competency-orchestration")
 @RestController
 @RequestMapping("api/atlas/orchestrator/")
 public class CompetencyOrchestrationResource {

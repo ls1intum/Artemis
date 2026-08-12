@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.admin.service.FeatureUsageQueryService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for the built-in feature usage analysis.
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage("monitoring/feature-usage")
 @RestController
 @RequestMapping("api/admin/")
 public class AdminFeatureUsageResource {

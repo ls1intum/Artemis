@@ -27,6 +27,9 @@ tasks.withType(Test).configureEach {
 
     // Pass weaviate server version to integration tests
     systemProperty 'weaviate.server.version', findProperty('weaviate_server_version')
+    // Lets FeatureUsageAnnotationTest rewrite the generated feature usage catalogue document on demand:
+    // ./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true
+    systemProperty 'updateFeatureUsageCatalogue', System.getProperty('updateFeatureUsageCatalogue', 'false')
 
     // Pin the Ryuk container image version (Testcontainers reads this env var)
     environment 'TESTCONTAINERS_RYUK_CONTAINER_IMAGE', "testcontainers/ryuk:${findProperty('ryuk_version')}"

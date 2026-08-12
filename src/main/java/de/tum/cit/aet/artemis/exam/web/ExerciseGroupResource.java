@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -51,6 +52,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
+@FeatureUsage("authoring/exercise-groups")
 @RestController
 @RequestMapping("api/exam/")
 public class ExerciseGroupResource {

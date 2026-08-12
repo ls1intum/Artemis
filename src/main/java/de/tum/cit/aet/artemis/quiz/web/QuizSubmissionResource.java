@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("conduction/submissions")
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizSubmissionResource {

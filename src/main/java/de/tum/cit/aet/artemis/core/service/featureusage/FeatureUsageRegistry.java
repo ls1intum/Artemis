@@ -344,9 +344,10 @@ public class FeatureUsageRegistry {
     /**
      * Resolves the {@code area/feature} label of an endpoint.
      * <p>
-     * A method level {@code @FeatureUsage} wins, then a class level one, then the curated catalogue. The catalogue covers
-     * every controller, so in practice an endpoint is only unlabelled while a newly added controller has not been
-     * catalogued yet, and a test fails for exactly that case.
+     * A method level {@code @FeatureUsage} wins over the controller's own, so a controller that genuinely serves two
+     * features can split them. Every controller is required to carry one, enforced by
+     * {@code FeatureUsageAnnotationTest}, so an unlabelled endpoint means a controller was added without deciding which
+     * feature it belongs to.
      */
     @Nullable
     private static String labelOf(HandlerMethod handlerMethod) {
@@ -354,13 +355,11 @@ public class FeatureUsageRegistry {
         if (annotation == null) {
             annotation = handlerMethod.getBeanType().getAnnotation(FeatureUsage.class);
         }
-        if (annotation != null) {
-            String label = annotation.value().strip();
-            if (!label.isEmpty()) {
-                return truncate(label, MAX_LABEL_LENGTH);
-            }
+        if (annotation == null) {
+            return null;
         }
-        return FeatureUsageCatalogue.labelFor(handlerMethod.getBeanType().getSimpleName()).map(label -> truncate(label, MAX_LABEL_LENGTH)).orElse(null);
+        String label = annotation.value().strip();
+        return label.isEmpty() ? null : truncate(label, MAX_LABEL_LENGTH);
     }
 
     private static String withLeadingSlash(String path) {

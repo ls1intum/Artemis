@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingServ
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("configuration/grading")
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseGradingResource {
