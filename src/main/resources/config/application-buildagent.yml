@@ -71,6 +71,11 @@ artemis:
                 http-proxy: http://proxyserver:port
                 https-proxy: http://proxyserver:port
                 no-proxy: localhost,127.0.0.1
+        # The maximum number of seconds a single Docker image pull may take before it is aborted. This is independent of the build timeout below: how long a pull takes
+        # depends on the image size and on the registry and network, not on the exercise. Without it, a pull that stops making progress blocks the build thread forever.
+        image-pull-timeout-seconds: 300
+        # Abort much earlier when the pull is not moving at all, which is what an unreachable registry looks like.
+        image-pull-stall-timeout-seconds: 60
         # Configuration for the cleanup of Docker images
         image-cleanup:
             enabled: false
