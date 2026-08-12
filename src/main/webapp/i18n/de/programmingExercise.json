@@ -147,6 +147,7 @@
                 "phaseNamePlaceholder": "z. B. compile",
                 "phaseNameInvalidCharacters": "Phasenname ist ungültig",
                 "phaseNameDuplicate": "Phasennamen müssen eindeutig sein",
+                "phaseNameReserved": "Phasenname ist reserviert",
                 "invalidPhaseNames": "Build-Phasennamen sind ungültig. Verwende nur Buchstaben, Zahlen und '_', beginne mit einem Buchstaben oder '_', vermeide reservierte Namen (wie 'main') und stelle sicher, dass Namen eindeutig sind.",
                 "condition": "Inklusionsbedingung",
                 "forceRun": "Am Ende trotz vorheriger Fehler ausführen",
