@@ -16,6 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationContext;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import de.tum.cit.aet.artemis.core.config.FeatureUsageProperties;
@@ -41,7 +42,7 @@ class FeatureUsageFlushServiceTest {
 
     @BeforeEach
     void init() {
-        collector = new FeatureUsageCollector(mock(FeatureUsageRegistry.class), new FeatureUsageProperties(true, 400, new FeatureUsageProperties.Digest(false, List.of())));
+        collector = newCollector(new FeatureUsageProperties(true, 400, new FeatureUsageProperties.Digest(false, List.of())));
         repository = mock(FeatureUsageDailyRepository.class);
         service = new FeatureUsageFlushService(collector, repository);
     }
@@ -112,8 +113,7 @@ class FeatureUsageFlushServiceTest {
 
     @Test
     void shouldDoNothingWhenTrackingIsDisabled() {
-        var disabledCollector = new FeatureUsageCollector(mock(FeatureUsageRegistry.class),
-                new FeatureUsageProperties(false, 400, new FeatureUsageProperties.Digest(false, List.of())));
+        var disabledCollector = newCollector(new FeatureUsageProperties(false, 400, new FeatureUsageProperties.Digest(false, List.of())));
 
         new FeatureUsageFlushService(disabledCollector, repository).flush();
 
@@ -129,4 +129,15 @@ class FeatureUsageFlushServiceTest {
 
         verify(repository).addUsage(anyLong(), any(), any(), anyLong(), anyLong(), anyLong(), anyInt());
     }
+
+    /**
+     * The collector resolves the registry from the context on first use, so constructing it here has to supply a context that
+     * hands back the mocked registry.
+     */
+    private FeatureUsageCollector newCollector(FeatureUsageProperties properties) {
+        var applicationContext = mock(ApplicationContext.class);
+        when(applicationContext.getBean(FeatureUsageRegistry.class)).thenReturn(mock(FeatureUsageRegistry.class));
+        return new FeatureUsageCollector(properties, applicationContext);
+    }
+
 }

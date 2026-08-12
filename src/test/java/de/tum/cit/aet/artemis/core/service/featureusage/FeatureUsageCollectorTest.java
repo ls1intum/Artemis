@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationContext;
 
 import de.tum.cit.aet.artemis.core.config.FeatureUsageProperties;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
@@ -36,7 +37,7 @@ class FeatureUsageCollectorTest {
     @BeforeEach
     void init() {
         registry = mock(FeatureUsageRegistry.class);
-        collector = new FeatureUsageCollector(registry, new FeatureUsageProperties(true, 400, new FeatureUsageProperties.Digest(false, List.of())));
+        collector = newCollector(new FeatureUsageProperties(true, 400, new FeatureUsageProperties.Digest(false, List.of())));
     }
 
     @Test
@@ -130,7 +131,7 @@ class FeatureUsageCollectorTest {
 
     @Test
     void shouldDoNothingWhenTrackingIsDisabled() {
-        var disabled = new FeatureUsageCollector(registry, new FeatureUsageProperties(false, 400, new FeatureUsageProperties.Digest(false, List.of())));
+        var disabled = newCollector(new FeatureUsageProperties(false, 400, new FeatureUsageProperties.Digest(false, List.of())));
 
         disabled.recordUsage(FEATURE_ID, Role.STUDENT, false, 1);
         disabled.recordUsage(FeatureKind.GIT, "localvc", "push/assignment", Role.ANONYMOUS, false, 1);
@@ -153,4 +154,15 @@ class FeatureUsageCollectorTest {
     private static LocalDate today() {
         return LocalDate.now(ZoneOffset.UTC);
     }
+
+    /**
+     * The collector resolves the registry from the context on first use, so constructing it here has to supply a context that
+     * hands back the mocked registry.
+     */
+    private FeatureUsageCollector newCollector(FeatureUsageProperties properties) {
+        var applicationContext = mock(ApplicationContext.class);
+        when(applicationContext.getBean(FeatureUsageRegistry.class)).thenReturn(registry);
+        return new FeatureUsageCollector(properties, applicationContext);
+    }
+
 }

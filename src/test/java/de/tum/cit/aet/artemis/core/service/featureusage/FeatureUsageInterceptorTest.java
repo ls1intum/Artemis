@@ -14,6 +14,7 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -46,8 +47,8 @@ class FeatureUsageInterceptorTest {
     @BeforeEach
     void init() throws NoSuchMethodException {
         registry = mock(FeatureUsageRegistry.class);
-        collector = new FeatureUsageCollector(registry, new FeatureUsageProperties(true, 400, new FeatureUsageProperties.Digest(false, List.of())));
-        interceptor = new FeatureUsageInterceptor(registry, collector);
+        collector = newCollector(enabledProperties());
+        interceptor = interceptor(enabledProperties(), collector);
         handlerMethod = new HandlerMethod(new DummyResource(), DummyResource.class.getDeclaredMethod("handle"));
         when(registry.restFeatureId(any(Method.class))).thenReturn(FEATURE_ID);
     }
@@ -156,8 +157,9 @@ class FeatureUsageInterceptorTest {
 
     @Test
     void shouldDoNothingWhenTrackingIsDisabled() {
-        var disabledCollector = new FeatureUsageCollector(registry, new FeatureUsageProperties(false, 400, new FeatureUsageProperties.Digest(false, List.of())));
-        var disabledInterceptor = new FeatureUsageInterceptor(registry, disabledCollector);
+        var disabledProperties = new FeatureUsageProperties(false, 400, new FeatureUsageProperties.Digest(false, List.of()));
+        var disabledCollector = newCollector(disabledProperties);
+        var disabledInterceptor = interceptor(disabledProperties, disabledCollector);
         var request = new MockHttpServletRequest();
         var response = new MockHttpServletResponse();
 
@@ -168,10 +170,36 @@ class FeatureUsageInterceptorTest {
         verifyNoInteractions(registry);
     }
 
+    /**
+     * The interceptor resolves the registry and the collector from the context on first use, so that constructing it does not
+     * put the repository behind them on the startup dependency path.
+     */
+    private FeatureUsageInterceptor interceptor(FeatureUsageProperties properties, FeatureUsageCollector usageCollector) {
+        var applicationContext = mock(ApplicationContext.class);
+        when(applicationContext.getBean(FeatureUsageRegistry.class)).thenReturn(registry);
+        when(applicationContext.getBean(FeatureUsageCollector.class)).thenReturn(usageCollector);
+        return new FeatureUsageInterceptor(properties, applicationContext);
+    }
+
+    private static FeatureUsageProperties enabledProperties() {
+        return new FeatureUsageProperties(true, 400, new FeatureUsageProperties.Digest(false, List.of()));
+    }
+
     static class DummyResource {
 
         public void handle() {
             // only its signature matters
         }
     }
+
+    /**
+     * The collector resolves the registry from the context on first use, so constructing it here has to supply a context that
+     * hands back the mocked registry.
+     */
+    private FeatureUsageCollector newCollector(FeatureUsageProperties properties) {
+        var applicationContext = mock(ApplicationContext.class);
+        when(applicationContext.getBean(FeatureUsageRegistry.class)).thenReturn(registry);
+        return new FeatureUsageCollector(properties, applicationContext);
+    }
+
 }

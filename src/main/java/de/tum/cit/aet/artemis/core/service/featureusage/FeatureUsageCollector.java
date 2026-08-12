@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.LongAdder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -42,15 +43,32 @@ public class FeatureUsageCollector {
 
     private static final Logger log = LoggerFactory.getLogger(FeatureUsageCollector.class);
 
-    private final FeatureUsageRegistry registry;
-
     private final FeatureUsageProperties properties;
+
+    /**
+     * The registry is resolved on first use rather than injected. Several services inject this collector, some of them close
+     * to the startup path, and injecting the registry would put its repository and the JPA infrastructure behind it into
+     * those dependency chains. Only the git and background paths need the registry at all; the REST path already has the
+     * feature id.
+     */
+    private final ApplicationContext applicationContext;
+
+    private volatile FeatureUsageRegistry registry;
 
     private final Map<UsageKey, UsageAccumulator> buckets = new ConcurrentHashMap<>();
 
-    public FeatureUsageCollector(FeatureUsageRegistry registry, FeatureUsageProperties properties) {
-        this.registry = registry;
+    public FeatureUsageCollector(FeatureUsageProperties properties, ApplicationContext applicationContext) {
         this.properties = properties;
+        this.applicationContext = applicationContext;
+    }
+
+    private FeatureUsageRegistry registry() {
+        FeatureUsageRegistry resolved = registry;
+        if (resolved == null) {
+            resolved = applicationContext.getBean(FeatureUsageRegistry.class);
+            registry = resolved;
+        }
+        return resolved;
     }
 
     /**
@@ -98,7 +116,7 @@ public class FeatureUsageCollector {
             return;
         }
         try {
-            Long featureId = registry.featureId(featureKind, module, identifier);
+            Long featureId = registry().featureId(featureKind, module, identifier);
             if (featureId == null) {
                 return;
             }

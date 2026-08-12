@@ -6,12 +6,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import de.tum.cit.aet.artemis.core.config.FeatureUsageProperties;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
@@ -40,18 +42,49 @@ public class FeatureUsageInterceptor implements HandlerInterceptor {
 
     private static final String CALLER_ROLE_ATTRIBUTE = FeatureUsageInterceptor.class.getName() + ".callerRole";
 
-    private final FeatureUsageRegistry registry;
+    private final FeatureUsageProperties properties;
 
-    private final FeatureUsageCollector collector;
+    /**
+     * The registry and the collector are resolved on first use rather than injected.
+     * <p>
+     * {@code WebConfigurer} constructor-injects this interceptor and has to exist before the web server does, so injecting
+     * the registry here would put it, its repository and the whole JPA infrastructure behind it on the startup dependency
+     * path. That pushed the longest startup chain past the limit the bean instantiation check enforces. Marking the
+     * parameter {@code @Lazy} is not an option either, forbidden by
+     * {@code ArchitectureTest.ensureLazyAnnotationNotUsedOnParameters}.
+     */
+    private final ApplicationContext applicationContext;
 
-    public FeatureUsageInterceptor(FeatureUsageRegistry registry, FeatureUsageCollector collector) {
-        this.registry = registry;
-        this.collector = collector;
+    private volatile FeatureUsageRegistry registry;
+
+    private volatile FeatureUsageCollector collector;
+
+    public FeatureUsageInterceptor(FeatureUsageProperties properties, ApplicationContext applicationContext) {
+        this.properties = properties;
+        this.applicationContext = applicationContext;
+    }
+
+    private FeatureUsageRegistry registry() {
+        FeatureUsageRegistry resolved = registry;
+        if (resolved == null) {
+            resolved = applicationContext.getBean(FeatureUsageRegistry.class);
+            registry = resolved;
+        }
+        return resolved;
+    }
+
+    private FeatureUsageCollector collector() {
+        FeatureUsageCollector resolved = collector;
+        if (resolved == null) {
+            resolved = applicationContext.getBean(FeatureUsageCollector.class);
+            collector = resolved;
+        }
+        return resolved;
     }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        if (!collector.isEnabled()) {
+        if (!properties.enabled()) {
             return true;
         }
         request.setAttribute(START_NANOS_ATTRIBUTE, System.nanoTime());
@@ -61,19 +94,19 @@ public class FeatureUsageInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable Exception ex) {
-        if (!collector.isEnabled() || !(handler instanceof HandlerMethod handlerMethod)) {
+        if (!properties.enabled() || !(handler instanceof HandlerMethod handlerMethod)) {
             return;
         }
         if (!(request.getAttribute(START_NANOS_ATTRIBUTE) instanceof Long startNanos)) {
             return;
         }
-        Long featureId = registry.restFeatureId(handlerMethod.getMethod());
+        Long featureId = registry().restFeatureId(handlerMethod.getMethod());
         if (featureId == null) {
             // not part of the inventory, for instance a handler registered after the startup pass
             return;
         }
         Role callerRole = request.getAttribute(CALLER_ROLE_ATTRIBUTE) instanceof Role role ? role : Role.ANONYMOUS;
         boolean failed = ex != null || response.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
-        collector.recordUsage(featureId, callerRole, failed, (System.nanoTime() - startNanos) / 1_000_000);
+        collector().recordUsage(featureId, callerRole, failed, (System.nanoTime() - startNanos) / 1_000_000);
     }
 }
