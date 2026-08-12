@@ -56,8 +56,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
 
     readonly phases = signal<BuildPhase[]>([]);
     readonly dockerImage = signal<string>('');
-    // the language default image shown as a placeholder while the field is empty, so the instructor sees what the build
-    // falls back to without the value being seeded into the field and pinned on the next save
+    // the language default, shown as a placeholder while the field is empty instead of being seeded into it and pinned
     readonly defaultDockerImage = signal<string>('');
     readonly timeout = signal<number>(0);
 
@@ -118,22 +117,16 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
 
     /**
      * Fetches the language default template to fill in what the exercise left implicit, without pinning those defaults on
-     * the next save:
-     * <ul>
-     * <li>when the exercise configured no image, the default is shown only as a placeholder ({@link defaultDockerImage}),
-     * so the field stays empty and {@code submit} keeps sending no image (the exercise follows future default bumps);</li>
-     * <li>when the exercise has no structured phases (a null configuration builds on the language default at build time),
-     * the default phases are seeded into the editor so it opens with the real default plan instead of an empty list.</li>
-     * </ul>
-     * Does nothing when neither is needed or the exercise has no programming language. The response is tied to the
-     * exercise it was requested for, so a slow response for a previously opened exercise never leaks into the one now on
-     * screen.
+     * the next save. A missing image is offered only as a placeholder, so the field stays empty and {@link submit} keeps
+     * sending no image; missing phases (a null configuration builds on the language default at build time) are seeded into
+     * the editor so it opens with the real default plan instead of an empty list. Does nothing when neither is needed or
+     * the exercise has no programming language. The response is only applied while it still fits the editor state that
+     * asked for it, so neither a slow response for a previously opened exercise nor one overtaken by the instructor's own
+     * edits can overwrite what is on screen.
      */
     private seedDefaultsFromTemplate(exercise: ProgrammingExercise): void {
         const programmingLanguage = exercise.programmingLanguage;
-        const needsImagePlaceholder = this.dockerImage().trim().length === 0;
-        const needsPhases = this.phases().length === 0;
-        if (!programmingLanguage || (!needsImagePlaceholder && !needsPhases)) {
+        if (!programmingLanguage || (this.dockerImage().trim().length > 0 && this.phases().length > 0)) {
             return;
         }
         this.buildPhasesTemplateService
@@ -144,10 +137,11 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
                     if (this.programmingExercise()?.id !== exercise.id) {
                         return;
                     }
-                    if (needsImagePlaceholder && template.dockerImage) {
+                    if (template.dockerImage && this.dockerImage().trim().length === 0) {
                         this.defaultDockerImage.set(template.dockerImage);
                     }
-                    if (needsPhases && template.phases?.length) {
+                    // re-check the phases here: the instructor may have authored one while the request was in flight
+                    if (template.phases?.length && this.phases().length === 0) {
                         this.phases.set(template.phases);
                         // seeded defaults are not user edits, so fold them into the baseline to avoid a false "unsaved changes" prompt
                         this.captureBaseline();
@@ -231,7 +225,6 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
             .subscribe({
                 next: () => {
                     this.isSaving.set(false);
-                    // the current state is now persisted, so it becomes the new baseline and leaving no longer prompts
                     this.captureBaseline();
                     this.alertService.success('artemisApp.programmingExercise.buildPlanConfiguration.saved');
                 },
@@ -243,10 +236,17 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     }
 
     /**
-     * Serializes the editable state (phases, Docker image, timeout) so it can be compared against the persisted baseline.
+     * Serializes everything {@link submit} persists so it can be compared against the persisted baseline. The Docker flags
+     * are included because the build configuration child edits them in place on the exercise, so leaving them out would
+     * let env variable, network and resource limit edits be discarded without a warning.
      */
     private snapshot(): string {
-        return JSON.stringify({ phases: this.phases(), dockerImage: this.dockerImage(), timeout: this.timeout() });
+        return JSON.stringify({
+            phases: this.phases(),
+            dockerImage: this.dockerImage(),
+            timeout: this.timeout(),
+            dockerFlags: this.programmingExercise()?.buildConfig?.dockerFlags,
+        });
     }
 
     /**
@@ -258,7 +258,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
 
     /**
      * Allows leaving the page without a prompt only when there are no unsaved edits (the current state still matches the
-     * persisted baseline). The {@link PendingChangesGuard} shows the confirmation when this returns false.
+     * persisted baseline). The pending changes guard on the route shows the confirmation when this returns false.
      */
     canDeactivate(): boolean {
         return this.snapshot() === this.persistedSnapshot();

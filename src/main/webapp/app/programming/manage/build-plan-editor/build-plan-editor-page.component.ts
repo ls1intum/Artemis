@@ -29,8 +29,8 @@ export class BuildPlanEditorPageComponent implements ComponentCanDeactivate {
     private readonly localCIEditor = viewChild(LocalCIBuildPlanEditorComponent);
 
     /**
-     * Delegates the unsaved-changes check to the active LocalCI editor so the {@link PendingChangesGuard} warns before its
-     * edits are discarded. The external CI editor keeps no editable state here, so leaving it is always allowed.
+     * Delegates the unsaved-changes check to the active LocalCI editor so the pending changes guard on the route warns
+     * before its edits are discarded. The external CI editor keeps no editable state here, so leaving it is always allowed.
      */
     canDeactivate(): boolean {
         return this.localCIEditor()?.canDeactivate() ?? true;

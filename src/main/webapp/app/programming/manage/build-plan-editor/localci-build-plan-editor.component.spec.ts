@@ -278,6 +278,27 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.defaultDockerImage()).toBe('language-default-image');
     });
 
+    it('should not overwrite phases authored while the template request was in flight', () => {
+        const exercise = {
+            id: 7,
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            buildConfig: { timeoutSeconds: 60 },
+        } as unknown as ProgrammingExercise;
+        activatedRoute.data = of({ exercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        comp.ngOnInit();
+
+        // the instructor authored a phase before the template came back, so seeding must not discard that work
+        const authoredPhases = [{ ...phases[0], name: 'authored' }];
+        comp.phases.set(authoredPhases);
+        getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
+
+        expect(comp.phases()).toEqual(authoredPhases);
+    });
+
     it('should not apply a resolved template once a different exercise is open', () => {
         const exercise = {
             id: 7,
@@ -478,6 +499,22 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         // an edit diverges from the baseline, so the guard must prompt
         comp.phases.set([{ ...phases[0], name: 'renamed' }]);
+        expect(comp.canDeactivate()).toBe(false);
+    });
+
+    it('should treat edited docker flags as unsaved changes', () => {
+        const exercise = { id: 7, buildConfig: { buildPlanConfiguration, dockerFlags: '{"network":"none"}' } } as unknown as ProgrammingExercise;
+        activatedRoute.data = of({ exercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        comp.ngOnInit();
+        expect(comp.canDeactivate()).toBe(true);
+
+        // the build configuration child edits the docker flags in place, and submit() persists them, so they must count
+        // towards the unsaved-changes check
+        comp.programmingExercise()!.buildConfig!.dockerFlags = '{"network":"none","cpuCount":4}';
         expect(comp.canDeactivate()).toBe(false);
     });
 
