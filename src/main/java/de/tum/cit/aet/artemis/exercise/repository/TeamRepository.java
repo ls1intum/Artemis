@@ -175,6 +175,12 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
     /**
      * Turns the integrity violation raised by the unique constraint on team_student into the client-facing error the
      * sequential case produces. The conflicts are looked up again because the concurrent winner is only visible now.
+     * <p>
+     * This depends on the rejected save having owned its transaction: there is no {@code @Transactional} anywhere on
+     * TeamResource, TeamService or this repository, so the violation ends only the failed save and the lookup below runs
+     * on a healthy connection. Adding {@code @Transactional} to that call chain would mark the surrounding transaction
+     * rollback-only, this lookup would throw, and the conflict would surface as a server error again, which is the
+     * regression this translation exists to prevent.
      *
      * @param exercise  Exercise which the team belongs to
      * @param team      Team whose save was rejected
