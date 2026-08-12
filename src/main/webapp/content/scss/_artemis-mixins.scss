@@ -48,9 +48,9 @@
 }
 
 /*
- * Layout of the title bars rendered below the breadcrumbs, shared by the student overview, course management
- * and administration shells: `--title-bar-content-height` of content plus `--title-bar-padding-block` above and
- * below, i.e. `--title-bar-height` in total. Applied to the bar element itself.
+ * Layout shared by the title bars in the student overview, course management and administration shells:
+ * `--title-bar-content-height` of content plus `--title-bar-padding-block` above and below, i.e.
+ * `--title-bar-height` in total. Applied to the bar element itself.
  *
  * The row does not wrap: the bar must stay at `--title-bar-height` on every viewport, so a crowded action row
  * shrinks its controls rather than growing the bar. Pages that project many controls therefore have to let them
@@ -165,7 +165,8 @@
 /*
  * Height of a shell's content region (student overview, course management, administration): everything between
  * the sticky navbar and the footer, minus one grey divider, so the shell ends exactly one divider above the
- * footer. `--navbar-height` / `--footer-height` are kept in sync with the rendered elements by
+ * footer. A shell can reserve its own top divider through `--shell-top-spacing`; the student overview uses this
+ * after removing its breadcrumbs. `--navbar-height` / `--footer-height` are kept in sync with the rendered elements by
  * `observeShellMetrics()`; the theme values are only fallbacks for the first paint. Note this uses
  * `--navbar-height`, not `--header-height`: the latter is repurposed by exam mode for the exam navigation bar.
  *
@@ -180,7 +181,7 @@
  * mis-sized (pre-existing; see the follow-up note in the PR description).
  */
 @mixin shell-content-height {
-    height: calc(100vh - var(--navbar-height) - var(--footer-height) - var(--spacing-divider));
+    height: calc(100vh - var(--navbar-height) - var(--footer-height) - var(--spacing-divider) - var(--shell-top-spacing, 0px));
 }
 
 @mixin dynamic-content-height($extra-height-to-subtract...) {
