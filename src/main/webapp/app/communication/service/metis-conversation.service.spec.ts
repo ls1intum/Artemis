@@ -197,6 +197,57 @@ describe('MetisConversationService', () => {
         });
     });
 
+    it('should open a conversation that was requested before the conversations were loaded', () => {
+        // The reload case. Opening the page with ?conversationId= asks for a conversation while the request that
+        // fetches them is still in flight, because the route emits its query parameters straight away. Dropping that
+        // request left the page on an empty view, because it is the only request that is ever made.
+        return new Promise((done) => {
+            metisConversationService.setActiveConversation(groupChat.id);
+
+            metisConversationService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    metisConversationService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                        expect(activeConversation?.id).toBe(groupChat.id);
+                        done({});
+                    });
+                },
+            });
+        });
+    });
+
+    it('should not warn about membership for a conversation requested before the conversations were loaded', () => {
+        // Whether the user is a member cannot be known while the list is still on its way, so claiming they are not is
+        // both wrong and, to the user, the only visible symptom of the race.
+        const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+
+        metisConversationService.setActiveConversation(4);
+
+        expect(addAlertSpy).not.toHaveBeenCalled();
+    });
+
+    it('should keep a conversation the user opened rather than the one the url asked for', () => {
+        // The user acting is the more recent intent, so a late arriving list must not pull them back to the
+        // conversation the url happened to carry.
+        return new Promise((done) => {
+            metisConversationService.setActiveConversation(9999);
+
+            metisConversationService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    metisConversationService.setActiveConversation(groupChat);
+
+                    metisConversationService.forceRefresh().subscribe({
+                        complete: () => {
+                            metisConversationService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                                expect(activeConversation?.id).toBe(groupChat.id);
+                                done({});
+                            });
+                        },
+                    });
+                },
+            });
+        });
+    });
+
     it('should still clear the active conversation when it is cleared on purpose', () => {
         return new Promise((done) => {
             metisConversationService.setUpConversationService(course).subscribe({
