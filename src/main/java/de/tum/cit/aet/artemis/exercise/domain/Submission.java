@@ -83,7 +83,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @ManyToOne
     private Participation participation;
 
-    // No @Cache: appended on every save; NONSTRICT produced stale version lists for concurrent readers, same class of bug as #12574.
     @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     private Set<SubmissionVersion> versions = new HashSet<>();
