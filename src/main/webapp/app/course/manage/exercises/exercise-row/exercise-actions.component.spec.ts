@@ -1,18 +1,14 @@
 import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterLink, provideRouter } from '@angular/router';
-import { NgTemplateOutlet } from '@angular/common';
+import { provideRouter } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective, TumUiPopoverComponent, TumUiPopoverTriggerDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { Exercise, ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -36,6 +32,15 @@ class QuizLifecycleButtonsStubComponent {
     quizExercise = input.required<QuizExercise>();
     loadOne = output<number>();
     handleNewQuizExercise = output<QuizExercise>();
+}
+
+// The collapsing behavior itself is covered by exercise-action-bar.component.spec.ts; this spec only builds the items.
+@Component({ selector: 'jhi-exercise-action-bar', template: '<ng-content select="[actionBarReserved]" />' })
+class ExerciseActionBarStubComponent {
+    items = input.required<ActionItem[]>();
+    hasReservedContent = input(false);
+    keepPriorityIds = input<string[]>([]);
+    columnMinWidthChange = output<number>();
 }
 
 describe('ExerciseActionsComponent', () => {
@@ -72,20 +77,7 @@ describe('ExerciseActionsComponent', () => {
             ],
         })
             .overrideComponent(ExerciseActionsComponent, {
-                set: {
-                    imports: [
-                        RouterLink,
-                        NgTemplateOutlet,
-                        FaIconComponent,
-                        TumUiButtonDirective,
-                        TumUiPopoverComponent,
-                        TumUiPopoverTriggerDirective,
-                        TumUiTooltipDirective,
-                        ArtemisTranslatePipe,
-                        DeleteButtonDirective,
-                        QuizLifecycleButtonsStubComponent,
-                    ],
-                },
+                set: { imports: [ExerciseActionBarStubComponent, QuizLifecycleButtonsStubComponent] },
             })
             .compileComponents();
 
@@ -289,52 +281,6 @@ describe('ExerciseActionsComponent', () => {
         });
     });
 
-    describe('hiddenIds / hasOverflow', () => {
-        it('shows nothing hidden before the row width is measured', () => {
-            expect(component.hiddenIds().size).toBe(0);
-            expect(component.hasOverflow()).toBe(false);
-            expect(component.hiddenActions()).toEqual([]);
-        });
-
-        /** Seeds every current action's cached natural width to the same value, so only the row width drives collapsing. */
-        const seedEqualWidths = (buttonWidth: number): void => {
-            const widths = new Map<string, number>();
-            for (const action of component.mainActions()) {
-                widths.set(component['signatureOf'](action), buttonWidth);
-            }
-            component['buttonWidths'].set(widths);
-        };
-
-        it('keeps scores, edit and delete inline and overflows the type-specific quiz actions first', () => {
-            // Editor+instructor quiz: participations, scores, statistics, preview, solution, edit, delete.
-            const quiz = { id: 2, type: ExerciseType.QUIZ, title: 'Quiz', isAtLeastEditor: true, isAtLeastInstructor: true } as QuizExercise;
-            fixture.componentRef.setInput('exercise', quiz);
-
-            // Each button 100px wide. With a 360px row (available 352 after the safety margin, budget 308 after the
-            // ellipsis + gap) exactly three 100px buttons plus their gaps fit.
-            seedEqualWidths(100);
-            component['quizWidth'].set(0);
-            component['rowWidth'].set(360);
-
-            const hidden = component.hiddenActions().map((a) => a.id);
-            expect(component.hasOverflow()).toBe(true);
-            // The three highest-priority actions stay inline regardless of their display position.
-            expect(hidden).not.toContain('scores');
-            expect(hidden).not.toContain('edit');
-            expect(hidden).not.toContain('delete');
-            // The type-specific extras collapse into the ellipsis menu.
-            expect(hidden).toEqual(expect.arrayContaining(['participations', 'statistics', 'preview', 'solution']));
-        });
-
-        it('hides nothing when every button fits', () => {
-            seedEqualWidths(50);
-            component['quizWidth'].set(0);
-            component['rowWidth'].set(2000);
-            expect(component.hiddenIds().size).toBe(0);
-            expect(component.hasOverflow()).toBe(false);
-        });
-    });
-
     describe('deletionSummary / deleteTranslateValues', () => {
         it('delegates to the exercise service for the deletion summary', () => {
             component.deletionSummary();
@@ -351,23 +297,6 @@ describe('ExerciseActionsComponent', () => {
             fixture.componentRef.setInput('course', { ...course, testCourse: true });
             const values = component.deleteTranslateValues();
             expect(values.courseType).toBe('artemisApp.exercise.delete.testCourse');
-        });
-    });
-
-    describe('menu interactions', () => {
-        it('runAction and closeMenuIfOpen do not throw when the popover is closed', () => {
-            // The popover renders but is never opened here (no width is measured, so hasOverflow() is false), so
-            // close() is a guarded no-op.
-            const action = component.mainActions()[0];
-            expect(() => component['runAction'](action)).not.toThrow();
-            expect(() => component['closeMenuIfOpen'](true)).not.toThrow();
-            expect(() => component['closeMenuIfOpen'](false)).not.toThrow();
-        });
-
-        it('runAction invokes the action onClick callback', () => {
-            const onClick = vi.fn();
-            component['runAction']({ id: 'x', labelKey: 'k', icon: 'trash' as never, severity: 'primary', kind: 'button', onClick });
-            expect(onClick).toHaveBeenCalledOnce();
         });
     });
 

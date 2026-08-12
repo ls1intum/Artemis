@@ -46,9 +46,11 @@ function widthOf(element: HTMLElement): number {
 /**
  * Owned, data-driven collapsible action row: renders {@link ActionItem}s inline (Delete/Edit/Scores kept longest via
  * {@link keepPriorityIds}) and folds whatever doesn't fit into a trailing ellipsis menu, based on measured button
- * widths and the row's available width. Extracted from the exercise-management table's action bar so both the
- * course-exercise and exam-exercise row actions render identically and collapse the same way on small screens —
- * only the `ActionItem[]` each context builds (its routes, role gates, and delete wiring) differs.
+ * widths and the row's available width.
+ *
+ * Both exercise row-action components render through this bar — `ExerciseActionsComponent` (course exercises) and
+ * `ExamExerciseRowButtonsComponent` (exam exercises) — so they look and collapse identically; only the `ActionItem[]`
+ * each builds (its routes, role gates, and delete wiring) differs.
  *
  * An optional `[actionBarReserved]`-projected prefix (e.g. quiz lifecycle buttons, an exam test-run warning icon)
  * stays always visible; its measured width is reserved up front and reported via {@link columnMinWidthChange} so a
