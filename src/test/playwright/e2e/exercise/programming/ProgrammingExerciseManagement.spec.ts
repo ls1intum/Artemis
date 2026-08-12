@@ -99,7 +99,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
     test.describe('Programming exercise team creation', () => {
         let exercise: ProgrammingExercise;
 
-        // Users are pre-enrolled via seed data (user_groups.csv)
+        // Users are pre-enrolled via seed data (user_course_role.csv)
 
         test.beforeEach('Setup team programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);

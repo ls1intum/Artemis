@@ -9,7 +9,7 @@ import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PasswordStrengthBarComponent } from './password-strength-bar.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CheckboxModule } from 'primeng/checkbox';
+import { TumUiCheckboxComponent } from '@tumaet/ui-angular';
 
 /**
  * Type definition for the password change form controls.
@@ -29,7 +29,7 @@ interface PasswordForm {
 @Component({
     selector: 'jhi-password',
     templateUrl: './password.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisTranslatePipe, CheckboxModule],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisTranslatePipe, TumUiCheckboxComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PasswordComponent implements OnInit {
