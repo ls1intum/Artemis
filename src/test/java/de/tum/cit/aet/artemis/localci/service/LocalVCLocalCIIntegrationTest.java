@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueu
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localvc.service.VcsAccessLogService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
@@ -597,6 +599,26 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(buildJobQueueItem.buildConfig().buildScript()).contains("set -e").contains("./gradlew testClasses\n").doesNotContain("./gradlew test\n");
             assertThat(buildJobQueueItem.buildConfig().resultPaths()).isEmpty();
             assertThat(buildJobQueueItem.buildConfig().areTestsExpected()).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testRejectsBuildPlanWithMultipleContainersBeforeQueueing() throws Exception {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            var studentTests = new BuildContainerDTO("student_tests", "", List.of(new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of())));
+            var instructorTests = new BuildContainerDTO("instructor_tests", "", List.of(new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of())));
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(studentTests, instructorTests)).toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            // executing several containers is added with the orchestration; until then such a plan must be refused outright
+            // rather than silently built as if it only had the first container
+            assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(LocalCIException.class)
+                    .hasMessageContaining("multiple containers");
+
+            // the guard has to run before the job is queued, so that no build is started for a plan that cannot be executed
+            assertThat(queuedJobs.getAll()).noneMatch(job -> job.participationId() == studentParticipation.getId());
         }
 
         @Test

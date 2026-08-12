@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -389,10 +390,20 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             throw new LocalCIException("The build plan configuration is invalid for build config " + buildConfig.getId(), e);
         }
 
-        final List<BuildPhaseDTO> phases = buildPlanPhasesDTO.phases() == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)
-                : buildPlanPhasesDTO.phases();
-        final String dockerImage = buildPlanPhasesDTO.dockerImage() == null ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise)
-                : buildPlanPhasesDTO.dockerImage();
+        final List<BuildContainerDTO> containers = buildPlanPhasesDTO.effectiveContainers();
+        if (containers.size() > 1) {
+            // Each container is meant to run as an independent build job; collapsing them into the single script and image
+            // of one build job would defeat the isolation they exist for. Executing them is added together with the
+            // orchestration that schedules one build job per container.
+            throw new LocalCIException(
+                    "Build plans with multiple containers cannot be executed yet, but the build plan of build config " + buildConfig.getId() + " defines " + containers.size());
+        }
+        // a build plan without any phase falls back to the default phases and image of the exercise
+        final BuildContainerDTO container = containers.isEmpty() ? null : containers.getFirst();
+
+        final List<BuildPhaseDTO> phases = container == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise) : container.phases();
+        final String configuredDockerImage = container == null ? buildPlanPhasesDTO.dockerImage() : container.dockerImage();
+        final String dockerImage = configuredDockerImage == null ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise) : configuredDockerImage;
 
         final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
 

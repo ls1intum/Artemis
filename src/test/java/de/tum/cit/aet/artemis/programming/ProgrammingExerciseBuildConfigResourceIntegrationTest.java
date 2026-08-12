@@ -24,7 +24,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateBuildPlanConfigurationDTO;
@@ -69,6 +72,10 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
     private static UpdateBuildPlanConfigurationDTO configurationWith(List<BuildPhaseDTO> phases, int timeoutSeconds) {
         return new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(phases, DOCKER_IMAGE), timeoutSeconds, DOCKER_FLAGS);
+    }
+
+    private static UpdateBuildPlanConfigurationDTO configurationWith(List<BuildContainerDTO> containers) {
+        return new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(null, null, containers), 240, DOCKER_FLAGS);
     }
 
     private void assertConfigurationPersisted() throws Exception {
@@ -359,5 +366,54 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
         var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(examExercise.getId()).orElseThrow();
         assertThat(BuildPlanPhasesDTO.fromBuildPlanConfiguration(persisted.getBuildPlanConfiguration()).phases()).extracting(BuildPhaseDTO::name).containsExactly("compile",
                 "test");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateBuildConfigWithMultipleContainers() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        var studentTests = new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(new BuildContainerRepositoryDTO(RepositoryType.USER)), List.of(phase("test")));
+        var instructorTests = new BuildContainerDTO("instructor_tests", DOCKER_IMAGE,
+                List.of(new BuildContainerRepositoryDTO(RepositoryType.USER), new BuildContainerRepositoryDTO(RepositoryType.TESTS)), List.of(phase("test")));
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(studentTests, instructorTests)), HttpStatus.OK);
+
+        var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        var containers = BuildPlanPhasesDTO.fromBuildPlanConfiguration(persisted.getBuildPlanConfiguration()).effectiveContainers();
+        assertThat(containers).extracting(BuildContainerDTO::name).containsExactly("student_tests", "instructor_tests");
+        // the student tests container must not receive the test repository, otherwise the instructor tests leak into it
+        assertThat(containers.getFirst().repositories()).extracting(BuildContainerRepositoryDTO::type).containsExactly(RepositoryType.USER);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsDuplicateContainerNames() throws Exception {
+        var container = new BuildContainerDTO("tests", DOCKER_IMAGE, List.of(phase("test")));
+        var duplicate = new BuildContainerDTO("Tests", DOCKER_IMAGE, List.of(phase("test")));
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(container, duplicate)), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsContainerWithoutPhases() throws Exception {
+        request.put(buildConfigEndpoint(), configurationWith(List.of(new BuildContainerDTO("tests", DOCKER_IMAGE, List.of()))), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsEmptyContainers() throws Exception {
+        request.put(buildConfigEndpoint(), configurationWith(List.of()), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAllowsSamePhaseNameInDifferentContainers() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        // containers execute independently, so a phase name only has to be unique within its container
+        var first = new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(phase("compile")));
+        var second = new BuildContainerDTO("instructor_tests", DOCKER_IMAGE, List.of(phase("compile")));
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(first, second)), HttpStatus.OK);
     }
 }
