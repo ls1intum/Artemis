@@ -124,7 +124,7 @@
                             <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
                             <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'" />
                             @if (!exam.testExam) {
-                                <input readonly disabled type="text" class="form-control" [value]="workingTimeInMinutesRounded" />
+                                <input id="workingTimeInMinutes" readonly disabled type="text" class="form-control" [value]="workingTimeInMinutesRounded" />
                                 @if (isWorkingTimeTooHigh) {
                                     <div class="alert alert-danger" jhiTranslate="error.examWorkingTimeTooHigh"></div>
                                 }

@@ -58,11 +58,11 @@ export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPag
      * Sets the Due Date field on the unified exercise timeline (PrimeNG p-datepicker rendered inside
      * <jhi-timeline>). The timeline assigns the inputId per visible item dynamically
      * (e.g. datepicker-0, datepicker-1, ...), so we locate the input through its associated label
-     * and then fill it in the format expected by ExerciseTimelineComponent#handleManualInput.
+     * and then fill it in the format expected by the component
      *
      * @param date the due date to set
      */
-    async setDueDate(date: Dayjs) {
+    override async setDueDate(date: Dayjs) {
         const dueDateInput = this.page.getByLabel('Due Date', { exact: true });
         await expect(dueDateInput).toBeEnabled();
         await dueDateInput.fill(date.format(TIMELINE_DATE_FORMAT));
