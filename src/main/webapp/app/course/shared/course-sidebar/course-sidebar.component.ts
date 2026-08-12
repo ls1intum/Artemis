@@ -11,6 +11,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { LayoutService } from 'app/foundation/breakpoints/layout.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CustomBreakpointNames } from 'app/foundation/breakpoints/breakpoints.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 
@@ -82,6 +83,7 @@ export class CourseSidebarComponent {
     communicationRouteLoaded = input<boolean>(false);
     layoutService = inject(LayoutService);
     private readonly scienceService = inject(ScienceService);
+    private readonly courseTabRefreshService = inject(CourseTabRefreshService);
 
     hiddenItems = signal<SidebarItem[]>([]);
     anyItemHidden = signal<boolean>(false);
@@ -167,6 +169,9 @@ export class CourseSidebarComponent {
     }
 
     onSidebarItemClick(item: SidebarItem): void {
+        // Selecting the tab that is already open is a refresh. The tab cannot infer that from the router, because it
+        // navigates to its own URL while rendering, so the click is reported explicitly.
+        this.courseTabRefreshService.notifyTabSelected(item.routerLink);
         if (item.routerLink !== 'iris') {
             return;
         }

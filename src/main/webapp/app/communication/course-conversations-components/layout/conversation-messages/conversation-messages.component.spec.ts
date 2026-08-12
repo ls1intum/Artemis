@@ -12,7 +12,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { DialogService } from 'primeng/dynamicdialog';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { Directive, NO_ERRORS_SCHEMA, input, output } from '@angular/core';
@@ -202,7 +202,7 @@ examples.forEach((activeConversation) => {
 
         it('should find visible elements at the scroll position and save scroll position', () => {
             // Mock des Containers
-            component.content().nativeElement = {
+            component.content()!.nativeElement = {
                 getBoundingClientRect: vi.fn().mockReturnValue({ top: 0, bottom: 100 }),
                 scrollTop: 0,
                 scrollHeight: 200,
@@ -236,11 +236,11 @@ examples.forEach((activeConversation) => {
         });
 
         it('should scroll to the bottom when a new message is created', () => {
-            component.content().nativeElement.scrollTop = 100;
+            component.content()!.nativeElement.scrollTop = 100;
             fixture.detectChanges();
             component.handleNewMessageCreated();
             vi.advanceTimersByTime(300);
-            expect(component.content().nativeElement.scrollTop).toBe(component.content().nativeElement.scrollHeight);
+            expect(component.content()!.nativeElement.scrollTop).toBe(component.content()!.nativeElement.scrollHeight);
         });
 
         it('should create empty post with the correct conversation type', () => {
@@ -834,5 +834,85 @@ examples.forEach((activeConversation) => {
             const result = (component as any).isPostVisible(postId);
             expect(result).toBe(false);
         });
+    });
+});
+
+// Regression test for NG0951 ("Child query result is required but no value is available").
+// The whole component template is wrapped in `@if (course())`, so the `#container` template ref
+// does not exist until a course is set. `setPosts()` runs from the metis posts subscription, which
+// can fire before that. Reading a `viewChild.required` signal in that state throws.
+// NOTE: deliberately does NOT stub `content` and does NOT set the `course` input — the rest of this
+// spec file stubs `content` with a fake container, which is exactly why this bug went unnoticed.
+describe('ConversationMessagesComponent before the container is rendered', () => {
+    let component: ConversationMessagesComponent;
+    let fixture: ComponentFixture<ConversationMessagesComponent>;
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [
+                FormsModule,
+                ReactiveFormsModule,
+                FaIconComponent,
+                ConversationMessagesComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(ButtonComponent),
+                MockComponent(PostingThreadComponent),
+                MockComponent(MessageInlineInputComponent),
+                MockComponent(PostCreateEditModalComponent),
+                MockDirective(TranslateDirective),
+                InfiniteScrollStubDirective,
+            ],
+            providers: [
+                MockProvider(MetisConversationService),
+                MockProvider(MetisService),
+                MockProvider(DialogService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        });
+
+        TestBed.overrideComponent(ConversationMessagesComponent, {
+            remove: {
+                imports: [PostingThreadComponent, MessageInlineInputComponent, PostCreateEditModalComponent, InfiniteScrollDirective, ButtonComponent, TranslateDirective],
+            },
+            add: {
+                imports: [
+                    MockComponent(PostingThreadComponent),
+                    MockComponent(MessageInlineInputComponent),
+                    MockComponent(PostCreateEditModalComponent),
+                    InfiniteScrollStubDirective,
+                    MockComponent(ButtonComponent),
+                    MockDirective(TranslateDirective),
+                ],
+                schemas: [NO_ERRORS_SCHEMA],
+            },
+        });
+
+        const metisService = TestBed.inject(MetisService);
+        const metisConversationService = TestBed.inject(MetisConversationService);
+        // A non-emitting posts stream, so nothing calls setPosts() during construction and the test
+        // can exercise it explicitly.
+        Object.defineProperty(metisService, 'posts', { get: () => new Subject<Post[]>().asObservable() });
+        Object.defineProperty(metisService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(0).asObservable() });
+        Object.defineProperty(metisService, 'createEmptyPostForContext', { value: () => new Post() });
+        Object.defineProperty(metisService, 'getPinnedPosts', { value: () => of([]) });
+        Object.defineProperty(metisService, 'fetchAllPinnedPosts', { value: () => of([]) });
+        // An active conversation IS required (ngOnInit dereferences it); the point of this test is that
+        // the `course` input is still unset, so the template's `@if (course())` keeps `#container` out of the DOM.
+        Object.defineProperty(metisConversationService, 'activeConversation$', {
+            get: () => new BehaviorSubject(generateExampleChannelDTO({} as ChannelDTO)).asObservable(),
+        });
+
+        fixture = TestBed.createComponent(ConversationMessagesComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should not throw when posts are prepared before the container exists', () => {
+        expect(() => component.setPosts()).not.toThrow();
     });
 });
