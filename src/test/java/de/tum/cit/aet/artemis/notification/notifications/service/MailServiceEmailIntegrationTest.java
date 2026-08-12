@@ -146,6 +146,58 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(body).contains("account/reset/finish");
     }
 
+    @Test
+    void passwordResetEmail_shouldUseTheSharedArtemisLayout() throws Exception {
+        recipient.setResetKey("styled-reset-key-345");
+
+        testMailService.sendPasswordResetMail(MailRecipientDTO.from(recipient));
+
+        assertUsesSharedArtemisLayout(getDeliveredEmailBody());
+    }
+
+    @Test
+    void activationEmail_shouldUseTheSharedArtemisLayout() throws Exception {
+        recipient.setActivationKey("styled-activation-key-123");
+
+        testMailService.sendActivationEmail(MailRecipientDTO.from(recipient));
+
+        assertUsesSharedArtemisLayout(getDeliveredEmailBody());
+    }
+
+    @Test
+    void saml2SetPasswordEmail_shouldUseTheSharedArtemisLayout() throws Exception {
+        recipient.setResetKey("styled-saml-key-567");
+
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.from(recipient));
+
+        assertUsesSharedArtemisLayout(getDeliveredEmailBody());
+    }
+
+    /**
+     * Asserts that a mail carries the shared Artemis chrome.
+     * <p>
+     * The three account mails that contain a link are the ones a user is most likely to distrust, because each can
+     * arrive unprompted: anyone can type someone else's address into the reset form. Looking like every other Artemis
+     * mail is what makes them credible rather than suspicious, and all three used to render as unstyled documents in
+     * the mail client's default serif font.
+     * <p>
+     * The absence of the footer is asserted too. That footer links to the notification settings, and none of these
+     * three can be switched off there, so the link would point at a setting that does not exist for them.
+     *
+     * @param body the rendered mail body
+     */
+    private static void assertUsesSharedArtemisLayout(String body) {
+        assertThat(body).as("the Artemis header with the logo").contains("<header>").contains("id=\"logo\"");
+        assertThat(body).as("the shared stylesheet, which sets the sans-serif font").contains("<style>").contains("font-family");
+        assertThat(body).as("the message body wrapper the shared css styles").contains("id=\"message-body\"");
+        assertThat(body).as("the favicon, at the path it is actually served from").contains("/logo/favicon.svg");
+        assertThat(body).as("no notification-settings footer on a mail that cannot be switched off").doesNotContain("<footer>");
+        // The logo has to come from this installation. It is a documented customization point, and pointing at the TUM
+        // deployment would both ignore a custom logo and make every recipient's mail client fetch an image from there.
+        assertThat(body).as("the logo, served by this installation so a custom one is used").contains("src=\"http://localhost:9000/public/images/logo.png\"");
+        assertThat(body).as("no request to the TUM deployment").doesNotContain("artemis.tum.de");
+    }
+
     // -- SAML2 set password email --
 
     @Test
