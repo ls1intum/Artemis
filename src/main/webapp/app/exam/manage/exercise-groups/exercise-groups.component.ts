@@ -296,7 +296,10 @@ export class ExerciseGroupsComponent implements OnInit {
             });
             return;
         }
-        this.exerciseGroupService.update(this.courseId(), this.examId(), edited).subscribe({
+        // Only these three fields are read server-side (ExerciseGroupUpdateDTO); `edited` still carries the group's
+        // whole exercise list, which would otherwise be shipped on every rename.
+        const update: ExerciseGroup = { id: edited.id, title: edited.title, isMandatory: edited.isMandatory };
+        this.exerciseGroupService.update(this.courseId(), this.examId(), update).subscribe({
             next: (res) => {
                 const saved = res.body!;
                 // The response carries the group without its exercises, so copy the two edited fields onto a clone of

@@ -63,8 +63,9 @@
         transition: opacity 0.2s ease;
     }
 
+    // The elevation comes from Tailwind's `hover:shadow-lg` in the template: a shadow needs a colour, and there is no
+    // semantic shadow token to build one from here.
     &:hover {
-        box-shadow: 0 6px 20px color-mix(in srgb, var(--black) 10%, transparent);
         transform: translateY(-2px);
         border-color: transparent;
 
@@ -98,7 +99,7 @@
     margin-bottom: 0.75rem;
     color: var(--tumaet-ui-primary-contrast-color);
     background: var(--tumaet-ui-primary-color);
-    box-shadow: 0 3px 8px color-mix(in srgb, var(--black) 12%, transparent);
+    // Elevation via Tailwind's `shadow-md` in the template, for the same reason as `.exercise-card`.
     font-size: 1.1rem;
 }
 

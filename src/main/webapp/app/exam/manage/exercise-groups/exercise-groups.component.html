@@ -106,13 +106,13 @@
     }
 </div>
 
-@if (typePickerGroupId(); as pickerGroupId) {
+@if (typePickerGroupId() !== undefined) {
     <jhi-exam-exercise-type-picker
         [(visible)]="typePickerVisible"
         [mode]="typePickerMode()"
         [courseId]="courseId()"
         [examId]="examId()"
-        [groupId]="pickerGroupId"
+        [groupId]="typePickerGroupId()!"
         [disabledExerciseTypes]="disabledExerciseTypes"
         (importRequested)="onTypePickerImport($event)"
     />

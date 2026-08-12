@@ -34,6 +34,14 @@ tum-ui-popover {
     display: none;
 }
 
+// Replaces Bootstrap's .vr: a hairline rule separating the always-visible reserved content from the collapsible
+// buttons. Tailwind has no divider utility, and a shadow/border colour needs a token, so it lives here.
+.action-separator {
+    width: 1px;
+    align-self: stretch;
+    background-color: var(--border-color);
+}
+
 .action-menu {
     min-width: 11rem;
 }

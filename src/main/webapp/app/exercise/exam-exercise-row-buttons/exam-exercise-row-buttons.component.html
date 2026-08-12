@@ -1,9 +1,13 @@
 <jhi-exercise-action-bar [items]="mainActions()" [hasReservedContent]="showTestRunWarning()" (columnMinWidthChange)="actionsMinWidth.emit($event)">
     <ng-container actionBarReserved>
         @if (showTestRunWarning()) {
+            <!-- The icon carries the whole message, so it needs the tooltip text as its accessible name: a tooltip is
+                 hover-only and never reaches a screen reader. -->
             <fa-icon
                 [icon]="faExclamationTriangle"
                 class="text-state-warning"
+                role="img"
+                [attr.aria-label]="'artemisApp.quizExercise.edit.testRunSubmissionsExist' | artemisTranslate"
                 [tumUiTooltip]="'artemisApp.quizExercise.edit.testRunSubmissionsExist' | artemisTranslate"
                 tumUiTooltipPlacement="top"
             />

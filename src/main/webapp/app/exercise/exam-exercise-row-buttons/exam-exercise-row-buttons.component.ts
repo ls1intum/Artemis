@@ -213,7 +213,8 @@ export class ExamExerciseRowButtonsComponent {
                     severity: 'warn',
                     kind: 'link',
                     link: [...typeSeg, 'edit'],
-                    disabled: this.hasExamStarted() || undefined,
+                    disabled: this.hasExamStarted(),
+                    disabledTooltip: this.hasExamStarted() ? 'artemisApp.examManagement.exerciseGroup.editNotPossibleExamStarted' : undefined,
                 });
             }
         } else if (course.isAtLeastEditor) {

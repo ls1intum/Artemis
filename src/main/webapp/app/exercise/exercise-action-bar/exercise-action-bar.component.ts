@@ -118,6 +118,12 @@ export class ExerciseActionBarComponent {
     /** Watches the inline buttons so {@link buttonWidths} tracks their real rendered width (see the constructor). */
     private readonly buttonObserver = new ResizeObserver((entries) => this.onButtonsResized(entries));
 
+    /**
+     * Set once the view is gone. `disconnect()` stops new notifications, but one already queued before destruction
+     * still runs its callback, and `detectChanges()` on a destroyed view throws.
+     */
+    private destroyed = false;
+
     private readonly keepPriorityOf = (action: ActionItem): number => {
         const index = this.keepPriorityIds().indexOf(action.id);
         return index === -1 ? EXTRA_ACTION_PRIORITY : index;
@@ -195,7 +201,10 @@ export class ExerciseActionBarComponent {
     readonly hiddenActions = computed<ActionItem[]>(() => this.items().filter((action) => this.hiddenIds().has(action.id)));
 
     constructor() {
-        this.destroyRef.onDestroy(() => this.buttonObserver.disconnect());
+        this.destroyRef.onDestroy(() => {
+            this.destroyed = true;
+            this.buttonObserver.disconnect();
+        });
 
         // Measurements use TranslateService.instant (not a signal), so on a language change drop the cached widths to
         // re-measure and bump the version the width effects watch.
@@ -219,6 +228,9 @@ export class ExerciseActionBarComponent {
             };
 
             const observer = new ResizeObserver(() => {
+                if (this.destroyed) {
+                    return;
+                }
                 measure();
                 this.changeDetectorRef.detectChanges();
             });
@@ -265,6 +277,9 @@ export class ExerciseActionBarComponent {
      * visibility settles instead of feeding back into itself.
      */
     private onButtonsResized(entries: ResizeObserverEntry[]): void {
+        if (this.destroyed) {
+            return;
+        }
         const current = this.buttonWidths();
         let next: Map<string, number> | undefined;
         for (const entry of entries) {

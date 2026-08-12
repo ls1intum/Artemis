@@ -7,6 +7,8 @@ import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exe
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { faTable, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { of } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 describe('ExerciseActionBarComponent', () => {
     let fixture: ComponentFixture<ExerciseActionBarComponent>;
@@ -67,12 +69,12 @@ describe('ExerciseActionBarComponent', () => {
             fixture.componentRef.setInput('keepPriorityIds', ['c']);
             seedEqualWidths(100);
             component['reservedWidth'].set(0);
-            // 3 buttons (308px incl. gaps) don't fit a 200px row (152px budget after the ellipsis+margin), so exactly
-            // one 100px button can stay inline — it must be 'c', the sole entry in keepPriorityIds.
+            // 3 buttons (308px incl. gaps) don't fit a 200px row (available 192 after the safety margin, budget 148
+            // after the ellipsis and its gap), so exactly one 100px button can stay inline — it must be 'c', the sole
+            // entry in keepPriorityIds, even though it is last in display order.
             component['rowWidth'].set(200);
 
-            const hidden = component.hiddenActions().map((a) => a.id);
-            expect(hidden).not.toContain('c');
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['a', 'b']);
         });
 
         it('hides nothing when every button fits', () => {
@@ -82,6 +84,23 @@ describe('ExerciseActionBarComponent', () => {
             component['rowWidth'].set(2000);
             expect(component.hiddenIds().size).toBe(0);
             expect(component.hasOverflow()).toBe(false);
+        });
+    });
+
+    describe('disabled tooltip', () => {
+        const tooltipTextOf = (): string => fixture.debugElement.query(By.css('a[data-testid="exercise-action-a"]')).injector.get(TumUiTooltipDirective).content();
+
+        it('shows the disabled tooltip only while the action is disabled', () => {
+            const action: ActionItem = { ...buildActions(['a'])[0], disabledTooltip: 'tooltip.key' };
+
+            fixture.componentRef.setInput('items', [{ ...action, disabled: true }]);
+            fixture.detectChanges();
+            expect(tooltipTextOf()).toBe('tooltip.key');
+
+            // Same action, still carrying disabledTooltip, but usable — it must not explain a restriction that is gone.
+            fixture.componentRef.setInput('items', [{ ...action, disabled: false }]);
+            fixture.detectChanges();
+            expect(tooltipTextOf()).toBe('');
         });
     });
 

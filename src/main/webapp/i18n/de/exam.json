@@ -697,6 +697,7 @@
                 "noExerciseGroup": "Die ausgewählte Klausur {{examTitle}} hat keine Aufgabengruppen",
                 "update": "Aufgabengruppe bearbeiten",
                 "addExercise": "Aufgabe hinzufügen",
+                "editNotPossibleExamStarted": "Eine Bearbeitung ist nicht möglich, da die Klausur bereits begonnen hat.",
                 "editGroup": "Gruppe bearbeiten",
                 "deleteGroup": "Gruppe löschen",
                 "type": "Typ",

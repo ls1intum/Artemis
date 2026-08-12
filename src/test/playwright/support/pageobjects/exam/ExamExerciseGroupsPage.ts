@@ -27,14 +27,18 @@ export class ExamExerciseGroupsPage {
      */
     private async clickRowAction(groupID: number, exerciseID: number, actionId: string) {
         const row = this.page.locator(`#group-${groupID} #exercise-${exerciseID}`);
-        await row.waitFor({ state: 'attached' });
         const inlineAction = row.locator(`[data-testid="exercise-action-${actionId}"]`);
+        const overflowTrigger = row.locator('.action-more');
+        // The bar only decides what collapses once its ResizeObserver has measured the row, so right after the row
+        // attaches neither the inline action nor the (hidden until needed) ellipsis trigger is visible yet. Waiting for
+        // whichever lands first avoids clicking a hidden element and timing out under CI load.
+        await inlineAction.or(overflowTrigger).first().waitFor({ state: 'visible', timeout: 30000 });
         if (await inlineAction.isVisible()) {
             await inlineAction.click();
             return;
         }
         // The action collapsed into the row's ellipsis overflow menu, which the kit renders in an overlay popover.
-        await row.locator('.action-more').click();
+        await overflowTrigger.click();
         await this.page.locator('.tum-ui-popover-panel').getByTestId(`exercise-action-${actionId}`).click();
     }
 

@@ -1,17 +1,17 @@
-<div #actionsRow class="d-flex gap-1 align-items-center justify-content-end flex-nowrap w-100">
+<div #actionsRow class="flex gap-1 items-center justify-end flex-nowrap w-full">
     <!-- Reserved prefix content (e.g. quiz lifecycle buttons, an exam test-run warning) always stays visible; grouped
          so its reserved width can be measured. -->
-    <span #reservedGroup class="d-flex gap-1 align-items-center flex-nowrap">
+    <span #reservedGroup class="flex gap-1 items-center flex-nowrap">
         <ng-content select="[actionBarReserved]" />
         @if (hasReservedContent() && items().length > 0) {
-            <div class="vr mx-1"></div>
+            <div class="action-separator mx-1"></div>
         }
     </span>
 
-    <!-- Main buttons: all rendered once (stable DOM). Overflowing ones get `d-none` and appear in the menu instead;
+    <!-- Main buttons: all rendered once (stable DOM). Overflowing ones get `hidden` and appear in the menu instead;
          resizing only toggles that class, it never recreates buttons. -->
     @for (item of inlineActions(); track item.action.id) {
-        <span #inlineItem class="inline-item" [attr.data-signature]="item.signature" [class.d-none]="item.hidden">
+        <span #inlineItem class="inline-item" [attr.data-signature]="item.signature" [class.hidden]="item.hidden">
             <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="item.context" />
         </span>
     }
@@ -22,7 +22,7 @@
         variant="outlined"
         size="small"
         class="action-more"
-        [class.d-none]="!hasOverflow()"
+        [class.hidden]="!hasOverflow()"
         [tumUiPopoverTrigger]="menu"
         [title]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
         [attr.aria-label]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
@@ -30,7 +30,7 @@
         <fa-icon [icon]="faEllipsis" />
     </button>
     <tum-ui-popover #menu placement="bottom" [ariaLabel]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate">
-        <div class="action-menu d-flex flex-column gap-1">
+        <div class="action-menu flex flex-col gap-1">
             @for (action of hiddenActions(); track action.id) {
                 <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
             }
@@ -61,8 +61,8 @@
                 [additionalChecks]="action.delete!.additionalChecks"
                 (delete)="onDelete(action, $event)"
                 [dialogError]="action.delete!.dialogError"
-                [class.text-start]="inMenu"
-                [class.w-100]="inMenu"
+                [class.text-left]="inMenu"
+                [class.w-full]="inMenu"
             >
                 <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
             </button>
@@ -74,8 +74,8 @@
                 [attr.data-testid]="'exercise-action-' + action.id"
                 [severity]="action.severity"
                 size="small"
-                [class.text-start]="inMenu"
-                [class.w-100]="inMenu"
+                [class.text-left]="inMenu"
+                [class.w-full]="inMenu"
                 (click)="runAction(action)"
             >
                 <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
@@ -89,12 +89,12 @@
                 [severity]="action.severity"
                 size="small"
                 [class.disabled]="action.disabled"
-                [class.text-start]="inMenu"
-                [class.w-100]="inMenu"
+                [class.text-left]="inMenu"
+                [class.w-full]="inMenu"
                 [attr.aria-disabled]="action.disabled || undefined"
                 [attr.tabindex]="action.disabled ? -1 : undefined"
                 [style.pointer-events]="action.disabled ? 'auto' : undefined"
-                [tumUiTooltip]="action.disabledTooltip ? (action.disabledTooltip | artemisTranslate) : ''"
+                [tumUiTooltip]="action.disabled && action.disabledTooltip ? (action.disabledTooltip | artemisTranslate) : ''"
                 tumUiTooltipPlacement="top"
                 (click)="closeMenuIfOpen(inMenu)"
             >

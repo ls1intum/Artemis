@@ -6,14 +6,20 @@
     [dismissableMask]="false"
     size="medium"
 >
-    <div class="tab-bar mb-3">
+    <div class="tab-bar mb-3" role="tablist">
         <button
+            type="button"
+            role="tab"
             class="tab-btn {{ activeTab() === 'create' ? 'tab-btn--active' : '' }}"
+            [attr.aria-selected]="activeTab() === 'create'"
             (click)="setActiveTab('create')"
             jhiTranslate="artemisApp.exerciseManagement.addModal.tab.create"
         ></button>
         <button
+            type="button"
+            role="tab"
             class="tab-btn {{ activeTab() === 'import' ? 'tab-btn--active' : '' }}"
+            [attr.aria-selected]="activeTab() === 'import'"
             (click)="setActiveTab('import')"
             jhiTranslate="artemisApp.exerciseManagement.addModal.tab.import"
         ></button>
@@ -26,12 +32,12 @@
     <div class="exercise-grid">
         @for (card of typeCards(); track card.type) {
             <button
-                class="exercise-card"
+                class="exercise-card hover:shadow-lg"
                 [attr.data-testid]="(activeTab() === 'import' ? 'import-' : 'create-') + card.type + '-exercise'"
                 (click)="onCardClick(card.type)"
                 type="button"
             >
-                <div class="card-icon-wrapper">
+                <div class="card-icon-wrapper shadow-md">
                     <fa-icon [icon]="card.icon" />
                 </div>
                 <h6 [jhiTranslate]="card.labelKey"></h6>

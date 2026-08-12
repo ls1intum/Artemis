@@ -694,6 +694,7 @@
                 "import": "Import Exercise Group",
                 "update": "Edit Exercise Group",
                 "addExercise": "Add Exercise",
+                "editNotPossibleExamStarted": "Editing is not possible because the exam has already started.",
                 "editGroup": "Edit group",
                 "deleteGroup": "Delete group",
                 "selectExerciseGroup": "Select Exercise Groups",
