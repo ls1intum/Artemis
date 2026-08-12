@@ -32,6 +32,10 @@ describe('PdfPreviewComponent', () => {
         const attachmentVideoUnitPart = formData.get('attachmentVideoUnit') as Blob;
         return JSON.parse(await attachmentVideoUnitPart.text());
     };
+    const getHiddenPagesPayload = async (formData: FormData) => {
+        const hiddenPagesPart = formData.get('hiddenPages') as Blob;
+        return JSON.parse(await hiddenPagesPart.text());
+    };
 
     beforeEach(async () => {
         engineService = new MockPdfEngineService();
@@ -81,6 +85,11 @@ describe('PdfPreviewComponent', () => {
             abort: () => {},
         } as any);
         await component.loadPdf('blob:original', new ArrayBuffer(8), 'original');
+    }
+
+    /** Replaces temporary preview IDs with persisted slide entity IDs, as returned for an already-split attachment video unit. */
+    function usePersistedSlideIds(): void {
+        component.pageOrder.update((pages) => pages.map((page, index) => ({ ...page, slideId: String(100 + index) })));
     }
 
     /** Makes the next `openDocumentBuffer` call resolve to a document with the given id and page count. */
@@ -230,7 +239,7 @@ describe('PdfPreviewComponent', () => {
         expect(updateFormData.has('pageOrder')).toBe(false);
         expect(updateFormData.has('hiddenPages')).toBe(true);
         expect(component.attachmentVideoUnit()!.attachmentUpdateIntent).toBeUndefined();
-        expect(attachmentVideoUnitService.updateStudentVersion).toHaveBeenCalledOnce();
+        expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
         expect(alertService.success).toHaveBeenCalled();
     });
 
@@ -240,6 +249,7 @@ describe('PdfPreviewComponent', () => {
         const hidden = component.pageOrder()[0];
         expect(hidden.slideId).toMatch(/^temp_/);
         component.hidePages({ slideId: hidden.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
+        component.isFileChanged.set(true);
 
         await component.updateAttachmentWithFile();
 
@@ -265,6 +275,101 @@ describe('PdfPreviewComponent', () => {
         });
         expect(updateFormData.has('file')).toBe(true);
         expect(updateFormData.has('pageOrder')).toBe(true);
+    });
+
+    it('should save hidden-page-only attachment video unit changes without uploading PDF files', async () => {
+        await loadOriginal(2);
+        usePersistedSlideIds();
+        const attachmentVideoUnit = { id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any;
+        component.attachmentVideoUnit.set(attachmentVideoUnit);
+        const hidden = component.pageOrder()[0];
+        component.hidePages({ slideId: hidden.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
+        const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
+
+        await component.updateAttachmentWithFile();
+
+        expect(applyOperationsSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
+        const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
+        expect(updateFormData.get('file')).toBeNull();
+        expect(updateFormData.get('studentVersion')).toBeNull();
+        expect(updateFormData.get('hiddenPages')).toBeInstanceOf(Blob);
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
+            attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+        });
+        expect(component.attachmentVideoUnit()).toBe(attachmentVideoUnit);
+        expect(component.attachmentVideoUnit()!.attachmentUpdateIntent).toBeUndefined();
+        expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
+        expect(alertService.success).toHaveBeenCalled();
+    });
+
+    it('should reject hidden-page-only saves when every page is hidden', async () => {
+        await loadOriginal(2);
+        usePersistedSlideIds();
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+        component.pageOrder().forEach((page) => component.hidePages({ slideId: page.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined }));
+        const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
+
+        await component.updateAttachmentWithFile();
+
+        expect(applyOperationsSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.update).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', {
+            error: 'Cannot create a student version with no visible pages',
+        });
+        expect(component.isSaving()).toBe(false);
+    });
+
+    it('should clear hidden pages without uploading PDF files', async () => {
+        await loadOriginal(2);
+        usePersistedSlideIds();
+        const hiddenDate = dayjs().add(1, 'day');
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+        component.initialHiddenPages.set({
+            [component.pageOrder()[0].slideId]: { date: hiddenDate, exerciseId: undefined },
+        });
+        component.hiddenPages.set({});
+        const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
+
+        await component.updateAttachmentWithFile();
+
+        expect(applyOperationsSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
+        const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
+        expect(updateFormData.get('file')).toBeNull();
+        expect(updateFormData.get('studentVersion')).toBeNull();
+        expect(updateFormData.get('hiddenPages')).toBeInstanceOf(Blob);
+        await expect(getHiddenPagesPayload(updateFormData)).resolves.toEqual([]);
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
+            attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+        });
+        expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
+    });
+
+    it('should not save no-net hidden-page operation history', async () => {
+        await loadOriginal(2);
+        usePersistedSlideIds();
+        const hiddenDate = dayjs().add(1, 'day');
+        const hiddenPages = {
+            [component.pageOrder()[0].slideId]: { date: hiddenDate, exerciseId: undefined },
+        };
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+        component.initialHiddenPages.set(hiddenPages);
+        component.hiddenPages.set(hiddenPages);
+        component.operations.set([
+            { type: 'SHOW', timestamp: dayjs(), data: { slideIds: [component.pageOrder()[0].slideId] } },
+            { type: 'HIDE', timestamp: dayjs().add(1, 'millisecond'), data: { pages: [{ slideId: component.pageOrder()[0].slideId, date: hiddenDate, exerciseId: undefined }] } },
+        ] as any);
+        const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
+
+        await component.updateAttachmentWithFile();
+
+        expect(component.hasChanges()).toBe(false);
+        expect(applyOperationsSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.update).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
+        expect(alertService.success).toHaveBeenCalled();
     });
 
     it('should abort saving when a hidden page has a past release date', async () => {
@@ -538,6 +643,7 @@ describe('PdfPreviewComponent', () => {
         it('should finish saving a video unit without a student version when no pages are hidden', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+            component.isFileChanged.set(true);
 
             await component.updateAttachmentWithFile();
 
@@ -577,6 +683,7 @@ describe('PdfPreviewComponent', () => {
         it('should surface an error when the video unit update service call fails', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+            component.isFileChanged.set(true);
             attachmentVideoUnitService.update.mockReturnValueOnce(throwError(() => new Error('unit update failed')));
 
             await component.updateAttachmentWithFile();
@@ -585,23 +692,25 @@ describe('PdfPreviewComponent', () => {
             expect(component.isSaving()).toBe(false);
         });
 
-        it('should surface an error when the student version update fails', async () => {
+        it('should upload the matching student version in the attachment update request', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
             component.hidePages({ slideId: component.pageOrder()[0].slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
-            attachmentVideoUnitService.updateStudentVersion.mockReturnValueOnce(throwError(() => new Error('student failed')));
+            component.isFileChanged.set(true);
 
             await component.updateAttachmentWithFile();
 
-            expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
-            expect(alertService.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.studentVersionUpdateError', { error: 'student failed' });
-            expect(component.isSaving()).toBe(false);
+            const formData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
+            expect(formData.get('studentVersion')).toBeInstanceOf(File);
+            expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
+            expect(alertService.success).toHaveBeenCalled();
         });
 
         it('should send the final page order (with slideId/order) to the video unit update endpoint', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
             component.onPageOrderChange([...component.pageOrder()].reverse().map((page, index) => ({ ...page, order: index + 1 })));
+            component.isFileChanged.set(true);
 
             await component.updateAttachmentWithFile();
 

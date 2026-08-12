@@ -57,10 +57,12 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -80,6 +82,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private LectureTestRepository lectureRepo;
+
+    @Autowired
+    private SlideTestRepository slideRepository;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -106,6 +111,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void initTestCase() {
         irisRequestMockProvider.enableMockingOfRequests();
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        }, ExpectedCount.manyTimes());
+        irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
         }, ExpectedCount.manyTimes());
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
@@ -225,6 +232,31 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Unit 2 (index 1) is an image and not included in the merged pdf
         var nonCompletedUnit = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(units.get(1).getId(), student.getId());
         assertThat(nonCompletedUnit).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLecturePdfAttachmentsMerged_HiddenSlidesWithoutStudentVersionReturnsNotFound() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        AttachmentVideoUnit unit = lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance).map(AttachmentVideoUnit.class::cast)
+                .filter(lectureUnit -> lectureUnit.getAttachment().getLink().endsWith(".pdf")).findFirst().orElseThrow();
+        // The upload schedules slide splitting asynchronously. Create the relevant slide explicitly so this test does
+        // not depend on the background processor winning a race with the assertion.
+        Slide slide = new Slide();
+        slide.setAttachmentVideoUnit(unit);
+        slide.setSlideNumber(1);
+        slide.setSlideImagePath("attachments/attachment-unit/" + unit.getId() + "/slide/1.png");
+        slide.setHidden(ZonedDateTime.now().plusDays(1));
+        slideRepository.save(slide);
+        unit.getAttachment().setStudentVersion(null);
+        attachmentRepo.save(unit.getAttachment());
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance)
+                .forEach(lectureUnit -> assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), student.getId())).isEmpty());
     }
 
     @Test
@@ -529,6 +561,23 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(new byte[] { 50, 51, 52, 53 });
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionFailsClosedWhileRegenerationIsPending() throws Exception {
+        Path tempFile = tempFileUtilService.createTempFile("dummy-pending-student", ".pdf");
+        FileUtils.writeByteArrayToFile(tempFile.toFile(), "unrestricted instructor content".getBytes());
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
+        var hiddenSlide = new Slide();
+        hiddenSlide.setAttachmentVideoUnit(attachmentVideoUnit);
+        hiddenSlide.setSlideNumber(1);
+        hiddenSlide.setSlideImagePath("attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/slide/1.png");
+        hiddenSlide.setHidden(ZonedDateTime.now().plusDays(1));
+        slideRepository.save(hiddenSlide);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        mockMvc.perform(get(url)).andExpect(status().isNotFound());
     }
 
     @Test

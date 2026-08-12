@@ -108,22 +108,34 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
     });
 
     test.describe('Update/change the competency linked to a lecture unit', () => {
-        test('Changes the competency linked to a lecture unit via UI', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
-            // Three `competencyManagement.goto` calls plus several navigations to the
-            // unit-management edit page accumulate well beyond the @fast 60s budget under
-            // heavy multi-node load — even `test.slow()`'s 180s budget can be tight when
-            // any single navigation stretches past 30s. Set an explicit 6-minute budget.
+        test('Changes the competency linked to a lecture unit via UI', async ({ page, courseManagementAPIRequests }) => {
+            // The fixture's bootstrap recovery can add several bounded reloads to each navigation under heavy multi-node load.
             test.setTimeout(360_000);
-            const compA = await courseManagementAPIRequests.createCompetency(course, 'Comp A ' + uid, 'First competency');
-            await courseManagementAPIRequests.createCompetency(course, 'Comp B ' + uid, 'Second competency');
+            page.setDefaultNavigationTimeout(15_000);
+            const compATitle = 'Comp A ' + uid;
+            const compBTitle = 'Comp B ' + uid;
+            const compA = await courseManagementAPIRequests.createCompetency(course, compATitle, 'First competency');
+            const compB = await courseManagementAPIRequests.createCompetency(course, compBTitle, 'Second competency');
+
+            const openCompetencyDetail = async (competencyId: number, title: string) => {
+                let detailNavigationError: unknown;
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    try {
+                        await page.goto(`/courses/${course.id}/competencies/${competencyId}`, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+                        await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 15_000 });
+                        return;
+                    } catch (error) {
+                        detailNavigationError = error;
+                    }
+                }
+                throw new Error(`Competency detail ${competencyId} did not render after 2 attempts`, { cause: detailNavigationError });
+            };
 
             const textUnit = await courseManagementAPIRequests.createTextUnit(lecture, 'Text Unit', 'Content for text unit', [
                 { competency: { id: compA.id, type: 'competency' }, weight: 1 },
             ]);
 
-            await competencyManagement.goto(course.id!);
-            await page.getByRole('link', { name: 'Comp A ' + uid }).click();
-            await page.waitForLoadState('domcontentloaded');
+            await openCompetencyDetail(compA.id!, compATitle);
             await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
 
             // Anchor on the edit form's submit button before interacting with the competency
@@ -132,33 +144,46 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             // to /courses. Retry the navigation once if the submit button does not appear.
             const editUrl = `/course-management/${course.id}/lectures/${lecture.id}/unit-management/text-units/${textUnit.id}/edit`;
             const submitButton = page.locator('#submitButton');
-            await page.goto(editUrl);
-            await page.waitForLoadState('domcontentloaded');
-            const submitVisible = await submitButton
-                .waitFor({ state: 'visible', timeout: 30_000 })
-                .then(() => true)
-                .catch(() => false);
-            if (!submitVisible) {
-                await page.goto(editUrl);
-                await page.waitForLoadState('domcontentloaded');
-                await submitButton.waitFor({ state: 'visible', timeout: 30_000 });
+            let editNavigationError: unknown;
+            for (let attempt = 0; attempt < 2; attempt++) {
+                try {
+                    await page.goto(editUrl, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+                    await submitButton.waitFor({ state: 'visible', timeout: 30_000 });
+                    editNavigationError = undefined;
+                    break;
+                } catch (error) {
+                    editNavigationError = error;
+                }
             }
-            await page.getByRole('checkbox', { name: 'Comp A ' + uid }).waitFor({ state: 'visible', timeout: 30_000 });
+            if (editNavigationError) {
+                throw new Error(`Text-unit edit form did not render at ${editUrl} after 2 attempts`, { cause: editNavigationError });
+            }
+            const compACheckbox = page.getByRole('checkbox', { name: compATitle });
+            const compBCheckbox = page.getByRole('checkbox', { name: compBTitle });
 
-            await page.getByRole('checkbox', { name: 'Comp A ' + uid }).uncheck();
-            await page.getByRole('checkbox', { name: 'Comp B ' + uid }).check();
+            // The edit form renders before its existing competency links finish loading. Waiting
+            // only for the checkbox to become visible can therefore make uncheck() a no-op while
+            // the initially-unchecked control is still being hydrated, after which the form sets
+            // Comp A back to checked and submits both links. Anchor on the persisted checked state
+            // before changing the selection and verify the final form state before submitting.
+            await expect(compACheckbox).toBeChecked({ timeout: 30_000 });
+            await expect(compBCheckbox).not.toBeChecked();
+            await compACheckbox.uncheck();
+            await compBCheckbox.check();
+            await expect(compACheckbox).not.toBeChecked();
+            await expect(compBCheckbox).toBeChecked();
 
+            const updateResponse = page.waitForResponse(
+                (response) => response.url().includes(`/api/lecture/lectures/${lecture.id}/text-units`) && response.request().method() === 'PUT' && response.status() === 200,
+            );
             await page.click('#submitButton');
-            await page.waitForLoadState('domcontentloaded');
+            await updateResponse;
+            await page.waitForURL('**/unit-management', { timeout: 30_000 });
 
-            await competencyManagement.goto(course.id!);
-            await page.getByRole('link', { name: 'Comp A ' + uid }).click();
-            await page.waitForLoadState('domcontentloaded');
+            await openCompetencyDetail(compA.id!, compATitle);
             await expect(page.getByRole('heading', { name: 'Text Unit' })).not.toBeVisible();
 
-            await competencyManagement.goto(course.id!);
-            await page.getByRole('link', { name: 'Comp B ' + uid }).click();
-            await page.waitForLoadState('domcontentloaded');
+            await openCompetencyDetail(compB.id!, compBTitle);
             await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
         });
     });

@@ -11,8 +11,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
@@ -28,9 +26,13 @@ public class IrisLectureUnitSyncService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    public IrisLectureUnitSyncService(IrisLectureUnitSyncStateRepository repository, ApplicationEventPublisher eventPublisher) {
+    private final TransactionAfterCommitService transactionAfterCommitService;
+
+    public IrisLectureUnitSyncService(IrisLectureUnitSyncStateRepository repository, ApplicationEventPublisher eventPublisher,
+            TransactionAfterCommitService transactionAfterCommitService) {
         this.repository = repository;
         this.eventPublisher = eventPublisher;
+        this.transactionAfterCommitService = transactionAfterCommitService;
     }
 
     /**
@@ -40,7 +42,7 @@ public class IrisLectureUnitSyncService {
      */
     public void markMetadataDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
         repository.markDirty(snapshot.lectureUnitId(), metadataHash(snapshot), null, ZonedDateTime.now());
-        publishAfterCommit(new IrisLectureUnitMetadataDirtyEvent(snapshot.lectureUnitId()));
+        transactionAfterCommitService.execute(() -> eventPublisher.publishEvent(new IrisLectureUnitMetadataDirtyEvent(snapshot.lectureUnitId())));
     }
 
     /**
@@ -50,21 +52,8 @@ public class IrisLectureUnitSyncService {
      */
     public void markVisibilityDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
         repository.markDirty(snapshot.lectureUnitId(), null, visibilityHash(snapshot), ZonedDateTime.now());
-        publishAfterCommit(new IrisLectureUnitVisibilityDirtyEvent(snapshot.lectureUnitId(), snapshot.slideHiddenUntilBySlideNumber()));
-    }
-
-    private void publishAfterCommit(Object event) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            eventPublisher.publishEvent(event);
-            return;
-        }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-
-            @Override
-            public void afterCommit() {
-                eventPublisher.publishEvent(event);
-            }
-        });
+        transactionAfterCommitService
+                .execute(() -> eventPublisher.publishEvent(new IrisLectureUnitVisibilityDirtyEvent(snapshot.lectureUnitId(), snapshot.slideHiddenUntilBySlideNumber())));
     }
 
     private static String metadataHash(LectureContentUpdateSnapshot snapshot) {

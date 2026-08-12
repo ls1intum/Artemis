@@ -84,6 +84,7 @@ export class AttachmentVideoUnitService {
 
     /**
      * Update only the student version of an attachment video unit's attachment
+     * This compatibility endpoint remains available for API clients that upload an independently generated student PDF; the current PDF editor sends both files in update().
      * @param lectureId the id of the lecture
      * @param attachmentVideoUnitId the id of the attachment video unit
      * @param formData the FormData containing only the student version file

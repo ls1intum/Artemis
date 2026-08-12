@@ -67,12 +67,15 @@ public class SlideSplitterService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService;
+
     public SlideSplitterService(SlideRepository slideRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository, SlideUnhideService slideUnhideService,
-            ExerciseRepository exerciseRepository) {
+            ExerciseRepository exerciseRepository, LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService) {
         this.slideRepository = slideRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.slideUnhideService = slideUnhideService;
         this.exerciseRepository = exerciseRepository;
+        this.lectureUnitVisibilitySyncService = lectureUnitVisibilitySyncService;
     }
 
     /**
@@ -111,9 +114,23 @@ public class SlideSplitterService {
         }
         catch (IOException e) {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
+            markVisibilityDirtyAfterFailedSplit(attachmentVideoUnit.getId());
             throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
+        catch (RuntimeException e) {
+            markVisibilityDirtyAfterFailedSplit(attachmentVideoUnit.getId());
+            throw e;
+        }
         return CompletableFuture.completedFuture(null);
+    }
+
+    private void markVisibilityDirtyAfterFailedSplit(long attachmentVideoUnitId) {
+        try {
+            lectureUnitVisibilitySyncService.markVisibilityDirtyForAttachmentVideoUnit(attachmentVideoUnitId);
+        }
+        catch (Exception e) {
+            log.error("Failed to mark visibility dirty after slide splitting failed for AttachmentVideoUnit {}: {}", attachmentVideoUnitId, e.getMessage(), e);
+        }
     }
 
     /**
@@ -146,6 +163,7 @@ public class SlideSplitterService {
         lockAttachmentVideoUnit(attachmentVideoUnit);
         log.debug("Splitting AttachmentVideoUnit file {} into single slides", attachmentVideoUnit.getAttachment().getName());
         try {
+            detachCurrentSlideGeneration(attachmentVideoUnit.getId());
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
             int numPages = document.getNumberOfPages();
             PDFRenderer pdfRenderer = new PDFRenderer(document);
@@ -167,11 +185,22 @@ public class SlideSplitterService {
                 slideEntity.setAttachmentVideoUnit(attachmentVideoUnit);
                 slideRepository.save(slideEntity);
             }
+            runAfterCommit(() -> lectureUnitVisibilitySyncService.markVisibilityDirtyForAttachmentVideoUnit(attachmentVideoUnit.getId()));
         }
         catch (IOException e) {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
             throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
+    }
+
+    /**
+     * Makes the basic split replacement-safe and idempotent. Existing rows remain available for historical references, but they no longer affect visibility or downloads for
+     * the current attachment video unit.
+     */
+    private void detachCurrentSlideGeneration(Long attachmentVideoUnitId) {
+        List<Slide> currentSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId);
+        currentSlides.forEach(slide -> slide.setAttachmentVideoUnit(null));
+        slideRepository.saveAll(currentSlides);
     }
 
     /**
@@ -210,6 +239,7 @@ public class SlideSplitterService {
 
             // Clean up slides that are no longer in the page order
             cleanupRemovedSlides(pageOrder, existingSlides);
+            runAfterCommit(() -> lectureUnitVisibilitySyncService.markVisibilityDirtyForAttachmentVideoUnit(attachmentVideoUnit.getId()));
         }
         catch (IOException e) {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);

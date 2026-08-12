@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -512,13 +513,20 @@ public class FileResource {
                 unit -> authorizationCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
                 .toList();
 
+        Set<Long> attachmentVideoUnitIds = lectureAttachments.stream().map(AttachmentVideoUnit::getId).collect(Collectors.toSet());
+        Set<Long> unitIdsWithHiddenSlides = attachmentApi.findAttachmentVideoUnitIdsWithHiddenSlides(attachmentVideoUnitIds);
+        lectureAttachments.stream().filter(unit -> unit.getAttachment().getStudentVersion() == null && unitIdsWithHiddenSlides.contains(unit.getId())).findFirst()
+                .ifPresent(unit -> {
+                    throw new EntityNotFoundException("Student version", unit.getId());
+                });
+
         unitApi.setCompletedForAllLectureUnits(lectureAttachments, user, true);
 
-        // Modified to use studentVersion if available
         List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> {
             Attachment attachment = unit.getAttachment();
-            String filePath = attachment.getStudentVersion() != null ? attachment.getStudentVersion() : attachment.getLink();
-            FilePathType filePathType = attachment.getStudentVersion() != null ? FilePathType.STUDENT_VERSION_SLIDES : FilePathType.ATTACHMENT_UNIT;
+            String studentVersion = attachment.getStudentVersion();
+            String filePath = studentVersion != null ? studentVersion : attachment.getLink();
+            FilePathType filePathType = studentVersion != null ? FilePathType.STUDENT_VERSION_SLIDES : FilePathType.ATTACHMENT_UNIT;
             return FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), filePathType);
         }).toList();
 
@@ -697,6 +705,9 @@ public class FileResource {
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
+            if (api.hasHiddenSlides(attachmentVideoUnitId)) {
+                throw new EntityNotFoundException("Student version", attachmentVideoUnitId);
+            }
             return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), downloadFilename,
                     AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
         }

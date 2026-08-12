@@ -148,9 +148,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     hasHiddenSelectedPages = computed(() => {
         return Array.from(this.selectedPages()).some((page) => this.hiddenPages()[page.slideId]);
     });
+    private readonly hasPdfContentChanges = computed(() => {
+        return (
+            this.isFileChanged() ||
+            this.pageOrderChanged() ||
+            this.operations().some((operation) => operation.type === 'MERGE' || operation.type === 'DELETE' || operation.type === 'REORDER')
+        );
+    });
 
     hasChanges = computed(() => {
-        return this.operations().length > 0 || this.hiddenPagesChanged() || this.pageOrderChanged() || this.isFileChanged();
+        return this.hasPdfContentChanges() || this.hiddenPagesChanged() || this.pageOrderChanged();
     });
     sortedHiddenSelectedPages = computed(() => {
         return Array.from(this.selectedPages())
@@ -485,10 +492,32 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         this.isSaving.set(true);
 
+        if (this.attachmentVideoUnit() && this.hasCompletePersistedSlideSet() && !this.hasPdfContentChanges()) {
+            if (this.hiddenPagesChanged()) {
+                const hiddenSlideIds = new Set(Object.keys(this.hiddenPages()));
+                if (this.pageOrder().length > 0 && this.pageOrder().every((page) => hiddenSlideIds.has(page.slideId))) {
+                    this.isSaving.set(false);
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', {
+                        error: 'Cannot create a student version with no visible pages',
+                    });
+                    return;
+                }
+                try {
+                    await this.updateAttachmentVideoUnitWithoutFile(this.getHiddenPages());
+                    this.finishSaving();
+                } catch {
+                    // The helper already handles user-facing error state.
+                }
+            } else {
+                this.finishSaving();
+            }
+            return;
+        }
+
         try {
             const pdfName = this.attachment()?.name ?? this.attachmentVideoUnit()?.name ?? '';
             const { instructorBytes, studentBytes } = await this.applyOperations(true);
-            const needsPdfContentUpdate = this.attachment() !== undefined || this.hasPdfContentChanges();
+            const needsPdfContentUpdate = this.attachment() !== undefined || this.hasPdfContentChanges() || !this.hasCompletePersistedSlideSet();
             const instructorPdfFile = needsPdfContentUpdate ? this.bytesToFile(instructorBytes, pdfName) : undefined;
 
             if (instructorPdfFile && instructorPdfFile.size > MAX_FILE_SIZE) {
@@ -501,14 +530,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 await this.updateAttachment(instructorPdfFile!);
             } else if (this.attachmentVideoUnit()) {
                 const hiddenPages = this.getHiddenPages();
-                await this.updateAttachmentVideoUnit(instructorPdfFile, hiddenPages);
-
-                if (studentBytes && hiddenPages.length > 0) {
-                    const studentPdfFile = this.bytesToFile(studentBytes, pdfName, true);
-                    await this.updateStudentVersion(studentPdfFile);
-                } else {
-                    this.finishSaving();
-                }
+                const studentPdfFile = studentBytes && hiddenPages.length > 0 ? this.bytesToFile(studentBytes, pdfName, true) : undefined;
+                await this.updateAttachmentVideoUnit(instructorPdfFile, hiddenPages, studentPdfFile);
+                this.finishSaving();
             }
         } catch (error) {
             this.isSaving.set(false);
@@ -541,16 +565,63 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Updates an attachment video unit without changing the stored PDF files.
+     */
+    private async updateAttachmentVideoUnitWithoutFile(hiddenPages: HiddenPage[]): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const attachmentVideoUnit = this.attachmentVideoUnit();
+            if (!attachmentVideoUnit?.attachment || !attachmentVideoUnit.lecture || attachmentVideoUnit.lecture.id === undefined || attachmentVideoUnit.id === undefined) {
+                const error = new Error('Cannot update attachment video unit without attachment, lecture, and id');
+                this.isSaving.set(false);
+                this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                reject(error);
+                return;
+            }
+
+            const formData = new FormData();
+            const attachmentVideoUnitWithoutFile = Object.assign(new AttachmentVideoUnit(), attachmentVideoUnit, {
+                attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+            });
+
+            formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitWithoutFile));
+            formData.append('attachment', objectToJsonBlob(attachmentVideoUnit.attachment));
+            formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
+
+            this.attachmentVideoUnitService.update(attachmentVideoUnit.lecture.id, attachmentVideoUnit.id, formData).subscribe({
+                next: () => resolve(),
+                error: (error) => {
+                    this.isSaving.set(false);
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                    reject(error);
+                },
+            });
+        });
+    }
+
+    /**
      * Updates an attachment video unit
      */
-    private async updateAttachmentVideoUnit(instructorPdfFile: File | undefined, hiddenPages: HiddenPage[]): Promise<void> {
+    private async updateAttachmentVideoUnit(instructorPdfFile: File | undefined, hiddenPages: HiddenPage[], studentPdfFile?: File): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.attachmentToBeEdited.set(this.attachmentVideoUnit()!.attachment);
+            const attachmentVideoUnitToUpdate = this.attachmentVideoUnit();
+            if (
+                !attachmentVideoUnitToUpdate?.attachment ||
+                !attachmentVideoUnitToUpdate.lecture ||
+                attachmentVideoUnitToUpdate.lecture.id === undefined ||
+                attachmentVideoUnitToUpdate.id === undefined
+            ) {
+                reject(new Error('Cannot update attachment video unit without attachment, lecture, and id'));
+                return;
+            }
+
+            const lectureId = attachmentVideoUnitToUpdate.lecture.id;
+            const attachmentVideoUnitId = attachmentVideoUnitToUpdate.id;
+            this.attachmentToBeEdited.set(attachmentVideoUnitToUpdate.attachment);
             this.attachmentToBeEdited()!.uploadDate = dayjs();
 
             const formData = new FormData();
             formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
-            const attachmentVideoUnit = Object.assign(new AttachmentVideoUnit(), this.attachmentVideoUnit()!, {
+            const attachmentVideoUnit = Object.assign(new AttachmentVideoUnit(), attachmentVideoUnitToUpdate, {
                 attachmentUpdateIntent: instructorPdfFile ? AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED : AttachmentUpdateIntent.NO_FILE_CHANGE,
             });
             formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
@@ -559,6 +630,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const submitUpdate = (finalPageOrder?: OrderedPage[]) => {
                 if (instructorPdfFile) {
                     formData.append('file', instructorPdfFile);
+                }
+                if (studentPdfFile) {
+                    formData.append('studentVersion', studentPdfFile);
                 }
                 if (finalPageOrder) {
                     formData.append(
@@ -577,7 +651,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     );
                 }
 
-                this.attachmentVideoUnitService.update(this.attachmentVideoUnit()!.lecture!.id!, this.attachmentVideoUnit()!.id!, formData).subscribe({
+                this.attachmentVideoUnitService.update(lectureId, attachmentVideoUnitId, formData).subscribe({
                     next: () => resolve(),
                     error: (error) => {
                         this.isSaving.set(false);
@@ -597,39 +671,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
     }
 
-    private hasPdfContentChanges(): boolean {
-        return (
-            this.isFileChanged() ||
-            this.pageOrderChanged() ||
-            !this.hasCompletePersistedSlideSet() ||
-            this.operations().some((operation) => operation.type === 'MERGE' || operation.type === 'DELETE' || operation.type === 'REORDER')
-        );
-    }
-
     private hasCompletePersistedSlideSet(): boolean {
         return this.pageOrder().length === this.totalPages() && this.pageOrder().every((page) => !page.slideId.startsWith('temp_'));
-    }
-
-    /**
-     * Updates only the student version of the attachment video unit
-     */
-    private updateStudentVersion(studentPdfFile: File): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            const formData = new FormData();
-            formData.append('studentVersion', studentPdfFile);
-
-            this.attachmentVideoUnitService.updateStudentVersion(this.attachmentVideoUnit()!.lecture!.id!, this.attachmentVideoUnit()!.id!, formData).subscribe({
-                next: () => {
-                    this.finishSaving();
-                    resolve();
-                },
-                error: (error) => {
-                    this.isSaving.set(false);
-                    this.alertService.error('artemisApp.attachment.pdfPreview.studentVersionUpdateError', { error: error.message });
-                    reject(error);
-                },
-            });
-        });
     }
 
     /**

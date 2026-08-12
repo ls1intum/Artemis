@@ -153,14 +153,7 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
             return new CompetencyLearningObjectLink(competency, MEDIUM_COMPETENCY_LINK_WEIGHT);
         });
         this.competencyLinks.set(competencyLinks);
-        this.checkboxStates.set(
-            competencyLinks.reduce<Record<number, boolean>>((states, competencyLink) => {
-                if (competencyLink.competency?.id) {
-                    states[competencyLink.competency.id] = !!this.selectedCompetencyLinks?.find((value) => value.competency?.id === competencyLink.competency?.id);
-                }
-                return states;
-            }, {}),
-        );
+        this.syncCheckboxStates();
     }
 
     toggleCompetency(newValue: CompetencyLearningObjectLink) {
@@ -210,6 +203,19 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
         } else {
             this.selectedCompetencyLinks = value ?? [];
         }
+        this.syncCheckboxStates();
+    }
+
+    private syncCheckboxStates(): void {
+        const selectedIds = new Set((this.selectedCompetencyLinks ?? []).map((link) => link.competency?.id));
+        this.checkboxStates.set(
+            (this.competencyLinks() ?? []).reduce<Record<number, boolean>>((states, competencyLink) => {
+                if (competencyLink.competency?.id) {
+                    states[competencyLink.competency.id] = selectedIds.has(competencyLink.competency.id);
+                }
+                return states;
+            }, {}),
+        );
     }
 
     /** Merges new competencies from the given links into the available list and rebuilds selection/checkbox state. */
@@ -243,17 +249,6 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
             this._onChange(this.selectedCompetencyLinks);
         }
         this.valueChange.emit(this.selectedCompetencyLinks);
-
-        // Rebuild checkbox states to match the current selection
-        const selectedIds = new Set((this.selectedCompetencyLinks ?? []).map((l) => l.competency?.id).filter(Boolean));
-        this.checkboxStates.set(
-            this.competencyLinks()!.reduce<Record<number, boolean>>((states, cl) => {
-                if (cl.competency?.id) {
-                    states[cl.competency.id] = selectedIds.has(cl.competency.id);
-                }
-                return states;
-            }, {}),
-        );
     }
 
     registerOnChange(fn: (value: CompetencyLearningObjectLink[] | undefined) => void): void {

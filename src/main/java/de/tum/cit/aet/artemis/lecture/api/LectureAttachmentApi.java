@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -12,6 +13,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 /**
  * API for managing lecture attachments.
@@ -25,9 +27,12 @@ public class LectureAttachmentApi extends AbstractLectureApi {
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
-    public LectureAttachmentApi(AttachmentRepository attachmentRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository) {
+    private final SlideRepository slideRepository;
+
+    public LectureAttachmentApi(AttachmentRepository attachmentRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository, SlideRepository slideRepository) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
+        this.slideRepository = slideRepository;
     }
 
     public AttachmentVideoUnit findAttachmentVideoUnitByIdElseThrow(long id) {
@@ -44,5 +49,16 @@ public class LectureAttachmentApi extends AbstractLectureApi {
 
     public List<Attachment> findAllByLectureId(long lectureId) {
         return attachmentRepository.findAllByLectureId(lectureId);
+    }
+
+    public boolean hasHiddenSlides(long attachmentVideoUnitId) {
+        return slideRepository.existsByAttachmentVideoUnitIdAndHiddenNotNull(attachmentVideoUnitId);
+    }
+
+    public Set<Long> findAttachmentVideoUnitIdsWithHiddenSlides(Set<Long> attachmentVideoUnitIds) {
+        if (attachmentVideoUnitIds.isEmpty()) {
+            return Set.of();
+        }
+        return slideRepository.findAttachmentVideoUnitIdsWithHiddenSlides(attachmentVideoUnitIds);
     }
 }

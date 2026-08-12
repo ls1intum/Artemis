@@ -3,9 +3,15 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -26,6 +32,8 @@ import org.springframework.stereotype.Service;
 @Lazy
 @Service
 public class TempFileUtilService {
+
+    private static final Logger log = LoggerFactory.getLogger(TempFileUtilService.class);
 
     private Path tempPath;
 
@@ -107,6 +115,49 @@ public class TempFileUtilService {
     public Path createTempFile(Path parent, String prefix, String suffix) throws IOException {
         Files.createDirectories(parent);
         return Files.createTempFile(parent, prefix, suffix);
+    }
+
+    /**
+     * Replaces a file through a temporary file in the target directory. The final move is atomic where the file system supports it, so readers never observe partially written
+     * contents.
+     *
+     * @param trustedRoot the trusted root directory that must contain the target
+     * @param targetPath  the file to create or replace
+     * @param fileData    the complete replacement contents
+     * @return the target path
+     * @throws IOException if the replacement cannot be installed
+     */
+    public Path replaceFileAtomically(Path trustedRoot, Path targetPath, byte[] fileData) throws IOException {
+        Path normalizedRoot = trustedRoot.toAbsolutePath().normalize();
+        Path normalizedTarget = targetPath.toAbsolutePath().normalize();
+        if (normalizedTarget.equals(normalizedRoot) || !normalizedTarget.startsWith(normalizedRoot)) {
+            throw new IOException("Atomic replacement target must be contained in the trusted root");
+        }
+
+        // Keep the temporary name independent of the target name so valid long target filenames do not exceed the file system's per-component limit.
+        Path temporaryPath = createTempFile(normalizedTarget.getParent(), ".replace-", ".tmp");
+        try {
+            FileUtils.writeByteArrayToFile(temporaryPath.toFile(), fileData);
+            moveReplacing(temporaryPath, normalizedTarget);
+            return normalizedTarget;
+        }
+        finally {
+            try {
+                Files.deleteIfExists(temporaryPath);
+            }
+            catch (IOException cleanupException) {
+                log.warn("Failed to clean up atomic-replacement temporary file {}", temporaryPath, cleanupException);
+            }
+        }
+    }
+
+    void moveReplacing(Path source, Path target) throws IOException {
+        try {
+            source.getFileSystem().provider().move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        }
+        catch (AtomicMoveNotSupportedException | FileAlreadyExistsException ignored) {
+            source.getFileSystem().provider().move(source, target, StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 
     /**

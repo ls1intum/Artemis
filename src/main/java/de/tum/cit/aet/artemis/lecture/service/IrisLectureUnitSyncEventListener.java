@@ -13,8 +13,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -45,13 +47,18 @@ public class IrisLectureUnitSyncEventListener {
 
     private final IrisLectureUnitSyncService syncService;
 
+    private final TransactionTemplate requiresNewTransactionTemplate;
+
     public IrisLectureUnitSyncEventListener(AttachmentVideoUnitRepository attachmentVideoUnitRepository, IrisLectureUnitSyncStateRepository syncStateRepository,
-            IrisLectureUnitSyncDispatchService syncDispatchService, SlideRepository slideRepository, IrisLectureUnitSyncService syncService) {
+            IrisLectureUnitSyncDispatchService syncDispatchService, SlideRepository slideRepository, IrisLectureUnitSyncService syncService,
+            PlatformTransactionManager transactionManager) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.syncStateRepository = syncStateRepository;
         this.syncDispatchService = syncDispatchService;
         this.slideRepository = slideRepository;
         this.syncService = syncService;
+        this.requiresNewTransactionTemplate = new TransactionTemplate(transactionManager);
+        this.requiresNewTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     @EventListener
@@ -66,15 +73,24 @@ public class IrisLectureUnitSyncEventListener {
         synchronize(event.lectureUnitId(), LectureContentUpdateKind.VISIBILITY, event.slideHiddenUntilBySlideNumber());
     }
 
+    @EventListener
+    public void handleRetryDirtyStates(IrisLectureUnitSyncScheduleService.RetryDirtyStatesEvent event) {
+        retryDirtyStates();
+    }
+
+    @EventListener
+    public void handleBackfillMissingSyncStates(IrisLectureUnitSyncScheduleService.BackfillMissingSyncStatesEvent event) {
+        backfillMissingSyncStates();
+    }
+
     /**
      * Retries Iris/Pyris metadata and visibility updates that failed during event handling.
      */
-    @Scheduled(fixedRate = 300000)
     public void retryDirtyStates() {
         syncStateRepository.findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(
                 List.of(IrisLectureUnitSyncState.STATUS_DIRTY, IrisLectureUnitSyncState.STATUS_IN_PROGRESS), ZonedDateTime.now()).forEach(candidate -> {
                     ZonedDateTime claimTime = ZonedDateTime.now();
-                    syncStateRepository.claimRetry(candidate.getLectureUnitId(), claimTime, claimTime.plusMinutes(RETRY_LEASE_MINUTES)).ifPresent(this::synchronizeDirtyState);
+                    claimRetryInNewTransaction(candidate.getLectureUnitId(), claimTime).ifPresent(this::synchronizeDirtyState);
                 });
     }
 
@@ -82,7 +98,6 @@ public class IrisLectureUnitSyncEventListener {
      * Creates visibility synchronization state for active legacy units in bounded batches.
      * The resulting dirty event is handled by the same durable retry path as ordinary updates.
      */
-    @Scheduled(fixedRate = 300000)
     public void backfillMissingSyncStates() {
         attachmentVideoUnitRepository.findUnitsMissingIrisSyncStateFromActiveCourses(ZonedDateTime.now(), PageRequest.of(0, 50)).forEach(unit -> {
             try {
@@ -112,8 +127,7 @@ public class IrisLectureUnitSyncEventListener {
     private void synchronize(Long lectureUnitId, LectureContentUpdateKind updateKind, Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber) {
         try {
             ZonedDateTime claimTime = ZonedDateTime.now();
-            syncStateRepository.claimRetry(lectureUnitId, claimTime, claimTime.plusMinutes(RETRY_LEASE_MINUTES))
-                    .ifPresent(state -> synchronize(state, updateKind, projectedSlideHiddenUntilBySlideNumber));
+            claimRetryInNewTransaction(lectureUnitId, claimTime).ifPresent(state -> synchronize(state, updateKind, projectedSlideHiddenUntilBySlideNumber));
         }
         catch (Exception e) {
             log.warn("Could not claim Iris lecture unit sync state {}", lectureUnitId, e);
@@ -126,10 +140,10 @@ public class IrisLectureUnitSyncEventListener {
 
     private void synchronize(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber) {
         try {
-            AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(state.getLectureUnitId()).orElse(null);
+            AttachmentVideoUnit unit = findAttachmentVideoUnitInNewTransaction(state.getLectureUnitId()).orElse(null);
             if (unit == null) {
                 log.debug("Skipping Iris lecture unit sync for missing attachment video unit {}", state.getLectureUnitId());
-                syncStateRepository.delete(state);
+                requiresNewTransactionTemplate.executeWithoutResult(status -> syncStateRepository.delete(state));
                 return;
             }
 
@@ -137,18 +151,30 @@ public class IrisLectureUnitSyncEventListener {
                     .map(projectedVisibility -> syncDispatchService.triggerSyncForUpdateKind(unit, updateKind, projectedVisibility))
                     .orElseGet(() -> syncDispatchService.triggerSyncForUpdateKind(unit, updateKind));
             String dispatchedHash = getDispatchedHash(state, updateKind, dispatchResult);
-            syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(),
-                    currentState -> Optional.ofNullable(dispatchedHash).ifPresentOrElse(hash -> markSynced(currentState, updateKind, hash), () -> markSkipped(currentState)));
+            requiresNewTransactionTemplate.executeWithoutResult(status -> syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(),
+                    currentState -> Optional.ofNullable(dispatchedHash).ifPresentOrElse(hash -> markSynced(currentState, updateKind, hash), () -> markSkipped(currentState))));
         }
         catch (Exception e) {
             try {
-                syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(),
-                        currentState -> Optional.of(currentState).filter(candidate -> isDirtyForUpdateKind(candidate, updateKind)).ifPresent(candidate -> markRetry(candidate, e)));
+                requiresNewTransactionTemplate.executeWithoutResult(status -> syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(), currentState -> Optional
+                        .of(currentState).filter(candidate -> isDirtyForUpdateKind(candidate, updateKind)).ifPresent(candidate -> markRetry(candidate, e))));
             }
             catch (Exception persistenceException) {
                 log.warn("Could not persist retry state for Iris lecture unit sync {}", state.getLectureUnitId(), persistenceException);
             }
         }
+    }
+
+    private Optional<IrisLectureUnitSyncState> claimRetryInNewTransaction(Long lectureUnitId, ZonedDateTime claimTime) {
+        Optional<IrisLectureUnitSyncState> claimedState = requiresNewTransactionTemplate
+                .execute(status -> syncStateRepository.claimRetry(lectureUnitId, claimTime, claimTime.plusMinutes(RETRY_LEASE_MINUTES)));
+        return claimedState != null ? claimedState : Optional.empty();
+    }
+
+    private Optional<AttachmentVideoUnit> findAttachmentVideoUnitInNewTransaction(Long lectureUnitId) {
+        Optional<AttachmentVideoUnit> attachmentVideoUnit = requiresNewTransactionTemplate
+                .execute(status -> attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(lectureUnitId));
+        return attachmentVideoUnit != null ? attachmentVideoUnit : Optional.empty();
     }
 
     private static String getDispatchedHash(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, String dispatchResult) {
@@ -184,9 +210,7 @@ public class IrisLectureUnitSyncEventListener {
         }
         else {
             state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
-            if (state.getNextRetryAt() == null) {
-                state.setNextRetryAt(ZonedDateTime.now());
-            }
+            state.setNextRetryAt(ZonedDateTime.now());
         }
     }
 
