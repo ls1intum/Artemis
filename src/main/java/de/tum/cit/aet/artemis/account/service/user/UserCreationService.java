@@ -261,9 +261,6 @@ public class UserCreationService {
                 user.setPassword(passwordService.hashPassword(newPassword));
             }
         }
-        // if (user.isInternal() && updatedUserDTO.getPassword() != null) {
-        // user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
-        // }
         user.setOrganizations(updatedUserDTO.getOrganizations());
         setUserAuthorities(updatedUserDTO, user);
 
