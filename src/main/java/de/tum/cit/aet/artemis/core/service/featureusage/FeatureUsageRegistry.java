@@ -102,6 +102,9 @@ public class FeatureUsageRegistry {
     /** Feature id per {@code kind + identifier}, for the features that cannot be enumerated at startup. */
     private final Map<String, Long> lazyFeatureIds = new ConcurrentHashMap<>();
 
+    /** Serializes the first-sighting registration of a git or background feature. See {@link #featureId}. */
+    private final Object lazyRegistrationLock = new Object();
+
     public FeatureUsageRegistry(TrackedFeatureRepository trackedFeatureRepository, FeatureUsageProperties properties, ApplicationContext applicationContext) {
         this.trackedFeatureRepository = trackedFeatureRepository;
         this.properties = properties;
@@ -279,12 +282,24 @@ public class FeatureUsageRegistry {
         if (cached != null) {
             return cached;
         }
-        Long featureId = trackedFeatureRepository.findByFeatureKindAndIdentifier(featureKind, truncatedIdentifier).map(DomainObject::getId)
-                .orElseGet(() -> persistOrRead(new TrackedFeature(featureKind, truncate(module, MAX_MODULE_LENGTH), truncatedIdentifier, null, Instant.now())));
-        if (featureId != null) {
-            lazyFeatureIds.put(cacheKey, featureId);
+        // Creation is serialized within this JVM. Unsynchronized, two threads seeing the same feature for the first time
+        // both find nothing and both insert, and the loser's insert is rejected by the unique key. That is recovered from,
+        // but it logs a database error for what is normal operation, and a monitoring feature that writes alarming lines
+        // into the log on a fresh database is its own small problem. Only the first sighting of a feature takes this path;
+        // afterwards the lookup above returns without locking. A race between nodes remains possible and is what the
+        // unique key and persistOrRead are for.
+        synchronized (lazyRegistrationLock) {
+            Long created = lazyFeatureIds.get(cacheKey);
+            if (created != null) {
+                return created;
+            }
+            Long featureId = trackedFeatureRepository.findByFeatureKindAndIdentifier(featureKind, truncatedIdentifier).map(DomainObject::getId)
+                    .orElseGet(() -> persistOrRead(new TrackedFeature(featureKind, truncate(module, MAX_MODULE_LENGTH), truncatedIdentifier, null, Instant.now())));
+            if (featureId != null) {
+                lazyFeatureIds.put(cacheKey, featureId);
+            }
+            return featureId;
         }
-        return featureId;
     }
 
     /**

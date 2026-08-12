@@ -8,7 +8,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
@@ -21,6 +28,8 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import de.tum.cit.aet.artemis.core.config.FeatureUsageProperties;
+import de.tum.cit.aet.artemis.core.domain.FeatureKind;
+import de.tum.cit.aet.artemis.core.domain.TrackedFeature;
 import de.tum.cit.aet.artemis.core.repository.TrackedFeatureRepository;
 
 /**
@@ -38,6 +47,42 @@ class FeatureUsageRegistryTest {
      * deliberately swallows its failures, the only symptom was an admin page that stayed empty forever. The mapping has to
      * be addressed by its name.
      */
+    /**
+     * Git and background features cannot be enumerated at startup, so their inventory row is created the first time they are
+     * seen. Two threads seeing the same feature together used to insert it twice, and the loser's insert was rejected by the
+     * unique key: recovered from, but it left a database error in the log for normal operation.
+     */
+    @Test
+    void shouldRegisterAFirstSightingOnlyOnceWhenTwoThreadsSeeItTogether() throws Exception {
+        var repository = mock(TrackedFeatureRepository.class);
+        when(repository.findByFeatureKindAndIdentifier(any(), any())).thenReturn(Optional.empty());
+        var stored = new TrackedFeature(FeatureKind.GIT, "localvc", "push/assignment", null, Instant.now());
+        stored.setId(7L);
+        when(repository.save(any())).thenReturn(stored);
+        var registry = new FeatureUsageRegistry(repository, enabledProperties(), mock(ApplicationContext.class));
+
+        var start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            List<Future<Long>> results = new ArrayList<>();
+            for (int thread = 0; thread < 2; thread++) {
+                results.add(executor.submit(() -> {
+                    start.await();
+                    return registry.featureId(FeatureKind.GIT, "localvc", "push/assignment");
+                }));
+            }
+            start.countDown();
+            for (Future<Long> result : results) {
+                assertThat(result.get(10, TimeUnit.SECONDS)).isEqualTo(7L);
+            }
+        }
+        finally {
+            executor.shutdownNow();
+        }
+
+        verify(repository).save(any(TrackedFeature.class));
+    }
+
     @Test
     void shouldResolveTheMvcMappingByNameWhenASecondMappingBeanExists() {
         var repository = mock(TrackedFeatureRepository.class);
