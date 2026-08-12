@@ -210,7 +210,13 @@ public class UserService {
                 internalAdmin.setInternal(true);
             }
             internalAdmin.setActivated(true);
-            internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
+            // The configured password is applied on every startup, so it is compared rather than written blindly: stamping
+            // credentialsChangedDate unconditionally would end every admin session on every restart, while never stamping it
+            // leaves sessions from before a rotated configured password renewable past the renewal checkpoint.
+            if (internalAdmin.getPassword() == null || !passwordService.checkPasswordMatch(internalAdminPassword, internalAdmin.getPassword())) {
+                internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
+                internalAdmin.setCredentialsChangedDate(ZonedDateTime.now());
+            }
             // needs to be mutable --> new HashSet<>(Set.of(...))
             internalAdmin.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
             saveUser(internalAdmin);

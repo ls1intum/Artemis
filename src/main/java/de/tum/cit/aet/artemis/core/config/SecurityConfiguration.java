@@ -77,11 +77,23 @@ public class SecurityConfiguration {
     private final PasskeyTokenRenewalService passkeyTokenRenewalService;
 
     /**
-     * How often a "remember me" session may be silently extended. With the seven-day token validity this bounds an active
-     * password session to five windows, i.e. 35 days, and forces a fresh sign-in after that.
+     * How often a "remember me" session may be silently extended, which bounds how many database lookups one session can
+     * cause and forces a fresh sign-in in the end.
      */
     @Value("${artemis.user-management.max-session-extensions:4}")
     private int maxSessionExtensions;
+
+    /**
+     * The longest a "remember me" session may live, measured from the original login, regardless of how often it is
+     * extended. Defaults to the thirty days that a single non-rotating token was valid for before rotation existed.
+     * <p>
+     * The extension count alone does not bound this: five seven-day windows are 35 days, which would make an externally
+     * managed session outlive what it could reach before. The other renewal checks cannot help there, because a password
+     * reset or a deactivation performed in LDAP, SAML or OIDC leaves no trace in the local account fields they read. So an
+     * absolute ceiling is what keeps a revoked external session from being extended past its former lifetime.
+     */
+    @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}")
+    private long maxSessionLifetimeInSeconds;
 
     private final PasswordService passwordService;
 
@@ -378,7 +390,7 @@ public class SecurityConfiguration {
      * @return JWTConfigurer configured with a token provider that generates and validates JWT tokens.
      */
     private JWTConfigurer securityConfigurerAdapter() {
-        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionExtensions);
+        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionExtensions, maxSessionLifetimeInSeconds);
     }
 
 }

@@ -50,14 +50,18 @@ public class JWTFilter extends GenericFilterBean {
     /** How often a "remember me" password session may be silently extended before the user has to sign in again. */
     private final int maxSessionExtensions;
 
+    /** The longest a "remember me" session may live, measured from the original login, however often it is extended. */
+    private final long maxSessionLifetimeInSeconds;
+
     private final long tokenValidityInSecondsForPasskey;
 
     public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            int maxSessionExtensions) {
+            int maxSessionExtensions, long maxSessionLifetimeInSeconds) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.maxSessionExtensions = maxSessionExtensions;
+        this.maxSessionLifetimeInSeconds = maxSessionLifetimeInSeconds;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
     }
 
@@ -131,11 +135,17 @@ public class JWTFilter extends GenericFilterBean {
                 return;
             }
 
-            // A passkey session may never outlive the passkey lifetime measured from the original login. A password session
-            // is bounded by the extension count instead, so it only gets the next window.
-            long newTokenExpirationTimeInMs = isPasskeySession
-                    ? Math.min(nowInMs + tokenValidityInMs, issuedAt.getTime() + Math.multiplyExact(this.tokenValidityInSecondsForPasskey, 1000))
-                    : nowInMs + tokenValidityInMs;
+            // Neither kind of session may outlive its ceiling, measured from the original login: the passkey lifetime for a
+            // passkey session, and for a password session the lifetime a single non-rotating token used to have. Extending
+            // a password session only by count would take it past that former lifetime, and the checks above cannot make up
+            // for it on an externally managed account - a password reset or a deactivation done in LDAP, SAML or OIDC
+            // leaves no trace in the local fields they read, so the ceiling is all that bounds such a session.
+            long sessionCeilingInSeconds = isPasskeySession ? this.tokenValidityInSecondsForPasskey : this.maxSessionLifetimeInSeconds;
+            long newTokenExpirationTimeInMs = Math.min(nowInMs + tokenValidityInMs, issuedAt.getTime() + Math.multiplyExact(sessionCeilingInSeconds, 1000));
+            if (newTokenExpirationTimeInMs <= nowInMs) {
+                // The ceiling has been reached, so there is no window left to hand out.
+                return;
+            }
             // Determine the lifetime of the rotated token
             long rotatedTokenDurationInMs = newTokenExpirationTimeInMs - nowInMs;
             // Create the rotated token with updated expiration and same issued time/tools

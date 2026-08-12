@@ -43,6 +43,9 @@ class JWTFilterTest {
 
     private static final int MAX_SESSION_EXTENSIONS = 4;
 
+    /** Generous next to the 60 second token validity, so only the tests that mean to hit the ceiling reach it. */
+    private static final long MAX_SESSION_LIFETIME_IN_SECONDS = 3600;
+
     private TokenProvider tokenProvider;
 
     private JWTFilter jwtFilter;
@@ -76,7 +79,7 @@ class JWTFilterTest {
         when(passkeyTokenRenewalService.mayExtendPasskeySession(any())).thenReturn(true);
         when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(true);
 
-        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService, MAX_SESSION_EXTENSIONS);
+        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService, MAX_SESSION_EXTENSIONS, MAX_SESSION_LIFETIME_IN_SECONDS);
         SecurityContextHolder.getContext().setAuthentication(null);
     }
 
@@ -257,6 +260,39 @@ class JWTFilterTest {
         MockHttpServletResponse response = filterWithToken(createRotationDueRememberMeToken(MAX_SESSION_EXTENSIONS));
 
         assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNull();
+    }
+
+    @Test
+    void aRememberMeSessionIsNotExtendedBeyondItsLifetimeCeiling() throws Exception {
+        // The extension count alone would let an old session keep taking fresh windows. That matters most for an externally
+        // managed account, where a password reset or a deactivation performed in the directory leaves nothing for the other
+        // renewal checks to read, so this ceiling is the only thing that ends the session.
+        var authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        Date issuedAt = new Date(System.currentTimeMillis() - Math.multiplyExact(MAX_SESSION_LIFETIME_IN_SECONDS, 1000));
+        Date expiration = new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS / 10);
+        String token = tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true, 0);
+
+        MockHttpServletResponse response = filterWithToken(token);
+
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNull();
+    }
+
+    @Test
+    void aRememberMeExtensionNeverReachesPastTheLifetimeCeiling() throws Exception {
+        // Just inside the ceiling, so a window is still granted - but a clipped one, not another full validity period.
+        ArgumentCaptor<String> rotated = ArgumentCaptor.forClass(String.class);
+        long remainingLifetimeInMs = TOKEN_VALIDITY_IN_MILLISECONDS / 2;
+        var authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        Date issuedAt = new Date(System.currentTimeMillis() - Math.multiplyExact(MAX_SESSION_LIFETIME_IN_SECONDS, 1000) + remainingLifetimeInMs);
+        Date expiration = new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS / 10);
+        String token = tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true, 0);
+
+        MockHttpServletResponse response = filterWithToken(token);
+
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNotNull();
+        verify(jwtCookieServiceMock).buildRotatedCookie(rotated.capture(), anyLong());
+        Date ceiling = new Date(issuedAt.getTime() + Math.multiplyExact(MAX_SESSION_LIFETIME_IN_SECONDS, 1000));
+        assertThat(tokenProvider.getExpirationDate(rotated.getValue())).isBeforeOrEqualTo(ceiling);
     }
 
     @Test
