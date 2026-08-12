@@ -216,6 +216,10 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
             return;
         }
         this.isSaving.set(true);
+        // the fields stay editable while the request runs, so the state that is actually sent is captured here and only
+        // that state becomes the baseline; an edit made in the meantime therefore stays unsaved instead of being marked
+        // as persisted and silently discarded on the next navigation
+        const submittedSnapshot = this.snapshot();
         this.buildPlanConfigurationService
             .updateBuildPlanConfiguration(exercise.id, {
                 // the image is validated trimmed, so it is also stored trimmed instead of keeping the whitespace an instructor pasted
@@ -227,7 +231,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
             .subscribe({
                 next: () => {
                     this.isSaving.set(false);
-                    this.captureBaseline();
+                    this.persistedSnapshot.set(submittedSnapshot);
                     this.alertService.success('artemisApp.programmingExercise.buildPlanConfiguration.saved');
                 },
                 error: (error) => {

@@ -537,6 +537,28 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(event.preventDefault).toHaveBeenCalled();
     });
 
+    it('should keep an edit made while the save is in flight unsaved', () => {
+        comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
+        comp.phases.set(phases);
+        comp.dockerImage.set('some-image');
+        comp.timeout.set(120);
+        // a controllable response so the editor can be edited while the request is still running
+        const response = new Subject<HttpResponse<object>>();
+        vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(response.asObservable());
+
+        comp.submit();
+
+        // the fields stay editable during the save, so this edit is never part of the request
+        const editedDuringSave = [{ ...phases[0], name: 'edited_during_save' }];
+        comp.phases.set(editedDuringSave);
+        response.next(new HttpResponse<object>({ body: {} }));
+        response.complete();
+
+        // only the submitted state may become the baseline, otherwise this edit is silently discarded on navigation
+        expect(comp.phases()).toEqual(editedDuringSave);
+        expect(comp.canDeactivate()).toBe(false);
+    });
+
     it('should allow leaving again after a successful save', () => {
         comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
         comp.phases.set(phases);
