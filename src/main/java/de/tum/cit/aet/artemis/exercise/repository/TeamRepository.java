@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTeamAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.exception.StudentsAlreadyAssignedException;
 import de.tum.cit.aet.artemis.exercise.util.TeamStudentUniquenessViolation;
 
@@ -74,6 +75,22 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
                 AND student.id = :userId
             """)
     Optional<Team> findOneByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
+
+    /**
+     * Finds the requesting student's team for every given team exercise in one projection query.
+     *
+     * @param exerciseIds the team exercises shown in the course overview
+     * @param userId      the requesting student
+     * @return one assignment per exercise in which the student has a team
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ExerciseTeamAssignmentDTO(team.exercise.id, team.id)
+            FROM Team team
+                JOIN team.students student
+            WHERE team.exercise.id IN :exerciseIds
+                AND student.id = :userId
+            """)
+    List<ExerciseTeamAssignmentDTO> findAssignmentsForCourseOverview(@Param("exerciseIds") Collection<Long> exerciseIds, @Param("userId") long userId);
 
     @Query("""
             SELECT team

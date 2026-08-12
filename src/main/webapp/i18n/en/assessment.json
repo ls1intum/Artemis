@@ -67,7 +67,14 @@
                 "points": {
                     "one": "{{points}} Point",
                     "many": "{{points}} Points"
-                }
+                },
+                "otherFeedback": "Other feedback",
+                "feedbackSuggestions": "Feedback suggestions",
+                "baseAward": "Base award",
+                "deductions": "Deductions",
+                "finalScore": "Final",
+                "pointsShort": "{{points}} pts",
+                "pointsOfShort": "{{points}} / {{maxPoints}} pts"
             },
             "useAsExampleSubmissionVerificationQuestion": "Are you sure to import this submission as an example submission?",
             "messages": {
