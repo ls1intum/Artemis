@@ -2,6 +2,7 @@
  * Vitest tests for PasswordComponent.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -29,6 +30,7 @@ describe('Password Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [PasswordComponent],
                 providers: [
+                    { provide: CredentialRevocationConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
                     LocalStorageService,
                     SessionStorageService,
                     { provide: AccountService, useClass: MockAccountService },
@@ -47,21 +49,63 @@ describe('Password Component Tests', () => {
             service = TestBed.inject(PasswordService);
         });
 
-        it('should show error if passwords do not match', () => {
+        it('should show error if passwords do not match', async () => {
             // GIVEN
             comp.passwordForm.patchValue({
                 newPassword: 'password1',
                 confirmPassword: 'password2',
             });
             // WHEN
-            comp.changePassword();
+            await comp.changePassword();
             // THEN
             expect(comp.doNotMatch()).toBe(true);
             expect(comp.error()).toBe(false);
             expect(comp.success()).toBe(false);
         });
 
-        it('should call Auth.changePassword when passwords match', () => {
+        it('should not interrupt a routine password change with a confirmation', async () => {
+            // A dialog on every password change is one users learn to click through, which would weaken it exactly where
+            // it matters. Nothing is being deleted here, so nothing is asked.
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            const confirmSpy = vi.spyOn(confirmation, 'confirm');
+            const changeSpy = vi.spyOn(TestBed.inject(PasswordService), 'changePassword').mockReturnValue(of(undefined));
+            comp.passwordForm.patchValue({ currentPassword: 'old', newPassword: 'new-Password-1', confirmPassword: 'new-Password-1' });
+
+            await comp.changePassword();
+
+            expect(confirmSpy).toHaveBeenCalledExactlyOnceWith(undefined);
+            expect(changeSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not change the password when the revocation confirmation is dismissed', async () => {
+            // Dismissing the dialog has to abort the whole submit, not just skip the revocation: the user was asked
+            // about deleting their credentials and said no, so silently changing the password anyway would surprise them.
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            vi.spyOn(confirmation, 'confirm').mockResolvedValue(false);
+            const changeSpy = vi.spyOn(TestBed.inject(PasswordService), 'changePassword').mockReturnValue(of(undefined));
+            comp.onPasswordMayBeCompromisedChange(true);
+            comp.passwordForm.patchValue({ currentPassword: 'old', newPassword: 'new-Password-1', confirmPassword: 'new-Password-1' });
+
+            await comp.changePassword();
+
+            expect(changeSpy).not.toHaveBeenCalled();
+            expect(comp.success()).toBe(false);
+        });
+
+        it('should ask before deleting credentials alongside a password change', async () => {
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            const confirmSpy = vi.spyOn(confirmation, 'confirm');
+            vi.spyOn(TestBed.inject(PasswordService), 'changePassword').mockReturnValue(of(undefined));
+            comp.onPasswordMayBeCompromisedChange(true);
+            comp.revokeSshKeys.set(false);
+            comp.passwordForm.patchValue({ currentPassword: 'old', newPassword: 'new-Password-1', confirmPassword: 'new-Password-1' });
+
+            await comp.changePassword();
+
+            expect(confirmSpy).toHaveBeenCalledExactlyOnceWith({ passkeys: true, sshKeys: false, vcsAccessTokens: true });
+        });
+
+        it('should call Auth.changePassword when passwords match', async () => {
             // GIVEN
             const passwordValues = {
                 currentPassword: 'oldPassword',
@@ -77,7 +121,7 @@ describe('Password Component Tests', () => {
             });
 
             // WHEN
-            comp.changePassword();
+            await comp.changePassword();
 
             // THEN
             // Nothing is revoked unless the user says the old password may have been compromised, so a routine rotation
@@ -85,24 +129,24 @@ describe('Password Component Tests', () => {
             expect(service.changePassword).toHaveBeenCalledWith(passwordValues.newPassword, passwordValues.currentPassword, undefined);
         });
 
-        it('should revoke the selected credentials when the old password may be compromised', () => {
+        it('should revoke the selected credentials when the old password may be compromised', async () => {
             vi.spyOn(service, 'changePassword').mockReturnValue(of(void 0));
             comp.passwordForm.patchValue({ currentPassword: 'oldPassword', newPassword: 'myPassword', confirmPassword: 'myPassword' });
 
             comp.onPasswordMayBeCompromisedChange(true);
             comp.revokeSshKeys.set(false);
-            comp.changePassword();
+            await comp.changePassword();
 
             expect(service.changePassword).toHaveBeenCalledWith('myPassword', 'oldPassword', { passkeys: true, sshKeys: false, vcsAccessTokens: true });
         });
 
-        it('should revoke nothing again when the user unticks the compromise question', () => {
+        it('should revoke nothing again when the user unticks the compromise question', async () => {
             vi.spyOn(service, 'changePassword').mockReturnValue(of(void 0));
             comp.passwordForm.patchValue({ currentPassword: 'oldPassword', newPassword: 'myPassword', confirmPassword: 'myPassword' });
 
             comp.onPasswordMayBeCompromisedChange(true);
             comp.onPasswordMayBeCompromisedChange(false);
-            comp.changePassword();
+            await comp.changePassword();
 
             expect(service.changePassword).toHaveBeenCalledWith('myPassword', 'oldPassword', undefined);
         });
@@ -123,7 +167,7 @@ describe('Password Component Tests', () => {
             expect(comp.revokeVcsAccessTokens()).toBe(true);
         });
 
-        it('should set success to true upon success', () => {
+        it('should set success to true upon success', async () => {
             // GIVEN
             vi.spyOn(service, 'changePassword').mockReturnValue(of(void 0));
             comp.passwordForm.patchValue({
@@ -132,7 +176,7 @@ describe('Password Component Tests', () => {
             });
 
             // WHEN
-            comp.changePassword();
+            await comp.changePassword();
 
             // THEN
             expect(comp.doNotMatch()).toBe(false);
@@ -140,7 +184,7 @@ describe('Password Component Tests', () => {
             expect(comp.success()).toBe(true);
         });
 
-        it('should notify of error if change password fails', () => {
+        it('should notify of error if change password fails', async () => {
             // GIVEN
             vi.spyOn(service, 'changePassword').mockReturnValue(throwError(() => new Error('ERROR')));
             comp.passwordForm.patchValue({
@@ -149,7 +193,7 @@ describe('Password Component Tests', () => {
             });
 
             // WHEN
-            comp.changePassword();
+            await comp.changePassword();
 
             // THEN
             expect(comp.doNotMatch()).toBe(false);
@@ -178,6 +222,7 @@ describe('Password Component Tests', () => {
             await TestBed.configureTestingModule({
                 imports: [PasswordComponent],
                 providers: [
+                    { provide: CredentialRevocationConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
                     LocalStorageService,
                     SessionStorageService,
                     { provide: AccountService, useClass: MockAccountService },

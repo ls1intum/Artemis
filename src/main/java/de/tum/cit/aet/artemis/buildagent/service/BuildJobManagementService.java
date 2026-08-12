@@ -94,6 +94,14 @@ public class BuildJobManagementService {
      */
     private static final java.time.Duration CLUSTER_CONNECTION_RETRY_INTERVAL = java.time.Duration.ofSeconds(5);
 
+    /**
+     * How long a single wait slice for the build result lasts. The build timeout is enforced in slices of this length so
+     * that slices spent pulling the Docker image can be excluded from the build budget, see
+     * {@link #awaitBuildResult(Future, String, int)}. Short enough to report a timeout promptly, long enough to keep the
+     * polling overhead negligible over a multi-minute build.
+     */
+    private static final long BUILD_TIMEOUT_POLL_INTERVAL_MILLIS = 250;
+
     private final BuildJobExecutionService buildJobExecutionService;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
@@ -373,7 +381,7 @@ public class BuildJobManagementService {
 
         CompletableFuture<BuildResult> futureResult = createCompletableFuture(() -> {
             try {
-                return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
+                return awaitBuildResult(future, buildJobItem.id(), buildJobTimeoutSeconds);
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
@@ -426,6 +434,49 @@ public class BuildJobManagementService {
             runningFuturesWrapper.remove(resources.buildJobId(), futureResult);
             runningFutures.remove(resources.buildJobId(), resources.future());
             runningExecutionTrackers.remove(resources.buildJobId(), resources.executionTracker());
+        }
+    }
+
+    /**
+     * Waits for the build result, without letting the time spent pulling the Docker image consume the build timeout.
+     * <p>
+     * Pulling the image is the first step of {@link BuildJobExecutionService#runBuildJob}, so it runs inside the window
+     * guarded by the build timeout. A cold pull of a large image can easily take longer than
+     * {@code artemis.continuous-integration.build-timeout-seconds.max} (240 seconds by default), which would cancel the
+     * job and report it as a build timeout even though the build itself never started. The pull has its own, much longer
+     * budget ({@code artemis.continuous-integration.image-pull-timeout-seconds}) and must therefore be excluded here.
+     * <p>
+     * Rather than starting the timer after image preparation, the wait is sliced: only slices during which no pull is in
+     * progress count against the build budget. That keeps the accounting correct for images that are already present
+     * locally (no pull, so the full budget applies from the start) as well as for pulls that finish mid-build.
+     *
+     * Package-private for testing.
+     *
+     * @param future                 the future of the running build job
+     * @param buildJobId             the ID of the build job, used to check whether its image pull is still running
+     * @param buildJobTimeoutSeconds the build budget in seconds, excluding any time spent pulling the image
+     * @return the build result
+     * @throws TimeoutException if the build itself, not counting image pulls, exceeded the build budget
+     */
+    BuildResult awaitBuildResult(Future<BuildResult> future, String buildJobId, int buildJobTimeoutSeconds) throws Exception {
+        final long budgetNanos = TimeUnit.SECONDS.toNanos(buildJobTimeoutSeconds);
+        long consumedNanos = 0;
+
+        while (true) {
+            final long sliceStartNanos = System.nanoTime();
+            try {
+                return future.get(BUILD_TIMEOUT_POLL_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+            }
+            catch (TimeoutException timeout) {
+                if (buildJobRunner.isFetchingImage(buildJobId)) {
+                    // The fetch is bounded by the image pull timeout, so this slice does not count against the build budget.
+                    continue;
+                }
+                consumedNanos += System.nanoTime() - sliceStartNanos;
+                if (consumedNanos >= budgetNanos) {
+                    throw timeout;
+                }
+            }
         }
     }
 

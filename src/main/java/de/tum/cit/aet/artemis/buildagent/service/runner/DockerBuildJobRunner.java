@@ -151,6 +151,11 @@ public class DockerBuildJobRunner implements BuildJobRunner {
     }
 
     @Override
+    public boolean isFetchingImage(String buildJobId) {
+        return buildAgentDockerService.isImagePullInProgress(buildJobId);
+    }
+
+    @Override
     public void cleanupOrphans() {
         buildAgentDockerService.cleanUpContainers();
     }

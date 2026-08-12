@@ -490,16 +490,33 @@ public class SharedQueueProcessingService {
                     // 2. Container startup failed but job wasn't cleaned up
                     // 3. Job is still starting up (image pull, repo clone in progress)
 
+                    // A job that is still fetching its image has no execution resource yet by definition, and the fetch can
+                    // legitimately take longer than the grace period below. It is bounded by its own timeout
+                    // (artemis.continuous-integration.image-pull-timeout-seconds), so it does not need this watchdog as a backstop.
+                    if (buildJobRunner.isFetchingImage(jobId)) {
+                        log.debug("Job {} is currently fetching its image, skipping stale detection", jobId);
+                        staleJobDetectionCounts.remove(jobId);
+                        continue;
+                    }
+
                     // Check job age - don't consider jobs stale during startup grace period
                     // This allows time for Docker image pulls and repository cloning
                     BuildJobQueueItem job = distributedDataAccessService.getDistributedProcessingJobs().get(jobId);
-                    if (job != null && job.jobTimingInfo() != null && job.jobTimingInfo().buildStartDate() != null) {
-                        long jobAgeSeconds = Duration.between(job.jobTimingInfo().buildStartDate(), ZonedDateTime.now()).getSeconds();
-                        if (jobAgeSeconds < STALE_DETECTION_MIN_JOB_AGE_SECONDS) {
-                            // Job is still in startup grace period - skip stale detection
-                            log.debug("Job {} is {} seconds old (< {} min grace period), skipping stale detection", jobId, jobAgeSeconds, STALE_DETECTION_MIN_JOB_AGE_SECONDS / 60);
-                            continue;
-                        }
+                    ZonedDateTime buildStartDate = job != null && job.jobTimingInfo() != null ? job.jobTimingInfo().buildStartDate() : null;
+                    if (buildStartDate == null) {
+                        // We cannot tell how old the job is, so we cannot tell whether it is still starting up. Skipping is the safe choice: a genuinely stuck job without
+                        // a container is still caught by the orphan cross-check below, whereas counting it as stale here cancels jobs that just started. This happens when
+                        // another agent force-cancelled and requeued the job while this agent was picking it up, which removes it from the distributed processing map.
+                        // Reset the counter as well, so that earlier detections cannot add up with later ones and cancel the job the moment its entry reappears.
+                        log.debug("Job {} has no known build start date, skipping stale detection", jobId);
+                        staleJobDetectionCounts.remove(jobId);
+                        continue;
+                    }
+                    long jobAgeSeconds = Duration.between(buildStartDate, ZonedDateTime.now()).getSeconds();
+                    if (jobAgeSeconds < STALE_DETECTION_MIN_JOB_AGE_SECONDS) {
+                        // Job is still in startup grace period - skip stale detection
+                        log.debug("Job {} is {} seconds old (< {} min grace period), skipping stale detection", jobId, jobAgeSeconds, STALE_DETECTION_MIN_JOB_AGE_SECONDS / 60);
+                        continue;
                     }
 
                     int consecutiveCount = staleJobDetectionCounts.merge(jobId, 1, Integer::sum);
