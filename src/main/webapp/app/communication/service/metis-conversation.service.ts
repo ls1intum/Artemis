@@ -36,6 +36,19 @@ export class MetisConversationService implements OnDestroy {
 
     // Stores the conversation of the course where the current user is a member
     private conversationsOfUser: ConversationDTO[] = [];
+    /**
+     * Whether the conversations of the user have been loaded at least once. Until then an empty cache means "not known
+     * yet" rather than "the user is in no conversation", and the two lead to opposite behaviour.
+     */
+    private conversationsLoaded = false;
+    /**
+     * A conversation requested before the cache held anything, to be activated once it arrives.
+     * <p>
+     * Opening the page with `?conversationId=` asks for a conversation while the request that fetches them is still in
+     * flight, because the route emits its query parameters immediately. Dropping that request leaves the page on an
+     * empty view that nothing ever fills, since it is the only request that will be made.
+     */
+    private requestedConversationId: number | undefined = undefined;
     _conversationsOfUser$: ReplaySubject<ConversationDTO[]> = new ReplaySubject<ConversationDTO[]>(1);
     // Stores the currently selected conversation
     private activeConversation: ConversationDTO | undefined = undefined;
@@ -130,6 +143,13 @@ export class MetisConversationService implements OnDestroy {
             cachedConversation = this.conversationsOfUser.find((conversationInCache) => conversationInCache.id === conversationId);
         }
         if (!cachedConversation && conversationIdentifier) {
+            if (!this.conversationsLoaded) {
+                // Not a membership problem: the cache simply has nothing to look in yet. Remember what was asked for
+                // and activate it when the list arrives. Warning about membership here would be wrong too, because
+                // whether the user is a member is not known until the conversations are in.
+                this.requestedConversationId = conversationId;
+                return;
+            }
             this.alertService.addAlert({
                 type: AlertType.WARNING,
                 message: 'artemisApp.metis.channel.notAMember',
@@ -142,11 +162,28 @@ export class MetisConversationService implements OnDestroy {
         if (this.activeConversation?.id !== conversationId) {
             this.updateConversationAsRead();
         }
+        this.requestedConversationId = undefined;
         this.activeConversation = cachedConversation;
         this._activeConversation$.next(this.activeConversation);
         this.isCodeOfConductPresented = false;
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
         this.isMarkedAsUnread = false;
+    }
+
+    /**
+     * Activates the conversation that was asked for before the conversations were known, if there is one.
+     * <p>
+     * Only when nothing else has been activated in the meantime: a conversation the user has since opened themselves is
+     * the more recent intent and must not be replaced by the one the url happened to carry.
+     */
+    private activateRequestedConversation() {
+        if (this.requestedConversationId === undefined || this.activeConversation) {
+            this.requestedConversationId = undefined;
+            return;
+        }
+        const requested = this.requestedConversationId;
+        this.requestedConversationId = undefined;
+        this.setActiveConversation(requested);
     }
 
     public disableConversationService() {
@@ -228,6 +265,7 @@ export class MetisConversationService implements OnDestroy {
             }),
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
+                this.conversationsLoaded = true;
                 this.hasUnreadMessagesCheck();
                 this._conversationsOfUser$.next(this.conversationsOfUser);
 
@@ -243,6 +281,7 @@ export class MetisConversationService implements OnDestroy {
                 if (notifyConversationsSubscribers) {
                     this._conversationsOfUser$.next(this.conversationsOfUser);
                 }
+                this.activateRequestedConversation();
                 if (notifyActiveConversationSubscribers) {
                     this._activeConversation$.next(this.activeConversation);
                 }
@@ -315,9 +354,13 @@ export class MetisConversationService implements OnDestroy {
             }),
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
+                this.conversationsLoaded = true;
                 this.hasUnreadMessagesCheck();
                 this._conversationsOfUser$.next(this.conversationsOfUser);
                 this.activeConversation = undefined;
+                // After the reset, so the conversation the url asked for survives it. This is the reload case: the
+                // query parameters were read while this request was still in flight.
+                this.activateRequestedConversation();
                 this._activeConversation$.next(this.activeConversation);
                 this.subscribeToConversationMembershipTopic(course.id!, this.userId);
                 this.subscribeToRouteChange();
