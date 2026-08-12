@@ -58,19 +58,28 @@ KILL_GRACE_SECONDS=30
 # satisfy the drift check below. The file holds a second, unrelated `images:` block for Kubernetes app
 # definitions at a shallower indent, which is why the block has to be nested inside `build:` to count:
 # `build_indent` is tracked while inside that block and cleared on leaving it, so an `images:` key in
-# some later section cannot be picked up. Language keys carry no value of their own and are skipped;
-# values are accepted quoted or bare, and trailing comments are stripped.
+# some later section cannot be picked up. It has to be the *direct* child: `build_child_indent` is taken
+# from the first key below `build:`, and only an `images:` at exactly that indent counts, so an `images:`
+# mapping nested deeper under `build:` - inside `default-docker-flags:`, say - is not mistaken for the
+# list of build agent images. Language keys carry no value of their own and are skipped; values are
+# accepted quoted or bare, and trailing comments are stripped.
 configured_images() {
     awk '
         /^[[:space:]]*build:[[:space:]]*$/ {
             build_indent = match($0, /[^[:space:]]/)
+            build_child_indent = 0
             next
         }
         # Left the build block without having found its images child — stop looking until the next one.
         !in_block && build_indent && !/^[[:space:]]*$/ && match($0, /[^[:space:]]/) <= build_indent {
             build_indent = 0
+            build_child_indent = 0
         }
-        !in_block && build_indent && /^[[:space:]]*images:[[:space:]]*$/ && match($0, /[^[:space:]]/) > build_indent {
+        # The first key below `build:` fixes the indent its direct children sit at.
+        !in_block && build_indent && !build_child_indent && !/^[[:space:]]*$/ && match($0, /[^[:space:]]/) > build_indent {
+            build_child_indent = match($0, /[^[:space:]]/)
+        }
+        !in_block && build_indent && /^[[:space:]]*images:[[:space:]]*$/ && match($0, /[^[:space:]]/) == build_child_indent {
             in_block = 1
             block_indent = match($0, /[^[:space:]]/)
             next
