@@ -34,12 +34,62 @@ IMAGES=(
 
 CONFIG_FILE="src/main/resources/config/application.yml"
 MAX_ATTEMPTS=3
+# A cold pull of the ~1 GB Maven image takes a couple of minutes on a healthy runner. The cap only
+# has to be generous enough not to cut a working pull short, because its job is to stop a *stalled*
+# one: an unbounded `docker pull` here would hang until the job timeout, which is the same
+# undiagnosable failure this script exists to remove, just moved earlier.
+PULL_TIMEOUT_SECONDS=600
+
+# Prints every image configured for the build agent, one per line.
+#
+# Reads only the build agent's own block (`artemis.continuous-integration.build.images`) rather than
+# grepping the whole file, so an image name appearing in a comment or an unrelated setting cannot
+# satisfy the drift check below. The file holds a second, unrelated `images:` block for Kubernetes
+# app definitions, hence the requirement that the block be nested directly under `build:`. Language
+# keys carry no value of their own and are skipped; values are accepted quoted or bare, and trailing
+# comments are stripped.
+configured_images() {
+    awk '
+        /^[[:space:]]*build:[[:space:]]*$/ {
+            build_indent = match($0, /[^[:space:]]/)
+            next
+        }
+        !in_block && build_indent && /^[[:space:]]*images:[[:space:]]*$/ && match($0, /[^[:space:]]/) > build_indent {
+            in_block = 1
+            block_indent = match($0, /[^[:space:]]/)
+            next
+        }
+        in_block {
+            if ($0 ~ /^[[:space:]]*$/) { next }
+            if (match($0, /[^[:space:]]/) <= block_indent) { in_block = 0; build_indent = 0; next }
+            line = $0
+            sub(/[[:space:]]+#.*$/, "", line)
+            if (line !~ /:[[:space:]]*[^[:space:]]/) { next }
+            sub(/^[^:]*:[[:space:]]*/, "", line)
+            gsub(/^["'"'"']|["'"'"']$/, "", line)
+            if (line != "") { print line }
+        }
+    ' "$CONFIG_FILE"
+}
 
 # Guard against drift: the list above is a copy of the tags configured for the build agent, so a tag
 # bumped in application.yml without updating this script would silently reintroduce the on-demand
 # pull this step exists to prevent. Fail here, where the reason is obvious, instead of there.
+mapfile -t CONFIGURED < <(configured_images)
+if [ ${#CONFIGURED[@]} -eq 0 ]; then
+    echo "::error title=Could not read E2E exercise images::Found no images under the 'images:' block of ${CONFIG_FILE}. The configuration layout changed; update configured_images() in $0."
+    exit 1
+fi
+
 for image in "${IMAGES[@]}"; do
-    if ! grep -qF "\"${image}\"" "$CONFIG_FILE"; then
+    found=false
+    for configured in "${CONFIGURED[@]}"; do
+        if [ "$image" = "$configured" ]; then
+            found=true
+            break
+        fi
+    done
+    if [ "$found" != true ]; then
         echo "::error title=E2E image list is stale::${image} is no longer configured in ${CONFIG_FILE}. Update IMAGES in $0 to match the tags the build agent uses, otherwise the exercise image is pulled on demand during the test run and Java build assertions fail."
         exit 1
     fi
@@ -51,10 +101,29 @@ for image in "${IMAGES[@]}"; do
         continue
     fi
 
+    # A bound turns a stalled pull into a non-zero exit so the retry below can act on it. coreutils
+    # ships `timeout` on the CI runners; macOS names it `gtimeout` when coreutils is installed via
+    # Homebrew, which keeps the bound working for anyone running this locally. Without either the pull
+    # stays unbounded, which is worth saying out loud rather than failing over.
+    pull=(docker pull --quiet "$image")
+    timeout_bin=""
+    if command -v timeout > /dev/null 2>&1; then
+        timeout_bin="timeout"
+    elif command -v gtimeout > /dev/null 2>&1; then
+        timeout_bin="gtimeout"
+    fi
+    if [ -n "$timeout_bin" ]; then
+        # --kill-after escalates to SIGKILL for a pull wedged badly enough to ignore the SIGTERM, so
+        # the step cannot be held open by the very stall it is meant to cut short.
+        pull=("$timeout_bin" --kill-after=30s "${PULL_TIMEOUT_SECONDS}s" "${pull[@]}")
+    else
+        echo "Note: neither 'timeout' nor 'gtimeout' is available, so a stalled pull of ${image} cannot be bounded."
+    fi
+
     pulled=false
     for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
         echo "Pulling ${image} (attempt ${attempt}/${MAX_ATTEMPTS})..."
-        if docker pull --quiet "$image"; then
+        if "${pull[@]}"; then
             pulled=true
             break
         fi
