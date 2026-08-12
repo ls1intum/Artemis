@@ -32,13 +32,21 @@ IMAGES=(
     "ls1tum/artemis-python-docker:v1.1.0"     # python default
 )
 
-CONFIG_FILE="src/main/resources/config/application.yml"
+# Resolved from the script's own location so it does not matter which directory the caller is in.
+REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+CONFIG_FILE="${REPO_ROOT}/src/main/resources/config/application.yml"
+
 MAX_ATTEMPTS=3
-# A cold pull of the ~1 GB Maven image takes a couple of minutes on a healthy runner. The cap only
-# has to be generous enough not to cut a working pull short, because its job is to stop a *stalled*
-# one: an unbounded `docker pull` here would hang until the job timeout, which is the same
-# undiagnosable failure this script exists to remove, just moved earlier.
-PULL_TIMEOUT_SECONDS=600
+# Cold pulls of all four images together took 30 seconds on the CI runner, the Maven image 11 of them,
+# so these caps carry a large multiple of the real cost. They exist to stop a *stalled* pull: an
+# unbounded `docker pull` here would hang until the job timeout, which is the same undiagnosable
+# failure this script exists to remove, only moved earlier.
+PULL_TIMEOUT_SECONDS=300
+# `timeout` only terminates the `docker pull` client; the daemon keeps the pull going and the next
+# attempt attaches to it. Against a genuinely stalled daemon or registry every attempt would therefore
+# burn its full cap, so the retries need a shared ceiling as well — otherwise the step could outlive
+# the job timeout and be killed before it can report why.
+PULL_DEADLINE_SECONDS=600
 
 # Prints every image configured for the build agent, one per line.
 #
@@ -75,7 +83,17 @@ configured_images() {
 # Guard against drift: the list above is a copy of the tags configured for the build agent, so a tag
 # bumped in application.yml without updating this script would silently reintroduce the on-demand
 # pull this step exists to prevent. Fail here, where the reason is obvious, instead of there.
-mapfile -t CONFIGURED < <(configured_images)
+if [ ! -r "$CONFIG_FILE" ]; then
+    echo "::error title=Could not read E2E exercise images::${CONFIG_FILE} is missing or unreadable, so the configured image tags cannot be checked."
+    exit 1
+fi
+
+# A `while read` loop rather than `mapfile`, which macOS's default Bash 3.2 does not provide.
+CONFIGURED=()
+while IFS= read -r configured_image; do
+    CONFIGURED+=("$configured_image")
+done < <(configured_images)
+
 if [ ${#CONFIGURED[@]} -eq 0 ]; then
     echo "::error title=Could not read E2E exercise images::Found no images under the 'images:' block of ${CONFIG_FILE}. The configuration layout changed; update configured_images() in $0."
     exit 1
@@ -121,7 +139,12 @@ for image in "${IMAGES[@]}"; do
     fi
 
     pulled=false
+    deadline=$((SECONDS + PULL_DEADLINE_SECONDS))
     for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+        if [ "$SECONDS" -ge "$deadline" ]; then
+            echo "Giving up on ${image} after ${PULL_DEADLINE_SECONDS}s spent across ${attempt} attempts."
+            break
+        fi
         echo "Pulling ${image} (attempt ${attempt}/${MAX_ATTEMPTS})..."
         if "${pull[@]}"; then
             pulled=true
