@@ -721,8 +721,12 @@ public class SharedQueueProcessingService {
 
             if (OfflineBuildAgentDetector.isOffline(storedMemberAddress, liveNodeIdentifiers, agentsAppearInLiveList)) {
                 log.info("removeOfflineNodes: REMOVING agent '{}' with address '{}' (node is no longer alive)", agentKey, storedMemberAddress);
+                // Removing the agent entry is the whole cleanup: it raises the map removal event that
+                // SharedQueueManagementService.handleOrphanedJobsForRemovedAgent listens for, and that handler takes each of
+                // the node's processing jobs out of the map atomically and re-queues it, so exactly one core node retries it.
+                // Deleting those jobs here as well would race that handler and, when it won, drop the job instead of
+                // retrying it - the build would simply never come back.
                 removeBuildAgentInformationForNode(agentKey, storedMemberAddress);
-                removeProcessingJobsForNode(storedMemberAddress);
             }
         }
     }
@@ -736,22 +740,6 @@ public class SharedQueueProcessingService {
     private void removeBuildAgentInformationForNode(String agentKey, String memberAddress) {
         log.debug("Cleaning up build agent information for offline node: {} (address: {})", agentKey, memberAddress);
         distributedDataAccessService.getDistributedBuildAgentInformation().remove(agentKey);
-    }
-
-    /**
-     * Removes all processing jobs that were assigned to an offline node.
-     * <p>
-     * These jobs were being processed when the node went offline and need to be cleaned up.
-     * Note: The jobs are not re-queued here as they may have been partially processed.
-     *
-     * @param memberAddress the Hazelcast member address of the offline node
-     */
-    private void removeProcessingJobsForNode(String memberAddress) {
-        List<String> jobsToRemove = distributedDataAccessService.getProcessingJobIdsForAgent(memberAddress);
-        log.debug("Removing {} processing jobs for offline node: {}", jobsToRemove.size(), memberAddress);
-        for (String jobId : jobsToRemove) {
-            distributedDataAccessService.getDistributedProcessingJobs().remove(jobId);
-        }
     }
 
     /**
