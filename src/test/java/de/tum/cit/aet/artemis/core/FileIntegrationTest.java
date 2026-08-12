@@ -240,7 +240,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Lecture lecture = createLectureWithLectureUnits();
         AttachmentVideoUnit unit = lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance).map(AttachmentVideoUnit.class::cast)
                 .filter(lectureUnit -> lectureUnit.getAttachment().getLink().endsWith(".pdf")).findFirst().orElseThrow();
-        Slide slide = slideRepository.findAllByAttachmentVideoUnitId(unit.getId()).getFirst();
+        // The upload schedules slide splitting asynchronously. Create the relevant slide explicitly so this test does
+        // not depend on the background processor winning a race with the assertion.
+        Slide slide = new Slide();
+        slide.setAttachmentVideoUnit(unit);
+        slide.setSlideNumber(1);
+        slide.setSlideImagePath("attachments/attachment-unit/" + unit.getId() + "/slide/1.png");
         slide.setHidden(ZonedDateTime.now().plusDays(1));
         slideRepository.save(slide);
         unit.getAttachment().setStudentVersion(null);
