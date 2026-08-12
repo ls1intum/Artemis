@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.core.util;
 
 import java.util.Objects;
 
-import com.vdurmont.semver4j.Semver;
-import com.vdurmont.semver4j.SemverException;
+import org.semver4j.Semver;
+import org.semver4j.SemverException;
 
 /**
  * Utility for parsing Artemis version strings into {@link Semver} objects.
@@ -40,8 +40,8 @@ public final class ArtemisVersionUtil {
         if (trimmed.matches("\\d+\\.\\d+")) {
             return new Semver(trimmed + ".0");
         }
-        // semver4j's strict mode silently tolerates trailing dotted segments (e.g. "9.2.3.4");
-        // reject anything that is not exactly three dotted numeric components before delegating.
+        // Reject anything that is not exactly three dotted numeric components before delegating, so inputs
+        // like "9.2.3.4" are treated as invalid regardless of the underlying parser's leniency.
         if (!trimmed.matches("\\d+\\.\\d+\\.\\d+")) {
             throw new SemverException("Invalid Artemis version: " + version);
         }

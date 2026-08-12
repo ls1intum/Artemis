@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 @Conditional(LectureEnabled.class)
 @Lazy
 @Service
-@Transactional
 public class SlideService {
 
     private static final Logger log = LoggerFactory.getLogger(SlideService.class);
@@ -35,12 +34,15 @@ public class SlideService {
 
     private final AttachmentService attachmentService;
 
+    private final TransactionAfterCommitService transactionAfterCommitService;
+
     public SlideService(SlideRepository slideRepository, SlideUnhideService slideUnhideService, LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService,
-            AttachmentService attachmentService) {
+            AttachmentService attachmentService, TransactionAfterCommitService transactionAfterCommitService) {
         this.slideRepository = slideRepository;
         this.slideUnhideService = slideUnhideService;
         this.lectureUnitVisibilitySyncService = lectureUnitVisibilitySyncService;
         this.attachmentService = attachmentService;
+        this.transactionAfterCommitService = transactionAfterCommitService;
     }
 
     /**
@@ -50,6 +52,7 @@ public class SlideService {
      * @param originalExercise The original exercise before the update
      * @param updatedExercise  The updated exercise after the update
      */
+    @Transactional
     public void handleDueDateChange(Exercise originalExercise, Exercise updatedExercise) {
         handleDueDateChange(originalExercise.getDueDate(), updatedExercise);
     }
@@ -61,6 +64,7 @@ public class SlideService {
      * @param originalDueDate The original due date before the update
      * @param updatedExercise The updated exercise after the update
      */
+    @Transactional
     public void handleDueDateChange(ZonedDateTime originalDueDate, Exercise updatedExercise) {
         ZonedDateTime updatedDueDate = updatedExercise.getDueDate();
         boolean hasDueDateChanged = !Objects.equals(originalDueDate, updatedDueDate);
@@ -79,6 +83,7 @@ public class SlideService {
      *
      * @param exercise The exercise whose due date has changed
      */
+    @Transactional
     public void updateSlidesHiddenDate(Exercise exercise) {
         List<Slide> relatedSlides = slideRepository.findByExerciseId(exercise.getId());
         if (relatedSlides.isEmpty()) {
@@ -86,22 +91,21 @@ public class SlideService {
         }
 
         log.debug("Updating hidden date for {} slides related to exercise {}", relatedSlides.size(), exercise.getId());
+        lectureUnitVisibilitySyncService.lockAffectedAttachmentVideoUnits(relatedSlides);
 
-        ZonedDateTime newHiddenDate = exercise.getDueDate();
+        ZonedDateTime dueDate = exercise.getDueDate();
+        ZonedDateTime newHiddenDate = dueDate != null && dueDate.isAfter(ZonedDateTime.now()) ? dueDate : null;
 
-        var affectedAttachments = relatedSlides.stream().map(Slide::getAttachmentVideoUnit).filter(Objects::nonNull).map(AttachmentVideoUnit::getAttachment)
-                .filter(Objects::nonNull).distinct().sorted(Comparator.comparing(Attachment::getId, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
-        affectedAttachments.forEach(attachmentService::markStudentVersionRegenerationPending);
+        var attachmentsWithChangedStudentContent = relatedSlides.stream().filter(slide -> (slide.getHidden() == null) != (newHiddenDate == null)).map(Slide::getAttachmentVideoUnit)
+                .filter(Objects::nonNull).map(AttachmentVideoUnit::getAttachment).filter(Objects::nonNull).distinct()
+                .sorted(Comparator.comparing(Attachment::getId, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
 
         relatedSlides.forEach(slide -> slide.setHidden(newHiddenDate));
         slideRepository.saveAll(relatedSlides);
-        relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate);
-        try {
-            lectureUnitVisibilitySyncService.markVisibilityDirtyForSlides(relatedSlides);
-        }
-        catch (Exception e) {
-            log.error("Failed to mark lecture unit visibility dirty after updating slides for exercise {}: {}", exercise.getId(), e.getMessage(), e);
-        }
-        affectedAttachments.forEach(attachmentService::regenerateStudentVersionOrLeavePending);
+        // Keep the lock order consistent with hidden-page edits: slide rows first, then the attachment row.
+        attachmentsWithChangedStudentContent.forEach(attachmentService::markStudentVersionRegenerationPending);
+        transactionAfterCommitService.execute(() -> relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate));
+        lectureUnitVisibilitySyncService.markVisibilityDirtyForSlides(relatedSlides);
+        attachmentsWithChangedStudentContent.forEach(attachmentService::regenerateStudentVersionOrLeavePending);
     }
 }

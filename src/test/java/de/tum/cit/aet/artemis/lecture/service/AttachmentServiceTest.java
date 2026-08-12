@@ -166,6 +166,26 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void regenerationFailureAfterCommitDoesNotRollBackCallingTransaction() {
+        String committedName = "outer transaction still commits";
+        Attachment invalidAttachment = new Attachment();
+        invalidAttachment.setName("invalid.pdf");
+        invalidAttachment.setLink("attachments/attachment-unit/missing.pdf");
+        invalidAttachment.setAttachmentVideoUnit(testAttachment2.getAttachmentVideoUnit());
+
+        Boolean scheduled = new TransactionTemplate(transactionManager).execute(status -> {
+            Attachment managedAttachment = attachmentRepository.findById(testAttachment1.getId()).orElseThrow();
+            managedAttachment.setName(committedName);
+            attachmentRepository.save(managedAttachment);
+            return attachmentService.regenerateStudentVersionOrLeavePending(invalidAttachment);
+        });
+
+        assertThat(scheduled).isTrue();
+        assertThat(attachmentRepository.findById(testAttachment1.getId()).orElseThrow().getName()).isEqualTo(committedName);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testGenerateStudentVersionPdf() throws Exception {
         // Get hidden slides
         List<Slide> hiddenSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachment2.getAttachmentVideoUnit().getId());

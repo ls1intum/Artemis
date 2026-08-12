@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { EMPTY, Observable, of, throwError } from 'rxjs';
@@ -10,7 +10,9 @@ import { MockProvider } from 'ng-mocks';
 import { InformationBox } from 'app/shared-ui/information-box/information-box.component';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { CourseExerciseGroupDetailComponent } from 'app/course/overview/course-exercises/group-detail/course-exercise-group-detail.component';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { ExerciseProblemStatementDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
@@ -70,7 +72,8 @@ describe('CourseExerciseGroupDetailComponent', () => {
             imports: [CourseExerciseGroupDetailComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                MockProvider(CourseManagementService, { findOneForDashboard: () => of(new HttpResponse({ body: course })) }),
+                MockProvider(CourseOverviewExercisesService, { loadIfNeeded: () => of({ exercises } as CourseExercisesForOverviewDTO) }),
+                MockProvider(CourseStorageService, { getCourse: () => course, subscribeToCourseUpdates: () => EMPTY }),
                 MockProvider(ExerciseVariantGroupService, { getProblemStatements: (options?.getProblemStatements ?? (() => EMPTY)) as never }),
                 MockProvider(EntityTitleService),
                 MockProvider(ProgrammingExercisePlantUmlExtensionWrapper, {

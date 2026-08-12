@@ -236,6 +236,26 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLecturePdfAttachmentsMerged_HiddenSlidesWithoutStudentVersionReturnsNotFound() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        AttachmentVideoUnit unit = lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance).map(AttachmentVideoUnit.class::cast)
+                .filter(lectureUnit -> lectureUnit.getAttachment().getLink().endsWith(".pdf")).findFirst().orElseThrow();
+        Slide slide = slideRepository.findAllByAttachmentVideoUnitId(unit.getId()).getFirst();
+        slide.setHidden(ZonedDateTime.now().plusDays(1));
+        slideRepository.save(slide);
+        unit.getAttachment().setStudentVersion(null);
+        attachmentRepo.save(unit.getAttachment());
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance)
+                .forEach(lectureUnit -> assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), student.getId())).isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLecturePdfAttachmentsMerged_TutorAccessToUnreleasedUnits() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
 

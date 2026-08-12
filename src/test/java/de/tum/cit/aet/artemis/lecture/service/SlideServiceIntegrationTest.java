@@ -90,6 +90,11 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         testSlide.setExercise(originalExercise);
         testSlide.setHidden(originalDueDate);
         slideRepository.save(testSlide);
+        attachmentService.regenerateStudentVersion(testAttachmentVideoUnit.getAttachment());
+        String originalStudentVersion = attachmentRepository.findById(testAttachmentVideoUnit.getAttachment().getId()).orElseThrow().getStudentVersion();
+        assertThat(originalStudentVersion).isNotBlank();
+        Path originalStudentVersionPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(originalStudentVersion), FilePathType.STUDENT_VERSION_SLIDES);
+        assertThat(originalStudentVersionPath).exists();
 
         ZonedDateTime newDueDate = originalDueDate.plusDays(3);
         Exercise updatedTextExercise = TextExerciseFactory.generateTextExercise(originalExercise.getReleaseDate(), newDueDate, originalExercise.getAssessmentDueDate(), testCourse);
@@ -103,6 +108,8 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         List<Slide> updatedSlides = slideRepository.findByExerciseId(originalExercise.getId());
         assertThat(updatedSlides).hasSize(1);
         assertThat(updatedSlides.getFirst().getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(newDueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(attachmentRepository.findById(testAttachmentVideoUnit.getAttachment().getId()).orElseThrow().getStudentVersion()).isEqualTo(originalStudentVersion);
+        assertThat(originalStudentVersionPath).exists();
         awaitVisibilityWebhook(visibilityWebhookSeen);
         irisRequestMockProvider.verify();
     }

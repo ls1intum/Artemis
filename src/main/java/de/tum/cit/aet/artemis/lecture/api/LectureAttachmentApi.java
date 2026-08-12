@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -52,5 +53,12 @@ public class LectureAttachmentApi extends AbstractLectureApi {
 
     public boolean hasHiddenSlides(long attachmentVideoUnitId) {
         return slideRepository.existsByAttachmentVideoUnitIdAndHiddenNotNull(attachmentVideoUnitId);
+    }
+
+    public Set<Long> findAttachmentVideoUnitIdsWithHiddenSlides(Set<Long> attachmentVideoUnitIds) {
+        if (attachmentVideoUnitIds.isEmpty()) {
+            return Set.of();
+        }
+        return slideRepository.findAttachmentVideoUnitIdsWithHiddenSlides(attachmentVideoUnitIds);
     }
 }

@@ -171,7 +171,7 @@ public class AttachmentVideoUnitResource {
         AttachmentUpdateIntent updateIntent = attachmentVideoUnitDTO.attachmentUpdateIntent();
         validateAttachmentUpdateIntent(updateIntent, file, existingAttachmentVideoUnit, attachment);
         validateAtLeastOneVisibleSlide(updateIntent, hiddenPages, pageOrder, existingAttachmentVideoUnit, attachment);
-        validateStudentVersionForHiddenSlides(updateIntent, hiddenPages, studentVersion, existingAttachmentVideoUnit);
+        validateStudentVersionForHiddenSlides(updateIntent, hiddenPages, pageOrder, studentVersion);
 
         // Capture original competency IDs BEFORE updating links (for progress tracking)
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
@@ -226,14 +226,14 @@ public class AttachmentVideoUnitResource {
         }
     }
 
-    private void validateStudentVersionForHiddenSlides(AttachmentUpdateIntent updateIntent, List<HiddenPageInfoDTO> hiddenPages, MultipartFile studentVersion,
-            AttachmentVideoUnit existingAttachmentVideoUnit) {
+    private void validateStudentVersionForHiddenSlides(AttachmentUpdateIntent updateIntent, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder,
+            MultipartFile studentVersion) {
         boolean isFileChange = updateIntent == AttachmentUpdateIntent.FILE_UPLOAD || updateIntent == AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED;
         if (!isFileChange) {
             return;
         }
-        boolean hasHiddenSlidesAfterUpdate = hiddenPages != null ? hiddenPages.stream().anyMatch(page -> page.date() != null)
-                : existingAttachmentVideoUnit.getSlides().stream().anyMatch(slide -> slide.getHidden() != null);
+        // A basic file replacement (without pageOrder) creates a fresh, fully visible slide generation. Hidden-page metadata only survives an editor update with a page order.
+        boolean hasHiddenSlidesAfterUpdate = pageOrder != null && hiddenPages != null && hiddenPages.stream().anyMatch(page -> page.date() != null);
         if (hasHiddenSlidesAfterUpdate && (studentVersion == null || studentVersion.isEmpty())) {
             throw new BadRequestAlertException("A matching student PDF is required when an updated PDF contains hidden slides", ENTITY_NAME,
                     "studentVersionRequiredForHiddenSlides");
@@ -465,6 +465,8 @@ public class AttachmentVideoUnitResource {
 
     /**
      * PUT lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId/student-version : Updates the student version file for an existing attachment video unit
+     * This compatibility endpoint is retained for API clients that upload an independently generated student PDF. The current web PDF editor sends the student PDF together
+     * with the main update request.
      *
      * @param lectureId             the id of the lecture to which the attachment video unit belongs
      * @param attachmentVideoUnitId the id of the attachment video unit to update

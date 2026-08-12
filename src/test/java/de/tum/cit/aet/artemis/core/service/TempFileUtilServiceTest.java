@@ -50,6 +50,19 @@ class TempFileUtilServiceTest {
     }
 
     @Test
+    void replaceFileAtomicallySupportsLongTargetFilenames() throws Exception {
+        TempFileUtilService tempFileUtilService = new TempFileUtilService(tempDirectory);
+        Path targetPath = tempDirectory.resolve("a".repeat(240) + ".pdf");
+
+        tempFileUtilService.replaceFileAtomically(tempDirectory, targetPath, "content".getBytes(UTF_8));
+
+        assertThat(Files.readString(targetPath)).isEqualTo("content");
+        try (var files = Files.list(tempDirectory)) {
+            assertThat(files).containsExactly(targetPath);
+        }
+    }
+
+    @Test
     void moveReplacingFallsBackWhenAtomicMoveCannotReplaceExistingTarget() throws Exception {
         TempFileUtilService tempFileUtilService = new TempFileUtilService(tempDirectory);
         Path source = mock(Path.class);

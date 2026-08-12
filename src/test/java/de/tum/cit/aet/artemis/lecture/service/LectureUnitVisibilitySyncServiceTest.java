@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -110,6 +111,20 @@ class LectureUnitVisibilitySyncServiceTest {
 
         verify(slideRepository).findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID);
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
+    }
+
+    @Test
+    void locksAffectedUnitsOnceInStableOrder() {
+        var laterUnit = attachmentVideoUnit();
+        laterUnit.setId(43L);
+        var earlierUnit = attachmentVideoUnit();
+        earlierUnit.setId(41L);
+
+        service.lockAffectedAttachmentVideoUnits(List.of(slide(1, HIDDEN_UNTIL, laterUnit), slide(2, HIDDEN_UNTIL, earlierUnit), slide(3, null, laterUnit)));
+
+        var inOrder = inOrder(attachmentVideoUnitRepository);
+        inOrder.verify(attachmentVideoUnitRepository).findByIdForUpdate(41L);
+        inOrder.verify(attachmentVideoUnitRepository).findByIdForUpdate(43L);
     }
 
     private static AttachmentVideoUnit attachmentVideoUnit() {

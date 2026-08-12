@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -461,6 +460,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
         // Wait for async operation to complete (after attachment video unit is saved, the file gets split into slides)
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+        Set<Long> originalSlideIds = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).stream().map(Slide::getId).collect(Collectors.toSet());
 
         // Store the original attachment filename to check it changes
         String originalAttachmentLink = createdAttachment.link();
@@ -473,19 +473,14 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // Verify attachment file was updated (this should pass)
         assertThat(attachmentVideoUnit1.attachment().link()).isNotEqualTo(originalAttachmentLink);
         assertThat(attachmentVideoUnit1.attachment().version()).isEqualTo(originalAttachmentVersion + 1);
-        // Create a query to find the latest slides for this attachment video unit
-        // Since we know there will be duplicate slide numbers, we need to check for the latest ones (with highest ID)
-        var groupedSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit1.id()).stream().collect(Collectors.groupingBy(Slide::getSlideNumber));
-        List<Slide> latestSlides = new ArrayList<>();
-        for (var slidesWithSameNumber : groupedSlides.values()) {
-            slidesWithSameNumber.stream().max(Comparator.comparing(Slide::getId)).ifPresent(latestSlides::add);
-        }
-        // Verify we have the expected number of unique slide numbers
-        assertThat(latestSlides).hasSize(SLIDE_COUNT);
-        // Instead of checking that the slide paths changed, just verify they're correctly formatted
-        // and that they exist - the implementation doesn't seem to update slide paths when the
-        // attachment is updated
-        for (Slide slide : latestSlides) {
+        await().untilAsserted(() -> {
+            List<Slide> replacementSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit1.id());
+            assertThat(replacementSlides).hasSize(SLIDE_COUNT);
+            assertThat(replacementSlides).extracting(Slide::getId).doesNotContainAnyElementsOf(originalSlideIds);
+        });
+        List<Slide> replacementSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit1.id());
+        // Verify the newly generated slide paths are correctly formatted.
+        for (Slide slide : replacementSlides) {
             assertThat(slide.getSlideImagePath()).isNotNull();
             assertThat(slide.getSlideImagePath()).containsPattern("attachments/attachment-unit/\\d+/slide/\\d+/.*_Slide_\\d+\\.png");
         }
@@ -682,6 +677,10 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         Long attachmentVideoUnitId = persistedAttachmentVideoUnit.getId();
 
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId)).hasSize(SLIDE_COUNT));
+        List<Slide> originalSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId);
+        Set<Long> originalSlideIds = originalSlides.stream().map(Slide::getId).collect(Collectors.toSet());
+        originalSlides.getFirst().setHidden(ZonedDateTime.now().plusDays(1));
+        slideRepository.saveAndFlush(originalSlides.getFirst());
 
         MockMultipartFile studentVersionFile = new MockMultipartFile("studentVersion", "stale_student_version.pdf", "application/pdf", "student content".getBytes());
         MockMultipartHttpServletRequestBuilder studentVersionBuilder = MockMvcRequestBuilders
@@ -705,6 +704,12 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(updatedAttachmentVideoUnit.getAttachment().getStudentVersion()).isNull();
         assertThat(reloadedAttachment.getVersion()).isEqualTo(originalVersion + 1);
         assertThat(reloadedAttachment.getStudentVersion()).isNull();
+        assertThat(request.get("/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnitId + "/student/dummy.pdf", HttpStatus.OK, byte[].class)).isNotEmpty();
+        await().untilAsserted(() -> {
+            List<Slide> replacementSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId);
+            assertThat(replacementSlides).hasSize(SLIDE_COUNT).allMatch(slide -> slide.getHidden() == null);
+            assertThat(replacementSlides).extracting(Slide::getId).doesNotContainAnyElementsOf(originalSlideIds);
+        });
         await().untilAsserted(() -> assertThat(oldStudentVersionPath).doesNotExist());
     }
 

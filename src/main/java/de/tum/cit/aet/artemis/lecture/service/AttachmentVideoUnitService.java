@@ -23,6 +23,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
@@ -141,6 +143,10 @@ public class AttachmentVideoUnitService {
     private AttachmentVideoUnit updateAttachmentVideoUnitWithinTransaction(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO,
             Attachment updateAttachment, MultipartFile updateFile, MultipartFile studentVersionFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages,
             List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
+        Long attachmentVideoUnitId = existingAttachmentVideoUnit.getId();
+        if (attachmentVideoUnitId == null || attachmentVideoUnitRepository.findByIdForUpdate(attachmentVideoUnitId).isEmpty()) {
+            throw new EntityNotFoundException("AttachmentVideoUnit", attachmentVideoUnitId);
+        }
         LectureContentUpdateSnapshot beforeSnapshot = buildSnapshot(existingAttachmentVideoUnit);
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
@@ -206,6 +212,8 @@ public class AttachmentVideoUnitService {
                         if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                             visibilitySyncDeferredToSlideSplit = true;
                             if (pageOrder == null) {
+                                detachSlidesForBasicReplacement(savedAttachmentVideoUnit.getId());
+                                projectedSlideHiddenUntilBySlideNumber = Map.of();
                                 postCommitService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
                             }
                             else {
@@ -225,6 +233,16 @@ public class AttachmentVideoUnitService {
         var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
         triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds, visibilitySyncDeferredToSlideSplit);
         return savedAttachmentVideoUnit;
+    }
+
+    /**
+     * Detaches the previous slide generation before a basic PDF replacement is committed. The replacement split runs after commit, so clearing the association here prevents
+     * stale hidden-slide rows from blocking the student download while the new slides are being generated or if that asynchronous split needs to be retried.
+     */
+    private void detachSlidesForBasicReplacement(Long attachmentVideoUnitId) {
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId);
+        slides.forEach(slide -> slide.setAttachmentVideoUnit(null));
+        slideRepository.saveAll(slides);
     }
 
     private void triggerContentProcessingForUpdateKinds(AttachmentVideoUnit savedAttachmentVideoUnit, LectureContentUpdateSnapshot afterSnapshot,
@@ -381,7 +399,7 @@ public class AttachmentVideoUnitService {
                 attachmentService.replaceUploadedStudentVersionFile(studentVersionFile.getBytes(), attachment, attachmentVideoUnitId, studentVersionFile.getOriginalFilename());
             }
             catch (IOException e) {
-                throw new InternalServerErrorException("Could not create student version file");
+                throw new InternalServerErrorException("Could not create student version file", e);
             }
         }
     }

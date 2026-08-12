@@ -15,9 +15,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -51,13 +54,17 @@ public class AttachmentService {
 
     private final TransactionAfterCommitService transactionAfterCommitService;
 
+    private final TransactionTemplate requiresNewTransactionTemplate;
+
     public AttachmentService(AttachmentRepository attachmentRepository, SlideRepository slideRepository, FileService fileService, TempFileUtilService tempFileUtilService,
-            TransactionAfterCommitService transactionAfterCommitService) {
+            TransactionAfterCommitService transactionAfterCommitService, PlatformTransactionManager transactionManager) {
         this.attachmentRepository = attachmentRepository;
         this.slideRepository = slideRepository;
         this.fileService = fileService;
         this.tempFileUtilService = tempFileUtilService;
         this.transactionAfterCommitService = transactionAfterCommitService;
+        this.requiresNewTransactionTemplate = new TransactionTemplate(transactionManager);
+        this.requiresNewTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     /**
@@ -71,6 +78,7 @@ public class AttachmentService {
      */
     public Attachment updateLectureAttachment(Long attachmentId, Attachment attachmentUpdate, MultipartFile file) {
         Attachment existingAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
+        Path oldFilePath = null;
 
         existingAttachment.setName(attachmentUpdate.getName());
         existingAttachment.setReleaseDate(attachmentUpdate.getReleaseDate());
@@ -83,7 +91,6 @@ public class AttachmentService {
                 throw new BadRequestAlertException("The attachment must belong to a persisted lecture and have an existing file", "attachment", "invalidLectureAttachment");
             }
 
-            Path oldFilePath;
             try {
                 URI oldPath = URI.create(existingAttachment.getLink());
                 oldFilePath = FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT);
@@ -94,14 +101,17 @@ public class AttachmentService {
 
             Path basePath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(existingAttachment.getLecture().getId().toString());
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
-            fileService.schedulePathForDeletion(oldFilePath, 0);
-            fileService.evictCacheForPath(oldFilePath);
             existingAttachment
                     .setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, existingAttachment.getLecture().getId()).toString());
             existingAttachment.setVersion(existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1);
         }
 
-        return attachmentRepository.save(existingAttachment);
+        Attachment savedAttachment = attachmentRepository.save(existingAttachment);
+        if (oldFilePath != null) {
+            fileService.schedulePathForDeletion(oldFilePath, 0);
+            fileService.evictCacheForPath(oldFilePath);
+        }
+        return savedAttachment;
     }
 
     /**
@@ -114,6 +124,10 @@ public class AttachmentService {
      */
     @Transactional
     public void regenerateStudentVersion(Attachment attachment) {
+        regenerateStudentVersionWithinTransaction(attachment);
+    }
+
+    private void regenerateStudentVersionWithinTransaction(Attachment attachment) {
         attachment = lockAttachmentIfPersisted(attachment);
         AttachmentVideoUnit attachmentVideoUnit = attachment.getAttachmentVideoUnit();
         if (attachmentVideoUnit == null) {
@@ -137,20 +151,28 @@ public class AttachmentService {
             replaceStudentVersionFile(studentVersionPdf, attachment, attachmentVideoUnit.getId());
         }
         catch (Exception e) {
-            throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage());
+            throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage(), e);
         }
     }
 
     /**
      * Attempts regeneration while keeping the surrounding visibility transaction committable on file-generation failure.
      *
+     * If a transaction is active, regeneration is deferred until it commits and then runs in an independent transaction. This prevents a PDF-generation failure from marking
+     * the caller's visibility transaction rollback-only or deadlocking on an attachment row lock held by that transaction.
+     *
      * @param attachment the attachment whose student version should be regenerated
-     * @return whether regeneration succeeded
+     * @return whether regeneration succeeded immediately or was scheduled after the current commit
      */
-    @Transactional
     public boolean regenerateStudentVersionOrLeavePending(Attachment attachment) {
+        boolean[] succeeded = { true };
+        transactionAfterCommitService.execute(() -> succeeded[0] = regenerateStudentVersionInNewTransactionOrLeavePending(attachment));
+        return succeeded[0];
+    }
+
+    private boolean regenerateStudentVersionInNewTransactionOrLeavePending(Attachment attachment) {
         try {
-            regenerateStudentVersion(attachment);
+            requiresNewTransactionTemplate.executeWithoutResult(status -> regenerateStudentVersionWithinTransaction(attachment));
             return true;
         }
         catch (RuntimeException exception) {
@@ -207,7 +229,7 @@ public class AttachmentService {
                 fileService.evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES));
             }
             catch (Exception e) {
-                throw new InternalServerErrorException("Failed to delete student version file: " + e.getMessage());
+                throw new InternalServerErrorException("Failed to delete student version file: " + e.getMessage(), e);
             }
         }
     }
@@ -257,7 +279,8 @@ public class AttachmentService {
     public void replaceUploadedStudentVersionFile(byte[] pdfData, Attachment attachment, Long attachmentVideoUnitId, String originalFilename) throws IOException {
         String sanitizedFilename = FileUtil.checkAndSanitizeFilename(originalFilename);
         FileUtil.validateExtension(sanitizedFilename, false);
-        String filename = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.STUDENT_VERSION_SLIDES), sanitizedFilename, true);
+        // Always use a unique target so a rollback can leave the previously referenced file untouched.
+        String filename = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.STUDENT_VERSION_SLIDES), sanitizedFilename, false);
         persistStudentVersionFile(pdfData, attachment, attachmentVideoUnitId, filename);
     }
 
@@ -275,8 +298,10 @@ public class AttachmentService {
         }
         catch (RuntimeException | IOException exception) {
             attachment.setStudentVersion(oldStudentVersion);
-            fileService.schedulePathForDeletion(savePath, 0);
-            fileService.evictCacheForPath(savePath);
+            if (!java.util.Objects.equals(oldStudentVersion, newStudentVersion)) {
+                fileService.schedulePathForDeletion(savePath, 0);
+                fileService.evictCacheForPath(savePath);
+            }
             throw exception;
         }
 
@@ -294,8 +319,10 @@ public class AttachmentService {
                 public void afterCompletion(int status) {
                     if (status != TransactionSynchronization.STATUS_COMMITTED) {
                         attachment.setStudentVersion(oldStudentVersion);
-                        fileService.schedulePathForDeletion(savePath, 0);
-                        fileService.evictCacheForPath(savePath);
+                        if (!java.util.Objects.equals(oldStudentVersion, newStudentVersion)) {
+                            fileService.schedulePathForDeletion(savePath, 0);
+                            fileService.evictCacheForPath(savePath);
+                        }
                     }
                 }
             });

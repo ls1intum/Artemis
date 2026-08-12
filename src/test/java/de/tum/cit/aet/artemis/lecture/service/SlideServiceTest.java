@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -14,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -29,7 +31,7 @@ class SlideServiceTest {
         var slideUnhideService = mock(SlideUnhideService.class);
         var visibilitySyncService = mock(LectureUnitVisibilitySyncService.class);
         var attachmentService = mock(AttachmentService.class);
-        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService);
+        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService, new TransactionAfterCommitService());
         var exercise = exerciseWithDueDate();
         var firstSlide = new Slide();
         firstSlide.setId(1L);
@@ -49,8 +51,9 @@ class SlideServiceTest {
         assertThat(secondSlide.getHidden()).isEqualTo(exercise.getDueDate());
 
         var inOrder = inOrder(slideRepository, slideUnhideService, visibilitySyncService, attachmentService);
-        inOrder.verify(attachmentService).markStudentVersionRegenerationPending(attachment);
+        inOrder.verify(visibilitySyncService).lockAffectedAttachmentVideoUnits(relatedSlides);
         inOrder.verify(slideRepository).saveAll(relatedSlides);
+        inOrder.verify(attachmentService).markStudentVersionRegenerationPending(attachment);
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(firstSlide);
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(secondSlide);
         inOrder.verify(visibilitySyncService).markVisibilityDirtyForSlides(relatedSlides);
@@ -63,7 +66,7 @@ class SlideServiceTest {
         var slideUnhideService = mock(SlideUnhideService.class);
         var visibilitySyncService = mock(LectureUnitVisibilitySyncService.class);
         var attachmentService = mock(AttachmentService.class);
-        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService);
+        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService, new TransactionAfterCommitService());
         var exercise = exerciseWithDueDate();
         when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(List.of());
 
@@ -79,7 +82,7 @@ class SlideServiceTest {
         var slideUnhideService = mock(SlideUnhideService.class);
         var visibilitySyncService = mock(LectureUnitVisibilitySyncService.class);
         var attachmentService = mock(AttachmentService.class);
-        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService);
+        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService, new TransactionAfterCommitService());
         var exercise = new TextExercise();
         exercise.setId(42L);
         var attachment = new Attachment();
@@ -97,6 +100,7 @@ class SlideServiceTest {
 
         assertThat(slide.getHidden()).isNull();
         var inOrder = inOrder(slideRepository, slideUnhideService, visibilitySyncService);
+        inOrder.verify(visibilitySyncService).lockAffectedAttachmentVideoUnits(List.of(slide, secondSlide));
         inOrder.verify(slideRepository).saveAll(List.of(slide, secondSlide));
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(slide);
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(secondSlide);
@@ -112,7 +116,7 @@ class SlideServiceTest {
         var slideUnhideService = mock(SlideUnhideService.class);
         var visibilitySyncService = mock(LectureUnitVisibilitySyncService.class);
         var attachmentService = mock(AttachmentService.class);
-        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService);
+        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService, new TransactionAfterCommitService());
         var exercise = exerciseWithDueDate();
         var attachment = new Attachment();
         attachment.setId(7L);
@@ -133,12 +137,12 @@ class SlideServiceTest {
     }
 
     @Test
-    void updateSlidesHiddenDateDoesNotFailExerciseUpdateWhenFollowUpWorkFails() {
+    void updateSlidesHiddenDatePropagatesVisibilityPersistenceFailure() {
         var slideRepository = mock(SlideRepository.class);
         var slideUnhideService = mock(SlideUnhideService.class);
         var visibilitySyncService = mock(LectureUnitVisibilitySyncService.class);
         var attachmentService = mock(AttachmentService.class);
-        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService);
+        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService, new TransactionAfterCommitService());
         var exercise = exerciseWithDueDate();
         var attachment = new Attachment();
         attachment.setId(7L);
@@ -149,20 +153,64 @@ class SlideServiceTest {
         var relatedSlides = List.of(slide);
         when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(relatedSlides);
         doThrow(new IllegalStateException("sync failed")).when(visibilitySyncService).markVisibilityDirtyForSlides(relatedSlides);
-        when(attachmentService.regenerateStudentVersionOrLeavePending(attachment)).thenReturn(false);
-
-        slideService.updateSlidesHiddenDate(exercise);
+        assertThatThrownBy(() -> slideService.updateSlidesHiddenDate(exercise)).isInstanceOf(IllegalStateException.class).hasMessage("sync failed");
 
         verify(slideRepository).saveAll(relatedSlides);
         verify(visibilitySyncService).markVisibilityDirtyForSlides(relatedSlides);
-        verify(attachmentService).regenerateStudentVersionOrLeavePending(attachment);
+        verify(attachmentService, never()).regenerateStudentVersionOrLeavePending(attachment);
         verify(attachmentService).markStudentVersionRegenerationPending(attachment);
+    }
+
+    @Test
+    void changingFutureHiddenDateKeepsExistingStudentVersion() {
+        var slideRepository = mock(SlideRepository.class);
+        var slideUnhideService = mock(SlideUnhideService.class);
+        var visibilitySyncService = mock(LectureUnitVisibilitySyncService.class);
+        var attachmentService = mock(AttachmentService.class);
+        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService, new TransactionAfterCommitService());
+        var exercise = exerciseWithDueDate();
+        var attachment = new Attachment();
+        var attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.setAttachment(attachment);
+        var slide = new Slide();
+        slide.setHidden(ZonedDateTime.now().plusDays(2));
+        slide.setAttachmentVideoUnit(attachmentVideoUnit);
+        when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(List.of(slide));
+
+        slideService.updateSlidesHiddenDate(exercise);
+
+        assertThat(slide.getHidden()).isEqualTo(exercise.getDueDate());
+        verify(attachmentService, never()).markStudentVersionRegenerationPending(any());
+        verify(attachmentService, never()).regenerateStudentVersionOrLeavePending(any());
+        verify(slideUnhideService).handleSlideHiddenUpdate(slide);
+        verify(visibilitySyncService).markVisibilityDirtyForSlides(List.of(slide));
+    }
+
+    @Test
+    void updateSlidesHiddenDateDefersUnhideSchedulingUntilAfterCommit() {
+        var slideRepository = mock(SlideRepository.class);
+        var slideUnhideService = mock(SlideUnhideService.class);
+        var visibilitySyncService = mock(LectureUnitVisibilitySyncService.class);
+        var attachmentService = mock(AttachmentService.class);
+        var transactionAfterCommitService = mock(TransactionAfterCommitService.class);
+        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService, transactionAfterCommitService);
+        var exercise = exerciseWithDueDate();
+        var slide = new Slide();
+        when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(List.of(slide));
+
+        slideService.updateSlidesHiddenDate(exercise);
+
+        verifyNoInteractions(slideUnhideService);
+        var callback = ArgumentCaptor.forClass(Runnable.class);
+        verify(transactionAfterCommitService).execute(callback.capture());
+        callback.getValue().run();
+        verify(slideUnhideService).handleSlideHiddenUpdate(slide);
     }
 
     private static TextExercise exerciseWithDueDate() {
         var exercise = new TextExercise();
         exercise.setId(42L);
-        exercise.setDueDate(ZonedDateTime.parse("2026-07-03T12:00:00Z"));
+        exercise.setDueDate(ZonedDateTime.now().plusDays(7));
         return exercise;
     }
 }

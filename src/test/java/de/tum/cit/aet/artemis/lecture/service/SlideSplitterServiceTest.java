@@ -180,17 +180,21 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void repeatedBasicSlideSplitUsesUniqueImagePaths() {
+    void repeatedBasicSlideSplitReplacesCurrentGenerationWithUniqueImagePaths() {
         slideRepository.deleteAll(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()));
 
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf");
-        List<String> firstImagePaths = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getSlideImagePath).toList();
+        List<Slide> firstGeneration = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        List<Long> firstIds = firstGeneration.stream().map(Slide::getId).toList();
+        List<String> firstImagePaths = firstGeneration.stream().map(Slide::getSlideImagePath).toList();
 
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf");
-        List<String> allImagePaths = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getSlideImagePath).toList();
+        List<Slide> secondGeneration = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        List<String> secondImagePaths = secondGeneration.stream().map(Slide::getSlideImagePath).toList();
 
-        assertThat(allImagePaths).hasSize(6).doesNotHaveDuplicates();
-        assertThat(allImagePaths).containsAll(firstImagePaths);
+        assertThat(secondGeneration).hasSize(3).extracting(Slide::getId).doesNotContainAnyElementsOf(firstIds);
+        assertThat(secondImagePaths).doesNotHaveDuplicates().doesNotContainAnyElementsOf(firstImagePaths);
+        assertThat(firstIds).allSatisfy(id -> assertThat(slideRepository.findById(id).orElseThrow().getAttachmentVideoUnit()).isNull());
         assertThat(firstImagePaths).allSatisfy(imagePath -> {
             Path imageFile = FilePathConverter.fileSystemPathForExternalUri(URI.create(imagePath), FilePathType.SLIDE);
             assertThat(imageFile).exists();

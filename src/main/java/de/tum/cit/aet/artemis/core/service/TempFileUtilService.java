@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -30,6 +32,8 @@ import org.springframework.stereotype.Service;
 @Lazy
 @Service
 public class TempFileUtilService {
+
+    private static final Logger log = LoggerFactory.getLogger(TempFileUtilService.class);
 
     private Path tempPath;
 
@@ -130,14 +134,20 @@ public class TempFileUtilService {
             throw new IOException("Atomic replacement target must be contained in the trusted root");
         }
 
-        Path temporaryPath = createTempFile(normalizedTarget.getParent(), "." + normalizedTarget.getFileName() + ".", ".tmp");
+        // Keep the temporary name independent of the target name so valid long target filenames do not exceed the file system's per-component limit.
+        Path temporaryPath = createTempFile(normalizedTarget.getParent(), ".replace-", ".tmp");
         try {
             FileUtils.writeByteArrayToFile(temporaryPath.toFile(), fileData);
             moveReplacing(temporaryPath, normalizedTarget);
             return normalizedTarget;
         }
         finally {
-            Files.deleteIfExists(temporaryPath);
+            try {
+                Files.deleteIfExists(temporaryPath);
+            }
+            catch (IOException cleanupException) {
+                log.warn("Failed to clean up atomic-replacement temporary file {}", temporaryPath, cleanupException);
+            }
         }
     }
 

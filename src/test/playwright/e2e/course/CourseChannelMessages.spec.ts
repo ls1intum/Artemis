@@ -7,6 +7,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { SEED_COURSES } from '../../support/seedData';
 import { RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
+import { Commands } from '../../support/commands';
 
 // Use pre-seeded courses — no course creation needed
 const readOnlyCourse = { id: SEED_COURSES.channel1.id };
@@ -140,9 +141,9 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
 
         test('Instructor should be able to edit a channel', async ({ login, courseMessages, page, communicationAPIRequests }) => {
             // Login, three debounced edit flows, the server check and a full page reload share one test
-            // budget. Keep the same explicit limit on every runner so the bounded reactivation fallback
-            // can finish without making a genuine regression wait indefinitely.
-            test.setTimeout(180_000);
+            // budget, and the @fast project caps that at 60s. Lift it so the post-reload wait below can
+            // actually run to completion instead of being cut short by the total timeout under CI load.
+            test.slow();
             await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${channel.id}`);
             const newName = 'new-' + generateUUID().slice(0, 8);
             const topic = 'test-topic';
@@ -159,19 +160,16 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             expect(persisted?.topic).toBe(topic);
             expect(persisted?.description).toBe(description);
 
-            // Then confirm a genuine reload shows the persisted values. If Angular processes the
-            // conversation route before its list cache is ready, reactivate the same conversation once
-            // through the page object's bounded recovery path.
-            await page.reload({ waitUntil: 'domcontentloaded' });
-            const conversationHeader = page.locator('jhi-conversation-header');
-            const conversationReactivated = await conversationHeader
-                .waitFor({ state: 'visible', timeout: 15000 })
-                .then(() => true)
-                .catch(() => false);
-            if (!conversationReactivated) {
-                await courseMessages.openConversation(writeCourse.id, channel.id!);
-                await conversationHeader.waitFor({ state: 'visible', timeout: 15000 });
-            }
+            // Then confirm the reloaded UI shows them. A reload re-bootstraps the entire client, and
+            // Playwright disables the HTTP cache per context, so the bundle is re-fetched from scratch —
+            // on a loaded CI runner that can take longer than the default expect timeout. Wait on the
+            // assertions themselves (they poll) rather than gating on an intermediate element within a
+            // fixed window. Only the first assertion absorbs the re-bootstrap; the topic is rendered in
+            // the same pass, so it keeps the default timeout and the two budgets cannot stack.
+            // Restore the route after the reload: a lazy route chunk that fails to resolve sends the
+            // router to the bare /courses fallback, where the channel header does not exist at all and
+            // the assertion below waits out its whole budget on a page that can never satisfy it.
+            await Commands.reloadAndRestoreRoute(page);
             await expect(courseMessages.getName()).toContainText(newName, { timeout: RELOAD_RENDER_TIMEOUT });
             await expect(courseMessages.getTopic()).toContainText(topic);
         });

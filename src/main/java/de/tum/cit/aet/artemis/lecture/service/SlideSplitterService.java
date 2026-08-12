@@ -163,6 +163,7 @@ public class SlideSplitterService {
         lockAttachmentVideoUnit(attachmentVideoUnit);
         log.debug("Splitting AttachmentVideoUnit file {} into single slides", attachmentVideoUnit.getAttachment().getName());
         try {
+            detachCurrentSlideGeneration(attachmentVideoUnit.getId());
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
             int numPages = document.getNumberOfPages();
             PDFRenderer pdfRenderer = new PDFRenderer(document);
@@ -190,6 +191,16 @@ public class SlideSplitterService {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
             throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
+    }
+
+    /**
+     * Makes the basic split replacement-safe and idempotent. Existing rows remain available for historical references, but they no longer affect visibility or downloads for
+     * the current attachment video unit.
+     */
+    private void detachCurrentSlideGeneration(Long attachmentVideoUnitId) {
+        List<Slide> currentSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId);
+        currentSlides.forEach(slide -> slide.setAttachmentVideoUnit(null));
+        slideRepository.saveAll(currentSlides);
     }
 
     /**

@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
@@ -12,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -33,6 +36,7 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -111,7 +115,8 @@ class AttachmentVideoUnitServiceTest {
             invocation.<Runnable>getArgument(0).run();
             return null;
         }).when(transactionAfterCommitService).execute(any());
-        when(attachmentVideoUnitRepository.save(any(AttachmentVideoUnit.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(attachmentVideoUnitRepository.save(any(AttachmentVideoUnit.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(attachmentVideoUnitRepository.findByIdForUpdate(anyLong())).thenReturn(Optional.of(new AttachmentVideoUnit()));
         lenient().when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of());
     }
 
@@ -122,6 +127,7 @@ class AttachmentVideoUnitServiceTest {
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, null, false, null, null, Set.of());
 
+        verify(attachmentVideoUnitRepository).findByIdForUpdate(LECTURE_UNIT_ID);
         verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
         verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
@@ -317,6 +323,16 @@ class AttachmentVideoUnitServiceTest {
         verify(attachmentService).removeStudentVersionFile(attachment);
         verify(attachmentService, never()).replaceUploadedStudentVersionFile(any(), any(), any(), any());
         assertThat(attachment.getStudentVersion()).isNull();
+    }
+
+    @Test
+    void handleStudentVersionFilePreservesReadFailureCause() throws Exception {
+        var studentVersionFile = mock(MultipartFile.class);
+        var readFailure = new IOException("read failed");
+        when(studentVersionFile.getBytes()).thenThrow(readFailure);
+
+        assertThatThrownBy(() -> service.handleStudentVersionFile(studentVersionFile, attachment(), LECTURE_UNIT_ID)).isInstanceOf(InternalServerErrorException.class)
+                .hasCause(readFailure);
     }
 
     @Test

@@ -54,6 +54,17 @@ public class LectureUnitVisibilitySyncService {
                 .map(this::buildSnapshot).ifPresent(irisLectureUnitSyncService::markVisibilityDirtyAfterCommit));
     }
 
+    /**
+     * Locks the affected attachment video units in a stable order before slide rows are updated. Hidden-page edits already lock the unit before its slides; using the same order
+     * for exercise-driven visibility updates prevents deadlocks with concurrent edits.
+     *
+     * @param relatedSlides slides whose units must be locked
+     */
+    void lockAffectedAttachmentVideoUnits(List<Slide> relatedSlides) {
+        relatedSlides.stream().map(Slide::getAttachmentVideoUnit).filter(java.util.Objects::nonNull).map(AttachmentVideoUnit::getId).filter(java.util.Objects::nonNull).distinct()
+                .sorted().forEach(attachmentVideoUnitRepository::findByIdForUpdate);
+    }
+
     void markVisibilityDirtyForSlides(List<Slide> relatedSlides) {
         Map<Long, AttachmentVideoUnit> affectedUnitsById = new LinkedHashMap<>();
         relatedSlides.forEach(slide -> {
