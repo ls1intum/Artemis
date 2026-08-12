@@ -114,7 +114,7 @@ describe('CourseManagementContainerComponent', () => {
     let route: ActivatedRoute;
 
     let findSpy: ReturnType<typeof vi.spyOn>;
-    let findOneForDashboardSpy: ReturnType<typeof vi.spyOn>;
+    let findCourseSpy: ReturnType<typeof vi.spyOn>;
     let getCourseSummarySpy: ReturnType<typeof vi.spyOn>;
     let deleteSpy: ReturnType<typeof vi.spyOn>;
     let courseSidebarService: CourseSidebarService;
@@ -186,7 +186,7 @@ describe('CourseManagementContainerComponent', () => {
         );
         metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
 
-        findOneForDashboardSpy = vi.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
+        findCourseSpy = vi.spyOn(courseService, 'find').mockReturnValue(
             of(
                 new HttpResponse({
                     body: course1,
@@ -293,7 +293,7 @@ describe('CourseManagementContainerComponent', () => {
             expect(component.course()).toEqual(course1);
         });
 
-        expect(findOneForDashboardSpy).toHaveBeenCalledWith(1);
+        expect(findCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should create sidebar items based on course properties', () => {

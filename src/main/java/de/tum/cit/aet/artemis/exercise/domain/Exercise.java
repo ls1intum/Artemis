@@ -311,20 +311,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return studentParticipations;
     }
 
-    public Exercise participations(Set<StudentParticipation> participations) {
-        this.studentParticipations = participations;
-        return this;
-    }
-
     public Exercise addParticipation(StudentParticipation participation) {
         this.studentParticipations.add(participation);
         participation.setExercise(this);
         return this;
-    }
-
-    public void removeParticipation(StudentParticipation participation) {
-        this.studentParticipations.remove(participation);
-        participation.setExercise(null);
     }
 
     public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
@@ -735,11 +725,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return gradingCriteria;
     }
 
-    public void addGradingCriteria(GradingCriterion gradingCriterion) {
-        this.gradingCriteria.add(gradingCriterion);
-        gradingCriterion.setExercise(this);
-    }
-
     public void setGradingCriteria(Set<GradingCriterion> gradingCriteria) {
         reconnectCriteriaWithExercise(gradingCriteria);
     }
@@ -986,20 +971,5 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             setGradingCriteria(managedCriteria);
         }
         return managedCriteria;
-    }
-
-    /**
-     * Ensures that the exercise has a mutable set for competency links.
-     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
-     *
-     * @return the non-null mutable set of competency links
-     */
-    public Set<CompetencyExerciseLink> ensureCompetencyLinksSet() {
-        Set<CompetencyExerciseLink> managedLinks = getCompetencyLinks();
-        if (managedLinks == null) {
-            managedLinks = new HashSet<>();
-            setCompetencyLinks(managedLinks);
-        }
-        return managedLinks;
     }
 }
