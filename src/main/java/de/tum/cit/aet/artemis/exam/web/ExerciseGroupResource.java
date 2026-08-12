@@ -173,12 +173,8 @@ public class ExerciseGroupResource {
      * PUT /courses/{courseId}/exams/{examId}/exercises/{exerciseId}/exercise-group : Move an exam exercise into a
      * different exercise group of the same exam.
      * <p>
-     * Blocked once any student exam (including test runs) has been generated for the exam: {@link ExamService}
-     * computes each group's points from {@code exerciseGroup.getExercises()} and
-     * {@code StudentExamService#generateStudentExams} picks one exercise per group per student, so moving an exercise
-     * afterward would silently desync already-generated selections and point totals. The guard is evaluated inside the
-     * updating statement itself (see {@code ExerciseRepository#moveToExerciseGroupIfNoStudentExams}) so that it cannot
-     * go stale between the check and the write.
+     * Blocked once a student exam exists: generation has already picked one exercise per group, so a later move would
+     * desync those selections and the exam's point totals.
      *
      * @param courseId      the course to which the exam belongs to
      * @param examId        the exam to which the exercise and both exercise groups belong to
@@ -199,9 +195,8 @@ public class ExerciseGroupResource {
         if (exercise.getExam() == null || !examId.equals(exercise.getExam().getId())) {
             throw new BadRequestAlertException("The exercise does not belong to this exam", ENTITY_NAME, "examIdMismatch");
         }
-        // The student-exam guard and the write are one statement, so a concurrent student exam generation cannot slip
-        // between them. The exercise was loaded above, so 0 updated rows can only mean the guard rejected the move.
-        if (exerciseRepository.moveToExerciseGroupIfNoStudentExams(exerciseId, targetGroup.getId(), examId) == 0) {
+        // The exercise was loaded above, so only the student-exam guard can reject the move.
+        if (!exerciseRepository.moveToExerciseGroupIfNoStudentExams(exerciseId, targetGroup.getId(), examId)) {
             throw new ConflictException("The exercise group cannot be changed after student exams have been generated for this exam", ENTITY_NAME, "studentExamsAlreadyGenerated");
         }
         return ResponseEntity.ok().build();

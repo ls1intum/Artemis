@@ -799,22 +799,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
             @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
 
-    /**
-     * Moves an exam exercise into a different exercise group, but only while the exam has no student exam at all.
-     * <p>
-     * The guard is part of the statement rather than a preceding {@code exists} check on purpose: a separate check
-     * leaves a window in which a concurrent student exam generation persists its exercise selection, after which the
-     * move would silently desync that selection and the exam's point totals. Evaluated and applied as one statement,
-     * the two can no longer interleave.
-     * <p>
-     * Note that a bulk update bypasses the persistence context, so a previously loaded {@code Exercise} instance keeps
-     * its old exercise group and must not be reused afterwards.
-     *
-     * @param exerciseId      the id of the exercise to move
-     * @param exerciseGroupId the id of the target exercise group
-     * @param examId          the id of the exam the exercise belongs to
-     * @return 1 when the exercise was moved, 0 when a student exam already exists for the exam
-     */
+    // Spring Data only allows void, int/Integer or long/Long here; moveToExerciseGroupIfNoStudentExams wraps the count.
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
@@ -831,7 +816,21 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                       WHERE se.exam.id = :examId
                   )
             """)
-    int moveToExerciseGroupIfNoStudentExams(@Param("exerciseId") long exerciseId, @Param("exerciseGroupId") long exerciseGroupId, @Param("examId") long examId);
+    int updateExerciseGroupIfNoStudentExams(@Param("exerciseId") long exerciseId, @Param("exerciseGroupId") long exerciseGroupId, @Param("examId") long examId);
+
+    /**
+     * Moves an exam exercise into a different exercise group, but only while the exam has no student exam at all.
+     * The guard sits inside the statement so a concurrent generation cannot commit between check and write. Being a
+     * bulk update, it bypasses the persistence context: a previously loaded {@code Exercise} keeps its old group.
+     *
+     * @param exerciseId      the id of the exercise to move
+     * @param exerciseGroupId the id of the target exercise group
+     * @param examId          the id of the exam the exercise belongs to
+     * @return whether the exercise was moved; false when a student exam already exists for the exam
+     */
+    default boolean moveToExerciseGroupIfNoStudentExams(long exerciseId, long exerciseGroupId, long examId) {
+        return updateExerciseGroupIfNoStudentExams(exerciseId, exerciseGroupId, examId) > 0;
+    }
 
     /**
      * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}

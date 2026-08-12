@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
@@ -24,6 +24,9 @@ import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+
+/** setTimeout truncates delays beyond a signed 32-bit millisecond value. */
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
 /**
  * Builds the exam-exercise `ActionItem[]` (exam-scoped routes, exam-specific role/lifecycle gates, delete wiring) and
@@ -68,18 +71,42 @@ export class ExamExerciseRowButtonsComponent {
     private readonly localCIEnabled = signal(this.profileService.isProfileActive(PROFILE_LOCALCI));
 
     /**
+     * The wall clock as a signal. The action set depends on the exam's start and end having passed, and nothing
+     * tracks the clock, so a page left open across either boundary would keep serving a stale set of actions.
+     */
+    private readonly now = signal(dayjs());
+
+    /**
      * Whether the exam is over (using the latest individual end date), gating the quiz re-evaluate action and
      * whether the quiz edit action is shown at all.
      */
     isExamOver(): boolean {
         const latestIndividualEndDate = this.latestIndividualEndDate();
-        return latestIndividualEndDate ? latestIndividualEndDate.isBefore(dayjs()) : false;
+        return latestIndividualEndDate ? latestIndividualEndDate.isBefore(this.now()) : false;
     }
 
     /** Whether the exam has started, disabling the quiz edit action (students may already be working on it). */
     hasExamStarted(): boolean {
         const exam = this.exam();
-        return exam.startDate ? exam.startDate.isBefore(dayjs()) : false;
+        return exam.startDate ? exam.startDate.isBefore(this.now()) : false;
+    }
+
+    constructor() {
+        // Advance `now` exactly when the next boundary passes, so the actions recompute once instead of polling.
+        effect((onCleanup) => {
+            const next = [this.exam().startDate, this.latestIndividualEndDate()]
+                .filter((date): date is dayjs.Dayjs => date !== undefined)
+                .map((date) => date.valueOf())
+                .filter((time) => time > this.now().valueOf())
+                .sort((a, b) => a - b)
+                .at(0);
+            if (next === undefined) {
+                return;
+            }
+            // setTimeout caps at a 32-bit delay; a boundary further out re-schedules when that intermediate tick fires.
+            const handle = setTimeout(() => this.now.set(dayjs()), Math.min(Math.max(next - Date.now(), 0) + 1, MAX_TIMEOUT_MS));
+            onCleanup(() => clearTimeout(handle));
+        });
     }
 
     /** The always-visible test-run warning shown next to the quiz edit action, before the exam ends. */

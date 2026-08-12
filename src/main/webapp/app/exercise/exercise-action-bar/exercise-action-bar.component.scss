@@ -11,10 +11,8 @@
     display: inline-flex;
 }
 
-// Tailwind's `hidden` is a bare global utility (specificity 0,1,0), so on its own it loses to the component-scoped
-// `.inline-item` rule above (Angular's attribute selector makes that 0,2,0) and only ties with the kit button's
-// `inline-flex` on `.action-more`. Restating the collapse here, scoped, makes it win in both cases. Bootstrap's
-// `.d-none` needed none of this only because it carries `!important`.
+// Tailwind's global `hidden` loses to the scoped `.inline-item` rule above and only ties with the kit button's
+// `inline-flex`, so restate the collapse scoped. Bootstrap's `.d-none` won on `!important` alone.
 .inline-item.hidden,
 button.action-more.hidden {
     display: none;
