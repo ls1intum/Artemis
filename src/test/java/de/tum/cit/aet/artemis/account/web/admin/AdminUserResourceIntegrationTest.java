@@ -193,6 +193,46 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
         @Test
         @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void updateUser_externalToInternalWithoutPassword_generatesPassword() throws Exception {
+            ManagedUserVM externalUserDTO = userUtilService.createManagedUserVM(TEST_PREFIX + "extuser");
+            externalUserDTO.setInternal(false);
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(externalUserDTO)))
+                    .andExpect(status().isCreated());
+
+            User externalUser = userTestRepository.findOneByLogin(TEST_PREFIX + "extuser").orElseThrow();
+            assertThat(externalUser.isInternal()).isFalse();
+            // set external user to internal and provide no password
+            ManagedUserVM updateDTO = userUtilService.createManagedUserVM(externalUser.getLogin());
+            updateDTO.setId(externalUser.getId());
+            updateDTO.setInternal(true);
+            updateDTO.setPassword(null);
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(updateDTO))).andExpect(status().isOk());
+
+            User updatedUser = userTestRepository.findByIdWithAuthoritiesElseThrow(externalUser.getId());
+            assertThat(updatedUser.isInternal()).isTrue();
+            assertThat(updatedUser.getPassword()).isNotNull().isNotEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void updateUser_internalToExternal_reverseTransition_success() throws Exception {
+            User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "internaluser");
+            assertThat(regularUser.isInternal()).isTrue();
+
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(regularUser.getLogin());
+            managedUserVM.setId(regularUser.getId());
+            managedUserVM.setInternal(false);
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+
+            User updatedUser = userTestRepository.findByIdWithAuthoritiesElseThrow(regularUser.getId());
+            assertThat(updatedUser.isInternal()).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
         void updateUser_revokeSuperAdminBySuperAdmin_success() throws Exception {
             // Create a super admin user
             userUtilService.addSuperAdmin(TEST_PREFIX + "test2");
@@ -746,6 +786,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
             ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
             managedUserVM.setId(user.getId());
+            // #13492 made the internal flag caller-controlled, and only an internal account receives the password: an
+            // update that leaves it external ignores the password, so this has to say what it means.
+            managedUserVM.setInternal(true);
             managedUserVM.setPassword("a-new-admin-set-password");
             mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isOk());

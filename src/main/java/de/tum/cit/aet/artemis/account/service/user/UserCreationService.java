@@ -247,13 +247,31 @@ public class UserCreationService {
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
         user.setLangKey(updatedUserDTO.getLangKey());
-        boolean isPasswordBeingChanged = user.isInternal() && updatedUserDTO.getPassword() != null;
+
+        // if user was external and becomes internal - it's important to make sure that user still has a password
+        boolean wasInternal = user.isInternal();
+        user.setInternal(updatedUserDTO.isInternal());
+
+        // Set where the password is actually written rather than derived from the request, because only some requests that
+        // carry a password write it: an update that leaves the account external ignores it, and the changed date has to
+        // follow what happened to the credential, not what was asked for.
+        boolean isPasswordBeingChanged = false;
+        if (user.isInternal()) {
+            if (updatedUserDTO.getPassword() != null) {
+                user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
+                isPasswordBeingChanged = true;
+            }
+            else if (!wasInternal || user.getPassword() == null) {
+                // If user becomes internal user and got no password, generate the random password
+                String newPassword = RandomUtil.generatePassword();
+                user.setPassword(passwordService.hashPassword(newPassword));
+                // Deliberately not treated as a password change: the account had no usable password before, so there is no
+                // earlier password-based session for the changed date to end.
+            }
+        }
         // Bumping the changed date always stops an earlier session from being extended; revoking the other credentials on
         // top of that stays opt-in, because the admin form asks for it separately.
         boolean revokeCredentialsAfterPasswordChange = isPasswordBeingChanged && updatedUserDTO.isRevokeCredentials();
-        if (isPasswordBeingChanged) {
-            user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
-        }
         if (isBeingDeactivated || isPasswordBeingChanged) {
             user.setCredentialsChangedDate(ZonedDateTime.now());
         }
@@ -263,7 +281,8 @@ public class UserCreationService {
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
-        boolean passwordChangedByAdministrator = user.isInternal() && updatedUserDTO.getPassword() != null;
+        // Same condition as the changed date above, so the notice cannot claim a change the account did not receive.
+        boolean passwordChangedByAdministrator = isPasswordBeingChanged;
         boolean credentialsRevoked = isBeingDeactivated || revokeCredentialsAfterPasswordChange;
         if (credentialsRevoked) {
             String reason = isBeingDeactivated ? "user deactivated by an administrator" : "password changed by an administrator";

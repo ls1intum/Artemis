@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -260,6 +261,39 @@ class JWTFilterTest {
         MockHttpServletResponse response = filterWithToken(createRotationDueRememberMeToken(MAX_SESSION_EXTENSIONS));
 
         assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNull();
+    }
+
+    @Test
+    void aRefusedRenewalIsNotLookedUpAgainForTheSameToken() throws Exception {
+        // A refusal leaves the cookie untouched, so the token stays rotation-due for the rest of its life. Without
+        // remembering the decision, every later request would repeat these lookups - for a session refused early in its
+        // second half, that is per-request database load for as long as the token lives.
+        when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(false);
+        String token = createRotationDueRememberMeToken(0);
+
+        for (int request = 0; request < 5; request++) {
+            assertThat(filterWithToken(token).getHeader(HttpHeaders.SET_COOKIE)).as("a refused session is never extended").isNull();
+        }
+
+        verify(passkeyTokenRenewalService, times(1)).mayExtendSessionForAccount(any(), any());
+    }
+
+    @Test
+    void aRefusedRenewalDoesNotSuppressTheCheckForADifferentToken() throws Exception {
+        // The decision is remembered per token, not per account: a second session of the same user has its own token and
+        // has to be judged on its own, otherwise one refusal would stop every other session from being extended.
+        when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(false);
+        filterWithToken(createRotationDueRememberMeToken(0));
+
+        when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(true);
+        // A second token for the same account, issued two seconds earlier. The gap has to be whole seconds: `iat` is
+        // serialised with second precision, so a millisecond apart would produce the very same token and digest.
+        var authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        Date issuedAt = new Date(System.currentTimeMillis() - TOKEN_VALIDITY_IN_MILLISECONDS - 2000);
+        Date expiration = new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS / 10);
+        String otherToken = tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true, 0);
+
+        assertThat(filterWithToken(otherToken).getHeader(HttpHeaders.SET_COOKIE)).as("a different session is judged on its own").isNotNull();
     }
 
     @Test

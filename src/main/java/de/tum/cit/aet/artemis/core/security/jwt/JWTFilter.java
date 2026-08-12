@@ -4,11 +4,17 @@ import static de.tum.cit.aet.artemis.core.config.Constants.BEARER_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.JWT_COOKIE_NAME;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.FilterChain;
@@ -52,6 +58,27 @@ public class JWTFilter extends GenericFilterBean {
 
     /** The longest a "remember me" session may live, measured from the original login, however often it is extended. */
     private final long maxSessionLifetimeInSeconds;
+
+    /**
+     * Tokens whose renewal was refused, keyed by a digest of the signed token and valued with the token's expiry.
+     * <p>
+     * A refusal does not change the cookie, so the token stays rotation-due and every later request would repeat the
+     * lookups behind that refusal - for a session refused early in its second half, that is per-request database load for
+     * as long as the token lives. Remembering the refusal keeps it at one lookup per token, which is what the comment
+     * below claims. Only refusals are remembered: an approval rotates the cookie, so the next request carries a different
+     * token and asks again.
+     * <p>
+     * Caching until the token expires is safe because every reason to refuse is terminal for that token - the passkey is
+     * gone, or the account was deactivated, deleted or had its credentials changed. None of them can be undone in a way
+     * that should revive this session rather than require a fresh sign-in.
+     * <p>
+     * A digest rather than the token itself, so a heap dump does not hand out session credentials that would otherwise
+     * not be retained. Bounded, and swept of expired entries when it fills, so a node cannot accumulate them.
+     */
+    private final Map<String, Long> refusedRenewals = new ConcurrentHashMap<>();
+
+    /** Upper bound for {@link #refusedRenewals}. Far above the number of sessions one node can have refused at once. */
+    private static final int MAX_REFUSED_RENEWALS = 10_000;
 
     private final long tokenValidityInSecondsForPasskey;
 
@@ -125,13 +152,19 @@ public class JWTFilter extends GenericFilterBean {
             // rotation interval, not per request - so it is where everything that cannot reach an issued token is
             // re-checked: the passkey still exists, the account is still active, and its credentials have not changed since
             // the session started.
+            // Asked before the lookups, so a token already refused costs nothing further.
+            if (isRenewalAlreadyRefused(jwtToken, nowInMs)) {
+                return;
+            }
             String passkeyCredentialId = this.tokenProvider.getPasskeyCredentialId(jwtToken);
             // Only a passkey session has a passkey to verify. Asking for a password session too would refuse every
             // "remember me" extension on an installation that does not have passkeys enabled.
             if (isPasskeySession && !passkeyTokenRenewalService.mayExtendPasskeySession(passkeyCredentialId)) {
+                rememberRefusedRenewal(jwtToken, expirationDate.getTime());
                 return;
             }
             if (!passkeyTokenRenewalService.mayExtendSessionForAccount(authentication.getName(), issuedAt.toInstant())) {
+                rememberRefusedRenewal(jwtToken, expirationDate.getTime());
                 return;
             }
 
@@ -158,6 +191,65 @@ public class JWTFilter extends GenericFilterBean {
             // Build and set the new token as a response cookie
             ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDurationInMs);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        }
+    }
+
+    /**
+     * Whether this exact token has already been refused an extension, so the lookups behind that decision can be skipped.
+     *
+     * @param jwtToken the signed token presented by the request
+     * @param nowInMs  current time, passed in so one request reads a single clock value
+     * @return {@code true} if a refusal for this token is still remembered
+     */
+    private boolean isRenewalAlreadyRefused(String jwtToken, long nowInMs) {
+        Long refusedUntil = refusedRenewals.get(digestOf(jwtToken));
+        if (refusedUntil == null) {
+            return false;
+        }
+        if (refusedUntil > nowInMs) {
+            return true;
+        }
+        // The token outlived the refusal only if the clock moved past its expiry, in which case it is no longer usable
+        // anyway. Drop the entry so it does not sit here until the next sweep.
+        refusedRenewals.remove(digestOf(jwtToken), refusedUntil);
+        return false;
+    }
+
+    /**
+     * Remembers that this token may not be extended, until it expires.
+     *
+     * @param jwtToken      the signed token that was refused
+     * @param expiresAtInMs when the token expires, which is when remembering it stops being useful
+     */
+    private void rememberRefusedRenewal(String jwtToken, long expiresAtInMs) {
+        if (refusedRenewals.size() >= MAX_REFUSED_RENEWALS) {
+            // Sweep instead of evicting arbitrarily: entries are only useful until their token expires, so in practice
+            // this clears most of the map. Bounded work, and only on the rare request that finds the map full.
+            long nowInMs = System.currentTimeMillis();
+            refusedRenewals.values().removeIf(refusedUntil -> refusedUntil <= nowInMs);
+            if (refusedRenewals.size() >= MAX_REFUSED_RENEWALS) {
+                // Still full of live entries: skip caching rather than grow without bound. The lookups then repeat, which
+                // is the behaviour this cache improves on, not one it breaks.
+                return;
+            }
+        }
+        refusedRenewals.put(digestOf(jwtToken), expiresAtInMs);
+    }
+
+    /**
+     * Hashes a token so the cache key cannot be replayed if it is ever read out of memory.
+     *
+     * @param jwtToken the signed token
+     * @return a hex SHA-256 digest of the token
+     */
+    private static String digestOf(String jwtToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(jwtToken.getBytes(StandardCharsets.UTF_8)));
+        }
+        catch (NoSuchAlgorithmException e) {
+            // SHA-256 is required of every JRE, so this cannot happen.
+            throw new IllegalStateException("SHA-256 is not available", e);
         }
     }
 
