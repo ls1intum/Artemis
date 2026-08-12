@@ -54,6 +54,13 @@ export const courseManagementRoutes: Routes = [
         },
         children: [
             {
+                path: ':courseId/exercises/:exerciseId/teams',
+                loadChildren: () => import('app/exercise/team/team.route').then((m) => m.teamManagementRoute),
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                },
+            },
+            {
                 path: ':courseId',
                 loadComponent: () => import('./detail/course-detail.component').then((m) => m.CourseDetailComponent),
                 resolve: {
