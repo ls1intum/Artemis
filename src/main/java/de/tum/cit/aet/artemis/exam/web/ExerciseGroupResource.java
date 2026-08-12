@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -83,11 +82,9 @@ public class ExerciseGroupResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final StudentExamRepository studentExamRepository;
-
     public ExerciseGroupResource(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, UserRepository userRepository,
             ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository, ExamImportService examImportService,
-            ExerciseRepository exerciseRepository, StudentExamRepository studentExamRepository) {
+            ExerciseRepository exerciseRepository) {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
@@ -96,7 +93,6 @@ public class ExerciseGroupResource {
         this.auditEventRepository = auditEventRepository;
         this.examImportService = examImportService;
         this.exerciseRepository = exerciseRepository;
-        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -180,7 +176,9 @@ public class ExerciseGroupResource {
      * Blocked once any student exam (including test runs) has been generated for the exam: {@link ExamService}
      * computes each group's points from {@code exerciseGroup.getExercises()} and
      * {@code StudentExamService#generateStudentExams} picks one exercise per group per student, so moving an exercise
-     * afterward would silently desync already-generated selections and point totals.
+     * afterward would silently desync already-generated selections and point totals. The guard is evaluated inside the
+     * updating statement itself (see {@code ExerciseRepository#moveToExerciseGroupIfNoStudentExams}) so that it cannot
+     * go stale between the check and the write.
      *
      * @param courseId      the course to which the exam belongs to
      * @param examId        the exam to which the exercise and both exercise groups belong to
@@ -201,12 +199,11 @@ public class ExerciseGroupResource {
         if (exercise.getExam() == null || !examId.equals(exercise.getExam().getId())) {
             throw new BadRequestAlertException("The exercise does not belong to this exam", ENTITY_NAME, "examIdMismatch");
         }
-        if (studentExamRepository.existsByExamId(examId)) {
+        // The student-exam guard and the write are one statement, so a concurrent student exam generation cannot slip
+        // between them. The exercise was loaded above, so 0 updated rows can only mean the guard rejected the move.
+        if (exerciseRepository.moveToExerciseGroupIfNoStudentExams(exerciseId, targetGroup.getId(), examId) == 0) {
             throw new ConflictException("The exercise group cannot be changed after student exams have been generated for this exam", ENTITY_NAME, "studentExamsAlreadyGenerated");
         }
-
-        exercise.setExerciseGroup(targetGroup);
-        exerciseRepository.save(exercise);
         return ResponseEntity.ok().build();
     }
 
