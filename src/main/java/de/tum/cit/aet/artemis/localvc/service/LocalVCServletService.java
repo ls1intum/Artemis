@@ -949,6 +949,27 @@ public class LocalVCServletService {
      */
     public void processNewPush(String commitHash, Repository repository, User user, Optional<ProgrammingExercise> cachedExercise,
             Optional<ProgrammingExerciseParticipation> cachedParticipation, Optional<VcsAccessLog> vcsAccessLog) {
+        // A git push knows the id it pushed, so it is also the commit that triggered this call
+        processNewPush(commitHash, repository, user, cachedExercise, cachedParticipation, vcsAccessLog, commitHash);
+    }
+
+    /**
+     * Process a new push, identifying the commit that triggered it.
+     * <p>
+     * The online editor commits through {@code RepositoryService} and reaches this method with no pushed hash, because the
+     * hash the build is triggered for is resolved later. The id of the commit the request actually created still has to be
+     * known here, so the resulting new commit alert can be attributed to the client that made that commit and to no other.
+     *
+     * @param commitHash           the hash of the last commit, may be null for a commit from the online editor
+     * @param repository           the remote repository which was pushed to
+     * @param user                 the user who pushed the commit
+     * @param cachedExercise       the exercise which is potentially already loaded
+     * @param cachedParticipation  the participation which is potentially already loaded
+     * @param vcsAccessLog         the vcsAccessLog which is potentially already loaded
+     * @param triggeringCommitHash the id of the commit this request created, or null when the caller does not know it
+     */
+    public void processNewPush(String commitHash, Repository repository, User user, Optional<ProgrammingExercise> cachedExercise,
+            Optional<ProgrammingExerciseParticipation> cachedParticipation, Optional<VcsAccessLog> vcsAccessLog, @Nullable String triggeringCommitHash) {
         long timeNanoStart = System.nanoTime();
 
         Path repositoryFolderPath = repository.getDirectory().toPath();
@@ -977,11 +998,9 @@ public class LocalVCServletService {
 
         try {
             if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
-                // Identify the commit this push created, so the new commit alert can be attributed to the client that made it
-                // and to no other. Resolved here because the caller may not know the hash yet: a commit from the online editor
-                // arrives with a null hash and only the repository itself knows what was just written. Kept in a separate
-                // variable, because the build-triggering code below relies on commitHash staying null in that case.
-                String triggeringCommitHash = commitHash != null ? commitHash : getLatestCommitHash(repository);
+                // The identified commit, not the repository head. Attribution has to name the commit this request created, and
+                // re-reading the head here would be a race: the online editor shares one working copy per repository, so a
+                // concurrent commit can move it and the alert would then be attributed to the wrong client.
                 exerciseVersionService.createExerciseVersion(exercise, user, triggeringCommitHash);
             }
 
