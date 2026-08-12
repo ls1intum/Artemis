@@ -5,6 +5,7 @@ import { generateUUID } from '../../support/utils';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { SEED_COURSES, SEED_CHANNELS } from '../../support/seedData';
+import { Commands } from '../../support/commands';
 
 const writeCourse = { id: SEED_COURSES.channel2.id };
 // Use the pre-seeded "random" channel — students are already joined
@@ -47,22 +48,15 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             await courseMessages.checkMessage(message.id!, message.content!);
             await courseMessages.bookmarkMessage(message.id!);
             await courseMessages.checkMessageBookmarked(message.id!, true);
-            // Reload the page completely. Under heavy multi-node load the conversation occasionally fails to
-            // re-activate from the conversationId query param after a reload (the conversations-cache activation race
-            // that openConversation also works around), leaving an empty view in which the message never renders.
-            // Retry the full reload until the message reappears so this assertion tests bookmark persistence rather
-            // than that unrelated activation race.
-            for (let attempt = 0; attempt < 3; attempt++) {
-                await page.reload();
-                try {
-                    await courseMessages.getSinglePost(message.id!).waitFor({ state: 'visible', timeout: 12000 });
-                    break;
-                } catch {
-                    if (attempt === 2) {
-                        throw new Error('Bookmarked message did not reappear after reload — conversation failed to re-activate');
-                    }
-                }
-            }
+            // The route is captured before the reload, because a reload that drifts to the bare /courses fallback
+            // would leave the page somewhere the message cannot be; restoreRouteIfDrifted returns to it.
+            // No retry beyond that: the conversation used to fail to re-activate from the conversationId query
+            // parameter, since the route emits it while the request that loads the conversations is still in flight
+            // and the activation was dropped rather than deferred. MetisConversationService now remembers it and
+            // applies it when the list arrives, so one reload has to be enough.
+            const conversationUrl = page.url();
+            await Commands.reloadAndRestoreRoute(page, conversationUrl);
+            await courseMessages.getSinglePost(message.id!).waitFor({ state: 'visible' });
             // Verify the message is still visible and still bookmarked
             await courseMessages.checkMessage(message.id!, message.content!);
             await courseMessages.checkMessageBookmarked(message.id!, true);

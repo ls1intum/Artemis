@@ -2,6 +2,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
 import { outputToObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
     faBookmark,
@@ -64,6 +65,7 @@ import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, S
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     unreadMessages: { entityData: [] },
@@ -147,7 +149,7 @@ const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
         FeatureActivationComponent,
     ],
 })
-export class CourseConversationsComponent implements OnInit, OnDestroy {
+export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarView {
     readonly isCommunicationEnabled = computed(() => {
         const currentCourse = this.course();
         return currentCourse ? isCommunicationEnabled(currentCourse) : false;
@@ -155,6 +157,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     protected readonly faComments = faComments;
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private tabReselectionSubscription?: Subscription;
     private readonly selectionState = inject(ConversationSelectionState);
     private metisConversationService = inject(MetisConversationService);
     private metisService = inject(MetisService);
@@ -284,6 +288,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        // Selecting this tab while already on it acts as a refresh -- prepareSidebarData re-reads the conversations and
+        // replaces the rendered list only once they arrive
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.activatedRoute).subscribe(() => this.prepareSidebarData());
+
         this.course.set(this.getParentCourse());
         this.isManagementView.set(this.router.url.includes('course-management'));
 
@@ -459,6 +467,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.tabReselectionSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.openSidebarEventSubscription?.unsubscribe();
@@ -594,7 +603,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     prepareSidebarData() {
         this.metisConversationService.forceRefresh().subscribe({
             complete: () => {
-                this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(this.course()!, this.conversationsOfUser()));
+                this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(this.conversationsOfUser()));
                 this.accordionConversationGroups.set(this.courseOverviewService.groupConversationsByChannelType(this.course()!, this.conversationsOfUser(), this.messagingEnabled));
                 this.accordionConversationGroups().recents.entityData = this.sidebarConversations()?.filter((item) => item.isCurrent) || [];
                 this.updateSidebarData();

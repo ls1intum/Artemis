@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -75,6 +76,33 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * @param now      the current date, typically ZonedDateTime.now()
      * @return a set of all visible exams for the user in the provided courses
      */
+    /**
+     * Loads the exams of a course visible to the user, projected to what the course overview sidebar renders.
+     * <p>
+     * Deliberately a projection rather than the entity: everything an exam contains — exercise groups, exercises,
+     * registered users, grading — belongs to the exam itself and is loaded when a student opens it, not when the
+     * sidebar lists it. Mirrors the visibility predicate of {@link #findByCourseIdForUser}.
+     *
+     * @param courseId the course whose exams should be loaded
+     * @param userId   the id of the user requesting them
+     * @param now      the current date, typically ZonedDateTime.now()
+     * @return the exams visible to the user, projected for the sidebar
+     */
+    @Query("""
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO(
+                e.id, e.title, e.moduleNumber, e.visibleDate, e.startDate, e.endDate, e.workingTime, e.examMaxPoints, e.testExam
+            )
+            FROM Exam e
+            WHERE e.course.id = :courseId
+                AND e.visibleDate <= :now
+                AND (
+                    e.testExam = TRUE
+                    OR EXISTS (SELECT 1 FROM ExamUser eu WHERE eu.exam = e AND eu.user.id = :userId)
+                    OR EXISTS (SELECT 1 FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
+                )
+            """)
+    Set<ExamForOverviewDTO> findAllForOverviewByCourseIdForUser(@Param("courseId") long courseId, @Param("userId") long userId, @Param("now") ZonedDateTime now);
+
     @Query("""
             SELECT DISTINCT e
             FROM Exam e
