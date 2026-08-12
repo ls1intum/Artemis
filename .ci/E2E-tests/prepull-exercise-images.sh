@@ -47,6 +47,9 @@ PULL_TIMEOUT_SECONDS=300
 # burn its full cap, so the retries need a shared ceiling as well — otherwise the step could outlive
 # the job timeout and be killed before it can report why.
 PULL_DEADLINE_SECONDS=600
+# Grace between SIGTERM and SIGKILL for a pull that will not stop on its own. Subtracted from each
+# attempt's cap rather than added to it, so the deadline stays a true ceiling.
+KILL_GRACE_SECONDS=30
 
 # Prints every image configured for the build agent, one per line.
 #
@@ -120,21 +123,26 @@ done
 
 # A bound turns a stalled pull into a non-zero exit so the retries can act on it. coreutils ships
 # `timeout` on the CI runners; macOS names it `gtimeout` when coreutils is installed via Homebrew,
-# which keeps the bound working for anyone running this locally. Without either, pulls stay unbounded,
-# which is worth saying out loud rather than failing over.
+# which keeps the bound working for anyone running this locally.
 timeout_bin=""
 if command -v timeout > /dev/null 2>&1; then
     timeout_bin="timeout"
 elif command -v gtimeout > /dev/null 2>&1; then
     timeout_bin="gtimeout"
-else
-    echo "Note: neither 'timeout' nor 'gtimeout' is available, so a stalled pull cannot be bounded."
 fi
 
 for image in "${IMAGES[@]}"; do
     if docker image inspect "$image" > /dev/null 2>&1; then
         echo "Already present: ${image}"
         continue
+    fi
+
+    # Refuse to start a pull that cannot be bounded: an unbounded `docker pull` that stalls would hold
+    # the setup step open until the job timeout, which is the failure this script exists to remove. Only
+    # reached when an image is actually missing, so a machine with every image cached still succeeds.
+    if [ -z "$timeout_bin" ]; then
+        echo "::error title=Cannot bound the E2E image pull::${image} is missing and neither 'timeout' nor 'gtimeout' is available, so a stalled pull could hang this step indefinitely. Install coreutils (on macOS: brew install coreutils) or pull the image manually."
+        exit 1
     fi
 
     pulled=false
@@ -150,11 +158,16 @@ for image in "${IMAGES[@]}"; do
         # Checking the deadline only between attempts would let a single hanging pull overrun it by a
         # further PULL_TIMEOUT_SECONDS, so the shared ceiling has to bound the pull itself.
         attempt_cap=$((remaining < PULL_TIMEOUT_SECONDS ? remaining : PULL_TIMEOUT_SECONDS))
+
+        # The SIGKILL grace period has to come out of the attempt's own share of the budget, not be
+        # added to it: `timeout --kill-after=D T` sends SIGTERM at T and only escalates at T+D, so
+        # charging D on top would let a pull that ignores SIGTERM run past the deadline the comment
+        # above claims to hold. Below the grace period there is no room to be graceful, so kill outright.
         pull=(docker pull --quiet "$image")
-        if [ -n "$timeout_bin" ]; then
-            # --kill-after escalates to SIGKILL for a pull wedged badly enough to ignore the SIGTERM,
-            # so the step cannot be held open by the very stall it is meant to cut short.
-            pull=("$timeout_bin" --kill-after=30s "${attempt_cap}s" "${pull[@]}")
+        if [ "$attempt_cap" -gt "$KILL_GRACE_SECONDS" ]; then
+            pull=("$timeout_bin" --kill-after="${KILL_GRACE_SECONDS}s" "$((attempt_cap - KILL_GRACE_SECONDS))s" "${pull[@]}")
+        else
+            pull=("$timeout_bin" --signal=KILL "${attempt_cap}s" "${pull[@]}")
         fi
 
         echo "Pulling ${image} (attempt ${attempt}/${MAX_ATTEMPTS}, up to ${attempt_cap}s)..."
