@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
@@ -20,6 +21,8 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 
 function isStudentParticipationChange(participation: Participation | undefined): participation is StudentParticipation {
     return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
@@ -67,6 +70,8 @@ export class CourseExercisesComponent {
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private destroyRef = inject(DestroyRef);
     private changeDetectorRef = inject(ChangeDetectorRef);
+    private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     private readonly _course = signal<Course | undefined>(undefined);
     private readonly _courseId = signal<number>(0);
@@ -82,6 +87,7 @@ export class CourseExercisesComponent {
     private readonly _activeExerciseDetails = signal<CourseExerciseDetailsComponent | undefined>(undefined);
     readonly pageTitle = signal<string>('');
     private courseUpdateSubscription?: Subscription;
+    private exercisesLoadSubscription?: Subscription;
 
     readonly course = this._course.asReadonly();
     readonly courseId = this._courseId.asReadonly();
@@ -100,6 +106,12 @@ export class CourseExercisesComponent {
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     constructor() {
+        // Selecting the exercises tab while already on it acts as a refresh
+        this.courseTabRefreshService
+            .reselections(this.route)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => this.loadExercises());
+
         this._isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('exercise'));
 
         this.route.parent!.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
@@ -129,6 +141,10 @@ export class CourseExercisesComponent {
         effect(() => {
             this._activeExerciseDetails()?.setSidebarToggle(this._isCollapsed(), () => this.toggleSidebar());
         });
+
+        this.destroyRef.onDestroy(() => {
+            this.exercisesLoadSubscription?.unsubscribe();
+        });
     }
 
     private initializeAfterCourseIdSet(): void {
@@ -153,8 +169,23 @@ export class CourseExercisesComponent {
                 this.changeDetectorRef.markForCheck();
             });
 
-        // If no exercise is selected navigate to the lastSelected or upcoming exercise
-        this.navigateToExercise();
+        // The course container only loads the course itself; the exercises (with participations and scores) belong to
+        // this tab, so they are fetched here. Install the course-update subscription first: the overview service
+        // publishes the exercises there before emitting its response. Only then can last-selected/upcoming navigation
+        // reliably choose an exercise on a cold course entry. The statistics tab shares the same load.
+        this.loadExercises();
+    }
+
+    /**
+     * Fetches the exercises of the course without clearing what is on screen.
+     *
+     * Also the refresh path: selecting the exercises tab while already on it re-runs this, so a result that arrived or
+     * a due date that moved shows up without a page reload. The rendered list is replaced only once the response is
+     * in, so refreshing does not flash an empty tab.
+     */
+    private loadExercises(): void {
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(this._courseId()).subscribe(() => this.navigateToExercise());
     }
 
     navigateToExercise() {
@@ -316,7 +347,11 @@ export class CourseExercisesComponent {
         if (!course || !updatedCourseExercises || updatedCourseExercises === course.exercises) {
             return;
         }
-        this._course.set({ ...course, exercises: updatedCourseExercises });
+        // A different object has to be set: a signal only notifies when the reference changes. The exercise objects
+        // themselves are carried over by the assignment below, so live updates keep reaching what the cards render.
+        const updatedCourse = deepClone(course);
+        updatedCourse.exercises = updatedCourseExercises;
+        this._course.set(updatedCourse);
     }
 
     private updateExercisesWithParticipation(exercises: Exercise[] | undefined, changedParticipation: StudentParticipation): Exercise[] | undefined {

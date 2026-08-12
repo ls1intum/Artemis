@@ -246,7 +246,8 @@
                 "chatTopicSet": "Chat topic set:",
                 "chatTopicCleared": "Chat topic cleared",
                 "chatTopicSwitched": "Chat topic switched:",
-                "addContextTooltip": "Select lecture or exercise"
+                "addContextTooltip": "Select lecture or exercise",
+                "tutorSuggestionContext": "Tutor suggestion"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
