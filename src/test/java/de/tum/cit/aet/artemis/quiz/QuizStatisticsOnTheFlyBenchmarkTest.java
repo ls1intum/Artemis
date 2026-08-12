@@ -84,10 +84,15 @@ import me.xdrop.fuzzywuzzy.FuzzySearch;
  * The test seeds one quiz with a multiple-choice, a drag-and-drop and a short-answer question and grows it to 100, 500, 1000 and 2000 participations, each with a submitted quiz
  * submission, one submitted answer per question and a rated result. At every scale it computes each statistics page from scratch and reports the wall-clock time.
  * <p>
- * Two properties are checked besides the timings:
+ * No correctness is ever recomputed: whether a submitted answer earned full marks is read from {@code submitted_answer.score_in_points}, and whether an individual short-answer
+ * spot was filled in correctly is read from the {@code correct} flag the scoring pass persisted into the selection JSON. The one place the fuzzy matcher still appears is
+ * {@link #computeShortAnswerStatisticByRederivingCorrectness}, which is asserted against the flag-reading variant and never measured.
+ * <p>
+ * Three properties are checked besides the timings:
  * <ul>
  * <li>every on-the-fly number equals the number the current, incrementally maintained statistics produce (see {@link QuizStatisticService#recalculateStatistics}), so the
  * measurement is of the right computation, not just of a fast query;</li>
+ * <li>re-deriving short-answer correctness produces the same counters as reading the persisted flag, which is what licenses reading it;</li>
  * <li>only one statistics page is computed per measurement, mirroring how an instructor navigates: opening the multiple-choice page never pays for the other four.</li>
  * </ul>
  * <p>
@@ -178,12 +183,11 @@ class QuizStatisticsOnTheFlyBenchmarkTest extends AbstractSpringIntegrationIndep
         ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quiz.getQuizQuestions().get(2);
 
         List<String> pageReport = new ArrayList<>();
-        pageReport.add("| participations | quiz statistic (overview) | quiz point statistic | MC question | DnD question | SA question (fuzzy recheck) "
-                + "| SA question (stored flag) |");
-        pageReport.add("|---:|---:|---:|---:|---:|---:|---:|");
+        pageReport.add("| participations | quiz statistic (overview) | quiz point statistic | MC question | DnD question | SA question |");
+        pageReport.add("|---:|---:|---:|---:|---:|---:|");
         List<String> breakdownReport = new ArrayList<>();
-        breakdownReport.add("| participations | point stat: aggregate | point stat: fold in Java | question: counts query | question: selections query | MC fold | DnD fold "
-                + "| SA fold (fuzzy) |");
+        breakdownReport.add(
+                "| participations | point stat: aggregate | point stat: fold in Java | question: counts query | question: selections query | MC page | DnD page " + "| SA page |");
         breakdownReport.add("|---:|---:|---:|---:|---:|---:|---:|---:|");
 
         for (int scale : SCALES) {
@@ -199,10 +203,8 @@ class QuizStatisticsOnTheFlyBenchmarkTest extends AbstractSpringIntegrationIndep
             Timing pointTiming = measure(() -> computePointStatistic(quiz.getId()));
             Timing multipleChoiceTiming = measure(() -> computeMultipleChoiceStatistic(multipleChoiceQuestion.getId()));
             Timing dragAndDropTiming = measure(() -> computeDragAndDropStatistic(dragAndDropQuestion.getId()));
-            Timing shortAnswerRecheckTiming = measure(() -> computeShortAnswerStatistic(shortAnswerQuestion.getId(), true));
-            Timing shortAnswerStoredTiming = measure(() -> computeShortAnswerStatistic(shortAnswerQuestion.getId(), false));
-            pageReport.add("| %d | %s | %s | %s | %s | %s | %s |".formatted(scale, overviewTiming, pointTiming, multipleChoiceTiming, dragAndDropTiming, shortAnswerRecheckTiming,
-                    shortAnswerStoredTiming));
+            Timing shortAnswerTiming = measure(() -> computeShortAnswerStatistic(shortAnswerQuestion.getId()));
+            pageReport.add("| %d | %s | %s | %s | %s | %s |".formatted(scale, overviewTiming, pointTiming, multipleChoiceTiming, dragAndDropTiming, shortAnswerTiming));
 
             // Where the time of a page actually goes: the aggregate queries are flat, the per-element counters pay for streaming one JSON document per participation.
             Timing pointAggregateTiming = measure(() -> submittedAnswerRepository.findPointStatistic(quiz.getId()));
@@ -210,23 +212,23 @@ class QuizStatisticsOnTheFlyBenchmarkTest extends AbstractSpringIntegrationIndep
             Timing countsTiming = measure(() -> submittedAnswerRepository.findQuestionAggregate(multipleChoiceQuestion.getId(), MC_POINTS));
             Timing selectionsTiming = measure(() -> submittedAnswerRepository.findSelectionsForQuestion(multipleChoiceQuestion.getId()));
             breakdownReport.add("| %d | %s | %s | %s | %s | %s | %s | %s |".formatted(scale, pointAggregateTiming, pointFoldTiming, countsTiming, selectionsTiming,
-                    multipleChoiceTiming, dragAndDropTiming, shortAnswerRecheckTiming));
+                    multipleChoiceTiming, dragAndDropTiming, shortAnswerTiming));
 
             log.info("""
 
                     === quiz statistics computed on the fly, {} participations ===
+                    quiz statistic (overview)    {}
                     quiz point statistic         {}
                     multiple choice question     {}
                     drag and drop question       {}
-                    short answer question        {} (correctness re-checked with the fuzzy matcher)
-                    short answer question        {} (correctness read from the stored isCorrect flag)
+                    short answer question        {}
                     --- breakdown ---
                     point statistic aggregate    {}
                     point statistic folded       {}
                     question counts query        {}
                     question selections query    {}
-                    """, scale, pointTiming, multipleChoiceTiming, dragAndDropTiming, shortAnswerRecheckTiming, shortAnswerStoredTiming, pointAggregateTiming, pointFoldTiming,
-                    countsTiming, selectionsTiming);
+                    """, scale, overviewTiming, pointTiming, multipleChoiceTiming, dragAndDropTiming, shortAnswerTiming, pointAggregateTiming, pointFoldTiming, countsTiming,
+                    selectionsTiming);
         }
 
         log.info("\n=== on-the-fly quiz statistics: whole page, median (p95/min/max) ===\n{}\n", String.join("\n", pageReport));
@@ -384,13 +386,47 @@ class QuizStatisticsOnTheFlyBenchmarkTest extends AbstractSpringIntegrationIndep
 
     /**
      * Computes the short-answer question statistics page: participants, fully correct answers and how often each spot was filled in correctly.
+     * <p>
+     * Per-spot correctness is read from the {@code correct} flag the scoring pass already persisted into the selection JSON. Nothing is re-derived: the flag is written by
+     * {@code ScoringStrategyShortAnswerUtil} whenever a submission is scored, and re-writing it on a re-evaluation is what
+     * {@code QuizExerciseService#updateResultsOnQuizChanges} does, so it cannot go stale.
+     * {@link #computeShortAnswerStatisticByRederivingCorrectness} guards that equivalence.
      *
-     * @param questionId              the question the page shows
-     * @param recheckCorrectnessFuzzy whether the per-spot correctness is re-derived with the fuzzy matcher, as the current statistics code does, or read from the {@code isCorrect}
-     *                                    flag the scoring pass already persisted into the selection JSON
+     * @param questionId the question the page shows
      * @return the counters the chart draws
      */
-    private QuestionStatistic computeShortAnswerStatistic(long questionId, boolean recheckCorrectnessFuzzy) {
+    private QuestionStatistic computeShortAnswerStatistic(long questionId) {
+        ShortAnswerQuestion question = (ShortAnswerQuestion) quizQuestion(questionId);
+        QuestionStatistic statistic = questionAggregate(questionId, question.getPoints());
+
+        Map<Long, long[]> perSpot = newSpotCounters(question);
+        for (RatedSelection row : submittedAnswerRepository.findSelectionsForQuestion(questionId)) {
+            if (!(row.getSelection() instanceof ShortAnswerSubmittedAnswerSelection selection)) {
+                continue;
+            }
+            int index = Boolean.TRUE.equals(row.getRated()) ? 0 : 1;
+            for (ShortAnswerTextSelection submittedText : selection.getSubmittedTexts()) {
+                long[] counter = perSpot.get(submittedText.getSpotId());
+                if (counter != null && Boolean.TRUE.equals(submittedText.getIsCorrect())) {
+                    counter[index]++;
+                }
+            }
+        }
+        statistic.elementCounters().putAll(perSpot);
+        return statistic;
+    }
+
+    /**
+     * The same page as {@link #computeShortAnswerStatistic}, but with every spot's correctness re-derived from the submitted text with the fuzzy matcher, exactly as the current
+     * {@code ShortAnswerQuestionStatistic} does.
+     * <p>
+     * This exists only as a regression guard: it is asserted to produce identical numbers to the flag-reading variant, which is what proves that recomputation is unnecessary. It
+     * is deliberately not measured — no design should run this.
+     *
+     * @param questionId the question the page shows
+     * @return the counters the chart draws
+     */
+    private QuestionStatistic computeShortAnswerStatisticByRederivingCorrectness(long questionId) {
         ShortAnswerQuestion question = (ShortAnswerQuestion) quizQuestion(questionId);
         QuestionStatistic statistic = questionAggregate(questionId, question.getPoints());
 
@@ -401,10 +437,7 @@ class QuizStatisticsOnTheFlyBenchmarkTest extends AbstractSpringIntegrationIndep
         int similarityValue = question.getSimilarityValue() != null ? question.getSimilarityValue() : 85;
         boolean matchLetterCase = Boolean.TRUE.equals(question.getMatchLetterCase());
 
-        Map<Long, long[]> perSpot = new TreeMap<>();
-        for (ShortAnswerSpot spot : question.getSpots()) {
-            perSpot.put(spot.getId(), new long[2]);
-        }
+        Map<Long, long[]> perSpot = newSpotCounters(question);
         for (RatedSelection row : submittedAnswerRepository.findSelectionsForQuestion(questionId)) {
             if (!(row.getSelection() instanceof ShortAnswerSubmittedAnswerSelection selection)) {
                 continue;
@@ -412,19 +445,22 @@ class QuizStatisticsOnTheFlyBenchmarkTest extends AbstractSpringIntegrationIndep
             int index = Boolean.TRUE.equals(row.getRated()) ? 0 : 1;
             for (ShortAnswerTextSelection submittedText : selection.getSubmittedTexts()) {
                 long[] counter = perSpot.get(submittedText.getSpotId());
-                if (counter == null) {
-                    continue;
-                }
-                boolean correct = recheckCorrectnessFuzzy
-                        ? isAnySolutionMatched(submittedText.getText(), solutionsPerSpot.getOrDefault(submittedText.getSpotId(), List.of()), similarityValue, matchLetterCase)
-                        : Boolean.TRUE.equals(submittedText.getIsCorrect());
-                if (correct) {
+                if (counter != null
+                        && isAnySolutionMatched(submittedText.getText(), solutionsPerSpot.getOrDefault(submittedText.getSpotId(), List.of()), similarityValue, matchLetterCase)) {
                     counter[index]++;
                 }
             }
         }
         statistic.elementCounters().putAll(perSpot);
         return statistic;
+    }
+
+    private static Map<Long, long[]> newSpotCounters(ShortAnswerQuestion question) {
+        Map<Long, long[]> perSpot = new TreeMap<>();
+        for (ShortAnswerSpot spot : question.getSpots()) {
+            perSpot.put(spot.getId(), new long[2]);
+        }
+        return perSpot;
     }
 
     /**
@@ -550,7 +586,7 @@ class QuizStatisticsOnTheFlyBenchmarkTest extends AbstractSpringIntegrationIndep
         }
 
         ShortAnswerQuestionStatistic storedShortAnswer = (ShortAnswerQuestionStatistic) storedStatisticOf(stored, shortAnswerQuestion.getId());
-        QuestionStatistic onTheFlyShortAnswer = computeShortAnswerStatistic(shortAnswerQuestion.getId(), true);
+        QuestionStatistic onTheFlyShortAnswer = computeShortAnswerStatistic(shortAnswerQuestion.getId());
         assertQuestionParity(onTheFlyShortAnswer, storedShortAnswer.getParticipantsRated(), storedShortAnswer.getParticipantsUnrated(), storedShortAnswer.getRatedCorrectCounter(),
                 storedShortAnswer.getUnRatedCorrectCounter(), "short answer");
         for (ShortAnswerSpotCounter spotCounter : storedShortAnswer.getShortAnswerSpotCounters()) {
@@ -559,8 +595,9 @@ class QuizStatisticsOnTheFlyBenchmarkTest extends AbstractSpringIntegrationIndep
             assertThat(onTheFly[1]).as("unrated counter of spot %s", spotCounter.getSpotId()).isEqualTo((long) spotCounter.getUnRatedCounter());
         }
 
-        // Reading the persisted isCorrect flag instead of re-running the fuzzy matcher must not change any number.
-        assertThat(computeShortAnswerStatistic(shortAnswerQuestion.getId(), false)).as("the short answer statistic derived from the stored isCorrect flag")
+        // The regression guard for the design decision: re-deriving every spot's correctness with the fuzzy matcher, as the current statistics code does, produces exactly the
+        // numbers already persisted in the selection JSON. That is what makes recomputation unnecessary, so this variant is asserted but never measured.
+        assertThat(computeShortAnswerStatisticByRederivingCorrectness(shortAnswerQuestion.getId())).as("re-deriving short answer correctness changes no counter")
                 .isEqualTo(onTheFlyShortAnswer);
 
         // The overview page aggregates all questions at once and has to agree with the per-question pages.

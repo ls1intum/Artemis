@@ -73,19 +73,37 @@ evaluation time. So the fully-correct counters — the numbers the overview page
 **b) The point statistic only needs `result.score`.** Bucketing is `Math.round(overallQuizPoints * score / 100)`,
 which is a fold over at most a few dozen distinct scores. Pure aggregate.
 
-**c) The per-element counters cannot be aggregated in SQL portably.** Three separate reasons, each sufficient on its own:
+**c) Per-spot short-answer correctness is persisted too.** `ShortAnswerTextSelection` carries a `correct` boolean
+inside the selection JSON, written by the scoring pass. So no statistic anywhere needs `FuzzySearch.ratio`.
 
-- The student's selection lives in the `submitted_answer.selection` JSON column (since the same changelog). Counting
-  "how many students ticked answer option 7" means indexing into a JSON array — `JSON_CONTAINS` on MySQL, `@>` /
+That flag cannot go stale: `QuizExerciseService#updateResultsOnQuizChanges` runs `calculateAndUpdateScores` on every
+submission of a re-evaluated quiz, the scoring pass writes `isCorrect` through to the stored selection entry, and
+`quizSubmissionRepository.saveAll` persists it.
+
+**Nothing is recomputed, therefore.** Every number is either a scalar column, a `COUNT`, or a value already stored in
+the selection JSON. Only one number is *derived* at all: whether a drag-and-drop drop location was filled correctly,
+which has no persisted flag and is an integer id comparison against the question's correct mappings.
+
+### Why it is still not one query
+
+**The per-element counters cannot be aggregated in portable JPQL** — not because of correctness, but because of where
+the values live:
+
+- The student's selection is a JSON document in `submitted_answer.selection` (since the same changelog). Counting "how
+  many students ticked answer option 7" means indexing into a JSON array — `JSON_CONTAINS` on MySQL, `@>` /
   `jsonb_array_elements` on PostgreSQL. Neither is expressible in JPQL, and they are not the same statement.
-- The question's own definition (answer options, correct drag-and-drop mappings, spots, solutions) is *also* JSON, in
-  `quiz_question.content`. A SQL-side correctness check would have to join JSON to JSON.
-- Short-answer correctness runs `FuzzySearch.ratio` (fuzzywuzzy, Levenshtein-based) against the question's
-  `similarityValue` threshold. There is no portable SQL equivalent at all.
+- For drag-and-drop, the question's own definition (correct mappings, drop locations, drag items) is *also* JSON, in
+  `quiz_question.content`, so a SQL-side check would have to join JSON to JSON.
 
-So the shape is a hybrid, and it is the right one: **scalars are aggregated in the database, the JSON selections are
-streamed out for one question only and folded in Java.** The projection selects nothing but the JSON column and the
-rated flag, so no submitted answer, submission, participation or result entity is ever materialized.
+So the shape is a hybrid: **scalars are aggregated in the database, the JSON selections are streamed out for one
+question only and folded in Java.** The projection selects nothing but the JSON column and the rated flag, so no
+submitted answer, submission, participation or result entity is ever materialized.
+
+On a PostgreSQL-only future this could collapse into a single query per page: Hibernate 7.4 ships
+`PostgreSQLJsonTableFunction` (HQL `json_table`, enabled via `hibernate.query.hql.json_functions_enabled`) and
+PostgreSQL 17+ has native `JSON_TABLE`. Since correctness is read rather than recomputed, even the short-answer page
+would aggregate cleanly on the stored `correct` boolean. Estimated saving from the breakdown below: roughly 25–40 %
+of an already single-digit-to-teens page. Not obviously worth an incubating, vendor-locked feature at these sizes.
 
 ### The "results that count"
 
@@ -113,9 +131,9 @@ no views, no stored procedures, no vendor-specific function.
 ## 4. Measurements
 
 Seeded: one quiz with an MC question (5 answer options), a DnD question (4 drop locations / 4 drag items) and an SA
-question (4 spots, `matchLetterCase=false`, `similarityValue=85` — the configuration that forces the fuzzy matcher).
-Each participation gets a submission, three submitted answers and a rated result. Answers vary deterministically so
-the point histogram spreads and the fuzzy matcher sees a realistic mix of exact hits, typos and wrong answers.
+question (4 spots, `matchLetterCase=false`, `similarityValue=85`). Each participation gets a submission, three
+submitted answers and a rated result. Answers vary deterministically so the point histogram spreads over its buckets
+and the short-answer texts are a realistic mix of exact hits, typos and wrong answers.
 
 Median per page, whole page including loading the question, warm (5 warm-up + 15 measured rounds).
 Machine: Apple Silicon, 18 cores. PostgreSQL 18 (Zonky embedded, tmpfs), MySQL 9.7.2 (Docker).
@@ -124,11 +142,11 @@ Machine: Apple Silicon, 18 cores. PostgreSQL 18 (Zonky embedded, tmpfs), MySQL 9
 
 | participations | overview | point statistic | MC page | DnD page | SA page |
 |---:|---:|---:|---:|---:|---:|
-| 100 | 0.6 ms | 3.0 ms | 3.8 ms | 5.9 ms | 5.4 ms |
-| 500 | 2.0 ms | 2.3 ms | 5.3 ms | 6.3 ms | 7.2 ms |
-| 1000 | 3.3 ms | 2.5 ms | 7.6 ms | 9.5 ms | 9.9 ms |
-| **2000** | **6.3 ms** | **4.1 ms** | **12.8 ms** | **16.1 ms** | **16.8 ms** |
-| 5000 | 15.6 ms | 8.1 ms | 30.7 ms | 38.6 ms | 39.4 ms |
+| 100 | 0.7 ms | 2.4 ms | 5.6 ms | 5.5 ms | 4.6 ms |
+| 500 | 2.0 ms | 2.2 ms | 5.5 ms | 6.4 ms | 6.3 ms |
+| 1000 | 3.2 ms | 2.7 ms | 8.2 ms | 9.8 ms | 9.4 ms |
+| **2000** | **6.2 ms** | **4.2 ms** | **14.1 ms** | **16.3 ms** | **17.2 ms** |
+| 5000 | 16.0 ms | 8.3 ms | 32.1 ms | 40.3 ms | 38.5 ms |
 
 ### MySQL
 
@@ -137,28 +155,27 @@ portability claim, verified rather than argued.
 
 | participations | overview | point statistic | MC page | DnD page | SA page |
 |---:|---:|---:|---:|---:|---:|
-| 100 | 1.5 ms | 3.6 ms | 5.3 ms | 7.3 ms | 5.2 ms |
-| 500 | 4.5 ms | 3.4 ms | 7.4 ms | 8.3 ms | 8.2 ms |
-| 1000 | 5.5 ms | 4.6 ms | 11.1 ms | 12.6 ms | 12.6 ms |
-| **2000** | **17.0 ms** | **7.2 ms** | **17.9 ms** | **21.2 ms** | **21.3 ms** |
-| 5000 | 45.4 ms | 13.4 ms | 40.6 ms | 49.1 ms | 52.2 ms |
+| 100 | 1.4 ms | 3.8 ms | 6.3 ms | 7.7 ms | 6.7 ms |
+| 500 | 5.9 ms | 5.9 ms | 9.3 ms | 9.3 ms | 8.7 ms |
+| 1000 | 5.6 ms | 5.4 ms | 12.1 ms | 14.3 ms | 13.4 ms |
+| **2000** | **19.0 ms** | **7.9 ms** | **19.2 ms** | **23.4 ms** | **24.9 ms** |
+| 5000 | 53.4 ms | 15.0 ms | 45.7 ms | 54.0 ms | 50.8 ms |
 
 MySQL is roughly 1.3–1.8× slower than PostgreSQL across the board, and its overview aggregate scales worse than
-PostgreSQL's (45 ms vs 16 ms at 5000). Still comfortably inside budget at every realistic size.
+PostgreSQL's (53 ms vs 16 ms at 5000). Still comfortably inside budget at every realistic size.
 
 ### Where the time goes (PostgreSQL, 2000 participations)
 
 | Component | Median |
 |---|---:|
-| point statistic aggregate query | 2.7 ms |
-| per-question counts query | 4.1 ms |
-| per-question selections query (2000 JSON documents) | 5.9 ms |
-| whole MC page | 12.8 ms |
+| point statistic aggregate query | 2.8 ms |
+| per-question counts query | 4.4 ms |
+| per-question selections query (2000 JSON documents) | 6.2 ms |
+| whole MC page (incl. loading the question) | 14.1 ms |
 
-Two things follow. First, scaling is linear in participations, with no cliff. Second, **the fuzzy matching is not the
-cost** — re-running `FuzzySearch.ratio` for every spot of every submission (16.8 ms) versus trusting the `isCorrect`
-flag already persisted in the selection JSON (15.8 ms) is a ~1 ms difference. The JSON round-trip dominates, so the
-short-answer page can afford to recompute correctness rather than trust a stored flag.
+Scaling is linear in participations with no cliff, and the dominant term on a question page is transferring and
+deserializing one JSON selection per participation — not any computation. That is exactly the term a PostgreSQL-only
+`json_table` rewrite would attack.
 
 ### Correctness, not just speed
 
@@ -166,6 +183,11 @@ At 100 participations the test runs the current `QuizStatisticService#recalculat
 on-the-fly number equals the stored one: point buckets, participants, correct counters, per-answer-option counters,
 per-drop-location counters, per-spot counters, and the overview aggregates. The test passes on both databases. This is
 what makes the timings meaningful — it is the right computation being measured, not merely a fast query.
+
+A second assertion guards the decision to read persisted correctness rather than recompute it:
+`computeShortAnswerStatisticByRederivingCorrectness` re-derives every spot with `FuzzySearch.ratio`, exactly as
+`ShortAnswerQuestionStatistic` does today, and must produce identical counters to the flag-reading variant. It is
+asserted and deliberately never measured — no design should run it.
 
 ### Caveats on the numbers
 
@@ -225,7 +247,7 @@ part of the change that is not a mechanical deletion, and it should be designed 
 ## 6. Recommendation
 
 Proceed. The numbers leave a large margin: the slowest page at a realistic worst case (2000 participations) is 17 ms
-on PostgreSQL and 21 ms on MySQL, against pages that instructors open a handful of times per course. Even the
+on PostgreSQL and 25 ms on MySQL, against pages that instructors open a handful of times per course. Even the
 deliberately unrealistic 5000-participation case stays under 55 ms.
 
 What is gained is disproportionate to the cost: two tables and six entities disappear, six write call sites and an
@@ -233,8 +255,22 @@ asynchronous executor disappear, the statistics can no longer drift out of sync 
 endpoint becomes unnecessary), and re-evaluating a quiz no longer has to rewrite counters. The statistics become a
 pure function of the submissions, which is what they always semantically were.
 
-The two things to settle before implementing: the websocket debounce described above, and an `EXPLAIN` of the
-correlated-subquery formulation against a production-sized `result` / `submitted_answer` table.
+Three things to settle before implementing:
+
+1. The websocket debounce described above.
+2. An `EXPLAIN` of the correlated-subquery formulation against a production-sized `result` / `submitted_answer` table.
+3. A one-off data check that the persisted values the design now relies on are actually populated:
+
+   ```sql
+   -- must be 0: a submitted answer that belongs to an evaluated submission but has no score
+   SELECT COUNT(*) FROM submitted_answer sa
+     JOIN result r ON r.submission_id = sa.submission_id
+    WHERE sa.score_in_points IS NULL;
+   ```
+
+   The SQL version treats a `NULL` `score_in_points` as "not correct", where today's code would recompute it. Every
+   submission that has a result has been through `calculateAndUpdateScores`, so this should be empty — but it is worth
+   confirming rather than assuming.
 
 ---
 
