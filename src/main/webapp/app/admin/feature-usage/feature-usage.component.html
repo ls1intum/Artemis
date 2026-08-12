@@ -295,7 +295,13 @@
             </div>
             @if (trendChartData()) {
                 <div style="height: 240px">
-                    <p-chart type="line" [data]="trendChartData()!" [options]="trendChartOptions" style="height: 100%" />
+                    <p-chart
+                        type="line"
+                        [data]="trendChartData()!"
+                        [options]="trendChartOptions"
+                        [ariaLabel]="('artemisApp.featureUsage.trendTitle' | artemisTranslate) + ': ' + (selectedTrendRow()?.name ?? '')"
+                        style="height: 100%"
+                    />
                 </div>
             } @else {
                 <div class="flex justify-center py-4">
