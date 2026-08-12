@@ -35,7 +35,7 @@
                 }
             },
             "noResult": "Kein Ergebnis",
-            "noGradedResult": "Kein gewertetes Ergebnis",
+            "noGradedResult": "Nicht gewertet",
             "resultString": {
                 "resultString": "Ergebnistext",
                 "buildFailed": "Build gescheitert",
