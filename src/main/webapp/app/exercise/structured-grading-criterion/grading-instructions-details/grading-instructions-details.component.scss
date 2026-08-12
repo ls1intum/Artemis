@@ -56,3 +56,19 @@
         background-color: var(--edit-sqi-criterion-title-row-background);
     }
 }
+
+.assessment-criteria-generation {
+    &__controls {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        width: 100%;
+        margin-bottom: 0.25rem;
+        gap: 0.25rem;
+    }
+
+    &__disabled-reason {
+        max-width: 32rem;
+        text-align: end;
+    }
+}

@@ -72,6 +72,16 @@ describe('AssessmentCriteriaGenerationService', () => {
         }
     });
 
+    it('should reject an exercise without a valid maximum score', () => {
+        const exercise = new TextExercise({ id: 55 }, undefined);
+        exercise.problemStatement = 'Problem';
+
+        for (const maxPoints of [undefined, 0, Number.NaN, Number.POSITIVE_INFINITY]) {
+            exercise.maxPoints = maxPoints;
+            expect(() => service.buildGenerationCall(exercise)).toThrow('Assessment criteria generation requires a valid maximum score');
+        }
+    });
+
     it('should map generated DTOs to unsaved grading models', () => {
         api.generateAssessmentCriteria.mockReturnValue(
             of({

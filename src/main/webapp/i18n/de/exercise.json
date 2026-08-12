@@ -118,7 +118,6 @@
                 "disabledProblemStatement": "Füge vor der Generierung von Bewertungskriterien eine Aufgabenstellung hinzu.",
                 "disabledMaxPoints": "Lege vor der Generierung eine gültige maximale Punktzahl größer als null fest.",
                 "disabledBonusPoints": "Lege vor der Generierung von Bewertungskriterien eine endliche Bonuspunktzahl von null oder größer fest.",
-                "disabledGenerating": "Bewertungskriterien werden gerade generiert.",
                 "invalidSyntax": "Der Text der Bewertungsanweisungen konnte nicht verarbeitet werden. Korrigiere vor der Generierung die Syntax.",
                 "confirmationHeader": "Bewertungskriterien ersetzen?",
                 "confirmation": "Neue Bewertungskriterien ersetzen alle aktuell strukturierten Kriterien. Der allgemeine Text der Bewertungsanweisungen bleibt erhalten.",

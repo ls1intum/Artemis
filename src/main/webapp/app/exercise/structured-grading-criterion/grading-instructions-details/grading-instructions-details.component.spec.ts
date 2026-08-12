@@ -22,8 +22,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subject, of, throwError } from 'rxjs';
-import { ConfirmationService } from 'primeng/api';
 import { AccountService } from 'app/core/auth/account.service';
+import { TumUiConfirmationService } from '@tumaet/ui-angular';
 
 describe('GradingInstructionsDetailsComponent', () => {
     let component: GradingInstructionsDetailsComponent;
@@ -61,9 +61,7 @@ describe('GradingInstructionsDetailsComponent', () => {
                 { provide: AccountService, useValue: accountService },
                 { provide: AlertService, useClass: MockAlertService },
             ],
-        })
-            .overrideTemplate(GradingInstructionsDetailsComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(GradingInstructionsDetailsComponent);
         component = fixture.componentInstance;
@@ -85,6 +83,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             exercise.maxPoints = 5;
             exercise.course = { id: 7, isAtLeastEditor: true };
             component.ngOnInit();
+            component.ngDoCheck();
             vi.spyOn(alertService, 'success');
         });
 
@@ -93,33 +92,51 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(component.isGenerationDisabled()).toBe(false);
 
             exercise.problemStatement = ' ';
+            component.ngDoCheck();
             expect(component.isGenerationDisabled()).toBe(true);
             expect(component.generationDisabledReason()).toBe('artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement');
 
             exercise.problemStatement = 'Problem';
             exercise.maxPoints = 0;
+            component.ngDoCheck();
             expect(component.generationDisabledReason()).toBe('artemisApp.exercise.assessmentCriteriaGeneration.disabledMaxPoints');
 
             exercise.isAtLeastEditor = true;
             exercise.course = undefined;
+            component.ngDoCheck();
             expect(component.canShowGenerationButton()).toBe(false);
 
             Object.defineProperty(component, 'hyperionEnabled', { value: false });
+            component.ngDoCheck();
             expect(component.canShowGenerationButton()).toBe(false);
         });
 
         it('should gate generation for invalid bonus points and re-enable it for valid values', () => {
             for (const bonusPoints of [-1, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
                 exercise.bonusPoints = bonusPoints;
+                component.ngDoCheck();
 
                 expect(component.isGenerationDisabled()).toBe(true);
                 expect(component.generationDisabledReason()).toBe('artemisApp.exercise.assessmentCriteriaGeneration.disabledBonusPoints');
             }
 
             exercise.bonusPoints = 0;
+            component.ngDoCheck();
 
             expect(component.isGenerationDisabled()).toBe(false);
             expect(component.generationDisabledReason()).toBeUndefined();
+        });
+
+        it('should render an accessible explanation when generation is disabled', () => {
+            exercise.problemStatement = ' ';
+            fixture.detectChanges();
+
+            const button = fixture.nativeElement.querySelector('[data-testid="generate-assessment-criteria"] button') as HTMLButtonElement;
+            const reason = fixture.nativeElement.querySelector('#assessment-criteria-generation-disabled-reason') as HTMLElement;
+
+            expect(button.disabled).toBe(true);
+            expect(button.getAttribute('aria-describedby')).toBe(reason.id);
+            expect(reason.textContent).toContain('artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement');
         });
 
         it('should not persist the display-only grading instruction placeholder while generating', () => {
@@ -142,20 +159,24 @@ describe('GradingInstructionsDetailsComponent', () => {
             exercise.course = undefined;
             exercise.isAtLeastEditor = false;
             exercise.exerciseGroup = { exam: { course: examCourse } };
+            component.ngDoCheck();
 
             expect(component.canShowGenerationButton()).toBe(true);
             expect(accountService.isAtLeastEditorForExercise).toHaveBeenCalledWith(exercise);
 
             accountService.isAtLeastEditorForExercise.mockReturnValue(false);
+            component.ngDoCheck();
             expect(component.canShowGenerationButton()).toBe(false);
 
             examCourse.isAtLeastEditor = true;
+            component.ngDoCheck();
             expect(component.canShowGenerationButton()).toBe(true);
         });
 
         it('should show generation for every exercise type that uses the component', () => {
             for (const exerciseType of [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING]) {
                 exercise.type = exerciseType;
+                component.ngDoCheck();
                 expect(component.canShowGenerationButton()).toBe(true);
             }
         });
@@ -313,12 +334,13 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         it('should confirm replacement and make no request when confirmation is cancelled', () => {
             exercise.gradingCriteria = [gradingCriterion];
-            const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+            const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
             const confirmSpy = vi.spyOn(confirmationService, 'confirm');
 
             component.generateAssessmentCriteria();
 
             expect(confirmSpy).toHaveBeenCalledOnce();
+            expect(confirmSpy).toHaveBeenCalledWith(expect.objectContaining({ acceptSeverity: 'danger' }));
             expect(generationService.generate).not.toHaveBeenCalled();
         });
 
@@ -326,8 +348,8 @@ describe('GradingInstructionsDetailsComponent', () => {
             exercise.gradingCriteria = [];
             const previousCriteria = [gradingCriterion];
             exercise.gradingCriteria = previousCriteria;
-            const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => confirmation.accept?.());
+            const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => confirmation.accept());
             generationService.generate.mockReturnValue(throwError(() => new Error('generation failed')));
 
             component.generateAssessmentCriteria();
@@ -364,6 +386,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         it('should not request assessment criteria when the component is not editable', () => {
             fixture.componentRef.setInput('editable', false);
+            component.ngDoCheck();
 
             component.generateAssessmentCriteria();
 

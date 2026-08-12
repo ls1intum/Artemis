@@ -341,15 +341,21 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             });
     }
 
+    /** Copies the latest modeling-editor content to the exercise before criteria generation. */
     readonly synchronizeForAssessmentCriteriaGeneration = () => {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
     };
 
+    /**
+     * Keeps the serialized example solution synchronized with modeling-editor changes.
+     * @param model Latest model emitted by the editor.
+     */
     onModelChanged(model: UMLModel): void {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(model);
         void this.calculateFormSectionStatus();
     }
 
+    /** Supplies modeling-specific example-solution context for assessment-criteria generation. */
     readonly assessmentCriteriaAdditionalContext = () =>
         [
             `Diagram type:\n${this.modelingExercise.diagramType ?? ''}`,

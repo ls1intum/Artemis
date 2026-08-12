@@ -1,8 +1,23 @@
-import { AfterContentInit, Component, DestroyRef, Injector, OnInit, afterNextRender, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import {
+    AfterContentInit,
+    Component,
+    DestroyRef,
+    DoCheck,
+    Injector,
+    OnInit,
+    afterNextRender,
+    computed,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+    viewChildren,
+} from '@angular/core';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { cloneDeep, isEqual } from 'lodash-es';
+import { isEqual } from 'lodash-es';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { GradingCreditsAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-credits.action';
@@ -29,12 +44,20 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { defer, finalize } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
-import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { TumUiButtonComponent, TumUiConfirmDialogComponent, TumUiConfirmationService } from '@tumaet/ui-angular';
 import { AccountService } from 'app/core/auth/account.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const GRADING_INSTRUCTION_PLACEHOLDER = 'Add Assessment Instruction text here';
+const ASSESSMENT_CRITERIA_CONFIRMATION_KEY = 'assessment-criteria-generation-confirmation';
+
+/** Template state derived from the mutable exercise entity. */
+interface AssessmentCriteriaGenerationState {
+    /** Whether the current user and exercise permit showing the generation action. */
+    canShowButton: boolean;
+    /** Translation key explaining which generation prerequisite is missing. */
+    disabledReason?: string;
+}
 
 @Component({
     selector: 'jhi-grading-instructions-details',
@@ -50,28 +73,33 @@ const GRADING_INSTRUCTION_PLACEHOLDER = 'Add Assessment Instruction text here';
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
         TumUiButtonComponent,
-        TumUiTooltipDirective,
-        ConfirmDialogModule,
+        TumUiConfirmDialogComponent,
     ],
-    providers: [ConfirmationService],
+    providers: [TumUiConfirmationService],
 })
-export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
+export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit, DoCheck {
     private injector = inject(Injector);
     private readonly profileService = inject(ProfileService);
     private readonly generationService = inject(AssessmentCriteriaGenerationService);
     private readonly alertService = inject(AlertService);
-    private readonly confirmationService = inject(ConfirmationService);
+    private readonly confirmationService = inject(TumUiConfirmationService);
     private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly accountService = inject(AccountService);
 
     private readonly markdownEditors = viewChildren<MarkdownEditorMonacoComponent>('markdownEditors');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
+    /** Exercise whose assessment instructions are displayed and edited. */
     readonly exercise = input.required<Exercise>();
+    /** Whether the user may edit or generate assessment criteria. */
     readonly editable = input(true);
+    /** Optional example solution supplied as generation context. */
     readonly exampleSolution = input<string>();
+    /** Supplies exercise-type-specific context immediately before a generation request. */
     readonly additionalGenerationContext = input<() => string | undefined>(() => undefined);
+    /** Synchronizes editor-owned state with the exercise immediately before generation. */
     readonly synchronizeExercise = input<() => void>(() => undefined);
+    /** Emitted after generated criteria have replaced the current structured criteria. */
     readonly criteriaGenerated = output<void>();
     private instructions: GradingInstruction[] = [];
     private readonly criteria = signal<GradingCriterion[]>(undefined!);
@@ -79,38 +107,39 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     backupExercise!: Exercise; // set in ngOnInit() as a deep clone of the exercise() input before any edit-restore reads it
     readonly markdownEditorText = signal('');
     readonly showEditMode = signal<boolean>(undefined!);
+    /** Whether an assessment-criteria request is currently in flight. */
     readonly isGenerating = signal(false);
+    /** Whether the server profile enables Hyperion. */
     readonly hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
-    canShowGenerationButton(): boolean {
+    private readonly generationState = signal<AssessmentCriteriaGenerationState>(
+        { canShowButton: false },
+        { equal: (previous, current) => previous.canShowButton === current.canShowButton && previous.disabledReason === current.disabledReason },
+    );
+    /** Whether the generation action is applicable to the current exercise and user. */
+    readonly canShowGenerationButton = computed(() => this.generationState().canShowButton);
+    /** Translation key explaining why generation is unavailable, if applicable. */
+    readonly generationDisabledReason = computed(() => this.generationState().disabledReason);
+    /** Whether the generation action must currently be disabled. */
+    readonly isGenerationDisabled = computed(() => this.generationDisabledReason() !== undefined || this.isGenerating());
+
+    /** Refreshes signal-backed generation state when fields of the legacy mutable exercise entity change. */
+    ngDoCheck(): void {
         const exercise = this.exercise();
         const course = exercise.course ?? exercise.exerciseGroup?.exam?.course;
-        return (
+        const canShowButton =
             this.hyperionEnabled &&
             this.editable() &&
             course?.id !== undefined &&
-            !!(exercise.isAtLeastEditor || course.isAtLeastEditor || this.accountService.isAtLeastEditorForExercise(exercise))
-        );
-    }
-
-    generationDisabledReason(): string | undefined {
-        const exercise = this.exercise();
+            !!(exercise.isAtLeastEditor || course.isAtLeastEditor || this.accountService.isAtLeastEditorForExercise(exercise));
+        let disabledReason: string | undefined;
         if (!exercise.problemStatement?.trim()) {
-            return 'artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement';
+            disabledReason = 'artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement';
+        } else if (exercise.maxPoints === undefined || !Number.isFinite(exercise.maxPoints) || exercise.maxPoints <= 0) {
+            disabledReason = 'artemisApp.exercise.assessmentCriteriaGeneration.disabledMaxPoints';
+        } else if (exercise.bonusPoints !== undefined && (!Number.isFinite(exercise.bonusPoints) || exercise.bonusPoints < 0)) {
+            disabledReason = 'artemisApp.exercise.assessmentCriteriaGeneration.disabledBonusPoints';
         }
-        if (exercise.maxPoints === undefined || !Number.isFinite(exercise.maxPoints) || exercise.maxPoints <= 0) {
-            return 'artemisApp.exercise.assessmentCriteriaGeneration.disabledMaxPoints';
-        }
-        if (exercise.bonusPoints !== undefined && (!Number.isFinite(exercise.bonusPoints) || exercise.bonusPoints < 0)) {
-            return 'artemisApp.exercise.assessmentCriteriaGeneration.disabledBonusPoints';
-        }
-        if (this.isGenerating()) {
-            return 'artemisApp.exercise.assessmentCriteriaGeneration.disabledGenerating';
-        }
-        return undefined;
-    }
-
-    isGenerationDisabled(): boolean {
-        return this.generationDisabledReason() !== undefined;
+        this.generationState.set({ canShowButton, disabledReason });
     }
 
     creditsAction = new GradingCreditsAction();
@@ -149,7 +178,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     ngOnInit() {
         this.criteria.set(this.exercise().gradingCriteria || []);
-        this.backupExercise = cloneDeep(this.exercise());
+        this.backupExercise = deepClone(this.exercise());
         const markdown = this.exercise().gradingInstructionFeedbackUsed ? this.initializeExerciseGradingInstructionText() : this.generateMarkdown();
         this.markdownEditorText.set(markdown);
         this.showEditMode.set(true);
@@ -477,7 +506,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
 
             if (backupInstructionIndex != undefined && backupInstructionIndex >= 0) {
-                instructions[instructionIndex] = cloneDeep(this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions[backupInstructionIndex]);
+                instructions[instructionIndex] = deepClone(this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions[backupInstructionIndex]);
             }
         }
         if (backupCriterionIndex < 0 || backupInstructionIndex == undefined || backupInstructionIndex < 0) {
@@ -582,7 +611,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const criterionIndex = this.findCriterionIndex(criterion, this.exercise());
         const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
         if (backupCriterionIndex >= 0) {
-            this.exercise().gradingCriteria![criterionIndex].title = cloneDeep(this.backupExercise.gradingCriteria![backupCriterionIndex].title);
+            this.exercise().gradingCriteria![criterionIndex].title = deepClone(this.backupExercise.gradingCriteria![backupCriterionIndex].title);
         } else {
             criterion.title = '';
         }
@@ -625,6 +654,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.markdownEditorText.set(this.generateMarkdown());
     }
 
+    /** Validates current editor state and asks for confirmation before replacing existing criteria. */
     generateAssessmentCriteria(): void {
         if (!this.editable()) {
             return;
@@ -644,14 +674,15 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
         if (this.exercise().gradingCriteria?.length) {
             const usedCriteriaWarning = this.exercise().gradingInstructionFeedbackUsed
-                ? `\n\n${this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.confirmationUsed')}`
+                ? ` ${this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.confirmationUsed')}`
                 : '';
             this.confirmationService.confirm({
-                key: 'assessment-criteria-generation-confirmation',
+                key: ASSESSMENT_CRITERIA_CONFIRMATION_KEY,
                 header: this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.confirmationHeader'),
                 message: this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.confirmation') + usedCriteriaWarning,
                 rejectLabel: this.translateService.instant('entity.action.cancel'),
                 acceptLabel: this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.replaceAndGenerate'),
+                acceptSeverity: 'danger',
                 accept: () => this.requestAssessmentCriteria(),
             });
             return;
@@ -659,6 +690,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.requestAssessmentCriteria();
     }
 
+    /** Requests criteria and applies the response only if all generation inputs are unchanged. */
     private requestAssessmentCriteria(): void {
         if (!this.editable() || this.isGenerating()) {
             return;
@@ -671,7 +703,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             maxPoints: exercise.maxPoints,
             bonusPoints: exercise.bonusPoints,
             gradingInstructions: exercise.gradingInstructions,
-            gradingCriteria: cloneDeep(exercise.gradingCriteria),
+            gradingCriteria: deepClone(exercise.gradingCriteria),
             exampleSolution,
             additionalContext,
             gradingInstructionFeedbackUsed: exercise.gradingInstructionFeedbackUsed,
@@ -693,7 +725,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
                         maxPoints: currentExercise.maxPoints,
                         bonusPoints: currentExercise.bonusPoints,
                         gradingInstructions: currentExercise.gradingInstructions,
-                        gradingCriteria: cloneDeep(currentExercise.gradingCriteria),
+                        gradingCriteria: deepClone(currentExercise.gradingCriteria),
                         exampleSolution: this.exampleSolution(),
                         additionalContext: this.additionalGenerationContext()(),
                         gradingInstructionFeedbackUsed: currentExercise.gradingInstructionFeedbackUsed,
@@ -719,6 +751,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             });
     }
 
+    /** Returns whether all criteria parsed from markdown contain the required generation context. */
     private hasValidParsedCriteria(): boolean {
         return (this.exercise().gradingCriteria ?? []).every(
             (criterion) =>

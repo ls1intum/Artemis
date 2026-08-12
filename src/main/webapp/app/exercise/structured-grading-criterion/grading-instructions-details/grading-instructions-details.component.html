@@ -1,5 +1,6 @@
 @let currentExercise = exercise();
-<p-confirmdialog key="assessment-criteria-generation-confirmation" appendTo="body" [draggable]="false" />
+@let generationUnavailableReason = generationDisabledReason();
+<tum-ui-confirm-dialog key="assessment-criteria-generation-confirmation" />
 <!--- Template If Grading Instructions are not used in Assessment --->
 @if (!currentExercise.gradingInstructionFeedbackUsed) {
     <div class="edit-sqi">
@@ -24,7 +25,7 @@
             </button>
         </div>
         @if (canShowGenerationButton()) {
-            <div class="flex w-full justify-end mb-1">
+            <div class="assessment-criteria-generation__controls">
                 <tum-ui-button
                     type="button"
                     severity="secondary"
@@ -32,7 +33,7 @@
                     [disabled]="isGenerationDisabled()"
                     [loading]="isGenerating()"
                     [icon]="facArtemisIntelligence"
-                    [tumUiTooltip]="generationDisabledReason() ? (generationDisabledReason()! | artemisTranslate) : ''"
+                    [ariaDescribedBy]="generationUnavailableReason ? 'assessment-criteria-generation-disabled-reason' : undefined"
                     (clicked)="generateAssessmentCriteria()"
                 >
                     @if (isGenerating()) {
@@ -41,6 +42,11 @@
                         <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
                     }
                 </tum-ui-button>
+                @if (generationUnavailableReason) {
+                    <small id="assessment-criteria-generation-disabled-reason" class="assessment-criteria-generation__disabled-reason">
+                        {{ generationUnavailableReason | artemisTranslate }}
+                    </small>
+                }
             </div>
         }
         <div class="grading-instructions-update-border">
@@ -215,7 +221,7 @@
 @if (currentExercise.gradingInstructionFeedbackUsed) {
     <div class="edit-sqi">
         @if (canShowGenerationButton()) {
-            <div class="flex w-full justify-end mb-1">
+            <div class="assessment-criteria-generation__controls">
                 <tum-ui-button
                     type="button"
                     severity="secondary"
@@ -223,7 +229,7 @@
                     [disabled]="isGenerationDisabled()"
                     [loading]="isGenerating()"
                     [icon]="facArtemisIntelligence"
-                    [tumUiTooltip]="generationDisabledReason() ? (generationDisabledReason()! | artemisTranslate) : ''"
+                    [ariaDescribedBy]="generationUnavailableReason ? 'assessment-criteria-generation-disabled-reason' : undefined"
                     (clicked)="generateAssessmentCriteria()"
                 >
                     @if (isGenerating()) {
@@ -232,6 +238,11 @@
                         <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
                     }
                 </tum-ui-button>
+                @if (generationUnavailableReason) {
+                    <small id="assessment-criteria-generation-disabled-reason" class="assessment-criteria-generation__disabled-reason">
+                        {{ generationUnavailableReason | artemisTranslate }}
+                    </small>
+                }
             </div>
         }
         <div class="grading-instructions-update-border">
