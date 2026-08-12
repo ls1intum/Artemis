@@ -1285,13 +1285,14 @@ components:
       description: Generated structured assessment criterion
       properties:
         title: {type: string, description: Criterion title, maxLength: 255, minLength: 1}
+        bonus: {type: boolean, description: Whether the criterion awards bonus points}
         structuredGradingInstructions:
           type: array
           description: Full-credit, partial-credit, and no-credit instructions, in that order
           items: {$ref: '#/components/schemas/GeneratedAssessmentInstruction'}
           minItems: 3
           maxItems: 3
-      required: [structuredGradingInstructions, title]
+      required: [bonus, structuredGradingInstructions, title]
     GeneratedAssessmentInstruction:
       type: object
       description: Generated structured grading instruction

@@ -13,8 +13,8 @@ Create a detailed rubric that lets different tutors assess consistently:
 - No credit awards exactly zero.
 - Never use negative credits.
 - Set every instruction's usage count to exactly 1.
-- The full-credit values of all regular criteria must sum to the supplied maximum regular points.
+- Set `bonus` to false for every regular criterion. Their full-credit values must sum to the supplied maximum regular points.
 - If maximum bonus points are zero, do not create bonus criteria.
-- If maximum bonus points are greater than zero, create clearly identified bonus criteria whose full-credit values sum to exactly the supplied maximum bonus points.
+- If maximum bonus points are greater than zero, set `bonus` to true for every bonus criterion. Their full-credit values must sum to exactly the supplied maximum bonus points.
 - Include concise, actionable feedback appropriate to each credit level.
 - Every criterion needs a nonempty title and three complete grading instructions.

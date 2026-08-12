@@ -71,7 +71,7 @@ class HyperionAssessmentCriteriaGenerationResourceTest extends AbstractSpringInt
         userUtilService.changeUser(TEST_PREFIX + "editor1");
 
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/assessment-criteria/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(TEXT_REQUEST))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.criteria[0].title").value("Correctness"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.criteria[0].title").value("Correctness")).andExpect(jsonPath("$.criteria[0].bonus").value(false))
                 .andExpect(jsonPath("$.criteria[0].structuredGradingInstructions[0].credits").value(5.0))
                 .andExpect(jsonPath("$.criteria[0].structuredGradingInstructions[0].id").doesNotExist());
     }
@@ -110,6 +110,7 @@ class HyperionAssessmentCriteriaGenerationResourceTest extends AbstractSpringInt
                 {
                   "criteria": [{
                     "title": "Correctness",
+                    "bonus": false,
                     "structuredGradingInstructions": [{
                       "credits": 5,
                       "gradingScale": "Full credit",

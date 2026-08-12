@@ -8,5 +8,6 @@ import { GeneratedAssessmentInstruction } from './generated-assessment-instructi
 /** Generated structured assessment criterion. */
 export interface GeneratedAssessmentCriterion {
     title: string;
+    bonus: boolean;
     structuredGradingInstructions: Array<GeneratedAssessmentInstruction>;
 }

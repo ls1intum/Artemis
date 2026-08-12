@@ -123,19 +123,20 @@ public class HyperionAssessmentCriteriaGenerationService {
             log.error("Failed to parse generated assessment criteria for course [{}]", course.getId(), e);
             throw generationError("Generated assessment criteria are malformed", "invalidResponse");
         }
-        return mapAndValidate(output, request.maxPoints() + request.bonusPoints());
+        return mapAndValidate(output, request.maxPoints(), request.bonusPoints());
     }
 
-    private AssessmentCriteriaGenerationResponseDTO mapAndValidate(@Nullable GeneratedCriteriaOutput output, double expectedTotalPoints) {
+    private AssessmentCriteriaGenerationResponseDTO mapAndValidate(@Nullable GeneratedCriteriaOutput output, double maximumPoints, double bonusPoints) {
         if (output == null || output.criteria() == null || output.criteria().isEmpty()) {
             throw generationError("Generated assessment criteria are empty", "emptyResponse");
         }
 
         List<GeneratedAssessmentCriterionDTO> criteria = new ArrayList<>();
-        double fullCreditSum = 0;
+        double regularFullCreditSum = 0;
+        double bonusFullCreditSum = 0;
         for (GeneratedCriterionOutput criterion : output.criteria()) {
-            if (criterion == null) {
-                throw generationError("Generated assessment criterion is null", "invalidResponse");
+            if (criterion == null || criterion.bonus() == null) {
+                throw generationError("Generated assessment criterion is null or has an invalid bonus discriminator", "invalidResponse");
             }
             String title = sanitizeInput(criterion.title());
             if (title.isBlank() || title.length() > MAX_DATABASE_VARCHAR_LENGTH || criterion.structuredGradingInstructions() == null
@@ -148,11 +149,16 @@ public class HyperionAssessmentCriteriaGenerationService {
                 instructions.add(mapAndValidateInstruction(instruction));
             }
             validateCreditLevels(instructions);
-            fullCreditSum += instructions.getFirst().credits();
-            criteria.add(new GeneratedAssessmentCriterionDTO(title, instructions));
+            if (criterion.bonus()) {
+                bonusFullCreditSum += instructions.getFirst().credits();
+            }
+            else {
+                regularFullCreditSum += instructions.getFirst().credits();
+            }
+            criteria.add(new GeneratedAssessmentCriterionDTO(title, criterion.bonus(), instructions));
         }
-        if (!approximatelyEqual(fullCreditSum, expectedTotalPoints)) {
-            throw generationError("Generated full-credit values do not add up to the maximum points including bonus", "invalidResponse");
+        if (!approximatelyEqual(regularFullCreditSum, maximumPoints) || !approximatelyEqual(bonusFullCreditSum, bonusPoints)) {
+            throw generationError("Generated regular or bonus full-credit values do not add up to their respective maximum points", "invalidResponse");
         }
         return new AssessmentCriteriaGenerationResponseDTO(criteria);
     }
@@ -191,6 +197,7 @@ public class HyperionAssessmentCriteriaGenerationService {
     }
 
     record GeneratedCriterionOutput(@JsonPropertyDescription("Nonempty criterion title, at most 255 characters") String title,
+            @JsonPropertyDescription("False for a regular criterion and true for a bonus criterion") Boolean bonus,
             @JsonPropertyDescription("Exactly three grading instructions ordered as full credit, partial credit, and no credit") List<GeneratedInstructionOutput> structuredGradingInstructions) {
     }
 

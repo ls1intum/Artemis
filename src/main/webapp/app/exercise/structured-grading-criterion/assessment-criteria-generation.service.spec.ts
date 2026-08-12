@@ -88,6 +88,7 @@ describe('AssessmentCriteriaGenerationService', () => {
                 criteria: [
                     {
                         title: 'Correctness',
+                        bonus: false,
                         structuredGradingInstructions: [{ credits: 2, gradingScale: 'Full', instructionDescription: 'Correct', feedback: 'Well done', usageCount: 1 }],
                     },
                 ],

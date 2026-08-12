@@ -40,6 +40,7 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
               "criteria": [
                 {
                   "title": "Correctness",
+                  "bonus": false,
                   "structuredGradingInstructions": [
                     {
                       "credits": 5.0,
@@ -102,6 +103,7 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
 
         assertThat(response.criteria()).hasSize(1);
         assertThat(response.criteria().getFirst().title()).isEqualTo("Correctness");
+        assertThat(response.criteria().getFirst().bonus()).isFalse();
         assertThat(response.criteria().getFirst().structuredGradingInstructions()).extracting("credits").containsExactly(5.0, 2.5, 0.0);
         verify(chatModel, times(1)).call(any(Prompt.class));
         verify(llmTokenUsageService).trackChatResponseTokenUsage(any(), eq(LLMServiceType.HYPERION), eq(HyperionAssessmentCriteriaGenerationService.GENERATION_PIPELINE_ID), any());
@@ -109,13 +111,14 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
 
     @Test
     void generateAssessmentCriteriaIncludesScoringRulesAndAllProvidedContext() {
-        mockResponse(VALID_RESPONSE);
+        mockResponse(validBonusResponse());
         Course course = course(23L);
         var request = new AssessmentCriteriaGenerationRequestDTO("Draw a class diagram", 3.0, 2.0, "Reward correct relationships", "{\"nodes\":[{\"id\":\"example-node\"}]}",
                 "Diagram type: ClassDiagram\nExample explanation: Use inheritance\nCurrent example model: unsaved-node");
 
-        service.generateAssessmentCriteria(course, request);
+        var response = service.generateAssessmentCriteria(course, request);
 
+        assertThat(response.criteria()).extracting("bonus").containsExactly(false, true);
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(promptCaptor.capture());
         String promptText = promptCaptor.getValue().getInstructions().stream().map(message -> message.getText()).collect(Collectors.joining("\n"));
@@ -156,6 +159,7 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
                 {
                   "criteria": [{
                     "title": " ",
+                    "bonus": false,
                     "structuredGradingInstructions": [{
                       "credits": 1,
                       "gradingScale": "Full",
@@ -195,6 +199,15 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
     }
 
     @Test
+    void generateAssessmentCriteriaRejectsInvalidRegularAndBonusSubtotalsWithMatchingCombinedTotal() {
+        mockResponse(VALID_RESPONSE.replace("\"bonus\": false", "\"bonus\": true"));
+        var request = new AssessmentCriteriaGenerationRequestDTO("Explain idempotency.", 4.0, 1.0, "Be precise.", "An idempotent operation can be repeated.", null);
+
+        assertThatThrownBy(() -> service.generateAssessmentCriteria(course(1L), request)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("regular or bonus");
+    }
+
+    @Test
     void generateAssessmentCriteriaRejectsGeneratedIds() {
         mockResponse(VALID_RESPONSE.replace("\"title\": \"Correctness\"", "\"id\": 123, \"title\": \"Correctness\""));
 
@@ -211,6 +224,31 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
 
     private void mockResponse(String json) {
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(json)))));
+    }
+
+    private String validBonusResponse() {
+        return """
+                {
+                  "criteria": [
+                    %s,
+                    %s
+                  ]
+                }
+                """.formatted(generatedCriterion("Correctness", false, 3.0), generatedCriterion("Bonus", true, 2.0));
+    }
+
+    private String generatedCriterion(String title, boolean bonus, double fullCredit) {
+        return """
+                {
+                  "title": "%s",
+                  "bonus": %s,
+                  "structuredGradingInstructions": [
+                    { "credits": %s, "gradingScale": "Full credit", "instructionDescription": "Complete.", "feedback": "Well done.", "usageCount": 1 },
+                    { "credits": %s, "gradingScale": "Partial credit", "instructionDescription": "Partial.", "feedback": "Complete the answer.", "usageCount": 1 },
+                    { "credits": 0.0, "gradingScale": "No credit", "instructionDescription": "Incorrect.", "feedback": "Review the concept.", "usageCount": 1 }
+                  ]
+                }
+                """.formatted(title, bonus, fullCredit, fullCredit / 2);
     }
 
     private AssessmentCriteriaGenerationRequestDTO textRequest() {
