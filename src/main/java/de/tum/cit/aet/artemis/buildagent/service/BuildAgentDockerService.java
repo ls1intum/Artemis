@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -14,7 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -87,6 +90,9 @@ public class BuildAgentDockerService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentDockerService.class);
 
+    /** How often a running pull is re-examined while waiting, short enough to notice a stall promptly. */
+    private static final int PULL_PROGRESS_POLL_INTERVAL_SECONDS = 5;
+
     private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final DistributedDataAccessService distributedDataAccessService;
@@ -125,6 +131,35 @@ public class BuildAgentDockerService {
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
+    /**
+     * Maximum time a single Docker image pull may take before it is aborted.
+     * <p>
+     * This bounds the image pull independently of the per-exercise build timeout: how long a pull takes depends on the image size and on the registry and network,
+     * not on the exercise, so a slow registry must not eat into the time budget a student's build gets. Without this, a pull that never makes progress would block
+     * the build thread indefinitely.
+     */
+    @Value("${artemis.continuous-integration.image-pull-timeout-seconds:300}")
+    private int imagePullTimeoutSeconds;
+
+    /**
+     * Maximum time a Docker image pull may report no progress at all before it is aborted.
+     * <p>
+     * This separates the two ways a pull goes wrong. A large image over a slow link keeps emitting progress and is
+     * allowed to run until {@link #imagePullTimeoutSeconds}. A pull that is not getting through at all, because the
+     * registry is unreachable or a firewall silently drops the packets rather than refusing the connection, emits
+     * nothing, and there is no reason to hold a build thread and an agent slot for the full budget waiting for it.
+     */
+    @Value("${artemis.continuous-integration.image-pull-stall-timeout-seconds:60}")
+    private int imagePullStallTimeoutSeconds;
+
+    /**
+     * IDs of the build jobs that are currently pulling a Docker image, with the time the pull started.
+     * <p>
+     * A job is registered here for the whole time it spends in {@link #pullDockerImage}, which includes waiting for {@link #lock} while another job pulls. During
+     * that window the job legitimately has no Docker container yet, so {@link SharedQueueProcessingService} must not treat it as stale.
+     */
+    private final Map<String, Instant> ongoingImagePulls = new ConcurrentHashMap<>();
+
     private static final String AMD64_ARCHITECTURE = "amd64";
 
     private static final String ARM64_ARCHITECTURE = "arm64";
@@ -137,10 +172,31 @@ public class BuildAgentDockerService {
         this.taskScheduler = taskScheduler;
     }
 
-    // EventListener cannot be used here, as the bean is lazy
-    // https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation
+    /**
+     * Validates the image pull configuration and schedules the periodic cleanup of dangling build containers.
+     * <p>
+     * EventListener cannot be used here, as the bean is lazy, see the
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring docs</a>.
+     *
+     * @throws IllegalArgumentException if the configured image pull timeout is not positive
+     */
     @PostConstruct
     public void applicationReady() {
+        // A non-positive timeout would make awaitCompletion return immediately, so every image pull would be reported as timed out and no build could ever run. Fail fast
+        // at startup instead of turning every build into a confusing pull failure.
+        if (imagePullTimeoutSeconds <= 0) {
+            String errorMessage = "The Docker image pull timeout must be a positive number of seconds, but was " + imagePullTimeoutSeconds
+                    + ". It should be changed in the application properties under 'artemis.continuous-integration.image-pull-timeout-seconds'.";
+            log.error(errorMessage);
+            throw new IllegalArgumentException(errorMessage);
+        }
+        if (imagePullStallTimeoutSeconds <= 0) {
+            String errorMessage = "The Docker image pull stall timeout must be a positive number of seconds, but was " + imagePullStallTimeoutSeconds
+                    + ". It should be changed in the application properties under 'artemis.continuous-integration.image-pull-stall-timeout-seconds'.";
+            log.error(errorMessage);
+            throw new IllegalArgumentException(errorMessage);
+        }
+
         // Schedule the cleanup of dangling build containers once 10 seconds after the application has started and then every containerCleanupScheduleMinutes minutes
         taskScheduler.scheduleAtFixedRate(this::cleanUpContainers, Instant.now().plusSeconds(10), Duration.ofMinutes(containerCleanupScheduleMinutes));
     }
@@ -226,8 +282,27 @@ public class BuildAgentDockerService {
      */
     public static class MyPullImageResultCallback extends PullImageResultCallback {
 
+        /**
+         * How many updates the daemon has reported for this pull. Written from the docker-java callback thread and
+         * read by the waiting build thread, hence atomic.
+         * <p>
+         * A counter rather than a timestamp: the caller owns the clock, so "no progress yet" is measured from when
+         * the wait started rather than from when this object happened to be constructed.
+         */
+        private final AtomicLong progressCount = new AtomicLong();
+
+        /**
+         * How many updates the daemon has reported so far.
+         *
+         * @return the number of progress updates received for this pull
+         */
+        public long progressCount() {
+            return progressCount.get();
+        }
+
         @Override
         public void onNext(PullResponseItem item) {
+            progressCount.incrementAndGet();
             String msg = "~~~~~~~~~~~~~~~~~~~~ Pull image progress: " + item.getStatus() + " ~~~~~~~~~~~~~~~~~~~~";
             log.debug(msg);
             super.onNext(item);
@@ -262,6 +337,28 @@ public class BuildAgentDockerService {
      * @throws LocalCIException if the image pull is interrupted or fails due to other exceptions.
      */
     public void pullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
+        // Register the job for the whole pull phase, including the time spent waiting for the lock, so that the stale build job detection does not cancel a job that is
+        // simply waiting for its image.
+        ongoingImagePulls.put(buildJob.id(), Instant.now());
+        try {
+            doPullDockerImage(buildJob, buildLogsMap);
+        }
+        finally {
+            ongoingImagePulls.remove(buildJob.id());
+        }
+    }
+
+    /**
+     * Returns whether the given build job is currently pulling its Docker image.
+     *
+     * @param buildJobId the ID of the build job
+     * @return true if an image pull is in progress for this build job
+     */
+    public boolean isImagePullInProgress(String buildJobId) {
+        return ongoingImagePulls.containsKey(buildJobId);
+    }
+
+    private void doPullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
         final String imageName = buildJob.buildConfig().dockerImage();
         if (dockerClientNotAvailable("Cannot pull Docker image.")) {
             throw new LocalCIException("Docker is not available. Cannot pull image " + imageName);
@@ -298,7 +395,7 @@ public class BuildAgentDockerService {
                     // Only pull the image if the inspect command failed
                     var command = dockerClient.pullImageCmd(imageName).withPlatform(imageArchitecture);
                     var exec = command.exec(new MyPullImageResultCallback());
-                    exec.awaitCompletion();
+                    awaitPullCompletion(exec, imageName, buildJob, buildLogsMap);
 
                     // Check if the image is compatible with the current architecture
                     var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
@@ -317,7 +414,7 @@ public class BuildAgentDockerService {
                         try {
                             var fallbackCommand = dockerClient.pullImageCmd(imageName).withPlatform(AMD64_ARCHITECTURE);
                             var fallbackExec = fallbackCommand.exec(new MyPullImageResultCallback());
-                            fallbackExec.awaitCompletion();
+                            awaitPullCompletion(fallbackExec, imageName, buildJob, buildLogsMap);
 
                             // Verify the fallback image was pulled successfully
                             var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
@@ -349,6 +446,73 @@ public class BuildAgentDockerService {
                 lock.unlock();
             }
         }
+    }
+
+    /**
+     * Waits for a Docker image pull to finish, aborting it once {@code artemis.continuous-integration.image-pull-timeout-seconds} has elapsed.
+     * <p>
+     * Without a timeout a pull that stops making progress, for example because a configured registry mirror silently drops packets, blocks the build thread forever.
+     * The timed {@code awaitCompletion} keeps the error handling of the untimed one: it still calls {@code throwFirstError()}, so a pull that fails rather than stalls
+     * propagates its exception exactly as before, and it closes the callback itself, so the stalled pull is aborted rather than left running in the background.
+     *
+     * @param callback     the callback of the running pull command
+     * @param imageName    the name of the Docker image being pulled
+     * @param buildJob     the build job the pull belongs to
+     * @param buildLogsMap a map for appending log entries related to the build process
+     * @throws InterruptedException if the current thread is interrupted while waiting
+     * @throws LocalCIException     if the pull does not finish within the configured timeout
+     */
+    private void awaitPullCompletion(MyPullImageResultCallback callback, String imageName, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) throws InterruptedException {
+        final long pollIntervalNanos = TimeUnit.SECONDS.toNanos(PULL_PROGRESS_POLL_INTERVAL_SECONDS);
+        final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(imagePullTimeoutSeconds);
+        final long stallNanos = TimeUnit.SECONDS.toNanos(imagePullStallTimeoutSeconds);
+        long lastProgressAtNanos = System.nanoTime();
+        long lastProgressCount = callback.progressCount();
+
+        while (true) {
+            // Wait in slices rather than one long wait, so the pull can also be judged on whether it is still moving. A slice never reaches beyond the next deadline, so a
+            // timeout shorter than the poll interval is honoured just as precisely as a longer one.
+            long nowNanos = System.nanoTime();
+            long sliceNanos = Math.max(0, Math.min(pollIntervalNanos, Math.min(lastProgressAtNanos + stallNanos - nowNanos, deadlineNanos - nowNanos)));
+            if (callback.awaitCompletion(sliceNanos, TimeUnit.NANOSECONDS)) {
+                return;
+            }
+            long progressCount = callback.progressCount();
+            if (progressCount != lastProgressCount) {
+                lastProgressCount = progressCount;
+                lastProgressAtNanos = System.nanoTime();
+            }
+            if (System.nanoTime() - lastProgressAtNanos >= stallNanos) {
+                abortPull(callback, imageName, buildJob, buildLogsMap,
+                        "reported no progress for " + imagePullStallTimeoutSeconds + " seconds. The registry is most likely unreachable from this agent, for example "
+                                + "because a firewall drops the packets instead of refusing the connection");
+            }
+            if (System.nanoTime() - deadlineNanos >= 0) {
+                abortPull(callback, imageName, buildJob, buildLogsMap, "did not finish within " + imagePullTimeoutSeconds + " seconds");
+            }
+        }
+    }
+
+    /**
+     * Closes the callback so the pull is really abandoned rather than left running in the background, then fails the build job.
+     *
+     * @param callback     the callback of the running pull command
+     * @param imageName    the name of the Docker image being pulled
+     * @param buildJob     the build job the pull belongs to
+     * @param buildLogsMap a map for appending log entries related to the build process
+     * @param reason       what went wrong, phrased to continue "Pulling docker image <name> ..."
+     */
+    private static void abortPull(MyPullImageResultCallback callback, String imageName, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap, String reason) {
+        try {
+            callback.close();
+        }
+        catch (IOException e) {
+            log.warn("Could not close the callback of the aborted pull of docker image {}", imageName, e);
+        }
+        String msg = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " " + reason + " ~~~~~~~~~~~~~~~~~~~~";
+        log.error(msg);
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        throw new LocalCIException("Pulling docker image " + imageName + " " + reason);
     }
 
     /**

@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -310,6 +311,24 @@ public class LectureResource {
         // While it would be enough to send it once separately, we keep it like this for now to avoid overengineering. Ideally, the course data is only sent once
         var lectureDtos = lectures.stream().map(lecture -> SimpleLectureDTO.from(lecture, null)).collect(Collectors.toSet());
         return ResponseEntity.ok().body(lectureDtos);
+    }
+
+    /**
+     * GET /courses/:courseId/lectures-for-overview : get the lectures of a course for the student course overview.
+     * <p>
+     * Projected to what the sidebar renders — title, dates and the tutorial flag. Attachments are not included: they are
+     * eagerly mapped on the entity, so returning whole lectures loaded and serialised them on every visit for nothing.
+     * Lecture visibility does not depend on attachments; the attachment filter only ever removed attachments, never
+     * lectures, so dropping them here does not change which lectures a student sees.
+     *
+     * @param courseId the courseId of the course for which the lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
+     */
+    @GetMapping("courses/{courseId}/lectures-for-overview")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<LectureForOverviewDTO>> getLecturesForCourseOverview(@PathVariable Long courseId) {
+        log.debug("REST request to get the lectures of course {} for the course overview", courseId);
+        return ResponseEntity.ok(lectureRepository.findAllForOverviewByCourseId(courseId));
     }
 
     /**

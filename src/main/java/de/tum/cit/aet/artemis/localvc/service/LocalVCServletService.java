@@ -39,6 +39,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -252,7 +253,12 @@ public class LocalVCServletService {
         // If it is a fetch request, we check if it is the build agent that is fetching the repository.
         if (repositoryAction == RepositoryActionType.READ) {
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
-            if (Objects.equals(usernameAndPassword.username(), buildAgentGitUsername) && Objects.equals(usernameAndPassword.password(), buildAgentGitPassword)) {
+            // A blank configured credential must never match: this shortcut returns ahead of the rate limit, the
+            // repository authorization checks and the access log, so an empty configured password would hand
+            // repository-wide read access to anyone presenting the build-agent username. ConfigurationValidator
+            // rejects that configuration under prod, but this path also runs where that validation does not.
+            if (StringUtils.hasText(buildAgentGitUsername) && StringUtils.hasText(buildAgentGitPassword) && Objects.equals(usernameAndPassword.username(), buildAgentGitUsername)
+                    && Objects.equals(usernameAndPassword.password(), buildAgentGitPassword)) {
                 // Authentication successful
                 return;
             }
@@ -466,6 +472,15 @@ public class LocalVCServletService {
                 log.warn("Failed login attempt for user {} due to issue: {}", username, e.getMessage());
             }
             throw new LocalVCAuthException(e.getMessage(), missingPassword);
+        }
+
+        // Account state is checked here, before any credential is compared, because it has to hold for every credential
+        // type. Only the password fall-through below goes through the authenticationManager, which checks `activated`
+        // itself; the three token branches return the user directly, so without this a deactivated or soft-deleted user
+        // kept full repository access through any token they had been issued earlier.
+        if (!user.getActivated() || user.isDeleted()) {
+            log.warn("Git authentication attempt for user {} whose account is deactivated or deleted", username);
+            throw new LocalVCAuthException("Account is not active");
         }
 
         // check user VCS access token
