@@ -51,4 +51,11 @@
     @if (!arePhaseNamesValid()) {
         <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames"></div>
     }
+    @if (!isTimeoutValid()) {
+        <div
+            class="text-state-danger mt-1"
+            jhiTranslate="artemisApp.programmingExercise.timeout.outOfBounds"
+            [translateValues]="{ min: timeoutMinValue(), max: timeoutMaxValue() }"
+        ></div>
+    }
 }

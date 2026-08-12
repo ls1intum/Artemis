@@ -70,11 +70,15 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
         return namesAreUnique && namesArePatternValid && namesAreNotReserved;
     });
 
+    // the timeout bounds come from the build configuration child once it has read the profile info; exposed so the
+    // template can render the valid range in the out-of-bounds message
+    readonly timeoutMinValue = computed(() => this.buildConfigurationComponent()?.timeoutMinValue());
+    readonly timeoutMaxValue = computed(() => this.buildConfigurationComponent()?.timeoutMaxValue());
+
     readonly isTimeoutValid = computed(() => {
-        const buildConfigurationComponent = this.buildConfigurationComponent();
         // before the build configuration component has initialized its bounds from the profile info, do not block saving
-        const min = buildConfigurationComponent?.timeoutMinValue();
-        const max = buildConfigurationComponent?.timeoutMaxValue();
+        const min = this.timeoutMinValue();
+        const max = this.timeoutMaxValue();
         const timeout = this.timeout();
         return (min === undefined || timeout >= min) && (max === undefined || timeout <= max);
     });

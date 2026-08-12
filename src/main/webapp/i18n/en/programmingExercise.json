@@ -198,7 +198,8 @@
             "timeout": {
                 "title": "Maximum build duration in seconds",
                 "customize": "Set to 0 to use default value. Make sure to provide a valid integer value. The unit is seconds. Note that this value may be overridden by the maximum limit set by the administrators (default is 240s).",
-                "alert": "The timeout must be a valid integer value."
+                "alert": "The timeout must be a valid integer value.",
+                "outOfBounds": "The build duration must be between {{ min }} and {{ max }} seconds."
             },
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",

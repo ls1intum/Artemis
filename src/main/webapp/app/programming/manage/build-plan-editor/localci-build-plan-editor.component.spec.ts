@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Component, input, output, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -357,12 +358,23 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         comp.phases.set(phases);
         comp.dockerImage.set('some-image');
 
+        const timeoutMessage = () => fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.programmingExercise.timeout.outOfBounds"]'));
+
         comp.timeout.set(5);
+        fixture.detectChanges();
         expect(comp.canSubmit()).toBe(false);
+        // a stored timeout below the minimum must surface a message instead of only disabling save
+        expect(timeoutMessage()).not.toBeNull();
+
         comp.timeout.set(300);
+        fixture.detectChanges();
         expect(comp.canSubmit()).toBe(false);
+        expect(timeoutMessage()).not.toBeNull();
+
         comp.timeout.set(120);
+        fixture.detectChanges();
         expect(comp.canSubmit()).toBe(true);
+        expect(timeoutMessage()).toBeNull();
     });
 
     const invalidConfigurations: [string, typeof phases, string][] = [
