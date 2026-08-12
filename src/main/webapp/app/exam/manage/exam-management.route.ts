@@ -3,15 +3,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
 import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
-import { ParticipationSubmissionComponent } from 'app/exercise/participation-submission/participation-submission.component';
-
-import { ParticipationComponent } from 'app/exercise/participation/participation.component';
-import { ExerciseScoresComponent } from 'app/exercise/exercise-scores/exercise-scores.component';
-
-import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
 import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
-
-import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-statistics.component';
 
 import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/services/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
@@ -19,7 +11,6 @@ import { CourseResolve, ExamResolve, StudentExamResolve } from 'app/exam/manage/
 import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
 import { TextExerciseResolver } from 'app/text/manage/text-exercise/service/text-exercise-resolver.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
-import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 
 export const examManagementRoutes: Routes = [
     {
@@ -697,7 +688,8 @@ export const examManagementRoutes: Routes = [
     },
     {
         path: ':examId/assessment-dashboard/:exerciseId',
-        component: ExerciseAssessmentDashboardComponent,
+        loadComponent: () =>
+            import('app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component').then((m) => m.ExerciseAssessmentDashboardComponent),
         data: {
             authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
@@ -706,7 +698,8 @@ export const examManagementRoutes: Routes = [
     },
     {
         path: ':examId/test-assessment-dashboard/:exerciseId',
-        component: ExerciseAssessmentDashboardComponent,
+        loadComponent: () =>
+            import('app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component').then((m) => m.ExerciseAssessmentDashboardComponent),
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader',
@@ -716,7 +709,7 @@ export const examManagementRoutes: Routes = [
     ...exerciseTypes.map((exerciseType) => {
         return {
             path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/scores',
-            component: ExerciseScoresComponent,
+            loadComponent: () => import('app/exercise/exercise-scores/exercise-scores.component').then((m) => m.ExerciseScoresComponent),
             data: {
                 authorities: IS_AT_LEAST_TUTOR,
                 pageTitle: 'artemisApp.instructorDashboard.exerciseDashboard',
@@ -727,7 +720,7 @@ export const examManagementRoutes: Routes = [
     ...exerciseTypes.map((exerciseType) => {
         return {
             path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/participations',
-            component: ParticipationComponent,
+            loadComponent: () => import('app/exercise/participation/participation.component').then((m) => m.ParticipationComponent),
             data: {
                 authorities: IS_AT_LEAST_TUTOR,
                 pageTitle: 'artemisApp.participation.home.title',
@@ -738,7 +731,7 @@ export const examManagementRoutes: Routes = [
     ...exerciseTypes.map((exerciseType) => {
         return {
             path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/exercise-statistics',
-            component: ExerciseStatisticsComponent,
+            loadComponent: () => import('app/exercise/statistics/exercise-statistics.component').then((m) => m.ExerciseStatisticsComponent),
             data: {
                 authorities: IS_AT_LEAST_TUTOR,
                 pageTitle: 'exercise-statistics.title',
@@ -749,7 +742,7 @@ export const examManagementRoutes: Routes = [
     ...exerciseTypes.map((exerciseType) => {
         return {
             path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/participations/:participationId',
-            component: ParticipationSubmissionComponent,
+            loadComponent: () => import('app/exercise/participation-submission/participation-submission.component').then((m) => m.ParticipationSubmissionComponent),
             data: {
                 authorities: IS_AT_LEAST_INSTRUCTOR,
                 pageTitle: 'artemisApp.participation.home.title',
@@ -813,7 +806,10 @@ export const examManagementRoutes: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
-        component: CodeEditorTutorAssessmentContainerComponent,
+        loadComponent: () =>
+            import('app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component').then(
+                (m) => m.CodeEditorTutorAssessmentContainerComponent,
+            ),
         data: {
             authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.programmingExercise.home.title',
@@ -822,7 +818,10 @@ export const examManagementRoutes: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
-        component: CodeEditorTutorAssessmentContainerComponent,
+        loadComponent: () =>
+            import('app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component').then(
+                (m) => m.CodeEditorTutorAssessmentContainerComponent,
+            ),
         data: {
             authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.programmingExercise.home.title',
