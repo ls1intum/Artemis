@@ -52,15 +52,20 @@ PULL_DEADLINE_SECONDS=600
 #
 # Reads only the build agent's own block (`artemis.continuous-integration.build.images`) rather than
 # grepping the whole file, so an image name appearing in a comment or an unrelated setting cannot
-# satisfy the drift check below. The file holds a second, unrelated `images:` block for Kubernetes
-# app definitions, hence the requirement that the block be nested directly under `build:`. Language
-# keys carry no value of their own and are skipped; values are accepted quoted or bare, and trailing
-# comments are stripped.
+# satisfy the drift check below. The file holds a second, unrelated `images:` block for Kubernetes app
+# definitions at a shallower indent, which is why the block has to be nested inside `build:` to count:
+# `build_indent` is tracked while inside that block and cleared on leaving it, so an `images:` key in
+# some later section cannot be picked up. Language keys carry no value of their own and are skipped;
+# values are accepted quoted or bare, and trailing comments are stripped.
 configured_images() {
     awk '
         /^[[:space:]]*build:[[:space:]]*$/ {
             build_indent = match($0, /[^[:space:]]/)
             next
+        }
+        # Left the build block without having found its images child — stop looking until the next one.
+        !in_block && build_indent && !/^[[:space:]]*$/ && match($0, /[^[:space:]]/) <= build_indent {
+            build_indent = 0
         }
         !in_block && build_indent && /^[[:space:]]*images:[[:space:]]*$/ && match($0, /[^[:space:]]/) > build_indent {
             in_block = 1
@@ -113,52 +118,66 @@ for image in "${IMAGES[@]}"; do
     fi
 done
 
+# A bound turns a stalled pull into a non-zero exit so the retries can act on it. coreutils ships
+# `timeout` on the CI runners; macOS names it `gtimeout` when coreutils is installed via Homebrew,
+# which keeps the bound working for anyone running this locally. Without either, pulls stay unbounded,
+# which is worth saying out loud rather than failing over.
+timeout_bin=""
+if command -v timeout > /dev/null 2>&1; then
+    timeout_bin="timeout"
+elif command -v gtimeout > /dev/null 2>&1; then
+    timeout_bin="gtimeout"
+else
+    echo "Note: neither 'timeout' nor 'gtimeout' is available, so a stalled pull cannot be bounded."
+fi
+
 for image in "${IMAGES[@]}"; do
     if docker image inspect "$image" > /dev/null 2>&1; then
         echo "Already present: ${image}"
         continue
     fi
 
-    # A bound turns a stalled pull into a non-zero exit so the retry below can act on it. coreutils
-    # ships `timeout` on the CI runners; macOS names it `gtimeout` when coreutils is installed via
-    # Homebrew, which keeps the bound working for anyone running this locally. Without either the pull
-    # stays unbounded, which is worth saying out loud rather than failing over.
-    pull=(docker pull --quiet "$image")
-    timeout_bin=""
-    if command -v timeout > /dev/null 2>&1; then
-        timeout_bin="timeout"
-    elif command -v gtimeout > /dev/null 2>&1; then
-        timeout_bin="gtimeout"
-    fi
-    if [ -n "$timeout_bin" ]; then
-        # --kill-after escalates to SIGKILL for a pull wedged badly enough to ignore the SIGTERM, so
-        # the step cannot be held open by the very stall it is meant to cut short.
-        pull=("$timeout_bin" --kill-after=30s "${PULL_TIMEOUT_SECONDS}s" "${pull[@]}")
-    else
-        echo "Note: neither 'timeout' nor 'gtimeout' is available, so a stalled pull of ${image} cannot be bounded."
-    fi
-
     pulled=false
     deadline=$((SECONDS + PULL_DEADLINE_SECONDS))
     for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-        if [ "$SECONDS" -ge "$deadline" ]; then
-            echo "Giving up on ${image} after ${PULL_DEADLINE_SECONDS}s spent across ${attempt} attempts."
+        remaining=$((deadline - SECONDS))
+        if [ "$remaining" -le 0 ]; then
+            echo "Giving up on ${image}: its ${PULL_DEADLINE_SECONDS}s budget is spent after $((attempt - 1)) attempt(s)."
             break
         fi
-        echo "Pulling ${image} (attempt ${attempt}/${MAX_ATTEMPTS})..."
+
+        # Cap the attempt by whatever is left of the image's budget, not just by PULL_TIMEOUT_SECONDS.
+        # Checking the deadline only between attempts would let a single hanging pull overrun it by a
+        # further PULL_TIMEOUT_SECONDS, so the shared ceiling has to bound the pull itself.
+        attempt_cap=$((remaining < PULL_TIMEOUT_SECONDS ? remaining : PULL_TIMEOUT_SECONDS))
+        pull=(docker pull --quiet "$image")
+        if [ -n "$timeout_bin" ]; then
+            # --kill-after escalates to SIGKILL for a pull wedged badly enough to ignore the SIGTERM,
+            # so the step cannot be held open by the very stall it is meant to cut short.
+            pull=("$timeout_bin" --kill-after=30s "${attempt_cap}s" "${pull[@]}")
+        fi
+
+        echo "Pulling ${image} (attempt ${attempt}/${MAX_ATTEMPTS}, up to ${attempt_cap}s)..."
         if "${pull[@]}"; then
             pulled=true
             break
         fi
+
         # A pull that dies part-way leaves the partial layers behind; the next attempt resumes from
-        # them, so a plain retry after a short backoff is worth more than it looks.
-        if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
-            sleep $((attempt * 10))
+        # them, so a plain retry after a short backoff is worth more than it looks. The backoff is
+        # bounded by the budget too, otherwise sleeping could push the loop past the deadline.
+        remaining=$((deadline - SECONDS))
+        if [ "$attempt" -lt "$MAX_ATTEMPTS" ] && [ "$remaining" -gt 0 ]; then
+            backoff=$((attempt * 10))
+            if [ "$backoff" -gt "$remaining" ]; then
+                backoff=$remaining
+            fi
+            sleep "$backoff"
         fi
     done
 
     if [ "$pulled" != true ]; then
-        echo "::error title=Could not provision E2E exercise image::Failed to pull ${image} after ${MAX_ATTEMPTS} attempts. Programming-exercise builds cannot run without it, so every test asserting on a build result would fail with an unexplained 0% score. Check the runner's disk space and registry connectivity."
+        echo "::error title=Could not provision E2E exercise image::Failed to pull ${image} within ${PULL_DEADLINE_SECONDS}s (up to ${MAX_ATTEMPTS} attempts). Programming-exercise builds cannot run without it, so every test asserting on a build result would fail with an unexplained 0% score. Check the runner's disk space and registry connectivity."
         exit 1
     fi
     echo "Pulled: ${image}"
