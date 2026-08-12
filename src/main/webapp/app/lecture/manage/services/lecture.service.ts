@@ -81,7 +81,9 @@ export class LectureService {
      */
     findAllByCourseIdForOverview(courseId: number): Observable<LectureForOverview[]> {
         return this.http.get<LectureForOverview[]>(`api/lecture/courses/${courseId}/lectures-for-overview`).pipe(
-            map((lectures) => lectures.map((lecture) => ({ ...lecture, startDate: convertDateFromServer(lecture.startDate), endDate: convertDateFromServer(lecture.endDate) }))),
+            map((lectures) =>
+                lectures.map((lecture) => cloneWith(lecture, { startDate: convertDateFromServer(lecture.startDate), endDate: convertDateFromServer(lecture.endDate) })),
+            ),
             tap((lectures) => lectures.forEach((lecture) => this.entityTitleService.setTitle(EntityType.LECTURE, [lecture.id], lecture.title))),
         );
     }

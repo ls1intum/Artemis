@@ -21,7 +21,7 @@ import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
@@ -174,12 +174,13 @@ export class ExamParticipationService {
     public getExamsForOverview(courseId: number): Observable<ExamForOverview[]> {
         return this.httpClient.get<ExamForOverview[]>(`api/exam/courses/${courseId}/exams-for-overview`).pipe(
             map((exams) =>
-                exams.map((exam) => ({
-                    ...exam,
-                    visibleDate: convertDateFromServer(exam.visibleDate),
-                    startDate: convertDateFromServer(exam.startDate),
-                    endDate: convertDateFromServer(exam.endDate),
-                })),
+                exams.map((exam) =>
+                    cloneWith(exam, {
+                        visibleDate: convertDateFromServer(exam.visibleDate),
+                        startDate: convertDateFromServer(exam.startDate),
+                        endDate: convertDateFromServer(exam.endDate),
+                    }),
+                ),
             ),
         );
     }
