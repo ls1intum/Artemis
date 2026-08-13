@@ -263,6 +263,22 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Whether the URL addresses the practice participation of this exercise, e.g.
+     * `/courses/1/exercises/programming-exercises/2/code-editor/680` with 680 being the practice participation.
+     * <p>
+     * The routed participation is what the student asked to see, so it has to decide the mode. Without this the
+     * mode fell back to `graded` on every load, and {@link ExerciseSplitPanelComponent} then redirected the
+     * embedded editor from the practice participation in the URL to the graded one — after the due date a
+     * read-only repository. Starting the practice mode routes to the practice participation, so this is also
+     * what keeps the practice mode selected across a reload (issue #12780).
+     */
+    private routedParticipationIsPractice(): boolean {
+        const routedParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
+        const practiceParticipationId = this.practiceStudentParticipation()?.id;
+        return !!routedParticipationId && !!practiceParticipationId && routedParticipationId === String(practiceParticipationId);
+    }
+
     loadExercise() {
         this.participationMode.set('graded');
         this._studentParticipations.set(this.participationWebsocketService.getParticipationsForExercise(this.exerciseId));
@@ -273,7 +289,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         );
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
             this.handleNewExercise(exerciseResponse.body!);
-            if (!this.gradedStudentParticipation() && this.practiceStudentParticipation()) {
+            if (this.routedParticipationIsPractice() || (!this.gradedStudentParticipation() && this.practiceStudentParticipation())) {
                 this.participationMode.set('practice');
             }
             this.loadComplaintAndLatestRatedResult();

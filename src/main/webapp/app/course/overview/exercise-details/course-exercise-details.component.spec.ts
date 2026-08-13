@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
@@ -648,6 +648,52 @@ describe('CourseExerciseDetailsComponent', () => {
         const merged = comp.studentParticipations.find((p) => p.id === 555);
         expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2]);
         expect(merged?.submissions?.find((s) => s.id === 1)?.submitted).toBe(true);
+    });
+
+    describe('mode of the participation named in the URL', () => {
+        const gradedParticipation = { id: 679, testRun: false } as StudentParticipation;
+        const practiceParticipation = { id: 680, testRun: true } as StudentParticipation;
+
+        /** Puts a child route carrying `participationId` under the exercise route, as the embedded editor does. */
+        function routeToParticipation(participationId: string | undefined) {
+            (route as any).firstChild = participationId ? { snapshot: { paramMap: convertToParamMap({ participationId }) } } : undefined;
+        }
+
+        beforeEach(() => {
+            getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: { ...exercise, studentParticipations: [gradedParticipation, practiceParticipation] } } }));
+            mergeStudentParticipationMock.mockReturnValue([gradedParticipation, practiceParticipation]);
+            // ParticipationService is mocked for this spec, so the graded/practice split has to behave like the real one.
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((participations, testRun) =>
+                (participations ?? []).find((participation) => !!participation.testRun === testRun),
+            );
+        });
+
+        afterEach(() => routeToParticipation(undefined));
+
+        it('selects the practice mode when the URL addresses the practice participation', async () => {
+            // Reproduces the reload after starting the practice mode: without this the mode fell back to graded and the
+            // split panel redirected the editor to the graded participation, whose repository is read-only after the
+            // due date.
+            routeToParticipation('680');
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('practice');
+        });
+
+        it('keeps the graded mode when the URL addresses the graded participation', async () => {
+            routeToParticipation('679');
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('graded');
+        });
+
+        it('keeps the graded mode when no participation is addressed', async () => {
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('graded');
+        });
     });
 
     it('should switch participationMode to practice for a test-run participation', () => {
