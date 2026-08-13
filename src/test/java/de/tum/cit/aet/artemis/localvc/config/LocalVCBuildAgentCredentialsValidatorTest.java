@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 
@@ -41,9 +42,11 @@ class LocalVCBuildAgentCredentialsValidatorTest {
      */
     @Test
     void shouldRunEagerlyOnALocalVcNode() {
+        Component component = AnnotationUtils.findAnnotation(LocalVCBuildAgentCredentialsValidator.class, Component.class);
         Profile profile = AnnotationUtils.findAnnotation(LocalVCBuildAgentCredentialsValidator.class, Profile.class);
         Lazy lazy = AnnotationUtils.findAnnotation(LocalVCBuildAgentCredentialsValidator.class, Lazy.class);
 
+        assertThat(component).as("nothing else registers the validator, so without component scanning it never runs at all").isNotNull();
         assertThat(profile).as("the validator must declare the profile it runs under").isNotNull();
         assertThat(profile.value()).containsExactly(Constants.PROFILE_LOCALVC);
         assertThat(lazy).as("the validator must be eager, otherwise it runs no earlier than the service it protects").isNotNull();

@@ -13,6 +13,7 @@ artemis:
         build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc, and ignored when build-agent-use-ssh is true. This config must be set for build agents and localvc.
         build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc, and ignored when build-agent-use-ssh is true. This config must be set for build agents and localvc. You can also use an ssh key
         # If true, build agents generate a key pair at startup and use ssh to clone repositories from core nodes. Also set ssh-template-clone-url and ssh-private-key-folder-path for the build agents if true.
-        # Set the same value on the build agents and on every core node: it also decides which mechanism a core node accepts, and a core node with ssh enabled rejects the
-        # build-agent git username and password rather than leaving a repository-wide read shortcut open that no build agent uses.
+        # On a core node this instead governs the https door: with true, the core node rejects the build-agent git username and password rather than leaving a repository-wide
+        # read shortcut open that no build agent uses. A core node accepts a registered build agent's public key either way, so set this on the build agents first (builds keep
+        # working) and on the core nodes afterwards. Setting it on the core nodes while an agent still clones over https breaks that agent.
         build-agent-use-ssh: false

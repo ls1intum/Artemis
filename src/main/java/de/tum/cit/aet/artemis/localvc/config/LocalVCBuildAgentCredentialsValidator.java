@@ -47,11 +47,12 @@ public class LocalVCBuildAgentCredentialsValidator {
     }
 
     /**
-     * Rejects a node that has no way to authenticate build agents, and otherwise records the mechanism it accepts.
+     * Rejects a node that has no way to authenticate build agents, and otherwise records whether the credential pair is
+     * still accepted.
      * <p>
-     * The logged line matters because the property has to carry the same value on the build agents and on every core
-     * node, and in a multi node setup those live in separate files. A mismatch fails every clone with an authentication
-     * error that says nothing about the cause, so each side stating what it does makes the disagreement visible.
+     * The logged line matters because a core node configured for ssh rejects an agent that still clones over https, and
+     * in a multi node setup the two settings live in separate files. That failure surfaces as an authentication error
+     * saying nothing about the cause, so having each node state what it accepts makes the disagreement visible.
      *
      * @throws IllegalStateException if ssh is disabled and the build-agent git credentials are not both configured
      */

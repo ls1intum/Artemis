@@ -601,7 +601,7 @@ You can make following adaptations to the `application-prod.yml`:
             build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. You can otherwise use an ssh key
     ```
 
-    Alternatively, set `artemis.version-control.build-agent-use-ssh: true` to have every agent generate an SSH key pair at startup and authenticate with it, which removes the need for a shared credential. Set the property to the same value on the build agents *and* on every localvc node: it decides both which mechanism an agent uses and which one a localvc node accepts, and a node with SSH enabled rejects the git username and password rather than leaving a repository-wide read shortcut open. See [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication).
+    Alternatively, set `artemis.version-control.build-agent-use-ssh: true` to have every agent generate an SSH key pair at startup and authenticate with it, which removes the need for a shared credential. Set it on the build agents first — localvc nodes accept a registered agent's key regardless of their own setting, so builds keep working — and only afterwards on the localvc nodes, where it stops the git username and password from being accepted at all. See [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication).
 
 4. Configuration related to the execution of build jobs:
 

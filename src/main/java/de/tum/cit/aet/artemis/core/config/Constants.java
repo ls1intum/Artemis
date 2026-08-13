@@ -617,8 +617,14 @@ public final class Constants {
     /**
      * The name of the property that selects how build agents authenticate against the local VC of the core nodes: with
      * the key pair they generate at startup when {@code true}, or with the build-agent git username and password when
-     * {@code false}. It has to carry the same value on the build agents and on the core nodes, because it decides both
-     * which mechanism an agent uses and which one a core node accepts.
+     * {@code false}.
+     * <p>
+     * It means something different on each node role. On a build agent it picks the mechanism the agent uses. On a core
+     * node it governs only the https door: {@code true} stops the credential pair from being accepted. Core nodes
+     * accept a registered build agent's public key either way, because a key is per-agent and only reaches a core node
+     * through an agent that has joined the cluster, so unlike the shared credential pair there is nothing to close.
+     * Setting it on the agents therefore keeps builds running, and setting it on the core nodes is what removes the
+     * credential.
      */
     public static final String BUILD_AGENT_USE_SSH_PROPERTY_NAME = "artemis.version-control.build-agent-use-ssh";
 

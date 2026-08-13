@@ -153,6 +153,11 @@ public class LocalVCServletService {
      * {@code build-agent-git-password}. The two mechanisms are alternatives, not a fallback chain: a build agent picks
      * exactly one in {@code BuildJobGitService.authenticate}, so when ssh is configured, this node stops accepting the
      * credential pair rather than leaving a second way in that nothing uses.
+     * <p>
+     * This closes the https door only. {@code GitPublickeyAuthenticatorService} keeps authenticating a registered build
+     * agent by its public key whatever this property says, deliberately: a key is per-agent and reaches this node only
+     * through an agent that has joined the cluster, so there is no shared secret to withdraw, and agents can be moved to
+     * ssh one at a time before the core nodes follow.
      */
     @Value("${artemis.version-control.build-agent-use-ssh:false}")
     private boolean useSshForBuildAgent;
