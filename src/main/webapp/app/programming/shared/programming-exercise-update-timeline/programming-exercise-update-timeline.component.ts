@@ -1,6 +1,7 @@
 import { Component, OnInit, Signal, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MODULE_FEATURE_ATHENA, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Dayjs } from 'dayjs/esm';
@@ -28,7 +29,7 @@ import { convertDateFromClient } from 'app/foundation/util/date.utils';
     selector: 'jhi-programming-exercise-update-timeline',
     templateUrl: './programming-exercise-update-timeline.component.html',
     styleUrls: ['./programming-exercise-update-timeline.component.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, TimelineComponent, ExerciseFeedbackSuggestionOptionsComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, TimelineComponent, ExerciseFeedbackSuggestionOptionsComponent, ConfirmDialogModule],
     providers: [ConfirmationService],
 })
 export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
