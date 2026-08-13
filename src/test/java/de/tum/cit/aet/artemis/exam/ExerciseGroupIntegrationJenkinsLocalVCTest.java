@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -286,14 +288,14 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     void testDeleteExerciseGroup_asInstructor() throws Exception {
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(textExercise1));
+            await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise1));
         }
-        WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise1);
 
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, course1.getId(), exam1.getId(), exerciseGroup1);
         assertThat(textExerciseRepository.findById(textExercise1.getId())).isEmpty();
 
-        WeaviateTestUtil.assertExerciseNotInWeaviate(weaviateService, textExercise1.getId());
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> WeaviateTestUtil.assertExerciseNotInWeaviate(weaviateService, textExercise1.getId()));
     }
 
     @Test
