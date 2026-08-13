@@ -389,8 +389,8 @@ export class IrisCitationTextComponent {
     /**
      * Navigates to the cited lecture unit, jumping to the exact page or timestamp only when the material is unchanged.
      * <p>
-     * The `deepLink` flag tells the lecture page that a specific unit was asked for rather than the lecture as a whole, so that it can say so when it cannot find it. It is
-     * set for every citation, including ones carrying no pinned version: whether the unit still exists is a question that does not need versions to answer.
+     * The `unit` parameter is what tells the lecture page that a specific unit was asked for rather than the lecture as a whole, so that it can say so when it cannot find
+     * it. It is sent for every citation, including ones carrying no pinned version: whether the unit still exists is a question that does not need versions to answer.
      * <p>
      * A stamped citation only travels with the coordinate of the material it was checked against. A video citation carries the companion slide number of its transcript
      * segment, and that PDF may have changed on its own since — the transcription version says nothing about it, so jumping to that page would present an unverified slide
@@ -404,7 +404,7 @@ export class IrisCitationTextComponent {
         includeExactPosition: boolean,
         pinnedKind?: IrisCitationVersion['kind'],
     ): void {
-        const queryParams: Record<string, string> = { unit: unitId, deepLink: 'true' };
+        const queryParams: Record<string, string> = { unit: unitId };
         if (includeExactPosition) {
             const timestamp = element.getAttribute('data-timestamp');
             const page = element.getAttribute('data-page');

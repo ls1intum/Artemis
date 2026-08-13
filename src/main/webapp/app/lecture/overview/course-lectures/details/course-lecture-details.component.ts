@@ -155,9 +155,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
 
-    /** Whether the current navigation asked for a specific unit rather than the lecture as a whole, which is what makes a unit that cannot be found worth reporting. */
-    private isDeepLink = false;
-
     // ViewChildren to access all attachment/video unit components
     private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
 
@@ -207,7 +204,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const unitId = Number(params['unit']);
-            this.isDeepLink = params['deepLink'] === 'true';
             if (Number.isInteger(unitId) && unitId > 0) {
                 this.targetUnitId.set(unitId);
                 const timestamp = Number(params['timestamp']);
@@ -334,11 +330,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             if (this.lecture()?.id !== this.lectureId) {
                 return;
             }
-            // A deep link that was followed to a unit which is gone is worth saying out loud, since landing on the lecture with nothing highlighted otherwise looks like the
-            // link simply did nothing.
-            if (this.isDeepLink) {
-                this.alertService.error(DEEP_LINK_UNIT_GONE_ERROR_KEY);
-            }
+            // Asking for a unit that is gone is worth saying out loud, since landing on the lecture with nothing highlighted otherwise looks like the link simply did
+            // nothing. Reaching this point already means a unit was asked for, so the request to navigate to one is the signal — no separate flag is needed to mark it.
+            this.alertService.error(DEEP_LINK_UNIT_GONE_ERROR_KEY);
             this.targetUnitId.set(undefined);
             this.targetVideoTimestamp.set(undefined);
             this.targetPdfPage.set(undefined);

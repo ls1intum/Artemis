@@ -301,7 +301,7 @@ describe('IrisCitationTextComponent', () => {
         });
 
         /** Every citation navigation carries this, so the lecture page knows a specific unit was asked for and can say so when it cannot find it. */
-        const unitOnly = { unit: '42', deepLink: 'true' };
+        const unitOnly = { unit: '42' };
 
         const clickCitation = (text: string, citationInfo: IrisCitationMetaDTO[]) => {
             const el = render(text, citationInfo);

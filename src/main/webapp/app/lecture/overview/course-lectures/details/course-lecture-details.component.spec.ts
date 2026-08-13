@@ -538,7 +538,6 @@ describe('CourseLectureDetailsComponent', () => {
 
             it('reports a deep link whose unit no longer exists', () => {
                 const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-                courseLecturesDetailsComponent['isDeepLink'] = true;
                 courseLecturesDetailsComponent['lectureId'] = lecture.id!;
                 courseLecturesDetailsComponent.lecture.set(lecture);
                 targetMissingUnit();
@@ -549,12 +548,12 @@ describe('CourseLectureDetailsComponent', () => {
                 expect(courseLecturesDetailsComponent.targetUnitId()).toBeUndefined();
             });
 
-            it('stays silent when the lecture was opened without a deep link', () => {
+            it('stays silent when the lecture was opened without asking for a unit', () => {
                 const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-                courseLecturesDetailsComponent['isDeepLink'] = false;
                 courseLecturesDetailsComponent['lectureId'] = lecture.id!;
                 courseLecturesDetailsComponent.lecture.set(lecture);
                 targetMissingUnit();
+                courseLecturesDetailsComponent.targetUnitId.set(undefined);
 
                 courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
 
@@ -564,7 +563,6 @@ describe('CourseLectureDetailsComponent', () => {
             // While switching lectures the previous lecture's units are still in the signal, so every target looks missing for a moment
             it('keeps the target pending while the loaded units still belong to the previous lecture and reports once the requested lecture has loaded', () => {
                 const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-                courseLecturesDetailsComponent['isDeepLink'] = true;
                 courseLecturesDetailsComponent['lectureId'] = lecture.id! + 1;
                 courseLecturesDetailsComponent.lecture.set(lecture);
                 targetMissingUnit();
