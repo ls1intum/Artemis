@@ -295,7 +295,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         verify(examAccessService).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, course1.getId(), exam1.getId(), exerciseGroup1);
         assertThat(textExerciseRepository.findById(textExercise1.getId())).isEmpty();
 
-        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> WeaviateTestUtil.assertExerciseNotInWeaviate(weaviateService, textExercise1.getId()));
+        WeaviateTestUtil.assertExerciseNotInWeaviate(weaviateService, textExercise1.getId());
     }
 
     @Test
