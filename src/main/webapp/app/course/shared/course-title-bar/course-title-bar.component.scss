@@ -46,7 +46,7 @@
 
 /*
  * A crowded action row squeezes the title; without this the text wraps to a second line and the bar grows past its
- * 40px. Keep it on one line and ellipsis instead — the full title is still in the breadcrumb above.
+ * 40px. Keep it on one line with an ellipsis instead.
  */
 .title-bar-title {
     min-width: 0;

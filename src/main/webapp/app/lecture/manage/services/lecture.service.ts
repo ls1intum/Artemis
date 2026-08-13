@@ -8,6 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
@@ -80,7 +81,9 @@ export class LectureService {
      */
     findAllByCourseIdForOverview(courseId: number): Observable<LectureForOverview[]> {
         return this.http.get<LectureForOverview[]>(`api/lecture/courses/${courseId}/lectures-for-overview`).pipe(
-            map((lectures) => lectures.map((lecture) => ({ ...lecture, startDate: convertDateFromServer(lecture.startDate), endDate: convertDateFromServer(lecture.endDate) }))),
+            map((lectures) =>
+                lectures.map((lecture) => cloneWith(lecture, { startDate: convertDateFromServer(lecture.startDate), endDate: convertDateFromServer(lecture.endDate) })),
+            ),
             tap((lectures) => lectures.forEach((lecture) => this.entityTitleService.setTitle(EntityType.LECTURE, [lecture.id], lecture.title))),
         );
     }
@@ -138,7 +141,7 @@ export class LectureService {
     }
 
     protected convertLectureDatesFromClient(lecture: Lecture): Lecture {
-        const copy: Lecture = Object.assign({}, lecture, {
+        const copy: Lecture = cloneWith(lecture, {
             startDate: convertDateFromClient(lecture.startDate),
             endDate: convertDateFromClient(lecture.endDate),
         });
