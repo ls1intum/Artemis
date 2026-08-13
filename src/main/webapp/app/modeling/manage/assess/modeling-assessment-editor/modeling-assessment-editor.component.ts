@@ -125,6 +125,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
 
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return this.feedback;
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
     /**
      * Retrieve whether feedback suggestions are enabled based on whether a feedback suggestions module is set on the
      * current modeling exercise.

@@ -35,25 +35,12 @@ import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-ite
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
-import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
-import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
-import { LearningPathInstructorPageComponent } from 'app/atlas/manage/learning-path-instructor-page/learning-path-instructor-page.component';
-import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard.component';
-import { CourseScoresComponent } from 'app/course/manage/course-scores/course-scores.component';
-import { FaqComponent } from 'app/communication/faq/faq.component';
-import { BuildOverviewComponent } from 'app/localci/build-queue/build-overview.component';
-import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
-import { ExamManagementComponent } from 'app/exam/manage/exam-management/exam-management.component';
-import { CourseManagementExercisesComponent } from 'app/course/manage/exercises/course-management-exercises.component';
-import { LectureComponent } from 'app/lecture/manage/lecture/lecture.component';
-import { CourseManagementStatisticsComponent } from 'app/course/manage/statistics/course-management-statistics.component';
-import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
+import { SidebarView, isPageTitleView, isSidebarView } from 'app/course/shared/sidebar-view.interface';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { CourseOperationProgressDTO, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
@@ -146,23 +133,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    activatedComponentReference = signal<
-        | CourseDetailComponent
-        | ExamManagementComponent
-        | CourseManagementExercisesComponent
-        | LectureComponent
-        | CourseManagementStatisticsComponent
-        | IrisSettingsUpdateComponent
-        | CourseConversationsComponent
-        | TutorialGroupsChecklistComponent
-        | CompetencyManagementComponent
-        | LearningPathInstructorPageComponent
-        | AssessmentDashboardComponent
-        | CourseScoresComponent
-        | FaqComponent
-        | BuildOverviewComponent
-        | undefined
-    >(undefined);
+    activatedComponentReference = signal<SidebarView | undefined>(undefined);
 
     override async ngOnInit() {
         this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: Params) => {
@@ -264,7 +235,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     loadCourse(): Observable<void> {
-        return this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
+        // The management shell only needs the course record. It used to take it from the course dashboard, which also
+        // loads every exercise, participation, submission and result for the requesting instructor and discards them.
+        return this.courseManagementService.find(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.course.set(res.body);
@@ -278,27 +251,14 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     protected handleComponentActivation(componentRef: unknown): void {
-        if (
-            componentRef instanceof CourseDetailComponent ||
-            componentRef instanceof CourseManagementExercisesComponent ||
-            componentRef instanceof ExamManagementComponent ||
-            componentRef instanceof LectureComponent ||
-            componentRef instanceof CourseManagementStatisticsComponent ||
-            componentRef instanceof CourseConversationsComponent ||
-            componentRef instanceof TutorialGroupsChecklistComponent ||
-            componentRef instanceof CompetencyManagementComponent ||
-            componentRef instanceof LearningPathInstructorPageComponent ||
-            componentRef instanceof AssessmentDashboardComponent ||
-            componentRef instanceof CourseScoresComponent ||
-            componentRef instanceof FaqComponent ||
-            componentRef instanceof BuildOverviewComponent
-        ) {
-            this.activatedComponentReference.set(componentRef);
+        const sidebarView = isSidebarView(componentRef) ? componentRef : undefined;
+        this.activatedComponentReference.set(sidebarView);
+        if (sidebarView) {
+            this.isSidebarCollapsed.set(sidebarView.isCollapsed());
         }
-        if (this.activatedComponentReference() instanceof CourseConversationsComponent) {
-            const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
+        if (isPageTitleView(componentRef)) {
             // Show the page title inside the conversations sidebar header, mirroring the student overview.
-            childRouteComponent.setPageTitle(this.pageTitle());
+            componentRef.setPageTitle(this.pageTitle());
         }
         // if we don't scroll to the top, the page will be scrolled to the last position which is not expected by the user
         if (this.courseBody()) {
@@ -307,11 +267,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     handleToggleSidebar(): void {
-        if (!this.activatedComponentReference() || !(this.activatedComponentReference() instanceof CourseConversationsComponent)) {
+        const ref = this.activatedComponentReference();
+        if (!ref) {
             return;
         }
-        const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
-        childRouteComponent.toggleSidebar();
+        ref.toggleSidebar();
+        this.isSidebarCollapsed.set(ref.isCollapsed());
     }
 
     override getSidebarItems(): SidebarItem[] {

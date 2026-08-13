@@ -18,6 +18,7 @@ import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -376,7 +377,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         // Reassigning the model forces internal store sync and visual refresh without waiting for user interaction.
         if (this.apollonEditor) {
             const currentModel = this.apollonEditor.model;
-            this.apollonEditor.model = { ...currentModel };
+            this.apollonEditor.model = deepClone(currentModel);
         }
         this.isUpdatingFromServer = false;
     }

@@ -64,6 +64,9 @@
                         [readOnly]="readOnly"
                         [highlightDifferences]="highlightDifferences"
                         [resultId]="result()!.id!"
+                        [gradingCriteria]="modelingExercise()?.gradingCriteria ?? []"
+                        [allFeedbacks]="allAssessmentFeedbacks()"
+                        [maxPoints]="getTotalMaxPoints(modelingExercise())"
                     />
                 }
                 @if ((hasAutomaticFeedback() || highlightMissingFeedback()) && !result()?.completionDate) {

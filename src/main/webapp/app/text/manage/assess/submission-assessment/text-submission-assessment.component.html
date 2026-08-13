@@ -67,6 +67,9 @@
                     (feedbacksChange)="validateFeedback($event)"
                     [readOnly]="readOnly"
                     [resultId]="result()!.id!"
+                    [gradingCriteria]="exercise?.gradingCriteria ?? []"
+                    [allFeedbacks]="allAssessmentFeedbacks()"
+                    [maxPoints]="getTotalMaxPoints(exercise)"
                 />
             }
         </div>
