@@ -5,12 +5,9 @@
 
     <!-- Remove jhi_user.reset_key and replace it with two columns for id and hash -->
     <changeSet id="20260724210000-1" author="angatha and Lion Holtkötter">
-        <renameColumn tableName="jhi_user" oldColumnName="reset_key" newColumnName="reset_key_id"/>
         <update tableName="jhi_user">
-            <column name="reset_key_id" value="null"/>
+            <column name="reset_key" value="null"/>
         </update>
-        <addColumn tableName="jhi_user">
-            <column name="reset_key_hash" type="varchar(255)"/>
-        </addColumn>
+        <modifyDataType tableName="jhi_user" columnName="reset_key" newDataType="varchar(255)" />
     </changeSet>
 </databaseChangeLog>

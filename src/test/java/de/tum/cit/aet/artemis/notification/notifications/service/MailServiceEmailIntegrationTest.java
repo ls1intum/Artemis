@@ -125,12 +125,10 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void passwordResetEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        recipient.setResetKeyId("reset-key-789");
-
         testMailService.sendPasswordResetMail(MailRecipientDTO.withResetSecretFrom("secret-for-789", recipient));
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("reset-key-789");
+        assertThat(body).contains(recipient.getEmail());
         assertThat(body).contains("secret-for-789");
         assertThat(body).contains("account/reset/finish");
     }
@@ -138,12 +136,11 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void passwordResetEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
-        recipient.setResetKeyId("de-reset-key-012");
 
         testMailService.sendPasswordResetMail(MailRecipientDTO.withResetSecretFrom("secret-for-012", recipient));
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("de-reset-key-012");
+        assertThat(body).contains(recipient.getEmail());
         assertThat(body).contains("secret-for-012");
         assertThat(body).contains("account/reset/finish");
     }
@@ -152,7 +149,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void passwordResetEmail_shouldUseTheSharedArtemisLayout() throws Exception {
         recipient.setResetKey("styled-reset-key-345");
 
-        testMailService.sendPasswordResetMail(MailRecipientDTO.from(recipient));
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetSecretFrom("", recipient));
 
         assertUsesSharedArtemisLayout(getDeliveredEmailBody());
     }
@@ -170,7 +167,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void saml2SetPasswordEmail_shouldUseTheSharedArtemisLayout() throws Exception {
         recipient.setResetKey("styled-saml-key-567");
 
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.from(recipient));
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetSecretFrom("abc", recipient));
 
         assertUsesSharedArtemisLayout(getDeliveredEmailBody());
     }
@@ -204,12 +201,10 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void saml2SetPasswordEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        recipient.setResetKeyId("saml-reset-key-345");
-
         testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetSecretFrom("saml-secret-for-345", recipient));
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("saml-reset-key-345");
+        assertThat(body).contains(recipient.getEmail());
         assertThat(body).contains("saml-secret-for-345");
         assertThat(body).contains("account/reset/finish");
     }
@@ -217,12 +212,11 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void saml2SetPasswordEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
-        recipient.setResetKeyId("de-saml-key-678");
 
         testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetSecretFrom("saml-secret-for-678", recipient));
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("de-saml-key-678");
+        assertThat(body).contains(recipient.getEmail());
         assertThat(body).contains("saml-secret-for-678");
         assertThat(body).contains("account/reset/finish");
     }

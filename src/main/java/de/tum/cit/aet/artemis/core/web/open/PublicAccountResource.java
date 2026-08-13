@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
-import de.tum.cit.aet.artemis.core.dto.vm.KeyIdKeySecretAndPasswordVM;
+import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -312,15 +312,14 @@ public class PublicAccountResource {
     @PostMapping("account/reset-password/finish")
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
-    public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyIdKeySecretAndPasswordVM keyAndPassword) {
+    public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
         if (accountService.isPasswordLengthInvalid(keyAndPassword.newPassword())) {
             throw new PasswordViolatesRequirementsException();
         }
-        if (StringUtils.isEmpty(keyAndPassword.keyId()) || StringUtils.isEmpty(keyAndPassword.keySecret()) || keyAndPassword.keyId().length() < 10
-                || keyAndPassword.keySecret().length() < 10) {
+        if (StringUtils.isEmpty(keyAndPassword.resetKey()) || keyAndPassword.resetKey().length() < 10) {
             throw new AccessForbiddenException("Invalid key for password reset");
         }
-        Optional<User> user = userService.completePasswordReset(keyAndPassword.newPassword(), keyAndPassword.keyId(), keyAndPassword.keySecret(),
+        Optional<User> user = userService.completePasswordReset(keyAndPassword.newPassword(), keyAndPassword.email(), keyAndPassword.resetKey(),
                 keyAndPassword.revokeCredentialsOrAll());
 
         if (user.isEmpty()) {

@@ -17,11 +17,10 @@ import de.tum.cit.aet.artemis.account.domain.User;
  * (e.g. {@code user.login}, {@code user.activationKey}, {@code user.getName()}).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, String resetKeyId,
-        @Nullable @JsonIgnore String resetKeySecret) {
+public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, @Nullable @JsonIgnore String resetKey) {
 
     public MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName) {
-        this(email, langKey, login, firstName, lastName, null, null, null);
+        this(email, langKey, login, firstName, lastName, null, null);
     }
 
     /**
@@ -35,26 +34,24 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
     }
 
     public static MailRecipientDTO forUnnamed(String email, String langKey, String login) {
-        return new MailRecipientDTO(email, langKey, login, null, null, null, null, null);
+        return new MailRecipientDTO(email, langKey, login, null, null, null, null);
     }
 
     public static MailRecipientDTO forAdministrator(String email, String login) {
-        return new MailRecipientDTO(email, "en", login, "Administrator", null, null, null, null);
+        return new MailRecipientDTO(email, "en", login, "Administrator", null, null, null);
     }
 
     public static MailRecipientDTO from(User user) {
-        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getActivationKey(), user.getResetKeyId(),
-                null);
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getActivationKey(), null);
     }
 
     public static MailRecipientDTO withResetSecretFrom(String resetKeySecret, User user) {
-        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getActivationKey(), user.getResetKeyId(),
-                resetKeySecret);
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getActivationKey(), resetKeySecret);
     }
 
     @Override
     public @NonNull String toString() {
         return "MailRecipientDTO[" + "email='" + email + '\'' + ", langKey='" + langKey + '\'' + ", login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='"
-                + lastName + '\'' + ", activationKey=***, resetKeyId='" + resetKeyId + '\'' + ", resetKeySecret=***]";
+                + lastName + '\'' + ", activationKey=***, resetKey=***]";
     }
 }

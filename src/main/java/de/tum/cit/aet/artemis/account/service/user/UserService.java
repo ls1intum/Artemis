@@ -276,18 +276,16 @@ public class UserService {
      * Reset user password for given reset key
      *
      * @param newPassword      new password string
-     * @param keyId            reset key id
-     * @param keySecret        reset key secret (not the hashed version)
+     * @param resetKey         reset key secret (not the hashed version)
      * @param revocationChoice which of the user's other credentials to revoke alongside the reset
      * @return user for whom the password was performed
      */
-    public Optional<User> completePasswordReset(String newPassword, String keyId, String keySecret, CredentialRevocationChoiceDTO revocationChoice) {
-        log.debug("Reset user password for reset key with id {}", keyId);
-        return userRepository.findOneByResetKeyId(keyId).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400)))
-                .filter(user -> user.getResetKeyHash() != null && passwordService.checkPasswordMatch(keySecret, user.getResetKeyHash())).map(user -> {
+    public Optional<User> completePasswordReset(String newPassword, String email, String resetKey, CredentialRevocationChoiceDTO revocationChoice) {
+        log.debug("Reset user password for {} with reset key", email);
+        return userRepository.findOneByEmailIgnoreCase(email).filter(user -> user.getResetDate().isAfter(Instant.now().minus(MAX_RESET_KEY_LIFETIME)))
+                .filter(user -> user.getResetKey() != null && passwordService.checkPasswordMatch(resetKey, user.getResetKey())).map(user -> {
                     user.setPassword(passwordService.hashPassword(newPassword));
-                    user.setResetKeyId(null);
-                    user.setResetKeyHash(null);
+                    user.setResetKey(null);
                     user.setResetDate(null);
                     saveUser(user);
                     // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
@@ -320,13 +318,12 @@ public class UserService {
      */
     public Optional<String> prepareUserForPasswordReset(User user) {
         if (user.getActivated() && user.isInternal()) {
-            user.setResetKeyId(RandomUtil.generateResetKeyId());
-            String resetKeySecret = RandomUtil.generateResetKeySecret();
-            String resetKeyHash = passwordService.hashPassword(resetKeySecret);
-            user.setResetKeyHash(resetKeyHash);
+            String resetKey = RandomUtil.generateResetKeySecret();
+            String resetKeyHash = passwordService.hashPassword(resetKey);
+            user.setResetKey(resetKeyHash);
             user.setResetDate(Instant.now());
             saveUser(user);
-            return Optional.of(resetKeySecret);
+            return Optional.of(resetKey);
         }
         return Optional.empty();
     }

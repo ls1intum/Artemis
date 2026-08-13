@@ -354,7 +354,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         giveUserCredentials();
         prepareResetKey();
 
-        userService.completePasswordReset("new-Password-123", "reset-key-" + user.getId(), new CredentialRevocationChoiceDTO(true, true, true)).orElseThrow();
+        userService.completePasswordReset("new-Password-123", user.getEmail(), getUnhashedResetKey(), new CredentialRevocationChoiceDTO(true, true, true)).orElseThrow();
 
         assertAllCredentialsRevoked();
     }
@@ -366,7 +366,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         giveUserCredentials();
         prepareResetKey();
 
-        userService.completePasswordReset("new-Password-123", "reset-key-" + user.getId(), CredentialRevocationChoiceDTO.none()).orElseThrow();
+        userService.completePasswordReset("new-Password-123", user.getEmail(), getUnhashedResetKey(), CredentialRevocationChoiceDTO.none()).orElseThrow();
 
         assertAllCredentialsKept();
     }
@@ -377,15 +377,19 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         giveUserCredentials();
         prepareResetKey();
 
-        userService.completePasswordReset("new-Password-123", "reset-key-" + user.getId(), new CredentialRevocationChoiceDTO(false, true, false)).orElseThrow();
+        userService.completePasswordReset("new-Password-123", user.getEmail(), getUnhashedResetKey(), new CredentialRevocationChoiceDTO(false, true, false)).orElseThrow();
 
         assertPasskeyKept();
         assertVcsAccessTokensKept();
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
     }
 
+    private String getUnhashedResetKey() {
+        return "reset-key-" + user.getId();
+    }
+
     private void prepareResetKey() {
-        user.setResetKey("reset-key-" + user.getId());
+        user.setResetKey(passwordService.hashPassword(getUnhashedResetKey()));
         user.setResetDate(Instant.now());
         userRepository.save(user);
     }

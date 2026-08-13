@@ -82,8 +82,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     String FILTER_WITHOUT_REG_NO = "WITHOUT_REG_NO";
 
-    Optional<User> findOneByResetKeyId(String resetKeyId);
-
     Optional<User> findOneByEmailIgnoreCase(String email);
 
     List<User> findByVcsAccessTokenExpiryDateBetween(ZonedDateTime from, ZonedDateTime to);
