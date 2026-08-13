@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_AGENT_USE_SSH_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
@@ -42,6 +43,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.localvc.service.AbstractGitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -53,10 +55,10 @@ import de.tum.cit.aet.artemis.programming.exception.GitException;
  * <p>
  * This service extends {@link AbstractGitService} and provides build-agent-specific Git operations,
  * including repository cloning and commit checkout. It supports two authentication mechanisms:
- * <ol>
- * <li><b>SSH authentication</b>: Uses SSH keys for secure access (preferred when available)</li>
- * <li><b>Username/password authentication</b>: Falls back to HTTP(S) with credentials</li>
- * </ol>
+ * <ul>
+ * <li><b>SSH authentication</b>: the key pair the agent generates at startup and publishes to the core nodes</li>
+ * <li><b>Username/password authentication</b>: HTTP(S) with the configured build-agent git credentials</li>
+ * </ul>
  * <p>
  * <b>Usage in Build Jobs:</b>
  * <ul>
@@ -66,10 +68,11 @@ import de.tum.cit.aet.artemis.programming.exception.GitException;
  * <li>{@link #deleteLocalRepository} - Cleans up cloned repositories after build completion</li>
  * </ul>
  * <p>
- * <b>Authentication Priority:</b>
- * The service uses SSH if {@code artemis.version-control.build-agent-use-ssh=true} and required
- * SSH configuration (private key path, URL template) is provided. Otherwise, it uses the configured
- * username and password from application properties.
+ * <b>Choosing a mechanism:</b>
+ * {@code artemis.version-control.build-agent-use-ssh} selects one of the two, and there is no fallback between them:
+ * with ssh, a missing private key path or url template fails startup rather than reverting to https, and without ssh,
+ * missing credentials fail startup rather than reverting to a key. The same property has to be set on the core nodes,
+ * which accept only the mechanism it names.
  *
  * @see BuildJobExecutionService
  * @see AbstractGitService
@@ -81,10 +84,12 @@ public class BuildJobGitService extends AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobGitService.class);
 
-    @Value("${artemis.version-control.build-agent-git-username}")
+    // Optional on purpose: an agent that authenticates with an ssh key never uses this credential pair, and then must
+    // not have to configure one. {@link #init} rejects a missing value for the https case, where it is required.
+    @Value("${artemis.version-control.build-agent-git-username:}")
     private String buildAgentGitUsername;
 
-    @Value("${artemis.version-control.build-agent-git-password}")
+    @Value("${artemis.version-control.build-agent-git-password:}")
     private String buildAgentGitPassword;
 
     @Value("${artemis.version-control.build-agent-use-ssh:false}")
@@ -105,11 +110,9 @@ public class BuildJobGitService extends AbstractGitService {
     private SshdSessionFactory sshdSessionFactory;
 
     /**
-     * initialize the BuildJobGitService, in particular which authentication mechanism should be used
-     * Artemis uses the following order for authentication:
-     * 1. ssh key (if available)
-     * 2. username + personal access token (if available)
-     * 3. username + password
+     * Initializes the BuildJobGitService, in particular which authentication mechanism is used, and fails startup when
+     * the configuration for the selected mechanism is incomplete. Failing here rather than at clone time keeps the
+     * error next to the setting that caused it.
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
@@ -124,7 +127,17 @@ public class BuildJobGitService extends AbstractGitService {
                 throw new RuntimeException("No SSH private key folder was set but should use SSH for build agent authentication.");
             }
             configureSsh();
+            return;
         }
+        // The mirror of the checks above. Both credentials are optional so that an ssh installation does not have to
+        // configure them, which means the https case has to reject a missing value here instead: the core node stops
+        // accepting a blank credential pair, so an agent that started without one would fail every clone at build time
+        // with an authentication error, far away from the configuration that caused it.
+        if (!StringUtils.hasText(buildAgentGitUsername) || !StringUtils.hasText(buildAgentGitPassword)) {
+            throw new IllegalStateException("No build agent git username and password were set, and " + BUILD_AGENT_USE_SSH_PROPERTY_NAME
+                    + " is false. Configure both credentials, or set that property to true on the build agents and on every core node to authenticate with an ssh key instead.");
+        }
+        log.info("BuildJobGitService will use the configured git username and password as authentication method to interact with remote git repositories.");
     }
 
     protected boolean useSsh() {

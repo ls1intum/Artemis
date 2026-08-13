@@ -615,6 +615,14 @@ public final class Constants {
     public static final String WEAVIATE_ENABLED_PROPERTY_NAME = "artemis.weaviate.enabled";
 
     /**
+     * The name of the property that selects how build agents authenticate against the local VC of the core nodes: with
+     * the key pair they generate at startup when {@code true}, or with the build-agent git username and password when
+     * {@code false}. It has to carry the same value on the build agents and on the core nodes, because it decides both
+     * which mechanism an agent uses and which one a core node accepts.
+     */
+    public static final String BUILD_AGENT_USE_SSH_PROPERTY_NAME = "artemis.version-control.build-agent-use-ssh";
+
+    /**
      * The name of the property used to define the directories for file uploads.
      */
     public static final String UPLOADS_FILE_PATH_PROPERTY_NAME = "artemis.file-upload-path";

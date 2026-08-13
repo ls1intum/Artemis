@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_AGENT_USE_SSH_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpStringFromRequest;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.sshd.server.session.ServerSession;
@@ -138,11 +140,23 @@ public class LocalVCServletService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
 
-    @Value("${artemis.version-control.build-agent-git-username}")
+    // Optional on purpose: an installation whose build agents authenticate with an ssh key never uses this credential
+    // pair, and then must not have to configure one. Every read of these fields is guarded by StringUtils.hasText.
+    @Value("${artemis.version-control.build-agent-git-username:}")
     private String buildAgentGitUsername;
 
-    @Value("${artemis.version-control.build-agent-git-password}")
+    @Value("${artemis.version-control.build-agent-git-password:}")
     private String buildAgentGitPassword;
+
+    /**
+     * Whether the build agents of this installation clone over ssh, using the key pair they generate at startup and
+     * publish to the core nodes, rather than over https with {@code build-agent-git-username} and
+     * {@code build-agent-git-password}. The two mechanisms are alternatives, not a fallback chain: a build agent picks
+     * exactly one in {@code BuildJobGitService.authenticate}, so when ssh is configured, this node stops accepting the
+     * credential pair rather than leaving a second way in that nothing uses.
+     */
+    @Value("${artemis.version-control.build-agent-use-ssh:false}")
+    private boolean useSshForBuildAgent;
 
     public static final String BUILD_USER_NAME = "buildjob_user";
 
@@ -169,6 +183,29 @@ public class LocalVCServletService {
         this.authorizationCheckService = authorizationCheckService;
         this.rateLimitService = rateLimitService;
         this.exerciseVersionService = exerciseVersionService;
+    }
+
+    /**
+     * Logs which mechanism this node accepts from build agents, so that a rejected clone can be told apart from a
+     * misconfigured one without reading the source. A build agent whose configuration disagrees with this node fails
+     * every fetch, and in a multi node setup the two settings live in separate files, which makes the mismatch easy to
+     * produce and hard to see.
+     * <p>
+     * This bean is lazy, so the line appears when the first git request initialises the service rather than at startup.
+     */
+    @PostConstruct
+    public void logBuildAgentAuthenticationMechanism() {
+        if (useSshForBuildAgent) {
+            log.info("Build agents authenticate with an ssh key ({}=true). This node rejects the build-agent git username and password.", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
+        }
+        else if (StringUtils.hasText(buildAgentGitUsername) && StringUtils.hasText(buildAgentGitPassword)) {
+            log.info("Build agents authenticate with the configured git username and password. Set {}=true on the build agents and on every core node to use ssh keys instead.",
+                    BUILD_AGENT_USE_SSH_PROPERTY_NAME);
+        }
+        else {
+            log.warn("No build agent authentication is configured: {} is false, but the build-agent git username and password are not both set. Build agents cannot clone "
+                    + "repositories from this node over https.", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
+        }
     }
 
     /**
@@ -254,8 +291,10 @@ public class LocalVCServletService {
             throw new LocalVCAuthException("No authorization header provided", true);
         }
 
-        // If it is a fetch request, we check if it is the build agent that is fetching the repository.
-        if (repositoryAction == RepositoryActionType.READ) {
+        // If it is a fetch request, we check if it is the build agent that is fetching the repository. Build agents that
+        // authenticate with an ssh key never present this credential pair, so the shortcut is closed for them entirely:
+        // an unused way in that grants repository-wide read is worth strictly less than the attack surface it carries.
+        if (repositoryAction == RepositoryActionType.READ && !useSshForBuildAgent) {
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             // A blank configured credential must never match: this shortcut returns ahead of the rate limit, the
             // repository authorization checks and the access log, so an empty configured password would hand

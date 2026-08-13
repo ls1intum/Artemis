@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_AGENT_USE_SSH_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -61,7 +62,8 @@ public class BuildAgentGitPasswordValidator {
     }
 
     /**
-     * Rejects a shipped example or blank build-agent git password under the production profile.
+     * Rejects a shipped example or blank build-agent git password under the production profile, unless the build agents
+     * authenticate with an ssh key, in which case the password is not accepted anywhere and its value cannot matter.
      * <p>
      * Matching credentials let a caller read every repository in the installation: {@code LocalVCServletService}
      * returns early on a match, ahead of the rate limit, the repository authorization checks and the VCS access log.
@@ -73,6 +75,15 @@ public class BuildAgentGitPasswordValidator {
     public void validateBuildAgentGitPassword() {
         if (!environment.matchesProfiles(ArtemisConstants.SPRING_PROFILE_PRODUCTION)) {
             // Local development, tests and CI keep working with the packaged defaults.
+            return;
+        }
+
+        if (environment.getProperty(BUILD_AGENT_USE_SSH_PROPERTY_NAME, Boolean.class, false)) {
+            // The build agents authenticate with an ssh key, so LocalVCServletService rejects the credential pair
+            // outright and there is no shortcut left for this value to open. Refusing to start over an unused password
+            // would only push operators to invent one. The check re-arms by itself, because it runs on every startup
+            // and therefore also on the one that follows setting the property back to false.
+            log.info("Skipping build-agent git password validation: {} is true, so the build-agent git credentials are not accepted", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
             return;
         }
 
@@ -89,8 +100,8 @@ public class BuildAgentGitPasswordValidator {
             throw new InsecureDefaultCredentialException(BUILD_AGENT_GIT_PASSWORD_PROPERTY,
                     "the build-agent git password is configured but blank, and a caller presenting the build-agent username with an empty password can then read every "
                             + "repository without any authorization check or access-log entry",
-                    "Set a unique, non-blank password and keep it in sync with the build agents' configuration. The property has to carry a value even when the agents "
-                            + "authenticate with an ssh key, because the localvc and buildagent profiles require it to resolve.");
+                    "Set a unique, non-blank password and keep it in sync with the build agents' configuration, or set " + BUILD_AGENT_USE_SSH_PROPERTY_NAME
+                            + " to true on the build agents and on every core node, which drops the credential pair in favour of an ssh key.");
         }
 
         // Non-short-circuiting on purpose, so that every candidate is compared regardless of where the match sits.
