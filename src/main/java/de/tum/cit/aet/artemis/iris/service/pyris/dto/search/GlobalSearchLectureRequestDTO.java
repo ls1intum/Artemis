@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotBlank;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Request body sent by the Angular client to {@code POST api/iris/lecture-search}: the user's query, the result limit, and an optional course filter.
@@ -18,5 +17,5 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * {@link PyrisLectureSearchRequestDTO} (which does carry the access context) is built from this in the connector.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GlobalSearchLectureRequestDTO(@NotBlank String query, @Min(1) @Max(20) int limit, @Nullable @JsonProperty("courseIds") List<Long> courseIds) {
+public record GlobalSearchLectureRequestDTO(@NotBlank String query, @Min(1) @Max(20) int limit, @Nullable List<Long> courseIds) {
 }

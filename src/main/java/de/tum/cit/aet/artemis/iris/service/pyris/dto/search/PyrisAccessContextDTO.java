@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Role-grouped course IDs the requesting user can access, resolved by Artemis and applied by Pyris as opaque filters.
@@ -21,7 +20,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param unrestricted     {@code true} for admins, who bypass course scoping and visibility filtering entirely
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisAccessContextDTO(@JsonProperty("courseIds") List<Long> courseIds, @JsonProperty("editorCourseIds") List<Long> editorCourseIds,
-        @JsonProperty("taCourseIds") List<Long> taCourseIds, @JsonProperty("studentCourseIds") List<Long> studentCourseIds,
-        @JsonProperty("staffCourseIds") List<Long> staffCourseIds, @JsonProperty("now") ZonedDateTime now, @JsonProperty("unrestricted") boolean unrestricted) {
+public record PyrisAccessContextDTO(List<Long> courseIds, List<Long> editorCourseIds, List<Long> taCourseIds, List<Long> studentCourseIds, List<Long> staffCourseIds,
+        ZonedDateTime now, boolean unrestricted) {
+
+    /**
+     * Normalizes every role-grouped course-ID list to a non-null (empty) list, so callers and JSON
+     * serialization never have to reason about {@code null} lists. {@code now} may still be {@code null}
+     * (serialized as absent via {@link JsonInclude.Include#NON_EMPTY}; Iris then falls back to its own clock).
+     */
+    public PyrisAccessContextDTO {
+        courseIds = courseIds == null ? List.of() : courseIds;
+        editorCourseIds = editorCourseIds == null ? List.of() : editorCourseIds;
+        taCourseIds = taCourseIds == null ? List.of() : taCourseIds;
+        studentCourseIds = studentCourseIds == null ? List.of() : studentCourseIds;
+        staffCourseIds = staffCourseIds == null ? List.of() : staffCourseIds;
+    }
 }
