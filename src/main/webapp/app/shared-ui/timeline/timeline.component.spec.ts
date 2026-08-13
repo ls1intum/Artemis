@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
 
-import { TimelineComponent, TimelineItem } from './timeline.component';
+import { TimelineComponent, TimelineItem, TimelineValidationMode } from './timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -40,7 +40,7 @@ describe('ExerciseTimeline', () => {
             kind: 'optional',
             labelStringKey: 'release',
             internalDate: releaseDate.toDate(),
-            isBeforePreviousDate: false,
+            hasInvalidDateOrder: false,
             isInputRequiredButUndefined: false,
             tooltip: undefined,
         });
@@ -48,7 +48,7 @@ describe('ExerciseTimeline', () => {
             kind: 'required',
             labelStringKey: 'due',
             internalDate: dueDate.toDate(),
-            isBeforePreviousDate: true,
+            hasInvalidDateOrder: true,
             isInputRequiredButUndefined: false,
             tooltip: 'artemisApp.exercise.timelineDateOrderTooltip',
         });
@@ -56,7 +56,7 @@ describe('ExerciseTimeline', () => {
             kind: 'required',
             labelStringKey: 'assessment',
             internalDate: undefined,
-            isBeforePreviousDate: false,
+            hasInvalidDateOrder: false,
             isInputRequiredButUndefined: true,
             tooltip: 'artemisApp.exercise.timelineDateRequiredTooltip',
         });
@@ -136,14 +136,14 @@ describe('ExerciseTimeline', () => {
 
         // Between release (Jan 1) and due (Jan 10): fails the default "all previous items" check (it's before dueItem)...
         fixture.componentRef.setInput('timelineItems', buildItems(false));
-        expect(component.internalTimelineItems()[2]).toMatchObject({ isBeforePreviousDate: true });
+        expect(component.internalTimelineItems()[2]).toMatchObject({ hasInvalidDateOrder: true });
 
         // ...but is valid once the check is restricted to just [releaseItem] via orderCheckAgainst.
         fixture.componentRef.setInput('timelineItems', buildItems(true));
-        expect(component.internalTimelineItems()[2]).toMatchObject({ isBeforePreviousDate: false });
+        expect(component.internalTimelineItems()[2]).toMatchObject({ hasInvalidDateOrder: false });
     });
 
-    it('should reject equal dates only when strict ordering is enabled', () => {
+    it('should allow equal dates by default and reject them in sequentially strict mode', () => {
         const date = dayjs('2026-01-01T10:00:00Z');
         const timelineItems: TimelineItem[] = [
             { kind: 'optional', labelStringKey: 'release', date: signal(date) },
@@ -151,14 +151,14 @@ describe('ExerciseTimeline', () => {
         ];
         fixture.componentRef.setInput('timelineItems', timelineItems);
 
-        expect(component.internalTimelineItems()[1]).toMatchObject({ isBeforePreviousDate: false, tooltip: undefined });
+        expect(component.internalTimelineItems()[1]).toMatchObject({ hasInvalidDateOrder: false, tooltip: undefined });
         expect(component.timelineStatus().valid).toBe(true);
 
-        fixture.componentRef.setInput('strictOrdering', true);
+        fixture.componentRef.setInput('validationMode', TimelineValidationMode.SEQUENTIALLY_STRICT);
 
         expect(component.internalTimelineItems()[1]).toMatchObject({
-            isBeforePreviousDate: true,
-            tooltip: 'artemisApp.exercise.timelineStrictDateOrderTooltip',
+            hasInvalidDateOrder: true,
+            tooltip: 'artemisApp.exercise.timelineDateStrictOrderTooltip',
         });
         expect(component.timelineStatus().valid).toBe(false);
     });

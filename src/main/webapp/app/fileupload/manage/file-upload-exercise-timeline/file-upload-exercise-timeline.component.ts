@@ -1,5 +1,5 @@
 import { Component, computed, input, model, output } from '@angular/core';
-import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { TimelineComponent, TimelineItem, TimelineStatus, TimelineValidationMode } from 'app/shared-ui/timeline/timeline.component';
 import { Dayjs } from 'dayjs/esm';
 
 @Component({
@@ -8,6 +8,7 @@ import { Dayjs } from 'dayjs/esm';
     templateUrl: './file-upload-exercise-timeline.component.html',
 })
 export class FileUploadExerciseTimelineComponent {
+    readonly TimelineValidationMode = TimelineValidationMode;
     releaseDate = model<Dayjs | undefined>();
     startDate = model<Dayjs | undefined>();
     dueDate = model<Dayjs | undefined>();

@@ -1,1 +1,1 @@
-<jhi-timeline [timelineItems]="timelineItems()" [strictOrdering]="true" (timelineStatusChange)="timelineStatus.emit($event)" />
+<jhi-timeline [timelineItems]="timelineItems()" [validationMode]="TimelineValidationMode.SEQUENTIALLY_STRICT" (timelineStatusChange)="timelineStatus.emit($event)" />

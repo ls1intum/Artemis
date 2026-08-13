@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { TimelineStatus, TimelineItem } from 'app/shared-ui/timeline/timeline.component';
+import { TimelineItem, TimelineStatus, TimelineValidationMode } from 'app/shared-ui/timeline/timeline.component';
 
 @Component({
     selector: 'jhi-timeline',
@@ -8,6 +8,6 @@ import { TimelineStatus, TimelineItem } from 'app/shared-ui/timeline/timeline.co
 export class TimelineStubComponent {
     timelineItems = input.required<TimelineItem[]>();
     readonly = input<boolean>(false);
-    strictOrdering = input(false);
+    validationMode = input<TimelineValidationMode>(TimelineValidationMode.SEQUENTIALLY_ALLOW_EQUAL);
     timelineStatusChange = output<TimelineStatus>();
 }
