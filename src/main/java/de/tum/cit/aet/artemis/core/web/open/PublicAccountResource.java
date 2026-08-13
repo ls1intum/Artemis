@@ -281,6 +281,8 @@ public class PublicAccountResource {
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> requestPasswordReset(@RequestBody String mailUsername) {
+        // For failure paths: Pretend the request has been successful to prevent checking which emails or usernames
+        // really exist but log that an invalid attempt has been made
         List<User> users = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
         if (!users.isEmpty()) {
             List<User> internalUsers = users.stream().filter(User::isInternal).toList();
@@ -291,11 +293,14 @@ public class PublicAccountResource {
                 throw new BadRequestAlertException("Email or username is not unique. Found multiple potential users", "Account", "usernameNotUnique");
             }
             var internalUser = internalUsers.getFirst();
-            userService.prepareUserForPasswordReset(internalUser).ifPresent(s -> mailService.sendPasswordResetMail(MailRecipientDTO.withResetSecretFrom(s, internalUser)));
+            if (internalUser.getEmail() == null) { // Should not happen but constraint is not enforced on db.
+                log.warn("Password reset requested for user with login '{}' which has no email specified.", mailUsername);
+            }
+            else {
+                userService.prepareUserForPasswordReset(internalUser).ifPresent(s -> mailService.sendPasswordResetMail(MailRecipientDTO.withResetSecretFrom(s, internalUser)));
+            }
         }
         else {
-            // Pretend the request has been successful to prevent checking which emails or usernames really exist
-            // but log that an invalid attempt has been made
             log.warn("Password reset requested for non-existing mail or username '{}'", mailUsername);
         }
         return ResponseEntity.ok().build();
