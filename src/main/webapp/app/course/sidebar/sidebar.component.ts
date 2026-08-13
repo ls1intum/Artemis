@@ -4,7 +4,6 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { SidebarEventService } from './service/sidebar-event.service';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { cloneDeep } from 'lodash-es';
 import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/foundation/types/exercise-filter';
 import {
     getAchievablePointsAndAchievedScoreFilterOptions,
@@ -23,6 +22,7 @@ import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarI
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-sidebar',
@@ -188,7 +188,7 @@ export class SidebarComponent implements OnDestroy {
         this.initializeFilterOptions();
 
         if (!this.sidebarDataBeforeFiltering()) {
-            this.sidebarDataBeforeFiltering.set(cloneDeep(this.sidebarDataInternal()));
+            this.sidebarDataBeforeFiltering.set(deepClone(this.sidebarDataInternal()));
         }
 
         this.modalRef = this.modalService.open(ExerciseFilterModalComponent, {
@@ -197,8 +197,8 @@ export class SidebarComponent implements OnDestroy {
             animation: true,
         });
 
-        this.modalRef.componentInstance.sidebarData = cloneDeep(this.sidebarDataBeforeFiltering());
-        this.modalRef.componentInstance.exerciseFilters = cloneDeep(this.exerciseFilters());
+        this.modalRef.componentInstance.sidebarData = deepClone(this.sidebarDataBeforeFiltering());
+        this.modalRef.componentInstance.exerciseFilters = deepClone(this.exerciseFilters());
 
         this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
             this.sidebarDataInternal.set(exerciseFilterResults.filteredSidebarData!);

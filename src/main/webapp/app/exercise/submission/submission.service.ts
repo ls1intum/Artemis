@@ -13,6 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -197,7 +198,7 @@ export class SubmissionService {
      * Convert a Submission to a JSON which can be sent to the server.
      */
     public convert<T extends Submission>(submission: T): T {
-        return Object.assign({}, submission);
+        return deepClone(submission);
     }
 
     /**
