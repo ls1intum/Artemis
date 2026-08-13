@@ -40,6 +40,7 @@ import {
     PROFILE_LOCALCI,
     ProfileFeature,
 } from 'app/app.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type FeatureToggleInfo = {
     feature: FeatureToggle;
@@ -255,7 +256,7 @@ export class AdminFeatureToggleComponent implements OnInit {
     }
 
     private setToggleState(feature: FeatureToggle, isActive: boolean): void {
-        this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === feature ? { ...toggle, isActive } : toggle)));
+        this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === feature ? cloneWith(toggle, { isActive }) : toggle)));
     }
 
     private setPending(feature: FeatureToggle, pending: boolean): void {
