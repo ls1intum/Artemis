@@ -298,7 +298,7 @@ public class PyrisConnectorService {
             restTemplate.postForEntity(pyrisUrl + endpoint, dto, Void.class);
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to send lecture unit metadata {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
+            logLectureUnitSyncFailure("metadata", dto.lectureUnitId(), e);
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
@@ -318,12 +318,21 @@ public class PyrisConnectorService {
             restTemplate.postForEntity(pyrisUrl + endpoint, dto, Void.class);
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to send lecture unit visibility {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
+            logLectureUnitSyncFailure("visibility", dto.lectureUnitId(), e);
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send lecture unit visibility {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
             throw new PyrisConnectorException("Could not send lecture visibility to Pyris");
+        }
+    }
+
+    private void logLectureUnitSyncFailure(String updateKind, long lectureUnitId, HttpStatusCodeException exception) {
+        if (exception.getStatusCode().value() == 404) {
+            log.warn("Pyris has no lecture unit {} for {} sync (HTTP 404); retrying with backoff", lectureUnitId, updateKind);
+        }
+        else {
+            log.error("Failed to send lecture unit {} {} sync to Pyris: {}", lectureUnitId, updateKind, exception.getMessage());
         }
     }
 

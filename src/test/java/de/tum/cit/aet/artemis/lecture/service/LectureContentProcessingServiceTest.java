@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -74,6 +75,8 @@ class LectureContentProcessingServiceTest {
 
     private WebsocketMessagingService websocketMessagingService;
 
+    private IrisLectureUnitSyncService syncService;
+
     private AttachmentVideoUnit testUnit;
 
     private Lecture testLecture;
@@ -87,13 +90,14 @@ class LectureContentProcessingServiceTest {
         attachmentVideoUnitRepository = mock(AttachmentVideoUnitTestRepository.class);
         attachmentRepository = mock(AttachmentRepository.class);
         irisLectureApi = mock(IrisLectureApi.class);
+        syncService = mock(IrisLectureUnitSyncService.class);
         FeatureToggleService featureToggleService = mock(FeatureToggleService.class);
 
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
         websocketMessagingService = mock(WebsocketMessagingService.class);
-        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, Optional.of(irisLectureApi),
-                websocketMessagingService);
+        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, attachmentVideoUnitRepository,
+                Optional.of(irisLectureApi), websocketMessagingService, syncService);
         recoveryService = new ProcessingStateRecoveryService(processingStateRepository, transcriptionRepository, websocketMessagingService);
 
         service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService, attachmentRepository);
@@ -109,6 +113,9 @@ class LectureContentProcessingServiceTest {
 
         testState = new LectureUnitProcessingState(testUnit);
         testState.setPhase(ProcessingPhase.IDLE);
+        lenient().when(processingStateRepository.findByLectureUnitIdForUpdate(anyLong()))
+                .thenAnswer(invocation -> processingStateRepository.findByLectureUnit_Id(invocation.getArgument(0)));
+        lenient().when(processingStateRepository.findAttachmentVideoUnitForUpdateById(anyLong())).thenReturn(Optional.of(testUnit));
     }
 
     // ==================== FLOW 1: Enqueue New Unit ====================
@@ -161,7 +168,7 @@ class LectureContentProcessingServiceTest {
             FeatureToggleService fts = mock(FeatureToggleService.class);
             when(fts.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
             ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository,
-                    Optional.empty(), mock(WebsocketMessagingService.class));
+                    attachmentVideoUnitRepository, Optional.empty(), mock(WebsocketMessagingService.class), syncService);
             service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback, attachmentRepository);
 
             service.triggerProcessing(testUnit);
@@ -397,6 +404,7 @@ class LectureContentProcessingServiceTest {
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
             assertThat(testState.getIngestionJobToken()).isNull();
+            verify(syncService).markCurrentStateDirtyAfterIngestion(testUnit.getId());
         }
 
         @Test
@@ -1018,6 +1026,7 @@ class LectureContentProcessingServiceTest {
             LectureUnitProcessingState failingState = new LectureUnitProcessingState(testUnit);
             failingState.setId(301L);
             failingState.setPhase(ProcessingPhase.TRANSCRIBING);
+            failingState.setIngestionJobToken("token-1");
 
             AttachmentVideoUnit secondUnit = new AttachmentVideoUnit();
             secondUnit.setId(201L);
@@ -1025,6 +1034,7 @@ class LectureContentProcessingServiceTest {
             LectureUnitProcessingState recoverableState = new LectureUnitProcessingState(secondUnit);
             recoverableState.setId(302L);
             recoverableState.setPhase(ProcessingPhase.INGESTING);
+            recoverableState.setIngestionJobToken("token-2");
 
             when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(failingState, recoverableState));
             when(processingStateRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));

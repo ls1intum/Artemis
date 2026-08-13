@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -102,7 +103,6 @@ public class AttachmentVideoUnitService {
 
         // Trigger automated content processing (transcription and ingestion)
         contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
-        irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(buildSnapshot(savedAttachmentVideoUnit));
 
         return savedAttachmentVideoUnit;
     }
@@ -124,11 +124,19 @@ public class AttachmentVideoUnitService {
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
             MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
         LectureContentUpdateSnapshot beforeSnapshot = buildSnapshot(existingAttachmentVideoUnit);
+        boolean hasUploadedFile = updateFile != null && !updateFile.isEmpty();
+        boolean contentWillChange = !Objects.equals(existingAttachmentVideoUnit.getVideoSource(), updateUnitDTO.videoSource())
+                || hasUploadedFile && (existingAttachmentVideoUnit.getAttachment() == null || !getOrBackfillStoredFileSha256Hash(existingAttachmentVideoUnit.getAttachment())
+                        .filter(attachmentFileHashService.sha256(updateFile).value()::equals).isPresent());
+        boolean processingReserved = contentWillChange && existingAttachmentVideoUnit.getLecture() != null && !existingAttachmentVideoUnit.getLecture().isTutorialLecture()
+                && contentProcessingService.isPresent();
+        if (processingReserved) {
+            contentProcessingService.orElseThrow().prepareForReprocessing(existingAttachmentVideoUnit);
+        }
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
         existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
         existingAttachmentVideoUnit.setVideoSource(updateUnitDTO.videoSource());
-        boolean hasUploadedFile = updateFile != null && !updateFile.isEmpty();
         // Note: competency links are updated by the resource layer using lectureUnitService.updateCompetencyLinks
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
@@ -196,20 +204,26 @@ public class AttachmentVideoUnitService {
 
         LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit, projectedSlideHiddenUntilBySlideNumber);
         var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
-        triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds);
+        triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds, processingReserved);
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
 
         return savedAttachmentVideoUnit;
     }
 
     private void triggerContentProcessingForUpdateKinds(AttachmentVideoUnit savedAttachmentVideoUnit, LectureContentUpdateSnapshot afterSnapshot,
-            Set<LectureContentUpdateKind> updateKinds) {
+            Set<LectureContentUpdateKind> updateKinds, boolean processingReserved) {
         if (updateKinds.isEmpty()) {
             return;
         }
 
         if (updateKinds.contains(LectureContentUpdateKind.CONTENT)) {
-            contentProcessingService.ifPresent(service -> service.triggerProcessing(savedAttachmentVideoUnit));
+            if (processingReserved) {
+                contentProcessingService.orElseThrow().triggerProcessing(savedAttachmentVideoUnit);
+                return;
+            }
+            if (savedAttachmentVideoUnit.getLecture() != null && savedAttachmentVideoUnit.getLecture().isTutorialLecture()) {
+                return;
+            }
         }
 
         if (updateKinds.contains(LectureContentUpdateKind.METADATA)) {

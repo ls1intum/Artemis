@@ -13,7 +13,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,6 +30,7 @@ import org.springframework.data.domain.Pageable;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
@@ -59,7 +62,12 @@ class IrisLectureUnitSyncEventListenerTest {
     void setUp() {
         listener = new IrisLectureUnitSyncEventListener(attachmentVideoUnitRepository, syncStateRepository, syncDispatchService, slideRepository, syncService);
         lenient().when(syncDispatchService.triggerSyncForUpdateKind(any(), eq(LectureContentUpdateKind.METADATA))).thenReturn("metadata-token");
-        lenient().when(syncStateRepository.claimRetry(eq(LECTURE_UNIT_ID), any(), any())).thenAnswer(_ -> syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID));
+        lenient().when(syncStateRepository.claimRetry(eq(LECTURE_UNIT_ID), any(), any()))
+                .thenAnswer(invocation -> syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID).map(state -> {
+                    state.setStatus(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
+                    state.setNextRetryAt(invocation.getArgument(2));
+                    return state;
+                }));
     }
 
     @Test
@@ -70,7 +78,7 @@ class IrisLectureUnitSyncEventListenerTest {
         var slide = new Slide();
         slide.setSlideNumber(2);
         slide.setHidden(ZonedDateTime.parse("2026-07-04T10:15:30Z"));
-        when(attachmentVideoUnitRepository.findUnitsMissingIrisSyncStateFromActiveCourses(any(), any(Pageable.class))).thenReturn(List.of(unit));
+        when(attachmentVideoUnitRepository.findUnitsMissingIrisSyncStateFromActiveCourses(any(), eq(ProcessingPhase.DONE), any(Pageable.class))).thenReturn(List.of(unit));
         when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide));
 
         listener.backfillMissingSyncStates();
@@ -131,7 +139,6 @@ class IrisLectureUnitSyncEventListenerTest {
         assertThat(state.getLastSyncedMetadataHash()).isEqualTo("metadata-hash");
         assertThat(state.getLastSyncedVisibilityHash()).isNull();
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
-        assertThat(state.getNextRetryAt().toInstant()).isEqualTo(nextRetryAt.toInstant());
     }
 
     @Test
@@ -142,7 +149,6 @@ class IrisLectureUnitSyncEventListenerTest {
         var state = syncState();
         state.setVisibilityHash("projected-visibility-hash");
         when(syncStateRepository.findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(any(), any())).thenReturn(List.of(state));
-        when(syncStateRepository.claimRetry(eq(LECTURE_UNIT_ID), any(), any())).thenReturn(Optional.of(state));
         when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
         when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
         when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY)).thenReturn("persisted-slide-hash");
@@ -191,7 +197,10 @@ class IrisLectureUnitSyncEventListenerTest {
         var currentState = syncState();
         currentState.setMetadataHash("new-dirty-hash");
         when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
-        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(dispatchedState), Optional.of(currentState));
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(dispatchedState)).thenAnswer(_ -> {
+            currentState.setNextRetryAt(dispatchedState.getNextRetryAt());
+            return Optional.of(currentState);
+        });
 
         listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
 
@@ -223,6 +232,40 @@ class IrisLectureUnitSyncEventListenerTest {
         listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
 
         assertThat(retryState.getNextRetryAt().toInstant()).isBetween(before.plusMinutes(60).toInstant(), ZonedDateTime.now().plusMinutes(60).toInstant());
+    }
+
+    @Test
+    void syncResultDoesNotOverrideClaimRevokedByIngestionCompletion() {
+        enableStateTransitions();
+        var unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        var claimedState = syncState();
+        claimedState.setMetadataHash("metadata-hash");
+        var stateAfterIngestion = syncState();
+        stateAfterIngestion.setMetadataHash("metadata-hash");
+        stateAfterIngestion.setNextRetryAt(ZonedDateTime.now());
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(claimedState), Optional.of(stateAfterIngestion));
+        listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
+        assertThat(stateAfterIngestion.getLastSyncedMetadataHash()).isNull();
+    }
+
+    @Test
+    void syncResultAcceptsClaimDeadlineAfterDatabaseNormalization() {
+        enableStateTransitions();
+        var unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        var claimedState = syncState();
+        claimedState.setMetadataHash("metadata-hash");
+        var reloadedState = syncState();
+        reloadedState.setMetadataHash("metadata-hash");
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(claimedState)).thenAnswer(_ -> {
+            reloadedState.setNextRetryAt(claimedState.getNextRetryAt().withZoneSameInstant(ZoneOffset.ofHours(2)).truncatedTo(ChronoUnit.MICROS));
+            return Optional.of(reloadedState);
+        });
+        listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
+        assertThat(reloadedState.getLastSyncedMetadataHash()).isEqualTo("metadata-hash");
     }
 
     @Test

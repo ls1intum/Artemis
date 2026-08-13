@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
@@ -66,6 +68,19 @@ public class IrisLectureUnitSyncEventListener {
         synchronize(event.lectureUnitId(), LectureContentUpdateKind.VISIBILITY, event.slideHiddenUntilBySlideNumber());
     }
 
+    /** @param event the ingestion completion event */
+    @EventListener
+    @Async
+    public void handleResyncAfterIngestion(IrisLectureUnitSyncService.IrisLectureUnitResyncAfterIngestionEvent event) {
+        try {
+            ZonedDateTime claimTime = ZonedDateTime.now();
+            syncStateRepository.claimRetry(event.lectureUnitId(), claimTime, claimTime.plusMinutes(RETRY_LEASE_MINUTES)).ifPresent(this::synchronizeDirtyState);
+        }
+        catch (Exception e) {
+            log.warn("Could not claim Iris lecture unit sync state {} after ingestion", event.lectureUnitId(), e);
+        }
+    }
+
     /**
      * Retries Iris/Pyris metadata and visibility updates that failed during event handling.
      */
@@ -84,7 +99,7 @@ public class IrisLectureUnitSyncEventListener {
      */
     @Scheduled(fixedRate = 300000)
     public void backfillMissingSyncStates() {
-        attachmentVideoUnitRepository.findUnitsMissingIrisSyncStateFromActiveCourses(ZonedDateTime.now(), PageRequest.of(0, 50)).forEach(unit -> {
+        attachmentVideoUnitRepository.findUnitsMissingIrisSyncStateFromActiveCourses(ZonedDateTime.now(), ProcessingPhase.DONE, PageRequest.of(0, 50)).forEach(unit -> {
             try {
                 var snapshot = new LectureContentUpdateSnapshot(unit.getId(), null, null, null, null, null, null, null, unit.resolveReleaseDate(),
                         SlideVisibilitySnapshotHelper.toSortedHiddenUntilBySlideNumber(slideRepository.findAllByAttachmentVideoUnitId(unit.getId())));
@@ -100,9 +115,9 @@ public class IrisLectureUnitSyncEventListener {
         if (!Objects.equals(state.getMetadataHash(), state.getLastSyncedMetadataHash())) {
             synchronize(state, LectureContentUpdateKind.METADATA);
         }
-        if (!Objects.equals(state.getVisibilityHash(), state.getLastSyncedVisibilityHash())) {
-            synchronize(state, LectureContentUpdateKind.VISIBILITY);
-        }
+        syncStateRepository.findByLectureUnitId(state.getLectureUnitId())
+                .filter(currentState -> !Objects.equals(currentState.getVisibilityHash(), currentState.getLastSyncedVisibilityHash()))
+                .ifPresent(currentState -> synchronize(currentState, LectureContentUpdateKind.VISIBILITY));
     }
 
     private void synchronize(Long lectureUnitId, LectureContentUpdateKind updateKind) {
@@ -125,6 +140,7 @@ public class IrisLectureUnitSyncEventListener {
     }
 
     private void synchronize(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber) {
+        ZonedDateTime claimDeadline = state.getNextRetryAt();
         try {
             AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(state.getLectureUnitId()).orElse(null);
             if (unit == null) {
@@ -137,18 +153,27 @@ public class IrisLectureUnitSyncEventListener {
                     .map(projectedVisibility -> syncDispatchService.triggerSyncForUpdateKind(unit, updateKind, projectedVisibility))
                     .orElseGet(() -> syncDispatchService.triggerSyncForUpdateKind(unit, updateKind));
             String dispatchedHash = getDispatchedHash(state, updateKind, dispatchResult);
-            syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(),
-                    currentState -> Optional.ofNullable(dispatchedHash).ifPresentOrElse(hash -> markSynced(currentState, updateKind, hash), () -> markSkipped(currentState)));
+            syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(), currentState -> {
+                if (hasSameClaimDeadline(currentState.getNextRetryAt(), claimDeadline)) {
+                    Optional.ofNullable(dispatchedHash).ifPresentOrElse(hash -> markSynced(currentState, updateKind, hash), () -> markSkipped(currentState));
+                }
+            });
         }
         catch (Exception e) {
             try {
                 syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(),
-                        currentState -> Optional.of(currentState).filter(candidate -> isDirtyForUpdateKind(candidate, updateKind)).ifPresent(candidate -> markRetry(candidate, e)));
+                        currentState -> Optional.of(currentState).filter(candidate -> hasSameClaimDeadline(candidate.getNextRetryAt(), claimDeadline))
+                                .filter(candidate -> isDirtyForUpdateKind(candidate, updateKind)).ifPresent(candidate -> markRetry(candidate, e)));
             }
             catch (Exception persistenceException) {
                 log.warn("Could not persist retry state for Iris lecture unit sync {}", state.getLectureUnitId(), persistenceException);
             }
         }
+    }
+
+    private static boolean hasSameClaimDeadline(ZonedDateTime currentDeadline, ZonedDateTime claimedDeadline) {
+        return currentDeadline != null && claimedDeadline != null
+                && currentDeadline.toInstant().truncatedTo(ChronoUnit.MICROS).equals(claimedDeadline.toInstant().truncatedTo(ChronoUnit.MICROS));
     }
 
     private static String getDispatchedHash(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, String dispatchResult) {

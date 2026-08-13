@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -80,6 +81,20 @@ public class LectureContentProcessingService {
     }
 
     // -------------------- Public API --------------------
+
+    /** @param unit the unit to reserve for asynchronous reprocessing */
+    @Transactional
+    public void prepareForReprocessing(AttachmentVideoUnit unit) {
+        processingStateRepository.findAttachmentVideoUnitForUpdateById(unit.getId()).orElseThrow();
+        LectureUnitProcessingState state = processingStateRepository.findByLectureUnitIdForUpdate(unit.getId()).orElseGet(() -> new LectureUnitProcessingState(unit));
+        state.setPhase(ProcessingPhase.TRANSCRIBING);
+        state.setStartedAt(ZonedDateTime.now());
+        state.setIngestionJobToken(null);
+        state.setRetryEligibleAt(null);
+        state.setErrorKey(null);
+        state.setLastUpdated(ZonedDateTime.now());
+        processingStateRepository.saveAndFlush(state);
+    }
 
     /**
      * Main entry point: Trigger processing for an AttachmentVideoUnit.
@@ -155,6 +170,10 @@ public class LectureContentProcessingService {
         LectureUnitProcessingState state = existingState.orElseGet(() -> new LectureUnitProcessingState(unit));
 
         // Detect content changes
+        if (state.getPhase() == ProcessingPhase.TRANSCRIBING && state.getIngestionJobToken() == null && state.getStartedAt() != null) {
+            state.setPhase(ProcessingPhase.IDLE);
+            state.setStartedAt(null);
+        }
         boolean contentChanged = handleContentChanges(unit, state, hasVideo, hasPdf);
         boolean shouldReprocess = contentChanged || forceReprocessing;
         if (shouldReprocess) {

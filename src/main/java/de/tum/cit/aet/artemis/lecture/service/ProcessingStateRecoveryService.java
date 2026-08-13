@@ -71,6 +71,9 @@ public class ProcessingStateRecoveryService {
         int resetCount = 0;
         RuntimeException firstFailure = null;
         for (LectureUnitProcessingState state : activeStates) {
+            if (state.getIngestionJobToken() == null) {
+                continue;
+            }
             try {
                 if (resetToIdleForRecovery(state)) {
                     resetCount++;

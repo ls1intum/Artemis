@@ -76,10 +76,11 @@ public interface IrisLectureUnitSyncStateRepository extends ArtemisJpaRepository
      * @param metadataHash   the new metadata hash, or null if metadata did not change
      * @param visibilityHash the new visibility hash, or null if visibility did not change
      * @param nextRetryAt    the earliest retry time
+     * @param resetSynced    whether to revoke previous synchronization results
      * @return the persisted dirty state
      */
     @Transactional
-    default IrisLectureUnitSyncState markDirty(long lectureUnitId, String metadataHash, String visibilityHash, ZonedDateTime nextRetryAt) {
+    default IrisLectureUnitSyncState markDirty(long lectureUnitId, String metadataHash, String visibilityHash, ZonedDateTime nextRetryAt, boolean resetSynced) {
         if (findAttachmentVideoUnitForUpdateById(lectureUnitId).isEmpty()) {
             throw new EntityNotFoundException("AttachmentVideoUnit", lectureUnitId);
         }
@@ -95,7 +96,11 @@ public interface IrisLectureUnitSyncStateRepository extends ArtemisJpaRepository
         if (visibilityHash != null) {
             state.setVisibilityHash(visibilityHash);
         }
-        boolean hasActiveLease = IrisLectureUnitSyncState.STATUS_IN_PROGRESS.equals(state.getStatus()) && state.getNextRetryAt() != null
+        if (resetSynced) {
+            state.setLastSyncedMetadataHash(null);
+            state.setLastSyncedVisibilityHash(null);
+        }
+        boolean hasActiveLease = !resetSynced && IrisLectureUnitSyncState.STATUS_IN_PROGRESS.equals(state.getStatus()) && state.getNextRetryAt() != null
                 && state.getNextRetryAt().isAfter(nextRetryAt);
         if (!hasActiveLease && java.util.Objects.equals(state.getMetadataHash(), state.getLastSyncedMetadataHash())
                 && java.util.Objects.equals(state.getVisibilityHash(), state.getLastSyncedVisibilityHash())) {
@@ -112,4 +117,5 @@ public interface IrisLectureUnitSyncStateRepository extends ArtemisJpaRepository
         }
         return save(state);
     }
+
 }

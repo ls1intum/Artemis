@@ -9,12 +9,15 @@ import java.util.Optional;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.iris.api.IrisLectureUnitSyncApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Conditional(LectureWithIrisEnabled.class)
@@ -26,9 +29,13 @@ public class IrisLectureUnitSyncDispatchService {
 
     private final Optional<IrisLectureUnitSyncApi> irisLectureUnitSyncApi;
 
-    public IrisLectureUnitSyncDispatchService(SlideRepository slideRepository, Optional<IrisLectureUnitSyncApi> irisLectureUnitSyncApi) {
+    private final LectureUnitProcessingStateRepository processingStateRepository;
+
+    public IrisLectureUnitSyncDispatchService(SlideRepository slideRepository, Optional<IrisLectureUnitSyncApi> irisLectureUnitSyncApi,
+            LectureUnitProcessingStateRepository processingStateRepository) {
         this.slideRepository = slideRepository;
         this.irisLectureUnitSyncApi = irisLectureUnitSyncApi;
+        this.processingStateRepository = processingStateRepository;
     }
 
     /**
@@ -38,13 +45,22 @@ public class IrisLectureUnitSyncDispatchService {
      * @param updateKind          the classified update kind
      * @return the visibility hash of the dispatched payload, or null for non-visibility updates
      */
+    @Transactional
     public String triggerSyncForUpdateKind(AttachmentVideoUnit attachmentVideoUnit, LectureContentUpdateKind updateKind) {
         return triggerSyncForUpdateKind(attachmentVideoUnit, updateKind, null);
     }
 
+    @Transactional
     String triggerSyncForUpdateKind(AttachmentVideoUnit attachmentVideoUnit, LectureContentUpdateKind updateKind,
             Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber) {
         Objects.requireNonNull(updateKind, "updateKind");
+        if (processingStateRepository.findAttachmentVideoUnitForUpdateById(attachmentVideoUnit.getId()).isEmpty()) {
+            return null;
+        }
+        if ((updateKind == LectureContentUpdateKind.METADATA || updateKind == LectureContentUpdateKind.VISIBILITY)
+                && !processingStateRepository.existsByLectureUnit_IdAndPhase(attachmentVideoUnit.getId(), ProcessingPhase.DONE)) {
+            return null;
+        }
         return switch (updateKind) {
             case NONE -> {
                 yield null;

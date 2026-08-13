@@ -23,7 +23,9 @@ import org.mockito.ArgumentCaptor;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureUnitSyncApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 
 class IrisLectureUnitSyncDispatchServiceTest {
@@ -34,16 +36,21 @@ class IrisLectureUnitSyncDispatchServiceTest {
 
     private IrisLectureUnitSyncApi irisLectureUnitSyncApi;
 
+    private LectureUnitProcessingStateRepository processingStateRepository;
+
     private IrisLectureUnitSyncDispatchService service;
 
     @BeforeEach
     void setUp() {
         slideRepository = mock(SlideTestRepository.class);
         irisLectureUnitSyncApi = mock(IrisLectureUnitSyncApi.class);
+        processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
         when(irisLectureUnitSyncApi.updateLectureUnitMetadataInPyris(any())).thenReturn("metadata-token");
         when(irisLectureUnitSyncApi.updateLectureUnitVisibilityInPyris(any(), any())).thenReturn("visibility-token");
+        when(processingStateRepository.findAttachmentVideoUnitForUpdateById(LECTURE_UNIT_ID)).thenAnswer(invocation -> Optional.of(attachmentVideoUnit()));
+        when(processingStateRepository.existsByLectureUnit_IdAndPhase(LECTURE_UNIT_ID, ProcessingPhase.DONE)).thenReturn(true);
 
-        service = new IrisLectureUnitSyncDispatchService(slideRepository, Optional.of(irisLectureUnitSyncApi));
+        service = new IrisLectureUnitSyncDispatchService(slideRepository, Optional.of(irisLectureUnitSyncApi), processingStateRepository);
     }
 
     @Test
@@ -90,12 +97,20 @@ class IrisLectureUnitSyncDispatchServiceTest {
 
     @Test
     void triggerSyncForUpdateKindDoesNothingWhenIrisApiIsUnavailable() {
-        service = new IrisLectureUnitSyncDispatchService(slideRepository, Optional.empty());
+        service = new IrisLectureUnitSyncDispatchService(slideRepository, Optional.empty(), processingStateRepository);
 
         service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.METADATA);
         service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.VISIBILITY);
 
         verify(slideRepository, never()).findAllByAttachmentVideoUnitId(any());
+    }
+
+    @Test
+    void triggerSyncForUpdateKindSkipsUnitsUntilIngestionCompletes() {
+        when(processingStateRepository.existsByLectureUnit_IdAndPhase(LECTURE_UNIT_ID, ProcessingPhase.DONE)).thenReturn(false);
+        assertThat(service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.METADATA)).isNull();
+        assertThat(service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.VISIBILITY)).isNull();
+        verifyNoInteractions(irisLectureUnitSyncApi);
     }
 
     @Test

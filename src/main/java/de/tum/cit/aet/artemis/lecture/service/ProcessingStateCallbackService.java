@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
@@ -81,17 +82,24 @@ public class ProcessingStateCallbackService {
 
     private final AttachmentRepository attachmentRepository;
 
+    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+
     private final Optional<IrisLectureApi> irisLectureApi;
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final IrisLectureUnitSyncService irisLectureUnitSyncService;
+
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService) {
+            AttachmentRepository attachmentRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository, Optional<IrisLectureApi> irisLectureApi,
+            WebsocketMessagingService websocketMessagingService, IrisLectureUnitSyncService irisLectureUnitSyncService) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentRepository = attachmentRepository;
+        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.irisLectureApi = irisLectureApi;
         this.websocketMessagingService = websocketMessagingService;
+        this.irisLectureUnitSyncService = irisLectureUnitSyncService;
     }
 
     // -------------------- Capacity-Aware Dispatch --------------------
@@ -230,8 +238,10 @@ public class ProcessingStateCallbackService {
      * @param displayPageNumbers list of displayed page numbers indexed by slide number (0-based: index 0 = slide 1);
      *                               {@code null} if not applicable or unavailable
      */
+    @Transactional
     public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode, @Nullable List<Integer> displayPageNumbers) {
-        Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
+        attachmentVideoUnitRepository.findByIdForUpdate(lectureUnitId);
+        Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnitIdForUpdate(lectureUnitId);
 
         if (stateOpt.isEmpty()) {
             log.warn("Received completion callback for unit {} but no processing state exists", lectureUnitId);
@@ -257,6 +267,7 @@ public class ProcessingStateCallbackService {
             state.setIngestionJobToken(null);
             processingStateRepository.save(state);
             saveDisplayPageNumbers(state, displayPageNumbers);
+            irisLectureUnitSyncService.markCurrentStateDirtyAfterIngestion(lectureUnitId);
 
             // Notify UI via WebSocket
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
@@ -289,12 +300,13 @@ public class ProcessingStateCallbackService {
      * @param jobToken      the job token for validation
      * @param resultJson    the JSON string containing transcription data
      */
+    @Transactional
     public void handleCheckpointData(long lectureUnitId, String jobToken, String resultJson) {
         if (resultJson == null || resultJson.isBlank()) {
             return;
         }
 
-        Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
+        Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnitIdForUpdate(lectureUnitId);
         if (stateOpt.isEmpty()) {
             log.warn("Received checkpoint for unit {} but no processing state exists", lectureUnitId);
             return;
@@ -336,8 +348,9 @@ public class ProcessingStateCallbackService {
      * @param lectureUnitId the ID of the lecture unit
      * @param jobToken      the job token for validation
      */
+    @Transactional
     public void handleHeartbeat(long lectureUnitId, String jobToken) {
-        Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
+        Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnitIdForUpdate(lectureUnitId);
         if (stateOpt.isEmpty()) {
             return;
         }

@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,7 +28,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class IrisLectureUnitSyncServiceTest {
@@ -45,13 +48,19 @@ class IrisLectureUnitSyncServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
+
+    @Mock
+    private SlideTestRepository slideRepository;
+
     private IrisLectureUnitSyncService service;
 
     @BeforeEach
     void setUp() {
-        service = new IrisLectureUnitSyncService(repository, eventPublisher);
-        doCallRealMethod().when(repository).markDirty(anyLong(), nullable(String.class), nullable(String.class), any(ZonedDateTime.class));
-        when(repository.findAttachmentVideoUnitForUpdateById(LECTURE_UNIT_ID)).thenReturn(Optional.of(new AttachmentVideoUnit()));
+        service = new IrisLectureUnitSyncService(repository, eventPublisher, attachmentVideoUnitRepository, slideRepository);
+        lenient().doCallRealMethod().when(repository).markDirty(anyLong(), nullable(String.class), nullable(String.class), any(ZonedDateTime.class), any(Boolean.class));
+        lenient().when(repository.findAttachmentVideoUnitForUpdateById(LECTURE_UNIT_ID)).thenReturn(Optional.of(new AttachmentVideoUnit()));
     }
 
     @Test
@@ -223,6 +232,30 @@ class IrisLectureUnitSyncServiceTest {
         assertThat(persistedState.get().getVisibilityHash()).hasSize(64);
         assertThat(persistedState.get().getMetadataHash()).hasSize(64);
         verify(repository, times(2)).findAttachmentVideoUnitForUpdateById(LECTURE_UNIT_ID);
+    }
+
+    @Test
+    void ingestionCompletionReplacesBothSnapshotsAndPublishesCombinedEvent() {
+        var unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        var lecture = new Lecture();
+        lecture.setCourse(new de.tum.cit.aet.artemis.course.domain.Course());
+        unit.setLecture(lecture);
+        var state = new IrisLectureUnitSyncState();
+        state.setLastSyncedMetadataHash("old-metadata");
+        state.setLastSyncedVisibilityHash("old-visibility");
+        state.setStatus(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
+        state.setNextRetryAt(ZonedDateTime.now().plusHours(1));
+        when(attachmentVideoUnitRepository.findByIdForUpdate(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        service.markCurrentStateDirtyAfterIngestion(LECTURE_UNIT_ID);
+        assertThat(List.of(state.getMetadataHash(), state.getVisibilityHash())).allMatch(hash -> hash.length() == 64);
+        assertThat(state.getLastSyncedMetadataHash()).isNull();
+        assertThat(state.getLastSyncedVisibilityHash()).isNull();
+        assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
+        verify(eventPublisher).publishEvent(new IrisLectureUnitSyncService.IrisLectureUnitResyncAfterIngestionEvent(LECTURE_UNIT_ID));
     }
 
     private static LectureContentUpdateSnapshot snapshot() {

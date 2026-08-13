@@ -3,9 +3,12 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Path;
@@ -86,7 +89,7 @@ class AttachmentVideoUnitServiceTest {
                 lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, new LectureContentUpdateClassifierService(), slideRepository,
                 irisLectureUnitSyncService);
         when(attachmentVideoUnitRepository.save(any(AttachmentVideoUnit.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of());
+        lenient().when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of());
     }
 
     @Test
@@ -102,15 +105,12 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
-    void saveAttachmentVideoUnitMarksInitialVisibilityDirtyForRetryableSync() {
+    void saveAttachmentVideoUnitDefersVisibilitySyncUntilIngestionCompletes() {
         var unit = attachmentVideoUnit("New unit", null);
 
         service.saveAttachmentVideoUnit(unit, null, null, false);
 
-        var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
-        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
-        assertThat(snapshotCaptor.getValue().lectureUnitId()).isEqualTo(LECTURE_UNIT_ID);
-        assertThat(snapshotCaptor.getValue().releaseDate().toInstant()).isEqualTo(unit.getReleaseDate().toInstant());
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
         verify(contentProcessingService).triggerProcessing(unit);
     }
 
@@ -129,6 +129,7 @@ class AttachmentVideoUnitServiceTest {
         service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, false, null, null, Set.of());
 
         verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
+        verify(contentProcessingService, never()).prepareForReprocessing(any());
         verify(contentProcessingService, never()).triggerProcessing(any());
         verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
         verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
@@ -203,15 +204,26 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
-    void updateAttachmentVideoUnitTriggersAsyncContentProcessingForVideoSourceChange() {
+    void updateAttachmentVideoUnitDefersCombinedLightweightUpdatesUntilContentProcessingCompletes() {
         var unit = attachmentVideoUnit("Unit", null);
-        var dto = attachmentVideoUnitDTO(unit, unit.getName(), unit.getReleaseDate(), "https://video.example/updated");
+        var dto = attachmentVideoUnitDTO(unit, "Updated unit", unit.getReleaseDate().plusDays(1), "https://video.example/updated");
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
-        verify(contentProcessingService).triggerProcessing(unit);
+        var processingOrder = inOrder(contentProcessingService);
+        processingOrder.verify(contentProcessingService).prepareForReprocessing(unit);
+        processingOrder.verify(contentProcessingService).triggerProcessing(unit);
         verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
         verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
+    }
+
+    @Test
+    void updateAttachmentVideoUnitDoesNotReserveTutorialContent() {
+        var unit = attachmentVideoUnit("Unit", null);
+        unit.getLecture().setIsTutorialLecture(true);
+        var dto = attachmentVideoUnitDTO(unit, "Updated", unit.getReleaseDate(), "https://video.example/updated");
+        service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
+        verifyNoInteractions(contentProcessingService, irisLectureUnitSyncService);
     }
 
     @Test

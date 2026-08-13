@@ -11,11 +11,19 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Conditional(LectureEnabled.class)
 @Lazy
@@ -28,9 +36,16 @@ public class IrisLectureUnitSyncService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    public IrisLectureUnitSyncService(IrisLectureUnitSyncStateRepository repository, ApplicationEventPublisher eventPublisher) {
+    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+
+    private final SlideRepository slideRepository;
+
+    public IrisLectureUnitSyncService(IrisLectureUnitSyncStateRepository repository, ApplicationEventPublisher eventPublisher,
+            AttachmentVideoUnitRepository attachmentVideoUnitRepository, SlideRepository slideRepository) {
         this.repository = repository;
         this.eventPublisher = eventPublisher;
+        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
+        this.slideRepository = slideRepository;
     }
 
     /**
@@ -39,7 +54,7 @@ public class IrisLectureUnitSyncService {
      * @param snapshot the current lecture unit snapshot
      */
     public void markMetadataDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
-        repository.markDirty(snapshot.lectureUnitId(), metadataHash(snapshot), null, ZonedDateTime.now());
+        repository.markDirty(snapshot.lectureUnitId(), metadataHash(snapshot), null, ZonedDateTime.now(), false);
         publishAfterCommit(new IrisLectureUnitMetadataDirtyEvent(snapshot.lectureUnitId()));
     }
 
@@ -49,8 +64,24 @@ public class IrisLectureUnitSyncService {
      * @param snapshot the current lecture unit snapshot
      */
     public void markVisibilityDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
-        repository.markDirty(snapshot.lectureUnitId(), null, visibilityHash(snapshot), ZonedDateTime.now());
+        repository.markDirty(snapshot.lectureUnitId(), null, visibilityHash(snapshot), ZonedDateTime.now(), false);
         publishAfterCommit(new IrisLectureUnitVisibilityDirtyEvent(snapshot.lectureUnitId(), snapshot.slideHiddenUntilBySlideNumber()));
+    }
+
+    /** @param lectureUnitId the attachment video unit id */
+    @Transactional
+    public void markCurrentStateDirtyAfterIngestion(long lectureUnitId) {
+        attachmentVideoUnitRepository.findByIdForUpdate(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("AttachmentVideoUnit", lectureUnitId));
+        AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(lectureUnitId)
+                .orElseThrow(() -> new EntityNotFoundException("AttachmentVideoUnit", lectureUnitId));
+        Lecture lecture = unit.getLecture();
+        Course course = lecture.getCourse();
+        Attachment attachment = unit.getAttachment();
+        var snapshot = new LectureContentUpdateSnapshot(unit.getId(), unit.getName(), lecture.getTitle(), course.getTitle(), course.getDescription(),
+                attachment != null ? attachment.getVersion() : null, attachment != null ? attachment.getLink() : null, unit.getVideoSource(), unit.resolveReleaseDate(),
+                SlideVisibilitySnapshotHelper.toSortedHiddenUntilBySlideNumber(slideRepository.findAllByAttachmentVideoUnitId(lectureUnitId)));
+        repository.markDirty(lectureUnitId, metadataHash(snapshot), visibilityHash(snapshot), ZonedDateTime.now(), true);
+        publishAfterCommit(new IrisLectureUnitResyncAfterIngestionEvent(lectureUnitId));
     }
 
     private void publishAfterCommit(Object event) {
@@ -125,5 +156,8 @@ public class IrisLectureUnitSyncService {
     }
 
     public record IrisLectureUnitVisibilityDirtyEvent(Long lectureUnitId, Map<Integer, ZonedDateTime> slideHiddenUntilBySlideNumber) {
+    }
+
+    public record IrisLectureUnitResyncAfterIngestionEvent(Long lectureUnitId) {
     }
 }

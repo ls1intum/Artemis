@@ -80,6 +80,7 @@ class LectureContentProcessingSchedulerTest {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setRetryCount(1);
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
+            testState.setIngestionJobToken("job-token");
             testState.setRetryEligibleAt(null);
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
@@ -89,8 +90,17 @@ class LectureContentProcessingSchedulerTest {
             // When
             scheduler.processScheduledRetries();
 
-            // Then: Should delegate to callbackService.handleProcessingFailure
             verify(callbackService).handleProcessingFailure(testState);
+        }
+
+        @Test
+        void shouldRestartFullProcessingForLostReservation() {
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any())).thenReturn(List.of(testState));
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
+            scheduler.processScheduledRetries();
+            verify(processingService).triggerProcessing(testUnit);
+            verify(callbackService, never()).handleProcessingFailure(any());
         }
 
         @Test

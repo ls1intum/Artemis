@@ -164,6 +164,11 @@ public class LectureContentProcessingScheduler {
 
         log.info("Recovering stuck processing state for unit {}, phase: {}", freshState.getLectureUnit().getId(), phase);
 
+        if (freshState.getIngestionJobToken() == null) {
+            processingService.triggerProcessing((AttachmentVideoUnit) freshState.getLectureUnit());
+            return;
+        }
+
         // Treat stuck jobs as failures: the content itself may cause Iris to hang or crash
         // silently (e.g. malformed PDF, OOM during transcription). Incrementing retryCount
         // ensures poison-pill jobs eventually fail permanently instead of looping forever.

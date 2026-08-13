@@ -4,14 +4,18 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.persistence.LockModeType;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 
@@ -24,6 +28,12 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 @Repository
 public interface LectureUnitProcessingStateRepository extends ArtemisJpaRepository<LectureUnitProcessingState, Long> {
 
+    boolean existsByLectureUnit_IdAndPhase(long lectureUnitId, ProcessingPhase phase);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT unit FROM AttachmentVideoUnit unit WHERE unit.id = :lectureUnitId")
+    Optional<AttachmentVideoUnit> findAttachmentVideoUnitForUpdateById(@Param("lectureUnitId") long lectureUnitId);
+
     /**
      * Find the processing state for a specific lecture unit.
      *
@@ -31,6 +41,10 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * @return the processing state if it exists
      */
     Optional<LectureUnitProcessingState> findByLectureUnit_Id(Long lectureUnitId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT ps FROM LectureUnitProcessingState ps WHERE ps.lectureUnit.id = :lectureUnitId")
+    Optional<LectureUnitProcessingState> findByLectureUnitIdForUpdate(@Param("lectureUnitId") Long lectureUnitId);
 
     /**
      * Find processing states that are stuck (no callback received recently).

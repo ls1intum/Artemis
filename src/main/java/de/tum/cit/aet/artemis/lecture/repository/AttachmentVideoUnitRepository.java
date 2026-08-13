@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 
 /**
  * Spring Data JPA repository for the Attachment Unit entity.
@@ -131,16 +132,22 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
      * This supports a bounded rollout backfill for units created before retryable synchronization
      * was introduced.
      *
-     * @param now      the current time for determining active courses
-     * @param pageable pagination to limit results
+     * @param now             the current time for determining active courses
+     * @param processingPhase the required processing phase
+     * @param pageable        pagination to limit results
      * @return attachment video units without an Iris synchronization state
      */
     @Query("""
             SELECT avu FROM AttachmentVideoUnit avu
             JOIN avu.lecture l
             JOIN l.course c
+            LEFT JOIN avu.attachment attachment
             LEFT JOIN IrisLectureUnitSyncState syncState ON syncState.lectureUnitId = avu.id AND syncState.visibilityHash IS NOT NULL
             WHERE syncState.id IS NULL
+                AND EXISTS (
+                    SELECT processingState.id FROM LectureUnitProcessingState processingState
+                    WHERE processingState.lectureUnit.id = avu.id AND processingState.phase = :processingPhase
+                )
                 AND (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
                 AND c.testCourse = FALSE
@@ -148,9 +155,10 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                 AND (
                     (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
                     OR
-                    (avu.attachment IS NOT NULL AND LOWER(avu.attachment.link) LIKE '%.pdf')
+                    (attachment IS NOT NULL AND LOWER(attachment.link) LIKE '%.pdf')
                 )
             ORDER BY avu.id
             """)
-    List<AttachmentVideoUnit> findUnitsMissingIrisSyncStateFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
+    List<AttachmentVideoUnit> findUnitsMissingIrisSyncStateFromActiveCourses(@Param("now") ZonedDateTime now, @Param("processingPhase") ProcessingPhase processingPhase,
+            Pageable pageable);
 }
