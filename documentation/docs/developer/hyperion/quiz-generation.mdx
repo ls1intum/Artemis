@@ -110,3 +110,4 @@ This is the equivalent delimiter-and-instruction pattern used by the [Consistenc
 On the client, `QuizAiGenerationService` wraps the generated OpenAPI client and maps the DTOs and the editor's `MultipleChoiceQuestion` / `GeneratedQuestion` models. The generation dialog and the inline per-question refinement panel plug into the existing Multiple-Choice question editor, while the quiz exercise update view hosts the bulk-refinement action, shown only when Hyperion is enabled and the quiz has at least one Multiple-Choice question.
 
 Before applying a refinement, both the single-question and bulk flows snapshot the pre-refinement question with a deep clone, which is what enables the restore-previous-version action in the refinement UI. The refinement itself then mutates the original question object in place.
+
