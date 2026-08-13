@@ -10,6 +10,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { parseJson } from 'app/foundation/util/json.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
@@ -101,14 +102,14 @@ export class ExampleSubmissionService {
      * Convert a returned JSON object to ExampleSubmission.
      */
     private convertItemFromServer(exampleSubmission: ExampleSubmission): ExampleSubmission {
-        return Object.assign({}, exampleSubmission);
+        return deepClone(exampleSubmission);
     }
 
     /**
      * Convert a ExampleSubmission to a JSON which can be sent to the server.
      */
     private convert(exampleSubmission: ExampleSubmission): ExampleSubmission {
-        const jsonCopy = Object.assign({}, exampleSubmission);
+        const jsonCopy = deepClone(exampleSubmission);
         if (jsonCopy.exercise) {
             jsonCopy.exercise = ExerciseService.convertExerciseDatesFromClient(jsonCopy.exercise);
             jsonCopy.exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(jsonCopy.exercise);

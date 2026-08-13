@@ -186,8 +186,8 @@
     }
 </ng-template>
 <jhi-system-notification />
-<div class="breadcrumb-container">
-    @if (!isExamStarted() && !isExamActive() && breadcrumbs().length > 0) {
+@if (!isExamStarted() && !isExamActive() && breadcrumbs().length > 0) {
+    <div class="breadcrumb-container">
         <ol class="breadcrumb">
             @for (breadcrumb of breadcrumbs(); track breadcrumb.label; let i = $index) {
                 @if (i !== 0) {
@@ -200,29 +200,17 @@
                         }}</a>
                     }
                     @if (breadcrumb && !breadcrumb.translate) {
-                        @if (isBuildAgentDetails()) {
-                            <a
-                                class="breadcrumb-link"
-                                id="bread-crumb-{{ i }}"
-                                [routerLink]="breadcrumb.uri"
-                                routerLinkActive="active"
-                                [routerLinkActiveOptions]="{ exact: true }"
-                                [queryParams]="{ agentName: agentName() }"
-                                >{{ breadcrumb.label }}</a
-                            >
-                        } @else {
-                            <a
-                                class="breadcrumb-link"
-                                id="bread-crumb-plain-{{ i }}"
-                                [routerLink]="breadcrumb.uri"
-                                routerLinkActive="active"
-                                [routerLinkActiveOptions]="{ exact: true }"
-                                >{{ breadcrumb.label }}</a
-                            >
-                        }
+                        <a
+                            class="breadcrumb-link"
+                            id="bread-crumb-plain-{{ i }}"
+                            [routerLink]="breadcrumb.uri"
+                            routerLinkActive="active"
+                            [routerLinkActiveOptions]="{ exact: true }"
+                            >{{ breadcrumb.label }}</a
+                        >
                     }
                 </li>
             }
         </ol>
-    }
-</div>
+    </div>
+}
