@@ -10,6 +10,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { Subscription } from 'rxjs';
 import { RouterLink } from '@angular/router';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export const GLOBAL_NOTIFICATION_TYPES = {
     NEW_LOGIN: 'NEW_LOGIN',
@@ -18,6 +19,8 @@ export const GLOBAL_NOTIFICATION_TYPES = {
     SSH_KEY_EXPIRED: 'SSH_KEY_EXPIRED',
     MAINTENANCE: 'MAINTENANCE',
     MAVEN_CENTRAL_RATE_LIMIT: 'MAVEN_CENTRAL_RATE_LIMIT',
+    PASSWORD_CHANGED: 'PASSWORD_CHANGED',
+    CREDENTIALS_REVOKED: 'CREDENTIALS_REVOKED',
 } as const;
 
 export type GlobalNotificationType = keyof typeof GLOBAL_NOTIFICATION_TYPES;
@@ -106,7 +109,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
             next: () => {
                 const current = this.notificationSettings();
                 if (current) {
-                    this.notificationSettings.set({ ...current, [type]: enabled });
+                    this.notificationSettings.set(cloneWith(current, { [type]: enabled }));
                 }
                 this.alertService.success('artemisApp.userSettings.globalNotificationSettings.updateSuccess');
             },

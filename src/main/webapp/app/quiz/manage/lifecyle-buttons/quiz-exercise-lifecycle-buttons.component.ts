@@ -12,6 +12,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-quiz-exercise-lifecycle-buttons',
@@ -93,14 +94,14 @@ export class QuizExerciseLifecycleButtonsComponent {
     startQuiz() {
         this.quizExerciseService.start(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExerciseDates>) => {
-                const updatedExercise = { ...this.quizExercise() };
+                const updatedExercise = deepClone(this.quizExercise());
 
                 this.applyDatesToExercise(updatedExercise, res.body!);
                 updatedExercise.visibleToStudents = true;
                 updatedExercise.status = QuizStatus.ACTIVE;
                 const batches = updatedExercise.quizBatches ? [...updatedExercise.quizBatches] : [];
                 if (batches.length > 0) {
-                    const firstBatch = { ...batches[0] };
+                    const firstBatch = deepClone(batches[0]);
                     firstBatch.started = true;
                     firstBatch.startTime = updatedExercise.startDate;
                     batches[0] = firstBatch;
@@ -125,7 +126,7 @@ export class QuizExerciseLifecycleButtonsComponent {
     endQuiz() {
         return this.quizExerciseService.end(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExerciseDates>) => {
-                const updatedExercise = { ...this.quizExercise() };
+                const updatedExercise = deepClone(this.quizExercise());
                 this.applyDatesToExercise(updatedExercise, res.body!);
                 updatedExercise.quizEnded = true;
                 this.handleNewQuizExercise.emit(updatedExercise);
@@ -143,11 +144,11 @@ export class QuizExerciseLifecycleButtonsComponent {
     startBatch(quizBatchId: number) {
         this.quizExerciseService.startBatch(quizBatchId).subscribe({
             next: () => {
-                const updatedExercise = { ...this.quizExercise() };
+                const updatedExercise = deepClone(this.quizExercise());
                 if (updatedExercise.quizBatches) {
                     updatedExercise.quizBatches = updatedExercise.quizBatches.map((batch) => {
                         if (batch.id === quizBatchId) {
-                            return { ...batch, started: true };
+                            return cloneWith(batch, { started: true });
                         }
                         return batch;
                     });
@@ -166,7 +167,7 @@ export class QuizExerciseLifecycleButtonsComponent {
     addBatch() {
         this.quizExerciseService.addBatch(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizBatch>) => {
-                const updatedExercise = { ...this.quizExercise() };
+                const updatedExercise = deepClone(this.quizExercise());
                 const newBatch = res.body!;
 
                 const currentBatches = updatedExercise.quizBatches ? [...updatedExercise.quizBatches] : [];
@@ -187,7 +188,7 @@ export class QuizExerciseLifecycleButtonsComponent {
     showQuiz() {
         this.quizExerciseService.setVisible(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExerciseDates>) => {
-                const updatedExercise = { ...this.quizExercise() };
+                const updatedExercise = deepClone(this.quizExercise());
                 this.applyDatesToExercise(updatedExercise, res.body!);
                 updatedExercise.visibleToStudents = true;
                 this.handleNewQuizExercise.emit(updatedExercise);

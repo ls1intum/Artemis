@@ -2,6 +2,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
 import { outputToObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
     faBookmark,
@@ -64,6 +65,8 @@ import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, S
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     unreadMessages: { entityData: [] },
@@ -147,7 +150,7 @@ const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
         FeatureActivationComponent,
     ],
 })
-export class CourseConversationsComponent implements OnInit, OnDestroy {
+export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarView {
     readonly isCommunicationEnabled = computed(() => {
         const currentCourse = this.course();
         return currentCourse ? isCommunicationEnabled(currentCourse) : false;
@@ -155,6 +158,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     protected readonly faComments = faComments;
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private tabReselectionSubscription?: Subscription;
     private readonly selectionState = inject(ConversationSelectionState);
     private metisConversationService = inject(MetisConversationService);
     private metisService = inject(MetisService);
@@ -218,7 +223,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     // Getter/setter facade over a signal: the template/child read `courseWideSearchConfig` reactively, while the
     // component (and specs) keep mutating `courseWideSearchConfig.<prop>` in place. Call commitCourseWideSearchConfig()
     // after such deep mutations so the rebuilt reference fires the signal and the [courseWideSearchConfig] input updates.
-    private readonly _courseWideSearchConfig = signal<CourseWideSearchConfig>(undefined!);
+    private readonly _courseWideSearchConfig = signal<CourseWideSearchConfig>(undefined!, { equal: () => false });
     get courseWideSearchConfig(): CourseWideSearchConfig {
         return this._courseWideSearchConfig();
     }
@@ -226,7 +231,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this._courseWideSearchConfig.set(value);
     }
     private commitCourseWideSearchConfig(): void {
-        this._courseWideSearchConfig.update((config) => Object.assign(new CourseWideSearchConfig(), config));
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits.
+        this._courseWideSearchConfig.set(this._courseWideSearchConfig());
     }
 
     // Icons
@@ -284,6 +290,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        // Selecting this tab while already on it acts as a refresh -- prepareSidebarData re-reads the conversations and
+        // replaces the rendered list only once they arrive
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.activatedRoute).subscribe(() => this.prepareSidebarData());
+
         this.course.set(this.getParentCourse());
         this.isManagementView.set(this.router.url.includes('course-management'));
 
@@ -459,6 +469,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.tabReselectionSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.openSidebarEventSubscription?.unsubscribe();
@@ -524,7 +535,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     initializeSidebarAccordions() {
         this.messagingEnabled = isMessagingEnabled(this.course());
         this.accordionConversationGroups.set(
-            this.messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS,
+            this.messagingEnabled ? cloneWith(DEFAULT_CHANNEL_GROUPS, { groupChats: { entityData: [] }, directMessages: { entityData: [] } }) : DEFAULT_CHANNEL_GROUPS,
         );
     }
 
@@ -594,7 +605,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     prepareSidebarData() {
         this.metisConversationService.forceRefresh().subscribe({
             complete: () => {
-                this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(this.course()!, this.conversationsOfUser()));
+                this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(this.conversationsOfUser()));
                 this.accordionConversationGroups.set(this.courseOverviewService.groupConversationsByChannelType(this.course()!, this.conversationsOfUser(), this.messagingEnabled));
                 this.accordionConversationGroups().recents.entityData = this.sidebarConversations()?.filter((item) => item.isCurrent) || [];
                 this.updateSidebarData();
@@ -664,10 +675,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     openCreateGroupChatDialog() {
-        const ref = this.dialogService.open(GroupChatCreateDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: { course: this.course() },
-        });
+        const ref = this.dialogService.open(GroupChatCreateDialogComponent, cloneWith(defaultFirstLayerDialogOptions, { data: { course: this.course() } }));
         ref?.onClose
             .pipe(
                 filter((result: UserPublicInfoDTO[] | undefined) => !!result),
@@ -687,10 +695,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     openCreateOneToOneChatDialog() {
-        const ref = this.dialogService.open(OneToOneChatCreateDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: { course: this.course() },
-        });
+        const ref = this.dialogService.open(OneToOneChatCreateDialogComponent, cloneWith(defaultFirstLayerDialogOptions, { data: { course: this.course() } }));
         ref?.onClose
             .pipe(
                 filter((result: UserPublicInfoDTO | undefined) => !!result),
@@ -715,10 +720,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
      * Emits a create action for the given channel on confirmation.
      */
     openCreateChannelDialog() {
-        const ref = this.dialogService.open(ChannelsCreateDialogComponent, {
-            ...defaultSecondLayerDialogOptions,
-            data: { course: this.course() },
-        });
+        const ref = this.dialogService.open(ChannelsCreateDialogComponent, cloneWith(defaultSecondLayerDialogOptions, { data: { course: this.course() } }));
         ref?.onClose
             .pipe(
                 filter((result: ChannelDTO | undefined) => !!result),
@@ -746,14 +748,16 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     openChannelOverviewDialog() {
         const subType = undefined;
-        const ref = this.dialogService.open(ChannelsOverviewDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: {
-                course: this.course(),
-                createChannelFn: subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined,
-                channelSubType: subType,
-            },
-        });
+        const ref = this.dialogService.open(
+            ChannelsOverviewDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                data: {
+                    course: this.course(),
+                    createChannelFn: subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined,
+                    channelSubType: subType,
+                },
+            }),
+        );
         ref?.onClose
             .pipe(
                 filter((result) => !!result),
@@ -892,12 +896,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (id) {
             try {
                 await firstValueFrom(this.metisService.enable(id, withMessaging));
-                const updatedCourse = {
-                    ...this.course()!,
+                const updatedCourse = cloneWith(this.course()!, {
                     courseInformationSharingConfiguration: withMessaging
                         ? CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
                         : CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
-                };
+                });
                 this.course.set(updatedCourse);
 
                 this.eventManager.broadcast({

@@ -11,6 +11,7 @@ import {
 } from '@tumaet/ui-angular';
 import { Component, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { Router } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
@@ -529,11 +530,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     }
 
     toggleStepOutput(phase: string): void {
-        this.expandedPhases.update((expanded) => {
-            const updated = Object.assign({}, expanded);
-            updated[phase] = !updated[phase];
-            return updated;
-        });
+        this.expandedPhases.update((expanded) => cloneWith(expanded, { [phase]: !expanded[phase] }));
     }
 
     /** REPAIRING is a repeat visit on the VERIFYING step — swap that step's label while repairing. */
@@ -722,11 +719,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
     /** Appends a live event's output to the phase's history; the job-detail fetch replaces it with the full record. */
     private recordStepOutput(phase: string, output: StepOutput): void {
-        this.stepOutputs.update((outputs) => {
-            const updated = Object.assign({}, outputs);
-            updated[phase] = [...(updated[phase] ?? []), output];
-            return updated;
-        });
+        this.stepOutputs.update((outputs) => cloneWith(outputs, { [phase]: [...(outputs[phase] ?? []), output] }));
     }
 
     private resetJobState(): void {

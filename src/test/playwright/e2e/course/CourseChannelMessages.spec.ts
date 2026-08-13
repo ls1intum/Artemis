@@ -7,6 +7,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { SEED_COURSES } from '../../support/seedData';
 import { RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
+import { Commands } from '../../support/commands';
 
 // Use pre-seeded courses — no course creation needed
 const readOnlyCourse = { id: SEED_COURSES.channel1.id };
@@ -165,7 +166,10 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             // assertions themselves (they poll) rather than gating on an intermediate element within a
             // fixed window. Only the first assertion absorbs the re-bootstrap; the topic is rendered in
             // the same pass, so it keeps the default timeout and the two budgets cannot stack.
-            await page.reload();
+            // Restore the route after the reload: a lazy route chunk that fails to resolve sends the
+            // router to the bare /courses fallback, where the channel header does not exist at all and
+            // the assertion below waits out its whole budget on a page that can never satisfy it.
+            await Commands.reloadAndRestoreRoute(page);
             await expect(courseMessages.getName()).toContainText(newName, { timeout: RELOAD_RENDER_TIMEOUT });
             await expect(courseMessages.getTopic()).toContainText(topic);
         });

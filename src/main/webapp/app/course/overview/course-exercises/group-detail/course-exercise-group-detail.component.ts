@@ -7,7 +7,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo, faLayerGroup } from '@fortawesome/free-solid-svg-icons';
 import { DifficultyLevel, Exercise, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
@@ -48,7 +49,8 @@ import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
 })
 export class CourseExerciseGroupDetailComponent {
     private readonly route = inject(ActivatedRoute);
-    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly courseOverviewExercisesService = inject(CourseOverviewExercisesService);
+    private readonly courseStorageService = inject(CourseStorageService);
     private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly destroyRef = inject(DestroyRef);
@@ -211,14 +213,22 @@ export class CourseExerciseGroupDetailComponent {
             untracked(() => this.renderProblemStatements(exercises, statements));
         });
 
-        this.courseManagementService
-            .findOneForDashboard(this.courseId)
+        // The course itself is already loaded by the course overview container this route lives in; the only field read
+        // from it here is maxComplaintTimeDays, via the exercise header.
+        this.course.set(this.courseStorageService.getCourse(this.courseId));
+        this.courseStorageService
+            .subscribeToCourseUpdates(this.courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((course) => this.course.set(course));
+
+        // The exercises come from the same endpoint the exercises tab uses, freshly for this navigation, and the same
+        // response populates the achieved variant group points that {@link achievedGroupPoints} reads out of the
+        // ScoresStorageService.
+        this.courseOverviewExercisesService
+            .loadIfNeeded(this.courseId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (response) => {
-                    this.course.set(response.body ?? undefined);
-                    this.courseExercises.set(response.body?.exercises ?? []);
-                },
+                next: (overview) => this.courseExercises.set(overview.exercises ?? []),
             });
 
         toObservable(this.group)

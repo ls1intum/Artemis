@@ -5,6 +5,7 @@ import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-r
 import { VariantJob } from 'app/openapi/model/variant-job';
 import { VariantJobDetail } from 'app/openapi/model/variant-job-detail';
 import { ExerciseVariantWebsocketService, VariantGenerationEvent, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Client service for AI exercise-variant generation. Two responsibilities:
@@ -106,13 +107,13 @@ export class ExerciseVariantGenerationService {
                 if (job.jobId !== jobId) {
                     return job;
                 }
-                const updated: VariantJob = Object.assign({}, job);
-                updated.phase = event.phase ?? job.phase;
-                updated.attempt = event.attempt ?? job.attempt;
-                updated.maxAttempts = event.maxAttempts ?? job.maxAttempts;
-                updated.variantExerciseId = event.variantExerciseId ?? job.variantExerciseId;
-                updated.warnings = event.warnings ?? job.warnings;
-                return updated;
+                return cloneWith(job, {
+                    phase: event.phase ?? job.phase,
+                    attempt: event.attempt ?? job.attempt,
+                    maxAttempts: event.maxAttempts ?? job.maxAttempts,
+                    variantExerciseId: event.variantExerciseId ?? job.variantExerciseId,
+                    warnings: event.warnings ?? job.warnings,
+                });
             }),
         );
         if (event.type === 'DONE' || event.type === 'FAILED' || event.type === 'CANCELLED') {
@@ -135,7 +136,7 @@ export class ExerciseVariantGenerationService {
             const existingIndex = jobs.findIndex((existing) => existing.jobId === job.jobId);
             if (existingIndex >= 0) {
                 const updated = jobs.slice();
-                updated[existingIndex] = Object.assign({}, updated[existingIndex], job);
+                updated[existingIndex] = cloneWith(updated[existingIndex], job);
                 return updated;
             }
             return [job].concat(jobs);

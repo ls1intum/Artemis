@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { Exercise, ExerciseType, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -27,14 +28,13 @@ export class ExerciseGroupSyncService {
      * group edit so member dates and quiz badges / lifecycle buttons update without a full page reload.
      */
     applyGroupTimelineToMember(exercise: Exercise, groupDto: ExerciseVariantGroupDTO, now: dayjs.Dayjs): Exercise {
-        const updated: Exercise = {
-            ...exercise,
+        const updated: Exercise = cloneWith(exercise, {
             releaseDate: groupDto.releaseDate,
             startDate: groupDto.startDate,
             dueDate: groupDto.dueDate,
             assessmentDueDate: groupDto.assessmentDueDate,
             exampleSolutionPublicationDate: groupDto.exampleSolutionPublicationDate,
-        };
+        });
         this.refreshQuizTimelineFlags(updated, now);
         return updated;
     }
@@ -75,9 +75,7 @@ export class ExerciseGroupSyncService {
             if (newRef === undefined || groupDto === undefined) {
                 // The exercise was removed from its group. The server keeps the exercise's own dates on
                 // unassignment, so only drop the group reference here — do not blank the timeline.
-                const detached = Object.assign({}, exercise);
-                detached.exerciseVariantGroup = undefined;
-                return detached;
+                return cloneWith(exercise, { exerciseVariantGroup: undefined });
             }
             const updated = this.applyGroupTimelineToMember(exercise, groupDto, now);
             updated.exerciseVariantGroup = newRef;
@@ -115,12 +113,13 @@ export class ExerciseGroupSyncService {
             if (info === undefined) {
                 return exercise;
             }
-            const quiz = Object.assign({}, exercise as QuizExercise);
-            quiz.quizBatches = info.quizBatches;
-            quiz.isEditable = info.isEditable;
-            // The /with-exercises response has no question graph, so this flag is the list view's only way to
-            // tell whether the quiz supports AI variant generation.
-            quiz.hasDragAndDropQuestions = info.hasDragAndDropQuestions;
+            // hasDragAndDropQuestions: the /with-exercises response has no question graph, so this flag is the
+            // list view's only way to tell whether the quiz supports AI variant generation.
+            const quiz = cloneWith(exercise as QuizExercise, {
+                quizBatches: info.quizBatches,
+                isEditable: info.isEditable,
+                hasDragAndDropQuestions: info.hasDragAndDropQuestions,
+            });
             this.applyQuizClientState(quiz);
             replacements.set(exercise.id, quiz);
             return quiz;
@@ -130,10 +129,11 @@ export class ExerciseGroupSyncService {
         }
         return {
             exercises: merged,
-            groups: groups.map((group) => ({
-                ...group,
-                exercises: (group.exercises ?? []).map((exercise) => (exercise.id !== undefined && replacements.has(exercise.id) ? replacements.get(exercise.id)! : exercise)),
-            })),
+            groups: groups.map((group) =>
+                cloneWith(group, {
+                    exercises: (group.exercises ?? []).map((exercise) => (exercise.id !== undefined && replacements.has(exercise.id) ? replacements.get(exercise.id)! : exercise)),
+                }),
+            ),
         };
     }
 

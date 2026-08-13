@@ -31,6 +31,7 @@ export class CourseManagementAPIRequests {
      *   - iconFile: the course icon file blob (default: undefined)
      *   - allowCommunication: if communication should be enabled for the course
      *   - allowMessaging: if messaging should be enabled for the course
+     *   - timeZone: the IANA time zone of the course (default: undefined; required before tutorial groups can be added)
      * @returns Promise<Course> representing the course created
      */
     async createCourse(
@@ -43,6 +44,7 @@ export class CourseManagementAPIRequests {
             iconFile?: Blob;
             allowCommunication?: boolean;
             allowMessaging?: boolean;
+            timeZone?: string;
         } = {},
     ): Promise<Course> {
         const {
@@ -54,6 +56,7 @@ export class CourseManagementAPIRequests {
             iconFile,
             allowCommunication = true,
             allowMessaging = true,
+            timeZone,
         } = options;
 
         const course = new Course();
@@ -62,6 +65,7 @@ export class CourseManagementAPIRequests {
         course.testCourse = true;
         course.startDate = start;
         course.endDate = end;
+        course.timeZone = timeZone;
 
         if (allowCommunication && allowMessaging) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -216,6 +220,75 @@ export class CourseManagementAPIRequests {
      */
     async deleteLecture(lectureId: number) {
         await this.page.request.delete(`api/lecture/lectures/${lectureId}`);
+    }
+
+    /**
+     * Creates an accepted FAQ, which is the only state students can see.
+     *
+     * @param course - The course the FAQ belongs to.
+     * @param questionTitle - The title of the FAQ.
+     * @param questionAnswer - The answer text (optional, default: a generic answer).
+     * @returns Promise<{ id: number; questionTitle: string }> the created FAQ.
+     */
+    async createFaq(course: Course, questionTitle: string, questionAnswer = 'The answer to the question.'): Promise<{ id: number; questionTitle: string }> {
+        const data = { courseId: course.id, questionTitle, questionAnswer, faqState: 'ACCEPTED', categories: [] };
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/faqs`, { data });
+        if (!response.ok()) {
+            throw new Error(`Failed to create FAQ: ${response.status()} ${await response.text()}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Creates the tutorial groups configuration of a course, which has to exist before any tutorial group can be added.
+     * The course must have been created with a time zone, otherwise the server rejects the configuration.
+     *
+     * @param course - The course to configure.
+     */
+    async createTutorialGroupsConfiguration(course: Course) {
+        const data = {
+            tutorialPeriodStartInclusive: dayjs().subtract(1, 'year').format('YYYY-MM-DD'),
+            tutorialPeriodEndInclusive: dayjs().add(1, 'year').format('YYYY-MM-DD'),
+            useTutorialGroupChannels: false,
+            usePublicTutorialGroupChannels: false,
+        };
+        const response = await this.page.request.post(`api/tutorialgroup/courses/${course.id}/tutorial-groups-configuration`, { data });
+        if (!response.ok()) {
+            throw new Error(`Failed to create tutorial groups configuration: ${response.status()} ${await response.text()}`);
+        }
+    }
+
+    /**
+     * Creates a tutorial group taught by the given tutor. Requires {@link createTutorialGroupsConfiguration} to have run.
+     *
+     * @param course - The course the tutorial group belongs to.
+     * @param title - The title of the tutorial group. The server only accepts alphanumerics, spaces, colons and dashes, max 20 characters.
+     * @param tutorId - The id of the tutor teaching the group.
+     * @returns Promise<number> the id of the created tutorial group.
+     */
+    async createTutorialGroup(course: Course, title: string, tutorId: number): Promise<number> {
+        const data = { title, tutorId, language: 'ENGLISH', isOnline: false, campus: 'Garching', capacity: 10 };
+        const response = await this.page.request.post(`api/tutorialgroup/courses/${course.id}/tutorial-groups`, { data });
+        if (!response.ok()) {
+            throw new Error(`Failed to create tutorial group: ${response.status()} ${await response.text()}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Registers students in a tutorial group. A student who is registered somewhere sees their groups in the expanded
+     * "my groups" section of the tutorial groups sidebar, which is where a real student finds them.
+     *
+     * @param course - The course the tutorial group belongs to.
+     * @param tutorialGroupId - The id of the tutorial group.
+     * @param users - The students to register.
+     */
+    async registerStudentsInTutorialGroup(course: Course, tutorialGroupId: number, users: UserCredentials[]) {
+        const data = users.map((user) => user.username);
+        const response = await this.page.request.post(`api/tutorialgroup/courses/${course.id}/tutorial-groups/${tutorialGroupId}/batch-register`, { data });
+        if (!response.ok()) {
+            throw new Error(`Failed to register students in tutorial group: ${response.status()} ${await response.text()}`);
+        }
     }
 
     async createExamTestRun(exam: Exam, exercises: Array<Exercise>) {

@@ -18,7 +18,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { captureException } from '@sentry/angular';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { UMLDiagramType as UMLDiagramTypes } from '@tumaet/apollon';
+import type { UMLDiagramType } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
@@ -174,7 +174,7 @@ const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise |
             exercise = new ProgrammingExercise(course, undefined);
             break;
         case ExerciseType.MODELING:
-            exercise = new ModelingExercise(UMLDiagramTypes.ClassDiagram, course, undefined);
+            exercise = new ModelingExercise('ClassDiagram' satisfies UMLDiagramType, course, undefined);
             break;
         case ExerciseType.TEXT:
             exercise = new TextExercise(course, undefined);
