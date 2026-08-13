@@ -488,27 +488,41 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await page.setViewportSize({ width: 800, height: 600 });
             const dragItem = page.locator('#drag-item-0');
             await dragItem.waitFor({ state: 'visible' });
-            await dragItem.scrollIntoViewIfNeeded();
-            // Find the scroll container hosting the quiz and record its scroll state and position.
-            const before = await page.evaluate(() => {
-                let el = document.getElementById('drag-item-0')?.parentElement;
-                while (el) {
-                    const style = getComputedStyle(el);
-                    if (el.scrollHeight > el.clientHeight && ['auto', 'scroll'].includes(style.overflowY)) {
-                        break;
+
+            // Wait until the quiz actually overflows its container, then mark that container.
+            //
+            // The drag items render as soon as the question arrives, but the question's background image is fetched as a
+            // separate blob request and only contributes its height once decoded. Waiting for the overflow rather than for
+            // the image keeps this independent of how the image is delivered, and covers a question that has none.
+            await page.waitForFunction(
+                () => {
+                    let element = document.getElementById('drag-item-0')?.parentElement;
+                    while (element) {
+                        const style = getComputedStyle(element);
+                        if (element.scrollHeight > element.clientHeight && ['auto', 'scroll'].includes(style.overflowY)) {
+                            element.setAttribute('data-e2e-scroll-container', 'true');
+                            return true;
+                        }
+                        element = element.parentElement;
                     }
-                    el = el.parentElement;
-                }
-                if (!el) {
-                    return undefined;
-                }
-                el.setAttribute('data-e2e-scroll-container', 'true');
-                const rect = el.getBoundingClientRect();
-                return { scrollTop: el.scrollTop, top: rect.top, left: rect.left, width: rect.width };
+                    return false;
+                },
+                { timeout: 30_000 },
+            );
+
+            // Scroll the container to the bottom explicitly instead of relying on scrollIntoViewIfNeeded.
+            //
+            // This is what CI was failing on: the container was scrollable, but the drag item happened to be visible
+            // already, so scrollIntoViewIfNeeded had nothing to do and the offset stayed at 0. Whether it has anything to
+            // do depends on how tall the rest of the question renders, which depends on the background image, so the test
+            // was asserting a precondition it had only incidentally arranged. Setting the offset makes the starting state
+            // the test's own decision.
+            const before = await page.evaluate(() => {
+                const element = document.querySelector('[data-e2e-scroll-container]')!;
+                element.scrollTop = element.scrollHeight;
+                const rect = element.getBoundingClientRect();
+                return { scrollTop: element.scrollTop, top: rect.top, left: rect.left, width: rect.width };
             });
-            if (!before) {
-                throw new Error('the drag item must be inside a scrollable container');
-            }
             expect(before.scrollTop, 'precondition: the container must be scrolled down so it can scroll up during the drag').toBeGreaterThan(0);
 
             const box = await dragItem.boundingBox();
@@ -522,22 +536,27 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             const holdX = before.left + before.width / 2;
             const holdY = before.top + 5;
             await page.mouse.move(holdX, holdY, { steps: 10 });
-            const getScrollTop = () =>
-                page.evaluate(() => {
-                    const container = document.querySelector('[data-e2e-scroll-container]');
-                    if (!container) {
-                        throw new Error('scroll container marker not found');
-                    }
-                    return container.scrollTop;
-                });
-            let scrollTopWhileDragging = before.scrollTop;
-            for (let i = 0; i < 30 && scrollTopWhileDragging >= before.scrollTop; i++) {
-                await page.mouse.move(holdX + (i % 2), holdY);
-                await page.waitForTimeout(100);
-                scrollTopWhileDragging = await getScrollTop();
+            try {
+                // Waited for as a condition rather than a fixed number of iterations: the CDK moves the container on
+                // animation frames, which a busy machine delivers late, and a fixed ceiling turns that delay into a
+                // failure of behaviour that is in fact correct.
+                await expect
+                    .poll(
+                        async (jiggle = 0) => {
+                            await page.mouse.move(holdX + (jiggle % 2), holdY);
+                            return page.evaluate(() => document.querySelector('[data-e2e-scroll-container]')!.scrollTop);
+                        },
+                        {
+                            message: 'holding a dragged item at the top edge must scroll the container upwards',
+                            timeout: 15_000,
+                            intervals: [100],
+                        },
+                    )
+                    .toBeLessThan(before.scrollTop);
+            } finally {
+                // Always release the pointer, so a failure here cannot leave a held drag behind for the next assertion.
+                await page.mouse.up();
             }
-            await page.mouse.up();
-            expect(scrollTopWhileDragging, 'holding a dragged item at the top edge must scroll the container upwards').toBeLessThan(before.scrollTop);
         });
     });
 
