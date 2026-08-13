@@ -59,7 +59,8 @@ public class LocalVCBuildAgentCredentialsValidator {
     @PostConstruct
     public void validateBuildAgentCredentials() {
         if (environment.getProperty(BUILD_AGENT_USE_SSH_PROPERTY_NAME, Boolean.class, false)) {
-            log.info("Build agents authenticate with an ssh key ({}=true). This node rejects the build-agent git username and password.", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
+            log.info("Build agents authenticate with an ssh key ({}=true). This node no longer honours the build-agent git username and password.",
+                    BUILD_AGENT_USE_SSH_PROPERTY_NAME);
             return;
         }
 

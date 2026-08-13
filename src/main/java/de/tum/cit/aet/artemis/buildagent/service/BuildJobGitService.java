@@ -72,7 +72,8 @@ import de.tum.cit.aet.artemis.programming.exception.GitException;
  * {@code artemis.version-control.build-agent-use-ssh} selects one of the two, and there is no fallback between them:
  * with ssh, a missing private key path or url template fails startup rather than reverting to https, and without ssh,
  * missing credentials fail startup rather than reverting to a key. On a core node the same property governs only
- * whether the credential pair is still accepted; a registered agent's public key is accepted either way.
+ * whether the credential pair still grants build agents repository-wide read; a registered agent's public key is
+ * accepted either way.
  *
  * @see BuildJobExecutionService
  * @see AbstractGitService

@@ -151,8 +151,9 @@ public class LocalVCServletService {
      * Whether the build agents of this installation clone over ssh, using the key pair they generate at startup and
      * publish to the core nodes, rather than over https with {@code build-agent-git-username} and
      * {@code build-agent-git-password}. The two mechanisms are alternatives, not a fallback chain: a build agent picks
-     * exactly one in {@code BuildJobGitService.authenticate}, so when ssh is configured, this node stops accepting the
-     * credential pair rather than leaving a second way in that nothing uses.
+     * exactly one in {@code BuildJobGitService.authenticate}, so when ssh is configured, this node stops honouring the
+     * shortcut below rather than leaving a second repository-wide read path open that nothing uses. The credentials are
+     * still processed as ordinary Basic credentials afterwards, which grants only whatever the named account may access.
      * <p>
      * This closes the https door only. {@code GitPublickeyAuthenticatorService} keeps authenticating a registered build
      * agent by its public key whatever this property says, deliberately: a key is per-agent and reaches this node only

@@ -620,7 +620,8 @@ public final class Constants {
      * {@code false}.
      * <p>
      * It means something different on each node role. On a build agent it picks the mechanism the agent uses. On a core
-     * node it governs only the https door: {@code true} stops the credential pair from being accepted. Core nodes
+     * node it governs only the build-agent shortcut over https: {@code true} stops that pair from granting
+     * repository-wide read, though it is still processed as ordinary Basic credentials afterwards. Core nodes
      * accept a registered build agent's public key either way, because a key is per-agent and only reaches a core node
      * through an agent that has joined the cluster, so unlike the shared credential pair there is nothing to close.
      * Setting it on the agents therefore keeps builds running, and setting it on the core nodes is what removes the
