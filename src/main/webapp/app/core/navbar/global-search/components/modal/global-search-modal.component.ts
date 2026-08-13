@@ -210,9 +210,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     private static readonly COMMUNICATION_FILTER_TYPES: ReadonlySet<SearchEntityType> = new Set(['channel', 'post', 'answer_post']);
 
+    private static readonly LECTURE_FILTER_TYPES: ReadonlySet<SearchEntityType> = new Set(['lecture', 'lecture_unit']);
+
     private static readonly ROUTE_TO_FILTER_TAG: Record<string, SearchEntityType[]> = {
         exercises: ['exercise'],
-        lectures: ['lecture'],
+        lectures: ['lecture', 'lecture_unit'],
         exams: ['exam'],
         communication: ['channel', 'post', 'answer_post'],
         faq: ['faq'],
@@ -304,12 +306,26 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     protected removeFilter(filterType: SearchEntityType) {
-        const isCommunicationType = GlobalSearchModalComponent.COMMUNICATION_FILTER_TYPES.has(filterType);
-        const newFilters = isCommunicationType
-            ? this.activeFilters().filter((f) => !GlobalSearchModalComponent.COMMUNICATION_FILTER_TYPES.has(f))
-            : this.activeFilters().filter((f) => f !== filterType);
+        // Grouped filters (communication, lectures) are shown as a single chip, so removing that chip
+        // must clear every underlying type in the group, not just the one the chip is labelled with.
+        const group = GlobalSearchModalComponent.filterGroupFor(filterType);
+        const newFilters = group ? this.activeFilters().filter((f) => !group.has(f)) : this.activeFilters().filter((f) => f !== filterType);
         this.activeFilters.set(newFilters);
         this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
+    }
+
+    /**
+     * Returns the grouped filter-type set that {@link filterType} belongs to (communication or lectures),
+     * or {@code undefined} for a standalone type. Grouped types are collapsed into a single chip in the UI.
+     */
+    private static filterGroupFor(filterType: SearchEntityType): ReadonlySet<SearchEntityType> | undefined {
+        if (GlobalSearchModalComponent.COMMUNICATION_FILTER_TYPES.has(filterType)) {
+            return GlobalSearchModalComponent.COMMUNICATION_FILTER_TYPES;
+        }
+        if (GlobalSearchModalComponent.LECTURE_FILTER_TYPES.has(filterType)) {
+            return GlobalSearchModalComponent.LECTURE_FILTER_TYPES;
+        }
+        return undefined;
     }
 
     protected removeCourseFilter() {

@@ -555,6 +555,14 @@ public class GlobalSearchResource {
     /**
      * Builds the lecture type disjunct. All users with course access can see lectures in their courses
      * (no additional visibility constraints).
+     * <p>
+     * The {@code type} discriminator uses Weaviate's default {@code word} tokenization, which indexes
+     * {@code "lecture_unit"} as the tokens {@code ["lecture", "unit"]}. A {@code type Equal "lecture"}
+     * filter therefore also matches {@code lecture_unit} rows, which would drag them into this branch
+     * that has no release-date guard and leak unreleased lecture units. The explicit
+     * {@code type NotEqual "lecture_unit"} clause removes only the unit rows (they carry both tokens),
+     * while genuine {@code lecture} rows (token {@code ["lecture"]}) are kept; lecture units are gated
+     * by {@link #buildLectureUnitDisjunct(CourseRoleSets)} instead.
      *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching lectures the user may access, or {@code null} if no courses qualify
@@ -563,7 +571,8 @@ public class GlobalSearchResource {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
             return null;
         }
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT).not(),
+                courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
     }
 
     /**
