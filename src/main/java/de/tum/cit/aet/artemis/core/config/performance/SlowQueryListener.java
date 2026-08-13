@@ -23,8 +23,8 @@ import net.ttddyy.dsproxy.listener.QueryExecutionListener;
  * <ol>
  * <li>Normalises the SQL (strips literal values, collapses IN-lists).</li>
  * <li>Extracts the current HTTP request context from Spring's {@code RequestContextHolder}
- * (method, URI path, and the {@code X-Playwright-Test-Name} header injected by the
- * Playwright test fixture).</li>
+ * (method, URI path, and the {@code X-Playwright-Test-Name}/{@code X-Playwright-Phase} headers
+ * injected by the Playwright test fixture).</li>
  * <li>Delegates to {@link SlowQueryCollector#record} for threshold evaluation and storage.</li>
  * </ol>
  * <p>
@@ -36,6 +36,16 @@ public class SlowQueryListener implements QueryExecutionListener {
 
     /** HTTP header injected by the Playwright {@code baseFixtures.ts} fixture. */
     static final String PLAYWRIGHT_TEST_HEADER = "X-Playwright-Test-Name";
+
+    /**
+     * HTTP header injected by the Playwright {@code baseFixtures.ts} fixture. {@code "setup"} by
+     * default (baked in via {@code contextOptions}, so it covers {@code page.request}/
+     * {@code context.request} traffic used by test fixtures); overridden to {@code "action"} for
+     * requests the browser page itself issues, via a {@code page.route()} handler — see the
+     * comment on {@code autoTestFixture} in {@code baseFixtures.ts} for why that split reliably
+     * separates test setup from the action a test is actually verifying.
+     */
+    static final String PLAYWRIGHT_PHASE_HEADER = "X-Playwright-Phase";
 
     // Regex patterns used for SQL normalisation
     private static final Pattern LITERAL_STRINGS = Pattern.compile("'[^']*'");
@@ -71,6 +81,7 @@ public class SlowQueryListener implements QueryExecutionListener {
         String httpMethod = null;
         String httpEndpoint = null;
         String testName = null;
+        String phase = null;
 
         try {
             ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
@@ -79,13 +90,14 @@ public class SlowQueryListener implements QueryExecutionListener {
                 httpMethod = req.getMethod();
                 httpEndpoint = req.getRequestURI();
                 testName = req.getHeader(PLAYWRIGHT_TEST_HEADER);
+                phase = req.getHeader(PLAYWRIGHT_PHASE_HEADER);
             }
         }
         catch (IllegalStateException ignored) {
             // No request context bound (e.g. startup, scheduled tasks)
         }
 
-        collector.record(normalizedSql, executionTimeMs, httpMethod, httpEndpoint, testName);
+        collector.record(normalizedSql, executionTimeMs, httpMethod, httpEndpoint, testName, phase);
     }
 
     /**

@@ -137,12 +137,22 @@ const test = baseTest.extend<
     // finding, since the heaviest queries come from exactly that setup traffic. Extending
     // `contextOptions` instead of overriding the built-in `context` fixture keeps Playwright's
     // own trace/video/screenshot machinery (which is wired to `contextOptions`) intact.
+    //
+    // Also defaults `X-Playwright-Phase` to `setup`. The same `page.request`/`context.request`
+    // blind spot that used to hide the Test column turns out to be a reliable classifier: almost
+    // all test setup (creating exercises, courses, submissions) goes through those Node-side
+    // APIRequestContext calls, while the actual action a test is verifying is almost always
+    // driven through the browser page (a click, a form submit) and therefore visible to
+    // `page.route()`. The `autoTestFixture` below overrides this header to `action` only for
+    // requests that pass through `page.route()`, so setup traffic keeps the `setup` default
+    // baked in here without any per-test or per-helper tagging.
     contextOptions: async ({ contextOptions }, use, testInfo) => {
         await use({
             ...contextOptions,
             extraHTTPHeaders: {
                 ...contextOptions.extraHTTPHeaders,
                 'X-Playwright-Test-Name': testInfo.title,
+                'X-Playwright-Phase': 'setup',
             },
         });
     },
@@ -151,6 +161,19 @@ const test = baseTest.extend<
             // Add shared init scripts that suppress overlays (notification popup, passkey modal)
             // which would block test interactions. See addE2EInitScript for details.
             await addE2EInitScript(page);
+
+            // Overrides the `X-Playwright-Phase` header to `action` for requests the browser page
+            // itself issues (real UI interaction: clicks, form submits, navigations) — the
+            // `contextOptions` fixture above already defaulted it to `setup`, which stays in place
+            // for `page.request`/`context.request` traffic since those calls never pass through
+            // `page.route()`. Lets the slow-query report (thesis objective 4.4) separate genuine
+            // test-setup traffic from the actual action under test without any per-test tagging.
+            // Uses `route.fallback()`, not `route.continue()`, so the request still reaches
+            // `installApiResponseCapture`'s `browserContext.route()` handler below — Playwright
+            // resolves page-scoped routes before context-scoped ones, and `continue()` would
+            // terminate the chain right here (see the 2026-08-07 baseFixtures.ts merge note for
+            // why that distinction matters).
+            await page.route('**/api/**', (route) => route.fallback({ headers: { ...route.request().headers(), 'X-Playwright-Phase': 'action' } }));
 
             // Node-held capture of non-GET /api response bodies for the whole context (covers popups too).
             // Works because serviceWorkers: 'block' keeps the Angular SW from handling /api fetches — with

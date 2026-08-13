@@ -10,6 +10,10 @@ package de.tum.cit.aet.artemis.core.config.performance;
  * @param httpEndpoint  URI path of the triggering request; {@code null} for async contexts.
  * @param testName      Playwright test name that triggered this pattern; {@code null} when not
  *                          running under Playwright.
+ * @param phase         Value of the {@code X-Playwright-Phase} request header — {@code "action"} for
+ *                          requests the browser page itself issued (real UI interaction), {@code "setup"}
+ *                          for {@code page.request}/{@code context.request} traffic (test fixtures); {@code null}
+ *                          when not running under Playwright.
  */
-public record N1Suspect(String normalizedSql, int occurrences, String httpMethod, String httpEndpoint, String testName) {
+public record N1Suspect(String normalizedSql, int occurrences, String httpMethod, String httpEndpoint, String testName, String phase) {
 }

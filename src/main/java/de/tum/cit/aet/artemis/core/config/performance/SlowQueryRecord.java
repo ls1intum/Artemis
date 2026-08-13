@@ -13,7 +13,11 @@ import java.time.Instant;
  *                            {@code null} for background/async queries.
  * @param testName        Value of the {@code X-Playwright-Test-Name} request header injected by the
  *                            Playwright fixture; {@code null} when not running under Playwright.
+ * @param phase           Value of the {@code X-Playwright-Phase} request header — {@code "action"} for
+ *                            requests the browser page itself issued (real UI interaction), {@code "setup"}
+ *                            for {@code page.request}/{@code context.request} traffic (test fixtures); {@code null}
+ *                            when not running under Playwright.
  * @param capturedAt      Instant at which the query was recorded.
  */
-public record SlowQueryRecord(String sql, long executionTimeMs, String httpMethod, String httpEndpoint, String testName, Instant capturedAt) {
+public record SlowQueryRecord(String sql, long executionTimeMs, String httpMethod, String httpEndpoint, String testName, String phase, Instant capturedAt) {
 }

@@ -58,6 +58,19 @@ def fmt_endpoint(method: str, endpoint: str) -> str:
     return f"`{method or '?'} {endpoint or '?'}`"
 
 
+def fmt_phase(phase: str) -> str:
+    """Markdown for the setup-vs-action badge. `?` means the request predates the
+    `X-Playwright-Phase` header or wasn't run under Playwright at all."""
+    return {"action": "🎯 action", "setup": "🔧 setup"}.get(phase, "?")
+
+
+def phase_sort_key(finding: dict, metric: str):
+    """Ranks action-phase findings ahead of setup-phase ones (worst-metric-first within
+    each group) so the top-N cap in the Markdown comment surfaces genuine test-action
+    findings before the test-setup noise they'd otherwise be drowned out by."""
+    return (finding.get("phase") == "action", finding.get(metric, 0))
+
+
 def iso_to_human(iso: str) -> str:
     try:
         dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
@@ -82,23 +95,28 @@ def build_slow_queries_section(slow_queries: list, threshold_ms: int, run_url: s
     if not slow_queries:
         return f"✅ **No slow queries** detected (threshold: {threshold_ms} ms)\n"
 
-    ranked = sorted(slow_queries, key=lambda q: q.get("executionTimeMs", 0), reverse=True)
+    # Action-phase findings first (worst-first within each group): the Markdown comment can only
+    # show MAX_ROWS_PER_SECTION rows, and test-setup traffic (page.request/context.request calls,
+    # phase="setup") runs far more often than the action a test is actually verifying, so a plain
+    # worst-first sort lets setup noise crowd out genuine action-phase findings. The full,
+    # phase-unfiltered ranking is still in the untruncated HTML artifact.
+    ranked = sorted(slow_queries, key=lambda q: phase_sort_key(q, "executionTimeMs"), reverse=True)
     shown = ranked[:MAX_ROWS_PER_SECTION]
     hidden_count = len(ranked) - len(shown)
 
     lines = [
         f"### 🐢 Slow Queries ({len(slow_queries)} found, threshold: {threshold_ms} ms)\n",
-        "| # | Duration | Endpoint | Test | SQL (truncated) |",
-        "|---|----------|----------|------|-----------------|",
+        "| # | Duration | Phase | Endpoint | Test | SQL (truncated) |",
+        "|---|----------|-------|----------|------|-----------------|",
     ]
     for i, q in enumerate(shown, start=1):
         endpoint = fmt_endpoint(q.get("httpMethod"), q.get("httpEndpoint"))
         test = f"`{q['testName']}`" if q.get("testName") else "—"
         sql = trunc(q.get("sql", ""))
-        lines.append(f"| {i} | **{q['executionTimeMs']} ms** | {endpoint} | {test} | `{sql}` |")
+        lines.append(f"| {i} | **{q['executionTimeMs']} ms** | {fmt_phase(q.get('phase'))} | {endpoint} | {test} | `{sql}` |")
     if hidden_count > 0:
         lines.append("")
-        lines.append(f"_Showing the {len(shown)} slowest. {hidden_count} more not shown — see the {artifact_link(run_url)} for the full list._")
+        lines.append(f"_Showing the {len(shown)} worst (action-phase findings prioritized). {hidden_count} more not shown — see the {artifact_link(run_url)} for the full list._")
     return "\n".join(lines) + "\n"
 
 
@@ -106,23 +124,24 @@ def build_n1_section(n1_suspects: list, n1_threshold: int, run_url: str = "") ->
     if not n1_suspects:
         return f"✅ **No N+1 patterns** detected (threshold: >{n1_threshold} occurrences per request)\n"
 
-    ranked = sorted(n1_suspects, key=lambda s: s.get("occurrences", 0), reverse=True)
+    # See build_slow_queries_section for why action-phase findings are ranked first.
+    ranked = sorted(n1_suspects, key=lambda s: phase_sort_key(s, "occurrences"), reverse=True)
     shown = ranked[:MAX_ROWS_PER_SECTION]
     hidden_count = len(ranked) - len(shown)
 
     lines = [
         f"### 🔁 N+1 Query Suspects ({len(n1_suspects)} found, threshold: >{n1_threshold}×/request)\n",
-        "| # | Occurrences | Endpoint | Test | SQL template (truncated) |",
-        "|---|-------------|----------|------|--------------------------|",
+        "| # | Occurrences | Phase | Endpoint | Test | SQL template (truncated) |",
+        "|---|-------------|-------|----------|------|--------------------------|",
     ]
     for i, s in enumerate(shown, start=1):
         endpoint = fmt_endpoint(s.get("httpMethod"), s.get("httpEndpoint"))
         test = f"`{s['testName']}`" if s.get("testName") else "—"
         sql = trunc(s.get("normalizedSql", ""))
-        lines.append(f"| {i} | **{s['occurrences']}×** | {endpoint} | {test} | `{sql}` |")
+        lines.append(f"| {i} | **{s['occurrences']}×** | {fmt_phase(s.get('phase'))} | {endpoint} | {test} | `{sql}` |")
     if hidden_count > 0:
         lines.append("")
-        lines.append(f"_Showing the {len(shown)} worst. {hidden_count} more not shown — see the {artifact_link(run_url)} for the full list._")
+        lines.append(f"_Showing the {len(shown)} worst (action-phase findings prioritized). {hidden_count} more not shown — see the {artifact_link(run_url)} for the full list._")
     return "\n".join(lines) + "\n"
 
 
@@ -240,6 +259,9 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 td.sql-cell code, td.sql-cell pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 td.sql-cell pre { white-space: pre-wrap; word-break: break-word; margin: 6px 0 0; padding: 8px; background: var(--tile-bg); border-radius: 6px; }
 td.sql-cell summary { cursor: pointer; }
+.phase-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.phase-action { background: rgba(22, 163, 74, .15); color: #16a34a; }
+.phase-setup { background: rgba(107, 114, 128, .15); color: var(--muted); }
 """
 
 HTML_REPORT_JS = """
@@ -290,6 +312,23 @@ def severity_class(ratio: float) -> str:
     return "sev-low"
 
 
+def phase_sort_value(phase: str) -> int:
+    """Numeric rank for the Phase column's `data-sort` (must live on the <td>, not the badge
+    <span> inside it — the HTML report's click-to-sort script reads `cells[colIndex].dataset.sort`,
+    i.e. the cell element itself)."""
+    return 1 if phase == "action" else 0
+
+
+def html_phase(phase: str) -> str:
+    """Badge for the setup-vs-action split (see phase_sort_key). `?` covers findings captured
+    before the `X-Playwright-Phase` header existed, or not run under Playwright at all."""
+    if phase == "action":
+        return '<span class="phase-badge phase-action">action</span>'
+    if phase == "setup":
+        return '<span class="phase-badge phase-setup">setup</span>'
+    return '<span class="muted">?</span>'
+
+
 def html_endpoint(method: str, endpoint: str) -> str:
     if not method and not endpoint:
         return '<span class="muted">(background)</span>'
@@ -322,6 +361,7 @@ def build_slow_queries_table_html(slow_queries: list, threshold_ms: int) -> str:
         rows.append(
             f'<tr class="{severity_class(ratio)}">'
             f'<td class="num" data-sort="{duration}">{duration} ms</td>'
+            f"<td>{html_phase(q.get('phase'))}</td>"
             f"<td>{html_endpoint(q.get('httpMethod'), q.get('httpEndpoint'))}</td>"
             f"<td>{test}</td>"
             f'<td class="sql-cell">{html_sql_cell(q.get("sql", ""))}</td>'
@@ -329,10 +369,11 @@ def build_slow_queries_table_html(slow_queries: list, threshold_ms: int) -> str:
         )
 
     return (
-        '<input class="filter-box" type="search" placeholder="Filter by endpoint, test, or SQL…" data-target="slow-queries-table">\n'
+        '<input class="filter-box" type="search" placeholder="Filter by endpoint, test, phase, or SQL…" data-target="slow-queries-table">\n'
         '<table class="sortable" id="slow-queries-table">\n'
         "<thead><tr>"
         '<th data-type="number">Duration</th>'
+        '<th data-type="number">Phase</th>'
         '<th data-type="string">Endpoint</th>'
         '<th data-type="string">Test</th>'
         '<th data-type="string">SQL</th>'
@@ -355,6 +396,7 @@ def build_n1_table_html(n1_suspects: list, n1_threshold: int) -> str:
         rows.append(
             f'<tr class="{severity_class(ratio)}">'
             f'<td class="num" data-sort="{occurrences}">{occurrences}×</td>'
+            f"<td>{html_phase(s.get('phase'))}</td>"
             f"<td>{html_endpoint(s.get('httpMethod'), s.get('httpEndpoint'))}</td>"
             f"<td>{test}</td>"
             f'<td class="sql-cell">{html_sql_cell(s.get("normalizedSql", ""))}</td>'
@@ -362,10 +404,11 @@ def build_n1_table_html(n1_suspects: list, n1_threshold: int) -> str:
         )
 
     return (
-        '<input class="filter-box" type="search" placeholder="Filter by endpoint, test, or SQL…" data-target="n1-suspects-table">\n'
+        '<input class="filter-box" type="search" placeholder="Filter by endpoint, test, phase, or SQL…" data-target="n1-suspects-table">\n'
         '<table class="sortable" id="n1-suspects-table">\n'
         "<thead><tr>"
         '<th data-type="number">Occurrences</th>'
+        '<th data-type="number">Phase</th>'
         '<th data-type="string">Endpoint</th>'
         '<th data-type="string">Test</th>'
         '<th data-type="string">SQL template</th>'
@@ -385,6 +428,9 @@ def build_html_report(report: dict, run_url: str = "") -> str:
     generated_at = iso_to_human(report.get("generatedAt", ""))
     slow_queries = report.get("slowQueries", [])
     n1_suspects = report.get("n1Suspects", [])
+    all_findings = slow_queries + n1_suspects
+    action_count = sum(1 for f in all_findings if f.get("phase") == "action")
+    setup_count = sum(1 for f in all_findings if f.get("phase") == "setup")
 
     run_link_html = f'<p><a href="{html.escape(run_url)}">View CI run</a></p>' if run_url else ""
 
@@ -404,7 +450,10 @@ def build_html_report(report: dict, run_url: str = "") -> str:
 <div class="stats">
 <div class="stat-tile"><span class="stat-value">{slow_count}</span><span class="stat-label">Slow Queries</span><span class="stat-sub">threshold {threshold_ms} ms</span></div>
 <div class="stat-tile"><span class="stat-value">{n1_count}</span><span class="stat-label">N+1 Suspects</span><span class="stat-sub">threshold &gt;{n1_threshold}×/request</span></div>
+<div class="stat-tile"><span class="stat-value">{action_count}</span><span class="stat-label">Action-Phase Findings</span><span class="stat-sub">real UI-driven traffic — start here</span></div>
+<div class="stat-tile"><span class="stat-value">{setup_count}</span><span class="stat-label">Setup-Phase Findings</span><span class="stat-sub">test fixture traffic, lower priority</span></div>
 </div>
+<p class="muted">Type "action" or "setup" into a table's filter box to isolate findings by phase.</p>
 
 <h2>🐢 Slow Queries</h2>
 {build_slow_queries_table_html(slow_queries, threshold_ms)}

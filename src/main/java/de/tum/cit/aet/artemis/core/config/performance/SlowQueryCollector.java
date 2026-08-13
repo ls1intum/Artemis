@@ -70,14 +70,17 @@ public class SlowQueryCollector {
      * @param httpEndpoint    URI path of the triggering request; may be {@code null}.
      * @param testName        Playwright test name from the {@code X-Playwright-Test-Name} header;
      *                            may be {@code null}.
+     * @param phase           Playwright phase from the {@code X-Playwright-Phase} header — {@code "action"}
+     *                            for requests the browser page itself issued, {@code "setup"} for
+     *                            {@code page.request}/{@code context.request} traffic; may be {@code null}.
      */
-    public void record(String normalizedSql, long executionTimeMs, String httpMethod, String httpEndpoint, String testName) {
+    public void record(String normalizedSql, long executionTimeMs, String httpMethod, String httpEndpoint, String testName, String phase) {
 
         // --- Slow-query detection ---
         if (executionTimeMs >= properties.getSlowQueryThresholdMs()) {
             if (slowQueries.size() < properties.getMaxRecordedQueries()) {
-                slowQueries.add(new SlowQueryRecord(normalizedSql, executionTimeMs, httpMethod, httpEndpoint, testName, Instant.now()));
-                log.debug("[SlowQuery] {}ms | {} {} | test='{}' | sql={}", executionTimeMs, httpMethod, httpEndpoint, testName, abbreviate(normalizedSql));
+                slowQueries.add(new SlowQueryRecord(normalizedSql, executionTimeMs, httpMethod, httpEndpoint, testName, phase, Instant.now()));
+                log.debug("[SlowQuery] {}ms | {} {} | test='{}' | phase='{}' | sql={}", executionTimeMs, httpMethod, httpEndpoint, testName, phase, abbreviate(normalizedSql));
             }
             else {
                 log.warn("[SlowQuery] Circuit-breaker: max {} entries reached, ignoring further slow queries", properties.getMaxRecordedQueries());
@@ -91,12 +94,13 @@ public class SlowQueryCollector {
 
             if (count == properties.getN1DetectionThreshold() + 1) {
                 // Promote to suspect the first time the threshold is crossed (avoid duplicates)
-                n1Suspects.add(new N1Suspect(normalizedSql, count, httpMethod, httpEndpoint, testName));
-                log.warn("[N+1 Suspect] {} occurrences of same query on {} {} | test='{}' | sql={}", count, httpMethod, httpEndpoint, testName, abbreviate(normalizedSql));
+                n1Suspects.add(new N1Suspect(normalizedSql, count, httpMethod, httpEndpoint, testName, phase));
+                log.warn("[N+1 Suspect] {} occurrences of same query on {} {} | test='{}' | phase='{}' | sql={}", count, httpMethod, httpEndpoint, testName, phase,
+                        abbreviate(normalizedSql));
             }
             else if (count > properties.getN1DetectionThreshold() + 1) {
                 // Update the occurrence count in the existing suspect entry
-                updateN1SuspectCount(normalizedSql, httpMethod, httpEndpoint, testName, count);
+                updateN1SuspectCount(normalizedSql, httpMethod, httpEndpoint, testName, phase, count);
             }
         }
     }
@@ -140,12 +144,12 @@ public class SlowQueryCollector {
         return (httpMethod != null ? httpMethod : "?") + "::" + httpEndpoint + "::" + (testName != null ? testName : "?") + "::" + sql;
     }
 
-    private void updateN1SuspectCount(String sql, String httpMethod, String httpEndpoint, String testName, int newCount) {
+    private void updateN1SuspectCount(String sql, String httpMethod, String httpEndpoint, String testName, String phase, int newCount) {
         // CopyOnWriteArrayList doesn't support in-place mutation; rebuild the entry
         for (int i = 0; i < n1Suspects.size(); i++) {
             N1Suspect s = n1Suspects.get(i);
             if (s.normalizedSql().equals(sql) && objectsEqual(s.httpMethod(), httpMethod) && objectsEqual(s.httpEndpoint(), httpEndpoint) && objectsEqual(s.testName(), testName)) {
-                n1Suspects.set(i, new N1Suspect(sql, newCount, httpMethod, httpEndpoint, testName));
+                n1Suspects.set(i, new N1Suspect(sql, newCount, httpMethod, httpEndpoint, testName, phase));
                 return;
             }
         }
