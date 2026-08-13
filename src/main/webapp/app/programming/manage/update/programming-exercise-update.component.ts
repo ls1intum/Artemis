@@ -242,7 +242,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private selectedProjectTypeValue?: ProjectType;
 
     // Left undefined until categories load; code distinguishes undefined ("not yet loaded") from an empty array.
-    exerciseCategories?: ExerciseCategory[];
+    // Initialised here rather than left undefined, because getProgrammingExerciseCreationConfig() must hand the child
+    // components a stable array identity. See the comment on that getter.
+    exerciseCategories: ExerciseCategory[] = [];
     existingCategories: ExerciseCategory[] = [];
 
     formStatusSections = signal<FormSectionStatus[]>([]);
@@ -1677,9 +1679,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.updateRepositoryName = this.updateRepositoryName;
         config.updateCheckoutDirectory = this.updateCheckoutDirectory;
         config.refreshAuxiliaryRepositoryChecks = this.refreshAuxiliaryRepositoryChecks;
-        // The config requires a non-optional array; `?? []` mirrors the defensive default already applied in
-        // validateExerciseCategories. The previous `Object.assign` typing hid the mismatch.
-        config.exerciseCategories = this.exerciseCategories ?? [];
+        // Assigned directly, never with a `?? []` fallback: this getter runs on every change-detection pass, so a
+        // fallback would hand the category selector a new array identity each pass. On a creation page, where the
+        // categories start out empty, that re-seeds the selector on every pass, which re-dirties this component and
+        // loops. A production build has no dev-mode guard to break that loop, so the page stops responding entirely.
+        // The field is initialised at its declaration, which is what makes the direct assignment safe.
+        config.exerciseCategories = this.exerciseCategories;
         config.existingCategories = this.existingCategories;
         config.updateCategories = this.categoriesChanged;
         config.modePickerOptions = this.modePickerOptions;
