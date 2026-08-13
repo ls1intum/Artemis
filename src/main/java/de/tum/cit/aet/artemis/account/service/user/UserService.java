@@ -276,6 +276,7 @@ public class UserService {
      * Reset user password for given reset key
      *
      * @param newPassword      new password string
+     * @param email            email of the user whose password should be set.
      * @param resetKey         reset key secret (not the hashed version)
      * @param revocationChoice which of the user's other credentials to revoke alongside the reset
      * @return user for whom the password was performed
