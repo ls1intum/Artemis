@@ -318,7 +318,7 @@ public class UserService {
      */
     public Optional<String> prepareUserForPasswordReset(User user) {
         if (user.getActivated() && user.isInternal()) {
-            String resetKey = RandomUtil.generateResetKeySecret();
+            String resetKey = RandomUtil.generateResetKey();
             String resetKeyHash = passwordService.hashPassword(resetKey);
             user.setResetKey(resetKeyHash);
             user.setResetDate(Instant.now());
