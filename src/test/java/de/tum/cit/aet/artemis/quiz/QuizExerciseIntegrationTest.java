@@ -1666,6 +1666,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
+        assertThat(json.get("quizQuestionsType").asText()).isEqualTo("before-quiz-start");
         assertThat(json.has("quizQuestions")).isFalse();
 
         QuizExerciseWithoutQuestionsDTO dto = objectMapper.readValue(content, QuizExerciseWithoutQuestionsDTO.class);
@@ -1691,6 +1692,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
+        assertThat(json.get("quizQuestionsType").asText()).isEqualTo("after-quiz-end");
         assertThat(json.has("quizQuestions")).isTrue();
         assertThat(json.get("quizQuestions").size()).isEqualTo(3);
 
@@ -1728,6 +1730,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
+        assertThat(json.get("quizQuestionsType").asText()).isEqualTo("live-quiz");
         assertThat(json.has("quizQuestions")).isTrue();
         assertThat(json.get("quizQuestions").size()).isEqualTo(3);
 

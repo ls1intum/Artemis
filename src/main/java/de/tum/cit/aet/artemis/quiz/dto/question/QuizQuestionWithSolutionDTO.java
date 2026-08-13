@@ -9,6 +9,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
 /**
  * The full post-publish projection of an exam quiz question, one implementation per question type.
@@ -59,3 +60,4 @@ public sealed interface QuizQuestionWithSolutionDTO extends QuizQuestionForExamD
         };
     }
 }
+

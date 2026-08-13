@@ -20,7 +20,9 @@ import io.swagger.v3.oas.annotations.media.SchemaProperty;
 @SchemaProperty(name = "quizQuestionsType", schema = @Schema(type = "string", allowableValues = { "before-quiz-start" }, defaultValue = "before-quiz-start"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentQuizParticipationWithoutQuestionsDTO(@JsonUnwrapped StudentQuizParticipationBaseDTO studentQuizParticipationBaseDTO, QuizExerciseWithoutQuestionsDTO exercise,
-        Set<QuizSubmissionBeforeEvaluationDTO> submissions) implements StudentQuizParticipationDTO {
+        Set<QuizSubmissionBeforeEvaluationDTO> submissions,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = StudentQuizParticipationDTO.BEFORE_QUIZ_START, defaultValue = StudentQuizParticipationDTO.BEFORE_QUIZ_START) String quizQuestionsType)
+        implements StudentQuizParticipationDTO {
 
     /**
      * Creates a StudentQuizParticipationWithoutQuestionsDTO object from a StudentParticipation object.
@@ -41,7 +43,7 @@ public record StudentQuizParticipationWithoutQuestionsDTO(@JsonUnwrapped Student
                 .map(QuizSubmissionBeforeEvaluationDTO::of).collect(Collectors.toSet());
 
         return new StudentQuizParticipationWithoutQuestionsDTO(StudentQuizParticipationBaseDTO.of(studentParticipation), QuizExerciseWithoutQuestionsDTO.of(quizExercise),
-                submissionsBeforeEvaluation);
+                submissionsBeforeEvaluation, StudentQuizParticipationDTO.BEFORE_QUIZ_START);
     }
 
 }

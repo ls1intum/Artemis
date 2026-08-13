@@ -30,15 +30,24 @@
 
 # The following entries are pre-populated based on the input obtained via
 # the option `openapiGeneratorIgnoreList` (--openapi-generator-ignore-list in CLI for example).
-api/global-search-resources.ts
 api/tutorial-group-resources.ts
-api/hyperion-problem-statement-resources.ts
 api/hyperion-code-generation-resources.ts
-api/tutorial-group-free-period-resources.ts
-api/hyperion-faq-resources.ts
+api/quiz-participation-resources.ts
+api/hyperion-assessment-criteria-generation-resources.ts
 api/hyperion-quiz-question-generation-resources.ts
-api/calendar-resources.ts
-api/quiz-training-resources.ts
+api/quiz-submission-resources.ts
 api/tutorial-group-session-resources.ts
 api/tutorial-groups-configuration-resources.ts
+api/quiz-exercise-evaluation-resources.ts
+api/quiz-exercise-retrieval-resources.ts
 api/legacy-calendar-resources.ts
+api/global-search-resources.ts
+api/hyperion-problem-statement-resources.ts
+api/tutorial-group-free-period-resources.ts
+api/quiz-exercise-deletion-resources.ts
+api/hyperion-faq-resources.ts
+api/quiz-exercise-resources.ts
+api/calendar-resources.ts
+api/quiz-training-resources.ts
+api/quiz-exercise-creation-update-resources.ts
+api/quiz-exercise-batch-resources.ts

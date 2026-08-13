@@ -70,6 +70,8 @@ class QuizParticipationIntegrationTest extends AbstractSpringIntegrationIndepend
         addSubmissionWithResult(participation, false, 50D, ZonedDateTime.now().minusMinutes(1));
 
         String content = request.get(resultUrl(quizExercise, participation), HttpStatus.OK, String.class);
+        JsonNode participationJson = objectMapper.readTree(content);
+        assertThat(participationJson.get("quizQuestionsType").asText()).isEqualTo("after-quiz-end");
 
         JsonNode results = firstSubmissionResults(content);
         assertThat(results.size()).isEqualTo(1);
