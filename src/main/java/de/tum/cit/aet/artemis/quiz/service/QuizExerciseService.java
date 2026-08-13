@@ -87,6 +87,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForSearchDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForStudentResponseDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
@@ -1414,15 +1415,15 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param batch        the optional quiz batch associated with the student
      * @return the mapped DTO (QuizExerciseWithoutQuestionsDTO, QuizExerciseWithQuestionsDTO, or QuizExerciseWithSolutionsDTO)
      */
-    public Object createQuizExerciseDTOForStudent(QuizExercise quizExercise, Optional<QuizBatch> batch) {
+    public QuizExerciseForStudentResponseDTO createQuizExerciseDTOForStudent(QuizExercise quizExercise, Optional<QuizBatch> batch) {
         if (quizExercise.isQuizEnded()) {
-            return QuizExerciseWithSolutionDTO.of(quizExercise);
+            return QuizExerciseForStudentResponseDTO.afterQuizEnd(QuizExerciseWithSolutionDTO.of(quizExercise));
         }
         else if (batch.isEmpty() || !batch.get().isSubmissionAllowed()) {
-            return QuizExerciseWithoutQuestionsDTO.of(quizExercise);
+            return QuizExerciseForStudentResponseDTO.beforeQuizStart(QuizExerciseWithoutQuestionsDTO.of(quizExercise));
         }
         else {
-            return QuizExerciseWithQuestionsDTO.of(quizExercise);
+            return QuizExerciseForStudentResponseDTO.liveQuiz(QuizExerciseWithQuestionsDTO.of(quizExercise));
         }
     }
 

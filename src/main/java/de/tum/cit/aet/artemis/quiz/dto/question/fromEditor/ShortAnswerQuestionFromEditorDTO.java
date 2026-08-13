@@ -21,6 +21,8 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
 /**
  * DTO for short answer questions in the editor context.
@@ -40,6 +42,8 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
  * @param similarityValue the similarity value for comparing answers
  * @param matchLetterCase whether to match letter case
  */
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "short-answer" }, defaultValue = "short-answer"))
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ShortAnswerQuestionFromEditorDTO(Long id, @NotEmpty String title, String text, String hint, String explanation, @NotNull @Positive Double points,

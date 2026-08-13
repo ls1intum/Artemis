@@ -19,7 +19,11 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "drag-and-drop" }, defaultValue = "drag-and-drop"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, String hint, String explanation, @NotNull @Positive Double points, @NotNull ScoringType scoringType,
         Boolean randomizeOrder, String backgroundFilePath, @NotEmpty List<@Valid DropLocationCreateDTO> dropLocations, @NotEmpty List<@Valid DragItemCreateDTO> dragItems,
