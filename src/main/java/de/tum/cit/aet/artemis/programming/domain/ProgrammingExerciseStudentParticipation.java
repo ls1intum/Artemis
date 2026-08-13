@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -11,6 +10,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;

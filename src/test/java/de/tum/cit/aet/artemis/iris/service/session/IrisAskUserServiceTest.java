@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisAssessment;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisPipeEvent;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 class IrisAskUserServiceTest {
 
@@ -477,6 +479,157 @@ class IrisAskUserServiceTest {
 
         assertThatCode(() -> irisAskUserService.handleStatusUpdate(job, statusUpdate)).doesNotThrowAnyException();
 
+        verifyNoInteractions(irisAssessmentReviewService);
+    }
+
+    @Test
+    void handleNewResultEventIgnoresPracticeModeParticipation() {
+        var exercise = new ProgrammingExercise();
+        exercise.setId(1L);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(2L);
+        participation.setProgrammingExercise(exercise);
+        participation.setPracticeMode(true);
+        var submission = new ProgrammingSubmission();
+        submission.setId(3L);
+        submission.setParticipation(participation);
+        var result = new Result();
+        result.setId(4L);
+        result.setScore(40.0);
+        result.setSubmission(submission);
+        submission.addResult(result);
+
+        irisAskUserService.handleNewResultEvent(new NewResultEvent(result));
+
+        verifyNoInteractions(irisSettingsService);
+        verifyNoInteractions(pyrisPipelineService);
+    }
+
+    @Test
+    void handleNewResultEventIgnoresNonProgrammingSubmission() {
+        var exercise = new ProgrammingExercise();
+        exercise.setId(1L);
+        var user = optedInUser(9L);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(2L);
+        participation.setProgrammingExercise(exercise);
+        participation.setParticipant(user);
+
+        var submission = new TextSubmission();
+        submission.setId(3L);
+        submission.setParticipation(participation);
+        var result = new Result();
+        result.setId(4L);
+        result.setScore(40.0);
+        result.setSubmission(submission);
+        submission.addResult(result);
+
+        irisAskUserService.handleNewResultEvent(new NewResultEvent(result));
+
+        verifyNoInteractions(irisSettingsService);
+        verifyNoInteractions(pyrisPipelineService);
+    }
+
+    @Test
+    void requestAndHandleResponseThrowsConflictExceptionWhenAskUserModeDisabled() {
+        var fixture = stubAskUserPipeline();
+        fixture.session().setInAskUserModePipeline(true);
+        when(irisSettingsService.getSettingsForExercise(fixture.exercise())).thenReturn(IrisCourseSettings.of(false, null, null, null, null));
+
+        assertThatThrownBy(() -> irisAskUserService.requestAndHandleResponse(fixture.session())).isInstanceOf(ConflictException.class);
+
+        verifyNoInteractions(pyrisPipelineService);
+    }
+
+    @Test
+    void requestAndHandleResponseThrowsIllegalStateWhenLoadedSessionIsNotChatSessionAndNoParticipationsExist() {
+        var fixture = stubAskUserPipeline();
+        fixture.session().setInAskUserModePipeline(true);
+        when(programmingExerciseStudentParticipationRepository.findAllByExerciseIdAndStudentLogin(fixture.exercise().getId(), fixture.user().getLogin())).thenReturn(List.of());
+        when(irisSessionRepository.findByIdWithMessagesAndContents(fixture.session().getId())).thenReturn(null);
+
+        assertThatThrownBy(() -> irisAskUserService.requestAndHandleResponse(fixture.session())).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void requestAndHandleResponseThrowsConflictExceptionWhenSessionIsNotAProgrammingExerciseChatSession() {
+        var course = new Course();
+        course.setId(1L);
+        var exercise = new ProgrammingExercise();
+        exercise.setId(2L);
+        exercise.setCourse(course);
+        var user = optedInUser(3L);
+        var session = new IrisChatSession(course, user);
+        session.setId(4L);
+        session.setEntityId(exercise.getId());
+        session.setInAskUserModePipeline(true);
+
+        assertThatThrownBy(() -> irisAskUserService.requestAndHandleResponse(session)).isInstanceOf(ConflictException.class);
+
+        verifyNoInteractions(pyrisPipelineService);
+    }
+
+    @Test
+    void requestAndHandleResponseThrowsConflictExceptionForExamExercise() {
+        var fixture = stubAskUserPipeline();
+        fixture.session().setInAskUserModePipeline(true);
+        fixture.exercise().setExerciseGroup(new ExerciseGroup());
+
+        assertThatThrownBy(() -> irisAskUserService.requestAndHandleResponse(fixture.session())).isInstanceOf(ConflictException.class);
+
+        verifyNoInteractions(pyrisPipelineService);
+    }
+
+    @Test
+    void requestAndHandleResponseThrowsConflictExceptionWhenResolvedExerciseDoesNotMatchSessionEntity() {
+        var fixture = stubAskUserPipeline();
+        fixture.session().setInAskUserModePipeline(true);
+        var mismatchedExercise = new ProgrammingExercise();
+        mismatchedExercise.setId(999L);
+        mismatchedExercise.setCourse(fixture.course());
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(fixture.exercise().getId())).thenReturn(mismatchedExercise);
+        when(irisSettingsService.getSettingsForExercise(mismatchedExercise)).thenReturn(IrisCourseSettings.defaultSettings());
+
+        assertThatThrownBy(() -> irisAskUserService.requestAndHandleResponse(fixture.session())).isInstanceOf(ConflictException.class);
+
+        verifyNoInteractions(pyrisPipelineService);
+    }
+
+    @Test
+    void requestAndHandleResponseResetsPipelineWhenPyrisExecutionFails() {
+        var fixture = stubAskUserPipeline();
+        fixture.session().setInAskUserModePipeline(true);
+        when(irisChatSessionRepository.findById(fixture.session().getId())).thenReturn(Optional.of(fixture.session()));
+        when(pyrisPipelineService.executeAskUserPipeline(anyString(), any(), any(), any(), any(), any())).thenReturn(false);
+
+        irisAskUserService.requestAndHandleResponse(fixture.session());
+
+        assertThat(fixture.session().isInAskUserModePipeline()).isFalse();
+        verify(irisChatSessionRepository).findById(fixture.session().getId());
+    }
+
+    @Test
+    void resetAskUserPipelineAfterPyrisFailureIsNoOpWhenPipelineNotActive() {
+        var session = new IrisChatSession();
+        session.setId(9L);
+        session.setInAskUserModePipeline(false);
+        var job = new ChatJob("ask-user-run", 1L, session.getId(), 2L, null, null, null, ChatJob.ASK_USER_PIPELINE_NAME);
+        when(irisChatSessionRepository.findById(session.getId())).thenReturn(Optional.of(session));
+
+        assertThat(irisAskUserService.resetAskUserPipelineAfterPyrisFailure(job)).isFalse();
+
+        verify(irisChatSessionRepository, never()).save(any());
+        verifyNoInteractions(irisAssessmentReviewService);
+    }
+
+    @Test
+    void handleStatusUpdateIgnoresNullEvent() {
+        var job = new ChatJob("null-event-run", 1L, 2L, 3L, null, null, null, ChatJob.ASK_USER_PIPELINE_NAME);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("some result", PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null, null, null, null);
+
+        assertThatCode(() -> irisAskUserService.handleStatusUpdate(job, statusUpdate)).doesNotThrowAnyException();
+
+        verifyNoInteractions(irisChatSessionRepository);
         verifyNoInteractions(irisAssessmentReviewService);
     }
 

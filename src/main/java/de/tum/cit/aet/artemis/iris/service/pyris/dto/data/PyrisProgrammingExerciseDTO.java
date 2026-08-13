@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris.dto.data;
 import java.time.Instant;
 import java.util.Map;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
