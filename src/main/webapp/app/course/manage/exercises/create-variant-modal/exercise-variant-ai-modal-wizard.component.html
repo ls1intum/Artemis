@@ -126,7 +126,7 @@
         </div>
 
         <div class="flex justify-end mt-8">
-            <tum-ui-button severity="secondary" size="small" [disabled]="!anyCardSelected()" (clicked)="goToStep2()">
+            <tum-ui-button severity="primary" size="small" [disabled]="!anyCardSelected()" (clicked)="goToStep2()">
                 {{ 'artemisApp.exerciseVariantGeneration.wizard.next' | artemisTranslate }} <fa-icon [icon]="faArrowRight" class="ml-1" />
             </tum-ui-button>
         </div>
@@ -210,7 +210,7 @@
             <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep1()">
                 <fa-icon [icon]="faArrowLeft" class="mr-1" /> {{ 'artemisApp.exerciseVariantGeneration.wizard.back' | artemisTranslate }}
             </tum-ui-button>
-            <tum-ui-button severity="secondary" size="small" [disabled]="!canProceedToPlacement()" (clicked)="goToPlacement()">
+            <tum-ui-button severity="primary" size="small" [disabled]="!canProceedToPlacement()" (clicked)="goToPlacement()">
                 {{ 'artemisApp.exerciseVariantGeneration.wizard.next' | artemisTranslate }} <fa-icon [icon]="faArrowRight" class="ml-1" />
             </tum-ui-button>
         </div>
@@ -353,10 +353,9 @@
             <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep2()">
                 <fa-icon [icon]="faArrowLeft" class="mr-1" /> {{ 'artemisApp.exerciseVariantGeneration.wizard.back' | artemisTranslate }}
             </tum-ui-button>
-            <button type="button" class="btn-ai-generate" [disabled]="!canGenerate()" (click)="startGeneration()">
-                <fa-icon [icon]="faWandMagicSparkles" class="mr-2" />
+            <tum-ui-button severity="primary" size="small" [icon]="faWandMagicSparkles" [disabled]="!canGenerate()" (clicked)="startGeneration()">
                 {{ 'artemisApp.exerciseVariantGeneration.wizard.generate' | artemisTranslate }}
-            </button>
+            </tum-ui-button>
         </div>
     }
 
@@ -428,10 +427,9 @@
                         <fa-icon [icon]="faBan" class="mr-1" />
                         {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
                     </tum-ui-button>
-                    <button type="button" class="btn-ai-generate" (click)="onClose(false)" data-testid="variant-wizard-run-in-background">
-                        <fa-icon [icon]="faWandMagicSparkles" class="mr-1" />
+                    <tum-ui-button severity="primary" size="small" [icon]="faWandMagicSparkles" (clicked)="onClose(false)" data-testid="variant-wizard-run-in-background">
                         {{ 'artemisApp.exerciseVariantGeneration.wizard.runInBackground' | artemisTranslate }}
-                    </button>
+                    </tum-ui-button>
                 </div>
             }
         </div>
@@ -462,10 +460,9 @@
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</tum-ui-button>
                 @if (generatedVariant()) {
-                    <button type="button" class="btn-ai-generate" (click)="confirmVariant()" data-testid="variant-wizard-open-editor">
-                        <fa-icon [icon]="faPenToSquare" class="mr-1" />
+                    <tum-ui-button severity="primary" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-open-editor">
                         {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
-                    </button>
+                    </tum-ui-button>
                 }
             </div>
         } @else if (jobPhase() === 'CANCELLED') {
@@ -523,10 +520,16 @@
                 <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</tum-ui-button>
-                <button type="button" class="btn-ai-generate" [disabled]="!generatedVariant()" (click)="confirmVariant()" data-testid="variant-wizard-open-editor">
-                    <fa-icon [icon]="faPenToSquare" class="mr-1" />
+                <tum-ui-button
+                    severity="primary"
+                    size="small"
+                    [icon]="faPenToSquare"
+                    [disabled]="!generatedVariant()"
+                    (clicked)="confirmVariant()"
+                    data-testid="variant-wizard-open-editor"
+                >
                     {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
-                </button>
+                </tum-ui-button>
             </div>
         }
     }
