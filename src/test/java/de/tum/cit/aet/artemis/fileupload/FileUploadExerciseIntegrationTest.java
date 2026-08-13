@@ -682,6 +682,17 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
+        fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
+        fileUploadExercise.setDueDate(baseTime.plusHours(3));
+        fileUploadExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        fileUploadExercise.setExampleSolutionPublicationDate(fileUploadExercise.getDueDate());
+
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
         fileUploadExercise.setReleaseDate(baseTime.plusHours(3));
         fileUploadExercise.setDueDate(null);
         fileUploadExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
@@ -707,16 +718,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         fileUploadExercise.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 4));
         var result = request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
-
-        fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
-        fileUploadExercise.setDueDate(baseTime.plusHours(3));
-        exampleSolutionPublicationDate = baseTime.plusHours(2);
-        fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        fileUploadExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
-        result = request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
-        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
-
     }
 
     @Test

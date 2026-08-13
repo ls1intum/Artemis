@@ -143,6 +143,26 @@ describe('ExerciseTimeline', () => {
         expect(component.internalTimelineItems()[2]).toMatchObject({ isBeforePreviousDate: false });
     });
 
+    it('should reject equal dates only when strict ordering is enabled', () => {
+        const date = dayjs('2026-01-01T10:00:00Z');
+        const timelineItems: TimelineItem[] = [
+            { kind: 'optional', labelStringKey: 'release', date: signal(date) },
+            { kind: 'optional', labelStringKey: 'start', date: signal(date) },
+        ];
+        fixture.componentRef.setInput('timelineItems', timelineItems);
+
+        expect(component.internalTimelineItems()[1]).toMatchObject({ isBeforePreviousDate: false, tooltip: undefined });
+        expect(component.timelineStatus().valid).toBe(true);
+
+        fixture.componentRef.setInput('strictOrdering', true);
+
+        expect(component.internalTimelineItems()[1]).toMatchObject({
+            isBeforePreviousDate: true,
+            tooltip: 'artemisApp.exercise.timelineStrictDateOrderTooltip',
+        });
+        expect(component.timelineStatus().valid).toBe(false);
+    });
+
     it('should update timeline item date', () => {
         const initialDate = dayjs('2026-01-01T10:00:00Z');
         const newDate = new Date('2026-01-02T10:00:00Z');

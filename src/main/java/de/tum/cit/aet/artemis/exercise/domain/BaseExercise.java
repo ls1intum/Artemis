@@ -194,49 +194,51 @@ public abstract class BaseExercise extends DomainObject {
     public abstract boolean isExamExercise();
 
     /**
-     * This method is used to validate the assessmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assessmentDueDate is
-     * invalid without an according dueDate
+     * This method is used to validate the assessmentDueDate of an exercise. An assessmentDueDate is valid if it is strictly after the releaseDate, startDate, and dueDate if
+     * present. A given assessmentDueDate is invalid without an according dueDate.
      *
      * @return true if there is no assessmentDueDateError
      */
-    protected static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+    protected static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
         if (assessmentDueDate == null) {
             return true;
         }
-        // There cannot be a assessmentDueDate without dueDate
+        // There cannot be an assessmentDueDate without dueDate
         if (dueDate == null) {
             return false;
         }
-        return isNotAfterAndNotNull(dueDate, assessmentDueDate) && isNotAfterAndNotNull(releaseDate, assessmentDueDate);
+        return isStrictlyBeforeIfBothSet(releaseDate, assessmentDueDate) && isStrictlyBeforeIfBothSet(startDate, assessmentDueDate)
+                && isStrictlyBeforeIfBothSet(dueDate, assessmentDueDate);
     }
 
     /**
-     * This method is used to validate the exampleSolutionPublicationDate of an exercise. An exampleSolutionPublicationDate is valid if it is after the releaseDate and dueDate.
-     * Any given exampleSolutionPublicationDate is valid if releaseDate and dueDate are not set.
+     * This method is used to validate the exampleSolutionPublicationDate of an exercise. An exampleSolutionPublicationDate is valid if it is strictly after the releaseDate,
+     * startDate, and dueDate if present.
+     * Any given exampleSolutionPublicationDate is valid if releaseDate, startDate, and dueDate are not set.
      * exampleSolutionPublicationDate is valid if it is not set.
      *
      * @return true if there is no exampleSolutionPublicationDateError
      */
-    protected static boolean isValidExampleSolutionPublicationDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime exampleSolutionPublicationDate,
-            IncludedInOverallScore includedInOverallScore) {
+    protected static boolean isValidExampleSolutionPublicationDate(ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
+            ZonedDateTime exampleSolutionPublicationDate) {
         if (exampleSolutionPublicationDate == null) {
             return true;
         }
 
-        return (isNotAfterAndNotNull(dueDate, exampleSolutionPublicationDate) || includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED)
-                && isNotAfterAndNotNull(releaseDate, exampleSolutionPublicationDate);
+        return isStrictlyBeforeIfBothSet(releaseDate, exampleSolutionPublicationDate) && isStrictlyBeforeIfBothSet(startDate, exampleSolutionPublicationDate)
+                && isStrictlyBeforeIfBothSet(dueDate, exampleSolutionPublicationDate);
     }
 
     /**
-     * This method is used to validate if the previousDate is before the laterDate.
+     * This method is used to validate if the previousDate is strictly before the laterDate. Unset dates do not violate the ordering.
      *
      * @return true if the previousDate is valid
      */
-    protected static boolean isNotAfterAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
+    protected static boolean isStrictlyBeforeIfBothSet(ZonedDateTime previousDate, ZonedDateTime laterDate) {
         if (previousDate == null || laterDate == null) {
             return true;
         }
-        return !previousDate.isAfter(laterDate);
+        return previousDate.isBefore(laterDate);
     }
 
     /**

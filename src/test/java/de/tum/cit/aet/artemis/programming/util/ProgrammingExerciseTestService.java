@@ -108,6 +108,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -2701,6 +2702,17 @@ public class ProgrammingExerciseTestService {
         exercise.setReleaseDate(baseTime.plusHours(3));
         exercise.setDueDate(null);
         exercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        exercise.setReleaseDate(baseTime.plusHours(1));
+        exercise.setDueDate(baseTime.plusHours(3));
+        exercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        exercise.setExampleSolutionPublicationDate(exercise.getDueDate());
 
         request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }

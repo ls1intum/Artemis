@@ -1842,6 +1842,17 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
 
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        textExercise.setReleaseDate(baseTime.plusHours(1));
+        textExercise.setDueDate(baseTime.plusHours(3));
+        textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        textExercise.setExampleSolutionPublicationDate(textExercise.getDueDate());
+
+        request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
         textExercise.setReleaseDate(baseTime.plusHours(3));
         textExercise.setDueDate(null);
         textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
@@ -1864,15 +1875,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setChannelName("test");
 
         var result = request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.CREATED);
-        assertThat(result.exampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
-
-        textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        textExercise.setReleaseDate(baseTime.plusHours(1));
-        textExercise.setDueDate(baseTime.plusHours(3));
-        exampleSolutionPublicationDate = baseTime.plusHours(2);
-        textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
-        result = request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.CREATED);
         assertThat(result.exampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
     }
 

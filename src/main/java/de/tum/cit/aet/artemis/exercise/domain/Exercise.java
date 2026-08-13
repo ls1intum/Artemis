@@ -875,15 +875,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
         }
 
-        // at least one is set, so we have to check the three possible errors
         //@formatter:off
-        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate())
-                && isNotAfterAndNotNull(getReleaseDate(), getStartDate())
-                && isNotAfterAndNotNull(getStartDate(), getDueDate())
-                && isValidAssessmentDueDate(getStartDate(), getDueDate(), getAssessmentDueDate())
-                && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
-                && isValidExampleSolutionPublicationDate(getStartDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore())
-                && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
+        boolean areDatesValid = isStrictlyBeforeIfBothSet(getReleaseDate(), getStartDate())
+                && isStrictlyBeforeIfBothSet(getReleaseDate(), getDueDate())
+                && isStrictlyBeforeIfBothSet(getStartDate(), getDueDate())
+                && isValidAssessmentDueDate(getReleaseDate(), getStartDate(), getDueDate(), getAssessmentDueDate())
+                && isValidExampleSolutionPublicationDate(getReleaseDate(), getStartDate(), getDueDate(), getExampleSolutionPublicationDate());
         //@formatter:on
 
         if (!areDatesValid) {

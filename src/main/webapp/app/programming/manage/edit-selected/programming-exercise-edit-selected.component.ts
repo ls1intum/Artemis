@@ -4,9 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
@@ -25,9 +23,7 @@ import { TumUiDialogComponent } from '@tumaet/ui-angular';
 })
 export class ProgrammingExerciseEditSelectedComponent {
     private translateService = inject(TranslateService);
-    private alertService = inject(AlertService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    private exerciseService = inject(ExerciseService);
 
     /** Two-way visibility, driven by the parent. */
     readonly visible = model<boolean>(false);
@@ -76,13 +72,6 @@ export class ProgrammingExerciseEditSelectedComponent {
             }
         }
         this.isSaving.set(true);
-
-        if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.newProgrammingExercise)) {
-            this.alertService.addAlert({
-                type: AlertType.WARNING,
-                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
-            });
-        }
 
         this.selectedProgrammingExercises().forEach((programmingExercise) => {
             programmingExercise = this.setNewValues(programmingExercise);

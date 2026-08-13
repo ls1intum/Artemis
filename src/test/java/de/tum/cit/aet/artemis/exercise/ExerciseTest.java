@@ -27,9 +27,13 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -214,5 +218,59 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
         exercise.setBonusPoints(0.0);
 
         assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("The max points needs to be greater than 0");
+    }
+
+    @Test
+    void validateBaseDates_strictlyOrderedDates_doesNotThrow() {
+        setStrictlyOrderedDates(ZonedDateTime.now());
+
+        assertThatNoException().isThrownBy(exercise::validateBaseDates);
+    }
+
+    @Test
+    void validateBaseDates_equalDates_throws() {
+        ZonedDateTime releaseDate = ZonedDateTime.now();
+
+        setStrictlyOrderedDates(releaseDate);
+        exercise.setStartDate(releaseDate);
+        assertThatThrownBy(exercise::validateBaseDates).hasMessageContaining("The exercise dates are not valid");
+
+        setStrictlyOrderedDates(releaseDate);
+        exercise.setDueDate(releaseDate.plusHours(1));
+        assertThatThrownBy(exercise::validateBaseDates).hasMessageContaining("The exercise dates are not valid");
+
+        setStrictlyOrderedDates(releaseDate);
+        exercise.setStartDate(null);
+        exercise.setDueDate(releaseDate);
+        assertThatThrownBy(exercise::validateBaseDates).hasMessageContaining("The exercise dates are not valid");
+
+        setStrictlyOrderedDates(releaseDate);
+        exercise.setAssessmentDueDate(releaseDate.plusHours(2));
+        assertThatThrownBy(exercise::validateBaseDates).hasMessageContaining("The exercise dates are not valid");
+
+        setStrictlyOrderedDates(releaseDate);
+        exercise.setExampleSolutionPublicationDate(releaseDate.plusHours(2));
+        assertThatThrownBy(exercise::validateBaseDates).hasMessageContaining("The exercise dates are not valid");
+    }
+
+    @Test
+    void validateBaseDates_equalExampleSolutionPublicationDate_throwsForEveryExerciseType() {
+        ZonedDateTime releaseDate = ZonedDateTime.now();
+
+        for (Exercise exercise : List.of(new TextExercise(), new ModelingExercise(), new FileUploadExercise(), new ProgrammingExercise(), new QuizExercise())) {
+            exercise.setReleaseDate(releaseDate);
+            exercise.setDueDate(releaseDate.plusHours(1));
+            exercise.setExampleSolutionPublicationDate(exercise.getDueDate());
+
+            assertThatThrownBy(exercise::validateBaseDates).as(exercise.getClass().getSimpleName()).hasMessageContaining("The exercise dates are not valid");
+        }
+    }
+
+    private void setStrictlyOrderedDates(ZonedDateTime releaseDate) {
+        exercise.setReleaseDate(releaseDate);
+        exercise.setStartDate(releaseDate.plusHours(1));
+        exercise.setDueDate(releaseDate.plusHours(2));
+        exercise.setAssessmentDueDate(releaseDate.plusHours(3));
+        exercise.setExampleSolutionPublicationDate(releaseDate.plusHours(3));
     }
 }

@@ -52,6 +52,7 @@ export class TimelineComponent {
 
     timelineItems = input.required<TimelineItem[]>();
     readonly = input<boolean>(false);
+    strictOrdering = input(false);
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
     timelineStatus = computed<TimelineStatus>(() => this.computeExerciseTimelineStatus());
     timelineStatusChange = output<TimelineStatus>();
@@ -130,7 +131,7 @@ export class TimelineComponent {
                 date !== undefined &&
                 (item.orderCheckAgainst ?? items.slice(0, index)).some((previousItem) => {
                     const previousDate = previousItem.date();
-                    return previousDate !== undefined && date.isBefore(previousDate);
+                    return previousDate !== undefined && (this.strictOrdering() ? !date.isAfter(previousDate) : date.isBefore(previousDate));
                 });
             const isInputRequiredButUndefined = item.kind === 'required' && date === undefined;
             const otherRequiredItem = item.otherRequiredItem;
@@ -141,7 +142,8 @@ export class TimelineComponent {
             if (isInvalidInput) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateInvalidTooltip');
             } else if (isBeforePreviousDate) {
-                tooltip = this.translateService.instant('artemisApp.exercise.timelineDateOrderTooltip');
+                const tooltipKey = this.strictOrdering() ? 'artemisApp.exercise.timelineStrictDateOrderTooltip' : 'artemisApp.exercise.timelineDateOrderTooltip';
+                tooltip = this.translateService.instant(tooltipKey);
             } else if (isInputRequiredButUndefined) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateRequiredTooltip');
             } else if (isOtherRequiredItemDateUndefined && otherRequiredItem) {

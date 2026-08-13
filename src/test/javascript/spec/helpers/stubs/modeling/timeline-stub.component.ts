@@ -8,5 +8,6 @@ import { TimelineStatus, TimelineItem } from 'app/shared-ui/timeline/timeline.co
 export class TimelineStubComponent {
     timelineItems = input.required<TimelineItem[]>();
     readonly = input<boolean>(false);
+    strictOrdering = input(false);
     timelineStatusChange = output<TimelineStatus>();
 }

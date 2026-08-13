@@ -79,57 +79,34 @@ export class ExerciseService {
      * Validates if the dates are correct
      */
     validateDate(exercise: Exercise) {
-        exercise.dueDateError = this.hasDueDateError(exercise);
         exercise.startDateError = this.hasStartDateError(exercise);
+        exercise.dueDateError = this.hasDueDateError(exercise);
         exercise.assessmentDueDateError = this.hasAssessmentDueDateError(exercise);
-
         exercise.exampleSolutionPublicationDateError = this.hasExampleSolutionPublicationDateError(exercise);
-        exercise.exampleSolutionPublicationDateWarning = this.hasExampleSolutionPublicationDateWarning(exercise);
     }
 
     hasStartDateError(exercise: Exercise) {
-        return exercise.startDate && exercise.releaseDate && dayjs(exercise.startDate).isBefore(exercise.releaseDate);
+        return exercise.startDate && exercise.releaseDate && !dayjs(exercise.startDate).isAfter(exercise.releaseDate);
     }
 
     hasDueDateError(exercise: Exercise) {
         const relevantDateBefore = exercise.startDate ?? exercise.releaseDate;
-        return relevantDateBefore && exercise.dueDate && dayjs(exercise.dueDate).isBefore(relevantDateBefore);
+        return relevantDateBefore && exercise.dueDate && !dayjs(exercise.dueDate).isAfter(relevantDateBefore);
     }
 
     private hasAssessmentDueDateError(exercise: Exercise) {
-        if (exercise.releaseDate && exercise.assessmentDueDate) {
-            if (exercise.dueDate) {
-                return dayjs(exercise.assessmentDueDate).isBefore(exercise.dueDate) || dayjs(exercise.assessmentDueDate).isBefore(exercise.releaseDate);
-            } else {
-                return true;
-            }
+        if (!exercise.assessmentDueDate) {
+            return false;
         }
 
-        if (exercise.assessmentDueDate) {
-            if (exercise.dueDate) {
-                return dayjs(exercise.assessmentDueDate).isBefore(exercise.dueDate);
-            } else {
-                return true;
-            }
-        }
-        return false;
+        return !exercise.dueDate || !dayjs(exercise.assessmentDueDate).isAfter(exercise.dueDate);
     }
 
     hasExampleSolutionPublicationDateError(exercise: Exercise) {
         if (exercise.exampleSolutionPublicationDate) {
-            return (
-                dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.startDate ?? exercise.releaseDate) ||
-                (dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
-            );
-        }
-        return false;
-    }
-
-    hasExampleSolutionPublicationDateWarning(exercise: Exercise) {
-        if (exercise.exampleSolutionPublicationDate && !dayjs(exercise.exampleSolutionPublicationDate).isSameOrAfter(exercise.dueDate || null)) {
-            if (!exercise.dueDate || exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
-                return true;
-            }
+            const previousDate = exercise.dueDate ?? exercise.startDate ?? exercise.releaseDate;
+            const publicationDate = dayjs(exercise.exampleSolutionPublicationDate);
+            return previousDate !== undefined && !publicationDate.isAfter(previousDate);
         }
         return false;
     }

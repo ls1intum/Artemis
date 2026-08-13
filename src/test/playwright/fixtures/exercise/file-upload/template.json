@@ -12,7 +12,6 @@
     "assessmentDueDateError": false,
     "dueDateError": false,
     "exampleSolutionPublicationDateError": false,
-    "exampleSolutionPublicationDateWarning": false,
     "presentationScoreEnabled": false,
     "assessmentType": "MANUAL",
     "title": "File Upload Exercise 1",

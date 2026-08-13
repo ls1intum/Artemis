@@ -306,7 +306,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     save() {
         this.isSaving.set(true);
 
-        new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType, this.alertService)
+        new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType)
             .save(this.textExercise, this.isExamMode(), this.notificationText)
             .subscribe({
                 next: (exercise: TextExercise) => this.onSaveSuccess(exercise),

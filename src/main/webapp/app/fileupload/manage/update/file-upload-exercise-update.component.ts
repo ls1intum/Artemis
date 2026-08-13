@@ -290,7 +290,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     async save() {
         this.isSaving.set(true);
 
-        const command = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise(), this.editType(), this.alertService);
+        const command = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise(), this.editType());
 
         try {
             // save() returns Observable. Convert to Promise.
