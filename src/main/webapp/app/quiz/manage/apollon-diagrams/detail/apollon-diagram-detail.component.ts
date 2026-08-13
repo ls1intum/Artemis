@@ -21,6 +21,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { hasQuizRelevantElements } from 'app/modeling/shared/apollon-model.util';
 import { DialogService } from 'primeng/dynamicdialog';
 import { parseJson } from 'app/foundation/util/json.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /** Host DOM element augmented with the ApollonEditor instance exposed for E2E test access. */
 type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
@@ -163,9 +164,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             return false;
         }
         const umlModel = this.apollonEditor.model;
-        const updatedDiagram = Object.assign({}, this.apollonDiagram(), {
+        // Non-null assertion is safe: the guard above returns early when the diagram is missing.
+        const updatedDiagram = cloneWith(this.apollonDiagram()!, {
             jsonRepresentation: JSON.stringify(umlModel),
-        }) as ApollonDiagram;
+        });
 
         const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.courseId()));
         if (result?.ok) {

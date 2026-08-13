@@ -330,7 +330,12 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             await expect(programmingExerciseOverview.getCodeButton()).not.toBeVisible();
             await expect(programmingExerciseOverview.getExerciseDetails().getByText('Not yet started')).toBeVisible();
             await courseOverview.startExercise(exercise.id!);
-            await expect(programmingExerciseOverview.getExerciseDetails().getByText('No graded result')).toBeVisible();
+            // Starting gives this student their own fresh participation, so the header shows the graded-result
+            // placeholder `artemisApp.result.noGradedResult` ("Not graded") instead of the other team's score. The text
+            // asserted before ("No graded result") belongs to `courseOverview.exerciseDetails.noGradedResult`, a
+            // translation key the client stopped rendering in 2019 — long before this test was added — so the
+            // assertion could never match and failed deterministically.
+            await expect(programmingExerciseOverview.getExerciseDetails().getByText('Not graded')).toBeVisible();
         });
 
         test.describe('Check team participation', () => {

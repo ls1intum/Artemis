@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProgrammingExerciseUpdateTimelineComponent } from './programming-exercise-update-timeline.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ConfirmationService } from 'primeng/api';
 import { BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -761,5 +762,84 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution').disabled).toBe(true);
+    });
+
+    it('should show a confirmation dialog when unchecking setTestCaseVisibilityToAfterDueDate in exam mode during import', async () => {
+        activatedRouteUrlSubject.next([{ path: 'import' }] as UrlSegment[]);
+        createTestComponent();
+        fixture.componentRef.setInput('isExamMode', true);
+        fixture.componentRef.setInput('setTestCaseVisibilityToAfterDueDate', true);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+
+        const checkbox = fixture.debugElement.nativeElement.querySelector('#setTestCaseVisibilityToAfterDueDate-checkbox');
+        checkbox.click();
+        fixture.detectChanges();
+
+        expect(confirmSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should stay checked when the user cancels the setTestCaseVisibilityToAfterDueDate confirmation dialog', async () => {
+        activatedRouteUrlSubject.next([{ path: 'import' }] as UrlSegment[]);
+        createTestComponent();
+        fixture.componentRef.setInput('isExamMode', true);
+        fixture.componentRef.setInput('setTestCaseVisibilityToAfterDueDate', true);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const checkbox = fixture.debugElement.nativeElement.querySelector('#setTestCaseVisibilityToAfterDueDate-checkbox');
+        checkbox.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const rejectButton = document.querySelector('.p-confirmdialog-reject-button') as HTMLButtonElement;
+        rejectButton.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.setTestCaseVisibilityToAfterDueDate()).toBe(true);
+    });
+
+    it('should uncheck when the user confirms the setTestCaseVisibilityToAfterDueDate confirmation dialog', async () => {
+        activatedRouteUrlSubject.next([{ path: 'import' }] as UrlSegment[]);
+        createTestComponent();
+        fixture.componentRef.setInput('isExamMode', true);
+        fixture.componentRef.setInput('setTestCaseVisibilityToAfterDueDate', true);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const checkbox = fixture.debugElement.nativeElement.querySelector('#setTestCaseVisibilityToAfterDueDate-checkbox');
+        checkbox.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const acceptButton = document.querySelector('.p-confirmdialog-accept-button') as HTMLButtonElement;
+        acceptButton.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.setTestCaseVisibilityToAfterDueDate()).toBe(false);
+    });
+
+    it('should not show a confirmation dialog when checking setTestCaseVisibilityToAfterDueDate in exam mode during import', async () => {
+        activatedRouteUrlSubject.next([{ path: 'import' }] as UrlSegment[]);
+        createTestComponent();
+        fixture.componentRef.setInput('isExamMode', true);
+        fixture.componentRef.setInput('setTestCaseVisibilityToAfterDueDate', false);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+
+        const checkbox = fixture.debugElement.nativeElement.querySelector('#setTestCaseVisibilityToAfterDueDate-checkbox');
+        checkbox.click();
+        fixture.detectChanges();
+
+        expect(confirmSpy).not.toHaveBeenCalled();
+        expect(component.setTestCaseVisibilityToAfterDueDate()).toBe(true);
     });
 });

@@ -133,25 +133,6 @@ const routes: Routes = [
             usesModuleBackground: true,
         },
     },
-    // ===== TEAM ====
-    {
-        path: 'course-management/:courseId/exercises/:exerciseId/teams',
-        loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
-        // Preload-only authorities (no canActivate): least-privileged authority the team routes require.
-        data: {
-            usesModuleBackground: true,
-            authorities: IS_AT_LEAST_STUDENT,
-        },
-    },
-    {
-        path: 'courses/:courseId/exercises/:exerciseId/teams',
-        loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
-        // Preload-only authorities (no canActivate): least-privileged authority the team routes require.
-        data: {
-            usesModuleBackground: true,
-            authorities: IS_AT_LEAST_STUDENT,
-        },
-    },
     // ===== ACCOUNT ====
     {
         path: 'account',
@@ -244,15 +225,6 @@ const routes: Routes = [
             authorities: IS_AT_LEAST_STUDENT,
         },
     },
-    // ===== GRADING SYSTEM =====
-    {
-        path: 'courses/:courseId/grading',
-        loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
-        data: {
-            usesModuleBackground: true,
-        },
-    },
-
     {
         path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
         pathMatch: 'full',

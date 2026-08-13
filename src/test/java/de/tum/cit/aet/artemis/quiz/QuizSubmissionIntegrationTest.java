@@ -939,8 +939,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
      * <p>
      * Previously, refresh-path queries relied on Hibernate's EAGER fetch for {@code MultipleChoiceSubmittedAnswer.selectedOptions},
      * which was not reliably initialized when the polymorphic {@code submittedAnswers} collection was loaded alongside a join-table
-     * {@code ManyToMany} with a second-level cache — leading to different options appearing deselected across refreshes and (once
-     * re-evaluation read the same partial state) the stored score flipping between 0 and its true value.
+     * {@code ManyToMany} that was then cached in the Hibernate second-level cache, leading to different options appearing deselected
+     * across refreshes and (once re-evaluation read the same partial state) the stored score flipping between 0 and its true value.
+     * That cache has since been disabled cluster-wide, but the explicit fetch this test guards is what makes the result deterministic.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

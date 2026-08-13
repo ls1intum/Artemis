@@ -63,7 +63,6 @@ import { IrisMcqCarouselComponent } from 'app/iris/overview/mcq-question/iris-mc
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService, IrisLiveAssistantDraft } from 'app/iris/overview/services/iris-chat.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
-import * as _ from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
 import { ActivatedRoute, Params, RouterLink } from '@angular/router';
@@ -94,6 +93,7 @@ import { ContextSelectionComponent } from 'app/iris/overview/context-selection/c
 import { IrisContextSwitchDividerComponent } from 'app/iris/overview/context-selection/iris-context-switch-divider.component';
 import { routeForContext } from 'app/iris/overview/context-selection/iris-context.util';
 import { IrisActivityItem, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -804,7 +804,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * Process messages for display (clone)
      */
     private processMessages(rawMessages: IrisMessage[]): IrisMessage[] {
-        return _.cloneDeep(rawMessages);
+        return deepClone(rawMessages);
     }
 
     private isIntermediateAssistantMessage(message: IrisMessage | undefined): boolean {

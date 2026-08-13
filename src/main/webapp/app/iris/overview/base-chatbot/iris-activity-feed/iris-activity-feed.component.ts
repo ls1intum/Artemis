@@ -4,6 +4,7 @@ import { faCheck, faCircleNotch, faCircleXmark } from '@fortawesome/free-solid-s
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { IrisActivityItem, IrisActivityState } from 'app/iris/shared/entities/iris-activity.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type IrisActivityFeedMode = 'live' | 'trail';
 
@@ -51,15 +52,14 @@ export class IrisActivityFeedComponent {
             if (durationLabel) {
                 parts.push(durationLabel);
             }
-            return {
-                ...activity,
+            return cloneWith(activity, {
                 label,
                 durationLabel,
                 stateClass: activity.state.toLowerCase(),
                 icon: this.iconFor(activity.state),
                 spin: activity.state === IrisActivityState.RUNNING,
                 tooltip: parts.join(' · '),
-            };
+            });
         });
     });
 
