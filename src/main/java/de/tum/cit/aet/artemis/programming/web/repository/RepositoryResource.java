@@ -274,13 +274,18 @@ public abstract class RepositoryResource {
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, true);
-            repositoryService.commitChanges(repository, user);
+            // Kept, so the commit alert that versioning broadcasts can be attributed to this client and to no other. The
+            // repository head is not a substitute: this working copy is shared per repository, so a concurrent commit from
+            // another editor can move it.
+            String createdCommitHash = repositoryService.commitChanges(repository, user);
             var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
 
             // Trigger a build, and process the result.
             // For Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
-            localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog);
+            // The build hash stays null on purpose, so the latest commit is used for the build; only the attribution of the
+            // commit alert uses the exact commit created above.
+            localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog, createdCommitHash);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
