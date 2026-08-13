@@ -24,4 +24,12 @@ describe('courseManagementRoutes', () => {
     it('keeps the module background for the course list route (inherited from the parent route)', () => {
         expect(listRoute!.data?.['usesModuleBackground']).not.toBe(false);
     });
+
+    it('provides course grading inside the management container', () => {
+        expect(containerRoute!.children?.some((route) => route.path === ':courseId/grading')).toBe(true);
+    });
+
+    it('provides team pages inside the management container', () => {
+        expect(containerRoute!.children?.some((route) => route.path === ':courseId/exercises/:exerciseId/teams')).toBe(true);
+    });
 });

@@ -17,6 +17,7 @@
             optionValue="value"
             [ngModel]="selectedValue()"
             (onChange)="onSelectionChange($event.value)"
+            (onShow)="loadContextOptions()"
             [filter]="true"
             filterBy="label"
             [filterPlaceholder]="'artemisApp.iris.contextSelection.search' | artemisTranslate"
