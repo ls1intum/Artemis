@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { AdminDataExport, DataExport } from 'app/admin/admin-data-exports/data-export.model';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import dayjs from 'dayjs/esm';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Service for admin-level data export operations.
@@ -95,10 +96,11 @@ export class AdminDataExportsService {
      * @returns Array of data exports with dayjs date objects
      */
     private convertDates(exports: AdminDataExport[]): AdminDataExport[] {
-        return exports.map((dataExport) => ({
-            ...dataExport,
-            createdDate: dataExport.createdDate ? dayjs(dataExport.createdDate) : undefined,
-            creationFinishedDate: dataExport.creationFinishedDate ? dayjs(dataExport.creationFinishedDate) : undefined,
-        }));
+        return exports.map((dataExport) =>
+            cloneWith(dataExport, {
+                createdDate: dataExport.createdDate ? dayjs(dataExport.createdDate) : undefined,
+                creationFinishedDate: dataExport.creationFinishedDate ? dayjs(dataExport.creationFinishedDate) : undefined,
+            }),
+        );
     }
 }

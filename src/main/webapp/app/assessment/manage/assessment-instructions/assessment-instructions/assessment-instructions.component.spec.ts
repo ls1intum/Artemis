@@ -16,7 +16,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
+import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 // Stub for ModelingEditorComponent
 @Component({
@@ -53,7 +57,7 @@ describe('AssessmentInstructionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [MockProvider(ArtemisMarkdownService)],
+            providers: [MockProvider(ArtemisMarkdownService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(AssessmentInstructionsComponent, {
                 remove: {
@@ -148,5 +152,58 @@ describe('AssessmentInstructionsComponent', () => {
         fixture.detectChanges();
 
         expect(comp.gradingInstructions()).toBeUndefined();
+    });
+
+    describe('grading instruction selection', () => {
+        const criteria = [
+            {
+                id: 1,
+                title: 'Documentation',
+                structuredGradingInstructions: [
+                    { id: 1, credits: 4 },
+                    { id: 2, credits: -2 },
+                ],
+            },
+        ] as GradingCriterion[];
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, gradingCriteria: criteria } as ProgrammingExercise);
+        });
+
+        it('should not be selectable, and count nothing as applied, without a registered feedback list', () => {
+            fixture.detectChanges();
+
+            expect(comp.selectable()).toBe(false);
+            expect(comp.appliedInstructionCount()).toEqual({ applied: 0, total: 2 });
+        });
+
+        it('should be selectable and count applied instructions once a feedback list is registered', () => {
+            const host: GradingInstructionSelectionHost = {
+                appliedInstructionIds: signal(new Set([1])),
+                appliedInstructionCounts: signal(new Map([[1, 1]])),
+                removableInstructionIds: signal(new Set([1])),
+                applyInstruction: vi.fn(),
+                unapplyInstruction: vi.fn(),
+            };
+            TestBed.inject(GradingInstructionSelectionService).register(host);
+            fixture.detectChanges();
+
+            expect(comp.selectable()).toBe(true);
+            expect(comp.appliedInstructionCount()).toEqual({ applied: 1, total: 2 });
+        });
+
+        it('should stay non-selectable in read-only mode even with a feedback list registered', () => {
+            TestBed.inject(GradingInstructionSelectionService).register({
+                appliedInstructionIds: signal(new Set()),
+                appliedInstructionCounts: signal(new Map()),
+                removableInstructionIds: signal(new Set()),
+                applyInstruction: vi.fn(),
+                unapplyInstruction: vi.fn(),
+            });
+            fixture.componentRef.setInput('readOnly', true);
+            fixture.detectChanges();
+
+            expect(comp.selectable()).toBe(false);
+        });
     });
 });

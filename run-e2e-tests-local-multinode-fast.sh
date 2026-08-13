@@ -391,6 +391,17 @@ mkdir -p \
 # =============================================================================
 # Step 4: Launch 3 Artemis JVMs
 # =============================================================================
+# Admin credentials of the stack, used by the cluster preflight login below and by Playwright. They mirror
+# docker/artemis/config/prod-multinode-fast.env, which cannot use the published `artemis_admin` password because the prod
+# profile refuses to start on it.
+export ADMIN_USERNAME="artemis_admin"
+export ADMIN_PASSWORD="local-e2e-admin-not-a-deployment-credential"
+
+# A JWT signing key committed to the repository would be one anyone can use to forge a token, so it is generated per run.
+# Exported here rather than inside launch_node, which runs in a subshell per node: all three nodes have to sign with the
+# same key, or a token minted on one node is rejected by the next.
+export ARTEMIS_E2E_JWT_SECRET="${ARTEMIS_E2E_JWT_SECRET:-$(openssl rand -base64 64 | tr -d '\n')}"
+
 launch_node() {
     local n=$1
     local http_port=${HTTP_PORTS[$((n - 1))]}
@@ -526,7 +537,7 @@ trap 'rm -f "$COOKIE"' EXIT
 # Login via node-1 directly (HTTP, no nginx required for this preflight check).
 curl -s -c "$COOKIE" -X POST 'http://localhost:8080/api/core/public/authenticate' \
     -H 'Content-Type: application/json' \
-    -d '{"username":"artemis_admin","password":"artemis_admin","rememberMe":true}' \
+    -d "{\"username\":\"$ADMIN_USERNAME\",\"password\":\"$ADMIN_PASSWORD\",\"rememberMe\":true}" \
     -o /dev/null
 
 while true; do
@@ -575,13 +586,6 @@ echo -e "${BLUE}Step 6: Running Playwright tests...${NC}"
 export BASE_URL="https://localhost"
 export PW_BROWSER_HOST_RESOLVER_RULES="MAP localhost 127.0.0.1"
 export NODE_TLS_REJECT_UNAUTHORIZED=0  # nginx self-signed cert
-export ADMIN_USERNAME="artemis_admin"
-export ADMIN_PASSWORD="artemis_admin"
-export ALLOW_GROUP_CUSTOMIZATION="true"
-export STUDENT_GROUP_NAME="students"
-export TUTOR_GROUP_NAME="tutors"
-export EDITOR_GROUP_NAME="editors"
-export INSTRUCTOR_GROUP_NAME="instructors"
 export EXERCISE_REPO_DIRECTORY="test-exercise-repos"
 export TEST_WORKERS="${TEST_WORKERS:-${FAST_SLOW_WORKERS:-4}}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"

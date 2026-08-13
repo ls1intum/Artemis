@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseAccessStateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.course.service.CourseSearchService;
@@ -141,6 +142,27 @@ public class CourseAccessResource {
         enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
 
         return ResponseEntity.ok(course);
+    }
+
+    /**
+     * GET /courses/{courseId}/access-state : whether the requesting user already has access to the course.
+     * <p>
+     * Deliberately the cheapest endpoint that can answer this: one indexed EXISTS query, no entity hydration, and a
+     * response of a single boolean. The enrollment page uses it to decide whether to redirect into the course instead
+     * of requesting the course dashboard purely to inspect its status code.
+     * <p>
+     * Any authenticated user may ask, and a user without access gets {@code false} rather than a 403 — the answer is
+     * the point of the request, not an error, and a 403 here would raise a global error alert on a page where being
+     * unenrolled is the expected case.
+     *
+     * @param courseId the id of the course to check
+     * @return whether the user is at least a student in the course
+     */
+    @GetMapping("courses/{courseId}/access-state")
+    @EnforceAtLeastStudent
+    public ResponseEntity<CourseAccessStateDTO> getCourseAccessState(@PathVariable long courseId) {
+        log.debug("REST request to check whether the current user has access to course {}", courseId);
+        return ResponseEntity.ok(new CourseAccessStateDTO(authCheckService.isAtLeastStudentInCourse(courseId)));
     }
 
     /**

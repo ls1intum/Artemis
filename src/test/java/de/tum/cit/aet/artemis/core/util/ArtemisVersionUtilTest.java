@@ -5,9 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 import org.junit.jupiter.api.Test;
-
-import com.vdurmont.semver4j.Semver;
-import com.vdurmont.semver4j.SemverException;
+import org.semver4j.Semver;
+import org.semver4j.SemverException;
 
 class ArtemisVersionUtilTest {
 
