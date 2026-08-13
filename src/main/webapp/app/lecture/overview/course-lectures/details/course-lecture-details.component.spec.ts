@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EMPTY, of, throwError } from 'rxjs';
+import { EMPTY, Subject, of, throwError } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -60,7 +60,6 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -175,6 +174,8 @@ describe('CourseLectureDetailsComponent', () => {
                     useValue: {
                         params: of({ lectureId: '1' }),
                         queryParams: of({}),
+                        // Advanced ahead of the observables by the router; the deep link is validated against it.
+                        snapshot: { params: { lectureId: '1' } },
                         parent: {
                             parent: {
                                 params: of({ courseId: '1' }),
@@ -428,103 +429,73 @@ describe('CourseLectureDetailsComponent', () => {
         expect(updatedUnit).not.toBe(lectureUnit3);
     });
 
-    describe('ensureValidDeepLinkTargets', () => {
-        it('should preserve timestamp for unit with only video', () => {
-            const videoUnit = new AttachmentVideoUnit();
-            videoUnit.id = 100;
-            videoUnit.videoSource = 'https://example.com/video.mp4';
-            videoUnit.lecture = lecture;
+    describe('dropUnreachableTargets', () => {
+        const dropUnreachable = (unitId: number, target: { timestamp?: number; page?: number } = {}) =>
+            courseLecturesDetailsComponent['dropUnreachableTargets']({ unitId, ...target, requestId: 1 });
 
-            courseLecturesDetailsComponent.lectureUnits.set([videoUnit]);
-            courseLecturesDetailsComponent.targetUnitId.set(100);
-            courseLecturesDetailsComponent.targetVideoTimestamp.set(45.5);
+        const attachmentVideoUnit = (config: { id: number; videoSource?: string; youtubeVideoId?: string; pdfLink?: string }) => {
+            const unit = new AttachmentVideoUnit();
+            unit.id = config.id;
+            unit.videoSource = config.videoSource;
+            unit.youtubeVideoId = config.youtubeVideoId;
+            if (config.pdfLink) {
+                unit.attachment = new Attachment();
+                unit.attachment.link = config.pdfLink;
+            }
+            unit.lecture = lecture;
+            return unit;
+        };
 
-            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+        it('should keep the timestamp for a unit with only a video', () => {
+            courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 100, videoSource: 'https://example.com/video.mp4' })]);
 
-            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(45.5);
+            expect(dropUnreachable(100, { timestamp: 45.5 })?.timestamp).toBe(45.5);
         });
 
-        it('should preserve page for unit with only PDF', () => {
-            const pdfUnit = new AttachmentVideoUnit();
-            pdfUnit.id = 101;
-            pdfUnit.attachment = new Attachment();
-            pdfUnit.attachment.link = '/path/to/slides.pdf';
-            pdfUnit.lecture = lecture;
+        it('should keep the timestamp for a unit with only a YouTube video', () => {
+            courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 103, youtubeVideoId: 'dQw4w9WgXcQ' })]);
 
-            courseLecturesDetailsComponent.lectureUnits.set([pdfUnit]);
-            courseLecturesDetailsComponent.targetUnitId.set(101);
-            courseLecturesDetailsComponent.targetPdfPage.set(5);
-
-            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
-
-            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(5);
+            expect(dropUnreachable(103, { timestamp: 30 })?.timestamp).toBe(30);
         });
 
-        it('should preserve timestamp when unit has both video and PDF', () => {
-            const unitWithBoth = new AttachmentVideoUnit();
-            unitWithBoth.id = 102;
-            unitWithBoth.videoSource = 'https://example.com/video.mp4';
-            unitWithBoth.attachment = new Attachment();
-            unitWithBoth.attachment.link = '/path/to/slides.pdf';
-            unitWithBoth.lecture = lecture;
+        it('should keep the page for a unit with only a PDF', () => {
+            courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 101, pdfLink: '/path/to/slides.pdf' })]);
 
-            courseLecturesDetailsComponent.lectureUnits.set([unitWithBoth]);
-            courseLecturesDetailsComponent.targetUnitId.set(102);
-            courseLecturesDetailsComponent.targetVideoTimestamp.set(45.5);
-
-            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
-
-            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(45.5);
+            expect(dropUnreachable(101, { page: 5 })?.page).toBe(5);
         });
 
-        it('should preserve timestamp for unit with only YouTube video', () => {
-            const youtubeUnit = new AttachmentVideoUnit();
-            youtubeUnit.id = 103;
-            youtubeUnit.youtubeVideoId = 'dQw4w9WgXcQ';
-            youtubeUnit.lecture = lecture;
+        it('should keep both targets for a unit with a video and a PDF', () => {
+            courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 104, youtubeVideoId: 'dQw4w9WgXcQ', pdfLink: '/path/to/slides.pdf' })]);
 
-            courseLecturesDetailsComponent.lectureUnits.set([youtubeUnit]);
-            courseLecturesDetailsComponent.targetUnitId.set(103);
-            courseLecturesDetailsComponent.targetVideoTimestamp.set(30);
-
-            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
-
-            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(30);
+            expect(dropUnreachable(104, { timestamp: 60, page: 7 })).toEqual({ unitId: 104, requestId: 1, timestamp: 60, page: 7 });
         });
 
-        it('should preserve timestamp and page for unit with both YouTube video and PDF', () => {
-            const youtubeUnitWithPdf = new AttachmentVideoUnit();
-            youtubeUnitWithPdf.id = 104;
-            youtubeUnitWithPdf.youtubeVideoId = 'dQw4w9WgXcQ';
-            youtubeUnitWithPdf.attachment = new Attachment();
-            youtubeUnitWithPdf.attachment.link = '/path/to/slides.pdf';
-            youtubeUnitWithPdf.lecture = lecture;
+        it('should drop the timestamp for a unit without any video', () => {
+            courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 105, pdfLink: '/path/to/document.pdf' })]);
 
-            courseLecturesDetailsComponent.lectureUnits.set([youtubeUnitWithPdf]);
-            courseLecturesDetailsComponent.targetUnitId.set(104);
-            courseLecturesDetailsComponent.targetVideoTimestamp.set(60);
-            courseLecturesDetailsComponent.targetPdfPage.set(7);
-
-            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
-
-            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(60);
-            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(7);
+            expect(dropUnreachable(105, { timestamp: 45, page: 2 })).toEqual({ unitId: 105, requestId: 1, timestamp: undefined, page: 2 });
         });
 
-        it('should clear timestamp for unit with neither video source nor YouTube video ID', () => {
-            const unitWithoutVideo = new AttachmentVideoUnit();
-            unitWithoutVideo.id = 105;
-            unitWithoutVideo.attachment = new Attachment();
-            unitWithoutVideo.attachment.link = '/path/to/document.pdf';
-            unitWithoutVideo.lecture = lecture;
+        it('should drop the page for a unit whose attachment is not a PDF', () => {
+            courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 106, videoSource: 'https://example.com/video.mp4', pdfLink: '/path/to/notes.txt' })]);
 
-            courseLecturesDetailsComponent.lectureUnits.set([unitWithoutVideo]);
-            courseLecturesDetailsComponent.targetUnitId.set(105);
-            courseLecturesDetailsComponent.targetVideoTimestamp.set(45);
+            expect(dropUnreachable(106, { timestamp: 12, page: 2 })).toEqual({ unitId: 106, requestId: 1, timestamp: 12, page: undefined });
+        });
 
-            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+        it('should keep the unit but drop both targets for a unit that is not an attachment/video unit', () => {
+            const textUnit = new TextUnit();
+            textUnit.id = 200;
+            textUnit.lecture = lecture;
+            courseLecturesDetailsComponent.lectureUnits.set([textUnit]);
 
-            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
+            // Such a unit has no place to jump to inside it, but it is still opened and scrolled to.
+            expect(dropUnreachable(200, { timestamp: 12, page: 3 })).toEqual({ unitId: 200, requestId: 1 });
+        });
+
+        it('should drop the whole link when the unit is not part of the lecture', () => {
+            courseLecturesDetailsComponent.lectureUnits.set([lectureUnit3]);
+
+            expect(dropUnreachable(9999, { timestamp: 12, page: 3 })).toBeUndefined();
         });
     });
 
@@ -665,8 +636,7 @@ describe('CourseLectureDetailsComponent', () => {
     });
 
     describe('deep-link query params', () => {
-        // Set up a lecture whose single unit (id 7) has both a video and a PDF, so parsed deep-link
-        // targets survive the ensureValidDeepLinkTargets validation that runs after loadData.
+        // A lecture whose single unit (id 7) has both a video and a PDF, so every parsed target survives validation.
         const setupUnitWithBoth = () => {
             const unitWithBoth = new AttachmentVideoUnit();
             unitWithBoth.id = 7;
@@ -689,86 +659,75 @@ describe('CourseLectureDetailsComponent', () => {
             setupUnitWithBoth();
             reInitWithQueryParams({ unit: '7', timestamp: '30', page: '4' });
 
-            expect(courseLecturesDetailsComponent.targetUnitId()).toBe(7);
-            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(30);
-            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(4);
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, timestamp: 30, page: 4 }));
         });
 
         it('should ignore an invalid timestamp and page while keeping the unit', () => {
             setupUnitWithBoth();
             reInitWithQueryParams({ unit: '7', timestamp: '-5', page: '0' });
 
-            expect(courseLecturesDetailsComponent.targetUnitId()).toBe(7);
-            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
-            expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, timestamp: undefined, page: undefined }));
         });
 
-        it('should clear all deep-link targets when the unit param is not a positive integer', () => {
-            courseLecturesDetailsComponent.targetUnitId.set(99);
-            courseLecturesDetailsComponent.targetVideoTimestamp.set(10);
-            courseLecturesDetailsComponent.targetPdfPage.set(2);
+        it('should keep the previous deep link when the unit param is not a positive integer', () => {
+            setupUnitWithBoth();
+            reInitWithQueryParams({ unit: '7', page: '4' });
+            const executed = courseLecturesDetailsComponent.deepLink();
 
             reInitWithQueryParams({ unit: 'not-a-number' });
 
-            expect(courseLecturesDetailsComponent.targetUnitId()).toBeUndefined();
-            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
-            expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+            // Nothing to execute: parameters without a unit are also what clearing them leaves behind.
+            expect(courseLecturesDetailsComponent.deepLink()).toBe(executed);
         });
 
-        it('should re-validate deep-link targets when units are already loaded before the query params emit', () => {
-            const ensureSpy = vi.spyOn(courseLecturesDetailsComponent as any, 'ensureValidDeepLinkTargets');
+        it('should give a repeated jump to the same place a new identity, so it is executed again', () => {
+            setupUnitWithBoth();
+            reInitWithQueryParams({ unit: '7', timestamp: '30', page: '4' });
+            const first = courseLecturesDetailsComponent.deepLink();
+
+            reInitWithQueryParams({ unit: '7', timestamp: '30', page: '4' });
+            const second = courseLecturesDetailsComponent.deepLink();
+
+            expect(second).not.toBe(first);
+            expect(second!.requestId).not.toBe(first!.requestId);
+        });
+
+        it('should take the deep link out of the URL once it has been handed on', async () => {
+            const router = TestBed.inject(Router);
+            const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
             setupUnitWithBoth();
 
-            reInitWithQueryParams({ unit: '7' });
+            reInitWithQueryParams({ unit: '7', timestamp: '30', page: '4' });
+            // The clearing waits for the navigation that delivered the link to finish.
+            await Promise.resolve();
 
-            // Called once from loadData and again from the queryParams handler (units already loaded).
-            expect(ensureSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
-            expect(courseLecturesDetailsComponent.targetUnitId()).toBe(7);
-        });
-    });
-
-    describe('ensureValidDeepLinkTargets edge cases', () => {
-        it('should do nothing when there is no target unit', () => {
-            courseLecturesDetailsComponent.targetUnitId.set(undefined);
-            courseLecturesDetailsComponent.targetVideoTimestamp.set(12);
-            courseLecturesDetailsComponent.targetPdfPage.set(3);
-
-            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
-
-            // Values remain untouched because the method returns early.
-            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(12);
-            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(3);
+            expect(navigateSpy).toHaveBeenCalledWith(
+                [],
+                expect.objectContaining({
+                    queryParams: { unit: null, timestamp: null, page: null },
+                    queryParamsHandling: 'merge',
+                    replaceUrl: true,
+                }),
+            );
         });
 
-        it('should clear all targets when the target unit is not in the list', () => {
-            courseLecturesDetailsComponent.lectureUnits.set([lectureUnit3]);
-            courseLecturesDetailsComponent.targetUnitId.set(9999);
-            courseLecturesDetailsComponent.targetVideoTimestamp.set(12);
-            courseLecturesDetailsComponent.targetPdfPage.set(3);
+        it('should hold a deep link back until the lecture it points at is loaded', () => {
+            const lectureResponse = new Subject<HttpResponse<Lecture>>();
+            vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(lectureResponse);
 
-            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+            reInitWithQueryParams({ unit: '7', page: '4' });
 
-            expect(courseLecturesDetailsComponent.targetUnitId()).toBeUndefined();
-            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
-            expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
-        });
+            // Only that lecture's units may decide what the link can target, so there is nothing to publish yet.
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
 
-        it('should clear timestamp and page for a non attachment/video target unit', () => {
-            const textUnit = new TextUnit();
-            textUnit.id = 200;
-            textUnit.lecture = lecture;
-            expect(textUnit.type).toBe(LectureUnitType.TEXT);
+            const unitWithBoth = new AttachmentVideoUnit();
+            unitWithBoth.id = 7;
+            unitWithBoth.attachment = new Attachment();
+            unitWithBoth.attachment.link = '/path/to/slides.pdf';
+            unitWithBoth.lecture = lecture;
+            lectureResponse.next(new HttpResponse({ body: { ...lecture, lectureUnits: [unitWithBoth], attachments: [] }, status: 200 }));
 
-            courseLecturesDetailsComponent.lectureUnits.set([textUnit]);
-            courseLecturesDetailsComponent.targetUnitId.set(200);
-            courseLecturesDetailsComponent.targetVideoTimestamp.set(12);
-            courseLecturesDetailsComponent.targetPdfPage.set(3);
-
-            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
-
-            expect(courseLecturesDetailsComponent.targetUnitId()).toBe(200);
-            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
-            expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, page: 4 }));
         });
     });
 

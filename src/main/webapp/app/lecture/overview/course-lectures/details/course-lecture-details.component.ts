@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/foundation/util/download.util';
@@ -44,6 +44,7 @@ import { FileService } from 'app/foundation/service/file.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
 import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
+import { LECTURE_DEEP_LINK_QUERY_PARAMS, LectureDeepLink, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -79,6 +80,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly lectureService = inject(LectureService);
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
     private readonly fileService = inject(FileService);
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
@@ -148,9 +150,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
     readonly toggleSidebar = (): void => this.sidebarToggle()?.();
 
-    readonly targetUnitId = signal<number | undefined>(undefined);
-    readonly targetVideoTimestamp = signal<number | undefined>(undefined);
-    readonly targetPdfPage = signal<number | undefined>(undefined);
+    private readonly deepLinkState = signal<LectureDeepLink | undefined>(undefined);
+    /** The jump the page is currently executing (Iris citation, global search result, pasted link). */
+    readonly deepLink = this.deepLinkState.asReadonly();
+    /** A deep link read from the URL that still waits for the lecture units, which decide what it may target. */
+    private pendingDeepLink?: LectureDeepLink;
 
     // ViewChildren to access all attachment/video unit components
     private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
@@ -200,22 +204,15 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         });
 
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            const unitId = Number(params['unit']);
-            if (Number.isInteger(unitId) && unitId > 0) {
-                this.targetUnitId.set(unitId);
-                const timestamp = Number(params['timestamp']);
-                this.targetVideoTimestamp.set(Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : undefined);
-                const pageNum = Number(params['page']);
-                this.targetPdfPage.set(Number.isInteger(pageNum) && pageNum > 0 ? pageNum : undefined);
-            } else {
-                this.targetUnitId.set(undefined);
-                this.targetVideoTimestamp.set(undefined);
-                this.targetPdfPage.set(undefined);
+            const deepLink = parseLectureDeepLink(params);
+            if (!deepLink) {
+                // Also the emission caused by clearing the parameters below; there is nothing to execute then.
+                return;
             }
 
-            if (this.lectureUnits().length > 0) {
-                this.ensureValidDeepLinkTargets();
-            }
+            this.pendingDeepLink = deepLink;
+            this.publishDeepLink();
+            this.clearDeepLinkQueryParams();
         });
     }
 
@@ -240,7 +237,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         });
 
                         this.lectureUnits.set(lecture.lectureUnits ?? []);
-                        this.ensureValidDeepLinkTargets();
+                        this.publishDeepLink();
                         this.hasPdfLectureUnit.set(
                             this.lectureUnits().some(
                                 (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
@@ -313,36 +310,75 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
-    private ensureValidDeepLinkTargets(): void {
-        const targetUnitId = this.targetUnitId();
-        if (!targetUnitId) {
+    /**
+     * Hands the pending deep link to the units, once they are known.
+     *
+     * Only the lecture the link points at may decide what the link can target, and its units arrive later: the route
+     * reports the link while the page is still loading, and a link into another lecture even arrives before the switch.
+     * Until then the link waits and loadData publishes it. It is published at most once, as executing the same request
+     * twice would jump twice.
+     */
+    private publishDeepLink(): void {
+        const deepLink = this.pendingDeepLink;
+        // The snapshot, not `lectureId`: it is already advanced to the lecture the link arrived with, while the field
+        // is only set once the route parameters are reported, which happens after the query parameters.
+        const targetLectureId = Number(this.activatedRoute.snapshot.params['lectureId']);
+        if (!deepLink || this.lecture()?.id !== targetLectureId) {
             return;
         }
 
-        const targetUnit = this.lectureUnits().find((unit) => unit.id === targetUnitId);
+        this.pendingDeepLink = undefined;
+        this.deepLinkState.set(this.dropUnreachableTargets(deepLink));
+    }
+
+    /**
+     * Drops the parts of a deep link the target unit cannot honour, so a stale link cannot make a unit look like it has
+     * a video or slides. Returns undefined when the unit is gone from the lecture.
+     *
+     * Only an attachment/video unit has places to jump to inside it; every other unit is opened and scrolled to, which
+     * is all a jump can mean there.
+     */
+    private dropUnreachableTargets(deepLink: LectureDeepLink): LectureDeepLink | undefined {
+        const targetUnit = this.lectureUnits().find((unit) => unit.id === deepLink.unitId);
         if (!targetUnit) {
-            this.targetUnitId.set(undefined);
-            this.targetVideoTimestamp.set(undefined);
-            this.targetPdfPage.set(undefined);
-            return;
+            return undefined;
         }
 
-        if (targetUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-            const attachmentUnit = targetUnit as AttachmentVideoUnit;
-            const hasVideo = !!attachmentUnit.videoSource || !!attachmentUnit.youtubeVideoId;
-            const isPdf = attachmentUnit.attachment?.link?.toLowerCase().endsWith('.pdf');
-            // Clear timestamp only if unit has NO video source
-            if (!hasVideo) {
-                this.targetVideoTimestamp.set(undefined);
-            }
-            // Clear PDF page only if unit has NO PDF attachment
-            if (!isPdf) {
-                this.targetPdfPage.set(undefined);
-            }
-        } else {
-            this.targetVideoTimestamp.set(undefined);
-            this.targetPdfPage.set(undefined);
+        if (targetUnit.type !== LectureUnitType.ATTACHMENT_VIDEO) {
+            return { unitId: deepLink.unitId, requestId: deepLink.requestId };
         }
+
+        const attachmentUnit = targetUnit as AttachmentVideoUnit;
+        const hasVideo = !!attachmentUnit.videoSource || !!attachmentUnit.youtubeVideoId;
+        const hasPdf = !!attachmentUnit.attachment?.link?.toLowerCase().endsWith('.pdf');
+
+        return {
+            unitId: deepLink.unitId,
+            requestId: deepLink.requestId,
+            timestamp: hasVideo ? deepLink.timestamp : undefined,
+            page: hasPdf ? deepLink.page : undefined,
+        };
+    }
+
+    /**
+     * Takes the deep link out of the URL once it has been handed on.
+     *
+     * The parameters are a one-shot command, not a description of what is on screen. Left in place they go stale as soon
+     * as the user collapses the unit or scrolls on, and worse: the next click on the same citation would navigate to the
+     * URL that is already active, which the router reports as no change at all, so the jump would never arrive.
+     */
+    private clearDeepLinkQueryParams(): void {
+        // Deferred by a microtask: a jump made from this page reports its parameters while the router is still
+        // activating the page, and starting the next navigation from inside that one cancels it half-way through.
+        void Promise.resolve().then(() =>
+            this.router.navigate([], {
+                relativeTo: this.activatedRoute,
+                // Angular removes a query parameter when it is merged in as null; other parameters on the page are kept.
+                queryParams: Object.fromEntries(LECTURE_DEEP_LINK_QUERY_PARAMS.map((param) => [param, null])),
+                queryParamsHandling: 'merge',
+                replaceUrl: true,
+            }),
+        );
     }
 
     createDateInfoBox(date: Dayjs, contentStringName: string): InformationBox {

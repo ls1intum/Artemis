@@ -62,6 +62,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture-unit-fullscreen-layout/lecture-unit-fullscreen-layout.component';
 import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 type SplitSizes = [number, number];
 
@@ -104,8 +105,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly translateService = inject(TranslateService);
     private readonly themeService = inject(ThemeService);
 
-    targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
-    targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
     irisSettings = input<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
     contextsProvider = input<LectureContextsProvider | undefined>(undefined); // For collecting context from visible units
 
@@ -159,10 +158,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private pendingPdfTargetPage?: number;
     private isApplyingVideoSeek = false;
 
-    readonly validatedPdfPage = computed(() => {
-        const page = this.targetPdfPage();
-        return page && Number.isInteger(page) && page > 0 ? page : undefined;
-    });
+    readonly targetTimestamp = computed(() => this.matchedDeepLink()?.timestamp);
+    readonly targetPdfPage = computed(() => this.matchedDeepLink()?.page);
 
     readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
 
@@ -298,6 +295,45 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.clearSynchronizationTargets();
             }
         });
+
+        // Execute every jump that arrives, even when it asks for the place the unit is already showing: the user may
+        // have scrolled the video on or paged through the slides since, and clicking that citation again has to bring
+        // them back. Player and viewer read the target from their inputs while they are being created; once they are
+        // on screen those inputs are past and only this call still moves them.
+        effect(() => {
+            const deepLink = this.matchedDeepLink();
+            if (deepLink) {
+                untracked(() => this.applyDeepLink(deepLink));
+            }
+        });
+    }
+
+    /**
+     * Moves the video and the slides to the place the deep link asks for, as far as they are already on screen.
+     *
+     * The video is seeked first: with synchronization enabled it drags the slides along to the segment's page, and the
+     * link's own page has to be the one that survives.
+     */
+    private applyDeepLink(deepLink: LectureDeepLink): void {
+        if (deepLink.timestamp !== undefined) {
+            const videoPlayer = this.videoPlayer();
+            // Seeking must not start playback: a citation takes the user to a place, it does not play it for them.
+            if (videoPlayer) {
+                videoPlayer.seekTo(deepLink.timestamp, false);
+            } else {
+                this.youtubePlayer()?.seekTo(deepLink.timestamp, false);
+            }
+        }
+
+        const pdfViewer = this.pdfViewer();
+        // Slides that already show the requested page stay untouched, so the marker below cannot outlive a page change
+        // that never happens. Bringing the viewer back into view is the card's part of the jump.
+        if (deepLink.page !== undefined && pdfViewer && pdfViewer.getCurrentPage() !== deepLink.page) {
+            // Tells onPdfCurrentPageChange that this page change is ours, so synchronization does not answer it by
+            // seeking the video away from the timestamp we just set.
+            this.pendingPdfTargetPage = deepLink.page;
+            pdfViewer.goToPage(deepLink.page);
+        }
     }
 
     protected onPdfLoadError(event: { pdfUrl: string }): void {
