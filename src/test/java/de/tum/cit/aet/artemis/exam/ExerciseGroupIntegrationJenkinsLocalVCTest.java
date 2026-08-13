@@ -7,7 +7,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
 import java.net.URI;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -288,7 +287,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     void testDeleteExerciseGroup_asInstructor() throws Exception {
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(textExercise1));
-            await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise1));
+            WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise1);
         }
         WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise1);
 
@@ -297,6 +296,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         assertThat(textExerciseRepository.findById(textExercise1.getId())).isEmpty();
 
         WeaviateTestUtil.assertExerciseNotInWeaviate(weaviateService, textExercise1.getId());
+        await(); // so arch test does not complain, awaits happen in the assert methods
     }
 
     @Test
