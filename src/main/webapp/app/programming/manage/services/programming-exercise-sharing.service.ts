@@ -8,6 +8,7 @@ import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
 import dayjs from 'dayjs/esm';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -78,13 +79,12 @@ export class ProgrammingExerciseSharingService {
      * @param exercise for which the data should be converted
      */
     convertDataFromClient(exercise: ProgrammingExercise) {
-        const copy = {
-            ...ExerciseService.convertExerciseDatesFromClient(exercise),
+        const copy = cloneWith(ExerciseService.convertExerciseDatesFromClient(exercise), {
             buildAndTestStudentSubmissionsAfterDueDate:
                 exercise.buildAndTestStudentSubmissionsAfterDueDate && dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
                     ? dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
                     : undefined,
-        };
+        });
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
@@ -94,7 +94,7 @@ export class ProgrammingExerciseSharingService {
                 submissions: _ignoredSubmissions,
                 ...filteredTemplateParticipation
             } = copy.templateParticipation as ParticipationWithCircularReferences;
-            copy.templateParticipation = { ...filteredTemplateParticipation };
+            copy.templateParticipation = deepClone(filteredTemplateParticipation);
         }
         if (copy.solutionParticipation) {
             const {
@@ -103,7 +103,7 @@ export class ProgrammingExerciseSharingService {
                 submissions: _ignoredSubmissions,
                 ...filteredSolutionParticipation
             } = copy.solutionParticipation as ParticipationWithCircularReferences;
-            copy.solutionParticipation = { ...filteredSolutionParticipation };
+            copy.solutionParticipation = deepClone(filteredSolutionParticipation);
         }
 
         ExerciseService.stringifyExerciseCategories(copy);

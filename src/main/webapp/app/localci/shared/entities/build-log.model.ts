@@ -1,6 +1,7 @@
 import { safeUnescape } from 'app/foundation/util/security.util';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export enum BuildLogType {
     ERROR = 'ERROR',
@@ -40,11 +41,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                     logType = BuildLogType.WARNING;
                 }
             }
-            return {
-                log,
-                type: logType,
-                ...rest,
-            };
+            return cloneWith({ log, type: logType }, rest);
         });
         return new BuildLogEntryArray(...mappedLogs);
     }
