@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+
 /**
  * A submitted answer as it looks once the quiz has been evaluated, one implementation per question type.
  * <p>
@@ -66,4 +67,26 @@ public sealed interface SubmittedAnswerAfterEvaluationDTO
             default -> throw new IllegalArgumentException("Unsupported submitted answer type: " + submittedAnswer.getClass().getSimpleName());
         };
     }
+}
+
+// These definitions are used for OpenAPI generation because polymorphic types with @JsonUnwrapped do not work here
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "multiple-choice" }, defaultValue = "multiple-choice"))
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record MultipleChoiceSubmittedAnswerAfterEvaluationDTO(Long id, Double scoreInPoints, QuizQuestionWithSolutionDTO quizQuestion,
+        @JsonUnwrapped MultipleChoiceSubmittedAnswerWithSolutionDTO multipleChoiceSubmittedAnswer) {
+}
+
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "drag-and-drop" }, defaultValue = "drag-and-drop"))
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record DragAndDropSubmittedAnswerAfterEvaluationDTO(Long id, Double scoreInPoints, QuizQuestionWithSolutionDTO quizQuestion,
+        @JsonUnwrapped DragAndDropSubmittedAnswerDTO dragAndDropSubmittedAnswer) {
+}
+
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "short-answer" }, defaultValue = "short-answer"))
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record ShortAnswerSubmittedAnswerAfterEvaluationDTO(Long id, Double scoreInPoints, QuizQuestionWithSolutionDTO quizQuestion,
+        @JsonUnwrapped ShortAnswerSubmittedAnswerDTO shortAnswerSubmittedAnswer) {
 }

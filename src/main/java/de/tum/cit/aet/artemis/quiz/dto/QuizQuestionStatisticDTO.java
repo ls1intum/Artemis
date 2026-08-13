@@ -69,6 +69,28 @@ public record QuizQuestionStatisticDTO(Integer participantsRated, Integer partic
     }
 }
 
+// These definitions are used for OpenAPI generation because polymorphic types with @JsonUnwrapped do not work here
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "multiple-choice" }, defaultValue = "multiple-choice"))
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record MultipleChoiceQuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
+        @JsonUnwrapped MultipleChoiceQuestionStatisticDTO multipleChoiceQuestionStatisticDTO) {
+}
+
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "drag-and-drop" }, defaultValue = "drag-and-drop"))
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record DragAndDropQuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
+        @JsonUnwrapped DragAndDropQuestionStatisticDTO dragAndDropQuestionStatisticDTO) {
+}
+
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "short-answer" }, defaultValue = "short-answer"))
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record ShortAnswerQuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
+        @JsonUnwrapped ShortAnswerQuestionStatisticDTO shortAnswerQuestionStatisticDTO) {
+}
+
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record MultipleChoiceQuestionStatisticDTO(Set<AnswerCounterDTO> answerCounters) {
 }

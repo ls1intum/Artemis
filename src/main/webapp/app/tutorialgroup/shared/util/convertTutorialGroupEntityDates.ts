@@ -2,7 +2,10 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
 export function convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriod {
     tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
@@ -55,4 +58,15 @@ export function convertTutorialGroupArrayDatesFromServer(tutorialGroups: Tutoria
         });
     }
     return tutorialGroups;
+}
+
+export function convertTutorialGroupSummaryArrayDatesFromServer(tutorialGroups: TutorialGroupSummary[]): TutorialGroup[] {
+    return tutorialGroups.map(({ tutorialGroupSchedule, tutorialGroupSessions, nextSession, channel, ...properties }) => {
+        const tutorialGroup = Object.assign(new TutorialGroup(), properties);
+        tutorialGroup.tutorialGroupSchedule = tutorialGroupSchedule ? Object.assign(new TutorialGroupSchedule(), tutorialGroupSchedule) : undefined;
+        tutorialGroup.tutorialGroupSessions = tutorialGroupSessions?.map((session) => Object.assign(new LegacyTutorialGroupSession(), session));
+        tutorialGroup.nextSession = nextSession ? Object.assign(new LegacyTutorialGroupSession(), nextSession) : undefined;
+        tutorialGroup.channel = channel ? Object.assign(new ChannelDTO(), channel) : undefined;
+        return convertTutorialGroupDatesFromServer(tutorialGroup);
+    });
 }
