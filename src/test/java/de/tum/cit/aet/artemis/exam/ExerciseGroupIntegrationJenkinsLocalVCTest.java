@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
@@ -296,7 +295,6 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         assertThat(textExerciseRepository.findById(textExercise1.getId())).isEmpty();
 
         WeaviateTestUtil.assertExerciseNotInWeaviate(weaviateService, textExercise1.getId());
-        await(); // so arch test does not complain, awaits happen in the assert methods
     }
 
     @Test
