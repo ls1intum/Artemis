@@ -236,6 +236,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     readonly courseId = signal<number>(undefined!);
 
     rerenderSubject = new Subject<void>();
+    // Created once rather than per `asObservable()` call, because getProgrammingExerciseCreationConfig() hands this to
+    // the child components on every change-detection pass and a new wrapper each pass is a new input identity.
+    private readonly rerenderObservable = this.rerenderSubject.asObservable();
     // This is used to revert the select if the user cancels to override the new selected programming language.
     private selectedProgrammingLanguageValue!: ProgrammingLanguage; // set in ngOnInit() from the loaded exercise before the selectedProgrammingLanguage getter is read
     // This is used to revert the select if the user cancels to override the new selected project type.
@@ -1705,7 +1708,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.problemStatementLoaded = this.problemStatementLoaded;
         config.templateParticipationResultLoaded = this.templateParticipationResultLoaded;
         config.hasUnsavedChanges = this.hasUnsavedChanges;
-        config.rerenderSubject = this.rerenderSubject.asObservable();
+        config.rerenderSubject = this.rerenderObservable;
         config.validIdeSelection = this.validIdeSelection;
         config.validOnlineIdeSelection = this.validOnlineIdeSelection;
         config.inProductionEnvironment = this.inProductionEnvironment;

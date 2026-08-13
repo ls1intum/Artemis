@@ -1627,14 +1627,20 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         fixture.detectChanges();
 
         const first = comp.getProgrammingExerciseCreationConfig();
+        // Read out before the second call: the config object is cached, so comparing its fields afterwards would
+        // compare each field with itself and pass even if the second call had replaced them.
+        const firstExerciseCategories = first.exerciseCategories;
+        const firstModePickerOptions = first.modePickerOptions;
+        const firstRerenderSubject = first.rerenderSubject;
         const second = comp.getProgrammingExerciseCreationConfig();
 
         // the config object itself is cached deliberately
         expect(second).toBe(first);
         // and so are the values a child could track by identity, even on a creation page with no categories yet
-        expect(second.exerciseCategories).toBe(first.exerciseCategories);
+        expect(second.exerciseCategories).toBe(firstExerciseCategories);
         expect(second.exerciseCategories).toBeDefined();
-        expect(second.modePickerOptions).toBe(first.modePickerOptions);
+        expect(second.modePickerOptions).toBe(firstModePickerOptions);
+        expect(second.rerenderSubject).toBe(firstRerenderSubject);
     });
 
     it('stores with dependencies when changed', () => {

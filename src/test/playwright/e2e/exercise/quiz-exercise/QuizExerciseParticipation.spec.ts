@@ -518,6 +518,8 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                     }
                     return false;
                 },
+                // The second parameter is the argument handed to the browser callback, so the options belong third.
+                undefined,
                 { timeout: 30_000 },
             );
 
