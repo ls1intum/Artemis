@@ -10,27 +10,44 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { AppliedActionDTO, CompetencyOrchestrationResultDTO, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
 
 /**
- * Instructor-facing trigger for the manual Atlas competency orchestrator on a programming exercise.
+ * Instructor-facing trigger for the manual Atlas competency orchestrator on an exercise.
  * Encapsulates the orchestrator button, the run lifecycle (calling {@link CompetencyOrchestrationApiService})
- * and the result dialog so that host components (e.g. the programming exercise detail page) stay decoupled
- * from Atlas-specific logic.
+ * and the result dialog so that host components (e.g. the exercise detail pages) stay decoupled
+ * from Atlas-specific logic. Works for any supported exercise type (programming, text, modeling,
+ * file-upload, quiz); the backend resolves the exercise generically.
  */
 @Component({
     selector: 'jhi-atlas-orchestration-trigger',
     templateUrl: './atlas-orchestration-trigger.component.html',
+    // Lay the host out like a bare inline-block button so it aligns with sibling buttons in inline
+    // (non-flex) action bars, e.g. the programming exercise detail toolbar. In flex containers the host
+    // is a flex item and this display value is ignored, so projected usages are unaffected.
+    styles: ':host { display: inline-block; vertical-align: top; }',
     imports: [FaIconComponent, TooltipModule, FeatureToggleHideDirective, TranslateDirective, ArtemisTranslatePipe, OrchestrationResultDialogComponent],
 })
 export class AtlasOrchestrationTriggerComponent {
     private readonly competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
     private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
 
-    readonly programmingExercise = input.required<ProgrammingExercise>();
+    readonly exercise = input.required<Exercise>();
+    /** Button CSS classes, so each host page can match its own action-bar styling (solid vs outline). */
+    readonly buttonClass = input<string>('btn btn-primary btn-sm');
+
+    /**
+     * Whether the Atlas module is enabled on this instance. Owned here so host pages stay free of Atlas
+     * knowledge: a host only decides instructor / non-exam visibility, and this component self-hides when
+     * the module is off (the {@code AtlasAgent} feature toggle is a separate, finer runtime gate on the button).
+     */
+    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
 
     protected readonly orchestrationDialogVisible = signal(false);
     protected readonly orchestrationDialogMessage = signal('');
@@ -41,7 +58,7 @@ export class AtlasOrchestrationTriggerComponent {
     protected readonly FeatureToggle = FeatureToggle;
 
     async triggerAtlasOrchestrator() {
-        const exerciseId = this.programmingExercise()?.id;
+        const exerciseId = this.exercise()?.id;
         if (!exerciseId || this.orchestrationRunning()) {
             return;
         }
@@ -49,7 +66,7 @@ export class AtlasOrchestrationTriggerComponent {
         try {
             // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/500/502/503)
             // surface as HttpErrorResponse and are handled in the catch block below.
-            const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
+            const result = await this.competencyOrchestrationApiService.runForExercise(exerciseId);
             // PARTIAL responds with 207 (MULTI_STATUS, still 2xx), so both SUCCESS and PARTIAL land here.
             // summary/appliedActions may be omitted from the response when empty (@JsonInclude(NON_EMPTY)).
             const summary = result.summary?.trim() ?? '';

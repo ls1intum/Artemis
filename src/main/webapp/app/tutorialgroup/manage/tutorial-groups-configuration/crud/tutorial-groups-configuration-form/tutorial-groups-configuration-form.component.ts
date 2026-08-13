@@ -4,6 +4,7 @@ import { Course, isMessagingEnabled } from 'app/course/shared/entities/course.mo
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
@@ -112,7 +113,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit {
     }
 
     submitForm() {
-        this.formSubmitted.emit({ ...this.form.value });
+        this.formSubmitted.emit(deepClone(this.form.value));
     }
 
     get isPeriodInvalid() {
