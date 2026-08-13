@@ -142,8 +142,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String activationKey;
 
     @Size(max = 255)
-    @JsonIgnore
     @Column(name = "reset_key", length = 255)
+    @JsonIgnore
     private String resetKey;
 
     @Column(name = "reset_date")
