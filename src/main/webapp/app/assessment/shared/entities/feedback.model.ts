@@ -5,6 +5,7 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { convertToHtmlLinebreaks, escapeString } from 'app/foundation/util/text.utils';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { GradingInstructionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -285,7 +286,7 @@ export class Feedback implements BaseEntity {
     }
 
     public static fromServerResponse(response: Feedback): Feedback {
-        return Object.assign(new Feedback(), response);
+        return hydrate(new Feedback(), response);
     }
 
     public static updateFeedbackTypeOnChange(feedback: Feedback) {

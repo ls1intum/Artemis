@@ -31,6 +31,7 @@ import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { MAX_GRADING_POINTS, MAX_PRESENTATION_COUNT, MAX_PRESENTATION_SCORE } from 'app/foundation/constants/input.constants';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
@@ -181,12 +182,24 @@ export class GradingComponent implements OnInit {
      */
     get gradingScale(): GradingScale {
         const model = this.gradeStepsModel();
-        return Object.assign(new GradingScale(), this.gradingScaleMeta, {
-            gradeType: model.gradeType,
-            plagiarismGrade: model.plagiarismGrade || undefined,
-            noParticipationGrade: model.noParticipationGrade || undefined,
-            gradeSteps: model.gradeSteps,
-        });
+        // The fields are assigned individually rather than copied: this getter runs on every template read, and
+        // handing out detached copies of `course` / `exam` / `gradeSteps` would give every read fresh object
+        // identities. Under zoneless change detection that re-notifies child inputs and re-creates the
+        // `track`-by-identity grade-step rows on every pass, which ends in NG0103.
+        const gradingScale = new GradingScale();
+        gradingScale.id = this.gradingScaleMeta.id;
+        gradingScale.bonusStrategy = this.gradingScaleMeta.bonusStrategy;
+        gradingScale.GradeStep = this.gradingScaleMeta.GradeStep;
+        gradingScale.course = this.gradingScaleMeta.course;
+        gradingScale.exam = this.gradingScaleMeta.exam;
+        gradingScale.presentationsNumber = this.gradingScaleMeta.presentationsNumber;
+        gradingScale.presentationsWeight = this.gradingScaleMeta.presentationsWeight;
+        gradingScale.bonusFrom = this.gradingScaleMeta.bonusFrom;
+        gradingScale.gradeType = model.gradeType;
+        gradingScale.plagiarismGrade = model.plagiarismGrade || undefined;
+        gradingScale.noParticipationGrade = model.noParticipationGrade || undefined;
+        gradingScale.gradeSteps = model.gradeSteps;
+        return gradingScale;
     }
 
     set gradingScale(value: GradingScale) {
@@ -214,9 +227,9 @@ export class GradingComponent implements OnInit {
      */
     private updateGradeSteps(mutate: (gradeSteps: GradeStep[]) => void): void {
         this.gradeStepsModel.update((model) => {
-            const gradeSteps = model.gradeSteps.map((gradeStep) => ({ ...gradeStep }));
+            const gradeSteps = model.gradeSteps.map((gradeStep) => deepClone(gradeStep));
             mutate(gradeSteps);
-            return { ...model, gradeSteps };
+            return cloneWith(model, { gradeSteps });
         });
     }
 
@@ -510,7 +523,7 @@ export class GradingComponent implements OnInit {
             }
         }
         // copy the grade steps in a separate array, so they don't get dynamically updated when sorting
-        const sortedGradeSteps = this.gradingService.sortGradeSteps(gradeSteps.map((gradeStep) => Object.assign({}, gradeStep)));
+        const sortedGradeSteps = this.gradingService.sortGradeSteps(gradeSteps.map((gradeStep) => deepClone(gradeStep)));
         if (gradeType === GradeType.BONUS) {
             // check if when the grade type is BONUS, the bonus points are at least 0
             for (const gradeStep of sortedGradeSteps) {
@@ -1104,12 +1117,12 @@ export class GradingComponent implements OnInit {
         }
 
         if (csvGradeSteps.length === 0 || csvGradeSteps.length > 100) {
-            this.gradeStepsModel.update((model) => ({ ...model, gradeSteps: [] }));
+            this.gradeStepsModel.update((model) => cloneWith(model, { gradeSteps: [] }));
             return;
         }
 
         const gradeType = csvGradeSteps[0]['bonusPoints' as keyof CsvGradeStep] === undefined ? GradeType.GRADE : GradeType.BONUS;
-        this.gradeStepsModel.update((model) => ({ ...model, gradeType, gradeSteps: this.mapCsvGradeStepsToGradeSteps(csvGradeSteps, gradeType) }));
+        this.gradeStepsModel.update((model) => cloneWith(model, { gradeType, gradeSteps: this.mapCsvGradeStepsToGradeSteps(csvGradeSteps, gradeType) }));
         return undefined;
     }
 
@@ -1138,7 +1151,9 @@ export class GradingComponent implements OnInit {
                 upperBoundPercentage: csvGradeStep[csvColumnsGrade.upperBoundPercentage as keyof CsvGradeStep]
                     ? Number(csvGradeStep[csvColumnsGrade.upperBoundPercentage as keyof CsvGradeStep])
                     : undefined,
-                ...(gradeType === GradeType.GRADE && { isPassingGrade: csvGradeStep[csvColumnsGrade.isPassingGrade as keyof CsvGradeStep] === 'TRUE' }),
+                // Explicitly undefined rather than absent: the object is serialised to JSON, which drops undefined
+                // members, so the request payload is unchanged.
+                isPassingGrade: gradeType === GradeType.GRADE ? csvGradeStep[csvColumnsGrade.isPassingGrade as keyof CsvGradeStep] === 'TRUE' : undefined,
             };
             return gradeStep as GradeStep;
         });
@@ -1151,12 +1166,15 @@ export class GradingComponent implements OnInit {
     }
 
     convertToCsvRow(gradeStep: GradeStep): CsvRow {
+        // Undefined cells are equivalent to absent ones here: downloadCsv only reads the keys listed in
+        // columnHeaders, and those differ per grade type.
+        const gradeType = this.gradingScale.gradeType;
         return {
-            ...(this.gradingScale.gradeType === GradeType.GRADE && { gradeName: gradeStep.gradeName ?? '' }),
-            ...(this.gradingScale.gradeType === GradeType.BONUS && { bonusPoints: gradeStep.gradeName ?? '' }),
+            gradeName: gradeType === GradeType.GRADE ? (gradeStep.gradeName ?? '') : undefined,
+            bonusPoints: gradeType === GradeType.BONUS ? (gradeStep.gradeName ?? '') : undefined,
             lowerBoundPercentage: gradeStep.lowerBoundPercentage ?? '',
             upperBoundPercentage: gradeStep.upperBoundPercentage ?? '',
-            ...(this.gradingScale.gradeType === GradeType.GRADE && { isPassingGrade: gradeStep.isPassingGrade }),
+            isPassingGrade: gradeType === GradeType.GRADE ? gradeStep.isPassingGrade : undefined,
         };
     }
 
