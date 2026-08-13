@@ -36,7 +36,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { captureException } from '@sentry/angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -120,7 +120,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
                 const posting = this.posting();
                 if (!posting) return;
                 if (!(posting instanceof AnswerPost)) {
-                    this.posting.set(Object.assign(new AnswerPost(), posting));
+                    this.posting.set(hydrate(new AnswerPost(), posting));
                 }
             });
         });
@@ -215,7 +215,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
                 // The verify response's parent carries only its id (AnswerMessageDTO -> ParentPostDTO), so replacing the
                 // posting wholesale would drop post.conversation and make AnswerPostService.getResourceEndpoint route a
                 // later edit/delete to the plagiarism API. Preserve the existing full parent post (incl. conversation).
-                const merged = Object.assign(new AnswerPost(), verified, { post: posting.post });
+                const merged = hydrate(new AnswerPost(), verified, { post: posting.post });
                 this.posting.set(merged);
                 this.isEditingIrisReply.set(false);
                 this.isVerifying.set(false);
@@ -302,7 +302,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         const screenWidth = window.innerWidth;
 
         if (this.dropdownPosition().x + dropdownWidth > screenWidth) {
-            this.dropdownPosition.update((position) => ({ ...position, x: screenWidth - dropdownWidth - 10 }));
+            this.dropdownPosition.update((position) => cloneWith(position, { x: screenWidth - dropdownWidth - 10 }));
         }
     }
 
@@ -329,7 +329,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         // This is needed because otherwise instanceof returns 'object'.
         const posting = this.posting();
         if (posting && !(posting instanceof AnswerPost)) {
-            this.posting.set(Object.assign(new AnswerPost(), posting));
+            this.posting.set(hydrate(new AnswerPost(), posting));
         }
     }
 }
