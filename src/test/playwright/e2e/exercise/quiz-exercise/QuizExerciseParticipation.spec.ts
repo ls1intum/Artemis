@@ -489,17 +489,24 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             const dragItem = page.locator('#drag-item-0');
             await dragItem.waitFor({ state: 'visible' });
 
-            // Wait until the quiz actually overflows its container, then mark that container.
+            // Wait until the quiz overflows a container that the CDK will actually auto-scroll, then mark that container.
             //
-            // The drag items render as soon as the question arrives, but the question's background image is fetched as a
-            // separate blob request and only contributes its height once decoded. Waiting for the overflow rather than for
-            // the image keeps this independent of how the image is delivered, and covers a question that has none.
+            // Two reasons for the wait. The drag items render as soon as the question arrives, but the question's
+            // background image is fetched as a separate blob request and contributes its height only once decoded, so the
+            // overflow appears late. Waiting for the overflow rather than for the image keeps this independent of how the
+            // image is delivered and covers a question that has none.
+            //
+            // The container must also carry cdkScrollable, because that registration is what #13190 added and what this
+            // test exists to protect: the CDK only auto-scrolls containers it knows about. Requiring it here means a
+            // regression that leaves the scrolling element unregistered fails on this wait, naming the cause, instead of
+            // timing out later while watching an element that was never going to move.
             await page.waitForFunction(
                 () => {
                     let element = document.getElementById('drag-item-0')?.parentElement;
                     while (element) {
                         const style = getComputedStyle(element);
-                        if (element.scrollHeight > element.clientHeight && ['auto', 'scroll'].includes(style.overflowY)) {
+                        const scrollable = element.scrollHeight > element.clientHeight && ['auto', 'scroll'].includes(style.overflowY);
+                        if (scrollable && element.hasAttribute('cdkscrollable')) {
                             element.setAttribute('data-e2e-scroll-container', 'true');
                             return true;
                         }
@@ -536,14 +543,18 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             const holdX = before.left + before.width / 2;
             const holdY = before.top + 5;
             await page.mouse.move(holdX, holdY, { steps: 10 });
+            // Counted here rather than taken from the callback: expect.poll invokes its callback without arguments, so a
+            // parameter would stay at its default and the pointer would never actually move.
+            let jiggle = 0;
             try {
                 // Waited for as a condition rather than a fixed number of iterations: the CDK moves the container on
                 // animation frames, which a busy machine delivers late, and a fixed ceiling turns that delay into a
                 // failure of behaviour that is in fact correct.
                 await expect
                     .poll(
-                        async (jiggle = 0) => {
-                            await page.mouse.move(holdX + (jiggle % 2), holdY);
+                        async () => {
+                            // Alternate the pointer position so every poll dispatches a move the drag can react to.
+                            await page.mouse.move(holdX + (jiggle++ % 2), holdY);
                             return page.evaluate(() => document.querySelector('[data-e2e-scroll-container]')!.scrollTop);
                         },
                         {
