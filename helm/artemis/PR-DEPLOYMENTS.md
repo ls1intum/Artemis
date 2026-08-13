@@ -57,9 +57,11 @@ Configure under repo Settings → Secrets and variables → Actions.
   every `*.tum.de` cert. High PR churn (each new hostname = a new cert) can exhaust it and block issuance across the whole
   domain. Default `PR_DEPLOY_ACME_SERVER` to LE **staging** (`https://acme-staging-v02.api.letsencrypt.org/directory`);
   switch to prod only when the PR-cert volume is known to be safe. Redeploying the *same* PR reuses its existing cert.
-- **Build logs across concurrent PRs.** The cluster-wide Hades `log-manager` has a single global adapter URL. Build
-  *results* are routed per-job (per-PR) and work correctly; build *logs* can only reach one PR's adapter at a time (an
-  upstream Hades limitation). Results appearing in Artemis is the primary need for review.
+- **Build logs across concurrent PRs.** Fixed once the image carries [#13491](https://github.com/ls1intum/Artemis/pull/13491)
+  and the cluster runs Hades with [hades#452](https://github.com/ls1intum/hades/pull/452): Artemis now advertises a
+  **per-job log callback URL** (`hades.adapter.logs-endpoint`, wired to each PR's own adapter via
+  `hadesAdapter.logsPath`), so build *logs* route per-PR just like build *results*. Older images without #13491 fall back
+  to Hades' removed global adapter URL and can only reach one PR's adapter at a time.
 - **Image must contain the Hades integration** - only meaningful once `hades` is on `develop` (or the PR branch carries it).
 - **`mergeGateways` is GatewayClass-wide** - it merges all `envoy`-class Gateways onto one LB; the existing manual test env's
   IP may change when you enable it.

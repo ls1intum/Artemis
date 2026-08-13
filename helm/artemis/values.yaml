@@ -130,6 +130,13 @@ artemis:
       # Where the hades-artemis-adapter is reachable from inside build
       # containers (it forwards parsed results back to Artemis).
       adapterEndpoint: ""  # REQUIRED
+      # Per-job callback URL Artemis sends to Hades; the Hades log manager POSTs
+      # the aggregated build logs to it (replaces Hades' removed global
+      # ARTEMIS_ADAPTER_URL; requires Hades with ls1intum/hades#452 and Artemis
+      # with ls1intum/Artemis#13491). Empty -> when the adapter is deployed by
+      # this chart it defaults to that adapter's log route; otherwise log
+      # forwarding is disabled (no callback_url sent).
+      adapterLogsEndpoint: ""
       # Token the adapter presents on the Artemis new-result callback.
       # MUST be at least 12 characters (validated at startup) and match the
       # value configured in the hades-artemis-adapter. Change in production.
@@ -264,6 +271,9 @@ hadesAdapter:
   resultWaitTimeout: "30s"
   # Path Hades' result parser posts results to; forwarded to Artemis.
   ingestPath: /adapter/test-results
+  # Path the Hades log manager posts aggregated build logs to (the per-job
+  # callback route). Artemis advertises this to Hades via hades.adapter.logs-endpoint.
+  logsPath: /adapter/logs
   # How the adapter reaches Artemis to POST results. Empty -> the in-cluster
   # http service (http://<release>-http:8080). Override to the public URL if the
   # adapter must go through the ingress.

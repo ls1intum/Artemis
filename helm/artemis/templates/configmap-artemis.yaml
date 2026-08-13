@@ -38,6 +38,7 @@ data:
   # ---- External Hades build system ----
   ARTEMIS_CONTINUOUSINTEGRATION_URL: {{ required "artemis.config.hades.url is required" .Values.artemis.config.hades.url | quote }}
   ARTEMIS_CONTINUOUSINTEGRATION_HADES_ADAPTER_ENDPOINT: {{ include "artemis.hadesAdapterEndpoint" . | quote }}
+  ARTEMIS_CONTINUOUSINTEGRATION_HADES_ADAPTER_LOGSENDPOINT: {{ include "artemis.hadesAdapterLogsEndpoint" . | quote }}
   ARTEMIS_CONTINUOUSINTEGRATION_HADES_IMAGES_CLONEIMAGE: {{ .Values.artemis.config.hades.cloneImage | quote }}
   ARTEMIS_CONTINUOUSINTEGRATION_HADES_IMAGES_RESULTPARSERIMAGE: {{ .Values.artemis.config.hades.resultParserImage | quote }}
 

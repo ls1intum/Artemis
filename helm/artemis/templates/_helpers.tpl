@@ -143,6 +143,19 @@ http://{{ include "artemis.hadesAdapterName" . }}.{{ .Release.Namespace }}.svc.c
 {{- end -}}
 {{- end }}
 
+{{/* Per-job log callback URL Artemis advertises to Hades (hades.adapter.logs-endpoint). The
+     Hades log manager POSTs aggregated build logs here. Same FQDN reasoning as the result
+     endpoint: the log manager runs in the Hades namespace, so the address must be fully
+     qualified. Empty when neither an override nor a chart-deployed adapter is available, which
+     disables log forwarding (no callback_url is sent). */}}
+{{- define "artemis.hadesAdapterLogsEndpoint" -}}
+{{- if .Values.artemis.config.hades.adapterLogsEndpoint -}}
+{{- .Values.artemis.config.hades.adapterLogsEndpoint -}}
+{{- else if .Values.hadesAdapter.deploy -}}
+http://{{ include "artemis.hadesAdapterName" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.hadesAdapter.port }}{{ .Values.hadesAdapter.logsPath }}
+{{- end -}}
+{{- end }}
+
 {{/* Eureka service URL with embedded admin credentials. */}}
 {{- define "artemis.eurekaUrl" -}}
 http://admin:{{ required "registry.password is required" .Values.registry.password }}@{{ include "artemis.registryName" . }}:{{ .Values.registry.service.port }}/eureka/
