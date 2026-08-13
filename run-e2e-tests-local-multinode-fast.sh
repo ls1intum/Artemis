@@ -209,10 +209,34 @@ fi
 
 mkdir -p "$LOCAL_DIR"
 
-# Pre-clear ports we will claim. --skip-up still benefits from this (orphan from a prior crash).
-for port in "${ALL_PORTS[@]}"; do
-    check_port_available "$port" "Artemis host JVM"
-done
+# Pre-clear ports we will claim, so a leftover process from an earlier crash cannot block the launch.
+#
+# With --skip-up the running nodes are exactly what we intend to reuse, so killing whatever holds their
+# ports would defeat the flag: the pre-clear tore the stack down, and Step 4 then "reused" the PID it had
+# just killed and aborted the whole run when that process finished dying. Under --skip-up a node port is
+# therefore only cleared when its node does not answer /management/health, i.e. when it is a crashed
+# leftover rather than the stack we were asked to keep.
+node_port_is_healthy() {
+    curl -sf "http://localhost:$1/management/health" >/dev/null 2>&1
+}
+
+# All or nothing: the running nodes own their Hazelcast and management ports as well, so a healthy stack
+# has to be kept whole. If any node is missing, everything is cleared and all three are relaunched.
+REUSE_RUNNING_NODES=false
+if [ "$SKIP_UP" = true ]; then
+    REUSE_RUNNING_NODES=true
+    for port in "${HTTP_PORTS[@]}"; do
+        node_port_is_healthy "$port" || REUSE_RUNNING_NODES=false
+    done
+fi
+
+if [ "$REUSE_RUNNING_NODES" = true ]; then
+    echo -e "${GREEN}All three nodes answer /management/health — keeping the running stack (--skip-up).${NC}"
+else
+    for port in "${ALL_PORTS[@]}"; do
+        check_port_available "$port" "Artemis host JVM"
+    done
+fi
 echo -e "${GREEN}Prerequisites OK${NC}"
 
 # =============================================================================
@@ -408,8 +432,11 @@ launch_node() {
     local log_file="$LOCAL_DIR/server-${n}.log"
     local pid_file="$LOCAL_DIR/server-${n}.pid"
 
-    if [ "$SKIP_UP" = true ] && [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
-        echo "node-${n} already running (PID $(cat "$pid_file")), reusing."
+    # Reuse a node only when it actually serves requests. A live PID is not enough: a JVM that is shutting
+    # down still passes `kill -0` for several seconds, and reusing it means waiting on a health endpoint
+    # that will never come up again. Anything else gets relaunched, after clearing the port it may hold.
+    if [ "$REUSE_RUNNING_NODES" = true ] && node_port_is_healthy "$http_port"; then
+        echo "node-${n} already serving on :${http_port}, reusing."
         return
     fi
 

@@ -49,7 +49,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
         test('Keeps the practice mode selectable when switching back to graded', async ({ login, page, programmingExerciseEditor }) => {
             test.slow();
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
-            await startPracticeFromExercisePage(page, exercise.id!, 'Practice with template repository');
+            const practiceParticipationId = await startPracticeFromExercisePage(page, exercise.id!, 'Practice with template repository');
 
             const practiceButton = modeButton(page, 'practice');
             const gradedButton = modeButton(page, 'graded');
@@ -73,6 +73,11 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
 
             // Submitting in practice mode must process the submission and update the shown result
             await modeButton(page, 'practice').click();
+            // Selecting a mode re-routes the embedded editor to that mode's participation. Wait for the practice
+            // repository to be the one on screen before touching the file tree: the graded repository is read-only
+            // after the due date, so a file action aimed at the outgoing tree is dropped and the editor never sends
+            // the repository request the submission helper waits for.
+            await page.waitForURL((url) => url.pathname.endsWith(`/code-editor/${practiceParticipationId}`), { timeout: 30000 });
             await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaAllSuccessfulSubmission, async () => {
                 await expect(page.locator('#exercise-headers-information')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
             });
@@ -139,14 +144,33 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
  * Opens the start-practice popover on the exercise details page and starts the practice mode via the
  * option with the given label ('Practice with template repository' / 'Practice with graded participation'
  * when a graded participation exists, plain 'Practice' otherwise).
+ *
+ * @returns the id of the created practice participation, which also identifies its editor route.
  */
-async function startPracticeFromExercisePage(page: Page, exerciseId: number, optionLabel: string): Promise<void> {
+async function startPracticeFromExercisePage(page: Page, exerciseId: number, optionLabel: string): Promise<number> {
     const startPracticeButton = page.locator(`#start-practice-${exerciseId} button`);
     await startPracticeButton.waitFor({ state: 'visible', timeout: 15000 });
-    await startPracticeButton.click();
     const popover = page.locator('.start-practice-popover');
-    await popover.waitFor({ state: 'visible' });
     const responsePromise = page.waitForResponse((response) => response.url().includes(`/exercises/${exerciseId}/participations/practice`) && response.status() === 201);
-    await popover.locator('button', { hasText: optionLabel }).first().click();
-    await responsePromise;
+
+    // Opening the popover and picking an option are retried as a pair, because an exercise page that already has a
+    // participation routes itself to that participation's editor a moment after the details arrive. That navigation
+    // re-renders the header and closes the popover, and a click that lost the race spins forever: the option passes
+    // the actionability check and is gone by the time the click lands ("element is not visible", retried until the
+    // test dies). Reopening after the one-shot navigation settles is what makes this deterministic.
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            await startPracticeButton.click({ timeout: 10000 });
+            await popover.waitFor({ state: 'visible', timeout: 10000 });
+            await popover.locator('button', { hasText: optionLabel }).first().click({ timeout: 10000 });
+            break;
+        } catch (error) {
+            if (attempt === 2) {
+                throw error;
+            }
+        }
+    }
+
+    const participation = await (await responsePromise).json();
+    return participation.id;
 }

@@ -308,7 +308,11 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.endQuiz(quizExercise);
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await courseOverview.practiceExercise();
+            // Started through the dedicated action button, as the other practice tests in this file do. The generic
+            // "click a button containing Practice" helper this used to call does not start a practice attempt: the page
+            // offers several controls whose label contains the word, and the failure snapshot showed the exercise page
+            // still displaying an untouched "Start practice" button while the test waited for a question to appear.
+            await courseOverview.startQuizPractice(quizExercise.id!);
             await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
         });
     });

@@ -36,13 +36,6 @@ export class CourseOverviewPage {
     }
 
     /**
-     * Initiates the practice of an exercise.
-     */
-    async practiceExercise() {
-        await this.page.locator('button', { hasText: 'Practice' }).click();
-    }
-
-    /**
      * Starts a practice attempt for an ended quiz via the dedicated "Start practice" action button in the exercise
      * header. Works for both the first attempt and subsequent attempts (the button reappears after each submit).
      * @param exerciseId The id of the quiz exercise to practice.
@@ -176,8 +169,16 @@ export class CourseOverviewPage {
      * @param exerciseName The title of the exercise to open.
      */
     async openExercise(exerciseName: string) {
-        await this.page.locator('jhi-course-exercise-details').waitFor({ state: 'visible' });
-        await this.getExercise(exerciseName).click();
+        // Wait for the sidebar entry we are about to click, not for the detail pane. The exercises page only
+        // renders `jhi-course-exercise-details` once an exercise is selected, and selection before the click
+        // is up to the page's auto-navigation, which picks the upcoming or last-visited exercise and does
+        // nothing at all when it finds neither. Waiting for the detail pane first therefore waited for a
+        // component that only this click can bring up, and the test hung until its timeout with the exercise
+        // list fully rendered in front of it.
+        const card = this.getExercise(exerciseName);
+        await card.waitFor({ state: 'visible', timeout: 30000 });
+        await card.click();
+        await this.page.locator('jhi-course-exercise-details').waitFor({ state: 'visible', timeout: 30000 });
     }
 
     /**
