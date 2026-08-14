@@ -848,16 +848,20 @@ public class StudentExamService {
 
     /**
      * Generates a new individual StudentExam for the specified student and stores it in the database.
+     * Locks the exam row and re-reads the exercise groups under that lock, so a concurrent exercise-group move
+     * cannot desync the selection this generates. Called when a student starts a normal or test exam.
      *
-     * @param exam    The exam with eagerly loaded users, exercise groups, and exercises.
+     * @param exam    the exam to generate the student exam for
      * @param student The student for whom the StudentExam should be created.
      * @return The generated StudentExam.
      */
     public StudentExam generateIndividualStudentExam(Exam exam, User student) {
-        // To create a new StudentExam, the Exam with loaded ExerciseGroups and Exercises is needed
         long start = System.nanoTime();
-        Set<User> userSet = Set.of(student);
-        StudentExam studentExam = studentExamRepository.createRandomStudentExams(exam, userSet).getFirst();
+        StudentExam studentExam = transactionTemplate.execute(status -> {
+            examRepository.findByIdWithPessimisticWriteLockElseThrow(exam.getId());
+            Exam lockedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+            return studentExamRepository.createRandomStudentExams(lockedExam, Set.of(student)).getFirst();
+        });
         // we need to break a cycle for the serialization
         studentExam.getExam().setExerciseGroups(null);
         studentExam.getExam().setStudentExams(null);
