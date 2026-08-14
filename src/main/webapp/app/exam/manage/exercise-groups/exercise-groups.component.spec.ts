@@ -402,6 +402,21 @@ describe('Exercise Groups Component', () => {
         expect(comp.exerciseGroups()).toBe(before);
     });
 
+    it('does not show a duplicate generic alert when the move rejection already carries a server error key', async () => {
+        comp.exerciseGroups.set(groups);
+        vi.spyOn(exerciseGroupService, 'moveExerciseToGroup').mockReturnValue(
+            throwError(() => new HttpErrorResponse({ status: 409, error: { errorKey: 'studentExamsAlreadyGenerated' } })),
+        );
+        const alertSpy = vi.spyOn(alertService, 'addAlert');
+
+        comp.onTableGroupChange({ exercise: { id: 3 } as Exercise, group: { id: 1 } as ExerciseGroup });
+        await Promise.resolve();
+
+        // The server's errorKey-based alert (translated, shown independently) already informs the user; the
+        // generic onError fallback must not add a second, untranslated alert on top of it.
+        expect(alertSpy).not.toHaveBeenCalled();
+    });
+
     it('opens the import modal for exercise groups', async () => {
         const alertSpy = vi.spyOn(alertService, 'success');
         const exerciseGroup = { id: 1 } as ExerciseGroup;

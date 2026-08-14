@@ -7,7 +7,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/foundation/util/global.utils';
+import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
@@ -292,7 +292,11 @@ export class ExerciseGroupsComponent implements OnInit {
             const newGroup: ExerciseGroup = { title: edited.title, isMandatory: edited.isMandatory, exam };
             this.exerciseGroupService.create(this.courseId(), this.examId(), newGroup).subscribe({
                 next: (res) => this.exerciseGroups.set([...(this.exerciseGroups() ?? []), res.body!]),
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                error: (res: HttpErrorResponse) => {
+                    if (!isErrorAlert(res)) {
+                        onError(this.alertService, res);
+                    }
+                },
             });
             return;
         }
@@ -316,7 +320,11 @@ export class ExerciseGroupsComponent implements OnInit {
                     }),
                 );
             },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            error: (res: HttpErrorResponse) => {
+                if (!isErrorAlert(res)) {
+                    onError(this.alertService, res);
+                }
+            },
         });
     }
 
@@ -401,7 +409,11 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.exerciseGroups.set(updatedGroups);
             },
             // Nothing is applied optimistically, so a rejected move leaves the groups untouched and only needs an alert.
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            error: (res: HttpErrorResponse) => {
+                if (!isErrorAlert(res)) {
+                    onError(this.alertService, res);
+                }
+            },
         });
     }
 
