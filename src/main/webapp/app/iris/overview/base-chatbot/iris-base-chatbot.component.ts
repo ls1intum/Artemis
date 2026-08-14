@@ -1320,12 +1320,22 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
         textarea.style.height = 'auto'; // Reset the height to auto
         if (!textarea.value.trim()) {
+            // Empty input: fall back to the CSS min-height, which reserves enough lines for the ghost
+            // suggestion. Clearing the custom property lets the overlay's own fallback take over.
             textarea.style.height = '';
+            textarea.parentElement?.style.removeProperty('--iris-textarea-height');
             return;
         }
-        const maxHeight = 200;
+        // Read the cap from the stylesheet rather than hardcoding it: max-height scales with the number
+        // of lines the layout reserves for the ghost suggestion, so a literal here would disagree with
+        // the CSS in the layouts that reserve more. Falls back to the previous value if unresolvable.
+        const computedMaxHeight = Number.parseFloat(getComputedStyle(textarea).maxHeight);
+        const maxHeight = Number.isFinite(computedMaxHeight) ? computedMaxHeight : 200;
         const newHeight = Math.min(textarea.scrollHeight, maxHeight);
         textarea.style.height = `${newHeight}px`;
+        // Expose the grown height so the absolutely positioned ghost-text and chip-preview overlays can
+        // clip themselves to the textarea rather than spilling onto the controls row below it.
+        textarea.parentElement?.style.setProperty('--iris-textarea-height', `${newHeight}px`);
     }
 
     /**
