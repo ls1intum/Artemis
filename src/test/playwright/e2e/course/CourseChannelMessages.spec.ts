@@ -6,20 +6,12 @@ import { Channel } from 'app/communication/shared/entities/conversation/channel.
 import { Post } from 'app/communication/shared/entities/post.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { SEED_COURSES } from '../../support/seedData';
+import { RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
+import { Commands } from '../../support/commands';
 
 // Use pre-seeded courses — no course creation needed
 const readOnlyCourse = { id: SEED_COURSES.channel1.id };
 const writeCourse = { id: SEED_COURSES.channel2.id };
-
-// Budget for the client to re-bootstrap after a full page reload. Deliberately larger than the
-// default 10s expect timeout: a reload re-downloads and re-parses the whole bundle (Playwright
-// disables the HTTP cache per context), which is one of the slowest things a test can wait for
-// under parallel CI load.
-// Sized to fit the @fast per-test budget (60s locally, 75s in CI) alongside the work before the
-// reload, so that a genuine regression still fails as a clear assertion error rather than as an
-// opaque whole-test timeout. Only the first assertion after a reload needs this; anything rendered
-// in the same pass is already present by then and uses the default timeout.
-const RELOAD_RENDER_TIMEOUT = 30_000;
 
 test.describe('Channel messages', { tag: '@fast' }, () => {
     test.describe('Create channel', () => {
@@ -174,7 +166,10 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             // assertions themselves (they poll) rather than gating on an intermediate element within a
             // fixed window. Only the first assertion absorbs the re-bootstrap; the topic is rendered in
             // the same pass, so it keeps the default timeout and the two budgets cannot stack.
-            await page.reload();
+            // Restore the route after the reload: a lazy route chunk that fails to resolve sends the
+            // router to the bare /courses fallback, where the channel header does not exist at all and
+            // the assertion below waits out its whole budget on a page that can never satisfy it.
+            await Commands.reloadAndRestoreRoute(page);
             await expect(courseMessages.getName()).toContainText(newName, { timeout: RELOAD_RENDER_TIMEOUT });
             await expect(courseMessages.getTopic()).toContainText(topic);
         });

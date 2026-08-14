@@ -2,8 +2,8 @@ import { Component, ElementRef, inject, input, linkedSignal, output, viewChild }
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import { cloneDeep } from 'lodash-es';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faBan, faExclamationTriangle, faMinus, faPencilAlt, faPlus, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
@@ -108,7 +108,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     /**
      * Snapshot of the feedback used to restore state when the user cancels an edit. Reset whenever the input changes.
      */
-    readonly oldFeedback = linkedSignal<Feedback>(() => cloneDeep(this.feedback() ?? new Feedback()));
+    readonly oldFeedback = linkedSignal<Feedback>(() => deepClone(this.feedback() ?? new Feedback()));
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -139,7 +139,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     cancelFeedback() {
         const restored = this.oldFeedback();
         this.currentFeedback.set(restored);
-        this.oldFeedback.set(cloneDeep(restored));
+        this.oldFeedback.set(deepClone(restored));
         this.viewOnly.set(restored.type === this.MANUAL);
         this.onCancelFeedback.emit(this.codeLine());
     }
@@ -194,7 +194,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     editFeedback(line: number) {
         this.viewOnly.set(false);
         // Save the old feedback in case the user cancels later
-        this.oldFeedback.set(cloneDeep(this.currentFeedback()));
+        this.oldFeedback.set(deepClone(this.currentFeedback()));
         this.onEditFeedback.emit(line);
         setTimeout(() => (this.textareaRef()?.nativeElement as HTMLTextAreaElement | undefined)?.focus());
     }

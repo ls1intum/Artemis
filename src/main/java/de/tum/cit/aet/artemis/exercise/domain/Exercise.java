@@ -148,13 +148,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnoreProperties("exercises")
     private ExerciseVariantGroup exerciseVariantGroup;
 
-    // No @Cache: instructors edit grading criteria while assessors read them during assessment; NONSTRICT produced
-    // stale cross-node reads, same class of bug as #12574 / #12584.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     private Set<GradingCriterion> gradingCriteria = new HashSet<>();
 
-    // No @Cache: grows every time a student starts / submits the exercise; NONSTRICT caused stale reads for instructors and scoring paths, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<StudentParticipation> studentParticipations = new HashSet<>();
@@ -167,12 +164,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnoreProperties("exercise")
     private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
 
-    // No @Cache: instructors edit attachments while students are viewing the exercise page; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<Attachment> attachments = new HashSet<>();
 
-    // No @Cache: plagiarism cases are appended by detection runs while instructors read the list, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
@@ -311,20 +306,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return studentParticipations;
     }
 
-    public Exercise participations(Set<StudentParticipation> participations) {
-        this.studentParticipations = participations;
-        return this;
-    }
-
     public Exercise addParticipation(StudentParticipation participation) {
         this.studentParticipations.add(participation);
         participation.setExercise(this);
         return this;
-    }
-
-    public void removeParticipation(StudentParticipation participation) {
-        this.studentParticipations.remove(participation);
-        participation.setExercise(null);
     }
 
     public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
@@ -735,11 +720,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return gradingCriteria;
     }
 
-    public void addGradingCriteria(GradingCriterion gradingCriterion) {
-        this.gradingCriteria.add(gradingCriterion);
-        gradingCriterion.setExercise(this);
-    }
-
     public void setGradingCriteria(Set<GradingCriterion> gradingCriteria) {
         reconnectCriteriaWithExercise(gradingCriteria);
     }
@@ -986,20 +966,5 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             setGradingCriteria(managedCriteria);
         }
         return managedCriteria;
-    }
-
-    /**
-     * Ensures that the exercise has a mutable set for competency links.
-     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
-     *
-     * @return the non-null mutable set of competency links
-     */
-    public Set<CompetencyExerciseLink> ensureCompetencyLinksSet() {
-        Set<CompetencyExerciseLink> managedLinks = getCompetencyLinks();
-        if (managedLinks == null) {
-            managedLinks = new HashSet<>();
-            setCompetencyLinks(managedLinks);
-        }
-        return managedLinks;
     }
 }

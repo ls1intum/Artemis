@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -212,15 +214,26 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         String studentRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, student1Login);
         LocalRepository studentRepository = RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey1, studentRepositorySlug,
                 baseRepositories.solutionRepository());
+        if (projectType == ProjectType.GCC) {
+            makeSubmissionExerciseKillShadow(studentRepository);
+        }
         programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         // Retry the build once before failing — a real configuration regression fails twice.
-        // The GCC variant used to flake here with `TestOutputASan [FAIL]: timeout`, which was not a
-        // load or ASLR effect: AddressSanitizer runs LeakSanitizer at exit, that scan stops the world
-        // via ptrace, and the build containers deliberately have no CAP_SYS_PTRACE (they run untrusted
-        // student code), so a correct `asan.out` stalled instead of exiting. The C template now sets
-        // ASAN_OPTIONS=detect_leaks=0 for the tester's child processes, so the stall is gone at the
-        // source. This retry is kept as cheap insurance and can be dropped once that has held.
+        //
+        // The GCC variant has flaked here twice with `TestOutputASan [FAIL]: timeout`, each time for a
+        // different reason, and each time the fix belonged in the C template rather than here.
+        //
+        // First: AddressSanitizer runs LeakSanitizer at exit, that scan stops the world via ptrace, and
+        // the build containers deliberately have no CAP_SYS_PTRACE (they run untrusted student code), so
+        // a correct `asan.out` stalled instead of exiting. Fixed by ASAN_OPTIONS=detect_leaks=0.
+        //
+        // Second: the `kill` shadow in shadow_exec.c called itself instead of the syscall, so a signal
+        // sent by the program — or by the sanitizer runtime on its way to reporting an error — recursed
+        // until the stack overflowed. Fixed by issuing the syscall directly.
+        //
+        // Both attempts run on the same runner within seconds of each other, so this retry cannot
+        // absorb a condition of the host itself; it only covers a per-build hiccup.
         AssertionError lastFailure = null;
         for (int attempt = 1; attempt <= MAX_BUILD_ATTEMPTS; attempt++) {
             String triggerFileName = "trigger-attempt-" + attempt + ".txt";
@@ -353,6 +366,56 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         return baseRepositories;
     }
 
+    /**
+     * Replaces the student submission with one that exercises the {@code kill} shadow of {@code shadow_exec.c}, which
+     * is linked into every C submission to keep student code from controlling processes.
+     * <p>
+     * The template solution never calls {@code kill}, so the build alone could not tell a working shadow from a broken
+     * one. This submission both requires a targeted signal to reach the kernel and requires every signal that addresses
+     * more than one process to be refused, so a regression in either direction stops the program before it prints and
+     * shows up as a failing {@code TestOutput} rather than as a silent pass:
+     * <ul>
+     * <li>the shadow used to call {@code kill} recursively, so the targeted probe signal overflowed the stack — under
+     * AddressSanitizer that surfaced only as repeated {@code AddressSanitizer:DEADLYSIGNAL} until the tester timed out</li>
+     * <li>the shadow used to refuse only pid 0 and -1, so any other process group was signalled for real, which here
+     * would terminate the program via SIGTERM</li>
+     * </ul>
+     * The tester reads stdout until it sees {@code Hello world!}, so the refusal messages the shadow prints on the way
+     * are tolerated.
+     */
+    private void makeSubmissionExerciseKillShadow(LocalRepository studentRepository) throws Exception {
+        String submission = """
+                // Feature macro before any include so <signal.h> declares kill(2) under -std=c11.
+                #define _POSIX_C_SOURCE 200809L
+
+                #include <signal.h> // For kill(...)
+                #include <stdio.h>  // For printf(...)
+                #include <stdlib.h> // For EXIT_SUCCESS
+                #include <sys/types.h>
+                #include <unistd.h> // For getpid(...)
+
+                int main(void) {
+                    // Every signal that addresses more than one process has to be refused: 0 is this process group,
+                    // -1 is every process this user may signal, and any other negative pid is the process group -pid.
+                    if (kill(0, SIGTERM) != -1 || kill(-1, SIGTERM) != -1 || kill(-getpid(), SIGTERM) != -1) {
+                        return EXIT_FAILURE;
+                    }
+                    // A targeted signal has to reach the kernel. The shadow used to recurse here until the stack
+                    // overflowed, so this call never returned.
+                    if (kill(getpid(), 0) != 0) {
+                        return EXIT_FAILURE;
+                    }
+                    printf("Hello world!\\n");
+                    return EXIT_SUCCESS;
+                }
+                """;
+        FileUtils.writeStringToFile(studentRepository.workingCopyGitRepoFile.toPath().resolve("helloWorld.c").toFile(), submission, StandardCharsets.UTF_8);
+        studentRepository.workingCopyGitRepo.add().addFilepattern(".").call();
+        GitService.commit(studentRepository.workingCopyGitRepo).setMessage("Exercise the kill shadow from the submission").call();
+        studentRepository.workingCopyGitRepo.push().call();
+        RepositoryExportTestUtil.waitForBareRepositoryReady(studentRepository);
+    }
+
     private void seedRepositoryFromTemplate(LocalRepository repository, Path resourcePath, String commitSuffix) throws Exception {
         Resource[] resources = resourceLoaderService.getFileResources(resourcePath);
         FileUtil.copyResources(resources, resourcePath, repository.workingCopyGitRepoFile.toPath(), true);
@@ -477,8 +540,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
             FileSystemResource logResource = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJob.getBuildJobId());
             if (logResource != null && logResource.exists()) {
                 String logContent = Files.readString(logResource.getFile().toPath());
-                diagnostics.append(System.lineSeparator()).append("Build log file tail:").append(System.lineSeparator())
-                        .append(trimToLastCharacters(logContent, MAX_DIAGNOSTIC_LOG_LENGTH));
+                diagnostics.append(System.lineSeparator()).append("Build log excerpt:").append(System.lineSeparator()).append(trimToExcerpt(logContent, MAX_DIAGNOSTIC_LOG_LENGTH));
             }
         }
         catch (IOException ignored) {
@@ -497,15 +559,40 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
             persistedLogs.append(buildLog.getLog());
         }
 
-        diagnostics.append(System.lineSeparator()).append("Persisted build log tail:").append(System.lineSeparator())
-                .append(trimToLastCharacters(persistedLogs.toString(), MAX_DIAGNOSTIC_LOG_LENGTH));
+        diagnostics.append(System.lineSeparator()).append("Persisted build log excerpt:").append(System.lineSeparator())
+                .append(trimToExcerpt(persistedLogs.toString(), MAX_DIAGNOSTIC_LOG_LENGTH));
     }
 
-    private String trimToLastCharacters(String input, int maxCharacters) {
+    /**
+     * Keeps the beginning and the end of an over-long log, rather than only the end, and never returns more
+     * than {@code maxCharacters} in total.
+     * <p>
+     * A crashing sanitizer run prints the same line until its output limit is reached, which fills a
+     * tail-only excerpt entirely with copies of that line. The first lines are where the diagnosis
+     * actually is -- the error header, the mapping it failed on, the test case that was running --
+     * so keep both ends and say how much was dropped in between.
+     * <p>
+     * The marker counts against the budget: it is sized from the largest number it could carry (the whole
+     * input length) before the remainder is split, so the result honours {@code maxCharacters} whatever the
+     * digit count of the actual omission turns out to be.
+     */
+    private String trimToExcerpt(String input, int maxCharacters) {
         if (input.length() <= maxCharacters) {
             return input;
         }
-        return input.substring(input.length() - maxCharacters);
+        int markerBudget = omissionMarker(input.length()).length();
+        int contentBudget = maxCharacters - markerBudget;
+        if (contentBudget <= 0) {
+            // No room for both ends and a marker — the head is the more useful half.
+            return input.substring(0, maxCharacters);
+        }
+        int headLength = contentBudget / 2;
+        int tailLength = contentBudget - headLength;
+        return input.substring(0, headLength) + omissionMarker(input.length() - contentBudget) + input.substring(input.length() - tailLength);
+    }
+
+    private String omissionMarker(int omittedCharacters) {
+        return System.lineSeparator() + "... [" + omittedCharacters + " characters omitted] ..." + System.lineSeparator();
     }
 
     private void initializeLazyLocalCIServices() {

@@ -2,4 +2,6 @@
 
 .admin-layout {
     @include shell-content-height;
+
+    padding-top: var(--spacing-divider);
 }

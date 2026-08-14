@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PasswordStrengthBarComponent } from 'app/account/password/password-strength-bar.component';
 
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { PasswordResetFinishService } from './password-reset-finish.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
@@ -30,6 +31,7 @@ interface PasswordResetForm {
 })
 export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     private readonly passwordResetFinishService = inject(PasswordResetFinishService);
+    private readonly credentialRevocationConfirmationService = inject(CredentialRevocationConfirmationService);
     private readonly route = inject(ActivatedRoute);
     private readonly destroyRef = inject(DestroyRef);
 
@@ -51,6 +53,17 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     readonly success = signal(false);
     /** The reset key extracted from the URL query parameters */
     readonly resetKey = signal('');
+
+    // Default to revoking, so the safe outcome needs no thought and keeping a credential is the deliberate act.
+    // A reset only proves the person controls the mailbox, which is a weaker claim to the account than knowing the
+    // current password - but forgetting a password is not the same as losing it, so re-enrolling every authenticator
+    // and key should not be forced on someone who simply forgot.
+    /** Whether all passkeys should be deleted as part of the reset */
+    readonly revokePasskeys = signal(true);
+    /** Whether all SSH keys should be deleted as part of the reset */
+    readonly revokeSshKeys = signal(true);
+    /** Whether the personal, participation and repository VCS access tokens should be deleted as part of the reset */
+    readonly revokeVcsAccessTokens = signal(true);
 
     readonly passwordForm = new FormGroup<PasswordResetForm>({
         newPassword: new FormControl('', {
@@ -88,7 +101,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
      * Validates that passwords match before sending to server.
      * The reset key from the email link is sent along with the new password.
      */
-    finishReset(): void {
+    async finishReset(): Promise<void> {
         // Reset error states before attempting reset
         this.doNotMatch.set(false);
         this.error.set(false);
@@ -97,11 +110,24 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
 
         if (newPassword.value !== confirmPassword.value) {
             this.doNotMatch.set(true);
-        } else {
-            this.passwordResetFinishService.completePasswordReset(this.resetKey(), newPassword.value).subscribe({
-                next: () => this.success.set(true),
-                error: () => this.error.set(true),
-            });
+            return;
         }
+
+        const revocationChoice = {
+            passkeys: this.revokePasskeys(),
+            sshKeys: this.revokeSshKeys(),
+            vcsAccessTokens: this.revokeVcsAccessTokens(),
+        };
+        // This page arrives with all three options selected, so completing the reset deletes every authenticator, key and
+        // token unless the user deselected them. That is the easiest destructive action in the product to trigger by
+        // accident, and it is irreversible, so it is confirmed first. Deselecting all three skips the dialog.
+        if (!(await this.credentialRevocationConfirmationService.confirm(revocationChoice))) {
+            return;
+        }
+
+        this.passwordResetFinishService.completePasswordReset(this.resetKey(), newPassword.value, revocationChoice).subscribe({
+            next: () => this.success.set(true),
+            error: () => this.error.set(true),
+        });
     }
 }
