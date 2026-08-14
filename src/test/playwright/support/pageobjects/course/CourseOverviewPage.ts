@@ -43,7 +43,22 @@ export class CourseOverviewPage {
     async startQuizPractice(exerciseId: number) {
         const button = this.page.locator(`#quiz-start-practice-${exerciseId}`);
         await button.waitFor({ state: 'visible', timeout: 30_000 });
-        await button.click();
+
+        // Starting a practice attempt loads the quiz for the student, both for the first attempt and for a restart in
+        // the same session. Waiting for that request is what proves the click started an attempt: the exercise page
+        // re-renders its header while the details settle, and a click lost to that re-render leaves the caller waiting
+        // for a question that was never requested. Retry until an attempt is actually under way.
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const quizLoaded = this.page
+                .waitForResponse((response) => response.url().includes(`/quiz-exercises/${exerciseId}/for-student`) && response.ok(), { timeout: 15_000 })
+                .catch(() => undefined);
+            await button.click({ timeout: 10_000 });
+            if (await quizLoaded) {
+                return;
+            }
+            await button.waitFor({ state: 'visible', timeout: 10_000 });
+        }
+        throw new Error(`Could not start a practice attempt for quiz ${exerciseId}: the quiz was never loaded for the student after clicking start practice.`);
     }
 
     /**
@@ -175,10 +190,22 @@ export class CourseOverviewPage {
         // nothing at all when it finds neither. Waiting for the detail pane first therefore waited for a
         // component that only this click can bring up, and the test hung until its timeout with the exercise
         // list fully rendered in front of it.
+        // The click is retried because the sidebar re-renders while the exercise list and the auto-navigation settle,
+        // which swallows a click that landed on the outgoing card without ever opening the exercise.
         const card = this.getExercise(exerciseName);
         await card.waitFor({ state: 'visible', timeout: 30000 });
-        await card.click();
-        await this.page.locator('jhi-course-exercise-details').waitFor({ state: 'visible', timeout: 30000 });
+        const details = this.page.locator('jhi-course-exercise-details');
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                await card.click({ timeout: 10000 });
+                await details.waitFor({ state: 'visible', timeout: 15000 });
+                return;
+            } catch (error) {
+                if (attempt === 2) {
+                    throw error;
+                }
+            }
+        }
     }
 
     /**
