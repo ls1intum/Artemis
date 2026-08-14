@@ -28,12 +28,18 @@ services:
             PLAYWRIGHT_REPORT_PHASE: '${PLAYWRIGHT_REPORT_PHASE:-}'
             PLAYWRIGHT_REPORT_TRIGGERED_BY: '${PLAYWRIGHT_REPORT_TRIGGERED_BY:-}'
             GITHUB_RUN_ID: '${GITHUB_RUN_ID:-}'
+        # Both installs are required. The suite reuses the application's models through the `app/*` alias, so loading a
+        # spec pulls in files under src/main/webapp, and those resolve their own dependencies (lodash-es, ...) from the
+        # repository root upwards. Installing only the Playwright workspace leaves them unresolvable, which makes
+        # Playwright fail during collection and report zero tests rather than a failing test.
         command: >
           sh -c '
-          cd /app/artemis/src/test/playwright &&
+          cd /app/artemis &&
           chmod 777 /root &&
-          chmod +x ./run-tests.sh &&
           corepack enable &&
+          pnpm install --frozen-lockfile &&
+          cd /app/artemis/src/test/playwright &&
+          chmod +x ./run-tests.sh &&
           pnpm install --frozen-lockfile &&
           pnpm run playwright:setup &&
           rm -f ./test-reports/results.xml ./test-reports/results-*.xml &&
