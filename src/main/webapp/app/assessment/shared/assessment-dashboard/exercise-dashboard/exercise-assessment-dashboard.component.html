@@ -248,13 +248,15 @@
             isExamMode() &&
             !isTestRun()
         ) {
-            <div data-testid="correction-round-1">
-                <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: 2 }"></h4>
-                <fa-icon
-                    class="text-secondary"
-                    [icon]="faQuestionCircle"
-                    ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
-                />
+            <div class="d-flex align-items-center justify-content-between gap-2" data-testid="correction-round-1">
+                <div class="d-flex align-items-center gap-1">
+                    <h4 class="mb-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: 2 }"></h4>
+                    <fa-icon
+                        class="text-secondary"
+                        [icon]="faQuestionCircle"
+                        ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
+                    />
+                </div>
                 <jhi-second-correction-enable-button
                     data-testid="toggle-second-correction"
                     (ngModelChange)="toggleSecondCorrection()"
@@ -364,37 +366,41 @@
                     @for (correctionRound of correctionRoundIndices(); track correctionRound) {
                         <div [attr.data-testid]="'correction-round-' + correctionRound">
                             @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isTestRun()) {
-                                @if (!isExamMode()) {
-                                    <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
-                                }
-                                @if (isExamMode()) {
-                                    <h4
-                                        class="d-inline-block"
-                                        jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam"
-                                        [translateValues]="{ round: correctionRound + 1 }"
-                                    ></h4>
-                                }
-                                @if (correctionRound > 0) {
-                                    <fa-icon
-                                        class="text-secondary"
-                                        [icon]="faQuestionCircle"
-                                        ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
-                                    />
-                                }
-                                @if (
-                                    correctionRound === 1 &&
-                                    exercise().isAtLeastInstructor &&
-                                    exam()?.numberOfCorrectionRoundsInExam &&
-                                    exam()?.numberOfCorrectionRoundsInExam! > 1 &&
-                                    isExamMode()
-                                ) {
-                                    <jhi-second-correction-enable-button
-                                        data-testid="toggle-second-correction"
-                                        (ngModelChange)="toggleSecondCorrection()"
-                                        [secondCorrectionEnabled]="secondCorrectionEnabled()"
-                                        [togglingSecondCorrectionButton]="togglingSecondCorrectionButton()"
-                                    />
-                                }
+                                <div class="d-flex align-items-center justify-content-between gap-2" data-testid="correction-round-header">
+                                    <div class="d-flex align-items-center gap-1">
+                                        @if (!isExamMode()) {
+                                            <h4 class="mb-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
+                                        }
+                                        @if (isExamMode()) {
+                                            <h4
+                                                class="mb-0"
+                                                jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam"
+                                                [translateValues]="{ round: correctionRound + 1 }"
+                                            ></h4>
+                                        }
+                                        @if (correctionRound > 0) {
+                                            <fa-icon
+                                                class="text-secondary"
+                                                [icon]="faQuestionCircle"
+                                                ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
+                                            />
+                                        }
+                                    </div>
+                                    @if (
+                                        correctionRound === 1 &&
+                                        exercise().isAtLeastInstructor &&
+                                        exam()?.numberOfCorrectionRoundsInExam &&
+                                        exam()?.numberOfCorrectionRoundsInExam! > 1 &&
+                                        isExamMode()
+                                    ) {
+                                        <jhi-second-correction-enable-button
+                                            data-testid="toggle-second-correction"
+                                            (ngModelChange)="toggleSecondCorrection()"
+                                            [secondCorrectionEnabled]="secondCorrectionEnabled()"
+                                            [togglingSecondCorrectionButton]="togglingSecondCorrectionButton()"
+                                        />
+                                    }
+                                </div>
                             }
                             @if (numberOfCorrectionRoundsEnabled() > correctionRound && numberOfAssessmentsOfCorrectionRounds().length > correctionRound) {
                                 @if (isTestRun()) {
