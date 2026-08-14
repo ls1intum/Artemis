@@ -180,6 +180,22 @@ export class CourseOverviewPage {
     }
 
     /**
+     * Opens an exercise by id and waits for its detail page.
+     * <p>
+     * Preferred over {@link openExercise} whenever the caller knows the id and the point of the test lies on the
+     * exercise page rather than in the sidebar: the sidebar list re-renders as the exercise data, the grouping and
+     * the page's auto-navigation settle, so its card detaches under a click that has already passed the actionability
+     * check. Addressing the exercise directly takes that churn out of the test.
+     *
+     * @param courseId The id of the course the exercise belongs to.
+     * @param exerciseId The id of the exercise to open.
+     */
+    async openExerciseById(courseId: number, exerciseId: number) {
+        await this.page.goto(`/courses/${courseId}/exercises/${exerciseId}`);
+        await this.page.locator('jhi-course-exercise-details').waitFor({ state: 'visible', timeout: 30000 });
+    }
+
+    /**
      * Opens an exercise given its name.
      * @param exerciseName The title of the exercise to open.
      */
