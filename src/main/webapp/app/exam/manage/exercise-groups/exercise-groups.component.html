@@ -104,7 +104,7 @@
             </tum-ui-panel>
         </div>
     } @empty {
-        <div class="text-center py-5 text-secondary">
+        <div class="text-center py-5 text-body-secondary">
             <fa-icon [icon]="faLayerGroup" size="2x" class="mb-3" aria-hidden="true" />
             <p class="mb-2">{{ 'artemisApp.examManagement.exerciseGroup.noExerciseGroups' | artemisTranslate }}</p>
             @if (course()?.isAtLeastEditor) {
