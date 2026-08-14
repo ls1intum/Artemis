@@ -159,7 +159,7 @@
     }
 
     &:hover:not(&--selected) {
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 6px 20px var(--variant-wizard-elevation-shadow);
         transform: translateY(-2px);
         border-color: transparent;
 
@@ -181,7 +181,7 @@
     &--selected:hover {
         box-shadow:
             inset 0 0 0 2px var(--primary),
-            0 6px 20px rgba(0, 0, 0, 0.1);
+            0 6px 20px var(--variant-wizard-elevation-shadow);
         transform: translateY(-2px);
     }
 
@@ -222,7 +222,7 @@
         justify-content: center;
         font-size: 1.1rem;
         margin: 0 auto 0.65rem;
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 3px 8px var(--variant-wizard-elevation-shadow);
         transition: background 0.15s ease;
     }
 
