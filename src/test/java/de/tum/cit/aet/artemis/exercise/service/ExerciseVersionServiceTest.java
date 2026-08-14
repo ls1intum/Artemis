@@ -603,8 +603,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     void testCompetencyRelevantClassificationCoversAllExerciseSnapshotFields() {
         Set<String> allFields = Arrays.stream(ExerciseSnapshotDTO.class.getRecordComponents()).map(RecordComponent::getName).collect(Collectors.toSet());
 
-        // Content-bearing fields that SHOULD trigger an orchestration run.
-        Set<String> competencyRelevant = Set.of("title", "shortName", "difficulty", "categories", "problemStatement");
+        // Content-bearing fields that SHOULD trigger an orchestration run. The type-specific blocks are
+        // the learning content of the non-programming exercise types (example solutions, quiz questions).
+        Set<String> competencyRelevant = Set.of("title", "shortName", "difficulty", "categories", "problemStatement", "textData", "modelingData", "quizData", "fileUploadData");
 
         // Administrative / structural fields that must NOT trigger. competencyLinks is intentionally
         // here (not content-bearing): an orchestrator-driven link edit must not re-arm the pipeline.
@@ -612,9 +613,8 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
                 "assessmentDueDate", "exampleSolutionPublicationDate", "mode", "allowComplaintsForAutomaticAssessments", "allowFeedbackRequests", "includedInOverallScore",
                 "gradingInstructions", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "feedbackSuggestionModule", "gradingCriteria",
                 "plagiarismDetectionConfig",
-                // type-specific data blocks: programmingData repo commits are classified per-field below;
-                // the other type blocks are not yet fed into the orchestrator.
-                "programmingData", "textData", "modelingData", "quizData", "fileUploadData");
+                // programmingData is classified per-field via the programmingData.* repo-commit entries.
+                "programmingData");
 
         Set<String> classified = new HashSet<>(competencyRelevant);
         classified.addAll(competencyIrrelevant);

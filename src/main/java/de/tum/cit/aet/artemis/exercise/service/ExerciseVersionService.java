@@ -74,9 +74,15 @@ public class ExerciseVersionService {
      * instructor (or the orchestrator itself) editing the competency links does not change the
      * exercise's learning content, so re-triggering on it would create a feedback loop where the
      * orchestrator's own writes re-arm the pipeline.
+     * <p>
+     * The type-specific blocks are tracked whole: they consist almost entirely of learning content
+     * that Atlas consumes (example solutions, example-solution explanations, quiz questions), so
+     * filtering them per component would be more precise but would risk silently dropping a content
+     * edit — the failure mode this allowlist must not have.
      */
     public static final Set<String> COMPETENCY_RELEVANT_FIELDS = Set.of("title", "shortName", "difficulty", "categories", "problemStatement",
-            "programmingData.templateParticipation", "programmingData.solutionParticipation", "programmingData.testsCommitId", "programmingData.auxiliaryRepositoriesCommit");
+            "programmingData.templateParticipation", "programmingData.solutionParticipation", "programmingData.testsCommitId", "programmingData.auxiliaryRepositoriesCommit",
+            "textData", "modelingData", "quizData", "fileUploadData");
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseVersionService.class);
 
@@ -475,6 +481,13 @@ public class ExerciseVersionService {
         // set (Yjs handles it) but is exactly what Atlas must react to.
         addIfChanged(changedFields, "problemStatement", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::problemStatement);
         collectRepositoryCommitChanges(changedFields, newSnapshot.programmingData(), previousSnapshot.programmingData());
+        // The type-specific blocks carry the learning content of the non-programming exercise types.
+        // Editor metadata sync does not diff them (type-specific sync is not implemented), so the event
+        // path has to, or an example-solution or quiz-question edit would never reach Atlas.
+        addIfChanged(changedFields, "textData", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::textData);
+        addIfChanged(changedFields, "modelingData", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::modelingData);
+        addIfChanged(changedFields, "quizData", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::quizData);
+        addIfChanged(changedFields, "fileUploadData", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::fileUploadData);
         return changedFields;
     }
 
