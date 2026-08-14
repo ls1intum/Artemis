@@ -217,7 +217,9 @@ mkdir -p "$LOCAL_DIR"
 # therefore only cleared when its node does not answer /management/health, i.e. when it is a crashed
 # leftover rather than the stack we were asked to keep.
 node_port_is_healthy() {
-    curl -sf "http://localhost:$1/management/health" >/dev/null 2>&1
+    # Bounded on purpose: a wedged JVM can accept the connection and never answer, and an unbounded curl here would
+    # hang the pre-flight instead of deciding that this stack cannot be reused.
+    curl -sf --connect-timeout 2 --max-time 5 "http://localhost:$1/management/health" >/dev/null 2>&1
 }
 
 # All or nothing: the running nodes own their Hazelcast and management ports as well, so a healthy stack

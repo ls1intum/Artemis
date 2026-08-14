@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
@@ -654,9 +654,12 @@ describe('CourseExerciseDetailsComponent', () => {
         const gradedParticipation = { id: 679, testRun: false } as StudentParticipation;
         const practiceParticipation = { id: 680, testRun: true } as StudentParticipation;
 
+        /** The part of the route the component reads, so a change to the stub's shape stays type checked. */
+        type RouteWithParticipationChild = { firstChild?: { snapshot: { paramMap: ParamMap } } };
+
         /** Puts a child route carrying `participationId` under the exercise route, as the embedded editor does. */
         function routeToParticipation(participationId: string | undefined) {
-            (route as any).firstChild = participationId ? { snapshot: { paramMap: convertToParamMap({ participationId }) } } : undefined;
+            (route as unknown as RouteWithParticipationChild).firstChild = participationId ? { snapshot: { paramMap: convertToParamMap({ participationId }) } } : undefined;
         }
 
         beforeEach(() => {

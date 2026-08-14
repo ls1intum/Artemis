@@ -151,7 +151,12 @@ async function startPracticeFromExercisePage(page: Page, exerciseId: number, opt
     const startPracticeButton = page.locator(`#start-practice-${exerciseId} button`);
     await startPracticeButton.waitFor({ state: 'visible', timeout: 15000 });
     const popover = page.locator('.start-practice-popover');
-    const responsePromise = page.waitForResponse((response) => response.url().includes(`/exercises/${exerciseId}/participations/practice`) && response.status() === 201);
+    // The deadline has to outlast the retry loop below, which may spend three attempts of up to 30 s before the click
+    // that finally starts the practice mode. Playwright's 30 s default would expire during those retries and report a
+    // missing response for a request that was still to come.
+    const responsePromise = page.waitForResponse((response) => response.url().includes(`/exercises/${exerciseId}/participations/practice`) && response.status() === 201, {
+        timeout: 150000,
+    });
 
     // Opening the popover and picking an option are retried as a pair, because an exercise page that already has a
     // participation routes itself to that participation's editor a moment after the details arrive. That navigation
