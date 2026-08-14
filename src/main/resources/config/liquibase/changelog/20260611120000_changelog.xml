@@ -63,7 +63,15 @@
         <!-- Marks the moment a test-exam attempt reserved its slot against the cross-attempt Athena feedback request cap.
              The reservation (not the eventual success of the generated feedback) is what counts toward the cap, and is set
              atomically together with the cap check in a single UPDATE, so concurrent requests for the same or different
-             attempts of the same user/exam can no longer both observe a cap that has not yet been reached. -->
+             attempts of the same user/exam can no longer both observe a cap that has not yet been reached.
+
+             This changeSet previously lived in 20260812120000_changelog.xml under id
+             "20260812120000-1-add-student-exam-athena-feedback-requested-date". A database that already ran that
+             file+id combination has the column but no record of this new identity, so Liquibase would otherwise
+             retry the addColumn and fail on the duplicate column. -->
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="student_exam" columnName="athena_feedback_requested_date"/></not>
+        </preConditions>
         <addColumn tableName="student_exam">
             <column name="athena_feedback_requested_date" type="datetime(3)"/>
         </addColumn>
