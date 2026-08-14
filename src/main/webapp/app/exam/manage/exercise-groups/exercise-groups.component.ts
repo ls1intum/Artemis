@@ -395,7 +395,9 @@ export class ExerciseGroupsComponent implements OnInit {
                 for (const group of updatedGroups) {
                     group.exercises = (group.exercises ?? []).filter((exercise) => exercise.id !== exerciseId);
                 }
-                targetGroup.exercises!.push(moved);
+                // Empty groups arrive without an `exercises` property (the DTO omits empty collections).
+                targetGroup.exercises ??= [];
+                targetGroup.exercises.push(moved);
                 this.exerciseGroups.set(updatedGroups);
             },
             // Nothing is applied optimistically, so a rejected move leaves the groups untouched and only needs an alert.

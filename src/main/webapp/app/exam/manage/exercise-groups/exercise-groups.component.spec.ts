@@ -378,6 +378,17 @@ describe('Exercise Groups Component', () => {
         expect(comp.exerciseGroups()!.find((g) => g.id === 1)!.exercises).toEqual([{ id: 3, type: ExerciseType.TEXT }]);
     });
 
+    it('moves an exercise into an empty target group without an exercises array', async () => {
+        comp.exerciseGroups.set(groups);
+        expect(comp.exerciseGroups()!.find((g) => g.id === 1)!.exercises).toBeUndefined();
+        vi.spyOn(exerciseGroupService, 'moveExerciseToGroup').mockReturnValue(of(new HttpResponse<void>()));
+
+        expect(() => comp.onTableGroupChange({ exercise: { id: 3 } as Exercise, group: { id: 1 } as ExerciseGroup })).not.toThrow();
+        await Promise.resolve();
+
+        expect(comp.exerciseGroups()!.find((g) => g.id === 1)!.exercises).toEqual([{ id: 3, type: ExerciseType.TEXT }]);
+    });
+
     it('keeps the groups unchanged and alerts when the move is rejected', async () => {
         comp.exerciseGroups.set(groups);
         const before = comp.exerciseGroups();
