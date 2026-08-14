@@ -1,9 +1,4 @@
-<tum-ui-dialog
-    [header]="'artemisApp.exerciseManagement.addModal.header' | artemisTranslate"
-    [visible]="visible()"
-    (visibleChange)="visibleChange.emit($event)"
-    [style]="{ width: '680px', maxWidth: '95vw' }"
->
+<tum-ui-dialog [header]="'artemisApp.exerciseManagement.addModal.header' | artemisTranslate" [visible]="visible()" (visibleChange)="visibleChange.emit($event)" size="medium">
     <div class="tab-bar mb-3">
         <button
             class="tab-btn {{ activeTab() === 'create' ? 'tab-btn--active' : '' }}"
