@@ -466,6 +466,11 @@ pre {
         align-items: stretch; // stretch children to full width
         margin: 0 16px;
 
+        // Named inline-size container so .chat-input can size the ghost-text overlay from the width of the
+        // panel it actually sits in, rather than from the viewport (see --iris-input-lines below). Only the
+        // inline axis is contained, so the flex column keeps sizing from its content in the block axis.
+        container: iris-chat-body / inline-size;
+
         .messages-inner,
         .chat-input,
         .client-chat-error,
@@ -677,10 +682,11 @@ pre {
     --iris-input-lines: 2;
 }
 
-// Below this width even two lines are not enough for the longest labels, so reserve a third.
-// Container queries would be a better fit than a viewport media query here, but .chat-input has no
-// container ancestor to query; the embedded chat tracks the viewport width closely enough in practice.
-@media (max-width: 768px) {
+// Below this width even two lines are not enough for the longest labels, so reserve a third. This is a
+// container query against .chat-body (see `container: iris-chat-body` above) so a narrow embedded panel
+// gets the third line even in a wide viewport — the embedded chat can be docked into a side panel whose
+// width is independent of the window. The two-line default above still applies at wider panel widths.
+@container iris-chat-body (max-width: 768px) {
     :host.layout-embedded .chat-input {
         --iris-input-lines: 3;
     }
