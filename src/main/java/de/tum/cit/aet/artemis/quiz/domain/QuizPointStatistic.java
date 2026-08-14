@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizPointStatistic extends QuizStatistic {
 
-    // No @Cache: counters are incremented on every evaluation while instructors watch live statistics, same class of bug as #12574.
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "quizPointStatistic")
     private Set<PointCounter> pointCounters = new HashSet<>();
 

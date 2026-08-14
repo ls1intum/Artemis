@@ -44,6 +44,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-text-editor',
@@ -492,7 +493,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     private submissionForAnswer(answer: string): TextSubmission {
-        return { ...this.submission(), text: answer, language: this.textService.predictLanguage(answer) };
+        // The submission signal starts out unset (`undefined!`), which the previous spread tolerated by yielding a
+        // bare object; fall back to a fresh submission so the behaviour is unchanged.
+        return cloneWith(this.submission() ?? new TextSubmission(), { text: answer, language: this.textService.predictLanguage(answer) });
     }
 
     onReceiveSubmissionFromTeam(submission: TextSubmission) {

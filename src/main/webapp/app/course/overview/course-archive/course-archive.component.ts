@@ -16,6 +16,7 @@ import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course-archive',
@@ -110,7 +111,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
      * if the searched text is matched with a course title, expand the accordion, otherwise collapse
      */
     expandOrCollapseBasedOnSearchValue(): void {
-        const semesterCollapsed = { ...this.semesterCollapsed() };
+        const semesterCollapsed = deepClone(this.semesterCollapsed());
         for (const semester of this.semesters()) {
             const hasMatchingCourse = this.coursesBySemester()[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText().toLowerCase()));
             semesterCollapsed[semester] = !hasMatchingCourse;
@@ -119,7 +120,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     }
 
     getCollapseStateForSemesters(): void {
-        const semesterCollapsed = { ...this.semesterCollapsed() };
+        const semesterCollapsed = deepClone(this.semesterCollapsed());
         for (const semester of this.semesters()) {
             semesterCollapsed[semester] = this.courseService.getSemesterCollapseStateFromStorage(semester);
         }
@@ -128,7 +129,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
 
     toggleCollapseState(semester: string): void {
         const newState = !this.semesterCollapsed()[semester];
-        this.semesterCollapsed.set({ ...this.semesterCollapsed(), [semester]: newState });
+        this.semesterCollapsed.set(cloneWith(this.semesterCollapsed(), { [semester]: newState }));
         this.courseService.setSemesterCollapseState(semester, newState);
     }
 

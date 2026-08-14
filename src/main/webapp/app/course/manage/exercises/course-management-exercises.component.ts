@@ -66,6 +66,7 @@ import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 
 /** Local-storage key under which the last-selected view is remembered, so closing an exercise editor returns to it. */
 const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
@@ -429,24 +430,14 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     onExerciseUpdated(updated: Exercise): void {
         this.exercises.set(this.exercises().map((e) => (e.id === updated.id ? updated : e)));
-        this.groups.set(
-            this.groups().map((g) => ({
-                ...g,
-                exercises: (g.exercises ?? []).map((e) => (e.id === updated.id ? updated : e)),
-            })),
-        );
+        this.groups.set(this.groups().map((g) => cloneWith(g, { exercises: (g.exercises ?? []).map((e) => (e.id === updated.id ? updated : e)) })));
         this.rebuildCards();
     }
 
     onExerciseDeleted(deleted: Exercise): void {
         // Prune the exercise locally (flat list + its group) so it disappears without a reload.
         this.exercises.set(this.exercises().filter((e) => e.id !== deleted.id));
-        this.groups.set(
-            this.groups().map((g) => ({
-                ...g,
-                exercises: (g.exercises ?? []).filter((e) => e.id !== deleted.id),
-            })),
-        );
+        this.groups.set(this.groups().map((g) => cloneWith(g, { exercises: (g.exercises ?? []).filter((e) => e.id !== deleted.id) })));
         if (deleted.id !== undefined && this.selectedIds().has(deleted.id)) {
             const remaining = new Set(this.selectedIds());
             remaining.delete(deleted.id);
@@ -547,7 +538,7 @@ export class CourseManagementExercisesComponent implements OnInit {
                     const refreshedById = new Map(refreshedExercises.filter((e) => e.id !== undefined).map((e) => [e.id!, e]));
                     const mapped = toCourseExerciseGroup(dto, refreshedById);
                     // Merge rather than replace: the DTO carries no `order`, so mapping alone drops the display order.
-                    this.groups.set(this.groups().map((group) => (group.id === updated.id ? Object.assign(new CourseExerciseGroup(), group, mapped) : group)));
+                    this.groups.set(this.groups().map((group) => (group.id === updated.id ? hydrate(new CourseExerciseGroup(), group, mapped) : group)));
                     this.rebuildCards();
                 },
                 error: (errorRes: HttpErrorResponse) => this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),

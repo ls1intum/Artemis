@@ -17,6 +17,9 @@ overrides:
   # Kept on the 1.x line (docs' express 4 stack requires ^1).
   body-parser: '1.20.6'
   brace-expansion: '5.0.9'
+  # CVE-2026-73088 and CVE-2026-73089, both fixed in 4.28.7. Reached through @babel/core's
+  # helper-compilation-targets, whose range allows this. Build-time tooling only, never served.
+  browserslist: '4.28.8'
   # Kept on the 3.x line (consumers require ^3).
   fast-uri: '3.1.5'
   follow-redirects: '1.16.0'
