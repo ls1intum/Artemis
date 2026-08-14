@@ -103,6 +103,17 @@
                 </div>
             </tum-ui-panel>
         </div>
+    } @empty {
+        <div class="text-center py-5 text-secondary">
+            <fa-icon [icon]="faLayerGroup" size="2x" class="mb-3" aria-hidden="true" />
+            <p class="mb-2">{{ 'artemisApp.examManagement.exerciseGroup.noExerciseGroups' | artemisTranslate }}</p>
+            @if (course()?.isAtLeastEditor) {
+                <tum-ui-button size="small" id="create-first-group" (clicked)="openCreateGroupModal()">
+                    <fa-icon [icon]="faPlus" />
+                    <span class="ms-1" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"></span>
+                </tum-ui-button>
+            }
+        </div>
     }
 </div>
 

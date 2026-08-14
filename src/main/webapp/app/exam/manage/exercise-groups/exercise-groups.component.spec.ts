@@ -459,4 +459,23 @@ describe('Exercise Groups Component', () => {
         actions = renderActions();
         expect(actions.querySelector('#import-group')).not.toBeNull();
     });
+
+    it('shows an empty-state message and a create button when there are no exercise groups', () => {
+        const editorCourse = new Course();
+        editorCourse.id = course.id;
+        editorCourse.isAtLeastEditor = true;
+        comp.course.set(editorCourse);
+        comp.exerciseGroups.set([]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll('tum-ui-panel')).toHaveLength(0);
+        expect(fixture.nativeElement.querySelector('#create-first-group')).not.toBeNull();
+    });
+
+    it('does not show the empty-state create button once a group exists', () => {
+        comp.exerciseGroups.set(groups);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#create-first-group')).toBeNull();
+    });
 });
