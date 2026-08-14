@@ -15,6 +15,8 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -82,9 +84,11 @@ public class ExerciseGroupResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final TransactionTemplate transactionTemplate;
+
     public ExerciseGroupResource(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, UserRepository userRepository,
             ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository, ExamImportService examImportService,
-            ExerciseRepository exerciseRepository) {
+            ExerciseRepository exerciseRepository, PlatformTransactionManager transactionManager) {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
@@ -93,6 +97,7 @@ public class ExerciseGroupResource {
         this.auditEventRepository = auditEventRepository;
         this.examImportService = examImportService;
         this.exerciseRepository = exerciseRepository;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -195,8 +200,12 @@ public class ExerciseGroupResource {
         if (exercise.getExam() == null || !examId.equals(exercise.getExam().getId())) {
             throw new BadRequestAlertException("The exercise does not belong to this exam", ENTITY_NAME, "examIdMismatch");
         }
-        // The exercise was loaded above, so only the student-exam guard can reject the move.
-        if (!exerciseGroupRepository.moveToExerciseGroupIfNoStudentExams(exerciseId, targetGroup.getId(), examId)) {
+        // Locks the exam row so a concurrent student exam generation cannot interleave with the guarded move below.
+        boolean moved = Boolean.TRUE.equals(transactionTemplate.execute(status -> {
+            examRepository.findByIdWithPessimisticWriteLockElseThrow(examId);
+            return exerciseGroupRepository.moveToExerciseGroupIfNoStudentExams(exerciseId, targetGroup.getId(), examId);
+        }));
+        if (!moved) {
             throw new ConflictException("The exercise group cannot be changed after student exams have been generated for this exam", ENTITY_NAME, "studentExamsAlreadyGenerated");
         }
         return ResponseEntity.ok().build();

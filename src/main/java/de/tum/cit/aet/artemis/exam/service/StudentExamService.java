@@ -31,6 +31,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -138,6 +140,8 @@ public class StudentExamService {
 
     private final StudentExamSubmitMapper studentExamSubmitMapper;
 
+    private final TransactionTemplate transactionTemplate;
+
     /**
      * Maximum number of Athena feedback requests a student may accumulate across all of their submitted test-exam
      * attempts for a given exam. Reuses the course-exercise cap so the two stay in sync.
@@ -151,7 +155,8 @@ public class StudentExamService {
             SubmissionVersionService submissionVersionService, SubmissionService submissionService, StudentParticipationRepository studentParticipationRepository,
             ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService,
             ExerciseRepository exerciseRepository, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper) {
+            @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper,
+            PlatformTransactionManager transactionManager) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -174,6 +179,7 @@ public class StudentExamService {
         this.scheduler = scheduler;
         this.examService = examService;
         this.studentExamSubmitMapper = studentExamSubmitMapper;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -862,44 +868,53 @@ public class StudentExamService {
     }
 
     /**
-     * Generates the student exams randomly based on the exam configuration and the exercise groups
-     * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
+     * Generates the student exams randomly based on the exam configuration and the exercise groups.
+     * Locks the exam row and re-reads the exercise groups under that lock, so a concurrent exercise-group move
+     * cannot desync the selection this generates.
      *
-     * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
+     * @param exam the exam to generate student exams for
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam exam) {
-        this.invalidateExerciseStartStatus(exam.getId());
-        final var existingStudentExams = studentExamRepository.findByExamId(exam.getId());
-        // deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
-        studentExamRepository.deleteAll(existingStudentExams);
+        return transactionTemplate.execute(status -> {
+            examRepository.findByIdWithPessimisticWriteLockElseThrow(exam.getId());
+            Exam lockedExam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
 
-        Set<User> users = exam.getRegisteredUsers();
+            this.invalidateExerciseStartStatus(lockedExam.getId());
+            final var existingStudentExams = studentExamRepository.findByExamId(lockedExam.getId());
+            // deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
+            studentExamRepository.deleteAll(existingStudentExams);
 
-        // StudentExams are saved in the called method
-        return studentExamRepository.createRandomStudentExams(exam, users);
+            // StudentExams are saved in the called method
+            return studentExamRepository.createRandomStudentExams(lockedExam, lockedExam.getRegisteredUsers());
+        });
     }
 
     /**
      * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
      * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
-     * <p>
-     * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
+     * Locks the exam row and re-reads the exercise groups under that lock, so a concurrent exercise-group move
+     * cannot desync the selection this generates.
      *
-     * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
+     * @param exam the exam to generate student exams for
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
-        this.invalidateExerciseStartStatus(exam.getId());
+        return transactionTemplate.execute(status -> {
+            examRepository.findByIdWithPessimisticWriteLockElseThrow(exam.getId());
+            Exam lockedExam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
 
-        // Get all users who already have an individual exam
-        Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(exam.getId());
+            this.invalidateExerciseStartStatus(lockedExam.getId());
 
-        // Get all students who don't have an exam yet
-        Set<User> missingUsers = exam.getRegisteredUsers();
-        missingUsers.removeAll(usersWithStudentExam);
+            // Get all users who already have an individual exam
+            Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(lockedExam.getId());
 
-        // StudentExams are saved in the called method
-        return studentExamRepository.createRandomStudentExams(exam, missingUsers);
+            // Get all students who don't have an exam yet
+            Set<User> missingUsers = lockedExam.getRegisteredUsers();
+            missingUsers.removeAll(usersWithStudentExam);
+
+            // StudentExams are saved in the called method
+            return studentExamRepository.createRandomStudentExams(lockedExam, missingUsers);
+        });
     }
 }
