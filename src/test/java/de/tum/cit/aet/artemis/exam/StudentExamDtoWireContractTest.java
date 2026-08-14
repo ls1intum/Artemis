@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -176,6 +177,30 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         assertThat(courseNode.path("accuracyOfScores").asInt()).isEqualTo(2);
         assertThat(courseNode.path("maxComplaintTextLimit").asInt()).isEqualTo(5000);
         assertThat(courseNode.path("maxComplaintResponseTextLimit").asInt()).isEqualTo(4000);
+    }
+
+    /**
+     * FINDING 4: the summary wire must carry the course's {@code athenaFormativeFeedbackEnabled} flag; the test-exam AI
+     * feedback button ({@code exam-request-ai-feedback-button.component}) reads {@code exam.course.athenaFormativeFeedbackEnabled}
+     * to decide whether to show itself, and with a bare {@code CourseForStudentExamDTO} projection the field was always absent,
+     * hiding the button even when formative feedback was enabled for the course.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void summaryWireCarriesAthenaFormativeFeedbackEnabled() throws Exception {
+        CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
+
+        StudentExam studentExam = createSubmittedStudentExamWithResult(false).studentExam();
+
+        JsonNode summaryWire = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/summary", HttpStatus.OK,
+                JsonNode.class);
+
+        JsonNode courseNode = summaryWire.get("exam").get("course");
+        assertThat(courseNode).as("summary wire must carry the nested course").isNotNull();
+        assertThat(courseNode.path("athenaFormativeFeedbackEnabled").asBoolean()).as("athenaFormativeFeedbackEnabled must be on the summary wire").isTrue();
     }
 
     /**

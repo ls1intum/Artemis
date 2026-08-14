@@ -16,10 +16,11 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * {@code complaints-form.component} caps a new complaint at {@code course.maxComplaintTextLimit} (a missing value
  * falls back to 2000 and silently blocks longer complaints on courses configured above that), and
  * {@code complaint-request} / {@code complaint-response} render an existing complaint with both limits as required
- * inputs.
+ * inputs. {@code athenaFormativeFeedbackEnabled} is read by {@code exam-request-ai-feedback-button.component} to
+ * gate the test-exam AI feedback button on the course-level Athena formative feedback setting.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseForStudentExamDTO(long id, Integer accuracyOfScores, int maxComplaintTextLimit, int maxComplaintResponseTextLimit) {
+public record CourseForStudentExamDTO(long id, Integer accuracyOfScores, int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean athenaFormativeFeedbackEnabled) {
 
     /**
      * Converts a Course into a CourseForStudentExamDTO.
@@ -31,6 +32,7 @@ public record CourseForStudentExamDTO(long id, Integer accuracyOfScores, int max
         if (course == null) {
             return null;
         }
-        return new CourseForStudentExamDTO(course.getId(), course.getAccuracyOfScores(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit());
+        return new CourseForStudentExamDTO(course.getId(), course.getAccuracyOfScores(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(),
+                course.isAthenaFormativeFeedbackEnabled());
     }
 }
