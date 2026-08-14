@@ -696,6 +696,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public boolean areFeedbackSuggestionsEnabled() {
+        if (!(this instanceof TextExercise || this instanceof ProgrammingExercise || this instanceof ModelingExercise)) {
+            // Athena only supports text, programming, and modeling exercises
+            return false;
+        }
         var course = getCourseViaExerciseGroupOrCourseMember();
         return course != null && course.getAthenaConfig() != null && course.getAthenaConfig().isGradingFeedbackEnabled();
     }

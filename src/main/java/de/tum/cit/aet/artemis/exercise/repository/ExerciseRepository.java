@@ -788,6 +788,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             LEFT JOIN exam.course ec
             LEFT JOIN ec.athenaConfig eca
             WHERE e.dueDate > :dueDate
+                AND TYPE (e) IN (ModelingExercise, TextExercise, ProgrammingExercise)
                 AND (
                     (c IS NOT NULL AND ca IS NOT NULL AND ca.gradingFeedbackEnabled = true)
                     OR (eg IS NOT NULL AND eca IS NOT NULL AND eca.gradingFeedbackEnabled = true)
