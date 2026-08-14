@@ -2,7 +2,7 @@ import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 
 /**

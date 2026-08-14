@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -181,11 +182,15 @@ public class Course extends DomainObject {
     @Column(name = "time_zone")
     private String timeZone;
 
-    // No @Cache: instructors create / archive / edit exercises while every student's course-overview read hits this; NONSTRICT caused the dashboard to "forget"
-    // exercises on other nodes for a short window, same class of bug as #12574.
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
+
+    // Unidirectional Course -> ExerciseVariantGroup: the course owns its variant groups (FK course_id lives on
+    // exercise_variant_group), which lets empty groups exist in exercise management before any exercise is added.
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id")
+    private Set<ExerciseVariantGroup> exerciseVariantGroups = new HashSet<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course", allowSetters = true)
@@ -208,7 +213,6 @@ public class Course extends DomainObject {
     @OrderBy("title")
     private Set<TutorialGroup> tutorialGroups = new HashSet<>();
 
-    // No @Cache: exams are created / edited / archived by instructors while students see the course overview, same class of bug as #12574.
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     private Set<Exam> exams = new HashSet<>();
@@ -619,6 +623,14 @@ public class Course extends DomainObject {
 
     public void setExercises(Set<Exercise> exercises) {
         this.exercises = exercises;
+    }
+
+    public Set<ExerciseVariantGroup> getExerciseVariantGroups() {
+        return exerciseVariantGroups;
+    }
+
+    public void addExerciseVariantGroup(ExerciseVariantGroup exerciseVariantGroup) {
+        this.exerciseVariantGroups.add(exerciseVariantGroup);
     }
 
     public Set<Lecture> getLectures() {

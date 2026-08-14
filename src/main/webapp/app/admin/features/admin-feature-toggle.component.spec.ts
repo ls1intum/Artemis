@@ -306,4 +306,41 @@ describe('AdminFeatureToggleComponentTest', () => {
             expect(key).toBe('artemisApp.features.modules.exam.description');
         });
     });
+
+    describe('feature card colours', () => {
+        // The two neutral surfaces used before were one shade apart and could not be told apart. The contrast now
+        // comes from tinting the active state, while an inactive feature stays neutral: red is reserved for states
+        // that need attention, so a switched-off feature must not read as a failure.
+        it('should tint an active feature green and leave an inactive one neutral', () => {
+            const active = comp['featureCardClasses'](true);
+            const inactive = comp['featureCardClasses'](false);
+
+            expect(active).toContain('bg-state-success');
+            expect(active).toContain('border-state-success');
+            expect(inactive).toContain('bg-surface-');
+            expect(inactive).toContain('border-surface-');
+            expect(active).not.toBe(inactive);
+        });
+
+        it('should not signal an inactive feature as an error', () => {
+            const inactive = comp['featureCardClasses'](false);
+
+            expect(inactive).not.toContain('danger');
+            expect(inactive).not.toContain('warning');
+        });
+
+        it('should keep both branches readable in either theme', () => {
+            // The state tokens resolve per theme on their own; the neutral surface shades need explicit `dark:` pairs.
+            const active = comp['featureCardClasses'](true);
+            const inactive = comp['featureCardClasses'](false);
+
+            expect(active).not.toContain('dark:');
+            expect(inactive).toContain('dark:bg-surface-');
+            expect(inactive).toContain('dark:border-surface-');
+            // Raw palette colours are never brand-bound and would break theming.
+            for (const classes of [active, inactive]) {
+                expect(classes).not.toMatch(/(bg|border)-(red|green|blue|gray)-\d/);
+            }
+        });
+    });
 });

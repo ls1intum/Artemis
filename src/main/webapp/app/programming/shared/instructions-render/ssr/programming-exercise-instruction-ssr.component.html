@@ -5,10 +5,10 @@
     </div>
 }
 @if (initialLoadFailed()) {
-    <tum-ui-message severity="warn" styleClass="mb-3" [text]="errorMessageKey() | artemisTranslate" />
+    <tum-ui-message severity="warn" class="mb-3" [text]="errorMessageKey() | artemisTranslate" />
 }
 @if (refreshFailed()) {
-    <tum-ui-message severity="info" styleClass="mb-3" [text]="'artemisApp.programmingExercise.problemStatement.renderStale' | artemisTranslate" />
+    <tum-ui-message severity="info" class="mb-3" [text]="'artemisApp.programmingExercise.problemStatement.renderStale' | artemisTranslate" />
 }
 <div class="ssr-scroll-area">
     <jhi-programming-exercise-instruction-ssr-content

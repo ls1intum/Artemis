@@ -20,4 +20,5 @@ export class CourseTitleBarComponent {
     private courseTitleBarService = inject(CourseTitleBarService);
     readonly customTitleTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.courseTitleBarService.titleTemplate());
     readonly customActionsTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.courseTitleBarService.actionsTemplate());
+    readonly customToolbarTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.courseTitleBarService.toolbarTemplate());
 }

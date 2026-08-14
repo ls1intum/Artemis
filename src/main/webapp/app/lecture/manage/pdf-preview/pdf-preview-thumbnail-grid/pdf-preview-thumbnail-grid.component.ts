@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnChanges, Renderer2, SimpleChanges, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, Renderer2, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 
@@ -12,6 +12,7 @@ import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
@@ -19,7 +20,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
     imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbPopover, TranslateDirective, DragDropModule],
 })
-export class PdfPreviewThumbnailGridComponent implements OnChanges {
+export class PdfPreviewThumbnailGridComponent {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
     FOREVER = dayjs('9999-12-31');
@@ -59,17 +60,30 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     protected readonly faEyeSlash = faEyeSlash;
     protected readonly faGripLines = faGripLines;
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['orderedPages']) {
-            if (!this.reordering()) {
-                void this.renderPages();
-            }
-            this.reordering.set(false);
-        }
-        if (changes['updatedSelectedPages']) {
-            this.selectedPages.set(new Set(this.updatedSelectedPages()));
-            this.updateCheckboxStates();
-        }
+    constructor() {
+        // Replaces the ngOnChanges 'orderedPages' branch: re-render the thumbnails whenever the ordered pages
+        // change, unless the change originated from a local drag-and-drop reorder (the DOM is already in the new
+        // order, so re-rendering would be redundant). The render side effect and the read/write of `reordering`
+        // run inside untracked() so only orderedPages() retriggers this effect.
+        effect(() => {
+            this.orderedPages();
+            untracked(() => {
+                if (!this.reordering()) {
+                    void this.renderPages();
+                }
+                this.reordering.set(false);
+            });
+        });
+
+        // Replaces the ngOnChanges 'updatedSelectedPages' branch: mirror the externally selected pages into local
+        // state and sync the checkbox DOM. The writes run untracked so only updatedSelectedPages() retriggers it.
+        effect(() => {
+            const updatedSelectedPages = this.updatedSelectedPages();
+            untracked(() => {
+                this.selectedPages.set(new Set(updatedSelectedPages));
+                this.updateCheckboxStates();
+            });
+        });
     }
 
     /**
@@ -196,7 +210,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     onHiddenPagesReceived(hiddenPageData: HiddenPage | HiddenPage[]): void {
         const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
-        const updatedHiddenPages = { ...this.hiddenPages() };
+        const updatedHiddenPages = deepClone(this.hiddenPages());
 
         pages.forEach((page) => {
             updatedHiddenPages[page.slideId] = {
@@ -226,7 +240,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param slideId - The ID of the slide to be made visible.
      */
     showPage(slideId: string): void {
-        const updatedHiddenPages = { ...this.hiddenPages() };
+        const updatedHiddenPages = deepClone(this.hiddenPages());
         delete updatedHiddenPages[slideId];
         this.hiddenPagesOutput.emit(updatedHiddenPages);
         this.hideActionButton(slideId);

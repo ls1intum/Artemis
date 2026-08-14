@@ -46,12 +46,13 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
 
     private static final Path FIXTURE_DIRECTORY = CORPUS_DIRECTORY.resolve("rendered");
 
-    // Mirrors the client's `taskRegex` (programming-exercise-task.extension.ts) and the server renderer's own
-    // TASK_PATTERN (ProblemStatementRenderingService), not a simplified copy: a looser `[^)]*(?:\([^()]*\)[^)]*)*`
-    // group mis-parses a reference that is exactly "name()". The greedy `[^)]*` swallows up to the first ')'
-    // before the nested-parens alternative ever gets a chance to run, truncating the capture to "name(" and
-    // leaving the real closing ')' as stray text. The comma-separated, one-level-of-parens grammar below is the
-    // one actually used to extract "tests" in production and must be used here too.
+    // Mirrors the client's `taskRegex` (programming-exercise-task.extension.ts), the pipeline this harness diffs the
+    // server against, and not a simplified copy: a looser `[^)]*(?:\([^()]*\)[^)]*)*` group mis-parses a reference
+    // that is exactly "name()". The greedy `[^)]*` swallows up to the first ')' before the nested-parens alternative
+    // ever gets a chance to run, truncating the capture to "name(" and leaving the real closing ')' as stray text.
+    // The server's own TASK_PATTERN (ProblemStatementRenderingService) has since been rewritten as a bounded, unrolled
+    // loop to keep a pathological task list from overflowing the matcher's stack. It accepts a superset of the grammar
+    // below, so every task this harness extracts is still one the server renders as a task.
     private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[([^\\[\\]]+)]\\(((?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
 
     private static final Pattern TASK_STATUS_PATTERN = Pattern.compile("data-test-status=\"([^\"]+)\"");

@@ -22,6 +22,7 @@ import {
     EXERCISE_TITLE_NAME_REGEX,
     INVALID_DIRECTORY_NAME_PATTERN,
     INVALID_REPOSITORY_NAME_PATTERN,
+    MAX_PACKAGE_NAME_LENGTH,
     MAX_PENALTY_PATTERN,
     MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH,
     PACKAGE_NAME_PATTERN_FOR_DART,
@@ -32,7 +33,6 @@ import {
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
 } from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
@@ -46,6 +46,7 @@ import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -64,6 +65,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
@@ -83,6 +85,7 @@ const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerati
         ProgrammingExerciseProblemComponent,
         ProgrammingExerciseVersionControlComponent,
         ProgrammingExerciseGradingComponent,
+        ExerciseGroupTimelineLockComponent,
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
         FeatureOverlayComponent,
@@ -291,6 +294,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     constructor() {
+        const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+        this.isSimpleMode.set(editModeRetrievedFromLocalStorage !== undefined ? editModeRetrievedFromLocalStorage : true);
+
         effect(() => {
             // Recalculate whenever the edit mode changes — in BOTH directions. Simple and detailed mode expose a
             // different set (and therefore a different ordering/indexing) of status-bar sections: simple mode drops
@@ -301,16 +307,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.calculateFormStatusSections();
         });
         effect(() => this.updateFormSectionOnIsValidPlagiarismChange());
-
-        effect(() => {
-            const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-            if (editModeRetrievedFromLocalStorage !== undefined) {
-                this.isSimpleMode.set(editModeRetrievedFromLocalStorage);
-            } else {
-                const DEFAULT_EDIT_MODE_IS_SIMPLE_MODE = true;
-                this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
-            }
-        });
     }
 
     showGenerateWithAi = computed(() => {
@@ -551,7 +547,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            this.backupExercise = cloneDeep(this.programmingExercise);
+            this.backupExercise = deepClone(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
@@ -1488,6 +1484,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
 
+        if (this.programmingExercise.packageName.length > MAX_PACKAGE_NAME_LENGTH) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.exercise.form.packageName.maxlength',
+                translateValues: { max: MAX_PACKAGE_NAME_LENGTH },
+            });
+            return;
+        }
+
         const packageNameDoesMatch = regex.test(this.programmingExercise.packageName);
         if (!packageNameDoesMatch) {
             const translateKey =
@@ -1597,7 +1601,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private createProgrammingExerciseForImportFromFile() {
-        this.programmingExercise = cloneDeep(history.state.programmingExerciseForImportFromFile);
+        this.programmingExercise = deepClone(history.state.programmingExerciseForImportFromFile);
         this.programmingExercise.id = undefined;
         this.programmingExercise.exerciseGroup = undefined;
         this.programmingExercise.course = undefined;
@@ -1646,59 +1650,66 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * effect that both reads the config and writes back a two-way model() (e.g. isAuxiliaryRepositoryInputValid)
      * then re-dirties the parent every pass, producing an infinite change-detection loop (NG0103).
      */
-    private readonly programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig = Object.assign({}) as ProgrammingExerciseCreationConfig;
+    private readonly programmingExerciseCreationConfig: Partial<ProgrammingExerciseCreationConfig> = {};
 
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
-        return Object.assign(this.programmingExerciseCreationConfig, {
-            isImportFromFile: this.isImportFromFile,
-            isImportFromSharing: this.isImportFromSharing,
-            isImportFromExistingExercise: this.isImportFromExistingExercise,
-            showSummary: false,
-            isEdit: this.isEdit,
-            isExamMode: this.isExamMode(),
-            auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
-            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
-            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
-            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
-            customBuildPlansSupported: this.customBuildPlansSupported,
-            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
-            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            titleNamePattern: EXERCISE_TITLE_NAME_PATTERN,
-            shortNamePattern: this.shortNamePattern,
-            updateRepositoryName: this.updateRepositoryName,
-            updateCheckoutDirectory: this.updateCheckoutDirectory,
-            refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
-            exerciseCategories: this.exerciseCategories,
-            existingCategories: this.existingCategories,
-            updateCategories: this.categoriesChanged,
-            modePickerOptions: this.modePickerOptions,
-            withDependencies: this.withDependencies,
-            onWithDependenciesChanged: this.withDependenciesChanged,
-            packageNameRequired: this.packageNameRequired,
-            packageNamePattern: this.packageNamePattern,
-            supportedLanguages: this.supportedLanguages,
-            selectedProgrammingLanguage: this.selectedProgrammingLanguage,
-            onProgrammingLanguageChange: this.programmingLanguageChanged,
-            projectTypes: this.projectTypes,
-            selectedProjectType: this.selectedProjectType,
-            onProjectTypeChange: this.projectTypeChanged,
-            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
-            staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
-            onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
-            maxPenaltyPattern: this.maxPenaltyPattern,
-            problemStatementLoaded: this.problemStatementLoaded,
-            templateParticipationResultLoaded: this.templateParticipationResultLoaded,
-            hasUnsavedChanges: this.hasUnsavedChanges,
-            rerenderSubject: this.rerenderSubject.asObservable(),
-            validIdeSelection: this.validIdeSelection,
-            validOnlineIdeSelection: this.validOnlineIdeSelection,
-            inProductionEnvironment: this.inProductionEnvironment,
-            recreateBuildPlans: this.importOptions.recreateBuildPlans,
-            onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
-            updateTemplate: this.importOptions.updateTemplate,
-            recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
-            buildPlanLoaded: this.buildPlanLoaded,
-        });
+        // The fields are assigned onto the cached object one by one, deliberately by reference. A copy helper is
+        // wrong here: this getter runs on every change-detection pass (five template bindings use it), and handing
+        // out detached copies of the live component state would give `modePickerOptions`, `exerciseCategories`, the
+        // validation RegExps and `rerenderSubject` a fresh identity every pass — which re-creates the `track`-by-identity
+        // mode picker (NG0956), re-seeds the category selector's local working copy, and disconnects the Subject.
+        const config = this.programmingExerciseCreationConfig;
+        config.isImportFromFile = this.isImportFromFile;
+        config.isImportFromSharing = this.isImportFromSharing;
+        config.isImportFromExistingExercise = this.isImportFromExistingExercise;
+        config.showSummary = false;
+        config.isEdit = this.isEdit;
+        config.isExamMode = this.isExamMode();
+        config.auxiliaryRepositoriesSupported = this.auxiliaryRepositoriesSupported;
+        config.auxiliaryRepositoryDuplicateDirectories = this.auxiliaryRepositoryDuplicateDirectories;
+        config.auxiliaryRepositoryDuplicateNames = this.auxiliaryRepositoryDuplicateNames;
+        config.checkoutSolutionRepositoryAllowed = this.checkoutSolutionRepositoryAllowed;
+        config.customBuildPlansSupported = this.customBuildPlansSupported;
+        config.invalidDirectoryNamePattern = this.invalidDirectoryNamePattern;
+        config.invalidRepositoryNamePattern = this.invalidRepositoryNamePattern;
+        config.titleNamePattern = EXERCISE_TITLE_NAME_PATTERN;
+        config.shortNamePattern = this.shortNamePattern;
+        config.updateRepositoryName = this.updateRepositoryName;
+        config.updateCheckoutDirectory = this.updateCheckoutDirectory;
+        config.refreshAuxiliaryRepositoryChecks = this.refreshAuxiliaryRepositoryChecks;
+        // The config requires a non-optional array; `?? []` mirrors the defensive default already applied in
+        // validateExerciseCategories. The previous `Object.assign` typing hid the mismatch.
+        config.exerciseCategories = this.exerciseCategories ?? [];
+        config.existingCategories = this.existingCategories;
+        config.updateCategories = this.categoriesChanged;
+        config.modePickerOptions = this.modePickerOptions;
+        config.withDependencies = this.withDependencies;
+        config.onWithDependenciesChanged = this.withDependenciesChanged;
+        config.packageNameRequired = this.packageNameRequired;
+        config.packageNamePattern = this.packageNamePattern;
+        config.supportedLanguages = this.supportedLanguages;
+        config.selectedProgrammingLanguage = this.selectedProgrammingLanguage;
+        config.onProgrammingLanguageChange = this.programmingLanguageChanged;
+        config.projectTypes = this.projectTypes;
+        config.selectedProjectType = this.selectedProjectType;
+        config.onProjectTypeChange = this.projectTypeChanged;
+        config.sequentialTestRunsAllowed = this.sequentialTestRunsAllowed;
+        config.staticCodeAnalysisAllowed = this.staticCodeAnalysisAllowed;
+        config.onStaticCodeAnalysisChanged = this.staticCodeAnalysisChanged;
+        config.maxPenaltyPattern = this.maxPenaltyPattern;
+        config.problemStatementLoaded = this.problemStatementLoaded;
+        config.templateParticipationResultLoaded = this.templateParticipationResultLoaded;
+        config.hasUnsavedChanges = this.hasUnsavedChanges;
+        config.rerenderSubject = this.rerenderSubject.asObservable();
+        config.validIdeSelection = this.validIdeSelection;
+        config.validOnlineIdeSelection = this.validOnlineIdeSelection;
+        config.inProductionEnvironment = this.inProductionEnvironment;
+        config.recreateBuildPlans = this.importOptions.recreateBuildPlans;
+        config.onRecreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
+        config.updateTemplate = this.importOptions.updateTemplate;
+        config.recreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
+        config.buildPlanLoaded = this.buildPlanLoaded;
+        return config as ProgrammingExerciseCreationConfig;
     }
 
     private updateFormSectionOnIsValidPlagiarismChange() {

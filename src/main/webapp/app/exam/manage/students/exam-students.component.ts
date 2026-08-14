@@ -26,7 +26,7 @@ import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-
 import { StudentsExportDialogComponent } from 'app/exam/manage/students/export-users/students-export-dialog.component';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ExamStudentsMenuButtonComponent } from 'app/exam/manage/students/exam-students-menu-button/exam-students-menu-button.component';
 import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
@@ -52,6 +52,7 @@ import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } f
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 interface MenuCommandEvent {
@@ -386,9 +387,13 @@ export class ExamStudentsComponent implements OnDestroy {
                 this.setExercisePreparationStatus(exercisePreparationStatus);
             });
 
-        effect(() => {
-            this.fetchExamData();
-        });
+        // Bridge the route data into the exam-data pipeline whenever it changes. Replaces an effect() whose only job
+        // was to call fetchExamData() when routeData() changed (an effect() misuse — using an effect to push a signal
+        // value into a Subject). fetchExamData() stays a method because it is also invoked imperatively elsewhere
+        // (setExercisePreparationStatus).
+        toObservable(this.routeData)
+            .pipe(takeUntilDestroyed())
+            .subscribe(() => this.fetchExamData());
 
         effect((onCleanup) => {
             const examId = this.exam().id;
@@ -440,10 +445,7 @@ export class ExamStudentsComponent implements OnDestroy {
 
         const currentRequestId = ++this.requestId;
         const query = buildDbQueryFromLazyEvent(event);
-        const search: ExamStudentSearch = {
-            ...query,
-            filterProp: this.activeFilter() !== 'All' ? this.activeFilter() : undefined,
-        };
+        const search: ExamStudentSearch = cloneWith(query, { filterProp: this.activeFilter() !== 'All' ? this.activeFilter() : undefined });
         this.isLoading.set(true);
         this.examManagementService.findExamStudentsPaged(this.courseId(), examId, search).subscribe({
             next: (result) => {

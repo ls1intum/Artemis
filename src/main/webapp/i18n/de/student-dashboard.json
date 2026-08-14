@@ -37,6 +37,7 @@
         },
         "courseOverview": {
             "noCourseIcon": "Kein Kurs Icon verfügbar",
+            "exerciseLoadFailed": "Die Übungen konnten nicht geladen werden. Bitte versuche es erneut.",
             "showMore": "Mehr anzeigen",
             "showLess": "Weniger anzeigen",
             "general": {
@@ -219,6 +220,10 @@
                 "hideNotIncludedInScoreExercises": "Keine Optionalen",
                 "exerciseCount": "{{ number }} {{ type }}",
                 "yourPoints": "Deine Punktzahl: {{ number }}",
+                "yourTotalPoints": "Deine Gesamtpunktzahl: {{ number }}",
+                "yourTotalPointsHelp": "Die Summe aller von dir erreichten Punkte, einschließlich der vollen Punkte jeder gelösten Aufgabenvariante (bevor die Obergrenze der Variantengruppe angewendet wird).",
+                "yourCreditedPoints": "Deine angerechnete Punktzahl: {{ number }}",
+                "yourCreditedPointsHelp": "Die Punkte, die tatsächlich für deine Kurspunktzahl zählen. Die kombinierten Punkte der Varianten einer Aufgabenvariantengruppe werden auf die Maximalpunktzahl der Gruppe begrenzt.",
                 "reachablePoints": "Erreichbare Punktzahl: {{ number }} ({{ relative }}%)",
                 "totalPoints": "Maximale Punktzahl: {{ number }} ({{ relative }}%)",
                 "presentationScore": "Präsentationen: {{ number }} ",
@@ -276,6 +281,7 @@
             },
             "lectureDetails": {
                 "description": "Beschreibung",
+                "lectureContent": "Vorlesungsinhalt",
                 "lectureUnits": "Vorlesungsinhalte",
                 "attachments": "Anhänge",
                 "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",

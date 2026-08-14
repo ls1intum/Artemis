@@ -17,10 +17,14 @@ import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service'
 import { parseJson } from 'app/foundation/util/json.util';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { TumUiTagComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-assessment-instructions',
     templateUrl: './assessment-instructions.component.html',
+    styleUrl: './assessment-instructions.component.scss',
     imports: [
         ExpandableSectionComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
@@ -29,10 +33,13 @@ import { ExpandableSectionComponent } from '../expandable-section/expandable-sec
         ButtonComponent,
         TranslateDirective,
         ModelingEditorComponent,
+        TumUiTagComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class AssessmentInstructionsComponent {
     private markdownService = inject(ArtemisMarkdownService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
 
     readonly exercise = input.required<Exercise>();
 
@@ -46,6 +53,16 @@ export class AssessmentInstructionsComponent {
     readonly ExerciseType = ExerciseType;
 
     readonly problemStatement = computed(() => this.markdownService.safeHtmlForMarkdown(this.exercise().problemStatement));
+
+    // Instructions can only be ticked off while an editable feedback list is mounted to receive them.
+    readonly selectable = computed(() => !this.readOnly() && this.selectionService.isSelectable());
+
+    // How many of all structured grading instructions of this exercise are currently applied, and how many exist.
+    readonly appliedInstructionCount = computed(() => {
+        const applied = this.selectionService.appliedInstructionIds();
+        const instructions = (this.gradingCriteria() ?? []).flatMap((criterion) => criterion.structuredGradingInstructions ?? []);
+        return { applied: instructions.filter((instruction) => instruction.id !== undefined && applied.has(instruction.id)).length, total: instructions.length };
+    });
 
     readonly gradingInstructions = computed(() => {
         const exercise = this.exercise();

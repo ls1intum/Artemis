@@ -40,6 +40,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FileService } from 'app/foundation/service/file.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     providers: [FileUploadAssessmentService],
@@ -121,6 +122,8 @@ export class FileUploadAssessmentComponent implements OnInit {
     get assessments(): Feedback[] {
         return [...this.unreferencedFeedback()];
     }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
 
     public ngOnInit(): void {
         this.busy.set(true);
@@ -339,7 +342,8 @@ export class FileUploadAssessmentComponent implements OnInit {
                 this.unassessedSubmission = submission;
                 if (!submission) {
                     // there are no unassessed submissions
-                    this.submission.set(undefined);
+                    this.navigateBack();
+                    this.alertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                     return;
                 }
 
@@ -359,7 +363,9 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.examId,
                     this.exerciseGroupId,
                 );
-                void this.router.navigate(url);
+                // Carry the correction round and keep the other parameters: the component reads the round from the URL,
+                // so dropping it sent the next submission into the first correction round.
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() }, queryParamsHandling: 'merge' });
             },
             error: (error: HttpErrorResponse) => {
                 this.isLoading.set(false);
@@ -444,7 +450,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         if (confirmCancel) {
             this.isLoading.set(true);
             this.fileUploadAssessmentService
-                .cancelAssessment(submissionId)
+                .cancelAssessment(submissionId, this.result()?.id)
                 .pipe(finalize(() => this.isLoading.set(false)))
                 .subscribe(() => {
                     this.navigateBack();
@@ -457,7 +463,7 @@ export class FileUploadAssessmentComponent implements OnInit {
             return;
         }
         // Commit a new submission reference so the change propagates under zoneless OnPush.
-        this.submission.update((submission) => ({ ...submission!, results: [this.result()!, ...(submission!.results?.slice(1) ?? [])] }));
+        this.submission.update((submission) => cloneWith(submission!, { results: [this.result()!, ...(submission!.results?.slice(1) ?? [])] }));
     }
 
     getComplaint(): void {

@@ -33,7 +33,6 @@ import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
@@ -66,20 +65,8 @@ import { ProblemStatementComponent } from 'app/course/overview/exercise-details/
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { Component, input } from '@angular/core';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { ScienceService } from 'app/foundation/science/science.service';
 
-// Simple mock to avoid ng-mocks issues with signal-based viewChild
-@Component({
-    selector: 'jhi-exercise-chatbot-button',
-    template: '',
-    standalone: true,
-})
-class MockIrisExerciseChatbotButtonComponent {
-    readonly mode = input<ChatServiceMode>();
-}
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -94,6 +81,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ElementRef, signal } from '@angular/core';
 import { ResetRepoButtonComponent } from 'app/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -209,9 +197,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(DialogService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
-        }).overrideComponent(CourseExerciseDetailsComponent, {
-            remove: { imports: [IrisExerciseChatbotButtonComponent] },
-            add: { imports: [MockIrisExerciseChatbotButtonComponent] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
@@ -295,7 +280,7 @@ describe('CourseExerciseDetailsComponent', () => {
             return participations?.find((p) => p.testRun === testRun);
         });
 
-        const changedParticipation = cloneDeep(studentParticipation);
+        const changedParticipation = deepClone(studentParticipation);
         const changedResult = { ...result, id: 2 };
 
         changedParticipation.submissions![0].results = [changedResult];
@@ -593,14 +578,11 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(discussionSection).toBeTruthy();
     });
 
-    it('should propagate a newly started participation into the cached course so the sidebar updates live, preserving the fully-loaded marker', () => {
+    it('should propagate a newly started participation into the cached course so the sidebar updates live', () => {
         const courseStorageService = TestBed.inject(CourseStorageService);
         const cachedExercise = { id: exercise.id, studentParticipations: [] } as unknown as Exercise;
         const cachedCourse = { id: 1, exercises: [cachedExercise] } as unknown as Course;
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
-        // The parent course overview has fully loaded the course; enriching it in place must keep the marker the
-        // CourseOverviewGuard relies on, otherwise switching to a guarded tab would silently skip the access check.
-        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
         const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
 
         comp.courseId = 1;
@@ -609,7 +591,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         comp.onNewParticipation(newParticipation);
 
-        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse, true);
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
         expect(cachedExercise.studentParticipations).toContain(newParticipation);
     });
 
@@ -631,8 +613,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         comp.onNewParticipation(existingParticipation);
 
-        // isCourseFullyLoaded is not stubbed here, so the real (empty) marker set returns false: the in-place update preserves it
-        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse, false);
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
         // onNewParticipation now merges submissions into a fresh participation object (so prior attempts survive and
         // the signal change is detected), so assert by id rather than reference identity.
         expect(cachedExercise.studentParticipations?.some((p) => p.id === existingParticipation.id)).toBe(true);

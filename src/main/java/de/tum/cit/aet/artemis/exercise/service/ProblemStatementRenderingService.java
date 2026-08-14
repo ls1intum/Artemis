@@ -88,7 +88,13 @@ public class ProblemStatementRenderingService {
      */
     private static final String RENDERER_VERSION = "1.1.0";
 
-    private static final String KATEX_BASE_PATH = "/webjars/katex/dist";
+    /**
+     * KaTeX is served from the client's own copy, the one declared in {@code package.json} and copied out of
+     * {@code node_modules} by the Angular build. The server used to pull a second copy as a webjar, which meant shipping
+     * two versions of the same library - and the webjar's generated POM carried an npm version range, which Gradle cannot
+     * resolve without asking the repository for a version list on every build.
+     */
+    private static final String KATEX_BASE_PATH = "/assets/katex";
 
     private static final int MAX_PLANTUML_DIAGRAMS = 10;
 
@@ -121,14 +127,25 @@ public class ProblemStatementRenderingService {
     private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([\\s\\S]*?)@enduml");
 
     /**
-     * Matches the task syntax: {@code [task][Task Name](testId1,testId2,...)} where test identifiers
+     * Matches the task syntax: {@code [task][Task Name](testId1,testId2,...)}.
+     * <p>
+     * The test list is written as an unrolled loop - a run of non-parenthesis characters, then any number of parenthesised
+     * groups each followed by another such run. The earlier shape repeated a group once per comma
+     * ({@code (?:,[^(),]+...)*}), and Java's matcher recurses per repetition, so an unclosed task with twenty thousand
+     * commas raised a {@link StackOverflowError}. Commas are now absorbed by the character class, which does not recurse,
+     * and the parenthesised groups that remain are bounded to a hundred, because Java recurses per repetition however the
+     * loop is written: twenty thousand {@code ()} pairs overflowed the stack even in the unrolled form. A task list with
+     * more than a hundred parenthesised entries is not real content, and beyond the bound the task simply does not match
+     * and is rendered as written.
+     * <p>
+     * It accepts a slightly wider list than before, for instance one with empty entries; the caller already discards
+     * entries that are not test identifiers. Original note: test identifiers
      * are typically {@code <testid>123</testid>} values. Each identifier may carry one level of
      * parenthesized suffix (e.g. {@code testClass(Vehicle)}).
      * <p>
      * Named groups: {@code name} (task display name), {@code tests} (comma-separated test identifiers).
      */
-    private static final Pattern TASK_PATTERN = Pattern
-            .compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
+    private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>[^()]*(?:\\([^()]*\\)[^()]*){0,100})\\)");
 
     private static final String SVG_PLACEHOLDER_PREFIX = "<span class=\"artemis-svg-placeholder\" data-svg-index=\"";
 
@@ -218,6 +235,14 @@ public class ProblemStatementRenderingService {
         // 7. CommonMark → sanitized HTML.
         String html = renderWithCommonMark(processed);
 
+        // 7a. Give each formula its source as visible text, for readers whose document carries no script. It has to happen
+        // here rather than in restore(): inside the markdown the source would be parsed as markdown and mangled.
+        // Only without JavaScript: where KaTeX runs it overwrites the element anyway, and the source would be visible for
+        // as long as the script takes to get there.
+        if (!includeJs && !mathFormulas.isEmpty()) {
+            html = MathFormulaExtractor.fillFormulaSourceAsFallback(html);
+        }
+
         // 7b. Process images based on requested mode.
         if (inlineImages) {
             html = inlineMarkdownImages(html);
@@ -225,9 +250,7 @@ public class ProblemStatementRenderingService {
 
         // 8. Inject the earlier PlantUML SVGs and the GitHub-alert octicons (jsoup's HTML safelist would strip
         // any SVG, so both are injected afterwards).
-        for (int i = 0; i < inlineSvgs.size(); i++) {
-            html = html.replace(SVG_PLACEHOLDER_PREFIX + i + SVG_PLACEHOLDER_SUFFIX, inlineSvgs.get(i));
-        }
+        html = IndexedPlaceholders.replaceAll(html, SVG_PLACEHOLDER_PREFIX, SVG_PLACEHOLDER_SUFFIX, inlineSvgs.size(), inlineSvgs::get);
         html = GitHubAlertExtension.injectIcons(html);
 
         String containerClass = darkMode ? "artemis-problem-statement artemis-problem-statement--dark" : "artemis-problem-statement";
@@ -248,7 +271,10 @@ public class ProblemStatementRenderingService {
             html = css + html;
         }
 
-        if (!mathFormulas.isEmpty()) {
+        // Gated by includeJs like every other script: KaTeX is JavaScript, so a caller asking for a document without
+        // JavaScript has to get one. Without these scripts the formulas stay as their source text, which the placeholder
+        // now carries, rather than rendering as nothing.
+        if (includeJs && !mathFormulas.isEmpty()) {
             html += "<script src=\"" + HtmlEscaper.escapeAttribute(serverUrl) + KATEX_BASE_PATH + "/katex.min.js\"></script>";
             if (KATEX_AUTO_RENDER_JS != null) {
                 html += "<script>" + KATEX_AUTO_RENDER_JS + "</script>";
@@ -321,8 +347,12 @@ public class ProblemStatementRenderingService {
             String taskName = matcher.group("name");
             String testsStr = matcher.group("tests");
 
-            boolean hasTestRefs = testsStr != null && !testsStr.isBlank();
             List<String> authoredRefs = TestReferenceParser.splitTestReferences(testsStr);
+            // Separators alone are not a reference: "[task][Name](,)" names no test. The parser already drops blank
+            // references, so deriving the flag from the parsed list keeps a task that references nothing from being
+            // reported as successful by computeTaskTestStatus, which would otherwise find nothing failed and nothing
+            // unexecuted among its (empty) ids.
+            boolean hasTestRefs = !authoredRefs.isEmpty();
 
             List<Long> testIds = new ArrayList<>();
             int unresolvedRefs = 0;
@@ -635,11 +665,7 @@ public class ProblemStatementRenderingService {
     }
 
     private static String restoreCodeBlocks(String markdown, List<String> codeBlocks) {
-        String result = markdown;
-        for (int i = 0; i < codeBlocks.size(); i++) {
-            result = result.replace(CODE_BLOCK_PLACEHOLDER_PREFIX + i + CODE_BLOCK_PLACEHOLDER_SUFFIX, codeBlocks.get(i));
-        }
-        return result;
+        return IndexedPlaceholders.replaceAll(markdown, CODE_BLOCK_PLACEHOLDER_PREFIX, CODE_BLOCK_PLACEHOLDER_SUFFIX, codeBlocks.size(), codeBlocks::get);
     }
 
     private static Safelist buildSafelist() {
@@ -695,7 +721,11 @@ public class ProblemStatementRenderingService {
             i18n.put(key, messageSource.getMessage(prefix + key, null, key, locale));
         }
         try {
-            return "var __i18n = " + objectMapper.writeValueAsString(i18n) + ";\n" + INTERACTIVE_JS;
+            // Escape the slash in any "</" sequence: the JSON is emitted inside a <script> element, and an unescaped
+            // "</script>" in a translation would terminate it. "<\\/" is an equivalent JSON escape. The sequence holds no
+            // letter, so this covers "</ScRiPt>" as well - the parser only needs the "</" to start looking for a tag name.
+            String json = objectMapper.writeValueAsString(i18n).replace("</", "<\\/");
+            return "var __i18n = " + json + ";\n" + INTERACTIVE_JS;
         }
         catch (JsonProcessingException e) {
             log.error("Failed to serialize i18n JSON for interactive script", e);

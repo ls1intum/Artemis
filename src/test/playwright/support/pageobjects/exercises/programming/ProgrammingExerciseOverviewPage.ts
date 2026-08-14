@@ -87,8 +87,6 @@ export class ProgrammingExerciseOverviewPage {
 
         const codeButtonLocator = codeButton ?? this.getCodeButton();
         await Commands.reloadUntilFound(this.page, codeButtonLocator, 10000, 40000);
-        await codeButtonLocator.click();
-        await this.page.locator('.popover-body').waitFor({ state: 'visible' });
 
         // The popover loads SSH-key / token status asynchronously after it opens (see
         // code-button.component: getCachedSshKeys / getVcsAccessToken run in ngOnInit). As those
@@ -96,13 +94,26 @@ export class ProgrammingExerciseOverviewPage {
         // ngb repositions it — so the `.https-or-ssh-button` toggle and the dropdown options
         // re-render and briefly detach. Under heavy multi-node load this churn window is long
         // enough that a single click races a detach ("element is not stable" / "element was
-        // detached from the DOM"). Retry the toggle + option selection as a unit, re-finding the
-        // elements each attempt and only re-toggling when the dropdown is not already open.
+        // detached from the DOM"). Retry opening the popover plus the toggle and option selection as
+        // a unit, re-finding the elements each attempt and only re-toggling when the dropdown is not
+        // already open.
+        const popover = this.page.locator('.popover-body');
         const toggle = this.page.locator('.https-or-ssh-button');
         const cloneMethodOption = this.page.locator(gitCloneMethodSelector[cloneMethod]);
         const maxAttempts = 5;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
             try {
+                // Opening the popover belongs inside the retry: the page keeps rendering after
+                // `reloadUntilFound` returns, and because the popover is attached to `body` with
+                // `autoClose: 'outside'`, any re-render of the code button dismisses it again. The toggle
+                // exists only while the popover is open, so waiting for the toggle alone cannot recover
+                // from that — every attempt would wait out its timeout on an element that can no longer
+                // appear. Reopen instead, and skip the click when the popover is already showing (clicking
+                // the trigger again would close it).
+                if (!(await popover.isVisible())) {
+                    await codeButtonLocator.click();
+                    await popover.waitFor({ state: 'visible', timeout: 15_000 });
+                }
                 await toggle.waitFor({ state: 'visible', timeout: 15_000 });
                 if (!(await cloneMethodOption.isVisible())) {
                     await toggle.click({ timeout: 10_000 });

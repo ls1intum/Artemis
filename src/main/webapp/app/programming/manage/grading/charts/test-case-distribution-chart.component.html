@@ -13,13 +13,25 @@
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
     </div>
     <div class="chart bg-light">
-        <p-chart type="bar" [data]="weightChartData()" [options]="weightChartOptions()" (onDataSelect)="onSelectWeight($event)" />
+        <p-chart
+            type="bar"
+            [data]="weightChartData()"
+            [options]="weightChartOptions()"
+            (onDataSelect)="onSelectWeight($event)"
+            [ariaLabel]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title' | artemisTranslate"
+        />
     </div>
     <div class="mt-4">
         <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title"></h4>
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | artemisTranslate"></p>
     </div>
     <div class="points-chart bg-light">
-        <p-chart type="bar" [data]="pointsChartData()" [options]="pointsChartOptions()" (onDataSelect)="onSelectPoints()" />
+        <p-chart
+            type="bar"
+            [data]="pointsChartData()"
+            [options]="pointsChartOptions()"
+            (onDataSelect)="onSelectPoints()"
+            [ariaLabel]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title' | artemisTranslate"
+        />
     </div>
 </div>

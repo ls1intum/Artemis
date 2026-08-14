@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiMessageComponent } from '@tumaet/ui-angular';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';

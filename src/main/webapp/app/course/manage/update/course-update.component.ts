@@ -21,7 +21,7 @@ import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -119,7 +119,7 @@ export class CourseUpdateComponent implements OnInit {
     // while the template (and specs) keep reading/writing `course` and `course.X` unchanged. After deep
     // mutations performed outside a synchronous template event handler (e.g. in a subscribe/promise),
     // call commitCourse() to rebuild the reference so the signal fires.
-    private readonly _course = signal<Course>(undefined!);
+    private readonly _course = signal<Course>(undefined!, { equal: () => false });
     get course(): Course {
         return this._course();
     }
@@ -127,7 +127,10 @@ export class CourseUpdateComponent implements OnInit {
         this._course.set(value);
     }
     private commitCourse(): void {
-        this._course.update((course) => Object.assign(new Course(), course));
+        // No copy: `_course` is declared with `equal: () => false`, so re-setting the same reference emits. Copying the
+        // course here would detach the nested associations (organizations, exercises, …) that are two-way bound into
+        // child components, and it would do so on every keystroke in a date field.
+        this._course.set(this._course());
     }
     readonly isSaving = signal<boolean>(undefined!);
     courseImageUploadFile?: File;

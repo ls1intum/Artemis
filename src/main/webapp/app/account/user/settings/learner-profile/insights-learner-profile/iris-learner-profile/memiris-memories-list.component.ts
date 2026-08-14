@@ -11,6 +11,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { ResolveMemoriesConflictsModalComponent } from './resolve-memories-conflicts-modal.component';
 import { MemirisMemoryDetailsComponent } from './memiris-memory-details.component';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-memiris-memories-list',
@@ -93,14 +94,14 @@ export class MemirisMemoriesListComponent implements OnInit {
      */
     async deleteMemory(memory: MemirisMemory) {
         if (!memory?.id || this.deleting()[memory.id]) return;
-        this.deleting.update((m) => ({ ...m, [memory.id]: true }));
+        this.deleting.update((m) => cloneWith(m, { [memory.id]: true }));
         try {
             await firstValueFrom(this.irisMemoriesHttpService.deleteUserMemory(memory.id));
             this.applyDeletions([memory.id]);
         } catch (error) {
             this.alertService.error('artemisApp.iris.memories.error.deleteFailed');
         } finally {
-            this.deleting.update((m) => ({ ...m, [memory.id]: false }));
+            this.deleting.update((m) => cloneWith(m, { [memory.id]: false }));
         }
     }
 
@@ -112,7 +113,7 @@ export class MemirisMemoriesListComponent implements OnInit {
         if (!memory?.id) return;
         const id = memory.id;
         const currentlyOpen = this.open()[id];
-        this.open.update((o) => ({ ...o, [id]: !currentlyOpen }));
+        this.open.update((o) => cloneWith(o, { [id]: !currentlyOpen }));
     }
 
     /**
@@ -134,7 +135,7 @@ export class MemirisMemoriesListComponent implements OnInit {
         const learnings = (md.learnings ?? []).filter((l) => (mem.learnings ?? []).includes(l.id) || (l.memories ?? []).includes(id));
         const connections = (md.connections ?? [])
             .filter((c) => (mem.connections ?? []).includes(c.id) || (c.memories ?? []).includes(id))
-            .map((c) => ({ ...c, memories: (c.memories ?? []).filter((mid) => validMemoryIds.has(mid)) }));
+            .map((c) => cloneWith(c, { memories: (c.memories ?? []).filter((mid) => validMemoryIds.has(mid)) }));
         return {
             id: mem.id,
             title: mem.title,
@@ -185,18 +186,18 @@ export class MemirisMemoriesListComponent implements OnInit {
         if (md) {
             const updated: MemirisMemoryDataDTO = {
                 memories: md.memories.filter((m) => !toDelete.has(m.id)),
-                learnings: (md.learnings ?? []).map((l) => ({ ...l, memories: (l.memories ?? []).filter((id) => !toDelete.has(id)) })),
-                connections: (md.connections ?? []).map((c) => ({ ...c, memories: (c.memories ?? []).filter((id) => !toDelete.has(id)) })),
+                learnings: (md.learnings ?? []).map((l) => cloneWith(l, { memories: (l.memories ?? []).filter((id) => !toDelete.has(id)) })),
+                connections: (md.connections ?? []).map((c) => cloneWith(c, { memories: (c.memories ?? []).filter((id) => !toDelete.has(id)) })),
             };
             this.memoryData.set(updated);
         }
         this.open.update((o) => {
-            const copy = { ...o };
+            const copy = deepClone(o);
             for (const id of deletedIds) delete copy[id];
             return copy;
         });
         this.deleting.update((d) => {
-            const copy = { ...d };
+            const copy = deepClone(d);
             for (const id of deletedIds) delete copy[id];
             return copy;
         });

@@ -189,7 +189,7 @@ Organized by feature module:
 - PascalCase for classes, camelCase for members
 - Single quotes, 4-space indentation
 - Standalone components preferred
-- **Angular 21 signal-based APIs are mandatory for new code:**
+- **Signal-based Angular APIs are mandatory for new code:**
     - Use `input()` / `input.required()` instead of `@Input()`
     - Use `output()` instead of `@Output()`
     - Use `viewChild()` / `viewChild.required()` instead of `@ViewChild()`
@@ -199,7 +199,7 @@ Organized by feature module:
     - Legacy decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code
     - In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components
     - An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules
-    - **Prefer `computed()`/`effect()` over `ngOnChanges` for signal-based components.** Note: in Angular 21 `ngOnChanges` _does_ fire for signal inputs (it is NOT dead code — that was only true in v17–18), so do not treat it as a bug or auto-convert it. But `computed` (derived state) / `effect` (side effects, used sparingly) are the idiomatic, consistent choice. `ngOnChanges` is still valid when you need `SimpleChanges.previousValue`/`isFirstChange()` or logic that must run before child init. A warn-level rule (`prefer-signal-reactivity-over-ngonchanges`) warns on `ngOnChanges` in clean-baseline Angular client files; known migration-backlog files are temporarily excluded in `eslint.config.mjs`. The goal is to remove it entirely (migrate to `computed`/`effect`); rare genuinely-unavoidable cases need a detailed comment and a justified line-level disable. `ngOnInit`/`ngOnDestroy` are unaffected by signals. See `documentation/docs/developer/guidelines/client-development.mdx`.
+    - **`ngOnChanges` is banned — use `computed()`/`effect()` instead.** An error-level rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) enforces this across `src/main/webapp/app`, `packages/tum-ui/src/lib`, and `src/test/javascript`, including specs and undecorated base classes. Angular 21 does call inherited `ngOnChanges` hooks and fires them for signal inputs, so this is a consistency ban rather than a correctness fix. A genuinely unavoidable use of `SimpleChanges.previousValue`/`isFirstChange()` or pre-child-initialization ordering needs a detailed comment and a justified line-level `eslint-disable-next-line`. `ngOnInit` and `ngOnDestroy` are unaffected. See `documentation/docs/developer/guidelines/client-development.mdx`.
 - **Angular template control flow: use `@if`, `@for`, `@switch`; never use `*ngIf`, `*ngFor`, `*ngSwitch`**
 - Avoid `null`, use `undefined` where possible
 - **Copy objects with `deepClone`, never with object spread, `Object.assign`, or `structuredClone`**
@@ -207,18 +207,21 @@ Organized by feature module:
     - `structuredClone()` is the worst option: it does not preserve prototypes, so a cloned `dayjs` date comes back as a plain object without its methods
     - Object spread (`{ ...obj }`) and `Object.assign({}, obj)` only copy one level deep, so nested objects and arrays stay shared with the original and later edits mutate both
     - This is why signal updates need care: a signal only notifies when the reference changes, so replace the object rather than mutating it — `const updated = deepClone(current); updated.field = value; return updated;` See `AccountService.setImageUrl` for the canonical pattern
-    - Array spread stays fine: `items.update((items) => [...items, newItem])` is the documented way to append immutably
+    - Two companions live in the same file: `cloneWith(x, { a, b })` replaces `{ ...x, a, b }` in a single expression (source deep-cloned, overrides applied by reference), and `hydrate(new Course(), dto)` replaces `Object.assign(new Course(), dto)` for giving a parsed server DTO a prototype
+    - Enforced by `localRules/prefer-deep-clone` (error, production client TS; specs exempt). Importing `cloneDeep` from `lodash-es` is blocked by `no-restricted-imports` so all copying goes through the wrappers
+    - Array spread stays fine: `items.update((items) => [...items, newItem])` is the documented way to append immutably, as does object rest in destructuring (`const { id, ...rest } = post`)
+    - When you only need a signal to emit after mutating an object in place, do not copy it at all: declare the signal with `equal: () => false` and re-set the same reference (see `CourseUpdateComponent.commitCourse`). Copying detaches the nested objects children hold and can end in `NG0103`
+    - Where the state is not signal-backed, build the replacement object explicitly field by field (see `MetisService.rebuildPostReference`) rather than reaching for a shallow copy
     - Full rationale and examples: `documentation/docs/developer/guidelines/client-development.mdx` (### Cloning objects)
 - Prefer 100% type safety
-- **UI components: Use the TUM UI Kit. PrimeNG and Bootstrap are both deprecated.**
-    - All new UI elements must use the in-repo TUM UI Kit under `app/shared-ui/tum-ui/` (`tum-ui-button`, `tum-ui-message`, `tum-ui-tag`, `tum-ui-dialog`, `tum-ui-tooltip`, …), built on Angular CDK + Tailwind design tokens. Migrate pages you are already touching toward it.
-    - Do not add new PrimeNG or Bootstrap components, classes, or raw colours. Every component with its API, examples, and light/dark screenshots: `documentation/docs/developer/guidelines/tum-ui-kit.mdx`
-    - Kit components document which PrimeNG component they replace. Note `tum-ui-dialog` is a **declarative** `p-dialog` replacement (`[(visible)]` + projected templates); there is no kit equivalent of PrimeNG's `DialogService` for opening an arbitrary component dynamically, so existing `DialogService` call sites stay until that gap is closed.
-    - Missing a component? Ask on Slack rather than reaching back for PrimeNG.
-    - Existing Bootstrap and PrimeNG usage will be migrated incrementally
-    - **Colours use semantic tokens, never primitives or Bootstrap classes**: `text-state-danger`/`text-state-success`/`text-state-warning`/`text-state-info` (named state tokens; or PrimeNG `severity`, or `text-muted-color`/`bg-surface-*`) — never `--p-<color>-N` primitives, `text-red-500`, `text-danger`, or the superseded arbitrary `text-(--danger)` form. Full standard, decision rules, and the Bootstrap→Tailwind/PrimeNG quick reference: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling)
-    - **Never hand-write PrimeNG component root classes** (`class="p-button"`, `class="p-inputtext"`): PrimeNG injects component CSS lazily, so a bare element renders non-deterministically. Render the real component (`<button pButton>`, `<input pInputText>`, `<p-tag>`) — enforced by `localRules/no-primeng-component-classes`
-    - **`@ng-bootstrap/ng-bootstrap` is deprecated.** Do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, etc. in new code. Reach for the kit equivalent (`tum-ui-dialog`, `tum-ui-tooltip`, …); the one gap is dynamically opening an arbitrary component, where PrimeNG's `DialogService` is still the only option (see above). ng-bootstrap is incompatible with Angular signal inputs (assigning to `modalRef.componentInstance.X` silently fails when `X` is `input()`/`input.required()`). Existing usages are being migrated.
+- **UI components: use TUM UI and Tailwind CSS**
+    - TUM UI is the target component system; use an existing `@tumaet/ui-angular` component whenever it covers the required behavior.
+    - Use Tailwind CSS v4 utilities for application layout. Do not introduce Bootstrap or ng-bootstrap in new work.
+    - If TUM UI lacks a reusable capability, add or evolve a package component around native HTML or stable Angular CDK primitives. Keep Artemis-specific composition and policy in the application.
+    - PrimeNG is a transitional fallback only when the TUM UI gap cannot reasonably be closed in the same change. Explain the contained fallback in the pull request.
+    - **Colours use semantic tokens, never primitives or Bootstrap classes**: use TUM UI component variants or `text-state-danger`/`text-state-success`/`text-state-warning`/`text-state-info` for plain markup. Never use `--p-<color>-N` primitives, `text-red-500`, `text-danger`, or the superseded arbitrary `text-(--danger)` form. Full decision rules and the Bootstrap migration reference: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling).
+    - **Never hand-write PrimeNG component root classes** (`class="p-button"`, `class="p-inputtext"`). For a contained legacy fallback, render the real PrimeNG component so its styles load deterministically; `localRules/no-primeng-component-classes` enforces this.
+    - See `documentation/docs/developer/guidelines/tum-ui-kit.mdx` for package ownership, public API, theming, stories, and integration rules.
 
 ### General
 

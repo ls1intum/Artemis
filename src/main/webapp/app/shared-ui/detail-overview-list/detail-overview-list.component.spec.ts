@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockBehavior, DeferBlockState, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
@@ -41,6 +41,9 @@ describe('DetailOverviewList', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            // The details are rendered inside `@defer (on idle)` blocks, so a test that asserts on their content has to
+            // drive the block itself instead of waiting for an idle callback that never fires deterministically.
+            deferBlockBehavior: DeferBlockBehavior.Manual,
             providers: [
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useClass: MockRouter },
@@ -98,7 +101,7 @@ describe('DetailOverviewList', () => {
         expect(titleDetailValue.textContent).toContain('A Title');
     });
 
-    it('should bind shared live updates for the programming problem statement, a staff view of the template participation', () => {
+    it('should bind shared live updates for the programming problem statement, a staff view of the template participation', async () => {
         const exercise = { id: 1, templateParticipation: { id: 5 } } as ProgrammingExercise;
         fixture.componentRef.setInput('sections', [
             {
@@ -106,6 +109,10 @@ describe('DetailOverviewList', () => {
                 details: [{ type: DetailType.ProgrammingProblemStatement, title: 'problemStatement', data: { exercise } }],
             },
         ]);
+        fixture.detectChanges();
+
+        const [problemStatementBlock] = await fixture.getDeferBlocks();
+        await problemStatementBlock.render(DeferBlockState.Complete);
         fixture.detectChanges();
 
         // The mocked component exposes signal inputs as plain values, not callables.
