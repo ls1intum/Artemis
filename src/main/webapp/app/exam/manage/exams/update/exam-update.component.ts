@@ -33,6 +33,7 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -700,18 +701,19 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 /**
  * Prepares the exam for import by omitting all properties that should not be imported.
  */
-export const prepareExamForImport = (exam: Exam): Exam => ({
-    ...omit(exam, [
-        'id',
-        'visibleDate',
-        'startDate',
-        'endDate',
-        'publishResultsDate',
-        'examStudentReviewStart',
-        'examStudentReviewEnd',
-        'examSummaryPublicationDate',
-        'examUsers',
-        'studentExams',
-    ]),
-    workingTime: 0,
-});
+export const prepareExamForImport = (exam: Exam): Exam =>
+    cloneWith(
+        omit(exam, [
+            'id',
+            'visibleDate',
+            'startDate',
+            'endDate',
+            'publishResultsDate',
+            'examStudentReviewStart',
+            'examStudentReviewEnd',
+            'examSummaryPublicationDate',
+            'examUsers',
+            'studentExams',
+        ]),
+        { workingTime: 0 },
+    );

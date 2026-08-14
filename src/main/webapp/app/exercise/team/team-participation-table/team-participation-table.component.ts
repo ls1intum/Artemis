@@ -24,6 +24,7 @@ import { Tooltip } from 'primeng/tooltip';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 enum AssessmentAction {
     START = 'start',
@@ -157,12 +158,11 @@ export class TeamParticipationTableComponent implements OnInit {
         this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team()).subscribe({
             next: (courseResponse) => {
                 const exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
-                    return {
-                        ...exercise,
+                    return cloneWith(exercise, {
                         isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(exercise.course),
                         isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(exercise.course),
                         isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(exercise.course),
-                    };
+                    });
                 });
                 this.exercises.set(exercises);
                 this.submissions.set(exercises.filter((exercise) => exercise.submission).map((exercise) => exercise.submission!));
