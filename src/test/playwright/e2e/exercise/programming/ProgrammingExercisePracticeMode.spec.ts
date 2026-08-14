@@ -46,7 +46,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             }
         });
 
-        test('Keeps the practice mode selectable when switching back to graded', async ({ login, page, programmingExerciseEditor, waitForParticipationBuildToFinish }) => {
+        test('Keeps the practice mode selectable when switching back to graded', async ({ login, page, programmingExerciseEditor }) => {
             test.slow();
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
             const practiceParticipationId = await startPracticeFromExercisePage(page, exercise.id!, 'Practice with template repository');
@@ -79,11 +79,6 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             // the repository request the submission helper waits for.
             await page.waitForURL((url) => url.pathname.endsWith(`/code-editor/${practiceParticipationId}`), { timeout: 30000 });
             await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaAllSuccessfulSubmission, async () => {
-                // Wait for the build through the API first, then read the header. Asserting the header alone raced the
-                // build queue: under a loaded suite the result simply had not been produced yet, and the failure read as
-                // "expected 100%" about a build that was still waiting for an agent. With the result known to exist, the
-                // header assertion is only about the page showing it.
-                await waitForParticipationBuildToFinish(practiceParticipationId);
                 await expect(page.locator('#exercise-headers-information')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
             });
         });
