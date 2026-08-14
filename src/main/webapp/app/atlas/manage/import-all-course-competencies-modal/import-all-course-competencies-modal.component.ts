@@ -14,6 +14,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
 import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const tableColumns: Column<Course>[] = [
     {
@@ -71,10 +72,7 @@ export class ImportAllCourseCompetenciesModalComponent {
     }
 
     public selectCourse(course: Course): void {
-        const importOptions = {
-            sourceCourseId: course.id,
-            ...this.importSettings(),
-        };
+        const importOptions = cloneWith(this.importSettings(), { sourceCourseId: course.id });
         const courseCompetencyImportOptions = importOptions as CourseCompetencyImportOptionsDTO;
         this.dialogRef.close({
             course,
