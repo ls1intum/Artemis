@@ -32,6 +32,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { AccountService } from 'app/core/auth/account.service';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -155,7 +156,7 @@ export class UserManagementUpdateComponent implements OnInit {
                 this.oldLogin = this.user().login;
                 this.organizationService.getOrganizationsByUser(this.user().id!).subscribe((organizations) => {
                     // Rebuild the user reference so the async organization update renders under zoneless.
-                    this.user.update((currentUser) => ({ ...currentUser, organizations }));
+                    this.user.update((currentUser) => cloneWith(currentUser, { organizations }));
                 });
             }
         });
@@ -264,7 +265,7 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     onOrgSelected(organization: Organization) {
         // Rebuild the user reference (new organizations array) so the dialog result renders under zoneless.
-        this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }));
+        this.user.update((currentUser) => cloneWith(currentUser, { organizations: [...(currentUser.organizations ?? []), organization] }));
     }
 
     /**
@@ -273,7 +274,9 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     removeOrganizationFromUser(organization: Organization) {
         // Rebuild the user reference (new organizations array) so the updated list renders under zoneless.
-        this.user.update((currentUser) => ({ ...currentUser, organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }));
+        this.user.update((currentUser) =>
+            cloneWith(currentUser, { organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }),
+        );
     }
 
     /**

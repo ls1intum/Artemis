@@ -360,7 +360,7 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
         const plagiarismResult = this.plagiarismResult();
         if (plagiarismResult && plagiarismResult.comparisons.length > 0) {
             const rowData = plagiarismResult.comparisons.map((comparison) => {
-                return Object.assign({
+                return {
                     Similarity: comparison.similarity,
                     Status: comparison.status,
                     'Participant 1': comparison.submissionA.studentLogin,
@@ -371,7 +371,7 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
                     'Submission 2': comparison.submissionB.submissionId,
                     'Score 2': comparison.submissionB.score,
                     'Size 2': comparison.submissionB.size,
-                });
+                };
             });
 
             downloadCsv(rowData, {

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 
 import org.springframework.context.annotation.Lazy;
@@ -220,12 +221,23 @@ public class AuxiliaryRepositoryService {
      * @return true if the repository is an auxiliary repository of the exercise, false otherwise.
      */
     public boolean isAuxiliaryRepositoryOfExercise(String repositoryName, ProgrammingExercise exercise) {
+        return findAuxiliaryRepositoryIdOfExercise(repositoryName, exercise).isPresent();
+    }
+
+    /**
+     * Finds the id of the auxiliary repository of the given exercise that carries the given name.
+     *
+     * @param repositoryName the name of the auxiliary repository, as it appears in its repository uri
+     * @param exercise       the exercise the repository belongs to
+     * @return the id of that auxiliary repository, or empty if the exercise has none by that name
+     */
+    public Optional<Long> findAuxiliaryRepositoryIdOfExercise(String repositoryName, ProgrammingExercise exercise) {
         List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(exercise.getId());
         for (AuxiliaryRepository repo : auxiliaryRepositories) {
             if (repo.getName().equals(repositoryName)) {
-                return true;
+                return Optional.ofNullable(repo.getId());
             }
         }
-        return false;
+        return Optional.empty();
     }
 }
