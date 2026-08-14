@@ -75,14 +75,16 @@ public class ExerciseVersionService {
      * exercise's learning content, so re-triggering on it would create a feedback loop where the
      * orchestrator's own writes re-arm the pipeline.
      * <p>
-     * The type-specific blocks are tracked whole: they consist almost entirely of learning content
-     * that Atlas consumes (example solutions, example-solution explanations, quiz questions), so
-     * filtering them per component would be more precise but would risk silently dropping a content
-     * edit — the failure mode this allowlist must not have.
+     * The type-specific entries mirror what {@code ContentExtractionService} actually feeds into
+     * orchestration. Text and file-upload snapshots qualify as a whole (every field is extracted:
+     * the example solutions, and the file pattern as metadata), whereas modeling and quiz carry
+     * fields the extractor ignores — the modeling example-solution model, and the quiz delivery
+     * settings (question order, attempts, mode, duration) — so only their extracted components
+     * ({@code exampleSolutionExplanation}, {@code diagramType}, {@code quizQuestions}) arm a run.
      */
     public static final Set<String> COMPETENCY_RELEVANT_FIELDS = Set.of("title", "shortName", "difficulty", "categories", "problemStatement",
             "programmingData.templateParticipation", "programmingData.solutionParticipation", "programmingData.testsCommitId", "programmingData.auxiliaryRepositoriesCommit",
-            "textData", "modelingData", "quizData", "fileUploadData");
+            "textData", "fileUploadData", "modelingData.exampleSolutionExplanation", "modelingData.diagramType", "quizData.quizQuestions");
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseVersionService.class);
 
@@ -483,11 +485,17 @@ public class ExerciseVersionService {
         collectRepositoryCommitChanges(changedFields, newSnapshot.programmingData(), previousSnapshot.programmingData());
         // The type-specific blocks carry the learning content of the non-programming exercise types.
         // Editor metadata sync does not diff them (type-specific sync is not implemented), so the event
-        // path has to, or an example-solution or quiz-question edit would never reach Atlas.
+        // path has to, or an example-solution or quiz-question edit would never reach Atlas. Text and
+        // file-upload snapshots are tracked whole because ContentExtractionService consumes every one of
+        // their fields; modeling and quiz carry fields it ignores, so those are tracked per component.
         addIfChanged(changedFields, "textData", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::textData);
-        addIfChanged(changedFields, "modelingData", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::modelingData);
-        addIfChanged(changedFields, "quizData", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::quizData);
         addIfChanged(changedFields, "fileUploadData", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::fileUploadData);
+        addIfChanged(changedFields, "modelingData.exampleSolutionExplanation", newSnapshot, previousSnapshot,
+                snapshot -> snapshot.modelingData() == null ? null : snapshot.modelingData().exampleSolutionExplanation());
+        addIfChanged(changedFields, "modelingData.diagramType", newSnapshot, previousSnapshot,
+                snapshot -> snapshot.modelingData() == null ? null : snapshot.modelingData().diagramType());
+        addIfChanged(changedFields, "quizData.quizQuestions", newSnapshot, previousSnapshot,
+                snapshot -> snapshot.quizData() == null ? null : snapshot.quizData().quizQuestions());
         return changedFields;
     }
 
