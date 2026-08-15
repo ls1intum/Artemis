@@ -903,13 +903,16 @@ export class GradingComponent implements OnInit {
             let currentInterval: number;
 
             if (previousGradeStep) {
-                currentInterval = this.getPercentageInterval(currentGradeStep);
+                currentInterval = this.calculatePercentageInterval(currentGradeStep);
                 currentGradeStep.lowerBoundPercentage = previousGradeStep.upperBoundPercentage;
             } else {
-                currentInterval = newPercentageInterval ?? this.getPercentageInterval(currentGradeStep);
+                currentInterval = newPercentageInterval ?? this.calculatePercentageInterval(currentGradeStep);
             }
 
-            currentGradeStep.upperBoundPercentage = currentGradeStep.lowerBoundPercentage + currentInterval;
+            const shiftedUpperBound = currentGradeStep.lowerBoundPercentage + currentInterval;
+            // The final grade step is sticky: preserve its interval when the scale grows, but expand it when needed so
+            // reducing an earlier interval cannot leave an otherwise valid grading scale ending below 100 percent.
+            currentGradeStep.upperBoundPercentage = i === gradeSteps.length - 1 ? Math.max(shiftedUpperBound, 100) : shiftedUpperBound;
 
             this.setPoints(currentGradeStep, true);
             this.setPoints(currentGradeStep, false);
@@ -931,6 +934,10 @@ export class GradingComponent implements OnInit {
     }
 
     getPercentageInterval(gradeStep: GradeStep): number {
+        return parseFloat(this.calculatePercentageInterval(gradeStep).toFixed(1));
+    }
+
+    private calculatePercentageInterval(gradeStep: GradeStep): number {
         return gradeStep.upperBoundPercentage - gradeStep.lowerBoundPercentage;
     }
 
