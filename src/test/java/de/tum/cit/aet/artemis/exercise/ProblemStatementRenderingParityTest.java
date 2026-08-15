@@ -11,11 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpStatus;
@@ -57,6 +59,16 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
 
     private static final Pattern TASK_STATUS_PATTERN = Pattern.compile("data-test-status=\"([^\"]+)\"");
 
+    /**
+     * The inline PlantUML SVG inside a diagram container. Group 1 is the container's opening tag, group 2 the SVG.
+     * Deliberately scoped to {@code div.artemis-diagram}: the GitHub-alert octicons are inline SVGs too, but their
+     * path data is a constant in {@code GitHubAlertExtension} and stays byte-exact in the comparison.
+     */
+    private static final Pattern DIAGRAM_SVG_PATTERN = Pattern.compile("(<div class=\"artemis-diagram\"[^>]*>\\s*)(<svg\\b.*?</svg>)", Pattern.DOTALL);
+
+    /** A colour PlantUML painted into the diagram, the part of the SVG that carries the test outcome. */
+    private static final Pattern SVG_FILL_PATTERN = Pattern.compile("fill=\"(#[0-9A-Fa-f]{6})\"");
+
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
@@ -92,6 +104,7 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
         // Emit the server fixture for the client-side diff. A normal run compares against the committed fixture and
         // never rewrites it, so a rendering regression cannot silently overwrite its own baseline. Regeneration is
         // an explicit, opt-in action via -Dartemis.regenerateProblemStatementFixtures=true.
+        String fixtureHtml = canonicalizeDiagramSvgs(html);
         Path fixture = FIXTURE_DIRECTORY.resolve(corpusFile.getFileName().toString().replace(".md", ".html"));
         if (Boolean.getBoolean("artemis.regenerateProblemStatementFixtures")) {
             // Written with a trailing newline: .editorconfig requires insert_final_newline = true for every file in
@@ -100,7 +113,7 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
             // break the parity gate for a reason unrelated to actual rendering differences.
             // FileUtils rather than Files.writeString: it creates the missing fixture directory on a first
             // regeneration run, which Files does not (see ArchitectureTest.testFileWriteUsage).
-            FileUtils.writeStringToFile(fixture.toFile(), html + "\n", StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(fixture.toFile(), fixtureHtml + "\n", StandardCharsets.UTF_8);
             return;
         }
         assertThat(fixture).as("fixture missing - regenerate with -Dartemis.regenerateProblemStatementFixtures=true").exists();
@@ -108,7 +121,37 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
         // Strip exactly one trailing newline, matching what the write path above adds. This is not a general
         // whitespace normalization: any other difference, including additional trailing newlines, still fails.
         String normalizedFixtureContent = fixtureContent.endsWith("\n") ? fixtureContent.substring(0, fixtureContent.length() - 1) : fixtureContent;
-        assertThat(normalizedFixtureContent).isEqualTo(html);
+        assertThat(normalizedFixtureContent).isEqualTo(fixtureHtml);
+    }
+
+    /**
+     * Canonicalizer "diagram": replaces the inline PlantUML SVG with the colours it painted, keeping its container and
+     * position exact.
+     * <p>
+     * PlantUML measures its layout through AWT font metrics, so the same source renders to different geometry
+     * depending on which fonts the machine has: the runner produces {@code viewBox="0 0 170 60"} where macOS produces
+     * {@code 165}, down to different glyph path data. Pinning those bytes made the fixture a record of the machine it
+     * was generated on rather than of the renderer, and the gate could not pass on both.
+     * <p>
+     * The colours survive because they are the part of the diagram this feature actually drives: they come from
+     * {@code testsColor(...)} resolution against the test outcomes, which happens on the PlantUML *source* before
+     * layout and is pinned per case by {@code PlantUmlTaskColorResolverTest}. Everything else about the diagram, that
+     * it exists, how many there are, where it sits and which id it carries, still compares byte-exact. The client half
+     * of the harness ({@code problem-statement-parity.spec.ts}) drops the whole container in its own "diagram"
+     * canonicalizer, so nothing it asserts depends on the payload either.
+     *
+     * @param html the rendered document
+     * @return the document with every diagram SVG replaced by a placeholder listing its distinct fill colours
+     */
+    private static String canonicalizeDiagramSvgs(String html) {
+        Matcher matcher = DIAGRAM_SVG_PATTERN.matcher(html);
+        StringBuilder canonicalized = new StringBuilder();
+        while (matcher.find()) {
+            String fills = SVG_FILL_PATTERN.matcher(matcher.group(2)).results().map(fill -> fill.group(1)).distinct().sorted().collect(Collectors.joining(","));
+            matcher.appendReplacement(canonicalized, Matcher.quoteReplacement(matcher.group(1) + "<!--plantuml-svg fills=" + fills + "-->"));
+        }
+        matcher.appendTail(canonicalized);
+        return canonicalized.toString();
     }
 
     /**
@@ -163,5 +206,28 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
     /** The {@code data-test-status} of every rendered task, in document order. */
     private static List<String> taskStatuses(String html) {
         return TASK_STATUS_PATTERN.matcher(html).results().map(match -> match.group(1)).toList();
+    }
+
+    /**
+     * The diagram canonicalizer is only allowed to hide font-dependent layout, which is the same standard every
+     * canonicalizer on the client side is held to. This pins all three halves of that: geometry that differs between
+     * machines is hidden, the outcome colours are not, and an inline SVG outside a diagram container (the octicon of a
+     * GitHub alert) is left alone.
+     */
+    @Test
+    void diagramCanonicalizerHidesLayoutButNotColours() {
+        String macOsLayout = diagramDocument("viewBox=\"0 0 165 60\" width=\"165px\"", "#008000");
+        String linuxLayout = diagramDocument("viewBox=\"0 0 170 60\" width=\"170px\"", "#008000");
+        String failedOutcome = diagramDocument("viewBox=\"0 0 165 60\" width=\"165px\"", "#FF0000");
+
+        assertThat(canonicalizeDiagramSvgs(linuxLayout)).isEqualTo(canonicalizeDiagramSvgs(macOsLayout));
+        assertThat(canonicalizeDiagramSvgs(failedOutcome)).isNotEqualTo(canonicalizeDiagramSvgs(macOsLayout));
+
+        String octicon = "<p><svg class=\"octicon octicon-info mr-2\" viewBox=\"0 0 16 16\"><path d=\"M8 0\"></path></svg></p>";
+        assertThat(canonicalizeDiagramSvgs(octicon)).isEqualTo(octicon);
+    }
+
+    private static String diagramDocument(String geometry, String fill) {
+        return "<div class=\"artemis-diagram\" data-diagram-id=\"uml-0\"><svg " + geometry + "><rect fill=\"" + fill + "\" width=\"142.8047\"></rect></svg></div>";
     }
 }

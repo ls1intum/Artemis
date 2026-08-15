@@ -49,7 +49,23 @@ compared.
 Generated server-side HTML fixtures, one per corpus file, used as the
 baseline for the client-side diff. Do not hand-edit these. A normal test run
 of `ProblemStatementRenderingParityTest` compares against them; it never
-overwrites them. Regenerate deliberately with:
+overwrites them.
+
+One thing is deliberately not pinned: the inline PlantUML SVG inside a
+`div.artemis-diagram` is stored as a `<!--plantuml-svg fills=...-->`
+placeholder instead of its markup. PlantUML lays out through AWT font metrics,
+so the same diagram renders to different geometry depending on the fonts
+installed, and pinning those bytes made a fixture a record of the machine that
+generated it (macOS `viewBox="0 0 165 60"` against the CI runner's `170`, down
+to different glyph paths). The container, its id, the number of diagrams and
+their position still compare byte-exact, as do the colours PlantUML painted,
+which is the part `testsColor(...)` resolution drives;
+`PlantUmlTaskColorResolverTest` pins that resolution case by case, and the
+client half drops the whole container in its own "diagram" canonicalizer.
+The GitHub-alert octicons are inline SVGs too, but their path data is a
+constant and stays compared exactly.
+
+Regenerate deliberately with:
 
 ```
 ./gradlew test --tests ProblemStatementRenderingParityTest -Dartemis.regenerateProblemStatementFixtures=true -x webapp
