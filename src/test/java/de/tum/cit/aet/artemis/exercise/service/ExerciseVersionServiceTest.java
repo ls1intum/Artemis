@@ -677,8 +677,8 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         modelingExerciseRepository.saveAndFlush(modelingExercise);
         ExerciseSnapshotDTO newModeling = ExerciseSnapshotDTO.of(fetchExerciseForComparison(modelingExercise), null);
 
-        assertThat(Collections.disjoint(exerciseVersionService.collectChangedFieldsForEvent(newModeling, previousModeling),
-                ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS)).as("example-solution model is not extracted, so it must not arm orchestration").isTrue();
+        assertThat(Collections.disjoint(exerciseVersionService.collectChangedFieldsForEvent(newModeling, previousModeling), ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS))
+                .as("example-solution model is not extracted, so it must not arm orchestration").isTrue();
 
         QuizExercise quizExercise = createQuizExercise();
         ExerciseSnapshotDTO previousQuiz = ExerciseSnapshotDTO.of(fetchExerciseForComparison(quizExercise), null);

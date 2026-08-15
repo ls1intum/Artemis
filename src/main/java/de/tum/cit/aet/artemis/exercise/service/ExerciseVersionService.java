@@ -494,8 +494,7 @@ public class ExerciseVersionService {
                 snapshot -> snapshot.modelingData() == null ? null : snapshot.modelingData().exampleSolutionExplanation());
         addIfChanged(changedFields, "modelingData.diagramType", newSnapshot, previousSnapshot,
                 snapshot -> snapshot.modelingData() == null ? null : snapshot.modelingData().diagramType());
-        addIfChanged(changedFields, "quizData.quizQuestions", newSnapshot, previousSnapshot,
-                snapshot -> snapshot.quizData() == null ? null : snapshot.quizData().quizQuestions());
+        addIfChanged(changedFields, "quizData.quizQuestions", newSnapshot, previousSnapshot, snapshot -> snapshot.quizData() == null ? null : snapshot.quizData().quizQuestions());
         return changedFields;
     }
 
