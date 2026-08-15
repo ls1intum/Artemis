@@ -11,6 +11,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -350,7 +351,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Six messages sharing one creation date. Ordering them by date alone leaves their relative order undefined,
         // so a page boundary between them lets the database return the same message on two consecutive pages, and the
         // client renders it twice.
-        ZonedDateTime sameCreationDate = ZonedDateTime.now().minusHours(1);
+        // Fixed rather than relative to now, because only the messages sharing one date matters here and a wall-clock
+        // value would make the fixture differ between runs.
+        ZonedDateTime sameCreationDate = ZonedDateTime.of(2024, 1, 15, 12, 0, 0, 0, ZoneOffset.UTC);
         List<Long> savedMessageIds = new ArrayList<>();
         for (int index = 0; index < 6; index++) {
             Post message = new Post();

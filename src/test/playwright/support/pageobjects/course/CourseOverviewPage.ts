@@ -210,11 +210,14 @@ export class CourseOverviewPage {
         // which swallows a click that landed on the outgoing card without ever opening the exercise.
         const card = this.getExercise(exerciseName);
         await card.waitFor({ state: 'visible', timeout: 30000 });
-        const details = this.page.locator('jhi-course-exercise-details');
+        // What is waited for is the requested exercise's own title in the detail pane, not merely a detail pane: the
+        // page may already be showing an auto-selected different exercise, and waiting for the pane alone would accept
+        // that one and let a swallowed click pass as success.
+        const requestedExerciseIsOpen = this.page.locator('jhi-course-exercise-details').getByText(exerciseName).first();
         for (let attempt = 0; attempt < 3; attempt++) {
             try {
                 await card.click({ timeout: 10000 });
-                await details.waitFor({ state: 'visible', timeout: 15000 });
+                await requestedExerciseIsOpen.waitFor({ state: 'visible', timeout: 15000 });
                 return;
             } catch (error) {
                 if (attempt === 2) {
