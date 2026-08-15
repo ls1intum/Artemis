@@ -695,6 +695,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return course != null && course.getAthenaConfig() != null && course.getAthenaConfig().isFormativeFeedbackEnabled();
     }
 
+    /**
+     * Checks whether Athena feedback suggestions are enabled for this exercise.
+     *
+     * @return true if this exercise type is Athena-supported and the course has grading feedback enabled, false otherwise
+     */
     public boolean areFeedbackSuggestionsEnabled() {
         if (!(this instanceof TextExercise || this instanceof ProgrammingExercise || this instanceof ModelingExercise)) {
             // Athena only supports text, programming, and modeling exercises
