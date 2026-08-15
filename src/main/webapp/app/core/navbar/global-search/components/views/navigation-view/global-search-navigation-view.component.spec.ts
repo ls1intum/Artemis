@@ -192,7 +192,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(component['getIconForType']('exercise', 'programming')).toBe(faKeyboard);
                 expect(component['getIconForType']('exercise', 'modeling')).toBe(faProjectDiagram);
                 expect(component['getIconForType']('exercise', 'text')).toBe(faFont);
-                expect(component['getIconForType']('exercise', 'File Upload')).toBe(faFileUpload);
+                expect(component['getIconForType']('exercise', 'file-upload')).toBe(faFileUpload);
                 expect(component['getIconForType']('exercise', 'quiz')).toBe(faCheckDouble);
                 expect(component['getIconForType']('exercise', 'unknown')).toBe(faQuestion);
             });
@@ -223,7 +223,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 component['navigateToResult']({
                     type: 'exercise',
                     id: '42',
-                    badge: 'Programming',
+                    badge: 'programming',
                     metadata: { courseId: 10, examId: 5, exerciseGroupId: 3, isAtLeastEditor: true },
                 } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'exercise-groups', 3, 'programming-exercises', '42']);
@@ -233,7 +233,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 component['navigateToResult']({
                     type: 'exercise',
                     id: '42',
-                    badge: 'Programming',
+                    badge: 'programming',
                     metadata: { courseId: 10, examId: 5, isAtLeastTutor: true },
                 } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'assessment-dashboard', '42']);

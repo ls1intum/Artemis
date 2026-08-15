@@ -88,7 +88,23 @@
                 "point": "point",
                 "points": "points",
                 "examExercise": "Exam",
-                "reply": "Reply"
+                "reply": "Reply",
+                "badge": {
+                    "programming": "Programming Exercise",
+                    "modeling": "Modeling Exercise",
+                    "quiz": "Quiz Exercise",
+                    "text": "Text Exercise",
+                    "file-upload": "File Upload Exercise",
+                    "exercise": "Exercise",
+                    "exam": "Exam",
+                    "test-exam": "Test Exam",
+                    "lecture": "Lecture",
+                    "lecture-unit": "Lecture Unit",
+                    "faq": "FAQ",
+                    "channel": "Channel",
+                    "course": "Course",
+                    "message": "Message"
+                }
             },
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",

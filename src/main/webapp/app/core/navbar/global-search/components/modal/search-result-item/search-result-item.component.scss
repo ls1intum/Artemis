@@ -94,7 +94,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--bs-body-color);
+    color: color-mix(in srgb, var(--p-text-color) 60%, transparent);
 }
 
 .badge {
@@ -113,4 +113,11 @@
     background-color: var(--bs-info-bg-subtle);
     color: var(--bs-info-text-emphasis);
     border: 1px solid var(--bs-info-border-subtle);
+}
+
+// Entity type as the leading item on the muted metadata line: slightly weighted so it reads as the
+// "kind" without a chip. Inherits the metadata row's muted colour, so it stays quiet when repeated.
+.result-type {
+    font-weight: 500;
+    white-space: nowrap;
 }

@@ -234,7 +234,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             if (normalizedBadge === 'programming') return this.faKeyboard;
             if (normalizedBadge === 'modeling') return this.faProjectDiagram;
             if (normalizedBadge === 'text') return this.faFont;
-            if (normalizedBadge === 'file upload') return this.faFileUpload;
+            if (normalizedBadge === 'file-upload') return this.faFileUpload;
             if (normalizedBadge === 'quiz') return this.faCheckDouble;
             return this.faQuestion;
         }
@@ -321,7 +321,12 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     private navigateToExamExerciseDetailsPage(courseId: string, examId: string, exerciseGroupId: string, result: GlobalSearchResult) {
-        const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
+        // The badge is the canonical exercise-type key (e.g. "programming", "file-upload"), which is exactly the
+        // exam exercise-group route segment prefix. Guard against an unknown badge (e.g. the generic "exercise"
+        // fallback) so it can never build an invalid segment like "exercise-exercises".
+        const validExerciseSegments = new Set(['programming', 'modeling', 'text', 'file-upload', 'quiz']);
+        const segment = result.badge && validExerciseSegments.has(result.badge) ? result.badge : 'text';
+        const typeSegment = segment + '-exercises';
         void this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
     }
 

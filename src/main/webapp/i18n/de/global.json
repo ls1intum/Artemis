@@ -88,7 +88,23 @@
                 "point": "Punkt",
                 "points": "Punkte",
                 "examExercise": "Klausur",
-                "reply": "Antwort"
+                "reply": "Antwort",
+                "badge": {
+                    "programming": "Programmieraufgabe",
+                    "modeling": "Modellierungsaufgabe",
+                    "quiz": "Quizaufgabe",
+                    "text": "Textaufgabe",
+                    "file-upload": "Datei-Upload-Aufgabe",
+                    "exercise": "Aufgabe",
+                    "exam": "Klausur",
+                    "test-exam": "Testklausur",
+                    "lecture": "Vorlesung",
+                    "lecture-unit": "Vorlesungseinheit",
+                    "faq": "FAQ",
+                    "channel": "Kanal",
+                    "course": "Kurs",
+                    "message": "Nachricht"
+                }
             },
             "comingSoon": "Demnächst verfügbar",
             "enterToActivate": "Eingabetaste drücken zum Aktivieren",
