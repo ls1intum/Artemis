@@ -40,13 +40,18 @@ public class UserManagementInfoContributor implements InfoContributor {
     @Value("${artemis.user-management.login.account-name:#{null}}")
     private Optional<String> accountName;
 
+    @Value("${artemis.user-management.ldap.enabled:false}")
+    private boolean ldapEnabled;
+
     @Override
     public void contribute(Info.Builder builder) {
         builder.withDetail(Constants.REGISTRATION_ENABLED, registrationEnabled.orElse(Boolean.FALSE));
         builder.withDetail(Constants.NEEDS_TO_ACCEPT_TERMS, needsToAcceptTerms.orElse(Boolean.FALSE));
         allowedEmailPattern.ifPresent(pattern -> builder.withDetail(Constants.ALLOWED_EMAIL_PATTERN, pattern.toString()));
         allowedEmailPatternReadable.ifPresent(patternReadable -> builder.withDetail(Constants.ALLOWED_EMAIL_PATTERN_READABLE, patternReadable));
-        allowedLdapUsernamePattern.ifPresent(pattern -> builder.withDetail(Constants.ALLOWED_LDAP_USERNAME_PATTERN, pattern));
+        if (ldapEnabled) {
+            allowedLdapUsernamePattern.ifPresent(pattern -> builder.withDetail(Constants.ALLOWED_LDAP_USERNAME_PATTERN, pattern));
+        }
         allowedCourseRegistrationUsernamePattern.ifPresent(pattern -> builder.withDetail(Constants.ALLOWED_COURSE_REGISTRATION_USERNAME_PATTERN, pattern));
         accountName.ifPresent(accountName -> builder.withDetail(Constants.ACCOUNT_NAME, accountName));
     }
