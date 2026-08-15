@@ -1,14 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SearchInputComponent } from './search-input.component';
+import { FilterChipView, FilterMenuOption } from '../../../models/search-menu.model';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { faCube } from '@fortawesome/free-solid-svg-icons';
 
 describe('SearchInputComponent', () => {
     let component: SearchInputComponent;
     let fixture: ComponentFixture<SearchInputComponent>;
+
+    const chip = (label: string): FilterChipView => ({ key: `type:${label}:false`, label, facetLabel: 'type', icon: faCube, family: 'type', negate: false, selected: false });
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -19,7 +23,7 @@ describe('SearchInputComponent', () => {
         fixture = TestBed.createComponent(SearchInputComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('searchQuery', '');
-        fixture.componentRef.setInput('activeFilters', []);
+        fixture.componentRef.setInput('chips', []);
         fixture.componentRef.setInput('isLoading', false);
         fixture.detectChanges();
     });
@@ -28,11 +32,58 @@ describe('SearchInputComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should compute hasActiveFilters correctly', () => {
-        expect(component['hasActiveFilters']()).toBe(false);
-        fixture.componentRef.setInput('activeFilters', ['exercise']);
+    it('should compute hasChips from the chips input', () => {
+        expect(component['hasChips']()).toBe(false);
+        fixture.componentRef.setInput('chips', [chip('Exercises')]);
+        expect(component['hasChips']()).toBe(true);
+    });
+
+    it('renders an outlined chip with its value and family class', () => {
+        fixture.componentRef.setInput('chips', [chip('Exercises')]);
         fixture.detectChanges();
-        expect(component['hasActiveFilters']()).toBe(true);
+        const tok = fixture.nativeElement.querySelector('.tok');
+        expect(tok).toBeTruthy();
+        expect(tok.classList).toContain('tok--type');
+        expect(tok.textContent).toContain('Exercises');
+    });
+
+    it('marks an exclude chip and strikes through its value', () => {
+        const excluded: FilterChipView = { key: 'type:exam:true', label: 'Exams', facetLabel: 'type', icon: faCube, family: 'type', negate: true, selected: false };
+        fixture.componentRef.setInput('chips', [excluded]);
+        fixture.detectChanges();
+        const tok = fixture.nativeElement.querySelector('.tok');
+        expect(tok.classList).toContain('tok--exclude');
+        expect(fixture.nativeElement.querySelector('.tok-value-text.tok-strike')).toBeTruthy();
+    });
+
+    describe('value-menu combobox a11y', () => {
+        const option = (id: string, value: string): FilterMenuOption => ({ id, label: id, icon: faCube, action: { kind: 'value', value } });
+
+        it('wires the input as a combobox pointing aria-activedescendant at the highlighted option', () => {
+            fixture.componentRef.setInput('menuOptions', [option('type:exercise', 'exercise'), option('type:lecture', 'lecture')]);
+            fixture.componentRef.setInput('menuActiveIndex', 1);
+            fixture.componentRef.setInput('menuVisible', true);
+            fixture.detectChanges();
+
+            expect(component['activeOptionId']()).toBe('gs-filter-option-type:lecture');
+            const input = fixture.nativeElement.querySelector('input.search-input');
+            expect(input.getAttribute('role')).toBe('combobox');
+            expect(input.getAttribute('aria-expanded')).toBe('true');
+            expect(input.getAttribute('aria-controls')).toBe('global-search-filter-menu');
+            expect(input.getAttribute('aria-activedescendant')).toBe('gs-filter-option-type:lecture');
+            // The highlighted option carries the matching id the input references.
+            expect(fixture.nativeElement.querySelector('[id="gs-filter-option-type:lecture"]')).toBeTruthy();
+        });
+
+        it('drops aria-controls/activedescendant while the menu is closed', () => {
+            fixture.componentRef.setInput('menuVisible', false);
+            fixture.detectChanges();
+
+            const input = fixture.nativeElement.querySelector('input.search-input');
+            expect(input.getAttribute('aria-expanded')).toBe('false');
+            expect(input.getAttribute('aria-controls')).toBeNull();
+            expect(input.getAttribute('aria-activedescendant')).toBeNull();
+        });
     });
 
     it('should focus input', () => {
@@ -62,28 +113,39 @@ describe('SearchInputComponent', () => {
         expect(spy).toHaveBeenCalledWith(event);
     });
 
-    it('should emit filterRemoved on filter remove', () => {
-        const spy = vi.spyOn(component.filterRemoved, 'emit');
-        component['onFilterRemove']('exercise');
-        expect(spy).toHaveBeenCalledWith('exercise');
+    it('should emit chipRemoved with the chip index', () => {
+        const spy = vi.spyOn(component.chipRemoved, 'emit');
+        component['onChipRemove'](2);
+        expect(spy).toHaveBeenCalledWith(2);
     });
 
-    it('should compute hasActiveFilters true when courseFilterLabel is set', () => {
-        fixture.componentRef.setInput('activeFilters', []);
-        fixture.componentRef.setInput('courseFilterLabel', 'Intro to CS');
-        fixture.detectChanges();
-        expect(component['hasActiveFilters']()).toBe(true);
+    it('should emit chipSelected when a chip is clicked', () => {
+        const spy = vi.spyOn(component.chipSelected, 'emit');
+        component['onChipClick'](1);
+        expect(spy).toHaveBeenCalledWith(1);
     });
 
-    it('should emit courseFilterRemoved on course filter remove', () => {
-        const spy = vi.spyOn(component.courseFilterRemoved, 'emit');
-        component['onCourseFilterRemove']();
-        expect(spy).toHaveBeenCalled();
+    it.each(['Enter', ' '])('should emit chipSelected and stop propagation when "%s" is pressed on a focused chip', (key) => {
+        const spy = vi.spyOn(component.chipSelected, 'emit');
+        const event = new KeyboardEvent('keydown', { key });
+        const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+        const stopPropagationSpy = vi.spyOn(event, 'stopPropagation');
+
+        component['onChipKeydown'](2, event);
+
+        expect(spy).toHaveBeenCalledWith(2);
+        expect(preventDefaultSpy).toHaveBeenCalled();
+        expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    it('should ignore other keys on a focused chip', () => {
+        const spy = vi.spyOn(component.chipSelected, 'emit');
+        component['onChipKeydown'](2, new KeyboardEvent('keydown', { key: 'a' }));
+        expect(spy).not.toHaveBeenCalled();
     });
 
     it('should emit backspaceOnEmpty when Backspace is pressed on empty input', () => {
         const spy = vi.spyOn(component.backspaceOnEmpty, 'emit');
-        // Input is empty (searchQuery was set to '' in beforeEach)
         fixture.detectChanges();
         const event = new KeyboardEvent('keydown', { key: 'Backspace' });
         component['onKeyDown'](event);

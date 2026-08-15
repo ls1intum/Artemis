@@ -16,13 +16,22 @@
     <!-- Search Input Container -->
     <jhi-global-search-input
         [searchQuery]="searchQuery()"
-        [activeFilters]="activeFilters()"
-        [courseFilterLabel]="activeCourseLabel()"
+        [chips]="chips()"
         [isLoading]="isLoading()"
+        [operator]="operator()"
+        [operatorValueValid]="operatorValueValid()"
+        [menuOptions]="menuOptions()"
+        [menuActiveIndex]="menuActiveIndex()"
+        [menuVisible]="filterMenuOpen()"
+        [menuHeaderKey]="menuHeaderKey()"
+        [filterShortcutLabel]="filterShortcutLabel()"
         (searchInput)="onSearchInput($event)"
-        (filterRemoved)="removeFilter($event)"
-        (courseFilterRemoved)="removeCourseFilter()"
+        (chipRemoved)="onChipRemoved($event)"
+        (chipSelected)="onChipSelected($event)"
         (backspaceOnEmpty)="onBackspaceRemoveFilter()"
+        (optionSelected)="onOptionSelected($event)"
+        (optionHovered)="onOptionHovered($event)"
+        (filterTrigger)="toggleFilterPicker()"
     />
     <!-- Results Area -->
     <div class="results-container">
@@ -50,23 +59,20 @@
     </div>
     <!-- Keyboard hints footer -->
     <div class="search-footer shrink-0 text-start">
-        <div class="keyboard-hints flex items-center justify-between text-muted-color w-full gap-3">
+        <div class="keyboard-hints flex items-center justify-between w-full gap-3">
             <span class="flex items-center gap-1">
                 <span class="flex items-center gap-1">
-                    <kbd class="key-hint-small inline-flex items-center font-mono text-muted-color border" [attr.aria-label]="'global.search.arrowUpAriaLabel' | artemisTranslate">
+                    <kbd class="key-hint-small inline-flex items-center font-mono border" [attr.aria-label]="'global.search.arrowUpAriaLabel' | artemisTranslate">
                         <fa-icon [icon]="faArrowUp" aria-hidden="true" />
                     </kbd>
-                    <kbd
-                        class="key-hint-small inline-flex items-center font-mono text-muted-color border"
-                        [attr.aria-label]="'global.search.arrowDownAriaLabel' | artemisTranslate"
-                    >
+                    <kbd class="key-hint-small inline-flex items-center font-mono border" [attr.aria-label]="'global.search.arrowDownAriaLabel' | artemisTranslate">
                         <fa-icon [icon]="faArrowDown" aria-hidden="true" />
                     </kbd>
                 </span>
                 <span class="ms-2">{{ 'global.search.toNavigate' | artemisTranslate }}</span>
             </span>
             <span class="flex items-center gap-1">
-                <kbd class="key-hint-small inline-flex items-center font-mono text-muted-color border" aria-label="Escape">ESC</kbd>
+                <kbd class="key-hint-small inline-flex items-center font-mono border" aria-label="Escape">ESC</kbd>
                 <span class="ms-2">{{ 'global.search.toClose' | artemisTranslate }}</span>
             </span>
         </div>
