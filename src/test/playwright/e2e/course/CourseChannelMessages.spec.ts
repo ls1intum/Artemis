@@ -321,13 +321,19 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             // repeatedly to chain-load earlier pages until it is rendered: each scroll-to-top must load one more
             // page. The pre-fix directive stalled after the first older page (the post-load scroll nudge left the
             // sentinel inside the prefetch zone, so no further IntersectionObserver callback fired), and the oldest
-            // post never appeared — this loop would then time out. We do not assert the exact initial page count
+            // post never appeared — this loop would then run out of attempts. We do not assert the exact initial page count
             // because the conversation's initial load is not deterministic, but reaching the oldest post still
             // requires the directive to keep paging across successive scroll-ups.
-            await expect(async () => {
+            // Each scroll-up has to bring in another page, and that is what the loop waits for: more posts on screen
+            // than before it scrolled. A fixed overall budget measured how fast the machine is instead, and ran out
+            // under a loaded suite while the paging itself was working.
+            const oldestMessage = courseMessages.getSinglePost(oldestPost.id!);
+            for (let page = 0; page < 4 && (await oldestMessage.count()) === 0; page++) {
+                const renderedBefore = await courseMessages.getRenderedPostCount();
                 await courseMessages.scrollMessagesToTop();
-                expect(await courseMessages.getSinglePost(oldestPost.id!).count()).toBe(1);
-            }).toPass({ timeout: 30000, intervals: [700, 1000, 1000] });
+                await expect.poll(() => courseMessages.getRenderedPostCount(), { timeout: 10000 }).toBeGreaterThan(renderedBefore);
+            }
+            await expect(oldestMessage).toHaveCount(1);
 
             await courseMessages.checkMessage(oldestPost.id!, 'Oldest infinite scroll message');
         });
@@ -376,13 +382,17 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
 
             // The oldest post sits on the earliest page. Scroll to the top repeatedly to chain-load earlier pages
             // until it is rendered: the pre-fix directive stalled after the first older page and never reached it,
-            // so this loop would time out. We do not assert the exact initial page count because the discussion
+            // so this loop would run out of attempts. We do not assert the exact initial page count because the discussion
             // section's initial load is not deterministic (it differs in a multi-node setup), but reaching the
             // oldest post still requires the directive to keep paging across successive scroll-ups.
-            await expect(async () => {
+            // Waits for each scroll-up to add posts rather than for a fixed budget, see the channel test above.
+            const oldestDiscussionPost = courseCommunication.getDiscussionPost(oldestPost.id!);
+            for (let page = 0; page < 4 && (await oldestDiscussionPost.count()) === 0; page++) {
+                const renderedBefore = await courseCommunication.getRenderedDiscussionPostCount();
                 await courseCommunication.scrollDiscussionToTop();
-                expect(await courseCommunication.getDiscussionPost(oldestPost.id!).count()).toBe(1);
-            }).toPass({ timeout: 30000, intervals: [700, 1000, 1000] });
+                await expect.poll(() => courseCommunication.getRenderedDiscussionPostCount(), { timeout: 10000 }).toBeGreaterThan(renderedBefore);
+            }
+            await expect(oldestDiscussionPost).toHaveCount(1);
 
             await courseCommunication.checkDiscussionPost(oldestPost.id!, 'Oldest discussion infinite scroll message');
         });
@@ -431,10 +441,14 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             // The oldest match sits on the last result page. Scroll to the top repeatedly to chain-load earlier
             // pages until it is rendered. Before this fix the results container was not the scroll container and
             // was recreated on every fetch, so course-wide search never loaded a second page.
-            await expect(async () => {
+            // Waits for each scroll-up to add results rather than for a fixed budget, see the channel test above.
+            const oldestResult = courseMessages.getSinglePost(oldestPost.id!);
+            for (let page = 0; page < 4 && (await oldestResult.count()) === 0; page++) {
+                const renderedBefore = await courseMessages.getRenderedSearchResultCount();
                 await courseMessages.scrollMessagesToTop();
-                expect(await courseMessages.getSinglePost(oldestPost.id!).count()).toBe(1);
-            }).toPass({ timeout: 30000, intervals: [700, 1000, 1000] });
+                await expect.poll(() => courseMessages.getRenderedSearchResultCount(), { timeout: 10000 }).toBeGreaterThan(renderedBefore);
+            }
+            await expect(oldestResult).toHaveCount(1);
 
             await courseMessages.checkMessage(oldestPost.id!, `${searchToken} oldest message`);
         });
