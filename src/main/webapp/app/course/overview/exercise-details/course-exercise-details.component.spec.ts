@@ -33,7 +33,6 @@ import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
@@ -82,6 +81,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ElementRef, signal } from '@angular/core';
 import { ResetRepoButtonComponent } from 'app/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -280,7 +280,7 @@ describe('CourseExerciseDetailsComponent', () => {
             return participations?.find((p) => p.testRun === testRun);
         });
 
-        const changedParticipation = cloneDeep(studentParticipation);
+        const changedParticipation = deepClone(studentParticipation);
         const changedResult = { ...result, id: 2 };
 
         changedParticipation.submissions![0].results = [changedResult];

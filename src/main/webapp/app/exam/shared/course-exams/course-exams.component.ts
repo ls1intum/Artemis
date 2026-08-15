@@ -11,7 +11,6 @@ import { StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.mode
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { cloneDeep } from 'lodash-es';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { ExamParticipationComponent } from 'app/exam/overview/exam-participation/exam-participation.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -21,6 +20,7 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
@@ -239,7 +239,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy, SidebarView {
                         return;
                     }
                     studentExams.forEach((exam) => {
-                        const studentExam = cloneDeep(exam) as StudentExam;
+                        const studentExam = deepClone(exam) as StudentExam;
                         this.studentExamsForRealExams.set(studentExam.id!, studentExam);
                     });
                     this.prepareSidebarData();
@@ -318,7 +318,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy, SidebarView {
     }
 
     groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[]): AccordionGroups {
-        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
+        const groupedExamGroups = deepClone(DEFAULT_UNIT_GROUPS);
 
         for (const realExam of realExams) {
             const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam, this.studentExamsForRealExams.get(realExam.id!));

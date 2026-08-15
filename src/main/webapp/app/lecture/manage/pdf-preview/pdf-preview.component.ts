@@ -27,6 +27,7 @@ import { finalize } from 'rxjs/operators';
 import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
 interface PdfOperationBase {
     timestamp: dayjs.Dayjs;
@@ -204,7 +205,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                         ]),
                 );
                 this.initialHiddenPages.set(hiddenPagesMap);
-                this.hiddenPages.set({ ...hiddenPagesMap });
+                this.hiddenPages.set(deepClone(hiddenPagesMap));
 
                 this.fetchPdfFile('attachmentVideoUnit', slides);
             } else {
@@ -550,7 +551,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             const formData = new FormData();
             formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
-            const attachmentVideoUnit = Object.assign(new AttachmentVideoUnit(), this.attachmentVideoUnit()!, {
+            const attachmentVideoUnit = hydrate(new AttachmentVideoUnit(), this.attachmentVideoUnit()!, {
                 attachmentUpdateIntent: instructorPdfFile ? AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED : AttachmentUpdateIntent.NO_FILE_CHANGE,
             });
             formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
@@ -674,10 +675,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             }
         }
 
-        return workingPageOrder.map((page, index) => ({
-            ...page,
-            order: index + 1,
-        }));
+        return workingPageOrder.map((page, index) => cloneWith(page, { order: index + 1 }));
     }
 
     /**
@@ -727,10 +725,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             const remainingPages = this.pageOrder().filter((page) => !slideIds.includes(page.slideId));
 
-            const updatedPageOrder = remainingPages.map((page, index) => ({
-                ...page,
-                order: index + 1,
-            }));
+            const updatedPageOrder = remainingPages.map((page, index) => cloneWith(page, { order: index + 1 }));
 
             this.operations.update((ops) => [
                 ...ops,
@@ -751,7 +746,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.pageOrder.set(updatedPageOrder);
 
             this.hiddenPages.update((current) => {
-                const updated = { ...current };
+                const updated = deepClone(current);
                 slideIds.forEach((id) => delete updated[id]);
                 return updated;
             });
@@ -818,7 +813,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.hasOperations.set(true);
 
         this.hiddenPages.update((current) => {
-            const updated = { ...current };
+            const updated = deepClone(current);
             slideIds.forEach((id) => delete updated[id]);
             return updated;
         });
@@ -843,7 +838,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.hasOperations.set(true);
 
         this.hiddenPages.update((currentMap) => {
-            const updatedMap = { ...currentMap };
+            const updatedMap = deepClone(currentMap);
             pages.forEach((page) => {
                 updatedMap[page.slideId] = {
                     date: page.date,
