@@ -79,12 +79,6 @@
     min-width: 0;
 }
 
-.badge {
-    font-weight: 500;
-    font-size: 0.75rem;
-    border-radius: 0.25rem;
-}
-
 .key-hint-small {
     padding: 0.25rem 0.5rem;
     background: var(--global-search-kbd-bg);
@@ -93,7 +87,8 @@
     font-size: 0.75rem;
     font-family: monospace;
     font-weight: 600;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    color: color-mix(in srgb, var(--p-text-color) 60%, transparent);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     min-width: 1.5rem;
     display: inline-flex;
     align-items: center;
