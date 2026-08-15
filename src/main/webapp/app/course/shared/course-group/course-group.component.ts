@@ -66,6 +66,7 @@ export class CourseGroupComponent {
     readonly tutorialGroup = input<TutorialGroup | undefined>(undefined);
     readonly courseRoleSlug = input.required<CourseRoleSlug>();
     readonly exportFileName = input.required<string>();
+    readonly isDisabled = input(false);
 
     readonly userSearch = input<(loginOrName: string) => Observable<HttpResponse<User[]>>>(() => of(new HttpResponse<User[]>({ body: [] })));
     readonly addUserToGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
@@ -146,6 +147,12 @@ export class CourseGroupComponent {
      * Updates the table filter query and fetches matching users from the server for the dropdown.
      */
     onUserSearchComplete(event: AutoCompleteCompleteEvent): void {
+        if (this.isDisabled()) {
+            this.isSearching.set(false);
+            this.userSuggestions.set([]);
+            return;
+        }
+
         const query = event.query.trim();
         this.filterQuery.set(query);
         this.searchFailed.set(false);
@@ -179,6 +186,10 @@ export class CourseGroupComponent {
      * so the table is filtered in real time even before the server-search threshold is reached.
      */
     onSearchKeyUp(event: KeyboardEvent): void {
+        if (this.isDisabled()) {
+            return;
+        }
+
         this.filterQuery.set((event.target as HTMLInputElement).value);
     }
 
@@ -187,6 +198,10 @@ export class CourseGroupComponent {
      * Resets the table filter and clears the dropdown suggestions.
      */
     onSearchClear(): void {
+        if (this.isDisabled()) {
+            return;
+        }
+
         this.filterQuery.set('');
         this.userSuggestions.set([]);
     }
@@ -198,6 +213,10 @@ export class CourseGroupComponent {
      * member is immediately visible. Then adds the user to the group if not already a member.
      */
     onUserSelect(user: User): void {
+        if (this.isDisabled()) {
+            return;
+        }
+
         // Sync filterQuery to the login that PrimeNG will show in the input after selection.
         // This keeps the search bar non-empty and the table filtered, so the new member is visible.
         this.filterQuery.set(user.login ?? '');
@@ -236,6 +255,10 @@ export class CourseGroupComponent {
      * @param user User that should be removed from the currently viewed course group
      */
     removeFromGroup(user: User): void {
+        if (this.isDisabled()) {
+            return;
+        }
+
         if (user.login) {
             this.removeUserFromGroup()(user.login).subscribe({
                 next: () => {
@@ -268,6 +291,10 @@ export class CourseGroupComponent {
      * Exports the current group member list as a CSV file.
      */
     exportUserInformation = (): void => {
+        if (this.isDisabled()) {
+            return;
+        }
+
         const users = this.allGroupUsers();
         if (users.length > 0) {
             const rows: ExportUserInformationRow[] = users.map((user: User): ExportUserInformationRow => {

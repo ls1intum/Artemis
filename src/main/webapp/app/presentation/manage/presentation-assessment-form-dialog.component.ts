@@ -153,9 +153,21 @@ export class PresentationAssessmentFormDialogComponent {
             });
             this.currentTitle.set(this.editForm.controls.title.value ?? '');
         });
+
+        effect(() => {
+            if (this.isSaving()) {
+                this.editForm.disable({ emitEvent: false });
+            } else {
+                this.editForm.enable({ emitEvent: false });
+            }
+        });
     }
 
     save(): void {
+        if (this.isSaving()) {
+            return;
+        }
+
         if (this.editForm.invalid || this.datePicker()?.dateInput.valid === false) {
             this.editForm.markAllAsTouched();
             return;
@@ -169,10 +181,15 @@ export class PresentationAssessmentFormDialogComponent {
     }
 
     cancel(): void {
+        if (this.isSaving()) {
+            return;
+        }
+
         this.cancelled.emit();
     }
 
-    studentSearch = (loginOrName: string): Observable<HttpResponse<User[]>> => this.courseManagementService.searchStudents(this.courseId(), loginOrName);
+    studentSearch = (loginOrName: string): Observable<HttpResponse<User[]>> =>
+        this.isSaving() ? of(new HttpResponse<User[]>({ body: [] })) : this.courseManagementService.searchStudents(this.courseId(), loginOrName);
 
     addStudentToPresentation = (): Observable<HttpResponse<void>> => of(new HttpResponse<void>());
 

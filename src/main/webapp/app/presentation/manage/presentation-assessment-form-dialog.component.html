@@ -50,6 +50,7 @@
                 labelName="{{ 'artemisApp.presentationAssessment.presentationDate' | artemisTranslate }}"
                 formControlName="presentationDate"
                 name="presentationDate"
+                [disabled]="isSaving()"
                 [baseZIndex]="10000"
             />
         </div>
@@ -73,6 +74,7 @@
                 [handleUsersSizeChange]="handleAssignedStudentsSizeChange"
                 [exportFileName]="studentExportFilename()"
                 [userSearch]="studentSearch"
+                [isDisabled]="isSaving()"
                 removeUserQuestionKey="artemisApp.presentationAssessment.students.removeQuestion"
             >
                 <span>

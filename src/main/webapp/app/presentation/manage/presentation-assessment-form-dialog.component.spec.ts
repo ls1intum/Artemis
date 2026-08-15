@@ -165,4 +165,22 @@ describe('PresentationAssessmentFormDialogComponent', () => {
 
         expect(cancelledSpy).toHaveBeenCalledOnce();
     });
+
+    it('should disable editable form controls and ignore save and cancel while saving', () => {
+        const savedSpy = vi.fn();
+        const cancelledSpy = vi.fn();
+        component.saved.subscribe(savedSpy);
+        component.cancelled.subscribe(cancelledSpy);
+
+        fixture.componentRef.setInput('isSaving', true);
+        fixture.detectChanges();
+
+        expect(component.editForm.disabled).toBe(true);
+
+        component.save();
+        component.cancel();
+
+        expect(savedSpy).not.toHaveBeenCalled();
+        expect(cancelledSpy).not.toHaveBeenCalled();
+    });
 });

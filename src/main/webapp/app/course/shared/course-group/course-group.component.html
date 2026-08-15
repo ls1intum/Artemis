@@ -5,11 +5,11 @@
             <ng-content />
         </h2>
         <div class="d-flex mt-1 mb-1 gap-1">
-            @if (course().isAtLeastInstructor) {
+            @if (course().isAtLeastInstructor && !isDisabled()) {
                 <jhi-user-import-button [courseId]="course().id!" [courseRoleSlug]="courseRoleSlug()" (importDone)="importFinish.emit()" [tutorialGroup]="tutorialGroup()" />
             }
             @if (course().isAtLeastInstructor && allGroupUsers().length > 0) {
-                <button class="btn btn-primary btn-sm" (click)="exportUserInformation()">
+                <button class="btn btn-primary btn-sm" (click)="exportUserInformation()" [disabled]="isDisabled()">
                     <fa-icon [icon]="faDownload" [fixedWidth]="true" />
                     <span jhiTranslate="artemisApp.instructorDashboard.exportCSV"></span>
                 </button>
@@ -40,6 +40,7 @@
             (onSelect)="onUserSelect($event.value)"
             (onClear)="onSearchClear()"
             (onKeyUp)="onSearchKeyUp($event)"
+            [disabled]="isDisabled()"
         >
             <ng-template #item let-user>
                 <div class="d-flex justify-content-between" [class.already-member]="isAlreadyMember(user)">
@@ -72,6 +73,7 @@
             [deleteQuestion]="removeUserQuestionKey()"
             (delete)="removeFromGroup(row)"
             [dialogError]="dialogError$"
+            [disabled]="isDisabled()"
         >
             <fa-icon [icon]="faUserSlash" class="me-1" />
         </button>
