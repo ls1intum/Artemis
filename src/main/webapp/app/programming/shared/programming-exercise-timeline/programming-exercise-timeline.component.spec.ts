@@ -40,5 +40,6 @@ describe('ProgrammingExerciseTimelineComponent', () => {
         ]);
         expect(timelineItems.map((item) => item.date())).toEqual([startDate, buildAndTestAfterDueDate, assessmentDueDate]);
         expect(timelineItems.every((item) => item.kind === 'optional')).toBe(true);
+        expect(timelineItems.every((item) => item.disabled)).toBe(true);
     });
 });

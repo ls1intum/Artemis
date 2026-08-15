@@ -24,31 +24,37 @@ export class ProgrammingExerciseTimelineComponent {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.releaseDate',
                 date: this.releaseDate,
+                disabled: true,
             },
             {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.startDate',
                 date: this.startDate,
+                disabled: true,
             },
             {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.dueDate',
                 date: this.dueDate,
+                disabled: true,
             },
             {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.dateForRunningTestsAfterDueDate',
                 date: this.buildAndTestStudentSubmissionsAfterDueDate,
+                disabled: true,
             },
             {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.assessmentDueDate',
                 date: this.assessmentDueDate,
+                disabled: true,
             },
             {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
                 date: this.exampleSolutionPublicationDate,
+                disabled: true,
             },
         ];
         return timelineItems.filter((item) => item.date() !== undefined);

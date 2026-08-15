@@ -5,7 +5,7 @@ import { faCircleInfo, faCircleXmark, faTriangleExclamation } from '@fortawesome
 import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
-import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { TimelineComponent, TimelineItem, TimelineStatus, TimelineValidationMode } from 'app/shared-ui/timeline/timeline.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -36,6 +36,7 @@ export class ExerciseGroupEditModalComponent {
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly faCircleXmark = faCircleXmark;
     protected readonly MAX_TITLE_LENGTH = MAX_TITLE_LENGTH;
+    protected readonly TimelineValidationMode = TimelineValidationMode;
 
     /** Two-way visibility, driven by the parent. */
     readonly visible = model<boolean>(false);
@@ -56,25 +57,17 @@ export class ExerciseGroupEditModalComponent {
 
     readonly headerStringKey = computed(() => (this.isNew() ? 'artemisApp.exerciseManagement.groupEdit.createHeader' : 'artemisApp.exerciseManagement.groupEdit.header'));
 
-    readonly timelineItems = computed<TimelineItem[]>(() => {
-        const releaseDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate };
-        const items: TimelineItem[] = [
-            releaseDateItem,
-            { kind: 'optional', labelStringKey: 'artemisApp.exercise.startDate', date: this.draftStartDate },
-            { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: this.draftDueDate },
-        ];
-        items.push(
-            { kind: 'optional', labelStringKey: 'artemisApp.exercise.assessmentDueDate', date: this.draftAssessmentDueDate },
-            {
-                kind: 'optional',
-                labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
-                date: this.draftExampleSolutionPublicationDate,
-                // The group only requires `>= releaseDate` (see ExerciseVariantGroup#areDatesValid).
-                orderCheckAgainst: [releaseDateItem],
-            },
-        );
-        return items;
-    });
+    readonly timelineItems = computed<TimelineItem[]>(() => [
+        { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate },
+        { kind: 'optional', labelStringKey: 'artemisApp.exercise.startDate', date: this.draftStartDate },
+        { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: this.draftDueDate },
+        { kind: 'optional', labelStringKey: 'artemisApp.exercise.assessmentDueDate', date: this.draftAssessmentDueDate },
+        {
+            kind: 'optional',
+            labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
+            date: this.draftExampleSolutionPublicationDate,
+        },
+    ]);
 
     /** Mirrors the server-side constraints: non-blank and at most 255 characters (the title column is varchar(255)). */
     readonly isTitleValid = computed(() => {

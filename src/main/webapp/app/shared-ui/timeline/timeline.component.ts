@@ -13,11 +13,6 @@ export interface TimelineItem {
     date: WritableSignal<Dayjs | undefined>;
     otherRequiredItem?: TimelineItem;
     disabled?: boolean;
-    /**
-     * Restricts the ordering check to these items when a date depends on only a subset of earlier timeline entries.
-     * By default, an item may not precede any earlier item.
-     */
-    orderCheckAgainst?: TimelineItem[];
 }
 
 export interface TimelineStatus {
@@ -57,7 +52,6 @@ export class TimelineComponent {
 
     timelineItems = input.required<TimelineItem[]>();
     validationMode = input<TimelineValidationMode>(TimelineValidationMode.SEQUENTIALLY_ALLOW_EQUAL);
-    readonly = input<boolean>(false);
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
     timelineStatus = computed<TimelineStatus>(() => this.computeExerciseTimelineStatus());
     timelineStatusChange = output<TimelineStatus>();
@@ -132,10 +126,9 @@ export class TimelineComponent {
         return this.timelineItems().map((item, index, items) => {
             this.currentLocale();
             const date = item.date();
-            const itemsToCheckAgainst = item.orderCheckAgainst ?? items.slice(0, index);
             const hasInvalidDateOrder =
                 date !== undefined &&
-                itemsToCheckAgainst.some((previousItem) => {
+                items.slice(0, index).some((previousItem) => {
                     const previousDate = previousItem.date();
                     return previousDate !== undefined && this.isDateOrderInvalid(date, previousDate);
                 });
@@ -143,7 +136,7 @@ export class TimelineComponent {
             const otherRequiredItem = item.otherRequiredItem;
             const isOtherRequiredItemDateUndefined = date !== undefined && otherRequiredItem !== undefined && otherRequiredItem.date() === undefined;
             const isInvalidInput = invalidInputKeys.has(item.labelStringKey);
-            const isDisabled = this.readonly() || (item.disabled ?? false);
+            const isDisabled = item.disabled ?? false;
             let tooltip: string | undefined;
             if (isInvalidInput) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateInvalidTooltip');
