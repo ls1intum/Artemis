@@ -4,11 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,11 +43,17 @@ public class SlowQueryCollector {
      * Per-request frequency map: key = "httpMethod::httpEndpoint::testName::normalizedSql",
      * value = occurrence count within that request.
      * <p>
-     * We use a {@link ConcurrentHashMap} of {@link AtomicInteger} so that concurrent queries
-     * within the same request (e.g. async DB calls) can increment safely.
-     * Entries are created lazily and cleared when the request finishes (via {@link #resetRequestState}).
+     * Scoped via {@link ThreadLocal} rather than a single shared map: Tomcat/Spring MVC handles
+     * one HTTP request per thread (this collector is never used with async/reactive request
+     * handling), so a thread-confined map gives each request its own counters without any
+     * cross-request synchronization. This matters because a shared map cleared by
+     * {@link #resetRequestState()} in a servlet {@link jakarta.servlet.Filter}'s {@code finally}
+     * block would be reset by *any* request completing — under parallel E2E test workers, one
+     * request finishing could wipe another still-in-flight request's counts mid-count, corrupting
+     * both the occurrence totals and (since the promoted {@link N1Suspect} takes whichever
+     * request's data happened to trigger promotion) the recorded {@code phase}.
      */
-    private final ConcurrentHashMap<String, AtomicInteger> requestFrequencies = new ConcurrentHashMap<>();
+    private final ThreadLocal<Map<String, Integer>> requestFrequencies = ThreadLocal.withInitial(HashMap::new);
 
     /**
      * Detected N+1 suspects, accumulated over the lifetime of the E2E run.
@@ -90,7 +95,7 @@ public class SlowQueryCollector {
         // --- N+1 detection ---
         if (httpEndpoint != null) {
             String key = buildFrequencyKey(httpMethod, httpEndpoint, testName, normalizedSql);
-            int count = requestFrequencies.computeIfAbsent(key, k -> new AtomicInteger(0)).incrementAndGet();
+            int count = requestFrequencies.get().merge(key, 1, Integer::sum);
 
             if (count == properties.getN1DetectionThreshold() + 1) {
                 // Promote to suspect the first time the threshold is crossed (avoid duplicates)
@@ -106,11 +111,12 @@ public class SlowQueryCollector {
     }
 
     /**
-     * Clears the per-request frequency map. Should be called at the end of each HTTP request
-     * (via a {@link jakarta.servlet.Filter}) so that frequency counts don't bleed across requests.
+     * Clears the calling thread's frequency map. Should be called at the end of each HTTP request
+     * (via a {@link jakarta.servlet.Filter}, on the same request-handling thread) so that
+     * frequency counts don't bleed into whichever request this thread handles next.
      */
     public void resetRequestState() {
-        requestFrequencies.clear();
+        requestFrequencies.remove();
     }
 
     /**
@@ -128,11 +134,14 @@ public class SlowQueryCollector {
     /**
      * Resets all collected data. Called via the {@code POST .../reset} endpoint to allow
      * re-running the report collection mid-test-run if needed.
+     * <p>
+     * Does not touch {@link #requestFrequencies}: it's thread-confined, self-clears via
+     * {@link #resetRequestState()} at the end of every request regardless of this call, and (being
+     * a {@link ThreadLocal}) can't be cleared for other threads from here anyway.
      */
     public void reset() {
         slowQueries.clear();
         n1Suspects.clear();
-        requestFrequencies.clear();
         log.info("[SlowQuery] Collector reset");
     }
 
@@ -164,7 +173,7 @@ public class SlowQueryCollector {
     }
 
     // Exposed for testing
-    Map<String, AtomicInteger> getRequestFrequencies() {
-        return requestFrequencies;
+    Map<String, Integer> getRequestFrequencies() {
+        return requestFrequencies.get();
     }
 }
