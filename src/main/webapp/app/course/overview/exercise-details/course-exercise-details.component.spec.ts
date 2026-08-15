@@ -671,7 +671,10 @@ describe('CourseExerciseDetailsComponent', () => {
             );
         });
 
-        afterEach(() => routeToParticipation(undefined));
+        afterEach(() => {
+            routeToParticipation(undefined);
+            delete (TestBed.inject(Router) as unknown as { getCurrentNavigation?: unknown }).getCurrentNavigation;
+        });
 
         it('selects the practice mode when the URL addresses the practice participation', async () => {
             // Reproduces the reload after starting the practice mode: without this the mode fell back to graded and the
@@ -691,6 +694,20 @@ describe('CourseExerciseDetailsComponent', () => {
             getExerciseDetailsMock.mockReturnValue(NEVER);
             vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([gradedParticipation, practiceParticipation]);
             routeToParticipation('680');
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('practice');
+        });
+
+        it('selects the practice mode from the running navigation while the child route is not activated yet', async () => {
+            // The component is created during the navigation to the editor, when `router.url` still holds the URL being
+            // left. Only the navigation in flight names the participation the student is going to.
+            getExerciseDetailsMock.mockReturnValue(NEVER);
+            vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([gradedParticipation, practiceParticipation]);
+            const router = TestBed.inject(Router) as unknown as MockRouter & { getCurrentNavigation?: () => { finalUrl: { toString: () => string } } };
+            router.setUrl('/courses/1/exercises/2');
+            router.getCurrentNavigation = () => ({ finalUrl: { toString: () => '/courses/1/exercises/programming-exercises/2/code-editor/680' } });
 
             comp.loadExercise();
 

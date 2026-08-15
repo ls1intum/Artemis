@@ -285,14 +285,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Both are needed. Angular activates a child route only after this component has initialised, so during the first
      * pass `route.firstChild` is still empty, and reading it alone left the mode on `graded` until the details
      * response arrived - by which time the split panel had redirected the editor to the graded participation and the
-     * URL no longer named the one the student had asked for.
+     * URL no longer named the one the student had asked for. The URL of the running navigation is what covers that
+     * first pass; the child route covers every later evaluation.
      */
     private routedParticipationId(): number | undefined {
         const fromChildRoute = this.route.firstChild?.snapshot.paramMap.get('participationId');
         if (fromChildRoute) {
             return Number(fromChildRoute);
         }
-        const fromUrl = /\/(?:code-editor|participate)\/(\d+)/.exec(this.router.url);
+        // While a navigation is in flight - which is exactly when this component is being created for the editor route
+        // - `router.url` still holds the URL being left. The target is only in the navigation itself.
+        const navigationUrl = this.router.getCurrentNavigation?.()?.finalUrl?.toString() ?? this.router.url;
+        const fromUrl = /\/(?:code-editor|participate)\/(\d+)/.exec(navigationUrl);
         return fromUrl ? Number(fromUrl[1]) : undefined;
     }
 
