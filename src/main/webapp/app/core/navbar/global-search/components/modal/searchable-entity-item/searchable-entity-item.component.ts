@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faLevelDownAlt } from '@fortawesome/free-solid-svg-icons';
 import { SearchableEntity } from '../../../models/searchable-entity.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -15,6 +16,8 @@ export class SearchableEntityItemComponent {
     isSelected = input.required<boolean>();
 
     entityClick = output<SearchableEntity>();
+
+    protected readonly faLevelDownAlt = faLevelDownAlt;
 
     protected onClick() {
         this.entityClick.emit(this.entity());
