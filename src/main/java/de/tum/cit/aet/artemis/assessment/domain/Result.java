@@ -92,7 +92,6 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnoreProperties({ "results" })
     private Submission submission;
 
-    // No @Cache: actively mutated during manual assessment; NONSTRICT caused stale feedback lists across nodes, same class of bug as #12574.
     // Stored as a Set: feedback ordering is not semantically meaningful — every consumer that cares about
     // presentation order sorts explicitly (by credits, by FeedbackType, by reference, ...). Using a Set
     // avoids the @OrderColumn null-index race (Hibernate "Illegal null value for list index" under

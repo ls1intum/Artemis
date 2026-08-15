@@ -8,6 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { KeyValuePipe, NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export enum CsvFieldSeparator {
     TAB = '\t',
@@ -103,7 +104,7 @@ export class ExportModalComponent implements OnInit {
      * @param separator chosen separator which is used to separate the fields in the generated csv file
      */
     setCsvFieldSeparator(separator: CsvFieldSeparator) {
-        this.options.update((options) => ({ ...options, fieldSeparator: separator }));
+        this.options.update((options) => cloneWith(options, { fieldSeparator: separator }));
     }
 
     /**
@@ -111,7 +112,7 @@ export class ExportModalComponent implements OnInit {
      * @param quoteString chosen quoteString option which is used to quote strings in the generated csv file
      */
     setCsvQuoteString(quoteString: CsvQuoteStrings) {
-        this.options.update((options) => ({ ...options, quoteCharacter: quoteString, quoteStrings: quoteString !== CsvQuoteStrings.NONE }));
+        this.options.update((options) => cloneWith(options, { quoteCharacter: quoteString, quoteStrings: quoteString !== CsvQuoteStrings.NONE }));
     }
 
     /**
@@ -119,7 +120,7 @@ export class ExportModalComponent implements OnInit {
      * @param separator chosen decimal separator which is used in the generated csv file
      */
     setCsvDecimalSeparator(separator: CsvDecimalSeparator) {
-        this.options.update((options) => ({ ...options, decimalSeparator: separator }));
+        this.options.update((options) => cloneWith(options, { decimalSeparator: separator }));
     }
 
     /**

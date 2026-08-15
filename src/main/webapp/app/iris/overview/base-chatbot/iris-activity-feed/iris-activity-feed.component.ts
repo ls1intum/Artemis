@@ -4,6 +4,7 @@ import { faCheck, faCircleNotch, faCircleXmark } from '@fortawesome/free-solid-s
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { IrisActivityItem, IrisActivityState } from 'app/iris/shared/entities/iris-activity.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type IrisActivityFeedMode = 'live' | 'trail';
 
@@ -39,14 +40,15 @@ export class IrisActivityFeedComponent {
 
     protected readonly viewItems = computed<IrisActivityViewItem[]>(() => {
         this.currentLocale();
-        return this.activities().map((activity) => ({
-            ...activity,
-            label: this.translateActivityName(activity.name),
-            durationLabel: this.formatDuration(activity),
-            stateClass: activity.state.toLowerCase(),
-            icon: this.iconFor(activity.state),
-            spin: activity.state === IrisActivityState.RUNNING,
-        }));
+        return this.activities().map((activity) =>
+            cloneWith(activity, {
+                label: this.translateActivityName(activity.name),
+                durationLabel: this.formatDuration(activity),
+                stateClass: activity.state.toLowerCase(),
+                icon: this.iconFor(activity.state),
+                spin: activity.state === IrisActivityState.RUNNING,
+            }),
+        );
     });
 
     protected readonly feedAriaLabel = computed(() => {

@@ -545,10 +545,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const course = this.courseStorageService.getCourse(this.courseId);
         const cachedExercise = course?.exercises?.find((exercise) => exercise.id === exerciseId);
         if (course && cachedExercise) {
+            // Mutated in place, and the same course object re-stored: the sidebar card renders this very exercise
+            // object, so replacing it with a copy would leave the card bound to the pre-update one.
             cachedExercise.studentParticipations = this._studentParticipations();
-            // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
-            // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
-            this.courseStorageService.updateCourse(course, this.courseStorageService.isCourseFullyLoaded(this.courseId));
+            this.courseStorageService.updateCourse(course);
         }
     }
 

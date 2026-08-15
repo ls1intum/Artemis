@@ -30,6 +30,12 @@
                     <a class="list-group-item btn btn-outline-primary" routerLink="science" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.scienceSettings"></a>
                 }
                 <a class="list-group-item btn btn-outline-primary" routerLink="ssh" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.sshSettings"></a>
+                <a
+                    class="list-group-item btn btn-outline-primary"
+                    routerLink="credentials"
+                    routerLinkActive="active"
+                    jhiTranslate="artemisApp.userSettings.credentialRevocation.title"
+                ></a>
                 @if (isAtLeastTutor()) {
                     <a
                         class="list-group-item btn btn-outline-primary"

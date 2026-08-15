@@ -812,7 +812,7 @@ describe('QuizParticipationComponent - preview mode', () => {
         vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
         fixture.detectChanges();
 
-        component.onSubmit();
+        component.submitExercise();
 
         // Handle the HTTP request made by submitForPreview
         const request = httpMock.expectOne({ method: 'POST' });
@@ -907,7 +907,7 @@ describe('QuizParticipationComponent - practice mode', () => {
         const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
         fixture.detectChanges();
 
-        component.onSubmit();
+        component.submitExercise();
 
         const request = httpMock.expectOne({ method: 'POST' });
         request.flush({
