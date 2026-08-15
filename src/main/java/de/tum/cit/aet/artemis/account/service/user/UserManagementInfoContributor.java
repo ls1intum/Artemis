@@ -19,29 +19,39 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 @Lazy
 public class UserManagementInfoContributor implements InfoContributor {
 
-    @Value("${artemis.user-management.accept-terms:#{null}}")
-    private Optional<Boolean> needsToAcceptTerms;
+    private final Optional<Boolean> needsToAcceptTerms;
 
-    @Value("${artemis.user-management.registration.enabled:#{null}}")
-    private Optional<Boolean> registrationEnabled;
+    private final Optional<Boolean> registrationEnabled;
 
-    @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
-    private Optional<Pattern> allowedEmailPattern;
+    private final Optional<Pattern> allowedEmailPattern;
 
-    @Value("${artemis.user-management.registration.allowed-email-pattern-readable:#{null}}")
-    private Optional<String> allowedEmailPatternReadable;
+    private final Optional<String> allowedEmailPatternReadable;
 
-    @Value("${artemis.user-management.ldap.allowed-username-pattern:#{null}}")
-    private Optional<Pattern> allowedLdapUsernamePattern;
+    private final Optional<Pattern> allowedLdapUsernamePattern;
 
-    @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
-    private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
+    private final Optional<Pattern> allowedCourseRegistrationUsernamePattern;
 
-    @Value("${artemis.user-management.login.account-name:#{null}}")
-    private Optional<String> accountName;
+    private final Optional<String> accountName;
 
-    @Value("${artemis.user-management.ldap.enabled:false}")
-    private boolean ldapEnabled;
+    private final boolean ldapEnabled;
+
+    public UserManagementInfoContributor(@Value("${artemis.user-management.accept-terms:#{null}}") Optional<Boolean> needsToAcceptTerms,
+            @Value("${artemis.user-management.registration.enabled:#{null}}") Optional<Boolean> registrationEnabled,
+            @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}") Optional<Pattern> allowedEmailPattern,
+            @Value("${artemis.user-management.registration.allowed-email-pattern-readable:#{null}}") Optional<String> allowedEmailPatternReadable,
+            @Value("${artemis.user-management.ldap.allowed-username-pattern:#{null}}") Optional<Pattern> allowedLdapUsernamePattern,
+            @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}") Optional<Pattern> allowedCourseRegistrationUsernamePattern,
+            @Value("${artemis.user-management.login.account-name:#{null}}") Optional<String> accountName,
+            @Value("${artemis.user-management.ldap.enabled:false}") boolean ldapEnabled) {
+        this.needsToAcceptTerms = needsToAcceptTerms;
+        this.registrationEnabled = registrationEnabled;
+        this.allowedEmailPattern = allowedEmailPattern;
+        this.allowedEmailPatternReadable = allowedEmailPatternReadable;
+        this.allowedLdapUsernamePattern = allowedLdapUsernamePattern;
+        this.allowedCourseRegistrationUsernamePattern = allowedCourseRegistrationUsernamePattern;
+        this.accountName = accountName;
+        this.ldapEnabled = ldapEnabled;
+    }
 
     @Override
     public void contribute(Info.Builder builder) {
@@ -53,6 +63,6 @@ public class UserManagementInfoContributor implements InfoContributor {
             allowedLdapUsernamePattern.ifPresent(pattern -> builder.withDetail(Constants.ALLOWED_LDAP_USERNAME_PATTERN, pattern));
         }
         allowedCourseRegistrationUsernamePattern.ifPresent(pattern -> builder.withDetail(Constants.ALLOWED_COURSE_REGISTRATION_USERNAME_PATTERN, pattern));
-        accountName.ifPresent(accountName -> builder.withDetail(Constants.ACCOUNT_NAME, accountName));
+        accountName.ifPresent(account -> builder.withDetail(Constants.ACCOUNT_NAME, account));
     }
 }
