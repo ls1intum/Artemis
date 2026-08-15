@@ -35,7 +35,7 @@ import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, NEVER, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -677,6 +677,19 @@ describe('CourseExerciseDetailsComponent', () => {
             // Reproduces the reload after starting the practice mode: without this the mode fell back to graded and the
             // split panel redirected the editor to the graded participation, whose repository is read-only after the
             // due date.
+            routeToParticipation('680');
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('practice');
+        });
+
+        it('selects the practice mode before the details response arrives', async () => {
+            // The split panel routes the embedded editor on the first change detection, so a mode that only became
+            // practice once the response landed arrived after that redirect had already put the graded participation
+            // back into the URL. The locally known participations have to be enough.
+            getExerciseDetailsMock.mockReturnValue(NEVER);
+            vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([gradedParticipation, practiceParticipation]);
             routeToParticipation('680');
 
             comp.loadExercise();

@@ -282,6 +282,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     loadExercise() {
         this.participationMode.set('graded');
         this._studentParticipations.set(this.participationWebsocketService.getParticipationsForExercise(this.exerciseId));
+        // Evaluated here as well as after the details arrive, because it has to be settled before the first change
+        // detection: ExerciseSplitPanelComponent routes the embedded editor to the active participation as soon as it
+        // runs, so a mode derived only from the response would arrive after that redirect had already replaced the
+        // practice participation in the URL with the graded one, and the redirect is what the mode is then read back
+        // from. The locally known participations already contain the practice one right after it was started.
+        if (this.routedParticipationIsPractice()) {
+            this.participationMode.set('practice');
+        }
         this._resultWithComplaint.set(
             getFirstResultWithComplaintFromResults(
                 this.gradedStudentParticipation()?.submissions?.flatMap((submission) => (submission.results ?? []).filter((result): result is Result => result !== undefined)),
