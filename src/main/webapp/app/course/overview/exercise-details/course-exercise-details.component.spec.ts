@@ -697,6 +697,19 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(comp.participationMode()).toBe('practice');
         });
 
+        it('selects the practice mode from the URL while the child route is not activated yet', async () => {
+            // Angular activates the editor's child route only after this component has initialised, so on the first
+            // pass the participation is named by the URL alone. Held before the response lands, because that is where
+            // the mode has to be settled: the split panel routes the editor on the first change detection.
+            getExerciseDetailsMock.mockReturnValue(NEVER);
+            vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([gradedParticipation, practiceParticipation]);
+            (TestBed.inject(Router) as unknown as MockRouter).setUrl('/courses/1/exercises/programming-exercises/2/code-editor/680');
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('practice');
+        });
+
         it('keeps the graded mode when the URL addresses the graded participation', async () => {
             routeToParticipation('679');
 

@@ -274,9 +274,26 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * what keeps the practice mode selected across a reload (issue #12780).
      */
     private routedParticipationIsPractice(): boolean {
-        const routedParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
         const practiceParticipationId = this.practiceStudentParticipation()?.id;
-        return !!routedParticipationId && !!practiceParticipationId && routedParticipationId === String(practiceParticipationId);
+        return !!practiceParticipationId && this.routedParticipationId() === practiceParticipationId;
+    }
+
+    /**
+     * The participation id in the URL, read from the child route and, while that route is not activated yet, from the
+     * URL itself.
+     * <p>
+     * Both are needed. Angular activates a child route only after this component has initialised, so during the first
+     * pass `route.firstChild` is still empty, and reading it alone left the mode on `graded` until the details
+     * response arrived - by which time the split panel had redirected the editor to the graded participation and the
+     * URL no longer named the one the student had asked for.
+     */
+    private routedParticipationId(): number | undefined {
+        const fromChildRoute = this.route.firstChild?.snapshot.paramMap.get('participationId');
+        if (fromChildRoute) {
+            return Number(fromChildRoute);
+        }
+        const fromUrl = /\/(?:code-editor|participate)\/(\d+)/.exec(this.router.url);
+        return fromUrl ? Number(fromUrl[1]) : undefined;
     }
 
     loadExercise() {
