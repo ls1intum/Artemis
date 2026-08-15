@@ -93,6 +93,24 @@
             "comingSoon": "Demnächst verfügbar",
             "enterToActivate": "Eingabetaste drücken zum Aktivieren",
             "courseFallbackLabel": "Kurs {{ id }}",
+            "removeFilter": "Filter entfernen",
+            "editFilter": "Filter bearbeiten",
+            "noFilterMatches": "Keine Treffer",
+            "chooseType": "Typ wählen",
+            "chooseCourse": "Kurs wählen",
+            "filter": "Filter",
+            "addFilter": "Filter hinzufügen",
+            "applyFilterKey": "Tab",
+            "filterAction": {
+                "type": "Nach Typ filtern",
+                "excludeType": "Einen Typ ausschließen",
+                "course": "Auf einen Kurs eingrenzen",
+                "excludeCourse": "Einen Kurs ausschließen"
+            },
+            "facets": {
+                "type": "Typ",
+                "course": "Kurs"
+            },
             "searchFailed": "Suche fehlgeschlagen. Bitte versuche es erneut.",
             "irisAnswerShowMore": "Mehr anzeigen",
             "irisAnswerShowLess": "Weniger anzeigen",

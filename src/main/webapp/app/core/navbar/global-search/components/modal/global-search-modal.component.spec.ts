@@ -331,7 +331,10 @@ describe('GlobalSearchModalComponent', () => {
         });
 
         it('should remove rightmost filter when backspaceOnEmpty fires', () => {
-            component['activeFilters'].set(['exercise', 'lecture']);
+            component['tokens'].set([
+                { facet: 'type', value: 'exercise' },
+                { facet: 'type', value: 'lecture' },
+            ]);
 
             component['onBackspaceRemoveFilter']();
 
@@ -339,14 +342,12 @@ describe('GlobalSearchModalComponent', () => {
         });
 
         it('should remove course filter when backspaceOnEmpty fires and no type filters remain', () => {
-            component['activeCourseId'].set(42);
-            component['activeCourseLabel'].set('Test Course');
-            component['activeFilters'].set([]);
+            component['tokens'].set([{ facet: 'course', value: '42' }]);
 
             component['onBackspaceRemoveFilter']();
 
-            expect(component['activeCourseId']()).toBeUndefined();
-            expect(component['activeCourseLabel']()).toBeUndefined();
+            expect(component['courseIdsParam']()[0]).toBeUndefined();
+            expect(component['chips']().some((chip) => chip.family === 'course')).toBe(false);
         });
 
         it('should re-trigger search when filter changes even if query stays the same', () => {
@@ -356,7 +357,7 @@ describe('GlobalSearchModalComponent', () => {
             component['onSearchInput']('test');
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', undefined, undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', undefined, undefined, undefined);
             expect(component['results']()).toEqual(queryResults);
 
             // Now toggle a filter with the same query — should still re-trigger
@@ -364,7 +365,7 @@ describe('GlobalSearchModalComponent', () => {
             component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise', undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise', undefined, undefined);
             expect(component['results']()).toEqual(filteredResults);
         });
 
@@ -405,7 +406,7 @@ describe('GlobalSearchModalComponent', () => {
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
 
             // Remove exercise filter (no query) → resets to initial state
-            component['removeFilter']('exercise');
+            component['onChipRemoved'](0);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual([]);
             expect(component['hasSearched']()).toBe(false);
@@ -430,7 +431,7 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['isLoading']()).toBe(false);
 
             // Remove and immediately re-add (within 300ms debounce)
-            component['removeFilter']('exercise');
+            component['onChipRemoved'](0);
             // Don't wait for debounce — immediately re-add
             component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
@@ -467,7 +468,7 @@ describe('GlobalSearchModalComponent', () => {
             vi.advanceTimersByTime(300);
 
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('', 'exercise', undefined);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('', 'exercise', undefined, undefined);
             expect(component['results']()).toEqual(filteredResults);
         });
 
@@ -481,7 +482,7 @@ describe('GlobalSearchModalComponent', () => {
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
 
             // Remove filter — synchronous branch, no debounce needed
-            component['removeFilter']('exercise');
+            component['onChipRemoved'](0);
             // Don't advance timers — verify it clears synchronously
             expect(component['results']()).toEqual([]);
             expect(component['isLoading']()).toBe(false);
@@ -604,6 +605,20 @@ describe('GlobalSearchModalComponent', () => {
 
             expect((component as any).selectedIndex()).toBe(0);
         });
+
+        it('re-picks a keyboard-selected chip on Enter (same as clicking it)', () => {
+            (component as any).tokens.set([
+                { facet: 'type', value: 'exercise' },
+                { facet: 'course', value: '5' },
+            ]);
+            (component as any).selectedChip.set(1);
+
+            component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+            expect((component as any).editingChip()).toBe(1);
+            expect((component as any).selectedChip()).toBe(-1);
+            expect((component as any).searchQuery()).toBe('course:');
+        });
     });
 
     describe('Context Filters', () => {
@@ -625,8 +640,8 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeCourseId']()).toBe(42);
-            expect(component['activeCourseLabel']()).toBe('Intro to CS');
+            expect(component['courseIdsParam']()[0]).toBe(42);
+            expect(component['chips']().find((chip) => chip.family === 'course')?.label).toBe('Intro to CS');
         });
 
         it('should apply course and type filter when modal opens on exercises tab', () => {
@@ -636,8 +651,8 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeCourseId']()).toBe(10);
-            expect(component['activeCourseLabel']()).toBe('Algorithms');
+            expect(component['courseIdsParam']()[0]).toBe(10);
+            expect(component['chips']().find((chip) => chip.family === 'course')?.label).toBe('Algorithms');
             expect(component['activeFilters']()).toEqual(['exercise']);
         });
 
@@ -687,8 +702,8 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeCourseId']()).toBeUndefined();
-            expect(component['activeCourseLabel']()).toBeUndefined();
+            expect(component['courseIdsParam']()[0]).toBeUndefined();
+            expect(component['chips']().some((chip) => chip.family === 'course')).toBe(false);
             expect(component['activeFilters']()).toEqual([]);
         });
 
@@ -699,7 +714,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeCourseId']()).toBe(7);
+            expect(component['courseIdsParam']()[0]).toBe(7);
             expect(component['activeFilters']()).toEqual([]);
         });
 
@@ -710,7 +725,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeCourseLabel']()).toBe('global.search.courseFallbackLabel');
+            expect(component['chips']().find((chip) => chip.family === 'course')?.label).toBe('global.search.courseFallbackLabel');
         });
 
         it('should pass courseId to globalSearch API call', () => {
@@ -724,7 +739,19 @@ describe('GlobalSearchModalComponent', () => {
             component['onSearchInput']('test');
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise', 42);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise', [42], undefined);
+        });
+
+        it('should pass excludeCourseIds to globalSearch for a negated course token', () => {
+            mockSearchService.globalSearch.mockReturnValue(of([]));
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            component['tokens'].set([{ facet: 'course', value: '7', negate: true }]);
+            component['onSearchInput']('test');
+            vi.advanceTimersByTime(300);
+
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', undefined, undefined, [7]);
         });
 
         it('should remove course filter on backspace when no type filters remain', () => {
@@ -734,18 +761,18 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeCourseId']()).toBe(42);
+            expect(component['courseIdsParam']()[0]).toBe(42);
             expect(component['activeFilters']()).toEqual(['exercise']);
 
             // First backspace removes the type filter
             component['onBackspaceRemoveFilter']();
             expect(component['activeFilters']()).toEqual([]);
-            expect(component['activeCourseId']()).toBe(42);
+            expect(component['courseIdsParam']()[0]).toBe(42);
 
             // Second backspace removes the course filter
             component['onBackspaceRemoveFilter']();
-            expect(component['activeCourseId']()).toBeUndefined();
-            expect(component['activeCourseLabel']()).toBeUndefined();
+            expect(component['courseIdsParam']()[0]).toBeUndefined();
+            expect(component['chips']().some((chip) => chip.family === 'course')).toBe(false);
         });
 
         it('should remove course filter via removeCourseFilter and re-trigger search', () => {
@@ -756,12 +783,12 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeCourseId']()).toBe(42);
+            expect(component['courseIdsParam']()[0]).toBe(42);
 
             component['removeCourseFilter']();
 
-            expect(component['activeCourseId']()).toBeUndefined();
-            expect(component['activeCourseLabel']()).toBeUndefined();
+            expect(component['courseIdsParam']()[0]).toBeUndefined();
+            expect(component['chips']().some((chip) => chip.family === 'course')).toBe(false);
         });
 
         it('should clear context filters when modal is closed', () => {
@@ -771,15 +798,15 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeCourseId']()).toBe(42);
+            expect(component['courseIdsParam']()[0]).toBe(42);
             expect(component['activeFilters']()).toEqual(['exercise']);
 
             // Close modal
             mockSearchOverlayService.isOpen.set(false);
             fixture.detectChanges();
 
-            expect(component['activeCourseId']()).toBeUndefined();
-            expect(component['activeCourseLabel']()).toBeUndefined();
+            expect(component['courseIdsParam']()[0]).toBeUndefined();
+            expect(component['chips']().some((chip) => chip.family === 'course')).toBe(false);
             expect(component['activeFilters']()).toEqual([]);
         });
 
@@ -790,8 +817,8 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeCourseId']()).toBe(6);
-            expect(component['activeCourseLabel']()).toBe('Software Engineering');
+            expect(component['courseIdsParam']()[0]).toBe(6);
+            expect(component['chips']().find((chip) => chip.family === 'course')?.label).toBe('Software Engineering');
             expect(component['activeFilters']()).toEqual([]);
         });
 
@@ -802,7 +829,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeCourseId']()).toBe(6);
+            expect(component['courseIdsParam']()[0]).toBe(6);
             expect(component['activeFilters']()).toEqual(['exercise']);
         });
 
@@ -853,7 +880,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeCourseId']()).toBe(6);
+            expect(component['courseIdsParam']()[0]).toBe(6);
             expect(component['activeFilters']()).toEqual([]);
         });
     });
