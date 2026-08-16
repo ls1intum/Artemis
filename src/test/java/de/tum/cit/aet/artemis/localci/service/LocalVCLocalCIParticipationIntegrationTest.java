@@ -176,6 +176,27 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         assertThat(li.getFirst().userId()).isEqualTo(user.getId());
     }
 
+    /**
+     * A build agent clone has no user behind it: the agent authenticates with the token of the build job it is running
+     * rather than as a person, and the agent and job identify the access instead. This exercises the schema change that
+     * made {@code vcs_access_log.user_id} nullable, which nothing else covers, and confirms the entry survives the
+     * round trip through the DTO that used to dereference the user unconditionally.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetVcsAccessLogOfBuildAgentWithoutUser() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        vcsAccessLogRepository.save(new VcsAccessLog(null, participation, "Build agent artemis-build-agent-1 (build job 42)", "", RepositoryActionType.PULL,
+                AuthenticationMechanism.BUILD_JOB_TOKEN, "", "10.0.0.5"));
+
+        var accessLogs = request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/vcs-access-log", HttpStatus.OK, VcsAccessLogDTO.class);
+
+        assertThat(accessLogs).hasSize(1);
+        assertThat(accessLogs.getFirst().userId()).as("a build agent clone is attributed to the agent and job, not to a user").isNull();
+        assertThat(accessLogs.getFirst().name()).contains("artemis-build-agent-1").contains("42");
+        assertThat(accessLogs.getFirst().authenticationMechanism()).isEqualTo(AuthenticationMechanism.BUILD_JOB_TOKEN.name());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetVcsAccessLogOfTemplateParticipation() throws Exception {
