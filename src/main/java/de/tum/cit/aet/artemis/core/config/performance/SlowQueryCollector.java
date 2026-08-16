@@ -24,6 +24,10 @@ import org.springframework.stereotype.Component;
  * <li><b>N+1 suspects</b> – normalised SQL templates that were repeated more than
  * {@link SlowQueryProperties#getN1DetectionThreshold()} times within a single HTTP
  * request context, indicating a classic N+1 query problem.</li>
+ * <li><b>Endpoint timings</b> – one entry per HTTP request, regardless of whether any individual
+ * query was slow: total query count, DB time, and a per-query breakdown, so an endpoint whose
+ * total DB engagement is high across many individually-unremarkable queries is still visible.
+ * Deliberately unfiltered (no threshold of its own yet) -- see {@link EndpointTimingRecord}.</li>
  * </ul>
  * <p>
  * Only active when the {@code e2e-performance} Spring profile is enabled.
@@ -61,6 +65,18 @@ public class SlowQueryCollector {
      */
     private final CopyOnWriteArrayList<N1Suspect> n1Suspects = new CopyOnWriteArrayList<>();
 
+    /**
+     * Per-request query breakdown: key = normalized SQL, value = {@code [count, totalDurationMs]}.
+     * Unlike {@link #requestFrequencies} (used only to decide when to promote an N+1 suspect),
+     * this accumulates EVERY query -- not just repeated ones -- so {@link #recordEndpointTiming}
+     * can report the complete query mix for a request, not just its outliers. Thread-confined for
+     * the same reason as {@link #requestFrequencies}: one HTTP request per thread under Spring MVC.
+     */
+    private final ThreadLocal<Map<String, long[]>> requestQueryBreakdown = ThreadLocal.withInitial(HashMap::new);
+
+    /** One entry per completed HTTP request, capped like {@link #slowQueries} below. */
+    private final CopyOnWriteArrayList<EndpointTimingRecord> endpointTimings = new CopyOnWriteArrayList<>();
+
     public SlowQueryCollector(SlowQueryProperties properties) {
         this.properties = properties;
     }
@@ -82,6 +98,14 @@ public class SlowQueryCollector {
      *                            ({@code httpEndpoint == null}) to a subsystem without any request context.
      */
     public void record(String normalizedSql, long executionTimeMs, String httpMethod, String httpEndpoint, String testName, String phase, String threadName) {
+
+        // --- Per-request query breakdown (feeds recordEndpointTiming; every query, not just
+        // outliers) ---
+        if (httpEndpoint != null) {
+            long[] entry = requestQueryBreakdown.get().computeIfAbsent(normalizedSql, k -> new long[2]);
+            entry[0]++;
+            entry[1] += executionTimeMs;
+        }
 
         // --- Slow-query detection ---
         if (executionTimeMs >= properties.getSlowQueryThresholdMs()) {
@@ -123,6 +147,47 @@ public class SlowQueryCollector {
     }
 
     /**
+     * Assembles and records the calling thread's accumulated query breakdown as one
+     * {@link EndpointTimingRecord}, then clears it. Should be called once per HTTP request, on
+     * the same request-handling thread, after {@link #record} has been called for every query the
+     * request triggered but before {@link #resetRequestState()} discards the (different) frequency
+     * map -- order between the two doesn't matter, they're independent thread-locals.
+     *
+     * @param httpMethod      HTTP verb of the request.
+     * @param httpEndpoint    URI path of the request.
+     * @param testName        Playwright test name from the {@code X-Playwright-Test-Name} header; may be {@code null}.
+     * @param phase           Playwright phase from the {@code X-Playwright-Phase} header; may be {@code null}.
+     * @param totalDurationMs Wall-clock time for the whole request, measured by the caller.
+     */
+    public void recordEndpointTiming(String httpMethod, String httpEndpoint, String testName, String phase, long totalDurationMs) {
+        Map<String, long[]> breakdown = requestQueryBreakdown.get();
+        requestQueryBreakdown.remove();
+        if (breakdown.isEmpty()) {
+            // No queries at all (e.g. a static asset request never reached a repository) -- not
+            // interesting enough to record a row for.
+            return;
+        }
+
+        List<QueryCountEntry> queries = new ArrayList<>();
+        long dbTimeMs = 0;
+        int queryCount = 0;
+        for (Map.Entry<String, long[]> e : breakdown.entrySet()) {
+            int count = (int) e.getValue()[0];
+            long totalMs = e.getValue()[1];
+            queries.add(new QueryCountEntry(e.getKey(), count, totalMs));
+            dbTimeMs += totalMs;
+            queryCount += count;
+        }
+
+        if (endpointTimings.size() < properties.getMaxRecordedQueries()) {
+            endpointTimings.add(new EndpointTimingRecord(httpMethod, httpEndpoint, testName, phase, totalDurationMs, dbTimeMs, queryCount, queries, Instant.now()));
+        }
+        else {
+            log.warn("[EndpointTiming] Circuit-breaker: max {} entries reached, ignoring further endpoint timings", properties.getMaxRecordedQueries());
+        }
+    }
+
+    /**
      * Assembles and returns the current report.
      *
      * @return an immutable snapshot of all collected findings.
@@ -130,21 +195,24 @@ public class SlowQueryCollector {
     public SlowQueryReportDTO getReport() {
         List<SlowQueryRecord> slowSnapshot = new ArrayList<>(slowQueries);
         List<N1Suspect> n1Snapshot = new ArrayList<>(n1Suspects);
+        List<EndpointTimingRecord> endpointTimingSnapshot = new ArrayList<>(endpointTimings);
         return new SlowQueryReportDTO(Instant.now(), properties.getSlowQueryThresholdMs(), properties.getN1DetectionThreshold(), slowSnapshot.size(), n1Snapshot.size(),
-                slowSnapshot, n1Snapshot);
+                slowSnapshot, n1Snapshot, endpointTimingSnapshot);
     }
 
     /**
      * Resets all collected data. Called via the {@code POST .../reset} endpoint to allow
      * re-running the report collection mid-test-run if needed.
      * <p>
-     * Does not touch {@link #requestFrequencies}: it's thread-confined, self-clears via
-     * {@link #resetRequestState()} at the end of every request regardless of this call, and (being
-     * a {@link ThreadLocal}) can't be cleared for other threads from here anyway.
+     * Does not touch {@link #requestFrequencies} or {@link #requestQueryBreakdown}: both are
+     * thread-confined, self-clear via {@link #resetRequestState()}/{@link #recordEndpointTiming}
+     * at the end of every request regardless of this call, and (being {@link ThreadLocal}s)
+     * can't be cleared for other threads from here anyway.
      */
     public void reset() {
         slowQueries.clear();
         n1Suspects.clear();
+        endpointTimings.clear();
         log.info("[SlowQuery] Collector reset");
     }
 

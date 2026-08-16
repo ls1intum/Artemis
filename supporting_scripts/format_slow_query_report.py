@@ -161,6 +161,7 @@ def build_report(report: dict, run_url: str = "") -> str:
 
     slow_queries = report.get("slowQueries", [])
     n1_suspects = report.get("n1Suspects", [])
+    endpoint_timing_count = len(report.get("endpointTimings", []))
 
     # --- Header ---
     if slow_count == 0 and n1_count == 0:
@@ -187,6 +188,12 @@ def build_report(report: dict, run_url: str = "") -> str:
         "",
         build_slow_queries_section(slow_queries, threshold_ms, run_url),
         build_n1_section(n1_suspects, n1_threshold, run_url),
+        (
+            f"📊 Per-request query count and DB-time ratio for all {endpoint_timing_count} requests captured this run — "
+            f"unfiltered (no threshold yet), so too large for this comment — is in the {artifact_link(run_url)}, under the \"Endpoint Timing\" tab.\n"
+            if endpoint_timing_count > 0
+            else ""
+        ),
         "",
         "<details>",
         "<summary>How to investigate</summary>",
@@ -277,6 +284,10 @@ td.sql-cell summary { cursor: pointer; }
 .phase-action { background: rgba(22, 163, 74, .15); color: #16a34a; }
 .phase-setup { background: rgba(107, 114, 128, .15); color: var(--muted); }
 .phase-background { background: rgba(107, 114, 128, .08); color: var(--muted); font-style: italic; }
+table.nested-table { width: auto; min-width: 320px; margin: 6px 0 0; font-size: 12px; }
+table.nested-table th, table.nested-table td { padding: 4px 8px; }
+table.nested-table th { cursor: default; }
+.query-breakdown summary { cursor: pointer; color: var(--muted); }
 """
 
 HTML_REPORT_JS = """
@@ -453,6 +464,96 @@ def build_n1_table_html(n1_suspects: list, n1_threshold: int) -> str:
     )
 
 
+def ratio_severity_class(ratio: float) -> str:
+    """Bands a 0..1 DB-time ratio. Distinct from severity_class (which bands 'multiples of a
+    fixed ms threshold', meaningless for a fraction). Purely visual -- endpoint timings have no
+    inclusion threshold yet (see build_endpoint_timings_table_html), so these bands don't decide
+    what's shown, only how it's colored once shown."""
+    if ratio >= 0.7:
+        return "sev-high"
+    if ratio >= 0.4:
+        return "sev-medium"
+    return "sev-low"
+
+
+def html_query_breakdown(queries: list) -> str:
+    """Collapsible per-request query breakdown: every normalized SQL template that ran during
+    this request and how many times, sorted worst-first by total time. This is what lets a reader
+    see WHY an endpoint's query count or DB-time ratio is high even when no single query
+    individually crosses the slow-query or N+1 thresholds -- the blind spot neither of the other
+    two tables can cover, since both only ever record outliers."""
+    if not queries:
+        return ""
+    ranked = sorted(queries, key=lambda q: q.get("totalDurationMs", 0), reverse=True)
+    rows = []
+    for q in ranked:
+        rows.append(
+            "<tr>"
+            f'<td class="num">{q.get("count", 0)}×</td>'
+            f'<td class="num">{q.get("totalDurationMs", 0)} ms</td>'
+            f'<td class="sql-cell">{html_sql_cell(q.get("sql", ""))}</td>'
+            "</tr>"
+        )
+    label = f"{len(queries)} distinct quer{'y' if len(queries) == 1 else 'ies'}"
+    return (
+        f'<details class="query-breakdown"><summary>{label}</summary>'
+        '<table class="nested-table">'
+        "<thead><tr><th>Count</th><th>Total Time</th><th>SQL</th></tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody>"
+        "</table></details>"
+    )
+
+
+def build_endpoint_timings_table_html(endpoint_timings: list) -> str:
+    """One row per HTTP request captured during the run -- deliberately unfiltered (see
+    EndpointTimingRecord's Javadoc): a query-count or ratio threshold picked before seeing the
+    real distribution of values across genuine E2E traffic would be a guess, not a calibrated
+    bar. Ranked by DB-time ratio, which (unlike either of the absolute ms values it's computed
+    from) stays roughly stable if the whole run is uniformly faster or slower, since both sides
+    of the ratio move together."""
+    if not endpoint_timings:
+        return '<p class="ok">No endpoint-timing data captured.</p>'
+
+    def ratio_of(e):
+        total = e.get("totalDurationMs", 0)
+        return (e.get("dbTimeMs", 0) / total) if total else 0
+
+    ranked = sorted(endpoint_timings, key=ratio_of, reverse=True)
+    rows = []
+    for e in ranked:
+        r = ratio_of(e)
+        test = html.escape(e["testName"]) if e.get("testName") else '<span class="muted">—</span>'
+        rows.append(
+            f'<tr class="{ratio_severity_class(r)}">'
+            f'<td class="num" data-sort="{r:.4f}">{r * 100:.0f}%</td>'
+            f'<td class="num" data-sort="{e.get("totalDurationMs", 0)}">{e.get("totalDurationMs", 0)} ms</td>'
+            f'<td class="num" data-sort="{e.get("dbTimeMs", 0)}">{e.get("dbTimeMs", 0)} ms</td>'
+            f'<td class="num" data-sort="{e.get("queryCount", 0)}">{e.get("queryCount", 0)}</td>'
+            f"<td>{html_phase(e.get('phase'))}</td>"
+            f"<td>{html_endpoint(e.get('httpMethod'), e.get('httpEndpoint'))}</td>"
+            f"<td>{test}</td>"
+            f'<td class="sql-cell">{html_query_breakdown(e.get("queries", []))}</td>'
+            f"</tr>"
+        )
+
+    return (
+        '<input class="filter-box" type="search" placeholder="Filter by endpoint, test, phase, or SQL…" data-target="endpoint-timings-table">\n'
+        '<table class="sortable" id="endpoint-timings-table">\n'
+        "<thead><tr>"
+        '<th data-type="number">DB-Time Ratio</th>'
+        '<th data-type="number">Total Duration</th>'
+        '<th data-type="number">DB Time</th>'
+        '<th data-type="number">Query Count</th>'
+        '<th data-type="number">Phase</th>'
+        '<th data-type="string">Endpoint</th>'
+        '<th data-type="string">Test</th>'
+        '<th data-type="string">Queries</th>'
+        "</tr></thead>\n"
+        f"<tbody>{''.join(rows)}</tbody>\n"
+        "</table>"
+    )
+
+
 def build_html_report(report: dict, run_url: str = "") -> str:
     # Unlike build_report's "?" placeholder (display-only), these two feed severity_class's
     # division below, so a missing key needs a numeric fallback rather than a string one.
@@ -463,6 +564,7 @@ def build_html_report(report: dict, run_url: str = "") -> str:
     generated_at = iso_to_human(report.get("generatedAt", ""))
     slow_queries = report.get("slowQueries", [])
     n1_suspects = report.get("n1Suspects", [])
+    endpoint_timings = report.get("endpointTimings", [])
     all_findings = slow_queries + n1_suspects
     action_count = sum(1 for f in all_findings if f.get("phase") == "action")
     setup_count = sum(1 for f in all_findings if f.get("phase") == "setup")
@@ -494,6 +596,7 @@ def build_html_report(report: dict, run_url: str = "") -> str:
 <div class="tabs" role="tablist">
 <button class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="panel-slow-queries">🐢 Slow Queries <span class="tab-count">{slow_count}</span></button>
 <button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-n1-suspects">🔁 N+1 Suspects <span class="tab-count">{n1_count}</span></button>
+<button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-endpoint-timings">📊 Endpoint Timing <span class="tab-count">{len(endpoint_timings)}</span></button>
 </div>
 
 <section class="tab-panel" id="panel-slow-queries" role="tabpanel">
@@ -501,6 +604,10 @@ def build_html_report(report: dict, run_url: str = "") -> str:
 </section>
 <section class="tab-panel" id="panel-n1-suspects" role="tabpanel" hidden>
 {build_n1_table_html(n1_suspects, n1_threshold)}
+</section>
+<section class="tab-panel" id="panel-endpoint-timings" role="tabpanel" hidden>
+<p class="muted">One row per HTTP request captured during this run — deliberately unfiltered, no threshold applied yet. Ranked by DB-time ratio (DB time ÷ total request time), which stays roughly stable even if this CI run was uniformly faster or slower than usual. Click a row's "Queries" cell to see exactly which queries ran and how many times.</p>
+{build_endpoint_timings_table_html(endpoint_timings)}
 </section>
 </div>
 <script>{HTML_REPORT_JS}</script>
