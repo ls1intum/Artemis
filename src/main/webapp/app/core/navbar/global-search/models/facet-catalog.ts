@@ -7,6 +7,8 @@ import { TypeFacetValue } from './search-token.model';
 export interface TypeFacetMeta {
     /** i18n key for the chip and start-page card label. */
     labelKey: string;
+    /** i18n key for the value-menu description line (reuses the start-page card description). */
+    descriptionKey: string;
     /** Icon shown on the chip and the start-page card. */
     icon: IconDefinition;
     /** Server `types` this value expands to. Must match the present-day card `filterTags` exactly. */
@@ -19,12 +21,17 @@ export interface TypeFacetMeta {
  * identical results to present day.
  */
 export const TYPE_FACETS: Record<TypeFacetValue, TypeFacetMeta> = {
-    course: { labelKey: 'global.search.entities.coursesTitle', icon: faGraduationCap, serverTypes: ['course'] },
-    exercise: { labelKey: 'global.search.entities.exercisesTitle', icon: faCube, serverTypes: ['exercise'] },
-    lecture: { labelKey: 'global.search.entities.lecturesTitle', icon: faBook, serverTypes: ['lecture'] },
-    communication: { labelKey: 'global.search.entities.communicationTitle', icon: faComments, serverTypes: ['channel', 'post', 'answer_post'] },
-    faq: { labelKey: 'global.search.entities.faqsTitle', icon: faQuestionCircle, serverTypes: ['faq'] },
-    exam: { labelKey: 'global.search.entities.examsTitle', icon: faCalendarCheck, serverTypes: ['exam'] },
+    course: { labelKey: 'global.search.entities.coursesTitle', descriptionKey: 'global.search.entities.coursesDescription', icon: faGraduationCap, serverTypes: ['course'] },
+    exercise: { labelKey: 'global.search.entities.exercisesTitle', descriptionKey: 'global.search.entities.exercisesDescription', icon: faCube, serverTypes: ['exercise'] },
+    lecture: { labelKey: 'global.search.entities.lecturesTitle', descriptionKey: 'global.search.entities.lecturesDescription', icon: faBook, serverTypes: ['lecture'] },
+    communication: {
+        labelKey: 'global.search.entities.communicationTitle',
+        descriptionKey: 'global.search.entities.communicationDescription',
+        icon: faComments,
+        serverTypes: ['channel', 'post', 'answer_post'],
+    },
+    faq: { labelKey: 'global.search.entities.faqsTitle', descriptionKey: 'global.search.entities.faqsDescription', icon: faQuestionCircle, serverTypes: ['faq'] },
+    exam: { labelKey: 'global.search.entities.examsTitle', descriptionKey: 'global.search.entities.examsDescription', icon: faCalendarCheck, serverTypes: ['exam'] },
 };
 
 /** Start-page card order, unchanged from present day. */

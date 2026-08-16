@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SearchInputComponent } from './search-input.component';
-import { FilterChipView, FilterMenuOption } from '../../../models/search-menu.model';
+import { FilterChipView } from '../../../models/search-menu.model';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -57,22 +57,17 @@ describe('SearchInputComponent', () => {
     });
 
     describe('value-menu combobox a11y', () => {
-        const option = (id: string, value: string): FilterMenuOption => ({ id, label: id, icon: faCube, action: { kind: 'value', value } });
-
         it('wires the input as a combobox pointing aria-activedescendant at the highlighted option', () => {
-            fixture.componentRef.setInput('menuOptions', [option('type:exercise', 'exercise'), option('type:lecture', 'lecture')]);
-            fixture.componentRef.setInput('menuActiveIndex', 1);
+            // The menu listbox renders in the results pane (a sibling component); the input references it by id.
+            fixture.componentRef.setInput('activeOptionId', 'gs-filter-option-type:lecture');
             fixture.componentRef.setInput('menuVisible', true);
             fixture.detectChanges();
 
-            expect(component['activeOptionId']()).toBe('gs-filter-option-type:lecture');
             const input = fixture.nativeElement.querySelector('input.search-input');
             expect(input.getAttribute('role')).toBe('combobox');
             expect(input.getAttribute('aria-expanded')).toBe('true');
             expect(input.getAttribute('aria-controls')).toBe('global-search-filter-menu');
             expect(input.getAttribute('aria-activedescendant')).toBe('gs-filter-option-type:lecture');
-            // The highlighted option carries the matching id the input references.
-            expect(fixture.nativeElement.querySelector('[id="gs-filter-option-type:lecture"]')).toBeTruthy();
         });
 
         it('drops aria-controls/activedescendant while the menu is closed', () => {

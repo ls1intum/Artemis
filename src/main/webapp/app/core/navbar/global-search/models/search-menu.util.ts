@@ -39,7 +39,11 @@ export function buildFilterMenuOptions(params: {
             return [];
         }
         const pickerQuery = searchQuery.trim().toLowerCase();
-        return filterActions(translate).filter((action) => matchesQuery(action, pickerQuery));
+        // A leading "-" steps into the exclude sub-menu (choose a type or a course to hide); the picker stays open.
+        if (pickerQuery.startsWith('-')) {
+            return excludeActions(translate).filter((action) => matchesQuery(action, pickerQuery.slice(1).trim()));
+        }
+        return rootActions(translate).filter((action) => matchesQuery(action, pickerQuery));
     }
     const query = operator.query.trim().toLowerCase();
     // Values already applied in the same include/exclude state are hidden, so the menu only ever adds a
@@ -79,13 +83,56 @@ export function toChipView(token: FilterToken, index: number, selectedChip: numb
     };
 }
 
-/** The guided picker's filter actions (each injects an operator prefix). */
-function filterActions(translate: Translate): FilterMenuOption[] {
+/** Top-level guided-picker rows: include by type, include by course, or step into the exclude sub-menu. */
+function rootActions(translate: Translate): FilterMenuOption[] {
     return [
-        { id: 'type', label: translate('global.search.filterAction.type'), icon: faLayerGroup, hint: 'type:', action: { kind: 'operator', prefix: 'type:' } },
-        { id: '-type', label: translate('global.search.filterAction.excludeType'), icon: faBan, hint: '-type:', action: { kind: 'operator', prefix: '-type:' } },
-        { id: 'course', label: translate('global.search.filterAction.course'), icon: faGraduationCap, hint: 'course:', action: { kind: 'operator', prefix: 'course:' } },
-        { id: '-course', label: translate('global.search.filterAction.excludeCourse'), icon: faBan, hint: '-course:', action: { kind: 'operator', prefix: '-course:' } },
+        {
+            id: 'type',
+            label: translate('global.search.filterAction.type'),
+            description: translate('global.search.filterAction.typeDescription'),
+            icon: faLayerGroup,
+            hint: 'type:',
+            action: { kind: 'operator', prefix: 'type:' },
+        },
+        {
+            id: 'course',
+            label: translate('global.search.filterAction.course'),
+            description: translate('global.search.filterAction.courseDescription'),
+            icon: faGraduationCap,
+            hint: 'course:',
+            action: { kind: 'operator', prefix: 'course:' },
+        },
+        {
+            id: 'exclude',
+            label: translate('global.search.filterAction.exclude'),
+            description: translate('global.search.filterAction.excludeDescription'),
+            icon: faBan,
+            // The "{filter}" placeholder is rendered faded — it shows the exclude command shape (−<facet>:).
+            hint: '−{filter}:',
+            action: { kind: 'setQuery', query: '-' },
+        },
+    ];
+}
+
+/** The exclude sub-menu: pick whether to hide a type or a course (reached via the exclude row or by typing "-"). */
+function excludeActions(translate: Translate): FilterMenuOption[] {
+    return [
+        {
+            id: '-type',
+            label: translate('global.search.filterAction.excludeTypeRow'),
+            description: translate('global.search.filterAction.excludeTypeDescription'),
+            icon: faLayerGroup,
+            hint: '−type:',
+            action: { kind: 'operator', prefix: '-type:' },
+        },
+        {
+            id: '-course',
+            label: translate('global.search.filterAction.excludeCourseRow'),
+            description: translate('global.search.filterAction.excludeCourseDescription'),
+            icon: faGraduationCap,
+            hint: '−course:',
+            action: { kind: 'operator', prefix: '-course:' },
+        },
     ];
 }
 
@@ -95,7 +142,16 @@ function typeOptions(operator: ParsedOperator, applied: Set<string>, query: stri
     // (the server would fall through to uncategorised results such as lecture slides).
     const selectable = operator.negate && remaining.length <= 1 ? [] : remaining;
     return selectable
-        .map((value): FilterMenuOption => ({ id: value, label: translate(TYPE_FACETS[value].labelKey), icon: TYPE_FACETS[value].icon, action: { kind: 'value', value } }))
+        .map((value): FilterMenuOption => ({
+            id: value,
+            label: translate(TYPE_FACETS[value].labelKey),
+            // In exclude mode the include-flavoured entity description ("Search courses…") reads backwards and
+            // repeating a single "will be hidden" line six times is noise, so drop it — the red icons and the
+            // "Exclude type" header already say what these rows do.
+            description: operator.negate ? undefined : translate(TYPE_FACETS[value].descriptionKey),
+            icon: TYPE_FACETS[value].icon,
+            action: { kind: 'value', value },
+        }))
         .filter((option) => !query || option.label.toLowerCase().includes(query) || option.id.includes(query));
 }
 

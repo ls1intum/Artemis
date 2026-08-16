@@ -20,40 +20,49 @@
         [isLoading]="isLoading()"
         [operator]="operator()"
         [operatorValueValid]="operatorValueValid()"
-        [menuOptions]="menuOptions()"
-        [menuActiveIndex]="menuActiveIndex()"
         [menuVisible]="filterMenuOpen()"
-        [menuHeaderKey]="menuHeaderKey()"
+        [activeOptionId]="activeOptionId()"
         [filterShortcutLabel]="filterShortcutLabel()"
         (searchInput)="onSearchInput($event)"
         (chipRemoved)="onChipRemoved($event)"
         (chipSelected)="onChipSelected($event)"
         (backspaceOnEmpty)="onBackspaceRemoveFilter()"
-        (optionSelected)="onOptionSelected($event)"
-        (optionHovered)="onOptionHovered($event)"
         (filterTrigger)="toggleFilterPicker()"
     />
-    <!-- Results Area -->
+    <!-- Results Area — also hosts the filter menu while a filter is being composed (no overlay dropdown). -->
     <div class="results-container">
-        @switch (currentView()) {
-            @case (SearchView.Navigation) {
-                @if (overlay.isOpen()) {
-                    <jhi-global-search-navigation-view
-                        [searchQuery]="searchQuery()"
-                        [selectedIndex]="selectedIndex()"
-                        [results]="results()"
-                        [hasSearched]="hasSearched()"
-                        [showResults]="showResults()"
-                        [isLoading]="isLoading()"
-                        [searchError]="searchError()"
-                        [activeFilters]="activeFilters()"
-                        (viewSelected)="navigateTo($event)"
-                        (entityClick)="onEntityClick($event)"
-                    />
+        @if (filterMenuOpen()) {
+            <jhi-global-search-filter-menu
+                [options]="menuOptions()"
+                [activeIndex]="menuActiveIndex()"
+                [headerKey]="menuHeaderKey()"
+                [exclude]="operator()?.negate ?? false"
+                [showBack]="canGoBack()"
+                (optionSelected)="onOptionSelected($event)"
+                (optionHovered)="onOptionHovered($event)"
+                (back)="onFilterBack()"
+            />
+        } @else {
+            @switch (currentView()) {
+                @case (SearchView.Navigation) {
+                    @if (overlay.isOpen()) {
+                        <jhi-global-search-navigation-view
+                            [searchQuery]="searchQuery()"
+                            [selectedIndex]="selectedIndex()"
+                            [results]="results()"
+                            [hasSearched]="hasSearched()"
+                            [showResults]="showResults()"
+                            [isLoading]="isLoading()"
+                            [searchError]="searchError()"
+                            [activeFilters]="activeFilters()"
+                            (viewSelected)="navigateTo($event)"
+                            (entityClick)="onEntityClick($event)"
+                        />
+                    }
                 }
-            }
-            @case (SearchView.Lecture) {
-                <jhi-global-search-lecture-results (back)="navigateTo(SearchView.Navigation)" [searchQuery]="searchQuery()" [selectedIndex]="selectedIndex()" />
+                @case (SearchView.Lecture) {
+                    <jhi-global-search-lecture-results (back)="navigateTo(SearchView.Navigation)" [searchQuery]="searchQuery()" [selectedIndex]="selectedIndex()" />
+                }
             }
         }
     </div>
@@ -73,7 +82,7 @@
             </span>
             <span class="flex items-center gap-1">
                 <kbd class="key-hint-small inline-flex items-center font-mono border" aria-label="Escape">ESC</kbd>
-                <span class="ms-2">{{ 'global.search.toClose' | artemisTranslate }}</span>
+                <span class="ms-2">{{ (canGoBack() ? 'global.search.back' : 'global.search.toClose') | artemisTranslate }}</span>
             </span>
         </div>
     </div>

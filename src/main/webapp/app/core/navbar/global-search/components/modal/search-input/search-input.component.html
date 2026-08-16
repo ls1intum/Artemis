@@ -33,7 +33,7 @@
                 role="combobox"
                 aria-autocomplete="list"
                 [attr.aria-expanded]="menuVisible()"
-                [attr.aria-controls]="menuVisible() ? FILTER_MENU_ID : null"
+                [attr.aria-controls]="menuVisible() ? listboxId : null"
                 [attr.aria-activedescendant]="menuVisible() ? activeOptionId() : null"
             />
         </div>
@@ -77,37 +77,6 @@
                     </button>
                 </span>
             }
-        </div>
-    }
-
-    <!-- Value menu (typing a `facet:` operator) or the guided filter picker (Cmd/Ctrl+F) -->
-    @if (menuVisible()) {
-        <div class="filter-menu-panel">
-            <div class="filter-menu-header">{{ menuHeaderKey() | artemisTranslate }}</div>
-            <ul class="filter-menu" role="listbox" [id]="FILTER_MENU_ID">
-                @for (option of menuOptions(); track option.id; let i = $index) {
-                    <li
-                        class="filter-menu-item"
-                        role="option"
-                        [id]="optionDomId(option.id)"
-                        [attr.aria-selected]="i === menuActiveIndex()"
-                        [class.is-active]="i === menuActiveIndex()"
-                        (click)="onOptionClick(i)"
-                        (mouseenter)="optionHovered.emit(i)"
-                    >
-                        <fa-icon [icon]="option.icon" class="filter-menu-ic" aria-hidden="true" />
-                        <span class="filter-menu-label">{{ option.label }}</span>
-                        @if (option.hint) {
-                            <span class="filter-menu-syntax">{{ option.hint }}</span>
-                        }
-                        @if (i === menuActiveIndex()) {
-                            <span class="filter-menu-hint">{{ 'global.search.applyFilterKey' | artemisTranslate }}</span>
-                        }
-                    </li>
-                } @empty {
-                    <li class="filter-menu-empty">{{ 'global.search.noFilterMatches' | artemisTranslate }}</li>
-                }
-            </ul>
         </div>
     }
 </div>
