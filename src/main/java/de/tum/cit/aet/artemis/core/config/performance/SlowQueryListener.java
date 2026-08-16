@@ -97,7 +97,7 @@ public class SlowQueryListener implements QueryExecutionListener {
             // No request context bound (e.g. startup, scheduled tasks)
         }
 
-        collector.record(normalizedSql, executionTimeMs, httpMethod, httpEndpoint, testName, phase);
+        collector.record(normalizedSql, executionTimeMs, httpMethod, httpEndpoint, testName, phase, Thread.currentThread().getName());
     }
 
     /**

@@ -38,6 +38,31 @@ const PREWARM_ROUTES = [
 
 const JWT_TOKENS_PATH = path.join(__dirname, '..', '.auth', 'jwt-tokens.json');
 
+/**
+ * Header names the slow-query detector (thesis objective 4.4) uses to tag Playwright-issued
+ * requests. Declared once, in lower case, and referenced everywhere via {@link mergeHeaders}
+ * instead of being retyped as string literals: Playwright's `Request.headers()` always returns
+ * header names lower-cased, so a header override built with a differently-cased key (e.g.
+ * `'X-Playwright-Phase'`) doesn't replace the existing entry, it silently adds a second one.
+ * Node/Chromium then treat the two as repeated occurrences of the same case-insensitive HTTP
+ * header and join them with a comma (e.g. `"setup, action"`), which the server-side report can't
+ * parse as either value and renders as an unlabeled `?`. Confirmed via a real E2E run before this
+ * was fixed. Routing every override through `mergeHeaders` makes this structurally impossible to
+ * reintroduce, regardless of how a future edit spells the header name.
+ */
+const PLAYWRIGHT_TEST_NAME_HEADER = 'x-playwright-test-name';
+const PLAYWRIGHT_PHASE_HEADER = 'x-playwright-phase';
+
+/** Merges header overrides into an existing headers object, lower-casing override keys so they
+ * always replace (never duplicate) an existing entry — see {@link PLAYWRIGHT_PHASE_HEADER}. */
+function mergeHeaders(existing: Record<string, string> | undefined, overrides: Record<string, string>): Record<string, string> {
+    const merged: Record<string, string> = { ...(existing ?? {}) };
+    for (const [name, value] of Object.entries(overrides)) {
+        merged[name.toLowerCase()] = value;
+    }
+    return merged;
+}
+
 let chunksWarmedOnThisWorker = false;
 
 /**
@@ -149,11 +174,10 @@ const test = baseTest.extend<
     contextOptions: async ({ contextOptions }, use, testInfo) => {
         await use({
             ...contextOptions,
-            extraHTTPHeaders: {
-                ...contextOptions.extraHTTPHeaders,
-                'X-Playwright-Test-Name': testInfo.title,
-                'X-Playwright-Phase': 'setup',
-            },
+            extraHTTPHeaders: mergeHeaders(contextOptions.extraHTTPHeaders, {
+                [PLAYWRIGHT_TEST_NAME_HEADER]: testInfo.title,
+                [PLAYWRIGHT_PHASE_HEADER]: 'setup',
+            }),
         });
     },
     autoTestFixture: [
@@ -172,8 +196,9 @@ const test = baseTest.extend<
             // `installApiResponseCapture`'s `browserContext.route()` handler below — Playwright
             // resolves page-scoped routes before context-scoped ones, and `continue()` would
             // terminate the chain right here (see the 2026-08-07 baseFixtures.ts merge note for
-            // why that distinction matters).
-            await page.route('**/api/**', (route) => route.fallback({ headers: { ...route.request().headers(), 'X-Playwright-Phase': 'action' } }));
+            // why that distinction matters). Goes through `mergeHeaders`, not a raw spread, so the
+            // override can't silently duplicate into `"setup, action"` — see its doc comment.
+            await page.route('**/api/**', (route) => route.fallback({ headers: mergeHeaders(route.request().headers(), { [PLAYWRIGHT_PHASE_HEADER]: 'action' }) }));
 
             // Node-held capture of non-GET /api response bodies for the whole context (covers popups too).
             // Works because serviceWorkers: 'block' keeps the Angular SW from handling /api fetches — with

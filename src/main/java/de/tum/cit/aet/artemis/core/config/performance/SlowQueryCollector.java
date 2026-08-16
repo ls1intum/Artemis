@@ -78,14 +78,17 @@ public class SlowQueryCollector {
      * @param phase           Playwright phase from the {@code X-Playwright-Phase} header — {@code "action"}
      *                            for requests the browser page itself issued, {@code "setup"} for
      *                            {@code page.request}/{@code context.request} traffic; may be {@code null}.
+     * @param threadName      Name of the executing thread, for attributing background/async queries
+     *                            ({@code httpEndpoint == null}) to a subsystem without any request context.
      */
-    public void record(String normalizedSql, long executionTimeMs, String httpMethod, String httpEndpoint, String testName, String phase) {
+    public void record(String normalizedSql, long executionTimeMs, String httpMethod, String httpEndpoint, String testName, String phase, String threadName) {
 
         // --- Slow-query detection ---
         if (executionTimeMs >= properties.getSlowQueryThresholdMs()) {
             if (slowQueries.size() < properties.getMaxRecordedQueries()) {
-                slowQueries.add(new SlowQueryRecord(normalizedSql, executionTimeMs, httpMethod, httpEndpoint, testName, phase, Instant.now()));
-                log.debug("[SlowQuery] {}ms | {} {} | test='{}' | phase='{}' | sql={}", executionTimeMs, httpMethod, httpEndpoint, testName, phase, abbreviate(normalizedSql));
+                slowQueries.add(new SlowQueryRecord(normalizedSql, executionTimeMs, httpMethod, httpEndpoint, testName, phase, threadName, Instant.now()));
+                log.debug("[SlowQuery] {}ms | {} {} | test='{}' | phase='{}' | thread='{}' | sql={}", executionTimeMs, httpMethod, httpEndpoint, testName, phase, threadName,
+                        abbreviate(normalizedSql));
             }
             else {
                 log.warn("[SlowQuery] Circuit-breaker: max {} entries reached, ignoring further slow queries", properties.getMaxRecordedQueries());

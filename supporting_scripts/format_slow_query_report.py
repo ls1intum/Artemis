@@ -52,15 +52,21 @@ def trunc_plain(text: str, max_len: int = 100) -> str:
     return text[:max_len] + "…" if len(text) > max_len else text
 
 
-def fmt_endpoint(method: str, endpoint: str) -> str:
+def fmt_endpoint(method: str, endpoint: str, thread_name: str = None) -> str:
     if not method and not endpoint:
-        return "*(background)*"
+        return f"*(background: `{thread_name}`)*" if thread_name else "*(background)*"
     return f"`{method or '?'} {endpoint or '?'}`"
 
 
-def fmt_phase(phase: str) -> str:
-    """Markdown for the setup-vs-action badge. `?` means the request predates the
-    `X-Playwright-Phase` header or wasn't run under Playwright at all."""
+def fmt_phase(phase: str, has_endpoint: bool = True) -> str:
+    """Markdown for the setup-vs-action badge. A query with no `httpEndpoint` at all never ran
+    inside a Playwright-driven request -- there's no setup/action phase to report, so it gets its
+    own label rather than reusing the generic `?`, which otherwise looks identical to the (real,
+    separately-diagnosed) header-corruption bug that also renders as `?`. `?` itself is now only
+    reached when there IS an HTTP context but the phase value is neither `action` nor `setup`,
+    e.g. a not-yet-fully-diagnosed edge case -- genuinely worth a reader's attention."""
+    if not has_endpoint:
+        return "⚙️ background"
     return {"action": "🎯 action", "setup": "🔧 setup"}.get(phase, "?")
 
 
@@ -110,10 +116,11 @@ def build_slow_queries_section(slow_queries: list, threshold_ms: int, run_url: s
         "|---|----------|-------|----------|------|-----------------|",
     ]
     for i, q in enumerate(shown, start=1):
-        endpoint = fmt_endpoint(q.get("httpMethod"), q.get("httpEndpoint"))
+        endpoint = fmt_endpoint(q.get("httpMethod"), q.get("httpEndpoint"), q.get("threadName"))
         test = f"`{q['testName']}`" if q.get("testName") else "—"
+        phase = fmt_phase(q.get("phase"), has_endpoint=bool(q.get("httpEndpoint")))
         sql = trunc(q.get("sql", ""))
-        lines.append(f"| {i} | **{q['executionTimeMs']} ms** | {fmt_phase(q.get('phase'))} | {endpoint} | {test} | `{sql}` |")
+        lines.append(f"| {i} | **{q['executionTimeMs']} ms** | {phase} | {endpoint} | {test} | `{sql}` |")
     if hidden_count > 0:
         lines.append("")
         lines.append(f"_Showing the {len(shown)} worst (action-phase findings prioritized). {hidden_count} more not shown — see the {artifact_link(run_url)} for the full list._")
@@ -262,6 +269,7 @@ td.sql-cell summary { cursor: pointer; }
 .phase-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .phase-action { background: rgba(22, 163, 74, .15); color: #16a34a; }
 .phase-setup { background: rgba(107, 114, 128, .15); color: var(--muted); }
+.phase-background { background: rgba(107, 114, 128, .08); color: var(--muted); font-style: italic; }
 """
 
 HTML_REPORT_JS = """
@@ -319,9 +327,14 @@ def phase_sort_value(phase: str) -> int:
     return 1 if phase == "action" else 0
 
 
-def html_phase(phase: str) -> str:
-    """Badge for the setup-vs-action split (see phase_sort_key). `?` covers findings captured
-    before the `X-Playwright-Phase` header existed, or not run under Playwright at all."""
+def html_phase(phase: str, has_endpoint: bool = True) -> str:
+    """Badge for the setup-vs-action split (see phase_sort_key). A query with no `httpEndpoint`
+    never ran inside a Playwright-driven request, so it gets its own badge rather than sharing the
+    generic `?` with the (separately-diagnosed) header-corruption bug, which also renders as `?`.
+    `?` itself now only covers findings that DO have an HTTP context but an unrecognised phase
+    value -- e.g. a not-yet-diagnosed edge case, genuinely worth a reader's attention."""
+    if not has_endpoint:
+        return '<span class="phase-badge phase-background">background</span>'
     if phase == "action":
         return '<span class="phase-badge phase-action">action</span>'
     if phase == "setup":
@@ -329,9 +342,10 @@ def html_phase(phase: str) -> str:
     return '<span class="muted">?</span>'
 
 
-def html_endpoint(method: str, endpoint: str) -> str:
+def html_endpoint(method: str, endpoint: str, thread_name: str = None) -> str:
     if not method and not endpoint:
-        return '<span class="muted">(background)</span>'
+        label = f"(background: {thread_name})" if thread_name else "(background)"
+        return f'<span class="muted">{html.escape(label)}</span>'
     return html.escape(f"{method or '?'} {endpoint or '?'}")
 
 
@@ -358,11 +372,12 @@ def build_slow_queries_table_html(slow_queries: list, threshold_ms: int) -> str:
         duration = q.get("executionTimeMs", 0)
         ratio = duration / threshold_ms if threshold_ms else 0
         test = html.escape(q["testName"]) if q.get("testName") else '<span class="muted">—</span>'
+        has_endpoint = bool(q.get("httpEndpoint"))
         rows.append(
             f'<tr class="{severity_class(ratio)}">'
             f'<td class="num" data-sort="{duration}">{duration} ms</td>'
-            f"<td>{html_phase(q.get('phase'))}</td>"
-            f"<td>{html_endpoint(q.get('httpMethod'), q.get('httpEndpoint'))}</td>"
+            f"<td>{html_phase(q.get('phase'), has_endpoint)}</td>"
+            f"<td>{html_endpoint(q.get('httpMethod'), q.get('httpEndpoint'), q.get('threadName'))}</td>"
             f"<td>{test}</td>"
             f'<td class="sql-cell">{html_sql_cell(q.get("sql", ""))}</td>'
             f"</tr>"

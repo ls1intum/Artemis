@@ -17,7 +17,12 @@ import java.time.Instant;
  *                            requests the browser page itself issued (real UI interaction), {@code "setup"}
  *                            for {@code page.request}/{@code context.request} traffic (test fixtures); {@code null}
  *                            when not running under Playwright.
+ * @param threadName      Name of the thread that executed the query. Always captured (cheap), but only
+ *                            meaningful for background/async queries ({@code httpEndpoint == null}): Spring's
+ *                            {@code @Scheduled}/{@code @Async} executors are typically named after their
+ *                            bean (e.g. {@code quizStatisticsTaskExecutor-1}), which is often enough to
+ *                            identify which subsystem triggered the query without any request context at all.
  * @param capturedAt      Instant at which the query was recorded.
  */
-public record SlowQueryRecord(String sql, long executionTimeMs, String httpMethod, String httpEndpoint, String testName, String phase, Instant capturedAt) {
+public record SlowQueryRecord(String sql, long executionTimeMs, String httpMethod, String httpEndpoint, String testName, String phase, String threadName, Instant capturedAt) {
 }
