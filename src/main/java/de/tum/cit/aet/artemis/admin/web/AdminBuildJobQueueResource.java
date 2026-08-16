@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -145,6 +146,22 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to get information on available build agents");
         List<BuildAgentInformation> buildAgentSummary = distributedDataAccessService.getBuildAgentInformation();
         return ResponseEntity.ok(buildAgentSummary);
+    }
+
+    /**
+     * Returns the network addresses each build agent is observed to connect from, and whether they lie inside the
+     * configured build agent networks.
+     * <p>
+     * Kept out of {@code BuildAgentInformation} on purpose: that record is shared with the build agent nodes, so adding
+     * to it would require migrating or clearing the distributed structures on upgrade. These addresses are also written
+     * by the core nodes rather than by the agents, which is what makes them usable for authorizing git requests.
+     *
+     * @return the registered addresses of all build agents
+     */
+    @GetMapping("build-agent-addresses")
+    public ResponseEntity<List<BuildAgentAddressInfo>> getBuildAgentAddresses() {
+        log.debug("REST request to get the registered network addresses of all build agents");
+        return ResponseEntity.ok(List.copyOf(distributedDataAccessService.getBuildAgentAddressMap().values()));
     }
 
     /**

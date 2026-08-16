@@ -22,6 +22,21 @@ export class BuildAgentInformation implements BaseEntity {
     public pauseAfterConsecutiveBuildFailures?: number;
 }
 
+/**
+ * The network addresses a build agent is observed to connect to the cluster from.
+ *
+ * Recorded by the core nodes rather than reported by the agent, which is what makes them usable for deciding whether a
+ * clone really comes from that agent. Several agents behind one NAT gateway legitimately share an address, and an agent
+ * that is reconnecting can briefly show more than one.
+ */
+export class BuildAgentAddressInfo {
+    public agentName?: string;
+    public addresses?: string[];
+    public observedAt?: dayjs.Dayjs;
+    /** False when an observed address lies outside the configured build agent networks; such an agent cannot clone. */
+    public withinAllowlist?: boolean;
+}
+
 export class BuildAgentDetails {
     public averageBuildDuration?: number;
     public successfulBuilds?: number;

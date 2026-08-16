@@ -16,8 +16,8 @@ artemis:
             username: "artemis-admin"
             password: "artemis-admin"
     version-control:
-        # Deprecated, and both may be omitted entirely when build-agent-use-ssh is true.
-        # Prefer SSH keys for build agents, see "Build Agent Authentication" below.
+        # Deprecated. Omit both unless Jenkins clones from this installation:
+        # build agents authenticate per build job, see "Build Agent Authentication" below.
         build-agent-git-username: "buildagent_user"
         build-agent-git-password: "buildagent_password"
 jhipster:
@@ -71,37 +71,109 @@ Artemis also pins the restrictive rendering profile of the diagram renderer at s
 
 ### Build Agent Authentication
 
-Build agents clone repositories from the core nodes in one of two ways, selected by `artemis.version-control.build-agent-use-ssh`:
+Build agents clone repositories from the core nodes. Three mechanisms exist, and a clone is only served when the caller is a known agent, is calling from an address that agent is connected from, and is asking for a repository it currently has a build job for.
 
-- `false` (default, **deprecated**): the agents authenticate over HTTPS with `build-agent-git-username` and `build-agent-git-password`. A core node accepts that credential pair for read access to *every* repository, ahead of the rate limit, the repository authorization checks and the VCS access log. Treat it as a system-wide credential and give it the same care as the internal admin password.
-- `true` (**recommended**): each agent generates an SSH key pair at startup and publishes its public key to the core nodes, which authenticate agents by key. Core nodes then **stop honouring the build-agent shortcut**, so that credential pair no longer opens every repository. This also requires `ssh-template-clone-url` and `ssh-private-key-folder-path` on the agents.
+| Mechanism | Configuration | Scope |
+|---|---|---|
+| **Build job clone token** (default over HTTPS) | none | the repositories of one running build job |
+| **SSH key** (recommended) | `build-agent-use-ssh: true` plus `ssh-template-clone-url` and `ssh-private-key-folder-path` | the repositories of the agent's running build jobs |
+| **Shared git credentials** (**deprecated**) | `build-agent-git-username` and `build-agent-git-password` | *every* repository in the installation |
+
+On a node that runs local CI, leave both shared credentials empty. They are only still needed by a client that is not an Artemis build agent and therefore has neither a key nor a build job, which in practice means [Jenkins with LocalVC](/admin/jenkins-localvc).
 
 <Callout variant={CalloutVariant.warning}>
-    HTTPS authentication for build agents is deprecated. Configure new installations with
-    `artemis.version-control.build-agent-use-ssh: true`, and move existing ones over in the order given below.
+    The shared credential pair is deprecated. One static secret, held by every build agent and every core node and
+    usually written into several configuration files, opens every repository in the installation, and it does so ahead
+    of the rate limit, the authorization checks and the access log, which makes a leak both unlimited and invisible.
 
-    One static secret, shared by every build agent and every core node and usually written into several configuration
-    files, opens every repository in the installation, and it does so ahead of the rate limit, the authorization checks
-    and the access log, which makes a leak both unlimited and invisible. An SSH key is per agent, is generated at
-    startup rather than configured, never leaves the agent that holds it, and reaches a core node only through an agent
-    that has joined the cluster.
-
-    The default stays `false` for now because SSH mode still needs `ssh-template-clone-url` and
-    `ssh-private-key-folder-path` to be set explicitly, and because Jenkins uses the same credential pair (see the
-    rollout note below).
+    Clear `build-agent-git-username` and `build-agent-git-password` unless Jenkins clones from this installation. Build
+    agents do not need them: over HTTPS an agent authenticates with the clone token of the job it is running, and with
+    `build-agent-use-ssh: true` it authenticates with a key it generates at startup and never sends anywhere.
 </Callout>
 
-The property does different things on the two node roles. On a build agent it selects the mechanism the agent uses. On a core node it controls only the build-agent shortcut over HTTPS: `true` stops that pair from granting repository-wide read. The pair is still processed as ordinary Basic credentials afterwards, which matters only if you pointed `build-agent-git-username` at a real Artemis account — that person then authenticates as themselves and gets exactly their own access, subject to the rate limit, the authorization checks and the access log. Core nodes always accept a registered build agent's public key, whatever the property says there, because a key is per-agent and only reaches a core node through a build agent that has joined the cluster — unlike the credential pair, it is not a shared secret worth switching off.
+#### What a build agent may read
+
+Both current mechanisms are bounded by the build job the agent is actually running, which Artemis tracks in the distributed processing list:
+
+- A **clone token** is minted when a build job is queued and travels with it. It is accepted only for the repositories that job declares — the participant's assignment repository, the tests, the solution where the exercise checks it out, and any auxiliary repositories — and only from the agent that claimed the job. It has no expiry of its own and needs none: a job leaves the processing list when it finishes, is cancelled, or hits the build timeout, and the token stops working at that moment.
+- Over **SSH**, the public key already establishes which agent is connected, so no token is involved. The same processing list decides which repositories that agent may read.
+
+Both paths write a VCS access log entry naming the agent and the build job. The old shared-credential shortcut wrote nothing at all, which made the most privileged reader in the installation the only one that could not be audited.
+
+#### Restricting where build agents may connect from
+
+Every build agent registers the address it connects to the cluster from. Core nodes observe that address on the agent's own cluster connection rather than taking the agent's word for it, and a clone is only served from an address the presenting agent is currently connected from.
+
+Optionally, bound which hosts may act as a build agent at all:
+
+```yaml
+artemis:
+    continuous-integration:
+        build-agent-network:
+            allowed-ranges:
+                - "10.0.0.0/8"
+            trusted-proxies:
+                - "10.0.0.1"
+```
+
+- `allowed-ranges` accepts CIDR blocks and single addresses, IPv4 and IPv6. An agent connecting from outside them is refused, which is what stops a host that reached your cluster from registering itself as a build agent. **Leaving it empty means no restriction**, so upgrading does not stop existing agents.
+- `trusted-proxies` names the reverse proxies whose `X-Forwarded-For` header may be believed for HTTP git requests. Any client can set that header, so it is only consulted when the request's TCP peer is one of these addresses. Leave it empty when Artemis is reached directly.
+
+<Callout variant={CalloutVariant.info}>
+    Several agents on one host share a source address, which is normal behind NAT and fully supported. The allowlist
+    bounds hosts, not individual agents.
+
+    If your middleware cannot report client connection addresses, Artemis logs this at startup and skips the address
+    binding rather than refusing every build. The allowlist and the build job scoping still apply.
+</Callout>
+
+#### SSH behind a load balancer
+
+A load balancer that forwards port 7921 at the TCP level hides the client: every SSH connection would appear to come from the balancer, which would put all SSH users into one rate limit bucket and make the address check above meaningless. Enable PROXY protocol on both sides:
+
+```nginx
+stream {
+  server {
+    listen 7921;
+    proxy_pass 127.0.0.1:7921;
+    proxy_protocol on;
+  }
+}
+```
+
+```yaml
+artemis:
+    version-control:
+        ssh-proxy-protocol:
+            trusted-sources:
+                - "10.0.0.1"
+```
+
+A connection from a listed address must begin with a valid PROXY protocol header and is refused otherwise. A connection from any other address is handled as ordinary SSH and keeps its socket peer, so direct connections are unaffected. The list is keyed on the source address rather than on whether a header is present, because believing a header from any sender would let anyone who can reach the port claim an arbitrary client address.
+
+<Callout variant={CalloutVariant.warning}>
+    These two settings must change together. `proxy_protocol on` without the matching `trusted-sources` breaks every
+    SSH connection through that proxy, and `trusted-sources` without `proxy_protocol on` refuses them. The Docker
+    Compose setups in this repository already ship both.
+</Callout>
+
+#### Moving build agents to SSH
+
+`artemis.version-control.build-agent-use-ssh` does different things on the two node roles. On a build agent it selects the mechanism the agent uses. On a core node it controls only whether the shared credential pair still grants repository-wide read. Core nodes always accept a registered build agent's public key, whatever the property says there, because a key is per-agent and only reaches a core node through an agent that has joined the cluster.
 
 That asymmetry decides the order in which you roll the change out:
 
 1. Set `build-agent-use-ssh: true` on the build agents, together with `ssh-template-clone-url` and `ssh-private-key-folder-path`, and restart them. They now clone by key, and the core nodes accept that immediately, so builds keep working while the core nodes are still on `false`. You can move agents one at a time.
-2. Once no agent clones over HTTPS any more, set the property on the core nodes and restart them. This is the step that closes the shortcut.
+2. Once no agent clones over HTTPS any more, set the property on the core nodes and restart them.
 
 <Callout variant={CalloutVariant.warning}>
-    Do not do it in the other order. A core node with `build-agent-use-ssh: true` no longer honours the build-agent shortcut, and `buildjob_user` is not a real account, so every agent still configured for HTTPS fails to clone from it — which is also what happens if you set the property on the core nodes while any agent is still on `false`.
+    Do not do it in the other order. A core node with `build-agent-use-ssh: true` no longer grants the shared credential
+    pair repository-wide read, and `buildjob_user` is not a real account, so an agent that still relies on that pair
+    fails to clone from it. Agents that use build job clone tokens are unaffected either way.
 
-    Leave it at `false` when Jenkins is your CI backend. The [Jenkins with LocalVC](/admin/jenkins-localvc) setup has Jenkins clone over HTTPS with this same credential pair, and Jenkins is not an Artemis build agent, so it has no key to fall back to.
+    Leave the credential pair configured when Jenkins is your CI backend. The [Jenkins with LocalVC](/admin/jenkins-localvc)
+    setup has Jenkins clone over HTTPS with it, and Jenkins is not an Artemis build agent, so it has neither a key nor a
+    build job to fall back to.
 </Callout>
 
 ### Database Credentials

@@ -591,7 +591,7 @@ You can make following adaptations to the `application-prod.yml`:
     Build agents require access to the VC server. Therefore, you need to add credentials so the build agent can access the repositories.
     These credentials are used to clone repositories via HTTPS. You must also add these credentials to the localvc nodes.
 
-    HTTPS authentication for build agents is deprecated; prefer SSH keys as described after the example below.
+    These shared credentials are deprecated and can be omitted: a build agent authenticates with the clone token of the build job it is running, or with an SSH key as described after the example below. Configure them only if Jenkins clones from this installation.
 
     ```yaml
     artemis:
@@ -603,7 +603,9 @@ You can make following adaptations to the `application-prod.yml`:
             build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. You can otherwise use an ssh key
     ```
 
-    Preferably, set `artemis.version-control.build-agent-use-ssh: true` to have every agent generate an SSH key pair at startup and authenticate with it, which removes the need for a shared credential entirely; both properties above may then be omitted. Set it on the build agents first — localvc nodes accept a registered agent's key regardless of their own setting, so builds keep working — and only afterwards on the localvc nodes, where it stops that pair from granting build agents read access to every repository. See [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication).
+    Preferably, set `artemis.version-control.build-agent-use-ssh: true` to have every agent generate an SSH key pair at startup and authenticate with it. Set it on the build agents first — localvc nodes accept a registered agent's key regardless of their own setting, so builds keep working — and only afterwards on the localvc nodes, where it stops the shared pair from granting read access to every repository.
+
+    Note that a multi-node setup terminates SSH on the load balancer, which hides the real client from the SSH server. Enable PROXY protocol in the nginx `stream` block and list the balancer in `artemis.version-control.ssh-proxy-protocol.trusted-sources` on every localvc node; the Docker Compose files in this repository already do both. See [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication) for this and for restricting which networks build agents may connect from.
 
 4. Configuration related to the execution of build jobs:
 
