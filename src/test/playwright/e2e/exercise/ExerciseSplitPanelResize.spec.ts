@@ -45,6 +45,9 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
             }
             await panel.page().waitForTimeout(100);
         }
+        if (previous <= 0) {
+            throw new Error('The panel never reported a measurable width, so there is no settled layout to compare a resize against.');
+        }
         return previous;
     }
 

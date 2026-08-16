@@ -362,6 +362,11 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             expect(channel?.id, 'exercise channel should be created').toBeTruthy();
             await communicationAPIRequests.joinUserIntoChannel({ id: writeCourse.id } as any, channel.id!, studentOne);
 
+            // Seeded as the student who will view them, as the channel setup does: a user's own messages are not
+            // "unread", so the discussion opens at the newest page instead of jumping to the first unread post and
+            // auto-loading earlier pages, which would let this test pass without ever chain-loading anything.
+            await login(studentOne);
+
             oldestPost = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', 'Oldest discussion infinite scroll message');
             const fillerCount = messagesToSeed - 2;
             for (let batchStart = 0; batchStart < fillerCount; batchStart += 20) {
@@ -372,6 +377,7 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
                 );
             }
             newestPost = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', 'Newest discussion infinite scroll message');
+            await communicationAPIRequests.markConversationAsRead(writeCourse.id, channel.id!);
         });
 
         test('Scrolling up repeatedly chain-loads earlier pages in the exercise discussion section', async ({ login, courseCommunication }) => {

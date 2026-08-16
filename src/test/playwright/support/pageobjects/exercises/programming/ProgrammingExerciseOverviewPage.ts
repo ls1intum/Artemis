@@ -143,9 +143,25 @@ export class ProgrammingExerciseOverviewPage {
      */
     async getCloneUrl(cloneMethod: GitCloneMethod = GitCloneMethod.https) {
         const cloneUrl = this.page.locator('.clone-url');
-        const expectedScheme = cloneMethod === GitCloneMethod.ssh ? 'ssh://' : 'http';
-        await expect.poll(async () => (await cloneUrl.innerText()).trim(), { timeout: 15000 }).toMatch(new RegExp(`^${expectedScheme}`));
+        await expect.poll(async () => this.cloneUrlBelongsTo(cloneMethod, (await cloneUrl.innerText()).trim()), { timeout: 15000 }).toBeTruthy();
         return (await cloneUrl.innerText()).trim();
+    }
+
+    /**
+     * Whether the displayed clone URL is the one of the given method. The two HTTPS variants share a scheme and differ
+     * only in their credentials, so the token has to be part of the check: waiting for the scheme alone accepts the
+     * tokenized URL left over from a previous selection and clones with the wrong credential mode.
+     */
+    private cloneUrlBelongsTo(cloneMethod: GitCloneMethod, url: string): boolean {
+        if (cloneMethod === GitCloneMethod.ssh) {
+            return url.startsWith('ssh://');
+        }
+        if (!url.startsWith('http')) {
+            return false;
+        }
+        // `//login:token@host` - the plain HTTPS URL carries at most the login, never a password.
+        const carriesToken = /\/\/[^/@]+:[^/@]+@/.test(url);
+        return cloneMethod === GitCloneMethod.httpsWithToken ? carriesToken : !carriesToken;
     }
 
     async copyCloneUrl(cloneMethod: GitCloneMethod = GitCloneMethod.https, codeButton?: Locator) {
