@@ -719,6 +719,22 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         request.postWithResponseBody(POST_URL, body, String.class, HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldSilenceTheGlobalAlertOnARejectedRender() throws Exception {
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0), new TestFeedbackInputDTO(1L, "testB", false, null, 0.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][T](<testid>1</testid>)", testResults, null, "en", false, true, null, null);
+
+        // Sent through MockMvc directly: the shared request helpers discard the body of a non-2xx response, and the
+        // flag under test lives exactly there.
+        var mvcResult = request.performMvcRequest(post(new URI(POST_URL)).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isUnprocessableEntity()).andReturn();
+
+        // The renderer puts a message above the statement it could not replace, so the client's ErrorHandlerInterceptor
+        // must not raise a second, global one for the same failure. AlertService reads exactly this flag.
+        assertThat(objectMapper.readTree(mvcResult.getResponse().getContentAsString()).path("skipAlert").asBoolean()).isTrue();
+    }
+
     // --- Test result count cap ---
 
     /**

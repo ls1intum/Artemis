@@ -1,11 +1,21 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, map, of, tap } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, map, of, retry, tap, throwError, timer } from 'rxjs';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProblemStatementRenderRequest, RenderedProblemStatement, TestFeedbackInput } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 
 const RENDER_URL = 'api/exercise/problem-statement/render';
 const CACHE_LIMIT = 10;
+const RETRY_DELAY_MS = 300;
+
+/**
+ * Whether a second attempt could plausibly succeed: the request never reached the server, or the server failed in a
+ * way it may not fail again. A 429 is excluded on purpose, retrying it spends the very budget it complains about, and
+ * so is a 422, which is a deterministic rejection of this exact request.
+ */
+function isTransient(error: unknown): boolean {
+    return error instanceof HttpErrorResponse && (error.status === 0 || error.status >= 500);
+}
 
 @Injectable({ providedIn: 'root' })
 export class ProblemStatementSsrRenderService {
@@ -65,6 +75,9 @@ export class ProblemStatementSsrRenderService {
             inlineImages: false,
         };
         return this.http.post<RenderedProblemStatement>(RENDER_URL, body).pipe(
+            // One retry for a transient failure, as ProgrammingExercisePlantUmlService does for the diagram of the
+            // legacy renderer next door. A single hiccup should not put a failure banner in front of the reader.
+            retry({ count: 1, delay: (error) => (isTransient(error) ? timer(RETRY_DELAY_MS) : throwError(() => error)) }),
             // The server serializes with NON_EMPTY, so an empty rendering omits `html` entirely.
             // Built field by field rather than with object spread, per the client guideline on copying objects.
             map((rendered) => ({ html: rendered.html ?? '', contentHash: rendered.contentHash, rendererVersion: rendered.rendererVersion })),

@@ -149,5 +149,45 @@ describe('ProblemStatementSsrRenderService', () => {
 
             expect(received?.html).toBe('');
         });
+
+        it('retries a transient failure once instead of putting a banner in front of the reader', () => {
+            vi.useFakeTimers();
+            try {
+                let received: string | undefined;
+                service.render({ markdown: '# Hi', testResults: undefined, allTestsPassed: false, locale: 'en', darkMode: false }).subscribe((r) => (received = r.html));
+
+                httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush('boom', { status: 503, statusText: 'Service Unavailable' });
+                vi.advanceTimersByTime(300);
+                httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush({ html: '<p>Hi</p>', contentHash: 'abc', rendererVersion: '1.1.0' });
+
+                expect(received).toBe('<p>Hi</p>');
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it.each([
+            [429, 'Too Many Requests'],
+            [422, 'Unprocessable Content'],
+        ])('does not retry a %i, which a second identical request cannot change', (status, statusText) => {
+            let failedWith: number | undefined;
+            service
+                .render({ markdown: '# Hi', testResults: undefined, allTestsPassed: false, locale: 'en', darkMode: false })
+                .subscribe({ error: (error) => (failedWith = error.status) });
+
+            httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush('nope', { status, statusText });
+
+            // The afterEach verify() is what proves no second request was issued.
+            expect(failedWith).toBe(status);
+        });
+
+        it('does not cache a failed render', () => {
+            const request = { markdown: '# Hi', testResults: undefined, allTestsPassed: false, locale: 'en', darkMode: false };
+            service.render(request).subscribe({ error: () => {} });
+            httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush('nope', { status: 422, statusText: 'Unprocessable Content' });
+
+            service.render(request).subscribe({ error: () => {} });
+            httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush('nope', { status: 422, statusText: 'Unprocessable Content' });
+        });
     });
 });

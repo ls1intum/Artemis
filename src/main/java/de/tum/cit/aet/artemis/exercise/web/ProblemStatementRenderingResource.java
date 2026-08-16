@@ -100,6 +100,11 @@ public class ProblemStatementRenderingResource {
     private static ResponseEntity<?> unprocessable(String title, String detail) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, detail);
         problem.setTitle(title);
+        // The renderer shows a rejected render in place, above the statement it could not replace. Without this flag the
+        // client's ErrorHandlerInterceptor would raise a global toast for the same failure, so the user would be told
+        // twice, once in a message that names the endpoint's internals. Same contract as AccessForbiddenAlertException:
+        // the component handling the error displays the more concrete message itself.
+        problem.setProperty("skipAlert", true);
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(problem);
     }
 }
