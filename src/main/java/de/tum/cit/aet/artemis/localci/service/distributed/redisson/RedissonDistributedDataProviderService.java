@@ -139,6 +139,13 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     }
 
     @Override
+    public Map<String, Set<String>> getConnectedClientAddresses() {
+        // Redis reports the address it accepted each connection from in CLIENT LIST, which is observed rather
+        // than self-reported and therefore usable for authorizing git requests.
+        return redisClientListResolver.getClientAddressesByName();
+    }
+
+    @Override
     public boolean isConnectedToCluster() {
         // For Redis, being running means being connected
         return isInstanceRunning();

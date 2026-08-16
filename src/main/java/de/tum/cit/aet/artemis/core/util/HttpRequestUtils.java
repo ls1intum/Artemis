@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.util;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -50,6 +51,64 @@ public final class HttpRequestUtils {
         final String ipString = getIpStringFromRequest(request);
         final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
         return Optional.ofNullable(ipAddress);
+    }
+
+    /**
+     * Resolves the address a request actually came from, believing forwarding headers only from a trusted proxy.
+     * <p>
+     * Use this, not {@link #getIpStringFromRequest}, wherever the address decides an authorization outcome. That
+     * method returns the first {@code X-Forwarded-For} value whenever the header is present, and any client can set
+     * that header, so a caller could name whatever address an allowlist happens to permit. Here the TCP peer is the
+     * starting point, and the header is consulted only when that peer is a reverse proxy the installation operates.
+     * <p>
+     * The list is walked from the right, taking the last entry that did not come from a trusted proxy. Entries to the
+     * left of that one were supplied by the client and cannot be relied upon: a client may send an
+     * {@code X-Forwarded-For} of its own, and the proxy appends to it rather than replacing it.
+     *
+     * @param request        the HTTP request
+     * @param isTrustedProxy tells whether an address is a reverse proxy this installation operates
+     * @return the resolved client address, never null; falls back to the TCP peer whenever no forwarded entry can be
+     *         trusted
+     */
+    @NonNull
+    public static String getPeerIpString(@NonNull HttpServletRequest request, @NonNull Predicate<String> isTrustedProxy) {
+        String peer = request.getRemoteAddr();
+        if (peer == null || !isTrustedProxy.test(peer)) {
+            // Either the request reached this node directly, or it came through a proxy we do not operate. Both mean
+            // any forwarding header is unverified input, so the peer itself is the most that can be established.
+            return peer == null ? "" : peer;
+        }
+
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor == null || forwardedFor.isBlank()) {
+            return peer;
+        }
+
+        String[] entries = forwardedFor.split(",");
+        for (int index = entries.length - 1; index >= 0; index--) {
+            String candidate = entries[index].trim();
+            if (candidate.isEmpty()) {
+                continue;
+            }
+            if (!isTrustedProxy.test(candidate)) {
+                return candidate;
+            }
+        }
+
+        // Every entry named a trusted proxy, so the original client is not recorded in the header.
+        return peer;
+    }
+
+    /**
+     * Resolves the address a request actually came from, as an {@link IPAddress}.
+     *
+     * @param request        the HTTP request
+     * @param isTrustedProxy tells whether an address is a reverse proxy this installation operates
+     * @return the resolved client address, or empty if it could not be parsed
+     * @see #getPeerIpString
+     */
+    public static Optional<IPAddress> getPeerIpAddress(@NonNull HttpServletRequest request, @NonNull Predicate<String> isTrustedProxy) {
+        return Optional.ofNullable(new IPAddressString(getPeerIpString(request, isTrustedProxy)).getAddress());
     }
 
     /**

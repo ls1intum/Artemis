@@ -124,8 +124,11 @@ public class LocalCIQueueWebsocketService {
         for (BuildJobQueueItem job : queuedJobs) {
             var buildConfig = removeUnnecessaryInformationFromBuildConfig(job.buildConfig());
             var repositoryInfo = removeUnnecessaryInformationFromRepositoryInfo(job.repositoryInfo());
+            // The trailing null is the clone token, deliberately dropped rather than forwarded. @JsonIgnore already
+            // keeps it out of the payload; clearing it here makes the redaction something the compiler enforces on
+            // anyone who adds a field to this record later.
             filteredQueuedJobs.add(new BuildJobQueueItem(job.id(), job.name(), job.buildAgent(), job.participationId(), job.courseId(), job.exerciseId(), job.retryCount(),
-                    job.priority(), job.status(), repositoryInfo, job.jobTimingInfo(), buildConfig, null));
+                    job.priority(), job.status(), repositoryInfo, job.jobTimingInfo(), buildConfig, null, null));
 
         }
         return filteredQueuedJobs;

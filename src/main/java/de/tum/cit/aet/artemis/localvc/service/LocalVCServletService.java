@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpStringFromRequest;
+import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getPeerIpString;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
@@ -48,6 +49,8 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
@@ -58,6 +61,9 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.localci.service.BuildAgentAddressRegistryService;
+import de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService;
+import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
@@ -132,6 +138,15 @@ public class LocalVCServletService {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    // Optional: a node running LocalVC with Jenkins has no local CI, so it has neither build jobs nor a registry
+    private final Optional<DistributedDataAccessService> distributedDataAccessService;
+
+    private final Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService;
+
+    private final Optional<BuildJobCloneTokenService> buildJobCloneTokenService;
+
+    private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
+
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
 
@@ -171,7 +186,13 @@ public class LocalVCServletService {
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
-            ExerciseVersionService exerciseVersionService) {
+            ExerciseVersionService exerciseVersionService, Optional<DistributedDataAccessService> distributedDataAccessService,
+            Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService,
+            BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
+        this.distributedDataAccessService = distributedDataAccessService;
+        this.buildAgentAddressRegistryService = buildAgentAddressRegistryService;
+        this.buildJobCloneTokenService = buildJobCloneTokenService;
+        this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -271,6 +292,14 @@ public class LocalVCServletService {
         // The first request does not contain an authorizationHeader, the client expects this response
         if (authorizationHeader == null) {
             throw new LocalVCAuthException("No authorization header provided", true);
+        }
+
+        // A build agent cloning for a build job it is currently running. Ahead of the rate limiter on purpose: agents
+        // are exempt from it today only because the shortcut below returns early, and throttling them would stall
+        // every build during an exam peak. Unlike that shortcut this grants nothing installation-wide - it opens the
+        // repositories of one running job, to the agent that holds it, from the address that agent is connected from.
+        if (repositoryAction == RepositoryActionType.READ && authenticateBuildJobCloneToken(request, authorizationHeader)) {
+            return;
         }
 
         // If it is a fetch request, we check if it is the build agent that is fetching the repository. Build agents that
@@ -463,6 +492,104 @@ public class LocalVCServletService {
             }
         }
         return AuthenticationMechanism.PARTICIPATION_VCS_ACCESS_TOKEN;
+    }
+
+    /**
+     * Decides whether a fetch is a build agent cloning a repository of a build job it is currently running.
+     * <p>
+     * Replaces the installation-wide build agent credential on the https path with something bounded on three axes:
+     * the caller must be a registered agent connected from the address it is calling from, must present the token of a
+     * job that agent currently holds, and may only read the repositories that job declares. Nothing here is time
+     * based - a job leaves the processing list when it finishes, is cancelled or hits the build timeout, and the token
+     * stops working at that moment.
+     * <p>
+     * The username is the agent's short name, which is an identifier and not a credential: it is the Hazelcast client
+     * name, the key of the build agent information map, and is shown in the admin UI. It selects whose jobs and whose
+     * addresses to check; the token is what authenticates.
+     * <p>
+     * Every failure falls through to normal user authentication rather than rejecting, because a short name could
+     * collide with a real login and that person must still be able to use their own credentials.
+     *
+     * @param request             the incoming git request
+     * @param authorizationHeader the Basic authorization header of that request
+     * @return whether the request is an authorized build agent clone
+     */
+    private boolean authenticateBuildJobCloneToken(HttpServletRequest request, String authorizationHeader) {
+        if (distributedDataAccessService.isEmpty() || buildAgentAddressRegistryService.isEmpty() || buildJobCloneTokenService.isEmpty()) {
+            // No local CI on this node, so there are no build jobs and nothing can present a valid token
+            return false;
+        }
+
+        try {
+            UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+            String agentName = usernameAndPassword.username();
+            String presentedToken = usernameAndPassword.password();
+            if (!StringUtils.hasText(agentName) || !StringUtils.hasText(presentedToken)) {
+                return false;
+            }
+
+            var processingJobs = distributedDataAccessService.get().getProcessingJobsForAgentByName(agentName);
+            if (processingJobs.isEmpty()) {
+                // Either not a build agent name at all, or an agent with nothing running. Both mean no token can match
+                return false;
+            }
+
+            // Origin before secret: a token read out of the queue by some other party is useless unless it is also
+            // presented from the address the agent that holds the job is connected from.
+            String peerIpAddress = getPeerIpString(request, buildAgentNetworkPolicy::isTrustedProxy);
+            if (!buildAgentNetworkPolicy.isWithinAllowedRanges(peerIpAddress)) {
+                log.warn("Rejecting a build agent clone for agent {} from {}, which is outside the configured build agent networks", agentName, peerIpAddress);
+                return false;
+            }
+            if (!buildAgentAddressRegistryService.get().isRegisteredAddressOfAgent(agentName, peerIpAddress)) {
+                log.warn("Rejecting a build agent clone claiming to be agent {} from {}, which is not an address that agent is connected from", agentName, peerIpAddress);
+                return false;
+            }
+
+            LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
+            var tokenService = buildJobCloneTokenService.get();
+            for (BuildJobQueueItem buildJob : processingJobs) {
+                if (!tokenService.tokenMatches(buildJob, presentedToken)) {
+                    continue;
+                }
+                if (!tokenService.getRepositoryUris(buildJob).contains(localVCRepositoryUri.toString())) {
+                    log.warn("Build agent {} presented the token of build job {} for repository {}, which is not one of that job's repositories", agentName, buildJob.id(),
+                            localVCRepositoryUri);
+                    return false;
+                }
+                // Only on the handshake, like the rate limiter above: git follows /info/refs with a git-upload-pack
+                // using the same credentials, and one clone should leave one audit entry rather than two.
+                if (request.getRequestURI().endsWith("/info/refs")) {
+                    saveBuildAgentVcsAccessLog(localVCRepositoryUri, agentName, buildJob.id(), peerIpAddress);
+                }
+                return true;
+            }
+            return false;
+        }
+        catch (Exception e) {
+            // Anything unexpected here means this is not a valid build agent clone. Fall through rather than reject,
+            // so a malformed header or an unparsable repository path is still handled by the normal path below.
+            log.debug("Could not authenticate the request as a build agent clone", e);
+            return false;
+        }
+    }
+
+    /**
+     * Records a build agent clone in the VCS access log, which the old shared-credential shortcut never did.
+     * <p>
+     * Best effort: an audit entry that cannot be written must not fail the build.
+     */
+    private void saveBuildAgentVcsAccessLog(LocalVCRepositoryUri localVCRepositoryUri, String agentName, String buildJobId, String ipAddress) {
+        try {
+            ProgrammingExercise exercise = getProgrammingExerciseOrThrow(localVCRepositoryUri.getProjectKey());
+            var participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
+                    localVCRepositoryUri.toString(), exercise);
+            String commitHash = getCommitHash(localVCRepositoryUri);
+            vcsAccessLogService.ifPresent(service -> service.saveBuildAgentAccessLog(participation, agentName, buildJobId, commitHash, ipAddress));
+        }
+        catch (Exception e) {
+            log.warn("Could not write a VCS access log entry for build agent {} cloning {}: {}", agentName, localVCRepositoryUri, e.getMessage());
+        }
     }
 
     /**

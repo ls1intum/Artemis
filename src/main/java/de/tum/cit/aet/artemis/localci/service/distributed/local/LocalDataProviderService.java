@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service.distributed.local;
 
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.UUID;
@@ -76,6 +77,14 @@ public class LocalDataProviderService implements DistributedDataProvider {
     public Set<String> getConnectedClientNames() {
         // Local provider doesn't support client tracking - assume all registered agents are connected
         return Set.of();
+    }
+
+    @Override
+    public Map<String, Set<String>> getConnectedClientAddresses() {
+        // Local provider has no client connections to observe: everything runs in one JVM. Callers read the
+        // empty map as "unknown" and skip the address binding, which is correct here - there is no remote
+        // build agent whose origin could be checked.
+        return Map.of();
     }
 
     @Override

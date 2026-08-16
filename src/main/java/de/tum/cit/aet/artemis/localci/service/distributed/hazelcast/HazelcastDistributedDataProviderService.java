@@ -4,6 +4,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -304,6 +306,46 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
         catch (UnsupportedOperationException e) {
             // Client service not available
             return Set.of();
+        }
+    }
+
+    /**
+     * Gets the observed remote address of every connected Hazelcast client, keyed by client name.
+     * <p>
+     * {@link Client#getSocketAddress()} is the address Hazelcast accepted the connection from, so unlike the
+     * agent's self-reported member address it survives NAT honestly and cannot be set by the client. Several
+     * clients behind one gateway therefore share an entry, which is why the value is a set rather than a
+     * single address.
+     *
+     * @return connected client name to its observed remote host addresses, or an empty map if running as a client
+     */
+    @Override
+    public Map<String, Set<String>> getConnectedClientAddresses() {
+        if (!isInstanceRunning()) {
+            return Map.of();
+        }
+
+        // Client service is only available on cluster members, not on clients
+        if (hazelcastInstance instanceof HazelcastClientProxy) {
+            return Map.of();
+        }
+
+        try {
+            Map<String, Set<String>> addressesByClientName = new HashMap<>();
+            for (Client client : hazelcastInstance.getClientService().getConnectedClients()) {
+                InetSocketAddress socketAddress = client.getSocketAddress();
+                if (client.getName() == null || socketAddress == null || socketAddress.getAddress() == null) {
+                    continue;
+                }
+                // Host only: the client's source port is ephemeral and changes on every reconnect, so it would
+                // make every entry unstable without adding anything an authorization decision can use.
+                addressesByClientName.computeIfAbsent(client.getName(), _ -> new HashSet<>()).add(socketAddress.getAddress().getHostAddress());
+            }
+            return addressesByClientName;
+        }
+        catch (UnsupportedOperationException e) {
+            // Client service not available
+            return Map.of();
         }
     }
 

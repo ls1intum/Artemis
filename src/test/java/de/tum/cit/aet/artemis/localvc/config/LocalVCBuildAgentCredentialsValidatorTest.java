@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_AGENT_USE_SSH_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -24,14 +25,19 @@ import de.tum.cit.aet.artemis.core.config.Constants;
  * The credentials are optional properties, so nothing else keeps a local VC node from starting without them. Since
  * {@code LocalVCServletService} is lazy, a node in that state would otherwise start cleanly and only reveal the problem
  * when a build agent fails to clone.
+ * <p>
+ * Which state counts as unusable now depends on local CI. A node running it issues a clone token per build job, so
+ * build agents can always authenticate and a blank credential pair is the state worth aiming for. A node without it
+ * has no build jobs, so the pair is the only mechanism left and its absence is still fatal.
  */
 class LocalVCBuildAgentCredentialsValidatorTest {
 
-    private LocalVCBuildAgentCredentialsValidator createValidator(boolean buildAgentsUseSsh, String username, String password) {
+    private LocalVCBuildAgentCredentialsValidator createValidator(boolean buildAgentsUseSsh, String username, String password, boolean localCiActive) {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.getProperty(BUILD_AGENT_USE_SSH_PROPERTY_NAME, Boolean.class, false)).thenReturn(buildAgentsUseSsh);
         when(mockEnvironment.getProperty("artemis.version-control.build-agent-git-username")).thenReturn(username);
         when(mockEnvironment.getProperty("artemis.version-control.build-agent-git-password")).thenReturn(password);
+        when(mockEnvironment.matchesProfiles(PROFILE_LOCALCI)).thenReturn(localCiActive);
         return new LocalVCBuildAgentCredentialsValidator(mockEnvironment);
     }
 
@@ -54,23 +60,39 @@ class LocalVCBuildAgentCredentialsValidatorTest {
     }
 
     /**
-     * A node with ssh disabled and an incomplete credential pair accepts neither mechanism, so no build agent can ever
-     * clone from it.
+     * Without local CI there are no build jobs and therefore no clone tokens, so a node with ssh disabled and an
+     * incomplete credential pair accepts nothing at all. This is the Jenkins with LocalVC shape.
      *
      * @param username the configured build-agent git username
      * @param password the configured build-agent git password
      */
     @ParameterizedTest
     @CsvSource(nullValues = "null", value = { "null, null", "buildjob_user, null", "null, buildjob_password", "buildjob_user, ''", "'', buildjob_password", "' ', ' '" })
-    void shouldRejectAnIncompleteCredentialPairWithoutSsh(String username, String password) {
-        LocalVCBuildAgentCredentialsValidator validator = createValidator(false, username, password);
+    void shouldRejectAnIncompleteCredentialPairWithoutSshAndWithoutLocalCi(String username, String password) {
+        LocalVCBuildAgentCredentialsValidator validator = createValidator(false, username, password, false);
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(validator::validateBuildAgentCredentials).withMessageContaining(BUILD_AGENT_USE_SSH_PROPERTY_NAME);
     }
 
+    /**
+     * The configuration this change exists to make possible: local CI, no ssh, and no shared secret anywhere. Build
+     * agents authenticate with the clone token of the job they are running, so refusing to start here would reject the
+     * safest setup rather than an unusable one.
+     *
+     * @param username the configured build-agent git username
+     * @param password the configured build-agent git password
+     */
+    @ParameterizedTest
+    @CsvSource(nullValues = "null", value = { "null, null", "buildjob_user, null", "null, buildjob_password", "buildjob_user, ''", "'', buildjob_password", "' ', ' '" })
+    void shouldAcceptAnIncompleteCredentialPairWithLocalCi(String username, String password) {
+        LocalVCBuildAgentCredentialsValidator validator = createValidator(false, username, password, true);
+
+        assertThatCode(validator::validateBuildAgentCredentials).doesNotThrowAnyException();
+    }
+
     @Test
     void shouldAcceptACompleteCredentialPairWithoutSsh() {
-        LocalVCBuildAgentCredentialsValidator validator = createValidator(false, "buildjob_user", "buildjob_password");
+        LocalVCBuildAgentCredentialsValidator validator = createValidator(false, "buildjob_user", "buildjob_password", false);
 
         assertThatCode(validator::validateBuildAgentCredentials).doesNotThrowAnyException();
     }
@@ -81,7 +103,7 @@ class LocalVCBuildAgentCredentialsValidatorTest {
      */
     @Test
     void shouldAcceptAMissingCredentialPairWithSsh() {
-        LocalVCBuildAgentCredentialsValidator validator = createValidator(true, null, null);
+        LocalVCBuildAgentCredentialsValidator validator = createValidator(true, null, null, false);
 
         assertThatCode(validator::validateBuildAgentCredentials).doesNotThrowAnyException();
     }

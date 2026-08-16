@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import org.apache.sshd.git.GitLocationResolver;
 import org.apache.sshd.server.session.ServerSession;
@@ -19,6 +20,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService;
+import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
@@ -41,9 +44,17 @@ public class SshGitLocationResolverService implements GitLocationResolver {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public SshGitLocationResolverService(LocalVCServletService localVCServletService, ProgrammingExerciseRepository programmingExerciseRepository) {
+    // Optional: a node running LocalVC with Jenkins has no local CI and therefore no build jobs
+    private final Optional<DistributedDataAccessService> distributedDataAccessService;
+
+    private final Optional<BuildJobCloneTokenService> buildJobCloneTokenService;
+
+    public SshGitLocationResolverService(LocalVCServletService localVCServletService, ProgrammingExerciseRepository programmingExerciseRepository,
+            Optional<DistributedDataAccessService> distributedDataAccessService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService) {
         this.localVCServletService = localVCServletService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.distributedDataAccessService = distributedDataAccessService;
+        this.buildJobCloneTokenService = buildJobCloneTokenService;
     }
 
     @Override
@@ -75,7 +86,15 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         session.setAttribute(SshConstants.REPOSITORY_EXERCISE_KEY, exercise);
 
         if (session.getAttribute(SshConstants.IS_BUILD_AGENT_KEY) && repositoryAction == RepositoryActionType.READ) {
-            // We already checked for build agent authenticity
+            // The key already proved which build agent this is, and its origin was checked at authentication time.
+            // What remains is scope: an agent may read the repositories of the build jobs it is actually running, not
+            // every repository in the installation. The processing list is the authority and needs no expiry of its
+            // own, because a job leaves it when it finishes, is cancelled, or hits the build timeout.
+            String agentName = session.getAttribute(SshConstants.BUILD_AGENT_NAME_KEY);
+            if (!isRepositoryOfCurrentBuildJob(agentName, localVCRepositoryUri)) {
+                log.warn("Build agent {} tried to read {}, which belongs to none of the build jobs it is currently running", agentName, localVCRepositoryUri);
+                throw new AccessDeniedException("This repository does not belong to a build job of this build agent");
+            }
         }
         else {
             try {
@@ -96,5 +115,27 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         try (Repository repo = localVCServletService.resolveRepository(localRepositoryPath)) {
             return repo.getDirectory().toPath();
         }
+    }
+
+    /**
+     * Checks whether a repository belongs to one of the build jobs the given agent is currently processing.
+     * <p>
+     * This is the ssh counterpart of the per-build-job clone token used over https. No token is needed here, because
+     * the public key already established which agent is connected: the missing constraint was only which repositories
+     * that agent legitimately needs right now, and the processing list answers exactly that.
+     *
+     * @param agentName            the short name of the authenticated build agent, may be null on a session that
+     *                                 predates this attribute being set
+     * @param localVCRepositoryUri the repository the agent is asking to read
+     * @return whether one of the agent's running build jobs declares this repository
+     */
+    private boolean isRepositoryOfCurrentBuildJob(String agentName, LocalVCRepositoryUri localVCRepositoryUri) {
+        if (agentName == null || distributedDataAccessService.isEmpty() || buildJobCloneTokenService.isEmpty()) {
+            return false;
+        }
+        String requestedRepositoryUri = localVCRepositoryUri.toString();
+        var tokenService = buildJobCloneTokenService.get();
+        return distributedDataAccessService.get().getProcessingJobsForAgentByName(agentName).stream()
+                .anyMatch(buildJob -> tokenService.getRepositoryUris(buildJob).contains(requestedRepositoryUri));
     }
 }

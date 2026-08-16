@@ -104,6 +104,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final BuildPhaseEvaluationService buildPhaseEvaluationService;
 
+    private final BuildJobCloneTokenService buildJobCloneTokenService;
+
     private static final int DEFAULT_BUILD_DURATION = 17;
 
     // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
@@ -116,7 +118,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
-            BuildPhaseEvaluationService buildPhaseEvaluationService) {
+            BuildPhaseEvaluationService buildPhaseEvaluationService, BuildJobCloneTokenService buildJobCloneTokenService) {
+        this.buildJobCloneTokenService = buildJobCloneTokenService;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -237,8 +240,13 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
 
+        // The credential the agent that claims this job will clone with. Scoped to this job's repositories and valid
+        // only while the job is in the processing list, so it replaces the installation-wide build agent password
+        // rather than adding to it.
+        String cloneToken = buildJobCloneTokenService.generateCloneToken();
+
         BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
-                programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+                programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null, cloneToken);
 
         // Save the build job before adding it to the queue to ensure it exists in the database.
         // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service.distributed.api;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -103,6 +104,26 @@ public interface DistributedDataProvider {
      * @return a set of connected client names, or empty set if running as a client or not supported
      */
     Set<String> getConnectedClientNames();
+
+    /**
+     * Gets the remote addresses each connected client is observed to connect from, keyed by client name.
+     * <p>
+     * The addresses are the ones the middleware sees on the client's own connection, not values the client
+     * reported about itself. That distinction is the point of this method: a build agent's self-reported
+     * {@code memberAddress} is its local pre-NAT socket and is forgeable, whereas the observed address is
+     * whatever the connection actually came from and is therefore usable for authorizing git requests.
+     * <p>
+     * A client behind NAT appears under the address of its gateway, so several agents can legitimately share
+     * one address, and one agent can appear under several addresses while it reconnects.
+     * <p>
+     * Like {@link #getConnectedClientNames()}, this is only meaningful on data members (core nodes). Providers
+     * that cannot observe client connections return an empty map, which callers must treat as "unknown", never
+     * as "no client is connected".
+     *
+     * @return connected client name to its observed remote addresses (host only, without port), or an empty map
+     *         if running as a client or the provider does not support client tracking
+     */
+    Map<String, Set<String>> getConnectedClientAddresses();
 
     /**
      * Checks if the distributed data provider is connected and ready to use.
