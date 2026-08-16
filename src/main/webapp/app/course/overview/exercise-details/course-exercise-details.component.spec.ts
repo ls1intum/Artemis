@@ -735,6 +735,21 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(comp.participationMode()).toBe('graded');
         });
 
+        it('follows the routed participation on a navigation that does not reload the exercise', async () => {
+            // Switching the mode and going back changes only the child participation, so the exercise is not reloaded
+            // and the navigation is the only signal. The mode has to follow the URL both ways, or it goes on describing
+            // a participation the editor no longer shows.
+            fixture.detectChanges();
+            routeToParticipation('680');
+            comp.loadExercise();
+            expect(comp.participationMode()).toBe('practice');
+
+            routeToParticipation('679');
+            (TestBed.inject(Router) as unknown as MockRouter).setUrl('/courses/1/exercises/programming-exercises/2/code-editor/679');
+
+            expect(comp.participationMode()).toBe('graded');
+        });
+
         it('keeps the graded mode when no participation is addressed', async () => {
             comp.loadExercise();
 
