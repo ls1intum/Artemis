@@ -244,14 +244,21 @@ HTML_REPORT_CSS = """
 body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); }
 .wrapper { max-width: 100%; margin: 0; padding: 24px clamp(16px, 3vw, 48px) 64px; }
 h1 { margin-bottom: 4px; }
-h2 { margin-top: 40px; }
+h2 { margin-top: 0; }
 .muted { color: var(--muted); }
 .ok { color: #16a34a; font-weight: 600; }
-.stats { display: flex; gap: 16px; margin: 20px 0 32px; flex-wrap: wrap; }
+.lead { max-width: 760px; color: var(--fg); line-height: 1.5; margin: 8px 0 28px; }
+.stats { display: flex; gap: 16px; margin: 0 0 32px; flex-wrap: wrap; }
 .stat-tile { background: var(--tile-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; min-width: 160px; }
 .stat-value { display: block; font-size: 28px; font-weight: 700; }
 .stat-label { display: block; font-size: 13px; color: var(--muted); }
 .stat-sub { display: block; font-size: 12px; color: var(--muted); }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.tab-btn { appearance: none; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 10px 6px; font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.tab-btn:hover { color: var(--fg); }
+.tab-btn.active { color: var(--fg); border-bottom-color: var(--sev-medium); }
+.tab-count { background: var(--tile-bg); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; font-size: 12px; font-weight: 600; }
+.tab-panel[hidden] { display: none; }
 .filter-box { width: 100%; max-width: 400px; padding: 8px 10px; margin: 8px 0 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font-size: 14px; }
 table { width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 13px; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
@@ -305,6 +312,19 @@ document.querySelectorAll('.filter-box').forEach(function (input) {
         Array.prototype.forEach.call(table.tBodies[0].rows, function (row) {
             row.style.display = row.textContent.toLowerCase().indexOf(query) !== -1 ? '' : 'none';
         });
+    });
+});
+
+document.querySelectorAll('.tab-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(function (b) {
+            b.classList.remove('active');
+            b.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('.tab-panel').forEach(function (p) { p.hidden = true; });
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        document.getElementById(btn.getAttribute('aria-controls')).hidden = false;
     });
 });
 """
@@ -462,6 +482,7 @@ def build_html_report(report: dict, run_url: str = "") -> str:
 <h1>Slow Query Report</h1>
 <p class="muted">Generated at {html.escape(generated_at)}</p>
 {run_link_html}
+<p class="lead">Findings captured automatically during this E2E run: individual database queries whose execution time exceeded the configured threshold ("Slow Queries"), and SQL patterns repeated more than the N+1 threshold within a single request ("N+1 Suspects"), a classic sign of a missing eager fetch or batch load.</p>
 <div class="stats">
 <div class="stat-tile"><span class="stat-value">{slow_count}</span><span class="stat-label">Slow Queries</span><span class="stat-sub">threshold {threshold_ms} ms</span></div>
 <div class="stat-tile"><span class="stat-value">{n1_count}</span><span class="stat-label">N+1 Suspects</span><span class="stat-sub">threshold &gt;{n1_threshold}×/request</span></div>
@@ -470,11 +491,17 @@ def build_html_report(report: dict, run_url: str = "") -> str:
 </div>
 <p class="muted">Type "action" or "setup" into a table's filter box to isolate findings by phase.</p>
 
-<h2>🐢 Slow Queries</h2>
-{build_slow_queries_table_html(slow_queries, threshold_ms)}
+<div class="tabs" role="tablist">
+<button class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="panel-slow-queries">🐢 Slow Queries <span class="tab-count">{slow_count}</span></button>
+<button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-n1-suspects">🔁 N+1 Suspects <span class="tab-count">{n1_count}</span></button>
+</div>
 
-<h2>🔁 N+1 Query Suspects</h2>
+<section class="tab-panel" id="panel-slow-queries" role="tabpanel">
+{build_slow_queries_table_html(slow_queries, threshold_ms)}
+</section>
+<section class="tab-panel" id="panel-n1-suspects" role="tabpanel" hidden>
 {build_n1_table_html(n1_suspects, n1_threshold)}
+</section>
 </div>
 <script>{HTML_REPORT_JS}</script>
 </body>
