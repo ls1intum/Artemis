@@ -34,11 +34,15 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
     async function waitForSettledWidth(panel: Locator): Promise<number> {
         let previous = -1;
         for (let i = 0; i < 20; i++) {
-            const width = (await panel.boundingBox())!.width;
-            if (Math.abs(width - previous) < 1 && width > 0) {
-                return width;
+            // No box means the panel is between renders, which is the opposite of settled: keep polling instead of
+            // dereferencing null, which turned a panel that was still laying itself out into a TypeError.
+            const box = await panel.boundingBox();
+            if (box) {
+                if (Math.abs(box.width - previous) < 1 && box.width > 0) {
+                    return box.width;
+                }
+                previous = box.width;
             }
-            previous = width;
             await panel.page().waitForTimeout(100);
         }
         return previous;
