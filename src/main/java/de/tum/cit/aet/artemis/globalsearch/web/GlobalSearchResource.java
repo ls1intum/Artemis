@@ -100,11 +100,12 @@ public class GlobalSearchResource {
      * Executes exactly one Weaviate request per invocation. Per-type access rules are encoded as a
      * compound {@code OR}-of-{@code AND}s filter so access control cannot leak across types.
      *
-     * @param query     the search query (may be empty to browse recent items)
-     * @param types     optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel,course,post,answer_post}
-     *                      or {@code all}; default {@code all})
-     * @param courseIds optional course ids to scope the search to one or more courses (OR); inaccessible or unknown ids are ignored
-     * @param limit     maximum number of results (default 10, max 25)
+     * @param query            the search query (may be empty to browse recent items)
+     * @param types            optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel,course,post,answer_post}
+     *                             or {@code all}; default {@code all})
+     * @param courseIds        optional course ids to scope the search to one or more courses (OR); inaccessible or unknown ids are ignored
+     * @param excludeCourseIds optional course ids to hide from the results (OR); inaccessible or unknown ids are ignored
+     * @param limit            maximum number of results (default 10, max 25)
      * @return status 200 with a list of unified search results; empty list if the user has no access
      *         or all requested types are invalid
      */
@@ -496,10 +497,15 @@ public class GlobalSearchResource {
         if (disjuncts.isEmpty()) {
             return new FilterBuildResult(null, false, null, null, null);
         }
-        if (disjuncts.size() == 1) {
-            return new FilterBuildResult(disjuncts.getFirst(), true, accessibleCoursesById, staffCourseIds, editorCourseIds);
+        Filter combined = disjuncts.size() == 1 ? disjuncts.getFirst() : Filter.or(disjuncts.toArray(new Filter[0]));
+        // Admin without an include filter builds unscoped type-discriminator disjuncts (e.g. typeEquals(exercise)), so
+        // narrowing the accessible-course set above never reaches them. Apply the exclusion as a single course_id NOT
+        // IN (...) clause here too, mirroring the fast path. Safe because every indexed row carries a non-null
+        // course_id, so the negation never evaluates against an absent property.
+        if (isAdmin && !hasCourseFilter && hasExcludeFilter) {
+            combined = Filter.and(combined, courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, excludeCourseIds).not());
         }
-        return new FilterBuildResult(Filter.or(disjuncts.toArray(new Filter[0])), true, accessibleCoursesById, staffCourseIds, editorCourseIds);
+        return new FilterBuildResult(combined, true, accessibleCoursesById, staffCourseIds, editorCourseIds);
     }
 
     /**
