@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { type Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -9,8 +9,8 @@ import { FilterToken } from '../models/search-token.model';
 
 describe('GlobalSearchFilterService', () => {
     let service: GlobalSearchFilterService;
-    let applyTokens: ReturnType<typeof vi.fn>;
-    let requestFocus: ReturnType<typeof vi.fn>;
+    let applyTokens: Mock<(tokens: FilterToken[]) => void>;
+    let requestFocus: Mock<() => void>;
 
     const mockCourseStorageService = {
         getCourse: vi.fn<(id: number) => Course | undefined>().mockReturnValue(undefined),
@@ -28,8 +28,8 @@ describe('GlobalSearchFilterService', () => {
             ],
         });
         service = TestBed.inject(GlobalSearchFilterService);
-        applyTokens = vi.fn();
-        requestFocus = vi.fn();
+        applyTokens = vi.fn<(tokens: FilterToken[]) => void>();
+        requestFocus = vi.fn<() => void>();
         service.configure({ applyTokens, requestFocus });
     });
 
