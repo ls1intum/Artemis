@@ -60,6 +60,13 @@ describe('GlobalSearchFilterService', () => {
             expect(service.menuHeaderKey()).toBe('global.search.chooseType');
         });
 
+        it('uses an exclude header when the operator is negated', () => {
+            service.searchQuery.set('-type:');
+            expect(service.menuHeaderKey()).toBe('global.search.chooseExcludeType');
+            service.searchQuery.set('-course:');
+            expect(service.menuHeaderKey()).toBe('global.search.chooseExcludeCourse');
+        });
+
         it('shows the "add filter" header for the guided picker (no operator)', () => {
             service.filterPickerOpen.set(true);
             expect(service.menuHeaderKey()).toBe('global.search.addFilter');
@@ -80,19 +87,37 @@ describe('GlobalSearchFilterService', () => {
     });
 
     describe('onOptionSelected', () => {
-        it('injects the operator prefix and refocuses for a picker action', () => {
+        it('injects the operator prefix and keeps the picker open (for back navigation) on a picker action', () => {
             service.filterPickerOpen.set(true);
             const index = service.menuOptions().findIndex((option) => option.action.kind === 'operator');
             expect(index).toBeGreaterThanOrEqual(0);
 
             service.onOptionSelected(index);
 
-            expect(service.filterPickerOpen()).toBe(false);
+            expect(service.searchQuery()).toBe('type:');
+            expect(service.filterPickerOpen()).toBe(true);
+            expect(service.canGoBack()).toBe(true);
             expect(requestFocus).toHaveBeenCalled();
             expect(applyTokens).not.toHaveBeenCalled();
         });
 
-        it('adds a value token, clears the query, and refocuses', () => {
+        it('steps into the exclude sub-menu (setQuery) without closing the picker or adding a token', () => {
+            service.filterPickerOpen.set(true);
+            const index = service.menuOptions().findIndex((option) => option.action.kind === 'setQuery');
+            expect(index).toBeGreaterThanOrEqual(0);
+
+            service.onOptionSelected(index);
+
+            expect(service.searchQuery()).toBe('-');
+            expect(service.filterPickerOpen()).toBe(true);
+            expect(service.menuHeaderKey()).toBe('global.search.chooseExclude');
+            expect(service.menuOptions().map((option) => option.id)).toEqual(['-type', '-course']);
+            expect(applyTokens).not.toHaveBeenCalled();
+            expect(requestFocus).toHaveBeenCalled();
+        });
+
+        it('adds a value token, clears the query, closes the picker, and refocuses', () => {
+            service.filterPickerOpen.set(true);
             service.searchQuery.set('type:');
             const index = service.menuOptions().findIndex((option) => option.action.kind === 'value');
             const chosen = service.menuOptions()[index];
@@ -102,6 +127,7 @@ describe('GlobalSearchFilterService', () => {
 
             expect(applyTokens).toHaveBeenCalledWith([{ facet: 'type', value, negate: false }]);
             expect(service.searchQuery()).toBe('');
+            expect(service.filterPickerOpen()).toBe(false);
             expect(requestFocus).toHaveBeenCalled();
         });
 
@@ -120,6 +146,35 @@ describe('GlobalSearchFilterService', () => {
         });
     });
 
+    describe('back', () => {
+        it('returns to the root picker from an include value menu', () => {
+            service.filterPickerOpen.set(true);
+            service.searchQuery.set('type:');
+            expect(service.canGoBack()).toBe(true);
+
+            service.back();
+
+            expect(service.searchQuery()).toBe('');
+            expect(service.menuOptions().map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
+        });
+
+        it('returns to the exclude sub-menu from an exclude value menu', () => {
+            service.filterPickerOpen.set(true);
+            service.searchQuery.set('-type:');
+
+            service.back();
+
+            expect(service.searchQuery()).toBe('-');
+            expect(service.menuOptions().map((option) => option.id)).toEqual(['-type', '-course']);
+        });
+
+        it('is unavailable at the root picker', () => {
+            service.filterPickerOpen.set(true);
+            service.searchQuery.set('');
+            expect(service.canGoBack()).toBe(false);
+        });
+    });
+
     describe('chip mutations', () => {
         it('removes a chip by index and clears the keyboard selection', () => {
             const tokens: FilterToken[] = [
@@ -135,7 +190,7 @@ describe('GlobalSearchFilterService', () => {
             expect(service.selectedChip()).toBe(-1);
         });
 
-        it('removes the last token on backspace when no chip is selected', () => {
+        it('does not remove a filter on backspace over the empty input (removal needs chip navigation)', () => {
             service.tokens.set([
                 { facet: 'type', value: 'exercise' },
                 { facet: 'type', value: 'lecture' },
@@ -143,16 +198,8 @@ describe('GlobalSearchFilterService', () => {
 
             service.onBackspaceRemoveFilter();
 
-            expect(applyTokens).toHaveBeenCalledWith([{ facet: 'type', value: 'exercise' }]);
-        });
-
-        it('ignores backspace while a chip is keyboard-selected (nav owns removal)', () => {
-            service.tokens.set([{ facet: 'type', value: 'exercise' }]);
-            service.selectedChip.set(0);
-
-            service.onBackspaceRemoveFilter();
-
             expect(applyTokens).not.toHaveBeenCalled();
+            expect(service.tokens()).toHaveLength(2);
         });
 
         it('starts re-picking a chip: opens its facet operator and marks it as edited', () => {
@@ -223,6 +270,18 @@ describe('GlobalSearchFilterService', () => {
 
             expect(service.searchQuery()).toBe('');
             expect(service.editingChip()).toBe(-1);
+            expect(requestFocus).toHaveBeenCalled();
+        });
+
+        it('steps back to the root picker (not close) on Escape from the exclude sub-menu', () => {
+            service.filterPickerOpen.set(true);
+            service.searchQuery.set('-');
+
+            service.handleMenuKey(keydown('Escape'));
+
+            expect(service.searchQuery()).toBe('');
+            expect(service.filterPickerOpen()).toBe(true);
+            expect(service.menuHeaderKey()).toBe('global.search.addFilter');
             expect(requestFocus).toHaveBeenCalled();
         });
     });

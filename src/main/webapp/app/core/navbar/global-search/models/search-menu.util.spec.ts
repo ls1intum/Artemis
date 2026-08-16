@@ -14,20 +14,22 @@ describe('search menu builders', () => {
             expect(buildFilterMenuOptions({ ...base, pickerOpen: false })).toEqual([]);
         });
 
-        it('returns all four filter actions when the picker is open', () => {
+        it('returns the three root actions when the picker is open', () => {
             const options = buildFilterMenuOptions({ ...base, pickerOpen: true });
-            expect(options.map((option) => option.id)).toEqual(['type', '-type', 'course', '-course']);
+            expect(options.map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
+            // The exclude row steps into a sub-menu rather than injecting an operator.
+            expect(options.find((option) => option.id === 'exclude')?.action).toEqual({ kind: 'setQuery', query: '-' });
+        });
+
+        it('steps into the exclude sub-menu when the query is "-"', () => {
+            const options = buildFilterMenuOptions({ ...base, pickerOpen: true, searchQuery: '-' });
+            expect(options.map((option) => option.id)).toEqual(['-type', '-course']);
             expect(options.every((option) => option.action.kind === 'operator')).toBe(true);
         });
 
-        it('narrows to the exclusions when the query is "-"', () => {
-            const options = buildFilterMenuOptions({ ...base, pickerOpen: true, searchQuery: '-' });
-            expect(options.map((option) => option.id)).toEqual(['-type', '-course']);
-        });
-
-        it('narrows to the course actions when the query is "cou"', () => {
+        it('narrows to the course action when the query is "cou"', () => {
             const options = buildFilterMenuOptions({ ...base, pickerOpen: true, searchQuery: 'cou' });
-            expect(options.map((option) => option.id)).toEqual(['course', '-course']);
+            expect(options.map((option) => option.id)).toEqual(['course']);
         });
     });
 
@@ -36,6 +38,13 @@ describe('search menu builders', () => {
             const options = buildFilterMenuOptions({ ...base, operator: typeOp() });
             expect(options).toHaveLength(6);
             expect(options[0].action).toEqual({ kind: 'value', value: 'course' });
+            // Include mode uses the entity descriptions.
+            expect(options[0].description).toBe('global.search.entities.coursesDescription');
+        });
+
+        it('drops the include-flavoured description in exclude mode (avoids backwards / repetitive text)', () => {
+            const options = buildFilterMenuOptions({ ...base, operator: typeOp('', true) });
+            expect(options.every((option) => option.description === undefined)).toBe(true);
         });
 
         it('hides an already-applied type value', () => {

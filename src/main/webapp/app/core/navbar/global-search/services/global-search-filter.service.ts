@@ -104,10 +104,17 @@ export class GlobalSearchFilterService {
     readonly menuHeaderKey: Signal<string> = computed(() => {
         const op = this.operator();
         if (!op) {
-            return 'global.search.addFilter';
+            // Root picker vs the exclude sub-menu (entered with a leading "-").
+            return this.filterPickerOpen() && this.searchQuery().trim().startsWith('-') ? 'global.search.chooseExclude' : 'global.search.addFilter';
+        }
+        if (op.negate) {
+            return op.facet === 'course' ? 'global.search.chooseExcludeCourse' : 'global.search.chooseExcludeType';
         }
         return op.facet === 'course' ? 'global.search.chooseCourse' : 'global.search.chooseType';
     });
+
+    /** Whether the guided picker can step back a level (i.e. we are in a value menu or the exclude sub-menu). */
+    readonly canGoBack: Signal<boolean> = computed(() => this.filterPickerOpen() && this.searchQuery().trim().length > 0);
 
     private sideEffects: FilterSideEffects = {
         applyTokens: () => {},
@@ -135,10 +142,18 @@ export class GlobalSearchFilterService {
         if (!option) {
             return;
         }
+        if (option.action.kind === 'setQuery') {
+            // Step into a sub-menu (e.g. the exclude chooser) without forming an operator; keep the picker open.
+            this.searchQuery.set(option.action.query);
+            this.menuActiveIndex.set(0);
+            this.sideEffects.requestFocus();
+            return;
+        }
         if (option.action.kind === 'operator') {
-            // Guided picker: inject the operator prefix and open the value menu.
-            this.filterPickerOpen.set(false);
+            // Guided picker: inject the operator prefix and open the value menu. The picker stays "open" through the
+            // flow so the value menu can offer a step back to the previous level.
             this.searchQuery.set(option.action.prefix);
+            this.menuActiveIndex.set(0);
             this.sideEffects.requestFocus();
             return;
         }
@@ -150,6 +165,8 @@ export class GlobalSearchFilterService {
         const editing = this.editingChip();
         this.editingChip.set(-1);
         this.searchQuery.set('');
+        // A value completes the flow: close the picker so the menu does not reopen on the now-empty query.
+        this.filterPickerOpen.set(false);
         this.sideEffects.requestFocus();
         if (editing >= 0) {
             // Re-picking a chip: replace it in place so it keeps its position (the edit menu never offers a
@@ -162,6 +179,15 @@ export class GlobalSearchFilterService {
 
     onOptionHovered(index: number): void {
         this.menuActiveIndex.set(index);
+    }
+
+    /** Steps one level back in the guided picker: an exclude value menu returns to the exclude chooser, everything else to the root. */
+    back(): void {
+        const op = this.operator();
+        this.searchQuery.set(op?.negate ? '-' : '');
+        this.editingChip.set(-1);
+        this.menuActiveIndex.set(0);
+        this.sideEffects.requestFocus();
     }
 
     /** Handles keyboard navigation while the value menu is open. */
@@ -189,7 +215,12 @@ export class GlobalSearchFilterService {
                 break;
             case 'Escape':
                 event.preventDefault();
-                // Cancel the picker / chip edit and clear the operator; a chip being re-picked is kept (never removed until a value is chosen).
+                if (this.canGoBack()) {
+                    // In a value menu or the exclude sub-menu: step back one level instead of closing the whole thing.
+                    this.back();
+                    break;
+                }
+                // At the root picker (or a typed value menu): cancel the picker / chip edit and clear the operator.
                 this.filterPickerOpen.set(false);
                 this.editingChip.set(-1);
                 this.searchQuery.set('');
@@ -239,16 +270,13 @@ export class GlobalSearchFilterService {
         this.sideEffects.applyTokens(removeTokenAt(this.tokens(), index));
     }
 
-    /** Removes the last token when Backspace is pressed on an empty input (unless a chip is keyboard-selected). */
+    /**
+     * Backspace on the empty input intentionally does nothing: a filter must not disappear from an accidental
+     * keystroke. To remove a chip, click its × button, or arrow-navigate to it (which selects it) and press
+     * Delete / Backspace — that path is handled by the modal's chip-navigation keydown handler.
+     */
     onBackspaceRemoveFilter(): void {
-        // When a chip is keyboard-selected, the chip-navigation handler owns removal.
-        if (this.selectedChip() >= 0) {
-            return;
-        }
-        const tokens = this.tokens();
-        if (tokens.length > 0) {
-            this.sideEffects.applyTokens(removeTokenAt(tokens, tokens.length - 1));
-        }
+        // no-op by design (see doc comment)
     }
 
     /**

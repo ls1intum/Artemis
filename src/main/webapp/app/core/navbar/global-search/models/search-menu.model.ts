@@ -24,18 +24,32 @@ export interface FilterChipView {
 
 /**
  * What selecting a menu row does: the guided picker injects an operator prefix into the input; the
- * value menu contributes a value that the modal turns into a token for the active operator's facet.
+ * value menu contributes a value that the modal turns into a token for the active operator's facet;
+ * `setQuery` just sets the input (e.g. to `-`) to step into a sub-menu without forming an operator yet.
  */
-export type FilterMenuAction = { kind: 'operator'; prefix: string } | { kind: 'value'; value: string };
+export type FilterMenuAction = { kind: 'operator'; prefix: string } | { kind: 'value'; value: string } | { kind: 'setQuery'; query: string };
 
 /** One selectable row in the filter menu (guided picker or facet value list). */
 export interface FilterMenuOption {
     /** Stable identity for tracking. */
     id: string;
     label: string;
+    /** Secondary line under the label, so the rows read at the same size as the result / entity rows. */
+    description?: string;
     icon: IconDefinition;
     /** Operator syntax shown as a mono pill on the right (guided-picker rows only), e.g. "type:". */
     hint?: string;
     /** What choosing this row does. */
     action: FilterMenuAction;
+}
+
+/**
+ * DOM id of the filter-menu listbox. Shared so the search input's `aria-controls` / `aria-activedescendant`
+ * can reference the listbox even though it renders in a different component (the results pane).
+ */
+export const FILTER_MENU_LISTBOX_ID = 'global-search-filter-menu';
+
+/** DOM id for a single menu option, referenced by the input's `aria-activedescendant`. */
+export function filterOptionDomId(optionId: string): string {
+    return `gs-filter-option-${optionId}`;
 }

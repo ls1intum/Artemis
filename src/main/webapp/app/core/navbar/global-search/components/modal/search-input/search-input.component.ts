@@ -3,7 +3,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSearch, faSliders, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ParsedOperator } from '../../../models/search-operator.util';
-import { FilterChipView, FilterMenuOption } from '../../../models/search-menu.model';
+import { FILTER_MENU_LISTBOX_ID, FilterChipView } from '../../../models/search-menu.model';
 
 @Component({
     selector: 'jhi-global-search-input',
@@ -24,14 +24,10 @@ export class SearchInputComponent {
     operator = input<ParsedOperator | undefined>(undefined);
     /** True when the typed operator value is a recognised type / course, so it is coloured as confirmed. */
     operatorValueValid = input<boolean>(false);
-    /** Options for the value menu shown while a `facet:` operator is being typed. */
-    menuOptions = input<FilterMenuOption[]>([]);
-    /** Highlighted option index in the value menu. */
-    menuActiveIndex = input<number>(0);
-    /** Whether the menu panel (value menu or guided filter picker) is shown. */
+    /** Whether the filter menu (value menu or guided picker) is open — drives the combobox aria-expanded/controls. */
     menuVisible = input<boolean>(false);
-    /** i18n key for the menu header, e.g. "Choose type" / "Filter by". */
-    menuHeaderKey = input<string>('global.search.chooseType');
+    /** DOM id of the highlighted filter-menu option, for aria-activedescendant (the menu renders in the results pane). */
+    activeOptionId = input<string | undefined>(undefined);
     /** OS-aware label for the filter-picker shortcut, e.g. "⌘F" on Mac / "Ctrl+F" elsewhere. */
     filterShortcutLabel = input<string>('⌘F');
 
@@ -43,10 +39,6 @@ export class SearchInputComponent {
     chipSelected = output<number>();
     /** Emitted when Backspace is pressed while the cursor is at the beginning of the input. */
     backspaceOnEmpty = output<void>();
-    /** Emitted with the option index when a value-menu option is chosen. */
-    optionSelected = output<number>();
-    /** Emitted with the option index when a value-menu option is hovered. */
-    optionHovered = output<number>();
     /** Emitted when the Filter button (or Cmd/Ctrl+F) requests the guided filter picker. */
     filterTrigger = output<void>();
 
@@ -56,17 +48,8 @@ export class SearchInputComponent {
     /** Whether a `facet:` operator is active (drives the coloured overlay + transparent input). */
     protected operatorActive = computed(() => !!this.operator());
 
-    /** Stable id of the value-menu listbox, referenced by the input's aria-controls. */
-    protected readonly FILTER_MENU_ID = 'global-search-filter-menu';
-    /** DOM id for a menu option, so aria-activedescendant on the input can point at the highlighted option. */
-    protected optionDomId(optionId: string): string {
-        return `gs-filter-option-${optionId}`;
-    }
-    /** aria-activedescendant target: the DOM id of the currently highlighted menu option, if any. */
-    protected readonly activeOptionId = computed<string | undefined>(() => {
-        const option = this.menuOptions()[this.menuActiveIndex()];
-        return option ? this.optionDomId(option.id) : undefined;
-    });
+    /** Shared id of the filter-menu listbox (rendered in the results pane), for the input's aria-controls. */
+    protected readonly listboxId = FILTER_MENU_LISTBOX_ID;
 
     focusInput() {
         setTimeout(() => {
@@ -105,9 +88,5 @@ export class SearchInputComponent {
             event.stopPropagation();
             this.chipSelected.emit(index);
         }
-    }
-
-    protected onOptionClick(index: number) {
-        this.optionSelected.emit(index);
     }
 }

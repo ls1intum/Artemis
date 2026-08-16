@@ -49,6 +49,7 @@
             "toNavigate": "zum Navigieren",
             "toSelect": "zum Auswählen",
             "toClose": "zum Schließen",
+            "back": "Zurück",
             "toAddFilter": "um Filter hinzuzufügen",
             "tipTitle": "Schnellsuche",
             "tipDescription": "Suche nach Aufgaben, Vorlesungen und mehr. Verwende Filter, um deine Ergebnisse einzugrenzen.",
@@ -114,14 +115,23 @@
             "noFilterMatches": "Keine Treffer",
             "chooseType": "Typ wählen",
             "chooseCourse": "Kurs wählen",
+            "chooseExclude": "Ausschließen…",
+            "chooseExcludeType": "Typ ausschließen",
+            "chooseExcludeCourse": "Kurs ausschließen",
             "filter": "Filter",
             "addFilter": "Filter hinzufügen",
             "applyFilterKey": "Tab",
             "filterAction": {
                 "type": "Nach Typ filtern",
-                "excludeType": "Einen Typ ausschließen",
+                "typeDescription": "Ergebnisse auf einen Typ eingrenzen",
                 "course": "Auf einen Kurs eingrenzen",
-                "excludeCourse": "Einen Kurs ausschließen"
+                "courseDescription": "Ergebnisse auf einen Kurs eingrenzen",
+                "exclude": "Inhalte ausschließen",
+                "excludeDescription": "Passende Ergebnisse ausblenden",
+                "excludeTypeRow": "Ein Typ",
+                "excludeTypeDescription": "Einen Typ aus den Ergebnissen ausblenden",
+                "excludeCourseRow": "Ein Kurs",
+                "excludeCourseDescription": "Einen Kurs aus den Ergebnissen ausblenden"
             },
             "facets": {
                 "type": "Typ",

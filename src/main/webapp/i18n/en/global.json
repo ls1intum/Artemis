@@ -49,6 +49,7 @@
             "toNavigate": "to navigate",
             "toSelect": "to select",
             "toClose": "to close",
+            "back": "Back",
             "toAddFilter": "to add a filter",
             "tipTitle": "Quick Search",
             "tipDescription": "Search for exercises, lectures, and more. Use filters to narrow your results.",
@@ -114,14 +115,23 @@
             "noFilterMatches": "No matches",
             "chooseType": "Choose type",
             "chooseCourse": "Choose course",
+            "chooseExclude": "Exclude…",
+            "chooseExcludeType": "Exclude type",
+            "chooseExcludeCourse": "Exclude course",
             "filter": "Filter",
             "addFilter": "Add filter",
             "applyFilterKey": "Tab",
             "filterAction": {
                 "type": "Filter by type",
-                "excludeType": "Exclude a type",
+                "typeDescription": "Narrow results to one entity type",
                 "course": "Scope to a course",
-                "excludeCourse": "Exclude a course"
+                "courseDescription": "Narrow results to one course",
+                "exclude": "Exclude content",
+                "excludeDescription": "Hide matching results",
+                "excludeTypeRow": "A type",
+                "excludeTypeDescription": "Hide one entity type from the results",
+                "excludeCourseRow": "A course",
+                "excludeCourseDescription": "Hide one course from the results"
             },
             "facets": {
                 "type": "type",

@@ -16,6 +16,8 @@ import { MIN_SEARCH_QUERY_LENGTH, SEARCH_DEBOUNCE_MS, SearchResultView } from 'a
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { SearchInputComponent } from './search-input/search-input.component';
+import { GlobalSearchFilterMenuComponent } from './filter-menu/global-search-filter-menu.component';
+import { filterOptionDomId } from '../../models/search-menu.model';
 import { SearchEntityType, SearchableEntity } from '../../models/searchable-entity.model';
 import { FilterToken } from '../../models/search-token.model';
 import { removeTokenAt } from '../../models/search-token.util';
@@ -30,7 +32,15 @@ interface SearchState {
     selector: 'jhi-global-search-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, GlobalSearchLectureResultsComponent, SearchInputComponent],
+    imports: [
+        DialogModule,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        GlobalSearchNavigationViewComponent,
+        GlobalSearchLectureResultsComponent,
+        SearchInputComponent,
+        GlobalSearchFilterMenuComponent,
+    ],
     providers: [GlobalSearchFilterService],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
@@ -69,9 +79,16 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly editingChip = this.filter.editingChip;
     protected readonly filterMenuOpen = this.filter.filterMenuOpen;
     protected readonly menuHeaderKey = this.filter.menuHeaderKey;
+    protected readonly canGoBack = this.filter.canGoBack;
 
     // OS-aware label for the filter-picker shortcut shown on the Filter button (⌘F on Mac, Ctrl+F elsewhere).
     protected readonly filterShortcutLabel = computed<string>(() => (this.osDetector.isMac() ? '⌘F' : 'Ctrl+F'));
+    // DOM id of the highlighted filter-menu option, for the search input's aria-activedescendant (the menu now
+    // renders in the results pane, so the combobox references it across components by id).
+    protected readonly activeOptionId = computed<string | undefined>(() => {
+        const option = this.menuOptions()[this.menuActiveIndex()];
+        return option ? filterOptionDomId(option.id) : undefined;
+    });
     protected readonly results = signal<GlobalSearchResult[]>([]);
     protected readonly isLoading = signal<boolean>(false);
     protected readonly hasSearched = signal<boolean>(false);
@@ -218,6 +235,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
             untracked(() => {
                 if (isOpen) {
                     this.applyContextFilters();
+                    // Home screen: open the guided filter picker so filters are the first thing offered. When a course
+                    // context was applied (tokens present), show its scoped results instead of the picker.
+                    if (this.tokens().length === 0) {
+                        this.filter.openFilterPicker();
+                    }
                 } else {
                     this.resetSearch();
                 }
@@ -243,16 +265,20 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.searchQuery.set(query);
         this.searchError.set(undefined);
 
-        // While the guided picker is open, plain typing narrows its entries instead of closing it or searching
-        // (e.g. "-" shows the exclusions, "cou" shows the course actions). Typing a full operator falls through.
-        if (this.filterPickerOpen() && !parseOperator(query)) {
-            this.menuActiveIndex.set(0);
-            return;
+        const operator = parseOperator(query);
+        if (this.filterPickerOpen() && !operator) {
+            // While the guided picker is open, keep narrowing its rows as long as the text still matches a filter
+            // action (or is the "-" exclude trigger). Once nothing matches, the user is typing a normal search, so
+            // leave the picker and search instead of sitting on an empty filter list.
+            if (query.trim().startsWith('-') || this.menuOptions().length > 0) {
+                this.menuActiveIndex.set(0);
+                return;
+            }
+            this.filterPickerOpen.set(false);
         }
-        this.filterPickerOpen.set(false);
 
-        // Typing a `facet:` operator opens the value menu instead of running a text search.
-        if (parseOperator(query)) {
+        // A typed `facet:` operator opens the value menu instead of running a text search.
+        if (operator) {
             return;
         }
         // Typing plain text leaves any facet operator, so cancel a chip that was being re-picked.
@@ -290,6 +316,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     protected onOptionHovered(index: number) {
         this.filter.onOptionHovered(index);
+    }
+
+    /** Steps one level back in the guided picker (from the menu header back button). */
+    protected onFilterBack() {
+        this.filter.back();
     }
 
     /** Toggles the guided filter picker (used by the Filter button and Cmd/Ctrl+F). */

@@ -330,7 +330,7 @@ describe('GlobalSearchModalComponent', () => {
             vi.useRealTimers();
         });
 
-        it('should remove rightmost filter when backspaceOnEmpty fires', () => {
+        it('does not remove a filter on backspace over the empty input', () => {
             component['tokens'].set([
                 { facet: 'type', value: 'exercise' },
                 { facet: 'type', value: 'lecture' },
@@ -338,16 +338,8 @@ describe('GlobalSearchModalComponent', () => {
 
             component['onBackspaceRemoveFilter']();
 
-            expect(component['activeFilters']()).toEqual(['exercise']);
-        });
-
-        it('should remove course filter when backspaceOnEmpty fires and no type filters remain', () => {
-            component['tokens'].set([{ facet: 'course', value: '42' }]);
-
-            component['onBackspaceRemoveFilter']();
-
-            expect(component['courseIdsParam']()[0]).toBeUndefined();
-            expect(component['chips']().some((chip) => chip.family === 'course')).toBe(false);
+            expect(component['activeFilters']()).toEqual(['exercise', 'lecture']);
+            expect(component['tokens']()).toHaveLength(2);
         });
 
         it('should re-trigger search when filter changes even if query stays the same', () => {
@@ -367,6 +359,27 @@ describe('GlobalSearchModalComponent', () => {
 
             expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise', undefined, undefined);
             expect(component['results']()).toEqual(filteredResults);
+        });
+
+        it('leaves the guided picker and runs a normal search when typed text matches no filter action', () => {
+            mockSearchService.globalSearch.mockReturnValue(of(queryResults));
+            component['openFilterPicker']();
+            expect(component['filterPickerOpen']()).toBe(true);
+
+            component['onSearchInput']('deep');
+            vi.advanceTimersByTime(300);
+
+            expect(component['filterPickerOpen']()).toBe(false);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('deep', undefined, undefined, undefined);
+        });
+
+        it('keeps the guided picker open while typed text still matches a filter action', () => {
+            component['openFilterPicker']();
+            component['onSearchInput']('cou');
+            vi.advanceTimersByTime(300);
+
+            expect(component['filterPickerOpen']()).toBe(true);
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
         });
 
         it('should set searchError on HTTP failure', () => {
@@ -533,6 +546,10 @@ describe('GlobalSearchModalComponent', () => {
     describe('Arrow Key Navigation', () => {
         beforeEach(() => {
             mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+            // The home screen opens the guided picker; these tests exercise results / chip navigation, so close it
+            // and re-render so the navigation view (and its result views) mounts.
+            (component as any).filterPickerOpen.set(false);
             fixture.detectChanges();
         });
 
@@ -754,7 +771,7 @@ describe('GlobalSearchModalComponent', () => {
             expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', undefined, undefined, [7]);
         });
 
-        it('should remove course filter on backspace when no type filters remain', () => {
+        it('applies context filters on open and leaves them intact on backspace over the empty input', () => {
             mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
             Object.defineProperty(router, 'url', { get: () => '/courses/42/exercises', configurable: true });
 
@@ -764,15 +781,32 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['courseIdsParam']()[0]).toBe(42);
             expect(component['activeFilters']()).toEqual(['exercise']);
 
-            // First backspace removes the type filter
+            // Backspace over the empty input must not remove filters (removal requires chip navigation).
             component['onBackspaceRemoveFilter']();
-            expect(component['activeFilters']()).toEqual([]);
-            expect(component['courseIdsParam']()[0]).toBe(42);
+            component['onBackspaceRemoveFilter']();
 
-            // Second backspace removes the course filter
-            component['onBackspaceRemoveFilter']();
-            expect(component['courseIdsParam']()[0]).toBeUndefined();
-            expect(component['chips']().some((chip) => chip.family === 'course')).toBe(false);
+            expect(component['activeFilters']()).toEqual(['exercise']);
+            expect(component['courseIdsParam']()[0]).toBe(42);
+        });
+
+        it('opens the guided filter picker as the home screen when there is no course context', () => {
+            Object.defineProperty(router, 'url', { get: () => '/dashboard', configurable: true });
+
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            expect(component['tokens']()).toHaveLength(0);
+            expect(component['filterPickerOpen']()).toBe(true);
+        });
+
+        it('does not open the picker on a course-scoped page (shows the scoped results instead)', () => {
+            Object.defineProperty(router, 'url', { get: () => '/courses/42/exercises', configurable: true });
+
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            expect(component['tokens']().length).toBeGreaterThan(0);
+            expect(component['filterPickerOpen']()).toBe(false);
         });
 
         it('should remove course filter via removeCourseFilter and re-trigger search', () => {
