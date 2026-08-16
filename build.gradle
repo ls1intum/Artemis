@@ -179,7 +179,7 @@ ext["tomcat.version"] = "11.0.22"
 // earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
 dependencyManagement {
     imports {
-        mavenBom "tools.jackson:jackson-bom:3.1.5"
+        mavenBom "tools.jackson:jackson-bom:3.1.6"
         mavenBom "com.fasterxml.jackson:jackson-bom:2.22.1"
     }
 }
@@ -544,7 +544,7 @@ dependencies {
 
     // required by sshd-git; pinned to a patched release addressing GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
     implementation "org.bouncycastle:bcpkix-jdk18on:1.85"
-    implementation "org.bouncycastle:bcprov-jdk18on:1.85.2"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.85"
     // pulled transitively by sshd-git; pin to patched version
     implementation "org.bouncycastle:bcpg-jdk18on:1.85"
 
@@ -561,9 +561,9 @@ dependencies {
     implementation "org.apache.maven:maven-model:4.0.0-rc-5"
     implementation "org.apache.pdfbox:pdfbox:3.0.8"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.commonmark:commonmark:0.29.0"
-    implementation "org.commonmark:commonmark-ext-gfm-tables:0.29.0"
-    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.29.0"
+    implementation "org.commonmark:commonmark:0.30.0"
+    implementation "org.commonmark:commonmark-ext-gfm-tables:0.30.0"
+    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.30.0"
 
     implementation "commons-fileupload:commons-fileupload:1.6.0"
 
@@ -576,7 +576,7 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
     // needed for OpenAPI generation (v3 required for Spring Boot 4)
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor

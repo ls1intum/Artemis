@@ -86,7 +86,7 @@ enablePrePostScripts: true
 # We already pin every relevant @angular/* dep under ng-mocks
 # to ^22.0.0 via the `overrides:` block below; this block just suppresses
 # the cosmetic peer-range warning that overrides do not silence on their own.
-# ng-mocks 14.17.1 already declares Angular 22 in its peer range, so this block
+# ng-mocks 14.15.3 already declares Angular 22 in its peer range, so this block
 # is largely redundant for ng-mocks; it is kept as a safety net for any other
 # transitive package whose range still trails the Angular release train.
 peerDependencyRules:
