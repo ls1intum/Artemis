@@ -287,6 +287,9 @@ dependencies {
     // header list size before SETTINGS ACK. httpcore5-h2 is declared explicitly so the transitive request from
     // httpclient5 cannot resolve down to a vulnerable 5.3.x via another consumer.
     implementation "org.apache.httpcomponents.client5:httpclient5:5.6.3"
+    // httpclient5-cache reaches the runtime classpath transitively (webauthn4j, helios-status-spring-starter) and
+    // would otherwise sit at 5.6.1 while httpclient5 is 5.6.3. Pinned so the whole family stays on one version.
+    implementation "org.apache.httpcomponents.client5:httpclient5-cache:5.6.3"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.4.3"
     implementation "org.apache.httpcomponents.core5:httpcore5-h2:5.4.3"
 
