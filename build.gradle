@@ -683,7 +683,7 @@ configurations.matching { it.name != 'mockitoAgent' }.configureEach {
         // GHSA-rcgg-9c38-7xpx (unbounded memory allocation in W3C Baggage propagation).
         if (details.requested.group == "io.opentelemetry") {
             details.useVersion("${opentelemetry_version}")
-            details.because("Patched OpenTelemetry release; pre-${opentelemetry_version} contains GHSA-rcgg-9c38-7xpx.")
+            details.because("Patched OpenTelemetry release; releases before 1.62.0 contain GHSA-rcgg-9c38-7xpx.")
         }
     }
 }

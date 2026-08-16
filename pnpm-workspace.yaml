@@ -217,7 +217,7 @@ allowBuilds:
 # requires @sentry/node >= 10; lighthouse (latest 13.4.0) still pins @sentry/node@^9,
 # so there is no in-range upgrade. Revisit when lighthouse moves to @sentry/node 10.
 # (The server-side Java equivalent, GHSA-rcgg-9c38-7xpx, is already handled via
-# opentelemetry_version=1.62.0 in gradle.properties.)
+# opentelemetry_version=1.65.0 in gradle.properties.)
 auditConfig:
   ignoreGhsas:
     - 'GHSA-8988-4f7v-96qf'
