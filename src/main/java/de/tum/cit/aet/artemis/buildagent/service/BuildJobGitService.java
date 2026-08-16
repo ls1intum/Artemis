@@ -138,7 +138,8 @@ public class BuildJobGitService extends AbstractGitService {
             throw new IllegalStateException("No build agent git username and password were set, and " + BUILD_AGENT_USE_SSH_PROPERTY_NAME
                     + " is false. Configure both credentials, or set that property to true on the build agents and on every core node to authenticate with an ssh key instead.");
         }
-        log.info("BuildJobGitService will use the configured git username and password as authentication method to interact with remote git repositories.");
+        log.info("BuildJobGitService will use the configured git username and password as authentication method to interact with remote git repositories. This mechanism is "
+                + "deprecated; set {} to true here and on every core node to authenticate with an ssh key instead.", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
     }
 
     protected boolean useSsh() {

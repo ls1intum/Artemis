@@ -591,6 +591,8 @@ You can make following adaptations to the `application-prod.yml`:
     Build agents require access to the VC server. Therefore, you need to add credentials so the build agent can access the repositories.
     These credentials are used to clone repositories via HTTPS. You must also add these credentials to the localvc nodes.
 
+    HTTPS authentication for build agents is deprecated; prefer SSH keys as described after the example below.
+
     ```yaml
     artemis:
         version-control:
@@ -601,7 +603,7 @@ You can make following adaptations to the `application-prod.yml`:
             build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. You can otherwise use an ssh key
     ```
 
-    Alternatively, set `artemis.version-control.build-agent-use-ssh: true` to have every agent generate an SSH key pair at startup and authenticate with it, which removes the need for a shared credential. Set it on the build agents first — localvc nodes accept a registered agent's key regardless of their own setting, so builds keep working — and only afterwards on the localvc nodes, where it stops that pair from granting build agents read access to every repository. See [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication).
+    Preferably, set `artemis.version-control.build-agent-use-ssh: true` to have every agent generate an SSH key pair at startup and authenticate with it, which removes the need for a shared credential entirely; both properties above may then be omitted. Set it on the build agents first — localvc nodes accept a registered agent's key regardless of their own setting, so builds keep working — and only afterwards on the localvc nodes, where it stops that pair from granting build agents read access to every repository. See [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication).
 
 4. Configuration related to the execution of build jobs:
 

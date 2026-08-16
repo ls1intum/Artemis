@@ -63,10 +63,12 @@ public class BuildAgentGitPasswordValidator {
 
     /**
      * Rejects a shipped example or blank build-agent git password under the production profile, unless the build agents
-     * authenticate with an ssh key, in which case the password is not accepted anywhere and its value cannot matter.
+     * authenticate with an ssh key, in which case the value no longer opens the shortcut this check protects.
      * <p>
      * Matching credentials let a caller read every repository in the installation: {@code LocalVCServletService}
      * returns early on a match, ahead of the rate limit, the repository authorization checks and the VCS access log.
+     * That shortcut is the only thing the property closes; the credentials are still processed as ordinary Basic
+     * credentials afterwards, which grants only whatever the named account may access.
      * <p>
      * This throws rather than warning, because a warning in a startup log is routinely missed and the whole point is
      * that the unsafe state must not reach a running production system.
@@ -79,11 +81,14 @@ public class BuildAgentGitPasswordValidator {
         }
 
         if (environment.getProperty(BUILD_AGENT_USE_SSH_PROPERTY_NAME, Boolean.class, false)) {
-            // The build agents authenticate with an ssh key, so LocalVCServletService rejects the credential pair
-            // outright and there is no shortcut left for this value to open. Refusing to start over an unused password
-            // would only push operators to invent one. The check re-arms by itself, because it runs on every startup
-            // and therefore also on the one that follows setting the property back to false.
-            log.info("Skipping build-agent git password validation: {} is true, so the build-agent git credentials are not accepted", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
+            // The build agents authenticate with an ssh key, so LocalVCServletService no longer lets this credential
+            // pair read every repository, which is the shortcut this check protects. The pair still reaches ordinary
+            // Basic authentication afterwards, but there it opens only what the named account may access, and the
+            // shipped example username is not an Artemis account. Refusing to start over a password that can no longer
+            // grant repository-wide read would only push operators to invent one. The check re-arms by itself, because
+            // it runs on every startup and therefore also on the one that follows setting the property back to false.
+            log.info("Skipping build-agent git password validation: {} is true, so the build-agent git credentials no longer grant read access to every repository",
+                    BUILD_AGENT_USE_SSH_PROPERTY_NAME);
             return;
         }
 

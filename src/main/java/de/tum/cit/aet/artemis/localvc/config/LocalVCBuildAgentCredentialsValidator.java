@@ -59,7 +59,7 @@ public class LocalVCBuildAgentCredentialsValidator {
     @PostConstruct
     public void validateBuildAgentCredentials() {
         if (environment.getProperty(BUILD_AGENT_USE_SSH_PROPERTY_NAME, Boolean.class, false)) {
-            log.info("Build agents authenticate with an ssh key ({}=true). This node no longer honours the build-agent git username and password.",
+            log.info("Build agents authenticate with an ssh key ({}=true). This node no longer grants the build-agent git username and password read access to every repository.",
                     BUILD_AGENT_USE_SSH_PROPERTY_NAME);
             return;
         }
@@ -71,7 +71,8 @@ public class LocalVCBuildAgentCredentialsValidator {
                     + "authenticate with an ssh key instead.");
         }
 
-        log.info("Build agents authenticate with the configured git username and password. Set {}=true on the build agents and on every core node to use ssh keys instead.",
+        log.info(
+                "Build agents authenticate with the configured git username and password, which is deprecated. Set {}=true on the build agents and on every core node to use ssh keys instead.",
                 BUILD_AGENT_USE_SSH_PROPERTY_NAME);
     }
 }
