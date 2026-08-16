@@ -71,13 +71,10 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         // On reload the restored answer must be re-sent to the server (successful PUT for THIS quiz exercise). Wait for
         // the response and the reload together via Promise.all so only a POST-reload re-send can satisfy this; setting up
         // the wait before reload (without Promise.all) could otherwise be satisfied by a pre-reload autosave retry.
-        // The budget covers the reload itself, not just the re-send: the exam page has to load, restore the answer from
-        // local storage and then send it, and 30 s was short enough that a loaded runner spent most of it on the reload
-        // and reported a missing re-send for one that had not been reached yet.
         await Promise.all([
             page.waitForResponse(
                 (response) => response.url().includes(`/quiz/exercises/${quizExercise.id}/submissions/exam`) && response.request().method() === 'PUT' && response.status() === 200,
-                { timeout: 120000 },
+                { timeout: 30000 },
             ),
             page.reload(),
         ]);
