@@ -7,6 +7,7 @@ import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/
 import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { SEED_COURSES } from '../../../support/seedData';
+import { getExercise } from '../../../support/utils';
 import { BUILD_RESULT_TIMEOUT } from '../../../support/timeouts';
 
 const course = { id: SEED_COURSES.programmingParticipation.id } as any;
@@ -49,7 +50,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
         test('Keeps the practice mode selectable when switching back to graded', async ({ login, page, programmingExerciseEditor }) => {
             test.slow();
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
-            const practiceParticipationId = await startPracticeFromExercisePage(page, exercise.id!, 'Practice with template repository');
+            await startPracticeFromExercisePage(page, exercise.id!, 'Practice with template repository');
 
             const practiceButton = modeButton(page, 'practice');
             const gradedButton = modeButton(page, 'graded');
@@ -73,11 +74,11 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
 
             // Submitting in practice mode must process the submission and update the shown result
             await modeButton(page, 'practice').click();
-            // Selecting a mode re-routes the embedded editor to that mode's participation. Wait for the practice
-            // repository to be the one on screen before touching the file tree: the graded repository is read-only
-            // after the due date, so a file action aimed at the outgoing tree is dropped and the editor never sends
-            // the repository request the submission helper waits for.
-            await page.waitForURL((url) => url.pathname.endsWith(`/code-editor/${practiceParticipationId}`), { timeout: 30000 });
+            // Selecting a mode re-routes the embedded editor to that mode's participation, and the file tree must not be
+            // touched before that swap: the graded repository is read-only after the due date, so a file action aimed at
+            // it is dropped and the editor never sends the request the submission helper waits for. Its create controls
+            // being enabled is what says the writable practice repository is the one on screen.
+            await expect(getExercise(page, exercise.id!).locator('#file-browser-folder-create-file').first()).toBeEnabled({ timeout: 30000 });
             await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaAllSuccessfulSubmission, async () => {
                 await expect(page.locator('#exercise-headers-information')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
             });
@@ -144,10 +145,8 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
  * Opens the start-practice popover on the exercise details page and starts the practice mode via the
  * option with the given label ('Practice with template repository' / 'Practice with graded participation'
  * when a graded participation exists, plain 'Practice' otherwise).
- *
- * @returns the id of the created practice participation, which also identifies its editor route.
  */
-async function startPracticeFromExercisePage(page: Page, exerciseId: number, optionLabel: string): Promise<number> {
+async function startPracticeFromExercisePage(page: Page, exerciseId: number, optionLabel: string): Promise<void> {
     const startPracticeButton = page.locator(`#start-practice-${exerciseId} button`);
     await startPracticeButton.waitFor({ state: 'visible', timeout: 15000 });
     const popover = page.locator('.start-practice-popover');
@@ -176,6 +175,5 @@ async function startPracticeFromExercisePage(page: Page, exerciseId: number, opt
         }
     }
 
-    const participation = await (await responsePromise).json();
-    return participation.id;
+    await responsePromise;
 }
