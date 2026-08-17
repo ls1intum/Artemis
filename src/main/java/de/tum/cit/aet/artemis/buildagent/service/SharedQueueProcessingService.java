@@ -724,8 +724,7 @@ public class SharedQueueProcessingService {
             if (isClusterMember && !isInMemberSet) {
                 log.info("removeOfflineNodes: REMOVING agent '{}' with address '{}' (was cluster member but is now offline)", agentKey, storedMemberAddress);
                 removeBuildAgentInformationForNode(agentKey, storedMemberAddress);
-                removeProcessingJobsForNode(storedMemberAddress);
-            }
+}
         }
     }
 
