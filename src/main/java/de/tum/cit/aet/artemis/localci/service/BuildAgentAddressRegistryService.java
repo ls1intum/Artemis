@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import jakarta.annotation.PostConstruct;
 
@@ -93,8 +94,14 @@ public class BuildAgentAddressRegistryService {
      */
     private volatile boolean addressObservationAvailable = false;
 
-    /** When a lookup miss last triggered an out-of-band refresh, used to debounce them. */
-    private volatile long lastRefreshOnMissAt = 0;
+    /**
+     * When a lookup miss last triggered an out-of-band refresh, used to debounce them.
+     * <p>
+     * Atomic rather than volatile because the check and the update have to be one step: many clone requests arrive
+     * concurrently during an exam peak, and a read-then-write would let all of them pass the interval check and each
+     * start its own refresh against the middleware.
+     */
+    private final AtomicLong lastRefreshOnMissAt = new AtomicLong(0);
 
     public BuildAgentAddressRegistryService(DistributedDataAccessService distributedDataAccessService, BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
         this.distributedDataAccessService = distributedDataAccessService;
@@ -226,8 +233,11 @@ public class BuildAgentAddressRegistryService {
         // is only picked up by the next scheduled reconcile. Without this, every agent restart would fail builds for up
         // to the refresh interval, and fail them in a way that looks like a configuration problem. Refreshing on a miss
         // closes that window; the debounce keeps a wrong address from turning into a reconcile per request.
-        if (System.currentTimeMillis() - lastRefreshOnMissAt > MIN_REFRESH_ON_MISS_INTERVAL_MS) {
-            lastRefreshOnMissAt = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
+        long previousRefresh = lastRefreshOnMissAt.get();
+        // Only the request that wins the compareAndSet refreshes; the others fall straight through to the decision
+        // below, which is what they would have reached anyway had the refresh found nothing for them.
+        if (now - previousRefresh > MIN_REFRESH_ON_MISS_INTERVAL_MS && lastRefreshOnMissAt.compareAndSet(previousRefresh, now)) {
             log.debug("No registered address matches {} for build agent {}, refreshing the registry once before deciding", ipAddress, agentName);
             refreshRegisteredAddresses();
             if (matchesRegisteredAddress(agentName, ipAddress)) {
