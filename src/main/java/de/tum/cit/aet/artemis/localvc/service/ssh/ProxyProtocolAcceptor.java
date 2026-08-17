@@ -25,6 +25,8 @@ import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.SshProxyProtocolConfiguration;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 
 /**
  * Recovers the real client address of an SSH connection that reached this node through a TCP load balancer, by reading
@@ -237,7 +239,15 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
         catch (NumberFormatException e) {
             throw new IllegalStateException("Cannot parse '" + port + "' as the client port of a PROXY protocol header", e);
         }
-        applyClientAddress(session, InetAddress.getByName(host), parsedPort);
+
+        // Parsed strictly as a numeric literal, never resolved. InetAddress.getByName would perform a DNS lookup for
+        // anything that is not one, which would block this ssh handshake on a name server at the request of whoever
+        // wrote the header. The v1 specification requires a numeric address here, so a non-numeric value is malformed.
+        IPAddress parsedAddress = new IPAddressString(host).getAddress();
+        if (parsedAddress == null) {
+            throw new IllegalStateException("Cannot parse '" + host + "' as the client address of a PROXY protocol header");
+        }
+        applyClientAddress(session, parsedAddress.toInetAddress(), parsedPort);
     }
 
     private void applyClientAddress(ServerSession session, byte[] rawAddress, int port) throws UnknownHostException {

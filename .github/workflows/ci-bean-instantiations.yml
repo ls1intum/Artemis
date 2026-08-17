@@ -26,7 +26,10 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      MAX_INSTANTIATED_BEANS: 142
+      # Raised from 142 for BuildAgentAddressRegistryService, which has to be eager: it registers cluster connection
+      # listeners and a scheduled refresh, and a lazy bean that nothing instantiates at startup would leave the build
+      # agent address registry empty, so no build agent could clone.
+      MAX_INSTANTIATED_BEANS: 143
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:

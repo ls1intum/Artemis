@@ -217,6 +217,21 @@ class ProxyProtocolAcceptorTest {
                 .withMessageContaining("10.0.0.1");
     }
 
+    /**
+     * The v1 specification requires a numeric address, and it must be parsed as one rather than resolved: resolving
+     * would let whoever wrote the header block this ssh handshake on a name server of their choosing.
+     */
+    @Test
+    void shouldRejectANonNumericClientAddressWithoutResolvingIt() {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting("10.0.0.0/8");
+        AbstractServerSession session = sessionFrom("10.0.0.1");
+        Buffer buffer = bufferOf(("PROXY TCP4 attacker-controlled.example.com 10.0.0.5 56324 7921\r\n" + SSH_IDENTIFICATION).getBytes(StandardCharsets.US_ASCII));
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> acceptor.acceptServerProxyMetadata(session, buffer))
+                .withMessageContaining("attacker-controlled.example.com");
+        verify(session, never()).setClientAddress(any());
+    }
+
     @Test
     void shouldFailStartupOnAMalformedTrustedSource() {
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> acceptorTrusting("not-an-address"))
