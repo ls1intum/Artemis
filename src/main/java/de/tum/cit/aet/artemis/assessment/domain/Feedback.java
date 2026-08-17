@@ -80,9 +80,12 @@ public class Feedback extends DomainObject {
      * test case on synthesized legacy views for serialization (see ProgrammingFeedbackSynthesizerService)
      * and on in-memory feedback during grading-related computations.
      */
+    // NOTE: Helper variable name must be different from the getter name, so that Jackson ignores the
+    // @Transient annotation (the test case must still be serialized on the synthesized feedback views;
+    // the client renders test names from it), but Hibernate still respects it
     @Transient
     @JsonIgnoreProperties({ "tasks", "exercise" })
-    private ProgrammingExerciseTestCase testCase;
+    private ProgrammingExerciseTestCase testCaseTransient;
 
     /**
      * Absolute score for the assessed element (e.g. +0.5, -1.0, +2.0, etc.)
@@ -276,11 +279,11 @@ public class Feedback extends DomainObject {
     }
 
     public ProgrammingExerciseTestCase getTestCase() {
-        return testCase;
+        return testCaseTransient;
     }
 
     public void setTestCase(ProgrammingExerciseTestCase testCase) {
-        this.testCase = testCase;
+        this.testCaseTransient = testCase;
     }
 
     public Feedback testCase(ProgrammingExerciseTestCase testCase) {

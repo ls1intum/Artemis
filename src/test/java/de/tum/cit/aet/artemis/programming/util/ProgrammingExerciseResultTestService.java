@@ -2,9 +2,6 @@ package de.tum.cit.aet.artemis.programming.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_TOPIC;
-import static java.util.Comparator.comparing;
-import static java.util.Comparator.naturalOrder;
-import static java.util.Comparator.nullsFirst;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,13 +32,13 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
-import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
