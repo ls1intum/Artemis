@@ -12,6 +12,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -362,7 +363,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     private void addAssessmentFeedbackAndCheckScore(List<Feedback> feedbacks, Double pointsAwarded, Double expectedScore) throws Exception {
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         manualResult.setFeedbacks(feedbacks);
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         var score = (points / programmingExercise.getMaxPoints()) * 100.0;
         manualResult.score(score);
         manualResult.rated(true);
@@ -379,7 +380,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
         manualResult.setFeedbacks(feedbacks);
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score(points);
         manualResult.rated(true);
@@ -391,7 +392,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         manualResult.addFeedback(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
-        points = manualResult.calculateTotalPointsForProgrammingExercises();
+        points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         manualResult.score(points);
 
         response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
@@ -411,7 +412,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL).detailText("nice submission 1").text("manual feedback"));
 
         manualResult.setFeedbacks(feedbacks);
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score(points);
 
@@ -488,7 +489,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         // Remove feedbacks, change text and score. Keep the "theory" feedback (+2 credits) deterministically so the asserted score below is stable.
         Feedback keptFeedback = manualResult.getFeedbacks().stream().filter(f -> "theory".equals(f.getReference())).findFirst().orElseThrow();
         manualResult.setFeedbacks(List.of(keptFeedback));
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         manualResult.setScore(points);
         manualResult = resultRepository.save(manualResult);
 
@@ -537,7 +538,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         // Overwrite the previous assessment with additional feedback.
         manualResult.addFeedback(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         manualResult.setScore(points);
         Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
                 Result.class, HttpStatus.OK);
@@ -621,7 +622,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         // Overwrite the previous assessment with additional feedback.
         manualResult.addFeedback(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         manualResult.setScore(points);
         Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
                 Result.class, HttpStatus.OK);
@@ -656,7 +657,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         // Remove feedbacks, change text and score.
         manualResult.setFeedbacks(feedbacks);
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         manualResult.setScore(points);
         return resultRepository.save(manualResult);
     }

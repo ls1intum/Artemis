@@ -117,7 +117,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
         // The client echoes the automatic test-case and SCA feedback items it received (synthesized from the
         // typed collections, hence without ids). They must not be persisted as manual feedback rows - the
         // typed rows on the result already hold them.
-        newManualResult.getFeedbacks().removeIf(feedback -> feedback.getId() == null && (feedback.isTestFeedback() || feedback.isStaticCodeAnalysisFeedback()));
+        newManualResult.getFeedbacks().removeIf(feedback -> (feedback.getId() == null || feedback.getId() < 0) && (feedback.isTestFeedback() || feedback.isStaticCodeAnalysisFeedback()));
         // The client-built result has empty typed collections; hydrate them from the database so that
         // saving the result does not orphan-remove the stored typed automatic feedback.
         if (newManualResult.getId() != null) {

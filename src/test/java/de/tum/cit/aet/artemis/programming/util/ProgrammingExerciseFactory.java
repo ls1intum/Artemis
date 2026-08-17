@@ -16,6 +16,7 @@ import org.jspecify.annotations.Nullable;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -380,9 +381,12 @@ public class ProgrammingExerciseFactory {
      * @param result The result of the feedback.
      * @return The newly created feedback.
      */
-    public static Feedback createSCAFeedbackWithInactiveCategory(Result result) {
-        return new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"miscellaneous\"}")
-                .type(FeedbackType.AUTOMATIC).positive(false);
+    public static ScaFeedback createSCAFeedbackWithInactiveCategory(Result result) {
+        ScaFeedback scaFeedback = new ScaFeedback();
+        scaFeedback.setTool(StaticCodeAnalysisTool.CHECKSTYLE);
+        scaFeedback.setToolCategory("miscellaneous");
+        result.addScaFeedback(scaFeedback);
+        return scaFeedback;
     }
 
     /**

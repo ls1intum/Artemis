@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission.cr
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -594,6 +595,26 @@ public class ProgrammingExerciseGradingService {
      *
      * @param result the result to hydrate
      */
+    /**
+     * Bulk variant of {@link #hydrateTypedFeedback(Result)}: loads the typed automatic feedback of many
+     * results with two queries.
+     *
+     * @param results the results to hydrate
+     */
+    private void hydrateTypedFeedbackBulk(Collection<Result> results) {
+        List<Long> resultIds = results.stream().map(Result::getId).filter(Objects::nonNull).toList();
+        if (resultIds.isEmpty()) {
+            return;
+        }
+        var testCaseFeedbackByResult = testCaseFeedbackRepository.findWithTestCaseByResultIds(resultIds).stream()
+                .collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
+        var scaFeedbackByResult = scaFeedbackRepository.findByResultIds(resultIds).stream().collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
+        for (Result result : results) {
+            result.setTestCaseFeedbacks(testCaseFeedbackByResult.getOrDefault(result.getId(), List.of()));
+            result.setScaFeedbacks(scaFeedbackByResult.getOrDefault(result.getId(), List.of()));
+        }
+    }
+
     private void hydrateTypedFeedback(Result result) {
         if (result.getId() == null) {
             return;
@@ -1061,6 +1082,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         final var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(exerciseId);
+        hydrateTypedFeedbackBulk(results);
         for (Result result : results) {
             // Count the number of detected issues per category for the current result
             final var categoryIssuesMap = categorizeStaticCodeAnalysisIssues(result);
@@ -1087,13 +1109,11 @@ public class ProgrammingExerciseGradingService {
      * @return A map where the key is the static code analysis category name and the value is the count of occurrences of issues in that category
      */
     private static Map<String, Integer> categorizeStaticCodeAnalysisIssues(Result result) {
-        return result.getFeedbacks().stream()
-                // Filter the feedbacks to include only those that are related to static code analysis
-                .filter(Feedback::isStaticCodeAnalysisFeedback)
-                // Map each filtered feedback to its static code analysis category name
-                .map(Feedback::getStaticCodeAnalysisCategory)
-                // Filter out any empty category names to avoid counting them
-                .filter(categoryName -> !categoryName.isEmpty())
+        return result.getScaFeedbacks().stream()
+                // Map each SCA feedback row to its (Artemis) static code analysis category name
+                .map(ScaFeedback::getCategory)
+                // Filter out any missing category names to avoid counting them
+                .filter(categoryName -> categoryName != null && !categoryName.isEmpty())
                 // Collect the results into a map where the key is the category name and the value is the count of occurrences
                 .collect(Collectors.toMap(
                         // The key in the resulting map is the category name
@@ -1115,33 +1135,15 @@ public class ProgrammingExerciseGradingService {
      * @param testCaseStatsMap The map of test case names to their respective statistics (passed and failed counts)
      */
     private static void updateTestCaseMapBasedOnResultFeedback(Result result, HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
-        result.getFeedbacks().stream()
-                // Filter the feedbacks to include only those that are automatic and have an assigned test case
-                .filter(feedback -> {
-                    if (!FeedbackType.AUTOMATIC.equals(feedback.getType())) {
-                        return false;
-                    }
-                    if (feedback.getTestCase() == null) {
-                        return false;
-                    }
-                    if (feedback.getTestCase().getTestName() == null) {
-                        // Log the feedback id with null test name to analyse NullPointer issue if it occurs again in the future
-                        log.warn("Feedback with ID {} has a test case with a null test name.", feedback.getId());
-                        return false;
-                    }
-                    if (feedback.isPositive() == null) {
-                        // Log the feedback with null isPositive value to analyse NullPointer issue if it occurs again in the future
-                        log.warn("Feedback with ID {} has a test case with a null isPositive value.", feedback.getId());
-                        return false;
-                    }
-                    return true;
-                })
-                // Collect the filtered feedbacks into a map grouped by test case name, and partitioned by whether the feedback is positive
+        result.getTestCaseFeedbacks().stream()
+                // Only rows with a resolvable test case name and an executed test (positive != null) count
+                .filter(feedback -> feedback.getTestCase() != null && feedback.getTestCase().getTestName() != null && feedback.isPositive() != null)
+                // Collect the rows into a map grouped by test case name, and partitioned by whether the test passed
                 .collect(Collectors.groupingBy(
                         // Group by the name of the test case associated with the feedback
                         feedback -> feedback.getTestCase().getTestName(),
-                        // Partition each group into positive and non-positive feedbacks, and count the occurrences
-                        Collectors.partitioningBy(Feedback::isPositive, Collectors.counting())
+                        // Partition each group into positive and non-positive rows, and count the occurrences
+                        Collectors.partitioningBy(TestCaseFeedback::isPositive, Collectors.counting())
                 // Process each entry in the resulting map
                 )).forEach((testName, partitionedFeedbacks) -> {
                     // Get the count of positive feedbacks for the test case, defaulting to 0 if none exist

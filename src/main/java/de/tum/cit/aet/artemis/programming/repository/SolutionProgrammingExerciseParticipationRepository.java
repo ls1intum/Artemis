@@ -59,7 +59,6 @@ public interface SolutionProgrammingExerciseParticipationRepository
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE p.programmingExercise.id = :exerciseId
             """)
     Optional<SolutionProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(@Param("exerciseId") long exerciseId);

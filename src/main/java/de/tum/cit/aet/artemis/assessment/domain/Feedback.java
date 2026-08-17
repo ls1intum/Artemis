@@ -18,6 +18,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
@@ -74,18 +75,12 @@ public class Feedback extends DomainObject {
     private String reference;
 
     /**
-     * Reference to the test case which created this feedback.
-     * null if the feedback was not created by an automatic test case.
-     * <p>
-     * The {@code feedback.test_case_id} foreign key is defined with {@code ON DELETE CASCADE} at the database
-     * level (Liquibase changelog {@code 20260713120000}): when a {@link ProgrammingExerciseTestCase} is deleted,
-     * the database removes the feedback referencing it. This closes a deletion race in which the async
-     * build-result processing could persist feedback for a test case that the concurrent programming-exercise
-     * deletion cascade is removing. There is intentionally no JPA cascade here — the normal deletion path removes
-     * feedback via the participation → result → feedback cascade; the database cascade is the safety net for that
-     * concurrent re-creation.
+     * Reference to the test case, TRANSIENT: persisted automatic test feedback lives in the
+     * {@link TestCaseFeedback} table (which owns the test_case_id column). This field only carries the
+     * test case on synthesized legacy views for serialization (see ProgrammingFeedbackSynthesizerService)
+     * and on in-memory feedback during grading-related computations.
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @Transient
     @JsonIgnoreProperties({ "tasks", "exercise" })
     private ProgrammingExerciseTestCase testCase;
 

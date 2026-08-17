@@ -131,10 +131,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     List<Result> findLatestAutomaticResultsForExercise(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
     List<Result> findResultsWithFeedbacksAndTestCaseByIdIn(List<Long> ids);
 
-    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase", "assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "assessor" })
     List<Result> findResultsWithFeedbacksTestCaseAndAssessorByIdIn(Collection<Long> ids);
 
     /**
@@ -155,7 +155,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     Optional<Result> findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
     Optional<Result> findResultWithFeedbacksAndTestCasesById(long resultId);
 
     /**
@@ -175,7 +175,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return findResultWithFeedbacksAndTestCasesById(id);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase", "submission" })
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "submission" })
     Optional<Result> findResultWithSubmissionAndFeedbacksTestCasesById(long resultId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.participation" })
@@ -204,7 +204,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             SELECT r
             FROM Result r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") long resultId);
@@ -213,7 +212,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             SELECT r
             FROM Result r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
             WHERE r.id = :resultId
             """)
@@ -276,7 +274,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     Optional<Result> findWithSubmissionAndFeedbackAndTeamStudentsById(@Param("resultId") long resultId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase", "assessmentNote" })
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "assessmentNote" })
     Optional<Result> findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(long resultId);
 
     /**
@@ -858,7 +856,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             SELECT r
             FROM Result r
                  LEFT JOIN FETCH r.feedbacks f
-                 LEFT JOIN FETCH f.testCase
             WHERE r.submission.id = :submissionId
             AND r.id = (
                  SELECT MAX(r2.id)
@@ -905,7 +902,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
               FROM Submission s
                 JOIN s.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase tc
               WHERE s.id = :submissionId
                 AND r.id = (
                   SELECT MAX(r2.id)

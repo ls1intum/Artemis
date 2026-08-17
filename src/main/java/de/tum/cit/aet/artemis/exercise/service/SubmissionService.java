@@ -515,7 +515,7 @@ public class SubmissionService {
         if (submission.getParticipation().getExercise() instanceof ProgrammingExercise) {
             // The client echoes the automatic test-case and SCA feedback items it received (synthesized
             // from the typed collections, hence without ids) - they are copied as typed rows below instead.
-            feedbackToCopy.removeIf(feedback -> feedback.getId() == null && (feedback.isTestFeedback() || feedback.isStaticCodeAnalysisFeedback()));
+            feedbackToCopy.removeIf(feedback -> (feedback.getId() == null || feedback.getId() < 0) && (feedback.isTestFeedback() || feedback.isStaticCodeAnalysisFeedback()));
         }
         copyFeedbackToResult(newResult, feedbackToCopy);
         copyTypedFeedbackToResult(newResult, oldResult);

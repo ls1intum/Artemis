@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
@@ -38,6 +40,12 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
 
     @Autowired
     protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
+    protected TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    @Autowired
+    protected ScaFeedbackRepository scaFeedbackRepository;
 
     @Autowired
     protected IdeRepository ideRepository;
