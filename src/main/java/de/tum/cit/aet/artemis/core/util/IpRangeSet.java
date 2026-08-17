@@ -58,14 +58,27 @@ public final class IpRangeSet {
             try {
                 candidate.validate();
             }
-            catch (inet.ipaddr.AddressStringException e) {
-                throw new IllegalStateException("Cannot parse '" + range + "' in " + propertyName
-                        + " as an IP address or CIDR block. Use a single address such as 192.168.1.7 or a block such as 10.0.0.0/8 or 2001:db8::/32. Refusing to start rather "
-                        + "than silently never matching, which on an allowlist would refuse everything.", e);
+            // RuntimeException as well as the declared AddressStringException: some malformed values, "/8" among them,
+            // surface as a NullPointerException from the parser rather than as a validation error, and an operator
+            // deserves the message below rather than a stack trace with no property name in it.
+            catch (inet.ipaddr.AddressStringException | RuntimeException e) {
+                throw new IllegalStateException(malformedRangeMessage(range, propertyName), e);
             }
-            return candidate.getAddress();
+            IPAddress parsedRange = candidate.getAddress();
+            if (parsedRange == null) {
+                // validate() accepts a few strings it cannot then turn into an address, "/8" among them. Without this
+                // the list would hold a null and every later match would fail with a NullPointerException instead.
+                throw new IllegalStateException(malformedRangeMessage(range, propertyName));
+            }
+            return parsedRange;
         }).toList();
         return new IpRangeSet(List.copyOf(configuredRanges), parsed);
+    }
+
+    private static String malformedRangeMessage(String range, String propertyName) {
+        return "Cannot parse '" + range + "' in " + propertyName
+                + " as an IP address or CIDR block. Use a single address such as 192.168.1.7 or a block such as 10.0.0.0/8 or 2001:db8::/32. Refusing to start rather than "
+                + "silently never matching, which on an allowlist would refuse everything.";
     }
 
     /**
@@ -86,19 +99,66 @@ public final class IpRangeSet {
         if (ipAddress == null || ipAddress.isBlank() || ranges.isEmpty()) {
             return false;
         }
-        IPAddress candidate = new IPAddressString(ipAddress.trim()).getAddress();
+        IPAddress candidate;
+        try {
+            candidate = new IPAddressString(ipAddress.trim()).getAddress();
+        }
+        catch (RuntimeException e) {
+            log.debug("Cannot parse '{}' as an IP address, so it matches no configured range", ipAddress, e);
+            return false;
+        }
         if (candidate == null) {
             log.debug("Cannot parse '{}' as an IP address, so it matches no configured range", ipAddress);
             return false;
         }
+        // The thing being checked has to be one address. A CIDR block such as 10.0.0.0/8 parses happily and is
+        // "contained" by an identical configured range, so without this a caller who can influence the value being
+        // checked - an X-Forwarded-For entry, say - could pass a subnet and match an allowlist entry.
+        if (candidate.isPrefixed() || candidate.isMultiple()) {
+            log.debug("'{}' denotes a range rather than a single address, so it matches no configured range", ipAddress);
+            return false;
+        }
+
         for (IPAddress range : ranges) {
-            // Comparing across families is a plain false here rather than an error, and toIPv4/toIPv6 conversion of an
-            // IPv4-mapped address is handled by the library
-            if (range.getIPVersion() == candidate.getIPVersion() && range.contains(candidate)) {
+            if (containsSameFamily(range, candidate)) {
+                return true;
+            }
+            // A dual-stack server reports an IPv4 client as an IPv4-mapped IPv6 address, so ::ffff:10.0.0.5 has to be
+            // comparable against 10.0.0.0/8. The library converts, but only if asked.
+            IPAddress converted = toOtherFamily(candidate, range);
+            if (converted != null && containsSameFamily(range, converted)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean containsSameFamily(IPAddress range, IPAddress candidate) {
+        return range.getIPVersion() == candidate.getIPVersion() && range.contains(candidate);
+    }
+
+    /**
+     * Converts an address to the family of the given range where the two are equivalent, so that an IPv4-mapped IPv6
+     * address can be compared against an IPv4 range and the reverse.
+     *
+     * @param candidate the address being checked
+     * @param range     the range it is being checked against
+     * @return the converted address, or {@code null} if no equivalent exists in that family
+     */
+    @Nullable
+    private static IPAddress toOtherFamily(IPAddress candidate, IPAddress range) {
+        try {
+            if (candidate.isIPv6() && range.isIPv4() && candidate.toIPv6().isIPv4Convertible()) {
+                return candidate.toIPv6().toIPv4();
+            }
+            if (candidate.isIPv4() && range.isIPv6() && candidate.toIPv4().isIPv6Convertible()) {
+                return candidate.toIPv4().toIPv6();
+            }
+        }
+        catch (RuntimeException e) {
+            log.debug("Cannot convert {} to the family of {}", candidate, range, e);
+        }
+        return null;
     }
 
     /**
