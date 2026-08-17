@@ -7,6 +7,9 @@ import java.time.Instant;
  *
  * @param sql             Normalised SQL text (literals stripped, replaced by {@code ?}).
  * @param executionTimeMs Actual wall-clock execution time in milliseconds.
+ * @param joinCount       Number of SQL {@code join} keywords in the raw query text -- a structural
+ *                            signal of how many tables this one statement touches, independent of
+ *                            how fast or slow the environment it ran in happens to be.
  * @param httpMethod      HTTP verb of the triggering request (e.g. {@code GET}); {@code null} for
  *                            background/async queries.
  * @param httpEndpoint    URI path of the triggering request (e.g. {@code /api/courses/1/exercises});
@@ -24,5 +27,6 @@ import java.time.Instant;
  *                            identify which subsystem triggered the query without any request context at all.
  * @param capturedAt      Instant at which the query was recorded.
  */
-public record SlowQueryRecord(String sql, long executionTimeMs, String httpMethod, String httpEndpoint, String testName, String phase, String threadName, Instant capturedAt) {
+public record SlowQueryRecord(String sql, long executionTimeMs, int joinCount, String httpMethod, String httpEndpoint, String testName, String phase, String threadName,
+        Instant capturedAt) {
 }

@@ -11,6 +11,8 @@ package de.tum.cit.aet.artemis.core.config.performance;
  * @param sql             Normalised SQL text (literals stripped, same form as {@link SlowQueryRecord#sql()}).
  * @param count           Number of times this template was executed within the request.
  * @param totalDurationMs Sum of this template's execution times within the request.
+ * @param joinCount       Number of SQL {@code join} keywords in this template -- how many tables
+ *                            one execution of it touches, independent of environment speed.
  */
-public record QueryCountEntry(String sql, int count, long totalDurationMs) {
+public record QueryCountEntry(String sql, int count, long totalDurationMs, int joinCount) {
 }

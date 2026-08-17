@@ -87,6 +87,8 @@ public class SlowQueryCollector {
      *
      * @param normalizedSql   SQL with literals stripped (produced by {@link SlowQueryListener}).
      * @param executionTimeMs Measured wall-clock execution time in milliseconds.
+     * @param joinCount       Number of SQL {@code join} keywords in the raw query text -- see
+     *                            {@link SlowQueryRecord#joinCount()}.
      * @param httpMethod      HTTP verb of the triggering request; may be {@code null}.
      * @param httpEndpoint    URI path of the triggering request; may be {@code null}.
      * @param testName        Playwright test name from the {@code X-Playwright-Test-Name} header;
@@ -97,20 +99,21 @@ public class SlowQueryCollector {
      * @param threadName      Name of the executing thread, for attributing background/async queries
      *                            ({@code httpEndpoint == null}) to a subsystem without any request context.
      */
-    public void record(String normalizedSql, long executionTimeMs, String httpMethod, String httpEndpoint, String testName, String phase, String threadName) {
+    public void record(String normalizedSql, long executionTimeMs, int joinCount, String httpMethod, String httpEndpoint, String testName, String phase, String threadName) {
 
         // --- Per-request query breakdown (feeds recordEndpointTiming; every query, not just
         // outliers) ---
         if (httpEndpoint != null) {
-            long[] entry = requestQueryBreakdown.get().computeIfAbsent(normalizedSql, k -> new long[2]);
+            long[] entry = requestQueryBreakdown.get().computeIfAbsent(normalizedSql, k -> new long[3]);
             entry[0]++;
             entry[1] += executionTimeMs;
+            entry[2] = joinCount; // same template -> same join count every time; plain assignment is fine
         }
 
         // --- Slow-query detection ---
         if (executionTimeMs >= properties.getSlowQueryThresholdMs()) {
             if (slowQueries.size() < properties.getMaxRecordedQueries()) {
-                slowQueries.add(new SlowQueryRecord(normalizedSql, executionTimeMs, httpMethod, httpEndpoint, testName, phase, threadName, Instant.now()));
+                slowQueries.add(new SlowQueryRecord(normalizedSql, executionTimeMs, joinCount, httpMethod, httpEndpoint, testName, phase, threadName, Instant.now()));
                 log.debug("[SlowQuery] {}ms | {} {} | test='{}' | phase='{}' | thread='{}' | sql={}", executionTimeMs, httpMethod, httpEndpoint, testName, phase, threadName,
                         abbreviate(normalizedSql));
             }
@@ -174,7 +177,8 @@ public class SlowQueryCollector {
         for (Map.Entry<String, long[]> e : breakdown.entrySet()) {
             int count = (int) e.getValue()[0];
             long totalMs = e.getValue()[1];
-            queries.add(new QueryCountEntry(e.getKey(), count, totalMs));
+            int joinCount = (int) e.getValue()[2];
+            queries.add(new QueryCountEntry(e.getKey(), count, totalMs, joinCount));
             dbTimeMs += totalMs;
             queryCount += count;
         }

@@ -18,6 +18,12 @@
 #   slow-query-report.html   – full, sortable, self-contained HTML report (uploaded as the CI artifact)
 #   slow-query-summary.md    – Markdown summary (top 20 per section) for the PR comment
 #
+# Also runs find_slow_queries.py --json here (a second, independent invocation from the one
+# ci-quality.yml's separate "query-quality" job already runs for its own gate) to produce the
+# static findings this step's HTML report cross-references. It's a pure source scan with no
+# database/app dependency, so re-running it costs only the ~1-2s it takes to scan the codebase --
+# far cheaper than plumbing an artifact across CI jobs to share one run's output.
+#
 # Exit code is always 0 (informational step; a missing/failed report is reported via Markdown,
 # never fails the CI job).
 
@@ -26,6 +32,7 @@ set -euo pipefail
 REPORT_SOURCE="src/test/playwright/test-reports/slow-query-report.json"
 REPORT_HTML="slow-query-report.html"
 REPORT_MD="slow-query-summary.md"
+STATIC_FINDINGS="static-findings.json"
 
 echo "=== Slow-Query Report Collection ==="
 echo "Source: ${REPORT_SOURCE}"
@@ -49,12 +56,16 @@ if [ -n "${GITHUB_RUN_ID:-}" ] && [ -n "${GITHUB_REPOSITORY:-}" ]; then
     RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 fi
 
+# Static source scan -- informational only, never fails this step even if it errors (that's
+# ci-quality.yml's job; this one just wants the findings for cross-referencing, if available).
+python3 supporting_scripts/find_slow_queries.py --json "${STATIC_FINDINGS}" > /dev/null 2>&1 || echo "⚠️  Static scan failed; report will render without static-finding correlation."
+
 # ------------------------------------------------------------------
 # Delegate formatting to the Python script: Markdown summary to stdout (for the PR comment),
 # full untruncated HTML report to a file (for the CI artifact).
 # ------------------------------------------------------------------
 python3 supporting_scripts/format_slow_query_report.py \
-    "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" > "${REPORT_MD}"
+    "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" "${STATIC_FINDINGS}" > "${REPORT_MD}"
 
 echo ""
 echo "=== Summary preview ==="

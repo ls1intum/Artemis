@@ -15,6 +15,7 @@ The Markdown summary is written to stdout; redirect to a .md file from the shell
 
 import html
 import json
+import re
 import sys
 from datetime import timezone, datetime
 
@@ -22,6 +23,23 @@ from datetime import timezone, datetime
 # thousands of findings, so only the worst offenders are rendered inline; the rest are still
 # available, untruncated, in the uploaded HTML artifact (see build_html_report).
 MAX_ROWS_PER_SECTION = 20
+
+# --- Endpoint Findings inclusion rule ---
+# Absolute floors: a pattern must clear at least one to be shown at all. Deliberately absolute,
+# not relative -- a purely percentile-based rule ("top 10%") would always surface *something*,
+# even from a run where every endpoint is genuinely healthy. Ratio is safe to fix as an absolute
+# number (already normalised, stable across environment speed); the ms floor is deliberately low
+# and generous -- not "this is bad", just "this isn't literally noise"; the repeat-count floor
+# reuses the existing N+1 threshold rather than inventing a new number.
+ENDPOINT_FINDINGS_RATIO_FLOOR = 0.3
+ENDPOINT_FINDINGS_DBTIME_FLOOR_MS = 20
+ENDPOINT_FINDINGS_REPEAT_FLOOR = 5
+# Among patterns clearing a floor, show the union of the top N% on each axis -- three separate
+# axes because they catch different failure shapes (verified against real CI data: only ~10%
+# overlap between the ratio-ranked and time-ranked sets).
+ENDPOINT_FINDINGS_TOP_PERCENT = 10
+# A pattern reproduced across many tests doesn't need one row per test to make its point.
+ENDPOINT_FINDINGS_MAX_INSTANCES_SHOWN = 15
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +68,72 @@ def trunc_plain(text: str, max_len: int = 100) -> str:
         return ""
     text = text.replace("\n", " ")
     return text[:max_len] + "…" if len(text) > max_len else text
+
+
+# ---------------------------------------------------------------------------
+# Static-finding correlation
+# ---------------------------------------------------------------------------
+# Cross-references find_slow_queries.py's static source-scan findings (wide @EntityGraph/JOIN
+# FETCH definitions, wide eager-fetch association graphs) against the dynamic Slow Query / N+1
+# tables, by table name. Heuristic, not proven: the table-name guess is Hibernate's default
+# PascalCase -> snake_case naming convention, which this codebase follows in the common case but
+# doesn't guarantee for every @Table(name = ...) override.
+
+ROOT_TABLE_PATTERN = re.compile(r'\bfrom\s+(\w+)', re.IGNORECASE)
+
+
+def guess_table_name(entity_class: str) -> str:
+    """PascalCase entity class name -> snake_case table name guess (Hibernate's default physical
+    naming strategy). E.g. "ExerciseGroup" -> "exercise_group"."""
+    return re.sub(r'(?<!^)(?=[A-Z])', '_', entity_class).lower()
+
+
+def extract_root_table(sql: str) -> str:
+    """The table right after the query's own FROM clause -- deliberately not every table the
+    query happens to JOIN, so a query merely joining `course` incidentally isn't badged as an
+    eager-fetch risk just because `course` is a common join target elsewhere."""
+    if not sql:
+        return None
+    match = ROOT_TABLE_PATTERN.search(sql)
+    return match.group(1).lower() if match else None
+
+
+def build_static_index(static_findings: list) -> dict:
+    """table name guess -> list of static findings for that table."""
+    index = {}
+    for f in static_findings:
+        entity_class = f.get("entityClass")
+        if not entity_class:
+            continue
+        index.setdefault(guess_table_name(entity_class), []).append(f)
+    return index
+
+
+def static_finding_label(f: dict) -> str:
+    if f["type"] == "wide_eager_fetch":
+        return f"wide eager-fetch graph ({f['reachableEntityCount']} entities reachable)"
+    if f["type"] == "wide_join_fetch":
+        return f"wide JOIN FETCH ({f['fetchCount']} joins in one @Query)"
+    if f["type"] == "wide_entitygraph":
+        return f"wide @EntityGraph ({f['fetchCount']} attribute paths)"
+    return f["type"]
+
+
+def static_badge_html(sql: str, static_index: dict) -> str:
+    table = extract_root_table(sql)
+    matches = static_index.get(table, []) if table else []
+    if not matches:
+        return ""
+    labels = "; ".join(static_finding_label(f) for f in matches)
+    return f'<span class="static-badge" title="{html.escape(labels)}">🔍 static match</span>'
+
+
+def static_badge_md(sql: str, static_index: dict) -> str:
+    table = extract_root_table(sql)
+    matches = static_index.get(table, []) if table else []
+    if not matches:
+        return ""
+    return " 🔍" + "".join(f" *({static_finding_label(f)})*" for f in matches)
 
 
 def fmt_endpoint(method: str, endpoint: str, thread_name: str = None) -> str:
@@ -112,59 +196,123 @@ def build_slow_queries_section(slow_queries: list, threshold_ms: int, run_url: s
 
     lines = [
         f"### 🐢 Slow Queries ({len(slow_queries)} found, threshold: {threshold_ms} ms)\n",
-        "| # | Duration | Phase | Endpoint | Test | SQL (truncated) |",
-        "|---|----------|-------|----------|------|-----------------|",
+        "| # | Duration | Joins | Phase | Endpoint | Test | SQL (truncated) |",
+        "|---|----------|-------|-------|----------|------|-----------------|",
     ]
     for i, q in enumerate(shown, start=1):
         endpoint = fmt_endpoint(q.get("httpMethod"), q.get("httpEndpoint"), q.get("threadName"))
         test = f"`{q['testName']}`" if q.get("testName") else "—"
         phase = fmt_phase(q.get("phase"), has_endpoint=bool(q.get("httpEndpoint")))
         sql = trunc(q.get("sql", ""))
-        lines.append(f"| {i} | **{q['executionTimeMs']} ms** | {phase} | {endpoint} | {test} | `{sql}` |")
+        lines.append(f"| {i} | **{q['executionTimeMs']} ms** | {q.get('joinCount', 0)} | {phase} | {endpoint} | {test} | `{sql}` |")
     if hidden_count > 0:
         lines.append("")
         lines.append(f"_Showing the {len(shown)} worst (action-phase findings prioritized). {hidden_count} more not shown — see the {artifact_link(run_url)} for the full list._")
     return "\n".join(lines) + "\n"
 
 
-def build_n1_section(n1_suspects: list, n1_threshold: int, run_url: str = "") -> str:
-    if not n1_suspects:
-        return f"✅ **No N+1 patterns** detected (threshold: >{n1_threshold} occurrences per request)\n"
+# ---------------------------------------------------------------------------
+# Endpoint Findings -- replaces the old separate N+1 Suspects / Endpoint Timing sections.
+# ---------------------------------------------------------------------------
+# Both were really the same underlying data (per-request query behaviour) answered at two
+# different grain sizes; keeping them apart just meant a reader had to cross-reference two tables
+# to see the full picture of one endpoint. Grouped by (endpoint, query-template-set) rather than
+# raw request, so the same bug tested by many different tests collapses into one row instead of
+# flooding the table with near-duplicates -- see ENDPOINT_FINDINGS_* constants above for the exact
+# inclusion rule and why each threshold is what it is.
 
-    # See build_slow_queries_section for why action-phase findings are ranked first.
-    ranked = sorted(n1_suspects, key=lambda s: phase_sort_key(s, "occurrences"), reverse=True)
-    shown = ranked[:MAX_ROWS_PER_SECTION]
-    hidden_count = len(ranked) - len(shown)
+def compute_endpoint_findings(endpoint_timings: list) -> dict:
+    """Groups per-request Endpoint Timing entries into distinct (endpoint, query-template-set)
+    patterns, then applies the inclusion rule: Rule 1 (something repeats) -> floor gate (ratio,
+    absolute DB time, or the classic N+1 repeat count) -> percentile ranking (top N% per axis,
+    unioned). Returns the final sorted rows plus the funnel counts at each stage, so the report
+    can show its own filtering honestly rather than silently dropping rows."""
+    groups = {}
+    for e in endpoint_timings:
+        method = e.get("httpMethod") or "?"
+        endpoint = e.get("httpEndpoint") or "?"
+        queries = e.get("queries", [])
+        templates = tuple(sorted(q.get("sql", "") for q in queries))
+        key = (method, endpoint, templates)
+        g = groups.setdefault(key, {"instances": 0, "worst_ratio": 0.0, "worst_dbtime": 0, "worst_qcount": 0, "max_repeat": 0, "queries": {}, "occurrences": []})
+
+        total = e.get("totalDurationMs", 0)
+        db = e.get("dbTimeMs", 0)
+        ratio = (db / total) if total else 0
+        qcount = e.get("queryCount", 0)
+        g["instances"] += 1
+        g["worst_ratio"] = max(g["worst_ratio"], ratio)
+        g["worst_dbtime"] = max(g["worst_dbtime"], db)
+        g["worst_qcount"] = max(g["worst_qcount"], qcount)
+        g["occurrences"].append({"test": e.get("testName"), "phase": e.get("phase"), "ratio": ratio, "total_ms": total, "db_ms": db, "qcount": qcount})
+        for q in queries:
+            sql = q.get("sql", "")
+            count = q.get("count", 0)
+            qms = q.get("totalDurationMs", 0)
+            g["max_repeat"] = max(g["max_repeat"], count)
+            prev = g["queries"].get(sql, (0, 0))
+            g["queries"][sql] = (max(prev[0], count), max(prev[1], qms))
+
+    repeating = {k: v for k, v in groups.items() if v["max_repeat"] > 1}
+    cleared = {
+        k: v
+        for k, v in repeating.items()
+        if v["worst_ratio"] >= ENDPOINT_FINDINGS_RATIO_FLOOR or v["worst_dbtime"] >= ENDPOINT_FINDINGS_DBTIME_FLOOR_MS or v["max_repeat"] > ENDPOINT_FINDINGS_REPEAT_FLOOR
+    }
+
+    items = list(cleared.items())
+    n = max(1, int(len(items) * ENDPOINT_FINDINGS_TOP_PERCENT / 100)) if items else 0
+    top_ratio = {k for k, v in sorted(items, key=lambda kv: kv[1]["worst_ratio"], reverse=True)[:n]}
+    top_dbtime = {k for k, v in sorted(items, key=lambda kv: kv[1]["worst_dbtime"], reverse=True)[:n]}
+    top_repeat = {k for k, v in sorted(items, key=lambda kv: kv[1]["max_repeat"], reverse=True)[:n]}
+    final_keys = top_ratio | top_dbtime | top_repeat
+
+    final_rows = [(k, v) for k, v in items if k in final_keys]
+    final_rows.sort(key=lambda kv: kv[1]["worst_ratio"], reverse=True)
+
+    return {"rows": final_rows, "total_requests": len(endpoint_timings), "distinct_patterns": len(groups), "repeating_patterns": len(repeating), "floor_cleared": len(cleared)}
+
+
+def worst_query_summary(queries: dict, template_count: int) -> str:
+    if not queries:
+        return f"{template_count} templates"
+    worst_sql, (worst_count, _) = max(queries.items(), key=lambda kv: kv[1][0])
+    return f"{trunc(worst_sql, 50)} ×{worst_count}" if worst_count > 1 else f"{template_count} templates"
+
+
+def build_endpoint_findings_section(findings: dict, run_url: str = "") -> str:
+    rows = findings["rows"]
+    if not rows:
+        return "✅ **No endpoint findings** above the inclusion floor (DB-time ratio, absolute DB time, or repeat count)\n"
+
+    shown = rows[:MAX_ROWS_PER_SECTION]
+    hidden_count = len(rows) - len(shown)
 
     lines = [
-        f"### 🔁 N+1 Query Suspects ({len(n1_suspects)} found, threshold: >{n1_threshold}×/request)\n",
-        "| # | Occurrences | Phase | Endpoint | Test | SQL template (truncated) |",
-        "|---|-------------|-------|----------|------|--------------------------|",
+        f"### 🔁 Endpoint Findings ({len(rows)} shown, from {findings['distinct_patterns']} distinct patterns across {findings['total_requests']} requests)\n",
+        "| # | Endpoint | What Repeats | Seen In | Worst DB Time | Worst Ratio | Max Repeat |",
+        "|---|----------|--------------|---------|---------------|-------------|------------|",
     ]
-    for i, s in enumerate(shown, start=1):
-        endpoint = fmt_endpoint(s.get("httpMethod"), s.get("httpEndpoint"))
-        test = f"`{s['testName']}`" if s.get("testName") else "—"
-        sql = trunc(s.get("normalizedSql", ""))
-        lines.append(f"| {i} | **{s['occurrences']}×** | {fmt_phase(s.get('phase'))} | {endpoint} | {test} | `{sql}` |")
+    for i, ((method, endpoint, templates), v) in enumerate(shown, start=1):
+        what = worst_query_summary(v["queries"], len(templates))
+        lines.append(f"| {i} | `{method} {endpoint}` | `{what}` | {v['instances']} | {v['worst_dbtime']} ms | {v['worst_ratio'] * 100:.0f}% | {v['max_repeat']}× |")
     if hidden_count > 0:
         lines.append("")
-        lines.append(f"_Showing the {len(shown)} worst (action-phase findings prioritized). {hidden_count} more not shown — see the {artifact_link(run_url)} for the full list._")
+        lines.append(f"_Showing the {len(shown)} worst by ratio. {hidden_count} more not shown — see the {artifact_link(run_url)} for the full list._")
     return "\n".join(lines) + "\n"
 
 
 def build_report(report: dict, run_url: str = "") -> str:
     threshold_ms = report.get("thresholdMs", "?")
-    n1_threshold = report.get("n1Threshold", "?")
     slow_count = report.get("slowQueryCount", 0)
-    n1_count = report.get("n1SuspectCount", 0)
     generated_at = iso_to_human(report.get("generatedAt", ""))
 
     slow_queries = report.get("slowQueries", [])
-    n1_suspects = report.get("n1Suspects", [])
-    endpoint_timing_count = len(report.get("endpointTimings", []))
+    findings = compute_endpoint_findings(report.get("endpointTimings", []))
+    findings_count = len(findings["rows"])
 
     # --- Header ---
-    if slow_count == 0 and n1_count == 0:
+    if slow_count == 0 and findings_count == 0:
         header_emoji = "✅"
         header_status = "No performance regressions detected"
     else:
@@ -172,8 +320,8 @@ def build_report(report: dict, run_url: str = "") -> str:
         issues = []
         if slow_count > 0:
             issues.append(f"{slow_count} slow quer{'y' if slow_count == 1 else 'ies'}")
-        if n1_count > 0:
-            issues.append(f"{n1_count} N+1 suspect{'s' if n1_count != 1 else ''}")
+        if findings_count > 0:
+            issues.append(f"{findings_count} endpoint finding{'s' if findings_count != 1 else ''}")
         header_status = "Performance issues found: " + " · ".join(issues)
 
     lines = [
@@ -184,16 +332,12 @@ def build_report(report: dict, run_url: str = "") -> str:
         f"**{header_status}**",
         "",
         f"> Generated at: {generated_at}  ",
-        f"> Slow-query threshold: **{threshold_ms} ms** · N+1 detection: **>{n1_threshold}×/request**",
+        f"> Slow-query threshold: **{threshold_ms} ms**  ",
+        f"> Endpoint findings from {findings['total_requests']} requests → {findings['distinct_patterns']} distinct patterns → "
+        f"{findings['repeating_patterns']} with a repeated query → {findings['floor_cleared']} clearing a floor → **{findings_count} shown**",
         "",
         build_slow_queries_section(slow_queries, threshold_ms, run_url),
-        build_n1_section(n1_suspects, n1_threshold, run_url),
-        (
-            f"📊 Per-request query count and DB-time ratio for all {endpoint_timing_count} requests captured this run — "
-            f"unfiltered (no threshold yet), so too large for this comment — is in the {artifact_link(run_url)}, under the \"Endpoint Timing\" tab.\n"
-            if endpoint_timing_count > 0
-            else ""
-        ),
+        build_endpoint_findings_section(findings, run_url),
         "",
         "<details>",
         "<summary>How to investigate</summary>",
@@ -201,9 +345,13 @@ def build_report(report: dict, run_url: str = "") -> str:
         "**Slow queries** exceed the per-query execution time threshold.",
         "Common causes: missing index, unbounded result set, complex JOIN.",
         "",
-        "**N+1 suspects** are queries whose *normalised* SQL template was executed more than",
-        f"{n1_threshold} times within a single HTTP request — a strong indicator that",
-        "related data is being loaded one entity at a time instead of in a single JOIN.",
+        "**Endpoint findings** are requests where the same query template repeated within one",
+        "request, grouped by endpoint and query shape (so the same bug tested many times shows up",
+        "once, not once per test), and shown only if it clears at least one bar: a high share of",
+        "the request's time spent in the database, a high absolute DB time, or a single query",
+        "repeating more than 5 times — a strong indicator that related data is being loaded one",
+        "entity at a time instead of in a single JOIN, or that an endpoint's overall DB engagement",
+        "is high even though no single query is individually slow.",
         "",
         "See the [performance guidelines](https://docs.artemis.tum.de/developer/guidelines/performance)",
         "for remediation patterns.",
@@ -236,6 +384,10 @@ HTML_REPORT_CSS = """
     --sev-medium: #d97706;
     --sev-low: #ca8a04;
     --tile-bg: #f9fafb;
+    --sql-keyword: #1d4ed8;
+    --sql-string: #15803d;
+    --sql-number: #7c3aed;
+    --sql-placeholder: #b45309;
 }
 @media (prefers-color-scheme: dark) {
     :root {
@@ -245,6 +397,10 @@ HTML_REPORT_CSS = """
         --border: #2d323b;
         --row-hover: #1f232a;
         --tile-bg: #1c1f26;
+        --sql-keyword: #7aa2f7;
+        --sql-string: #7ee787;
+        --sql-number: #d2a8ff;
+        --sql-placeholder: #f2cc60;
     }
 }
 * { box-sizing: border-box; }
@@ -288,6 +444,15 @@ table.nested-table { width: auto; min-width: 320px; margin: 6px 0 0; font-size: 
 table.nested-table th, table.nested-table td { padding: 4px 8px; }
 table.nested-table th { cursor: default; }
 .query-breakdown summary { cursor: pointer; color: var(--muted); }
+.static-badge { display: inline-block; margin-left: 6px; font-size: 11px; color: var(--muted); cursor: help; white-space: nowrap; }
+.sql-keyword { color: var(--sql-keyword); font-weight: 600; }
+.sql-string { color: var(--sql-string); }
+.sql-number { color: var(--sql-number); }
+.sql-placeholder { color: var(--sql-placeholder); font-weight: 600; }
+.group-row { cursor: pointer; }
+.expand-cell { width: 20px; text-align: center; color: var(--muted); }
+.detail-row td { background: var(--tile-bg); padding: 10px 10px 14px 30px; }
+.detail-row table.nested-table { width: 100%; }
 """
 
 HTML_REPORT_JS = """
@@ -338,6 +503,52 @@ document.querySelectorAll('.tab-btn').forEach(function (btn) {
         document.getElementById(btn.getAttribute('aria-controls')).hidden = false;
     });
 });
+
+// Endpoint Findings: grouped rows are expand/collapse-able, and sorted with a small dedicated
+// script rather than the generic one above. The generic sort reorders every <tr> in the tbody by
+// index, which would scramble group/detail-row pairing (a detail row has one colspan cell, not
+// one per column, so `cells[colIndex]` would misalign). This one moves each group-row and
+// re-attaches its detail-row by id right after it, so pairing survives sorting.
+(function () {
+    var table = document.getElementById('endpoint-findings-table');
+    if (!table) return;
+    var tbody = table.tBodies[0];
+    table.querySelectorAll('.group-row').forEach(function (row) {
+        row.addEventListener('click', function (e) {
+            if (e.target.closest('details')) return;
+            var detail = document.getElementById(row.dataset.detailTarget);
+            var arrow = row.querySelector('.expand-arrow');
+            detail.hidden = !detail.hidden;
+            arrow.innerHTML = detail.hidden ? '&#9654;' : '&#9660;';
+        });
+    });
+    var colIndex = { endpoint: 1, repeats: 2, instances: 3, dbtime: 4, ratio: 5, repeat: 6, qcount: 7 };
+    table.querySelectorAll('th[data-col]').forEach(function (th) {
+        th.style.cursor = 'pointer';
+        th.addEventListener('click', function () {
+            var col = th.dataset.col;
+            var idx = colIndex[col];
+            var type = th.dataset.type;
+            var groupRows = Array.prototype.slice.call(tbody.querySelectorAll('.group-row'));
+            var asc = !(table.dataset.sortCol === col && table.dataset.sortDir === 'asc');
+            groupRows.sort(function (a, b) {
+                var x = a.cells[idx].dataset.sort !== undefined ? a.cells[idx].dataset.sort : a.cells[idx].textContent.trim();
+                var y = b.cells[idx].dataset.sort !== undefined ? b.cells[idx].dataset.sort : b.cells[idx].textContent.trim();
+                if (type === 'number') { x = parseFloat(x) || 0; y = parseFloat(y) || 0; }
+                else { x = x.toLowerCase(); y = y.toLowerCase(); }
+                if (x < y) return asc ? -1 : 1;
+                if (x > y) return asc ? 1 : -1;
+                return 0;
+            });
+            groupRows.forEach(function (row) {
+                tbody.appendChild(row);
+                tbody.appendChild(document.getElementById(row.dataset.detailTarget));
+            });
+            table.dataset.sortCol = col;
+            table.dataset.sortDir = asc ? 'asc' : 'desc';
+        });
+    });
+})();
 """
 
 
@@ -380,22 +591,52 @@ def html_endpoint(method: str, endpoint: str, thread_name: str = None) -> str:
     return html.escape(f"{method or '?'} {endpoint or '?'}")
 
 
+SQL_KEYWORDS = (
+    "SELECT|FROM|WHERE|LEFT|RIGHT|INNER|OUTER|JOIN|ON|AND|OR|NOT|IN|IS|NULL|ORDER|BY|GROUP|HAVING|"
+    "INSERT|INTO|VALUES|UPDATE|SET|DELETE|AS|DISTINCT|LIMIT|OFFSET|EXISTS|UNION|ALL|ASC|DESC|LIKE|"
+    "BETWEEN|COUNT|SUM|AVG|MAX|MIN|CASE|WHEN|THEN|ELSE|END|FETCH|FIRST|ROWS|ONLY"
+)
+SQL_TOKEN_PATTERN = re.compile(
+    r"(?P<string>'[^']*')"
+    r"|(?P<placeholder>\?)"
+    r"|(?P<number>\b\d+\.?\d*\b)"
+    rf"|(?P<keyword>\b(?:{SQL_KEYWORDS})\b)",
+    re.IGNORECASE,
+)
+
+
+def highlight_sql(sql: str) -> str:
+    """Lightweight, self-contained SQL syntax highlighting -- no external library (the report has
+    no external assets by design), just a single-pass regex tokenizer wrapping recognized pieces
+    in spans styled via the --sql-* CSS tokens."""
+    if not sql:
+        return ""
+    out = []
+    last_end = 0
+    for m in SQL_TOKEN_PATTERN.finditer(sql):
+        out.append(html.escape(sql[last_end:m.start()]))
+        out.append(f'<span class="sql-{m.lastgroup}">{html.escape(m.group(0))}</span>')
+        last_end = m.end()
+    out.append(html.escape(sql[last_end:]))
+    return "".join(out)
+
+
 def html_sql_cell(sql: str) -> str:
     """Short queries render inline; long ones collapse behind <details> so the table stays
     scannable while the full, untruncated SQL is still one click away (impossible in the
     Markdown comment, which can only ever show the truncated form)."""
     if not sql:
         return ""
-    escaped_full = html.escape(sql)
     if len(sql) <= 100:
-        return f"<code>{escaped_full}</code>"
-    summary = html.escape(trunc_plain(sql, 100))
-    return f"<details><summary><code>{summary}</code></summary><pre>{escaped_full}</pre></details>"
+        return f"<code>{highlight_sql(sql)}</code>"
+    summary = highlight_sql(trunc_plain(sql, 100))
+    return f"<details><summary><code>{summary}</code></summary><pre>{highlight_sql(sql)}</pre></details>"
 
 
-def build_slow_queries_table_html(slow_queries: list, threshold_ms: int) -> str:
+def build_slow_queries_table_html(slow_queries: list, threshold_ms: int, static_index: dict = None) -> str:
     if not slow_queries:
         return f'<p class="ok">✅ No slow queries detected (threshold: {threshold_ms} ms)</p>'
+    static_index = static_index or {}
 
     ranked = sorted(slow_queries, key=lambda q: q.get("executionTimeMs", 0), reverse=True)
     rows = []
@@ -404,13 +645,16 @@ def build_slow_queries_table_html(slow_queries: list, threshold_ms: int) -> str:
         ratio = duration / threshold_ms if threshold_ms else 0
         test = html.escape(q["testName"]) if q.get("testName") else '<span class="muted">—</span>'
         has_endpoint = bool(q.get("httpEndpoint"))
+        joins = q.get("joinCount", 0)
+        badge = static_badge_html(q.get("sql", ""), static_index)
         rows.append(
             f'<tr class="{severity_class(ratio)}">'
             f'<td class="num" data-sort="{duration}">{duration} ms</td>'
+            f'<td class="num" data-sort="{joins}">{joins}</td>'
             f"<td>{html_phase(q.get('phase'), has_endpoint)}</td>"
             f"<td>{html_endpoint(q.get('httpMethod'), q.get('httpEndpoint'), q.get('threadName'))}</td>"
             f"<td>{test}</td>"
-            f'<td class="sql-cell">{html_sql_cell(q.get("sql", ""))}</td>'
+            f'<td class="sql-cell">{html_sql_cell(q.get("sql", ""))}{badge}</td>'
             f"</tr>"
         )
 
@@ -419,6 +663,7 @@ def build_slow_queries_table_html(slow_queries: list, threshold_ms: int) -> str:
         '<table class="sortable" id="slow-queries-table">\n'
         "<thead><tr>"
         '<th data-type="number">Duration</th>'
+        '<th data-type="number" title="Tables joined in this one query -- structural, doesn\'t depend on environment speed">Joins</th>'
         '<th data-type="number">Phase</th>'
         '<th data-type="string">Endpoint</th>'
         '<th data-type="string">Test</th>'
@@ -429,145 +674,168 @@ def build_slow_queries_table_html(slow_queries: list, threshold_ms: int) -> str:
     )
 
 
-def build_n1_table_html(n1_suspects: list, n1_threshold: int) -> str:
-    if not n1_suspects:
-        return f'<p class="ok">✅ No N+1 patterns detected (threshold: &gt;{n1_threshold} occurrences per request)</p>'
-
-    ranked = sorted(n1_suspects, key=lambda s: s.get("occurrences", 0), reverse=True)
+def shared_query_breakdown_html(queries: dict, static_index: dict) -> str:
+    """The query breakdown for a pattern, rendered ONCE per group rather than once per instance:
+    every instance in a group has the identical query *set* by construction (that's the grouping
+    key), so per-instance timing/count can differ slightly but repeating the full SQL text per
+    instance would just be duplication, not new information."""
+    ranked = sorted(queries.items(), key=lambda kv: kv[1][1], reverse=True)
     rows = []
-    for s in ranked:
-        occurrences = s.get("occurrences", 0)
-        ratio = occurrences / n1_threshold if n1_threshold else 0
-        test = html.escape(s["testName"]) if s.get("testName") else '<span class="muted">—</span>'
-        rows.append(
-            f'<tr class="{severity_class(ratio)}">'
-            f'<td class="num" data-sort="{occurrences}">{occurrences}×</td>'
-            f"<td>{html_phase(s.get('phase'))}</td>"
-            f"<td>{html_endpoint(s.get('httpMethod'), s.get('httpEndpoint'))}</td>"
-            f"<td>{test}</td>"
-            f'<td class="sql-cell">{html_sql_cell(s.get("normalizedSql", ""))}</td>'
-            f"</tr>"
-        )
-
+    for sql, (count, qms) in ranked:
+        badge = static_badge_html(sql, static_index)
+        rows.append(f'<tr><td class="num">{count}×</td><td class="num">{qms} ms</td><td class="sql-cell">{html_sql_cell(sql)}{badge}</td></tr>')
+    label = f"{len(ranked)} distinct quer{'y' if len(ranked) == 1 else 'ies'}"
     return (
-        '<input class="filter-box" type="search" placeholder="Filter by endpoint, test, phase, or SQL…" data-target="n1-suspects-table">\n'
-        '<table class="sortable" id="n1-suspects-table">\n'
-        "<thead><tr>"
-        '<th data-type="number">Occurrences</th>'
-        '<th data-type="number">Phase</th>'
-        '<th data-type="string">Endpoint</th>'
-        '<th data-type="string">Test</th>'
-        '<th data-type="string">SQL template</th>'
-        "</tr></thead>\n"
-        f"<tbody>{''.join(rows)}</tbody>\n"
-        "</table>"
+        f'<details class="query-breakdown"><summary>{label}</summary>'
+        '<table class="nested-table"><thead><tr><th>Count</th><th>Total Time</th><th>SQL</th></tr></thead>'
+        f"<tbody>{''.join(rows)}</tbody></table></details>"
     )
 
 
-def ratio_severity_class(ratio: float) -> str:
-    """Bands a 0..1 DB-time ratio. Distinct from severity_class (which bands 'multiples of a
-    fixed ms threshold', meaningless for a fraction). Purely visual -- endpoint timings have no
-    inclusion threshold yet (see build_endpoint_timings_table_html), so these bands don't decide
-    what's shown, only how it's colored once shown."""
-    if ratio >= 0.7:
+def instance_rows_html(occurrences: list) -> str:
+    """Reproduces the columns the old, ungrouped Endpoint Timing row used to show -- ratio,
+    total, DB time, query count, phase, test -- as a nested table under the pattern it belongs
+    to. Capped worst-first: a pattern seen in dozens of tests doesn't need one row per test to
+    make its point, same capping philosophy the rest of the report already uses."""
+    ranked = sorted(occurrences, key=lambda o: o["ratio"], reverse=True)
+    hidden_count = max(0, len(ranked) - ENDPOINT_FINDINGS_MAX_INSTANCES_SHOWN)
+    ranked = ranked[:ENDPOINT_FINDINGS_MAX_INSTANCES_SHOWN]
+    rows = []
+    for o in ranked:
+        has_endpoint = True  # every EndpointTimingRecord comes from a real HTTP request by construction
+        test = html.escape(o["test"]) if o.get("test") else '<span class="muted">—</span>'
+        rows.append(
+            "<tr>"
+            f'<td class="num">{o["ratio"] * 100:.0f}%</td>'
+            f'<td class="num">{o["total_ms"]} ms</td>'
+            f'<td class="num">{o["db_ms"]} ms</td>'
+            f'<td class="num">{o["qcount"]}</td>'
+            f"<td>{html_phase(o.get('phase'), has_endpoint)}</td>"
+            f"<td>{test}</td>"
+            "</tr>"
+        )
+    note = ""
+    if hidden_count:
+        note = f'<p class="muted" style="margin:6px 0 0;font-size:12px;">+ {hidden_count} more instance{"s" if hidden_count != 1 else ""} not shown</p>'
+    return (
+        '<table class="nested-table"><thead><tr><th>Ratio</th><th>Total</th><th>DB Time</th><th>Queries</th><th>Phase</th><th>Test</th></tr></thead>'
+        f"<tbody>{''.join(rows)}</tbody></table>{note}"
+    )
+
+
+def endpoint_findings_severity(ratio: float, max_repeat: int) -> str:
+    if ratio >= 0.6 or max_repeat > 20:
         return "sev-high"
-    if ratio >= 0.4:
+    if ratio >= 0.4 or max_repeat > 10:
         return "sev-medium"
     return "sev-low"
 
 
-def html_query_breakdown(queries: list) -> str:
-    """Collapsible per-request query breakdown: every normalized SQL template that ran during
-    this request and how many times, sorted worst-first by total time. This is what lets a reader
-    see WHY an endpoint's query count or DB-time ratio is high even when no single query
-    individually crosses the slow-query or N+1 thresholds -- the blind spot neither of the other
-    two tables can cover, since both only ever record outliers."""
-    if not queries:
-        return ""
-    ranked = sorted(queries, key=lambda q: q.get("totalDurationMs", 0), reverse=True)
-    rows = []
-    for q in ranked:
-        rows.append(
-            "<tr>"
-            f'<td class="num">{q.get("count", 0)}×</td>'
-            f'<td class="num">{q.get("totalDurationMs", 0)} ms</td>'
-            f'<td class="sql-cell">{html_sql_cell(q.get("sql", ""))}</td>'
+def build_endpoint_findings_table_html(findings: dict, static_index: dict = None) -> str:
+    """Grouped, collapsible Endpoint Findings table -- replaces the old separate N+1 Suspects and
+    Endpoint Timing tables. See compute_endpoint_findings for the grouping/inclusion rule."""
+    static_index = static_index or {}
+    rows = findings["rows"]
+    if not rows:
+        return '<p class="ok">✅ No endpoint findings above the inclusion floor.</p>'
+
+    rows_html = []
+    for idx, ((method, endpoint, templates), v) in enumerate(rows):
+        what_repeats = worst_query_summary_html(v["queries"], len(templates))
+        detail_id = f"endpoint-finding-detail-{idx}"
+        rows_html.append(
+            f'<tr class="{endpoint_findings_severity(v["worst_ratio"], v["max_repeat"])} group-row" data-detail-target="{detail_id}">'
+            '<td class="expand-cell"><span class="expand-arrow">&#9654;</span></td>'
+            f"<td>{html.escape(f'{method} {endpoint}')}</td>"
+            f'<td class="sql-cell">{what_repeats}</td>'
+            f'<td class="num" data-sort="{v["instances"]}">{v["instances"]}</td>'
+            f'<td class="num" data-sort="{v["worst_dbtime"]}">{v["worst_dbtime"]} ms</td>'
+            f'<td class="num" data-sort="{v["worst_ratio"]:.4f}">{v["worst_ratio"] * 100:.0f}%</td>'
+            f'<td class="num" data-sort="{v["max_repeat"]}">{v["max_repeat"]}×</td>'
+            f'<td class="num" data-sort="{v["worst_qcount"]}">{v["worst_qcount"]}</td>'
             "</tr>"
+            f'<tr class="detail-row" id="{detail_id}" hidden><td></td><td colspan="7">'
+            f'{instance_rows_html(v["occurrences"])}<div style="margin-top:10px;">{shared_query_breakdown_html(v["queries"], static_index)}</div>'
+            "</td></tr>"
         )
-    label = f"{len(queries)} distinct quer{'y' if len(queries) == 1 else 'ies'}"
+
     return (
-        f'<details class="query-breakdown"><summary>{label}</summary>'
-        '<table class="nested-table">'
-        "<thead><tr><th>Count</th><th>Total Time</th><th>SQL</th></tr></thead>"
-        f"<tbody>{''.join(rows)}</tbody>"
-        "</table></details>"
+        '<input class="filter-box" type="search" placeholder="Filter by endpoint or SQL…" data-target="endpoint-findings-table">\n'
+        # Deliberately NOT class="sortable": the shared click-to-sort script reorders every <tr>
+        # in the tbody generically, which would scramble group/detail-row pairing. See the
+        # dedicated sort script scoped to #endpoint-findings-table in HTML_REPORT_JS instead.
+        '<table class="grouped-table" id="endpoint-findings-table">\n'
+        "<thead><tr>"
+        "<th></th>"
+        '<th data-type="string" data-col="endpoint">Endpoint</th>'
+        '<th data-type="string" data-col="repeats">What Repeats</th>'
+        '<th data-type="number" data-col="instances">Seen In</th>'
+        '<th data-type="number" data-col="dbtime">Worst DB Time</th>'
+        '<th data-type="number" data-col="ratio">Worst Ratio</th>'
+        '<th data-type="number" data-col="repeat">Max Repeat</th>'
+        '<th data-type="number" data-col="qcount">Total Queries</th>'
+        "</tr></thead>\n"
+        f"<tbody>{''.join(rows_html)}</tbody>\n"
+        "</table>"
     )
 
 
-def build_endpoint_timings_table_html(endpoint_timings: list) -> str:
-    """One row per HTTP request captured during the run -- deliberately unfiltered (see
-    EndpointTimingRecord's Javadoc): a query-count or ratio threshold picked before seeing the
-    real distribution of values across genuine E2E traffic would be a guess, not a calibrated
-    bar. Ranked by DB-time ratio, which (unlike either of the absolute ms values it's computed
-    from) stays roughly stable if the whole run is uniformly faster or slower, since both sides
-    of the ratio move together."""
-    if not endpoint_timings:
-        return '<p class="ok">No endpoint-timing data captured.</p>'
+def worst_query_summary_html(queries: dict, template_count: int) -> str:
+    if not queries:
+        return f"{template_count} templates"
+    worst_sql, (worst_count, _) = max(queries.items(), key=lambda kv: kv[1][0])
+    if worst_count <= 1:
+        return f"{template_count} templates"
+    return f'{highlight_sql(trunc_plain(worst_sql, 70))} <strong>×{worst_count}</strong>'
 
-    def ratio_of(e):
-        total = e.get("totalDurationMs", 0)
-        return (e.get("dbTimeMs", 0) / total) if total else 0
 
-    ranked = sorted(endpoint_timings, key=ratio_of, reverse=True)
+def build_static_findings_table_html(static_findings: list) -> str:
+    """Every static finding, unfiltered -- including ones with no dynamic match, which are
+    exactly the interesting case: a structural risk E2E's traffic never happened to exercise."""
+    if not static_findings:
+        return '<p class="ok">No static findings.</p>'
+
     rows = []
-    for e in ranked:
-        r = ratio_of(e)
-        test = html.escape(e["testName"]) if e.get("testName") else '<span class="muted">—</span>'
+    for f in static_findings:
+        entity = f.get("entityClass") or "—"
         rows.append(
-            f'<tr class="{ratio_severity_class(r)}">'
-            f'<td class="num" data-sort="{r:.4f}">{r * 100:.0f}%</td>'
-            f'<td class="num" data-sort="{e.get("totalDurationMs", 0)}">{e.get("totalDurationMs", 0)} ms</td>'
-            f'<td class="num" data-sort="{e.get("dbTimeMs", 0)}">{e.get("dbTimeMs", 0)} ms</td>'
-            f'<td class="num" data-sort="{e.get("queryCount", 0)}">{e.get("queryCount", 0)}</td>'
-            f"<td>{html_phase(e.get('phase'))}</td>"
-            f"<td>{html_endpoint(e.get('httpMethod'), e.get('httpEndpoint'))}</td>"
-            f"<td>{test}</td>"
-            f'<td class="sql-cell">{html_query_breakdown(e.get("queries", []))}</td>'
-            f"</tr>"
+            "<tr>"
+            f"<td>{html.escape(f['type'])}</td>"
+            f"<td>{html.escape(entity)}</td>"
+            f"<td>{html.escape(static_finding_label(f))}</td>"
+            f'<td class="sql-cell">{html_sql_cell(f.get("snippet") or " -> ".join(f.get("reachablePath", [])))}</td>'
+            f"<td>{html.escape(f.get('file', ''))}</td>"
+            "</tr>"
         )
 
     return (
-        '<input class="filter-box" type="search" placeholder="Filter by endpoint, test, phase, or SQL…" data-target="endpoint-timings-table">\n'
-        '<table class="sortable" id="endpoint-timings-table">\n'
+        '<input class="filter-box" type="search" placeholder="Filter by type, entity, or file…" data-target="static-findings-table">\n'
+        '<table class="sortable" id="static-findings-table">\n'
         "<thead><tr>"
-        '<th data-type="number">DB-Time Ratio</th>'
-        '<th data-type="number">Total Duration</th>'
-        '<th data-type="number">DB Time</th>'
-        '<th data-type="number">Query Count</th>'
-        '<th data-type="number">Phase</th>'
-        '<th data-type="string">Endpoint</th>'
-        '<th data-type="string">Test</th>'
-        '<th data-type="string">Queries</th>'
+        '<th data-type="string">Type</th>'
+        '<th data-type="string">Entity</th>'
+        '<th data-type="string">Detail</th>'
+        '<th data-type="string">Path / Snippet</th>'
+        '<th data-type="string">File</th>'
         "</tr></thead>\n"
         f"<tbody>{''.join(rows)}</tbody>\n"
         "</table>"
     )
 
 
-def build_html_report(report: dict, run_url: str = "") -> str:
-    # Unlike build_report's "?" placeholder (display-only), these two feed severity_class's
-    # division below, so a missing key needs a numeric fallback rather than a string one.
+def build_html_report(report: dict, run_url: str = "", static_findings: list = None) -> str:
+    static_findings = static_findings or []
+    static_index = build_static_index(static_findings)
+    # Unlike build_report's "?" placeholder (display-only), this feeds severity_class's division
+    # below, so a missing key needs a numeric fallback rather than a string one.
     threshold_ms = report.get("thresholdMs") if isinstance(report.get("thresholdMs"), (int, float)) else 100
-    n1_threshold = report.get("n1Threshold") if isinstance(report.get("n1Threshold"), (int, float)) else 5
     slow_count = report.get("slowQueryCount", 0)
-    n1_count = report.get("n1SuspectCount", 0)
     generated_at = iso_to_human(report.get("generatedAt", ""))
     slow_queries = report.get("slowQueries", [])
-    n1_suspects = report.get("n1Suspects", [])
-    endpoint_timings = report.get("endpointTimings", [])
-    all_findings = slow_queries + n1_suspects
-    action_count = sum(1 for f in all_findings if f.get("phase") == "action")
-    setup_count = sum(1 for f in all_findings if f.get("phase") == "setup")
+    findings = compute_endpoint_findings(report.get("endpointTimings", []))
+    findings_count = len(findings["rows"])
+    action_count = sum(1 for f in slow_queries if f.get("phase") == "action")
+    setup_count = sum(1 for f in slow_queries if f.get("phase") == "setup")
 
     run_link_html = f'<p><a href="{html.escape(run_url)}">View CI run</a></p>' if run_url else ""
 
@@ -584,30 +852,31 @@ def build_html_report(report: dict, run_url: str = "") -> str:
 <h1>Slow Query Report</h1>
 <p class="muted">Generated at {html.escape(generated_at)}</p>
 {run_link_html}
-<p class="lead">Findings captured automatically during this E2E run: individual database queries whose execution time exceeded the configured threshold ("Slow Queries"), and SQL patterns repeated more than the N+1 threshold within a single request ("N+1 Suspects"), a classic sign of a missing eager fetch or batch load.</p>
+<p class="lead">Findings captured automatically during this E2E run: individual database queries whose execution time exceeded the configured threshold ("Slow Queries"), and endpoints whose queries repeat within a request and clear at least one significance floor ("Endpoint Findings") -- grouped by endpoint and query shape, so the same bug tested many times shows up once, not once per test.</p>
 <div class="stats">
 <div class="stat-tile"><span class="stat-value">{slow_count}</span><span class="stat-label">Slow Queries</span><span class="stat-sub">threshold {threshold_ms} ms</span></div>
-<div class="stat-tile"><span class="stat-value">{n1_count}</span><span class="stat-label">N+1 Suspects</span><span class="stat-sub">threshold &gt;{n1_threshold}×/request</span></div>
-<div class="stat-tile"><span class="stat-value">{action_count}</span><span class="stat-label">Action-Phase Findings</span><span class="stat-sub">real UI-driven traffic — start here</span></div>
-<div class="stat-tile"><span class="stat-value">{setup_count}</span><span class="stat-label">Setup-Phase Findings</span><span class="stat-sub">test fixture traffic, lower priority</span></div>
+<div class="stat-tile"><span class="stat-value">{findings_count}</span><span class="stat-label">Endpoint Findings</span><span class="stat-sub">from {findings['distinct_patterns']} distinct patterns</span></div>
+<div class="stat-tile"><span class="stat-value">{action_count}</span><span class="stat-label">Action-Phase Slow Queries</span><span class="stat-sub">real UI-driven traffic — start here</span></div>
+<div class="stat-tile"><span class="stat-value">{setup_count}</span><span class="stat-label">Setup-Phase Slow Queries</span><span class="stat-sub">test fixture traffic, lower priority</span></div>
 </div>
 <p class="muted">Type "action" or "setup" into a table's filter box to isolate findings by phase.</p>
 
 <div class="tabs" role="tablist">
 <button class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="panel-slow-queries">🐢 Slow Queries <span class="tab-count">{slow_count}</span></button>
-<button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-n1-suspects">🔁 N+1 Suspects <span class="tab-count">{n1_count}</span></button>
-<button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-endpoint-timings">📊 Endpoint Timing <span class="tab-count">{len(endpoint_timings)}</span></button>
+<button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-endpoint-findings">🔁 Endpoint Findings <span class="tab-count">{findings_count}</span></button>
+<button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-static-findings">🔍 Static Findings <span class="tab-count">{len(static_findings)}</span></button>
 </div>
 
 <section class="tab-panel" id="panel-slow-queries" role="tabpanel">
-{build_slow_queries_table_html(slow_queries, threshold_ms)}
+{build_slow_queries_table_html(slow_queries, threshold_ms, static_index)}
 </section>
-<section class="tab-panel" id="panel-n1-suspects" role="tabpanel" hidden>
-{build_n1_table_html(n1_suspects, n1_threshold)}
+<section class="tab-panel" id="panel-endpoint-findings" role="tabpanel" hidden>
+<p class="muted">{findings['total_requests']} requests captured → {findings['distinct_patterns']} distinct (endpoint, query-shape) patterns → {findings['repeating_patterns']} with a repeated query → {findings['floor_cleared']} clearing a floor (DB-time ratio ≥ 30%, DB time ≥ 20ms, or a query repeating &gt;5×) → <strong>{findings_count} shown</strong> (top 10% per axis, unioned). Click a row to see the individual requests it was grouped from, and the shared query breakdown.</p>
+{build_endpoint_findings_table_html(findings, static_index)}
 </section>
-<section class="tab-panel" id="panel-endpoint-timings" role="tabpanel" hidden>
-<p class="muted">One row per HTTP request captured during this run — deliberately unfiltered, no threshold applied yet. Ranked by DB-time ratio (DB time ÷ total request time), which stays roughly stable even if this CI run was uniformly faster or slower than usual. Click a row's "Queries" cell to see exactly which queries ran and how many times.</p>
-{build_endpoint_timings_table_html(endpoint_timings)}
+<section class="tab-panel" id="panel-static-findings" role="tabpanel" hidden>
+<p class="muted">Findings from a pure source scan (no test run needed) -- wide @EntityGraph/JOIN FETCH definitions, and entities whose eager-fetch association graph transitively touches many other entities. A 🔍 badge on a row means its root table matches one of these by name (heuristic: PascalCase → snake_case), not a proven link. Findings with no badge anywhere are just as worth a look -- they're structural risks no test happened to trigger yet.</p>
+{build_static_findings_table_html(static_findings)}
 </section>
 </div>
 <script>{HTML_REPORT_JS}</script>
@@ -622,20 +891,28 @@ def build_html_report(report: dict, run_url: str = "") -> str:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: format_slow_query_report.py <report.json> [run_url] [html_output_path]", file=sys.stderr)
+        print("Usage: format_slow_query_report.py <report.json> [run_url] [html_output_path] [static_findings.json]", file=sys.stderr)
         sys.exit(1)
 
     report_path = sys.argv[1]
     run_url = sys.argv[2] if len(sys.argv) > 2 else ""
     html_output_path = sys.argv[3] if len(sys.argv) > 3 else ""
+    static_findings_path = sys.argv[4] if len(sys.argv) > 4 else ""
     try:
         report = load_report(report_path)
     except (json.JSONDecodeError, FileNotFoundError) as exc:
         print(f"## ⚠️ Slow Query Report Parse Error\n\n{exc}", file=sys.stderr)
         sys.exit(1)
 
+    static_findings = []
+    if static_findings_path:
+        try:
+            static_findings = load_report(static_findings_path)
+        except (json.JSONDecodeError, FileNotFoundError) as exc:
+            print(f"Warning: could not load static findings from {static_findings_path}: {exc}", file=sys.stderr)
+
     print(build_report(report, run_url))
 
     if html_output_path:
         with open(html_output_path, "w", encoding="utf-8") as f:
-            f.write(build_html_report(report, run_url))
+            f.write(build_html_report(report, run_url, static_findings))
