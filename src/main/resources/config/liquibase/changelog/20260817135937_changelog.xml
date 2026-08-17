@@ -39,6 +39,26 @@
     </changeSet>
 
     <!--
+    Covering index for the in-time submission counts on the course and exam assessment dashboards
+    (SubmissionRepository#countAllByExerciseIdsSubmittedBeforeDueDate and its exam variant). They walk the
+    participations of a course and read discriminator, submitted and submission_date of each participation's
+    submissions. The existing index on (participation_id, submission_date) cannot answer that, so every candidate row
+    was fetched from the clustered index.
+
+    Measured on a production dump for a course with 89 exercises: 0.42s -> 0.32s warm, and EXPLAIN ANALYZE turns
+    227,789 index lookups with ~391k row fetches into "Covering index lookup" with none. Those fetches are what makes
+    the statement take 7.4s on production, where the working set does not fit into the buffer pool.
+    -->
+    <changeSet id="20260817-03-add-submission-participation-covering-index" author="krusche">
+        <createIndex indexName="idx_submission_participation_type_submitted_date" tableName="submission">
+            <column name="participation_id"/>
+            <column name="discriminator"/>
+            <column name="submitted"/>
+            <column name="submission_date"/>
+        </createIndex>
+    </changeSet>
+
+    <!--
     Denormalize complaint.exercise_id, following the established result.exercise_id precedent.
 
     The complaint counts on the course and exam assessment dashboards filter a set of exercise ids. Reaching the
@@ -46,14 +66,14 @@
     all 25,646 complaints to find its 43. Only ~27k rows, so the backfill is quick.
     -->
 
-    <changeSet id="20260817-03-add-complaint-exercise-id" author="krusche">
+    <changeSet id="20260817-04-add-complaint-exercise-id" author="krusche">
         <addColumn tableName="complaint">
             <column name="exercise_id" type="bigint"/>
         </addColumn>
     </changeSet>
 
     <!-- A correlated subquery rather than UPDATE ... JOIN, which MySQL and PostgreSQL spell differently -->
-    <changeSet id="20260817-04-backfill-complaint-exercise-id" author="krusche">
+    <changeSet id="20260817-05-backfill-complaint-exercise-id" author="krusche">
         <sql>
             UPDATE complaint c
             SET exercise_id = (SELECT r.exercise_id FROM result r WHERE r.id = c.result_id)
@@ -63,7 +83,7 @@
         <rollback/>
     </changeSet>
 
-    <changeSet id="20260817-05-add-complaint-exercise-type-index" author="krusche">
+    <changeSet id="20260817-06-add-complaint-exercise-type-index" author="krusche">
         <createIndex indexName="idx_complaint_exercise_type" tableName="complaint">
             <column name="exercise_id"/>
             <column name="complaint_type"/>
@@ -75,7 +95,7 @@
     column to a primitive. There is no such row on production, and 0 is a sentinel that matches no exercise, so those
     complaints simply stay uncounted instead of blocking the migration.
     -->
-    <changeSet id="20260817-06-complaint-exercise-id-not-null" author="krusche">
+    <changeSet id="20260817-07-complaint-exercise-id-not-null" author="krusche">
         <addNotNullConstraint tableName="complaint" columnName="exercise_id" columnDataType="bigint" defaultNullValue="0"/>
     </changeSet>
 
