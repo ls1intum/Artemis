@@ -317,7 +317,7 @@ public class ProgrammingSubmissionResource {
         }
 
         programmingSubmissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
-        boolean isFeedbackRequest = participation.getIndividualDueDate() != null && participation.getIndividualDueDate().isBefore(ZonedDateTime.now());
+        boolean isFeedbackRequest = participation.isFeedbackRequest();
         if (!programmingExercise.areManualResultsAllowed(isFeedbackRequest)) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }

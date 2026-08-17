@@ -33,4 +33,22 @@ public interface ParticipationInterface {
     void setExercise(Exercise exercise);
 
     <T extends Submission> Optional<T> findLatestSubmission();
+
+    /**
+     * Whether the individual due date marks this participation as an actual feedback request rather than a regular
+     * deadline extension. Feedback requests get an individual due date set to the moment of the request, which is
+     * always before the exercise's regular due date; extensions are only ever set at or after it (see
+     * {@code ParticipationService#updateIndividualDueDates}). Without this distinction, an expired extension would
+     * incorrectly be treated as a feedback request.
+     *
+     * @return true if the individual due date has passed and represents a feedback request, not an extension
+     */
+    default boolean isFeedbackRequest() {
+        ZonedDateTime individualDueDate = getIndividualDueDate();
+        if (individualDueDate == null || individualDueDate.isAfter(ZonedDateTime.now())) {
+            return false;
+        }
+        ZonedDateTime exerciseDueDate = getExercise().getDueDate();
+        return exerciseDueDate == null || individualDueDate.isBefore(exerciseDueDate);
+    }
 }

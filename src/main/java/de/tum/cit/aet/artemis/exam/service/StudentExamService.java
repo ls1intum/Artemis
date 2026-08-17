@@ -490,7 +490,7 @@ public class StudentExamService {
      * @return the latestSubmission
      */
     public Optional<Submission> prepareProgrammingSubmission(Optional<Submission> latestSubmission, StudentParticipation studentParticipation) {
-        boolean isFeedbackRequest = studentParticipation.getIndividualDueDate() != null && studentParticipation.getIndividualDueDate().isBefore(ZonedDateTime.now());
+        boolean isFeedbackRequest = studentParticipation.isFeedbackRequest();
         if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise programmingExercise
                 && programmingExercise.areManualResultsAllowed(isFeedbackRequest)) {
             submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -93,8 +92,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
-        var complaintParticipationIndividualDueDate = programmingSubmission.getParticipation().getIndividualDueDate();
-        boolean isFeedbackRequest = complaintParticipationIndividualDueDate != null && complaintParticipationIndividualDueDate.isBefore(ZonedDateTime.now());
+        boolean isFeedbackRequest = programmingSubmission.getParticipation().isFeedbackRequest();
         if (!programmingExercise.areManualResultsAllowed(isFeedbackRequest)) {
             throw new AccessForbiddenException();
         }
@@ -166,7 +164,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
 
         submissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
-        boolean isFeedbackRequest = participation.getIndividualDueDate() != null && participation.getIndividualDueDate().isBefore(ZonedDateTime.now());
+        boolean isFeedbackRequest = participation.isFeedbackRequest();
         if (!programmingExercise.areManualResultsAllowed(isFeedbackRequest)) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
