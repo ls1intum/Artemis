@@ -113,17 +113,6 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         expect(comp.shouldReloadTemplate()).toBe(true);
     });
 
-    it('should render the build phases editor by default', () => {
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('jhi-build-phases-editor')).toBeTruthy();
-    });
-
-    it('should hide the build phases editor when dockerImageOnly is set', () => {
-        fixture.componentRef.setInput('dockerImageOnly', true);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('jhi-build-phases-editor')).toBeFalsy();
-    });
-
     it('should reset custom build plan', () => {
         programmingExercise.buildConfig!.buildPlanConfiguration = 'x';
         programmingExercise.buildConfig!.buildScript = 'y';

@@ -71,19 +71,19 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         expect(comp).not.toBeNull();
     });
 
-    it('should validate only the docker image field for Hades custom build plans', () => {
+    it('should validate the custom build plan for Hades like for LocalCI', () => {
         comp.programmingExercise().customizeBuildPlan = true;
         fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { customBuildPlansSupported: PROFILE_HADES }));
 
-        const stub = (dockerImageValid: boolean) =>
+        const stub = (dockerImageValid: boolean, timeoutValid: boolean) =>
             ((comp as unknown as { programmingExerciseCustomBuildPlanComponent: unknown }).programmingExerciseCustomBuildPlanComponent = () => ({
-                programmingExerciseDockerImageComponent: () => ({ dockerImageField: () => ({ valid: dockerImageValid }) }),
+                programmingExerciseDockerImageComponent: () => ({ dockerImageField: () => ({ valid: dockerImageValid }), timeoutField: () => ({ valid: timeoutValid }) }),
             }));
 
-        stub(true);
+        stub(true, true);
         expect(comp.isCustomBuildPlanValid()).toBe(true);
 
-        stub(false);
+        stub(false, true);
         expect(comp.isCustomBuildPlanValid()).toBe(false);
     });
 

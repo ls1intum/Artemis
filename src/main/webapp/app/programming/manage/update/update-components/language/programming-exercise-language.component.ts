@@ -110,14 +110,10 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
             return true;
         }
 
-        const dockerImageComponent = this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent();
-        if (this.programmingExerciseCreationConfig().customBuildPlansSupported === PROFILE_LOCALCI) {
+        const customBuildPlansSupported = this.programmingExerciseCreationConfig().customBuildPlansSupported;
+        if (customBuildPlansSupported === PROFILE_LOCALCI || customBuildPlansSupported === PROFILE_HADES) {
+            const dockerImageComponent = this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent();
             return (dockerImageComponent?.dockerImageField()?.valid ?? false) && (dockerImageComponent?.timeoutField()?.valid ?? false);
-        }
-
-        // Hades only offers the Docker image field (no timeout), so validate just that.
-        if (this.programmingExerciseCreationConfig().customBuildPlansSupported === PROFILE_HADES) {
-            return dockerImageComponent?.dockerImageField()?.valid ?? false;
         }
 
         return true;

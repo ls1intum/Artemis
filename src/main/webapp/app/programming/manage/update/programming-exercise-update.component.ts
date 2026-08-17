@@ -631,8 +631,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.isLocalCIEnabled = true;
             this.customBuildPlansSupported = PROFILE_LOCALCI;
         } else if (this.profileService.isProfileActive(PROFILE_HADES)) {
-            // Hades honors a custom Docker image (and build phases) server-side, but not the Docker flags or timeout,
-            // so only the Docker image field is offered (see the language component's dockerImageOnly gate).
+            // Hades reuses the same custom build plan section as LocalCI so instructors can configure a custom Docker image.
             this.customBuildPlansSupported = PROFILE_HADES;
         }
 
@@ -1302,7 +1301,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateBuildPhaseNames(validationErrorReasons: ValidationReason[]): void {
-        if (!this.programmingExercise.customizeBuildPlan || this.customBuildPlansSupported !== PROFILE_LOCALCI) {
+        if (!this.programmingExercise.customizeBuildPlan || (this.customBuildPlansSupported !== PROFILE_LOCALCI && this.customBuildPlansSupported !== PROFILE_HADES)) {
             return;
         }
 
