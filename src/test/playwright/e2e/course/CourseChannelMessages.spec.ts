@@ -328,10 +328,10 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             // than before it scrolled. A fixed overall budget measured how fast the machine is instead, and ran out
             // under a loaded suite while the paging itself was working.
             const oldestMessage = courseMessages.getSinglePost(oldestPost.id!);
-            for (let page = 0; page < 4 && (await oldestMessage.count()) === 0; page++) {
+            for (let attempt = 0; attempt < 8 && (await oldestMessage.count()) === 0; attempt++) {
                 const renderedBefore = await courseMessages.getRenderedPostCount();
                 await courseMessages.scrollMessagesToTop();
-                await expect.poll(() => courseMessages.getRenderedPostCount(), { timeout: 10000 }).toBeGreaterThan(renderedBefore);
+                await becomesTrue(async () => (await courseMessages.getRenderedPostCount()) > renderedBefore || (await oldestMessage.count()) === 1);
             }
             await expect(oldestMessage).toHaveCount(1);
 
@@ -393,10 +393,10 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             // oldest post still requires the directive to keep paging across successive scroll-ups.
             // Waits for each scroll-up to add posts rather than for a fixed budget, see the channel test above.
             const oldestDiscussionPost = courseCommunication.getDiscussionPost(oldestPost.id!);
-            for (let page = 0; page < 4 && (await oldestDiscussionPost.count()) === 0; page++) {
+            for (let attempt = 0; attempt < 8 && (await oldestDiscussionPost.count()) === 0; attempt++) {
                 const renderedBefore = await courseCommunication.getRenderedDiscussionPostCount();
                 await courseCommunication.scrollDiscussionToTop();
-                await expect.poll(() => courseCommunication.getRenderedDiscussionPostCount(), { timeout: 10000 }).toBeGreaterThan(renderedBefore);
+                await becomesTrue(async () => (await courseCommunication.getRenderedDiscussionPostCount()) > renderedBefore || (await oldestDiscussionPost.count()) === 1);
             }
             await expect(oldestDiscussionPost).toHaveCount(1);
 
@@ -449,10 +449,10 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             // was recreated on every fetch, so course-wide search never loaded a second page.
             // Waits for each scroll-up to add results rather than for a fixed budget, see the channel test above.
             const oldestResult = courseMessages.getSinglePost(oldestPost.id!);
-            for (let page = 0; page < 4 && (await oldestResult.count()) === 0; page++) {
+            for (let attempt = 0; attempt < 8 && (await oldestResult.count()) === 0; attempt++) {
                 const renderedBefore = await courseMessages.getRenderedSearchResultCount();
                 await courseMessages.scrollMessagesToTop();
-                await expect.poll(() => courseMessages.getRenderedSearchResultCount(), { timeout: 10000 }).toBeGreaterThan(renderedBefore);
+                await becomesTrue(async () => (await courseMessages.getRenderedSearchResultCount()) > renderedBefore || (await oldestResult.count()) === 1);
             }
             await expect(oldestResult).toHaveCount(1);
 
@@ -460,3 +460,19 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
         });
     });
 });
+
+/**
+ * Polls until the condition holds, reporting whether it did instead of failing. Used by the chain-loading loops: a
+ * single scroll that brings nothing in is not a failure on its own, the loop simply scrolls again, and the assertion
+ * after the loop is what decides whether the paging ever got there.
+ */
+async function becomesTrue(condition: () => Promise<boolean>, timeout = 10000): Promise<boolean> {
+    const deadline = Date.now() + timeout;
+    while (Date.now() < deadline) {
+        if (await condition()) {
+            return true;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    return false;
+}

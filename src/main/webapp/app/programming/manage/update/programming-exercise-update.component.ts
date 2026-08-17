@@ -749,10 +749,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
             this.existingCategories = existingCategories;
         });
-
-        if (this.exerciseCategories === undefined) {
-            this.exerciseCategories = [];
-        }
     }
 
     /**
@@ -761,7 +757,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * so both references must point to the same object for changes to propagate correctly.
      */
     private ensureExerciseCategoriesReference() {
-        this.exerciseCategories = this.programmingExercise.categories ?? this.exerciseCategories ?? [];
+        this.exerciseCategories = this.programmingExercise.categories ?? this.exerciseCategories;
         this.programmingExercise.categories = this.exerciseCategories;
     }
 
