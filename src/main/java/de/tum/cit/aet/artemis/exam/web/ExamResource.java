@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
 import org.jspecify.annotations.NonNull;
@@ -100,6 +99,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForImportListDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForQuestionPoolDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamIdAndTitleDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
@@ -108,6 +108,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamResponseDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
@@ -258,7 +259,7 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exams")
     @EnforceAtLeastInstructor
-    public ResponseEntity<ExamDTO> createExam(@PathVariable Long courseId, @Valid @RequestBody ExamUpdateDTO examDTO) throws URISyntaxException {
+    public ResponseEntity<ExamDTO> createExam(@PathVariable Long courseId, @RequestBody ExamUpdateDTO examDTO) throws URISyntaxException {
         log.debug("REST request to create an exam : {}", examDTO);
         if (examDTO.id() != null) {
             throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idExists");
@@ -290,7 +291,7 @@ public class ExamResource {
      */
     @PutMapping("courses/{courseId}/exams")
     @EnforceAtLeastInstructor
-    public ResponseEntity<ExamDTO> updateExam(@PathVariable Long courseId, @Valid @RequestBody ExamUpdateDTO examUpdateDTO) {
+    public ResponseEntity<ExamDTO> updateExam(@PathVariable Long courseId, @RequestBody ExamUpdateDTO examUpdateDTO) {
         log.debug("REST request to update an exam : {}", examUpdateDTO);
 
         if (examUpdateDTO.id() == null) {
@@ -1279,21 +1280,28 @@ public class ExamResource {
     }
 
     /**
-     * @GetMapping("courses/{courseId}/exams-for-overview")
-     *
-     * @EnforceAtLeastStudentInCourse
-     *                                public ResponseEntity<Set<ExamForOverviewDTO>> getExamsForCourseOverview(@PathVariable long courseId) {
-     *                                log.debug("REST request to get the exams of course {} for the course overview", courseId);
-     *                                User user = userRepository.getUser();
-     *                                return ResponseEntity.ok(examRepository.findAllForOverviewByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now()));
-     *                                }
-     *
-     *                                /**
-     *                                GET /courses/{courseId}/real-exams-sidebar-data : Get sidebar data for real exams in a course.
-     *                                For the content see {@link ExamSidebarDataDTO}
+     * GET /courses/{courseId}/exams-for-overview : Get the exams of a course that are visible to the requesting user.
+     * <p>
+     * Projected to what the sidebar renders. The visibility rules are unchanged: an exam is returned once its visible
+     * date has passed and the user is registered for it, is at least a tutor in the course, or it is a test exam.
      *
      * @param courseId the id of the course
-     * @return the ResponseEntity with status 200 (OK) and with the found working times as body
+     * @return the ResponseEntity with status 200 (OK) and the exams visible to the user as body
+     */
+    @GetMapping("courses/{courseId}/exams-for-overview")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<ExamForOverviewDTO>> getExamsForCourseOverview(@PathVariable long courseId) {
+        log.debug("REST request to get the exams of course {} for the course overview", courseId);
+        User user = userRepository.getUser();
+        return ResponseEntity.ok(examRepository.findAllForOverviewByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now()));
+    }
+
+    /**
+     * GET /courses/{courseId}/real-exams-sidebar-data : Get sidebar data for real exams in a course.
+     * For the content see {@link ExamSidebarDataDTO}
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and with the found sidebar data as body
      */
     @GetMapping("courses/{courseId}/real-exams-sidebar-data")
     @EnforceAtLeastStudentInCourse

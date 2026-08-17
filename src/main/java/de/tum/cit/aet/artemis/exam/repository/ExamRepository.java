@@ -565,7 +565,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 exam.moduleNumber,
                 exam.startDate,
                 se.workingTime,
-                exam.examMode
+                exam.examMaxPoints
             )
             FROM Exam exam
             JOIN exam.studentExams se
