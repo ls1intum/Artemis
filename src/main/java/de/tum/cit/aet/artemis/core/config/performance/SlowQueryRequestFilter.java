@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerMapping;
 
 /**
  * Servlet filter that times each HTTP request end-to-end and clears the per-request N+1
@@ -47,7 +48,15 @@ public class SlowQueryRequestFilter implements Filter {
         finally {
             if (request instanceof HttpServletRequest httpRequest) {
                 long totalDurationMs = (System.nanoTime() - startNanos) / 1_000_000;
-                collector.recordEndpointTiming(httpRequest.getMethod(), httpRequest.getRequestURI(), httpRequest.getHeader(SlowQueryListener.PLAYWRIGHT_TEST_HEADER),
+                // Resolved route template ("/api/admin/courses/{courseId}"), not the raw URI --
+                // same reasoning as SlowQueryListener's endpoint capture: otherwise every distinct
+                // path-variable value fragments one endpoint into many patterns downstream. This
+                // filter runs at LOWEST_PRECEDENCE (outermost), so by the time doFilter() returns
+                // here in the finally block, the whole request -- including handler mapping,
+                // which sets this attribute -- has already completed.
+                Object routeTemplate = httpRequest.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+                String httpEndpoint = routeTemplate != null ? routeTemplate.toString() : httpRequest.getRequestURI();
+                collector.recordEndpointTiming(httpRequest.getMethod(), httpEndpoint, httpRequest.getHeader(SlowQueryListener.PLAYWRIGHT_TEST_HEADER),
                         httpRequest.getHeader(SlowQueryListener.PLAYWRIGHT_PHASE_HEADER), totalDurationMs);
             }
             collector.resetRequestState();
