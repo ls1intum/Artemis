@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.admin.dto;
+package de.tum.cit.aet.artemis.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+
+import de.tum.cit.aet.artemis.admin.dto.ActiveUserLastSubmissionDTO;
+import de.tum.cit.aet.artemis.admin.dto.ActiveUserWindowCountsDTO;
 
 /**
  * Tests the bucketing of active users into the rolling 1/7/14/30 day windows.
