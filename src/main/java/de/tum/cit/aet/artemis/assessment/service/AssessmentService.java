@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
@@ -90,6 +91,20 @@ public class AssessmentService {
     }
 
     /**
+     * Derives the points per test case for programming score calculations. Test-case feedback does not
+     * store credits, so the programming subclass ({@code ProgrammingAssessmentService}) overrides this with
+     * the real derivation; the base implementation is only reached for non-programming exercises (the
+     * programming complaint flow always goes through the subclass bean).
+     *
+     * @param exercise the programming exercise
+     * @param result   the result being scored
+     * @return derived points per test-case id
+     */
+    protected Map<Long, Double> calculateTestCasePoints(ProgrammingExercise exercise, Result result) {
+        return Map.of();
+    }
+
+    /**
      * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about.
      *
      * @param originalResult   the original assessment that was complained about
@@ -114,7 +129,7 @@ public class AssessmentService {
         resultRepository.save(newResult);
 
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            newResult.calculateScoreForProgrammingExercise(programmingExercise);
+            newResult.calculateScoreForProgrammingExercise(programmingExercise, calculateTestCasePoints(programmingExercise, newResult));
             newResult.setCompletionDate(ZonedDateTime.now());
             newResult.setRated(true);
             newResult.copyProgrammingExerciseCounters(originalResult);

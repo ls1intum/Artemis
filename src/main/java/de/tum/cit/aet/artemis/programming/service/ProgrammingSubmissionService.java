@@ -30,6 +30,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -99,9 +101,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService,
             CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
-            ParticipationAuthorizationCheckService participationAuthCheckService) {
+            ParticipationAuthorizationCheckService participationAuthCheckService, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
@@ -524,6 +527,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 feedback = feedbackRepository.save(feedback);
                 feedback.setResult(newResult);
             }
+
+            // Copy the typed automatic feedback (test cases + static code analysis); the copies share the
+            // deduplicated message rows, so this is cheap.
+            existingResult.getTestCaseFeedbacks().stream().map(feedbackService::copyTestCaseFeedback).forEach(newResult::addTestCaseFeedback);
+            existingResult.getScaFeedbacks().stream().map(feedbackService::copyScaFeedback).forEach(newResult::addScaFeedback);
 
             newResult.copyProgrammingExerciseCounters(existingResult);
         }

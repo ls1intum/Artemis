@@ -37,6 +37,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -97,10 +99,15 @@ public class SubmissionService {
 
     private final Optional<AthenaApi> athenaApi;
 
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private final ScaFeedbackRepository scaFeedbackRepository;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
+            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -114,6 +121,8 @@ public class SubmissionService {
         this.complaintRepository = complaintRepository;
         this.feedbackService = feedbackService;
         this.athenaApi = athenaApi;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.scaFeedbackRepository = scaFeedbackRepository;
     }
 
     /**
@@ -431,7 +440,25 @@ public class SubmissionService {
     public Set<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
         Collection<Feedback> oldFeedback = oldResult.getFeedbacks();
         copyFeedbackToResult(newResult, oldFeedback);
+        copyTypedFeedbackToResult(newResult, oldResult);
         return newResult.getFeedbacks();
+    }
+
+    /**
+     * Copies the typed automatic feedback (test-case and SCA rows) of the old result to the new result.
+     * The rows are loaded from the database (the old result's collections may be uninitialized) and the
+     * copies share the deduplicated message rows. No-op for results of non-programming exercises.
+     *
+     * @param newResult the result to copy the typed feedback to
+     * @param oldResult the result to copy the typed feedback from
+     */
+    private void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
+        if (oldResult == null || oldResult.getId() == null) {
+            return;
+        }
+        testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyTestCaseFeedback)
+                .forEach(newResult::addTestCaseFeedback);
+        scaFeedbackRepository.findByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyScaFeedback).forEach(newResult::addScaFeedback);
     }
 
     /**
@@ -484,7 +511,14 @@ public class SubmissionService {
         Result newResult = new Result();
         setExerciseIdFromSubmission(submission, newResult);
         updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
-        copyFeedbackToResult(newResult, feedbacks);
+        List<Feedback> feedbackToCopy = new ArrayList<>(feedbacks);
+        if (submission.getParticipation().getExercise() instanceof ProgrammingExercise) {
+            // The client echoes the automatic test-case and SCA feedback items it received (synthesized
+            // from the typed collections, hence without ids) - they are copied as typed rows below instead.
+            feedbackToCopy.removeIf(feedback -> feedback.getId() == null && (feedback.isTestFeedback() || feedback.isStaticCodeAnalysisFeedback()));
+        }
+        copyFeedbackToResult(newResult, feedbackToCopy);
+        copyTypedFeedbackToResult(newResult, oldResult);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
         return newResult;
     }

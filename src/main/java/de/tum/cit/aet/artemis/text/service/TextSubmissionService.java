@@ -17,6 +17,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -54,9 +56,9 @@ public class TextSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository,
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository,
-            FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
+            FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
         this.exerciseDateService = exerciseDateService;

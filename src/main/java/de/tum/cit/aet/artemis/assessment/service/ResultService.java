@@ -47,6 +47,8 @@ import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -114,6 +116,10 @@ public class ResultService {
 
     private final LongFeedbackTextRepository longFeedbackTextRepository;
 
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private final ScaFeedbackRepository scaFeedbackRepository;
+
     private final BuildJobRepository buildJobRepository;
 
     private final BuildLogEntryService buildLogEntryService;
@@ -139,7 +145,8 @@ public class ResultService {
             Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService,
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService,
-            Optional<ParticipantScoreScheduleService> participantScoreScheduleService) {
+            Optional<ParticipantScoreScheduleService> participantScoreScheduleService, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.assessmentNoteRepository = assessmentNoteRepository;
@@ -161,6 +168,8 @@ public class ResultService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionFilterService = submissionFilterService;
         this.participantScoreScheduleService = participantScoreScheduleService;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.scaFeedbackRepository = scaFeedbackRepository;
     }
 
     /**
@@ -256,6 +265,8 @@ public class ResultService {
             // delete the result itself via JPQL, completely bypassing Hibernate's cascade logic.
             longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
             feedbackRepository.deleteByResult_Id(resultId);
+            testCaseFeedbackRepository.deleteByResultId(resultId);
+            scaFeedbackRepository.deleteByResultId(resultId);
             // Since JPQL bypasses @PreRemove in ResultListener, we must explicitly schedule
             // participant score recalculation here for single-result deletions. For bulk deletions
             // (shouldClearParticipantScore=false), the caller handles scores separately.
@@ -313,6 +324,8 @@ public class ResultService {
         // Order matters: long_feedback_text has a FK to feedback, so delete it first.
         longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
         feedbackRepository.deleteByResult_Id(resultId);
+        testCaseFeedbackRepository.deleteByResultId(resultId);
+        scaFeedbackRepository.deleteByResultId(resultId);
     }
 
     /**

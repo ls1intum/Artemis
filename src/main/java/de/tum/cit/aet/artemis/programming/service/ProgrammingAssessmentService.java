@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
@@ -20,6 +22,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintResponseService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
@@ -43,13 +47,29 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
+    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
+
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private final ScaFeedbackRepository scaFeedbackRepository;
+
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, Optional<ExamDateApi> examDateApi, UserRepository userRepository, Optional<LtiApi> ltiApi,
-            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
+            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService, Optional<AthenaFeedbackApi> athenaFeedbackApi,
+            @Lazy ProgrammingExerciseGradingService programmingExerciseGradingService, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
                 submissionRepository, examDateApi, userRepository, ltiApi, singleUserNotificationService, resultWebsocketService);
         this.athenaFeedbackApi = athenaFeedbackApi;
+        this.programmingExerciseGradingService = programmingExerciseGradingService;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.scaFeedbackRepository = scaFeedbackRepository;
+    }
+
+    @Override
+    protected Map<Long, Double> calculateTestCasePoints(ProgrammingExercise exercise, Result result) {
+        return programmingExerciseGradingService.calculateTestCasePoints(exercise, result);
     }
 
     /**
@@ -93,6 +113,18 @@ public class ProgrammingAssessmentService extends AssessmentService {
         newManualResult.setSubmission(submission);
         newManualResult.setExerciseId(exercise.getId());
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().orElse(false));
+
+        // The client echoes the automatic test-case and SCA feedback items it received (synthesized from the
+        // typed collections, hence without ids). They must not be persisted as manual feedback rows - the
+        // typed rows on the result already hold them.
+        newManualResult.getFeedbacks().removeIf(feedback -> feedback.getId() == null && (feedback.isTestFeedback() || feedback.isStaticCodeAnalysisFeedback()));
+        // The client-built result has empty typed collections; hydrate them from the database so that
+        // saving the result does not orphan-remove the stored typed automatic feedback.
+        if (newManualResult.getId() != null) {
+            newManualResult.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(newManualResult.getId())));
+            newManualResult.setScaFeedbacks(scaFeedbackRepository.findByResultIds(List.of(newManualResult.getId())));
+        }
+
         newManualResult = saveManualAssessment(newManualResult, assessor);
 
         Result savedResult = resultRepository.save(newManualResult);

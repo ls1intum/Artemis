@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.localci.dto.BuildJobInterface;
 import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -86,13 +86,13 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
                         failedTest.testMessages()));
             }
 
-            job.failedTests().forEach(failedTest -> result
-                    .addFeedback(feedbackCreationService.createFeedbackFromTestCase(failedTest.name(), failedTest.testMessages(), false, programmingExercise, activeTestCases)));
+            job.failedTests().forEach(failedTest -> feedbackCreationService
+                    .createFeedbackFromTestCase(failedTest.name(), failedTest.testMessages(), false, programmingExercise, activeTestCases).ifPresent(result::addTestCaseFeedback));
             result.setTestCaseCount(result.getTestCaseCount() + job.failedTests().size());
 
             for (final var successfulTest : job.successfulTests()) {
-                result.addFeedback(
-                        feedbackCreationService.createFeedbackFromTestCase(successfulTest.name(), successfulTest.testMessages(), true, programmingExercise, activeTestCases));
+                feedbackCreationService.createFeedbackFromTestCase(successfulTest.name(), successfulTest.testMessages(), true, programmingExercise, activeTestCases)
+                        .ifPresent(result::addTestCaseFeedback);
             }
 
             result.setTestCaseCount(result.getTestCaseCount() + job.successfulTests().size());
@@ -103,8 +103,8 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
     private void addStaticCodeAnalysisFeedbackToResult(Result result, BuildResultNotification buildResult, ProgrammingExercise programmingExercise) {
         final var staticCodeAnalysisReports = buildResult.staticCodeAnalysisReports();
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
-            List<Feedback> scaFeedbackList = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
-            result.addFeedbacks(scaFeedbackList);
+            List<ScaFeedback> scaFeedbackList = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
+            scaFeedbackList.forEach(result::addScaFeedback);
             result.setCodeIssueCount(scaFeedbackList.size());
         }
     }

@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.BatchSize;
 
@@ -83,6 +84,15 @@ public class ScaFeedback {
     @BatchSize(size = 50)
     @JsonIgnore
     private FeedbackMessage message;
+
+    /**
+     * The tool-reported category of the issue (e.g. a checkstyle rule group). Only needed transiently
+     * between report parsing and the categorization step, which maps it to the Artemis
+     * {@code StaticCodeAnalysisCategory} stored in {@link #category}. Never persisted.
+     */
+    @Transient
+    @JsonIgnore
+    private String toolCategory;
 
     public FeedbackItemId getId() {
         return id;
@@ -194,6 +204,14 @@ public class ScaFeedback {
 
     public void setMessage(FeedbackMessage message) {
         this.message = message;
+    }
+
+    public String getToolCategory() {
+        return toolCategory;
+    }
+
+    public void setToolCategory(String toolCategory) {
+        this.toolCategory = toolCategory;
     }
 
     /**

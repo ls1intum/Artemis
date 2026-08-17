@@ -46,6 +46,8 @@ import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
@@ -79,6 +81,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -141,6 +144,12 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
+    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
+
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private final ScaFeedbackRepository scaFeedbackRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
@@ -148,7 +157,8 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService) {
+            ParticipationFilterService participationFilterService, ProgrammingExerciseGradingService programmingExerciseGradingService,
+            TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -173,6 +183,9 @@ public class ExerciseService {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
+        this.programmingExerciseGradingService = programmingExerciseGradingService;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.scaFeedbackRepository = scaFeedbackRepository;
     }
 
     /**
@@ -715,6 +728,11 @@ public class ExerciseService {
             results.addAll(resultRepository.getResultForExampleSubmissions(exercise.getExampleSubmissions()));
         }
 
+        // programming results need their (lazy) typed automatic feedback for the score re-calculation below
+        if (exercise instanceof ProgrammingExercise) {
+            attachTypedFeedbackToResults(results);
+        }
+
         // re-calculate the results after updating the feedback
         for (Result result : results) {
             if (!feedbackToBeDeleted.isEmpty()) {
@@ -731,9 +749,29 @@ public class ExerciseService {
                 resultRepository.submitResult(result, exercise);
             }
             else {
-                result.calculateScoreForProgrammingExercise(programmingExercise);
+                result.calculateScoreForProgrammingExercise(programmingExercise, programmingExerciseGradingService.calculateTestCasePoints(programmingExercise, result));
                 resultRepository.save(result);
             }
+        }
+    }
+
+    /**
+     * Bulk-loads the typed automatic feedback (test-case and SCA rows) of the given results and attaches it,
+     * so that score calculations on the (detached) results can iterate the collections.
+     *
+     * @param results the results to hydrate
+     */
+    private void attachTypedFeedbackToResults(List<Result> results) {
+        List<Long> resultIds = results.stream().map(Result::getId).filter(Objects::nonNull).toList();
+        if (resultIds.isEmpty()) {
+            return;
+        }
+        var testCaseFeedbackByResult = testCaseFeedbackRepository.findWithTestCaseByResultIds(resultIds).stream()
+                .collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
+        var scaFeedbackByResult = scaFeedbackRepository.findByResultIds(resultIds).stream().collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
+        for (Result result : results) {
+            result.setTestCaseFeedbacks(testCaseFeedbackByResult.getOrDefault(result.getId(), List.of()));
+            result.setScaFeedbacks(scaFeedbackByResult.getOrDefault(result.getId(), List.of()));
         }
     }
 

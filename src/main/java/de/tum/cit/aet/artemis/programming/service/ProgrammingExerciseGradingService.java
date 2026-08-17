@@ -33,14 +33,16 @@ import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -75,6 +77,8 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 @Lazy
 @Service
 public class ProgrammingExerciseGradingService {
+
+    private static final String NOT_EXECUTED_MESSAGE = "Test was not executed.";
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 
@@ -114,6 +118,8 @@ public class ProgrammingExerciseGradingService {
 
     private final MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService;
 
+    private final FeedbackMessageService feedbackMessageService;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, FeedbackService feedbackService,
@@ -121,7 +127,7 @@ public class ProgrammingExerciseGradingService {
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
-            MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService) {
+            MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService, FeedbackMessageService feedbackMessageService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -140,6 +146,7 @@ public class ProgrammingExerciseGradingService {
         this.feedbackCreationService = feedbackCreationService;
         this.feedbackService = feedbackService;
         this.mavenCentralRateLimitNotificationService = mavenCentralRateLimitNotificationService;
+        this.feedbackMessageService = feedbackMessageService;
     }
 
     /**
@@ -372,20 +379,28 @@ public class ProgrammingExerciseGradingService {
         // this makes it the most recent result, but optionally keeps the draft state of an unfinished manual result
         latestSemiAutomaticResult.setCompletionDate(latestSemiAutomaticResult.getCompletionDate() != null ? newAutomaticResult.getCompletionDate() : null);
 
-        // remove old automatic feedback
+        // remove old automatic feedback (legacy rows, e.g. duplicate-test warnings and submission-policy feedback)
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
+        // remove old typed automatic feedback and flush the deletion: the copies below reuse the (result_id, seq)
+        // key space, and Hibernate would otherwise execute their inserts before the deletes
+        latestSemiAutomaticResult.setTestCaseFeedbacks(List.of());
+        latestSemiAutomaticResult.setScaFeedbacks(List.of());
+        latestSemiAutomaticResult = resultRepository.saveAndFlush(latestSemiAutomaticResult);
 
-        // copy all feedback from the automatic result
+        // copy all automatic feedback from the new automatic result (the copies share the deduplicated message rows)
+        Result semiAutomaticResult = latestSemiAutomaticResult;
+        newAutomaticResult.getTestCaseFeedbacks().stream().map(feedbackService::copyTestCaseFeedback).forEach(semiAutomaticResult::addTestCaseFeedback);
+        newAutomaticResult.getScaFeedbacks().stream().map(feedbackService::copyScaFeedback).forEach(semiAutomaticResult::addScaFeedback);
         List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(feedbackService::copyFeedback).toList();
-        latestSemiAutomaticResult = resultService.addFeedbackToResult(latestSemiAutomaticResult, copiedFeedbacks, false);
+        latestSemiAutomaticResult = resultService.addFeedbackToResult(semiAutomaticResult, copiedFeedbacks, false);
 
         latestSemiAutomaticResult.setTestCaseCount(newAutomaticResult.getTestCaseCount());
         latestSemiAutomaticResult.setPassedTestCaseCount(newAutomaticResult.getPassedTestCaseCount());
         latestSemiAutomaticResult.setCodeIssueCount(newAutomaticResult.getCodeIssueCount());
 
-        Exercise exercise = latestSemiAutomaticResult.getSubmission().getParticipation().getExercise();
-        latestSemiAutomaticResult.setScore(latestSemiAutomaticResult.calculateTotalPointsForProgrammingExercises(), exercise.getMaxPoints(),
-                exercise.getCourseViaExerciseGroupOrCourseMember());
+        ProgrammingExercise exercise = (ProgrammingExercise) latestSemiAutomaticResult.getSubmission().getParticipation().getExercise();
+        latestSemiAutomaticResult.setScore(latestSemiAutomaticResult.calculateTotalPointsForProgrammingExercises(calculateTestCasePoints(exercise, latestSemiAutomaticResult)),
+                exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember());
 
         return latestSemiAutomaticResult;
     }
@@ -607,11 +622,11 @@ public class ProgrammingExerciseGradingService {
      * @param staticCodeAnalysisFeedback of a given programming exercise.
      * @param weightSum                  the sum of all weights of test cases that are visible
      */
-    private record ScoreCalculationData(ProgrammingExercise exercise, Result result, Set<ProgrammingExerciseTestCase> testCases,
-            Set<ProgrammingExerciseTestCase> successfulTestCases, List<Feedback> staticCodeAnalysisFeedback, double weightSum) {
+    public record ScoreCalculationData(ProgrammingExercise exercise, Result result, Set<ProgrammingExerciseTestCase> testCases,
+            Set<ProgrammingExerciseTestCase> successfulTestCases, List<ScaFeedback> staticCodeAnalysisFeedback, double weightSum) {
 
         ScoreCalculationData(ProgrammingExercise exercise, Result result, Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> successfulTestCases,
-                List<Feedback> staticCodeAnalysisFeedback) {
+                List<ScaFeedback> staticCodeAnalysisFeedback) {
             this(exercise, result, testCases, successfulTestCases, staticCodeAnalysisFeedback, calculateWeightSum(testCases));
         }
 
@@ -636,20 +651,10 @@ public class ProgrammingExerciseGradingService {
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> relevantTestCases, @NonNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
-        List<Feedback> automaticFeedbacks = result.getFeedbacks().stream().filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType())).toList();
-        List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
-        List<Feedback> testCaseFeedback = new ArrayList<>();
+        List<ScaFeedback> staticCodeAnalysisFeedback = new ArrayList<>(result.getScaFeedbacks());
+        boolean hasTestCaseFeedback = !result.getTestCaseFeedbacks().isEmpty();
 
-        for (Feedback automaticFeedback : automaticFeedbacks) {
-            if (automaticFeedback.isStaticCodeAnalysisFeedback()) {
-                staticCodeAnalysisFeedback.add(automaticFeedback);
-            }
-            else {
-                testCaseFeedback.add(automaticFeedback); // if feedback isn't static code analysis here, then it has to be test case feedback
-            }
-        }
-
-        // Remove feedback that is in an invisible SCA category
+        // Remove feedback that is in an invisible SCA category, resolve the Artemis category and penalty
         feedbackCreationService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
 
         if (applySubmissionPolicy) {
@@ -658,9 +663,8 @@ public class ProgrammingExerciseGradingService {
         }
 
         // Case 1: There are tests and test case feedback, find out which tests were not executed or should only count to the score after the due date.
-        if (!relevantTestCases.isEmpty() && !testCaseFeedback.isEmpty() && !result.getFeedbacks().isEmpty()) {
-            filterAutomaticFeedbacksWithoutTestCase(result, testCases);
-            setVisibilityForFeedbacksWithTestCase(result);
+        if (!relevantTestCases.isEmpty() && hasTestCaseFeedback) {
+            filterTestCaseFeedbackWithoutActiveTestCase(result, testCases);
 
             createFeedbackForNotExecutedTests(result, relevantTestCases);
             boolean hasDuplicateTestCases = createFeedbacksForDuplicateTests(result, exercise);
@@ -672,18 +676,18 @@ public class ProgrammingExerciseGradingService {
             // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
 
             updateResultScore(scoreCalculationData, hasDuplicateTestCases, applySubmissionPolicy);
-            updateFeedbackCredits(scoreCalculationData);
 
             result.setTestCaseCount(relevantTestCases.size());
             result.setPassedTestCaseCount(successfulTestCases.size());
             result.setCodeIssueCount(staticCodeAnalysisFeedback.size());
 
             if (result.isManual()) {
-                result.setScore(result.calculateTotalPointsForProgrammingExercises(), exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember());
+                result.setScore(result.calculateTotalPointsForProgrammingExercises(calculateTestCasePoints(scoreCalculationData)), exercise.getMaxPoints(),
+                        exercise.getCourseViaExerciseGroupOrCourseMember());
             }
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
-        else if (!testCases.isEmpty() && !result.getFeedbacks().isEmpty() && !testCaseFeedback.isEmpty()) {
+        else if (!testCases.isEmpty() && hasTestCaseFeedback) {
             addFeedbackTestsNotExecuted(result, exercise, staticCodeAnalysisFeedback);
         }
 
@@ -691,6 +695,33 @@ public class ProgrammingExerciseGradingService {
         // changing it.
 
         return result;
+    }
+
+    /**
+     * Calculates the derived points per test-case id for the given calculation context. Test-case feedback
+     * does not store credits — this map is how readers (score calculation, DTO assembly) obtain them.
+     *
+     * @param scoreCalculationData the calculation context (test cases, weight sum, exercise)
+     * @return derived points per test-case id
+     */
+    public Map<Long, Double> calculateTestCasePoints(ScoreCalculationData scoreCalculationData) {
+        return scoreCalculationData.testCases().stream().filter(testCase -> testCase.getId() != null)
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getId, testCase -> calculatePointsForTestCase(testCase, scoreCalculationData), (first, second) -> first));
+    }
+
+    /**
+     * Calculates the derived points per test-case id for a result of the given exercise, loading the
+     * exercise's active test cases. Convenience variant for callers outside the grading flow (e.g. manual
+     * assessment).
+     *
+     * @param exercise the programming exercise
+     * @param result   the result whose participation determines special weight handling
+     * @return derived points per test-case id
+     */
+    public Map<Long, Double> calculateTestCasePoints(ProgrammingExercise exercise, Result result) {
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
+        var scoreCalculationData = new ScoreCalculationData(exercise, result, testCases, Set.of(), List.of());
+        return calculateTestCasePoints(scoreCalculationData);
     }
 
     private void createSubmissionPolicyFeedback(Result result, ProgrammingExercise exercise) {
@@ -706,49 +737,39 @@ public class ProgrammingExerciseGradingService {
      * @param exercise                   to which the result belongs to.
      * @param staticCodeAnalysisFeedback that has been created for this result.
      */
-    private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final List<Feedback> staticCodeAnalysisFeedback) {
+    private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final List<ScaFeedback> staticCodeAnalysisFeedback) {
         removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
 
         createFeedbacksForDuplicateTests(result, exercise);
     }
 
     /**
-     * Only keeps automatic feedbacks that also are associated with a relevant test case.
-     * Used to remove feedbacks that are, e.g., related to test cases with visibility = never.
-     * <p>
-     * Does not remove static code analysis feedback.
+     * Only keeps test-case feedback that is associated with a relevant test case.
+     * Used to remove feedback that is, e.g., related to test cases with visibility = never.
      *
      * @param result    of the build run.
      * @param testCases of the programming exercise.
      */
-    private void filterAutomaticFeedbacksWithoutTestCase(Result result, final Set<ProgrammingExerciseTestCase> testCases) {
-        result.getFeedbacks().removeIf(feedback -> feedback.isTestFeedback() && testCases.stream().noneMatch(test -> test.equals(feedback.getTestCase())));
+    private void filterTestCaseFeedbackWithoutActiveTestCase(Result result, final Set<ProgrammingExerciseTestCase> testCases) {
+        result.getTestCaseFeedbacks().removeIf(feedback -> testCases.stream().noneMatch(test -> test.equals(feedback.getTestCase())));
     }
 
     /**
-     * Sets the visibility on all feedbacks associated with a test case with the same name.
-     *
-     * @param result of the build run.
-     */
-    private void setVisibilityForFeedbacksWithTestCase(Result result) {
-        for (Feedback feedback : result.getFeedbacks()) {
-            if (feedback.getTestCase() != null) {
-                feedback.setVisibility(feedback.getTestCase().getVisibility());
-            }
-        }
-    }
-
-    /**
-     * Checks which test cases were not executed and add a new Feedback for them to the exercise.
+     * Checks which test cases were not executed and adds a test-case feedback row for them (positive =
+     * {@code null}, matching the tri-state semantics).
      *
      * @param result    of the build run.
      * @param testCases of the given programming exercise.
      */
     private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> testCases) {
-        List<Feedback> feedbacksForNotExecutedTestCases = testCases.stream().filter(testCase -> testCase.wasNotExecuted(result))
-                .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).testCase(testCase).detailText("Test was not executed.")).toList();
-
-        result.addFeedbacks(feedbacksForNotExecutedTestCases);
+        var notExecutedMessage = feedbackMessageService.getOrCreate(NOT_EXECUTED_MESSAGE);
+        testCases.stream().filter(testCase -> testCase.wasNotExecuted(result)).forEach(testCase -> {
+            TestCaseFeedback feedback = new TestCaseFeedback();
+            feedback.setTestCase(testCase);
+            feedback.setPositive(null);
+            feedback.setMessage(notExecutedMessage);
+            result.addTestCaseFeedback(feedback);
+        });
     }
 
     /**
@@ -762,8 +783,7 @@ public class ProgrammingExerciseGradingService {
      */
     private boolean createFeedbacksForDuplicateTests(Result result, ProgrammingExercise programmingExercise) {
         Set<ProgrammingExerciseTestCase> uniqueTestCases = new HashSet<>();
-        Set<ProgrammingExerciseTestCase> duplicateTestCases = result.getFeedbacks().stream()
-                .filter(feedback -> !feedback.isStaticCodeAnalysisFeedback() && FeedbackType.AUTOMATIC.equals(feedback.getType())).map(Feedback::getTestCase)
+        Set<ProgrammingExerciseTestCase> duplicateTestCases = result.getTestCaseFeedbacks().stream().map(TestCaseFeedback::getTestCase)
                 // Set.add() returns false if the test case is already present in the set
                 .filter(testCase -> !uniqueTestCases.add(testCase)).collect(Collectors.toSet());
 
@@ -794,16 +814,6 @@ public class ProgrammingExerciseGradingService {
         }
 
         scoreCalculationData.result().setScore(score, scoreCalculationData.exercise().getCourseViaExerciseGroupOrCourseMember());
-    }
-
-    private void updateFeedbackCredits(ScoreCalculationData scoreCalculationData) {
-        // Set credits for successful test cases
-        scoreCalculationData.testCases().stream().filter(testCase -> testCase.isSuccessful(scoreCalculationData.result())).forEach(testCase -> {
-            double credits = calculatePointsForTestCase(testCase, scoreCalculationData);
-            setCreditsForTestCaseFeedback(credits, testCase, scoreCalculationData.result());
-        });
-
-        scoreCalculationData.result().getFeedbacks().stream().filter(feedback -> feedback.getCredits() == null).forEach(feedback -> feedback.setCredits(0D));
     }
 
     /**
@@ -864,20 +874,6 @@ public class ProgrammingExerciseGradingService {
         double maxPoints = programmingExercise.getMaxPoints() + Objects.requireNonNullElse(programmingExercise.getBonusPoints(), 0D);
 
         return Math.min(points, maxPoints);
-    }
-
-    /**
-     * Updates the feedback corresponding to the test case with the given credits.
-     *
-     * @param credits  that should be set in the feedback.
-     * @param testCase the feedback that should be updated corresponds to.
-     * @param result   from which the result is taken and updated.
-     */
-    private void setCreditsForTestCaseFeedback(double credits, final ProgrammingExerciseTestCase testCase, final Result result) {
-        // We need to compare testcases ignoring the case, because the testcaseRepository is case-insensitive
-        // SCA (static code analysis) feedback also has type AUTOMATIC but no test case attached, so guard against null.
-        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && Objects.equals(fb.getTestCase(), testCase)).findFirst()
-                .ifPresent(feedback -> feedback.setCredits(credits));
     }
 
     /**
@@ -943,8 +939,8 @@ public class ProgrammingExerciseGradingService {
      * @param programmingExercise        The current exercise
      * @return The sum of all penalties, capped at the maximum allowed penalty
      */
-    private double calculateStaticCodeAnalysisPenalty(final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
-        final var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
+    private double calculateStaticCodeAnalysisPenalty(final List<ScaFeedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
+        final var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(feedback -> Objects.requireNonNullElse(feedback.getCategory(), "")));
         final double maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getMaxStaticCodeAnalysisPenalty(), 100) / 100.0 * programmingExercise.getMaxPoints();
         double overallPenaltyPoints = 0;
 
@@ -954,7 +950,7 @@ public class ProgrammingExerciseGradingService {
             }
 
             // get all feedback in this category
-            List<Feedback> categoryFeedback = feedbackByCategory.getOrDefault(category.getName(), List.of());
+            List<ScaFeedback> categoryFeedback = feedbackByCategory.getOrDefault(category.getName(), List.of());
 
             // calculate the sum of all per-feedback penalties
             double categoryPenaltyPoints = categoryFeedback.size() * category.getPenalty();
@@ -972,10 +968,11 @@ public class ProgrammingExerciseGradingService {
             }
             overallPenaltyPoints += categoryPenaltyPoints;
 
-            // update credits of feedbacks in category
+            // update the graded penalty of the feedback rows in this category (the capped, per-row share;
+            // negated it is the credits value used everywhere else)
             if (!categoryFeedback.isEmpty()) {
                 double perFeedbackPenalty = categoryPenaltyPoints / categoryFeedback.size();
-                categoryFeedback.forEach(feedback -> feedback.setCredits(-perFeedbackPenalty));
+                categoryFeedback.forEach(feedback -> feedback.setPenalty(perFeedbackPenalty));
             }
         }
 
@@ -988,8 +985,9 @@ public class ProgrammingExerciseGradingService {
      * @param result                     Result containing all feedback
      * @param staticCodeAnalysisFeedback Static code analysis feedback to keep
      */
-    private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
-        result.setFeedbacks(staticCodeAnalysisFeedback);
+    private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<ScaFeedback> staticCodeAnalysisFeedback) {
+        result.setTestCaseFeedbacks(List.of());
+        result.setScaFeedbacks(staticCodeAnalysisFeedback);
         result.setScore(0D);
         result.setTestCaseCount(0);
         result.setPassedTestCaseCount(0);

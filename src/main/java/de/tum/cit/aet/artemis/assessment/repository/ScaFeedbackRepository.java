@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
@@ -31,6 +32,13 @@ public interface ScaFeedbackRepository extends ArtemisJpaRepository<ScaFeedback,
             WHERE feedback.id.resultId = :resultId
             """)
     List<ScaFeedback> findWithMessageByResultId(@Param("resultId") long resultId);
+
+    @Query("""
+            SELECT feedback
+            FROM ScaFeedback feedback
+            WHERE feedback.id.resultId IN :resultIds
+            """)
+    List<ScaFeedback> findByResultIds(@Param("resultIds") Collection<Long> resultIds);
 
     @Modifying
     @Transactional // ok because of delete

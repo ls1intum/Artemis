@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -831,11 +832,16 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Calculates the total score for programming exercises. Do not use it for other exercise types
+     * Calculates the total score for programming exercises. Do not use it for other exercise types.
+     * <p>
+     * Test-case feedback does not store credits — they are derived from the test-case configuration.
+     * Callers therefore pass the derived points per test case (see
+     * {@code ProgrammingExerciseGradingService#calculateTestCasePoints}).
      *
+     * @param pointsByTestCaseId derived points per test-case id for passed tests
      * @return calculated totalScore
      */
-    public Double calculateTotalPointsForProgrammingExercises() {
+    public Double calculateTotalPointsForProgrammingExercises(Map<Long, Double> pointsByTestCaseId) {
         double totalPoints = 0.0;
         double scoreAutomaticTests = 0.0;
         ProgrammingExercise programmingExercise = (ProgrammingExercise) submission.getParticipation().getExercise();
@@ -847,15 +853,20 @@ public class Result extends DomainObject implements Comparable<Result> {
                 totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
             }
             else {
-                // In case no structured grading instruction was applied on the assessment model we just sum the feedback credit. We differentiate between automatic test and
-                // automatic SCA feedback (automatic test feedback has to be capped)
-                if (feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()) {
-                    scoreAutomaticTests += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
-                }
-                else {
-                    totalPoints += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
-                }
+                // In case no structured grading instruction was applied on the assessment model we just sum the feedback credit (manual, unreferenced, adapted, and legacy rows).
+                totalPoints += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
             }
+        }
+
+        // Automatic test feedback: derived points for passed tests (capped below)
+        for (TestCaseFeedback testCaseFeedback : testCaseFeedbacks) {
+            if (Boolean.TRUE.equals(testCaseFeedback.isPositive()) && testCaseFeedback.getTestCase() != null) {
+                scoreAutomaticTests += pointsByTestCaseId.getOrDefault(testCaseFeedback.getTestCase().getId(), 0.0);
+            }
+        }
+        // Static code analysis feedback: negative credits from the graded penalty
+        for (ScaFeedback scaFeedback : scaFeedbacks) {
+            totalPoints += scaFeedback.getCredits();
         }
         /*
          * Calculated score from automatic test feedbacks, is capped to max points + bonus points, see also see {@link ProgrammingExerciseGradingService#updateScore}
@@ -877,12 +888,14 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * calculates the score for programming exercises
+     * Calculates and sets the score for programming exercises.
      *
-     * @param exercise the exercise
+     * @param exercise           the exercise
+     * @param pointsByTestCaseId derived points per test-case id for passed tests (see
+     *                               {@code ProgrammingExerciseGradingService#calculateTestCasePoints})
      */
-    public void calculateScoreForProgrammingExercise(ProgrammingExercise exercise) {
-        double totalPoints = calculateTotalPointsForProgrammingExercises();
+    public void calculateScoreForProgrammingExercise(ProgrammingExercise exercise, Map<Long, Double> pointsByTestCaseId) {
+        double totalPoints = calculateTotalPointsForProgrammingExercises(pointsByTestCaseId);
         setScore(totalPoints, exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember());
     }
 
