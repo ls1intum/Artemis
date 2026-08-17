@@ -528,10 +528,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 feedback.setResult(newResult);
             }
 
-            // Copy the typed automatic feedback (test cases + static code analysis); the copies share the
+            // Copy the typed automatic feedback (test cases + static code analysis); the rows are loaded
+            // from the database (the collections may be uninitialized) and the copies share the
             // deduplicated message rows, so this is cheap.
-            existingResult.getTestCaseFeedbacks().stream().map(feedbackService::copyTestCaseFeedback).forEach(newResult::addTestCaseFeedback);
-            existingResult.getScaFeedbacks().stream().map(feedbackService::copyScaFeedback).forEach(newResult::addScaFeedback);
+            copyTypedFeedbackToResult(newResult, existingResult);
 
             newResult.copyProgrammingExerciseCounters(existingResult);
         }

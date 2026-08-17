@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
@@ -130,6 +131,9 @@ public class ParticipationUtilService {
 
     @Autowired
     private FeedbackRepository feedbackRepo;
+
+    @Autowired
+    private TestCaseFeedbackRepository testCaseFeedbackRepository;
 
     @Autowired
     private FeedbackMessageService feedbackMessageService;
@@ -567,8 +571,13 @@ public class ParticipationUtilService {
         if (messageText != null && !messageText.isEmpty()) {
             feedback.setMessage(feedbackMessageService.getOrCreate(messageText));
         }
-        result.addTestCaseFeedback(feedback);
-        return resultRepo.save(result);
+        feedback.setResult(result);
+        // insert the row directly (instead of re-saving the possibly stale parent) to avoid composite-key
+        // collisions when this helper is called multiple times for the same result
+        int nextSeq = testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId())).stream().mapToInt(TestCaseFeedback::getSeq).max().orElse(0) + 1;
+        feedback.setSeq(nextSeq);
+        testCaseFeedbackRepository.save(feedback);
+        return result;
     }
 
     /**

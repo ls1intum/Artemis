@@ -452,7 +452,7 @@ public class SubmissionService {
      * @param newResult the result to copy the typed feedback to
      * @param oldResult the result to copy the typed feedback from
      */
-    private void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
+    protected void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
         if (oldResult == null || oldResult.getId() == null) {
             return;
         }
@@ -515,7 +515,7 @@ public class SubmissionService {
         if (submission.getParticipation().getExercise() instanceof ProgrammingExercise) {
             // The client echoes the automatic test-case and SCA feedback items it received (synthesized
             // from the typed collections, hence without ids) - they are copied as typed rows below instead.
-            feedbackToCopy.removeIf(feedback -> (feedback.getId() == null || feedback.getId() < 0) && (feedback.isTestFeedback() || feedback.isStaticCodeAnalysisFeedback()));
+            feedbackToCopy.removeIf(feedback -> (feedback.getId() == null || feedback.getId() < 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback()));
         }
         copyFeedbackToResult(newResult, feedbackToCopy);
         copyTypedFeedbackToResult(newResult, oldResult);

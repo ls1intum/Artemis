@@ -420,10 +420,11 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
                 manualResult, Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(4);
-        assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
-            assertThat(feedback.getType()).isEqualTo(FeedbackType.AUTOMATIC);
-            assertThat(feedback.getTestCase().getId()).isEqualTo(testCase.getId());
-        });
+        // The echoed automatic test-case feedback is not persisted as a manual feedback row anymore:
+        // automatic test feedback lives in the typed test_case_feedback table, and incoming echoes
+        // (without a stored id) are stripped before saving.
+        assertThat(response.getFeedbacks()).hasSize(3);
+        assertThat(response.getFeedbacks()).noneMatch(feedback -> feedback.getTestCase() != null && testCase.getId().equals(feedback.getTestCase().getId()));
     }
 
     @Test
