@@ -142,4 +142,27 @@ class BuildJobGitServiceTest extends AbstractArtemisBuildAgentTest {
         credentialsProvider.get(new URIish(), username);
         assertThat(username.getValue()).isEqualTo("buildjob_user");
     }
+
+    /**
+     * The one combination that cannot authenticate: no token on the job and no configured pair to fall back to. Blank
+     * credentials are a valid configuration now - the intended one where every job carries a token - so this is not a
+     * startup failure, and the resulting clone reports only an unauthorized response. The agent has to say which of the
+     * two mechanisms is missing, or the failure names neither the absent token nor the deliberately empty property.
+     */
+    @Test
+    void shouldStillProduceAProviderWhenNeitherMechanismIsConfigured() throws Exception {
+        ReflectionTestUtils.setField(buildJobGitService, "buildAgentGitUsername", "");
+        ReflectionTestUtils.setField(buildJobGitService, "buildAgentGitPassword", "");
+        ReflectionTestUtils.setField(buildJobGitService, "credentialsProvider", null);
+        buildJobGitService.clearCloneTokenForCurrentThread();
+
+        var credentialsProvider = (UsernamePasswordCredentialsProvider) ReflectionTestUtils.invokeMethod(buildJobGitService, "getCredentialsProvider");
+
+        CredentialItem.Username username = new CredentialItem.Username();
+        CredentialItem.Password password = new CredentialItem.Password();
+        credentialsProvider.get(new URIish(), username, password);
+
+        assertThat(username.getValue()).as("a blank credential must not become an exception on the build thread").isEmpty();
+        assertThat(password.getValue()).isEmpty();
+    }
 }

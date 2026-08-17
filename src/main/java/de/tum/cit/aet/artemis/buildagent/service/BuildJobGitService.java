@@ -429,6 +429,15 @@ public class BuildJobGitService extends AbstractGitService {
      */
     private CredentialsProvider getCachedFallbackCredentialsProvider() {
         if (credentialsProvider == null) {
+            if (!StringUtils.hasText(buildAgentGitUsername) || !StringUtils.hasText(buildAgentGitPassword)) {
+                // Says why the clone about to happen cannot succeed. Blank credentials are a valid configuration now,
+                // and the right one where every job carries a token, so reaching this point means a job arrived without
+                // one. Without this line the only symptom is an unauthorized response in a build log, which names
+                // neither the missing token nor the deliberately empty property.
+                log.warn("This build job carries no clone token and no build agent git credentials are configured, so the clone will not be authorized. Either the core node "
+                        + "that queued the job predates per-build-job clone tokens, in which case upgrading it resolves this, or it is configured with credentials this agent "
+                        + "does not have.");
+            }
             credentialsProvider = new UsernamePasswordCredentialsProvider(buildAgentGitUsername, buildAgentGitPassword);
         }
         return credentialsProvider;
