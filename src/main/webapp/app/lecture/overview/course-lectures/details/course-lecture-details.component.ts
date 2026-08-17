@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/foundation/util/download.util';
@@ -11,7 +11,7 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { onError } from 'app/foundation/util/global.utils';
-import { finalize, tap } from 'rxjs/operators';
+import { filter, finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faChalkboardTeacher, faComment, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
@@ -196,7 +196,16 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
 
         this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
-            this.lectureId = +params.lectureId;
+            const lectureId = +params.lectureId;
+            if (lectureId !== this.lectureId) {
+                // The executed jump belongs to the lecture being left, and this component outlives it: Angular reuses it
+                // for a new lectureId. Kept around, the request would be handed to the units of every lecture opened
+                // afterwards and jump again as soon as one of them carries the id it names. A request that arrived for
+                // the lecture being entered is still pending and stays untouched.
+                this.deepLinkState.set(undefined);
+            }
+
+            this.lectureId = lectureId;
             if (this.lectureId) {
                 this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN, this.lectureId);
                 this.loadData();
@@ -206,14 +215,22 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const deepLink = parseLectureDeepLink(params);
             if (!deepLink) {
-                // Also the emission caused by clearing the parameters below; there is nothing to execute then.
+                // Also the emission caused by clearing the parameters; there is nothing to execute then.
                 return;
             }
 
             this.pendingDeepLink = deepLink;
             this.publishDeepLink();
-            this.clearDeepLinkQueryParams();
         });
+
+        // The parameters are read while the router is still activating this page, so they can only be taken back out
+        // once that navigation has finished: starting the next one from inside it cancels it half-way through.
+        this.router.events
+            .pipe(
+                filter((event) => event instanceof NavigationEnd),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(() => this.clearDeepLinkQueryParams());
     }
 
     loadData() {
@@ -350,7 +367,12 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         const attachmentUnit = targetUnit as AttachmentVideoUnit;
         const hasVideo = !!attachmentUnit.videoSource || !!attachmentUnit.youtubeVideoId;
-        const hasPdf = !!attachmentUnit.attachment?.link?.toLowerCase().endsWith('.pdf');
+        // The same candidate the unit itself decides on in AttachmentVideoUnitComponent.hasPdf: a student version
+        // replaces the link, and an attachment that carries neither is still named after the file it holds. Reading
+        // only the link would drop the page of a unit that does render a PDF.
+        const attachment = attachmentUnit.attachment;
+        const pdfCandidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
+        const hasPdf = !!pdfCandidate?.toLowerCase().endsWith('.pdf');
 
         return {
             unitId: deepLink.unitId,
@@ -361,24 +383,29 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Takes the deep link out of the URL once it has been handed on.
+     * Takes the deep link out of the URL, once the navigation that brought it in has finished.
      *
      * The parameters are a one-shot command, not a description of what is on screen. Left in place they go stale as soon
      * as the user collapses the unit or scrolls on, and worse: the next click on the same citation would navigate to the
      * URL that is already active, which the router reports as no change at all, so the jump would never arrive.
+     *
+     * Runs after every navigation and decides from the URL whether there is anything to take out, so the removal itself
+     * passes through here without starting another one. Parameters that named no reachable unit are dropped as well:
+     * they are as stale as the ones that were executed, and nothing acts on them either.
      */
     private clearDeepLinkQueryParams(): void {
-        // Deferred by a microtask: a jump made from this page reports its parameters while the router is still
-        // activating the page, and starting the next navigation from inside that one cancels it half-way through.
-        void Promise.resolve().then(() =>
-            this.router.navigate([], {
-                relativeTo: this.activatedRoute,
-                // Angular removes a query parameter when it is merged in as null; other parameters on the page are kept.
-                queryParams: Object.fromEntries(LECTURE_DEEP_LINK_QUERY_PARAMS.map((param) => [param, null])),
-                queryParamsHandling: 'merge',
-                replaceUrl: true,
-            }),
-        );
+        const queryParams = this.activatedRoute.snapshot.queryParams;
+        if (!LECTURE_DEEP_LINK_QUERY_PARAMS.some((param) => queryParams[param] !== undefined)) {
+            return;
+        }
+
+        void this.router.navigate([], {
+            relativeTo: this.activatedRoute,
+            // Angular removes a query parameter when it is merged in as null; other parameters on the page are kept.
+            queryParams: Object.fromEntries(LECTURE_DEEP_LINK_QUERY_PARAMS.map((param) => [param, null])),
+            queryParamsHandling: 'merge',
+            replaceUrl: true,
+        });
     }
 
     createDateInfoBox(date: Dayjs, contentStringName: string): InformationBox {
