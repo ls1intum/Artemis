@@ -1,4 +1,5 @@
 import dayjs from 'dayjs/esm';
+import { ExamMode } from './exam-mode.model';
 
 /**
  * An exam as the course overview sidebar needs it, returned by
@@ -16,5 +17,5 @@ export interface ExamForOverview {
     endDate?: dayjs.Dayjs;
     workingTime?: number;
     examMaxPoints?: number;
-    testExam?: boolean;
+    examMode?: ExamMode
 }

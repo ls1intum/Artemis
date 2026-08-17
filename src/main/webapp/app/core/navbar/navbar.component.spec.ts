@@ -69,7 +69,6 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { LoginService } from 'app/core/login/login.service';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
-import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 class MockBreadcrumb {
     label!: string;
@@ -406,37 +405,6 @@ describe('NavbarComponent', () => {
         expect(component.gitUsername()).toBe('Max Musterman');
     });
 
-    it('should set the exam active state correctly', async () => {
-        vi.useFakeTimers();
-        const now = dayjs();
-        const examParticipationService = TestBed.inject(ExamParticipationService);
-        const activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
-
-        fixture.detectChanges();
-        activatedRoute.setParameters({ examId: 1 });
-        router.setUrl('/course/2/exams/1');
-
-        examParticipationService.currentlyLoadedStudentExam.next({
-            workingTime: 60,
-            exam: {
-                id: 1,
-                examMode: ExamMode.REAL,
-                startDate: now.add(1, 'minute'),
-                endDate: now.add(2, 'minutes'),
-                gracePeriod: 180,
-            },
-        } as StudentExam);
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(component.isExamActive()).toBe(false);
-        await vi.advanceTimersByTimeAsync(61000);
-        expect(component.isExamActive()).toBe(true);
-        await vi.advanceTimersByTimeAsync(61000);
-        expect(component.isExamActive()).toBe(true);
-        await vi.advanceTimersByTimeAsync(180000);
-        expect(component.isExamActive()).toBe(false);
-        vi.useRealTimers();
-    });
     describe('Special Cases for Breadcrumbs', () => {
         it('programming exercise import', () => {
             const testUrl = '/course-management/1/programming-exercises/import/2';

@@ -81,9 +81,6 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
  */
 export type SidebarLecture = Pick<Lecture, 'id' | 'title' | 'startDate' | 'endDate' | 'isTutorialLecture'>;
 
-/** The exam fields the sidebar renders; see {@link SidebarLecture}. */
-export type SidebarExam = Pick<Exam, 'id' | 'title' | 'moduleNumber' | 'startDate' | 'workingTime' | 'examMaxPoints' | 'testExam'>;
-
 @Injectable({
     providedIn: 'root',
 })

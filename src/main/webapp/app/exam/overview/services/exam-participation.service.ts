@@ -181,6 +181,11 @@ export class ExamParticipationService {
             }),
         );
     }
+    /**
+     * Fetches the exams of a course that are visible to the current user, for the exams tab of the course overview.
+     * These used to arrive as part of the course itself, which made every course visit pay for them.
+     * @param courseId the course to fetch the exams for
+     */
     public getExamsForOverview(courseId: number): Observable<ExamForOverview[]> {
         return this.httpClient.get<ExamForOverview[]>(`api/exam/courses/${courseId}/exams-for-overview`).pipe(
             map((exams) =>
