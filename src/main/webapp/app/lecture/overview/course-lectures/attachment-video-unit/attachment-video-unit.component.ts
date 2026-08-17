@@ -63,6 +63,7 @@ import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture
 import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+import { attachmentIsPdf } from 'app/lecture/shared/entities/attachment.model';
 
 type SplitSizes = [number, number];
 
@@ -168,11 +169,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly synchronizationState = computed(() => this.computeSynchronizationState());
     readonly synchronizationAvailable = computed(() => this.synchronizationState().available);
 
-    readonly hasPdf = computed(() => {
-        const attachment = this.lectureUnit().attachment;
-        const candidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
-        return this.hasAttachment() && candidate ? candidate.toLowerCase().endsWith('.pdf') : false;
-    });
+    readonly hasPdf = computed(() => attachmentIsPdf(this.lectureUnit().attachment));
 
     readonly hasRenderableVideo = computed(() => !!this.rawVideoSource() || !!this.youtubeVideoId());
 

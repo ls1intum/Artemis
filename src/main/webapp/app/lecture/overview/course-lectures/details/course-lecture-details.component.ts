@@ -6,7 +6,7 @@ import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/foundation/util/download.util';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Attachment } from 'app/lecture/shared/entities/attachment.model';
+import { Attachment, attachmentIsPdf } from 'app/lecture/shared/entities/attachment.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -153,8 +153,12 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly deepLinkState = signal<LectureDeepLink | undefined>(undefined);
     /** The jump the page is currently executing (Iris citation, global search result, pasted link). */
     readonly deepLink = this.deepLinkState.asReadonly();
-    /** A deep link read from the URL that still waits for the lecture units, which decide what it may target. */
-    private pendingDeepLink?: LectureDeepLink;
+    /**
+     * A deep link read from the URL that still waits for the lecture units, which decide what it may target, together
+     * with the lecture it arrived for. Without that lecture the request would be nothing but a unit id and could be
+     * executed against whichever lecture happens to load next.
+     */
+    private pendingDeepLink?: { readonly deepLink: LectureDeepLink; readonly lectureId: number };
 
     // ViewChildren to access all attachment/video unit components
     private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
@@ -198,11 +202,14 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
             const lectureId = +params.lectureId;
             if (lectureId !== this.lectureId) {
-                // The executed jump belongs to the lecture being left, and this component outlives it: Angular reuses it
-                // for a new lectureId. Kept around, the request would be handed to the units of every lecture opened
-                // afterwards and jump again as soon as one of them carries the id it names. A request that arrived for
-                // the lecture being entered is still pending and stays untouched.
+                // Both jumps belong to the lecture being left, and this component outlives it: Angular reuses it for a
+                // new lectureId. Kept around, they would be executed against a lecture they were never meant for. The
+                // one exception is a request that came in for the lecture being entered, which is why it is only
+                // dropped when it names another one.
                 this.deepLinkState.set(undefined);
+                if (this.pendingDeepLink && this.pendingDeepLink.lectureId !== lectureId) {
+                    this.pendingDeepLink = undefined;
+                }
             }
 
             this.lectureId = lectureId;
@@ -219,7 +226,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 return;
             }
 
-            this.pendingDeepLink = deepLink;
+            // The snapshot, not `lectureId`: it is already advanced to the lecture the link arrived with, while the
+            // field is only set once the route parameters are reported, which happens after the query parameters.
+            this.pendingDeepLink = { deepLink, lectureId: Number(this.activatedRoute.snapshot.params['lectureId']) };
             this.publishDeepLink();
         });
 
@@ -256,9 +265,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         this.lectureUnits.set(lecture.lectureUnits ?? []);
                         this.publishDeepLink();
                         this.hasPdfLectureUnit.set(
-                            this.lectureUnits().some(
-                                (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
-                            ),
+                            this.lectureUnits().some((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && attachmentIsPdf((unit as AttachmentVideoUnit).attachment)),
                         );
                         if (this.irisEnabled && lecture.course?.id) {
                             this.irisSettingsService.getCourseSettingsWithRateLimit(lecture.course.id).subscribe((response) => {
@@ -330,22 +337,19 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     /**
      * Hands the pending deep link to the units, once they are known.
      *
-     * Only the lecture the link points at may decide what the link can target, and its units arrive later: the route
-     * reports the link while the page is still loading, and a link into another lecture even arrives before the switch.
-     * Until then the link waits and loadData publishes it. It is published at most once, as executing the same request
-     * twice would jump twice.
+     * Only the lecture the link arrived for may decide what it can target, and that lecture's units arrive later: the
+     * route reports the link while the page is still loading, and a link into another lecture even arrives before the
+     * switch. Until its own lecture is the loaded one the link waits and loadData publishes it. It is published at most
+     * once, as executing the same request twice would jump twice.
      */
     private publishDeepLink(): void {
-        const deepLink = this.pendingDeepLink;
-        // The snapshot, not `lectureId`: it is already advanced to the lecture the link arrived with, while the field
-        // is only set once the route parameters are reported, which happens after the query parameters.
-        const targetLectureId = Number(this.activatedRoute.snapshot.params['lectureId']);
-        if (!deepLink || this.lecture()?.id !== targetLectureId) {
+        const pending = this.pendingDeepLink;
+        if (!pending || this.lecture()?.id !== pending.lectureId) {
             return;
         }
 
         this.pendingDeepLink = undefined;
-        this.deepLinkState.set(this.dropUnreachableTargets(deepLink));
+        this.deepLinkState.set(this.dropUnreachableTargets(pending.deepLink));
     }
 
     /**
@@ -362,23 +366,16 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
 
         if (targetUnit.type !== LectureUnitType.ATTACHMENT_VIDEO) {
-            return { unitId: deepLink.unitId, requestId: deepLink.requestId };
+            return { unitId: deepLink.unitId };
         }
 
         const attachmentUnit = targetUnit as AttachmentVideoUnit;
         const hasVideo = !!attachmentUnit.videoSource || !!attachmentUnit.youtubeVideoId;
-        // The same candidate the unit itself decides on in AttachmentVideoUnitComponent.hasPdf: a student version
-        // replaces the link, and an attachment that carries neither is still named after the file it holds. Reading
-        // only the link would drop the page of a unit that does render a PDF.
-        const attachment = attachmentUnit.attachment;
-        const pdfCandidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
-        const hasPdf = !!pdfCandidate?.toLowerCase().endsWith('.pdf');
 
         return {
             unitId: deepLink.unitId,
-            requestId: deepLink.requestId,
             timestamp: hasVideo ? deepLink.timestamp : undefined,
-            page: hasPdf ? deepLink.page : undefined,
+            page: attachmentIsPdf(attachmentUnit.attachment) ? deepLink.page : undefined,
         };
     }
 

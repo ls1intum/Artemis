@@ -12,8 +12,9 @@ export class LectureUnitDirective<T extends LectureUnit> {
     readonly deepLink = input<LectureDeepLink | undefined>(undefined);
 
     /**
-     * The pending jump if it targets this unit. The request keeps its identity while the unit around it changes, so
-     * marking the unit as completed does not look like a new jump, while asking for the same place twice does.
+     * The pending jump if it targets this unit, handed on as it is so that it keeps its identity: marking the unit as
+     * completed re-evaluates this and yields the same object, which goes no further, while asking for the same place
+     * twice yields a new one and reaches the unit.
      */
     readonly matchedDeepLink = computed(() => {
         const deepLink = this.deepLink();

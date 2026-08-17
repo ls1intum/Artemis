@@ -60,6 +60,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -436,7 +437,7 @@ describe('CourseLectureDetailsComponent', () => {
 
     describe('dropUnreachableTargets', () => {
         const dropUnreachable = (unitId: number, target: { timestamp?: number; page?: number } = {}) =>
-            courseLecturesDetailsComponent['dropUnreachableTargets']({ unitId, ...target, requestId: 1 });
+            courseLecturesDetailsComponent['dropUnreachableTargets']({ unitId, ...target });
 
         const attachmentVideoUnit = (config: { id: number; videoSource?: string; youtubeVideoId?: string; pdfLink?: string }) => {
             const unit = new AttachmentVideoUnit();
@@ -472,19 +473,19 @@ describe('CourseLectureDetailsComponent', () => {
         it('should keep both targets for a unit with a video and a PDF', () => {
             courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 104, youtubeVideoId: 'dQw4w9WgXcQ', pdfLink: '/path/to/slides.pdf' })]);
 
-            expect(dropUnreachable(104, { timestamp: 60, page: 7 })).toEqual({ unitId: 104, requestId: 1, timestamp: 60, page: 7 });
+            expect(dropUnreachable(104, { timestamp: 60, page: 7 })).toEqual({ unitId: 104, timestamp: 60, page: 7 });
         });
 
         it('should drop the timestamp for a unit without any video', () => {
             courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 105, pdfLink: '/path/to/document.pdf' })]);
 
-            expect(dropUnreachable(105, { timestamp: 45, page: 2 })).toEqual({ unitId: 105, requestId: 1, timestamp: undefined, page: 2 });
+            expect(dropUnreachable(105, { timestamp: 45, page: 2 })).toEqual({ unitId: 105, timestamp: undefined, page: 2 });
         });
 
         it('should drop the page for a unit whose attachment is not a PDF', () => {
             courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 106, videoSource: 'https://example.com/video.mp4', pdfLink: '/path/to/notes.txt' })]);
 
-            expect(dropUnreachable(106, { timestamp: 12, page: 2 })).toEqual({ unitId: 106, requestId: 1, timestamp: 12, page: undefined });
+            expect(dropUnreachable(106, { timestamp: 12, page: 2 })).toEqual({ unitId: 106, timestamp: 12, page: undefined });
         });
 
         it('should keep the unit but drop both targets for a unit that is not an attachment/video unit', () => {
@@ -494,7 +495,7 @@ describe('CourseLectureDetailsComponent', () => {
             courseLecturesDetailsComponent.lectureUnits.set([textUnit]);
 
             // Such a unit has no place to jump to inside it, but it is still opened and scrolled to.
-            expect(dropUnreachable(200, { timestamp: 12, page: 3 })).toEqual({ unitId: 200, requestId: 1 });
+            expect(dropUnreachable(200, { timestamp: 12, page: 3 })).toEqual({ unitId: 200 });
         });
 
         it('should drop the whole link when the unit is not part of the lecture', () => {
@@ -654,7 +655,14 @@ describe('CourseLectureDetailsComponent', () => {
             return unit;
         };
 
-        const lectureWith = (units: AttachmentVideoUnit[], id = 1) => new HttpResponse({ body: { ...lecture, id, lectureUnits: units, attachments: [] }, status: 200 });
+        // Deep-cloned, so nested fixture state is not shared between responses or test cases.
+        const lectureWith = (units: AttachmentVideoUnit[], id = 1) => {
+            const body = deepClone(lecture);
+            body.id = id;
+            body.lectureUnits = units;
+            body.attachments = [];
+            return new HttpResponse({ body, status: 200 });
+        };
 
         /** Answers the lecture request right away. */
         const respondWith = (units: AttachmentVideoUnit[], id = 1) => {
@@ -737,8 +745,9 @@ describe('CourseLectureDetailsComponent', () => {
             reInit({ unit: '7', timestamp: '30', page: '4' });
             const second = courseLecturesDetailsComponent.deepLink();
 
+            // The same place, but a different object: the reference is what marks it as a request of its own.
             expect(second).not.toBe(first);
-            expect(second!.requestId).not.toBe(first!.requestId);
+            expect(second).toEqual(first);
         });
 
         it('should take the deep link out of the URL once the navigation that delivered it has finished', () => {
@@ -785,6 +794,19 @@ describe('CourseLectureDetailsComponent', () => {
             deliver();
 
             expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 9, page: 2 }));
+        });
+
+        it('should not execute a waiting jump against a lecture it did not arrive for', () => {
+            // The link comes in for lecture 2, whose load never answers.
+            respondLater([attachmentUnit(7, { link: '/path/to/slides.pdf' })], 2);
+            reInit({ unit: '7', page: '4' }, '2');
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+
+            // Lecture 3 is opened instead and does load, carrying a unit with the very id the waiting link names.
+            respondWith([attachmentUnit(7, { link: '/path/to/slides.pdf' })], 3);
+            reInit({}, '3');
+
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
         });
 
         it('should forget an executed jump when another lecture is opened', () => {

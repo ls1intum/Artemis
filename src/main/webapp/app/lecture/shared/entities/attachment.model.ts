@@ -24,3 +24,15 @@ export class Attachment implements BaseEntity {
     studentVersion?: string;
     displayPageNumbers?: number[];
 }
+
+/**
+ * Whether the attachment holds a PDF, judged by the name it is stored under: a student version replaces the link, and
+ * an attachment that carries neither is still named after the file it holds.
+ *
+ * Everything deciding whether slides can be shown has to agree on this, or a unit renders a PDF that its surroundings
+ * believe it does not have.
+ */
+export function attachmentIsPdf(attachment?: Attachment): boolean {
+    const candidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
+    return !!candidate?.toLowerCase().endsWith('.pdf');
+}

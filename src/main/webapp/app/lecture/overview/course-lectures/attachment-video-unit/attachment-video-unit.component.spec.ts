@@ -69,11 +69,12 @@ describe('AttachmentVideoUnitComponent', () => {
 
     let mockLectureTranscriptionService: any;
 
-    let nextRequestId = 0;
-
-    /** Sends the unit a deep link, the only thing that expands it from the outside. */
+    /**
+     * Sends the unit a deep link, the only thing that expands it from the outside. A fresh object each call: the
+     * reference is what tells the unit this is a new jump.
+     */
     function deepLinkTo(unitId: number, target: { timestamp?: number; page?: number } = {}): void {
-        fixture.componentRef.setInput('deepLink', { unitId, ...target, requestId: ++nextRequestId });
+        fixture.componentRef.setInput('deepLink', { unitId, ...target });
     }
 
     function expectPlaylistRequest(url: string, response: string | null) {
@@ -1125,7 +1126,7 @@ describe('AttachmentVideoUnitComponent', () => {
             (component as any).videoPlayer = () => videoPlayer;
             (component as any).pdfViewer = () => pdfViewer;
 
-            component['applyDeepLink']({ unitId: 1, timestamp: 30, page: 4, requestId: 1 });
+            component['applyDeepLink']({ unitId: 1, timestamp: 30, page: 4 });
 
             expect(videoPlayer.seekTo).toHaveBeenCalledWith(30, false);
             expect(videoPlayer.seekTo.mock.invocationCallOrder[0]).toBeLessThan(pdfViewer.goToPage.mock.invocationCallOrder[0]);
@@ -1137,7 +1138,7 @@ describe('AttachmentVideoUnitComponent', () => {
             const pdfViewer = { getCurrentPage: vi.fn().mockReturnValue(3), goToPage: vi.fn() };
             (component as any).pdfViewer = () => pdfViewer;
 
-            component['applyDeepLink']({ unitId: 1, page: 3, requestId: 1 });
+            component['applyDeepLink']({ unitId: 1, page: 3 });
 
             expect(pdfViewer.goToPage).not.toHaveBeenCalled();
             expect(component['pendingPdfTargetPage']).toBeUndefined();
@@ -1148,7 +1149,7 @@ describe('AttachmentVideoUnitComponent', () => {
             (component as any).videoPlayer = () => undefined;
             (component as any).youtubePlayer = () => youtubePlayer;
 
-            component['applyDeepLink']({ unitId: 1, timestamp: 12, requestId: 1 });
+            component['applyDeepLink']({ unitId: 1, timestamp: 12 });
 
             expect(youtubePlayer.seekTo).toHaveBeenCalledWith(12, false);
         });

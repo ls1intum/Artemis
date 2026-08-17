@@ -23,8 +23,8 @@ describe('LectureUnitComponent', () => {
         visibleToStudents: true,
     };
 
-    let nextRequestId = 0;
-    const deepLinkTo = (target: { timestamp?: number; page?: number }): LectureDeepLink => ({ unitId: lectureUnit.id!, ...target, requestId: ++nextRequestId });
+    // A fresh object each call: the reference is what tells the card this is a new jump.
+    const deepLinkTo = (target: { timestamp?: number; page?: number }): LectureDeepLink => ({ unitId: lectureUnit.id!, ...target });
 
     beforeEach(async () => {
         mockProfileService = {
