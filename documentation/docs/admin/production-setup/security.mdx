@@ -98,7 +98,7 @@ Both current mechanisms are bounded by the build job the agent is actually runni
 - A **clone token** is minted when a build job is queued and travels with it. It is accepted only for the repositories that job declares — the participant's assignment repository, the tests, the solution where the exercise checks it out, and any auxiliary repositories — and only from the agent that claimed the job. It has no expiry of its own and needs none: a job leaves the processing list when it finishes, is cancelled, or hits the build timeout, and the token stops working at that moment.
 - Over **SSH**, the public key already establishes which agent is connected, so no token is involved. The same processing list decides which repositories that agent may read.
 
-Both paths write a VCS access log entry naming the agent and the build job. The old shared-credential shortcut wrote nothing at all, which made the most privileged reader in the installation the only one that could not be audited.
+Both paths write a VCS access log entry naming the agent and the build job, recorded under the mechanism the agent used — `BUILD_JOB_TOKEN` over HTTPS and `SSH` with a key — so which one an installation actually uses is visible in the audit UI rather than inferred from its configuration. The old shared-credential shortcut wrote nothing at all, which made the most privileged reader in the installation the only one that could not be audited.
 
 #### Restricting where build agents may connect from
 

@@ -579,7 +579,7 @@ public class LocalVCServletService {
                 // Only on the handshake, like the rate limiter above: git follows /info/refs with a git-upload-pack
                 // using the same credentials, and one clone should leave one audit entry rather than two.
                 if (request.getRequestURI().endsWith("/info/refs")) {
-                    saveBuildAgentVcsAccessLog(localVCRepositoryUri, agentName, buildJob.id(), peerIpAddress);
+                    saveBuildAgentVcsAccessLog(localVCRepositoryUri, agentName, buildJob.id(), peerIpAddress, AuthenticationMechanism.BUILD_JOB_TOKEN);
                 }
                 return true;
             }
@@ -600,15 +600,25 @@ public class LocalVCServletService {
     /**
      * Records a build agent clone in the VCS access log, which the old shared-credential shortcut never did.
      * <p>
+     * Shared by both mechanisms rather than reimplemented per transport: the ssh path resolves the same participation
+     * from the same repository uri, and having one implementation is what stops the two from drifting into logging
+     * different things - or, as ssh originally did, nothing at all.
+     * <p>
      * Best effort: an audit entry that cannot be written must not fail the build.
+     *
+     * @param localVCRepositoryUri the repository being read
+     * @param agentName            the short name of the build agent
+     * @param buildJobId           the id of the build job the read belongs to
+     * @param ipAddress            the address the agent connected from
+     * @param mechanism            how the agent authenticated
      */
-    private void saveBuildAgentVcsAccessLog(LocalVCRepositoryUri localVCRepositoryUri, String agentName, String buildJobId, String ipAddress) {
+    public void saveBuildAgentVcsAccessLog(LocalVCRepositoryUri localVCRepositoryUri, String agentName, String buildJobId, String ipAddress, AuthenticationMechanism mechanism) {
         try {
             ProgrammingExercise exercise = getProgrammingExerciseOrThrow(localVCRepositoryUri.getProjectKey());
             var participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
                     localVCRepositoryUri.toString(), exercise);
             String commitHash = getCommitHash(localVCRepositoryUri);
-            vcsAccessLogService.ifPresent(service -> service.saveBuildAgentAccessLog(participation, agentName, buildJobId, commitHash, ipAddress));
+            vcsAccessLogService.ifPresent(service -> service.saveBuildAgentAccessLog(participation, agentName, buildJobId, commitHash, ipAddress, mechanism));
         }
         catch (EntityNotFoundException e) {
             // An auxiliary repository has no participation of its own, so there is nothing to attribute the access to.

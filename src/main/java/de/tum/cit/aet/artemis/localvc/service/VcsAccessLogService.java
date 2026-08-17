@@ -75,9 +75,14 @@ public class VcsAccessLogService {
      * @param buildJobId     The id of the build job the clone belongs to
      * @param commitHash     The latest commit hash
      * @param ipAddress      The address the build agent connected from
+     * @param mechanism      How the agent authenticated: {@link AuthenticationMechanism#BUILD_JOB_TOKEN} over https,
+     *                           {@link AuthenticationMechanism#SSH} with its key. Both are audited, so which one an
+     *                           installation uses stays visible in the log rather than being inferred from its
+     *                           configuration.
      */
     @Async
-    public void saveBuildAgentAccessLog(ProgrammingExerciseParticipation participation, String buildAgentName, String buildJobId, String commitHash, String ipAddress) {
+    public void saveBuildAgentAccessLog(ProgrammingExerciseParticipation participation, String buildAgentName, String buildJobId, String commitHash, String ipAddress,
+            AuthenticationMechanism mechanism) {
         log.debug("Storing access operation for build agent {} running build job {}", buildAgentName, buildJobId);
 
         // The name column is NOT NULL and is what identifies the accessor in the audit UI, so it carries both parts.
@@ -87,8 +92,7 @@ public class VcsAccessLogService {
             // The column is varchar(100); a long agent short name must not turn an audit entry into a failed insert
             accessor = accessor.substring(0, ACCESSOR_NAME_MAX_LENGTH);
         }
-        VcsAccessLog accessLogEntry = new VcsAccessLog(null, (Participation) participation, accessor, "", RepositoryActionType.PULL, AuthenticationMechanism.BUILD_JOB_TOKEN,
-                commitHash, ipAddress);
+        VcsAccessLog accessLogEntry = new VcsAccessLog(null, (Participation) participation, accessor, "", RepositoryActionType.PULL, mechanism, commitHash, ipAddress);
         vcsAccessLogRepository.save(accessLogEntry);
     }
 

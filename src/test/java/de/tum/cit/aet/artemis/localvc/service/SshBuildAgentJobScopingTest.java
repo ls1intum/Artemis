@@ -60,8 +60,15 @@ class SshBuildAgentJobScopingTest {
                 null);
     }
 
+    @SuppressWarnings("unchecked")
+    private Optional<BuildJobQueueItem> buildJobFound(String agentName, LocalVCRepositoryUri uri) {
+        Optional<BuildJobQueueItem> result = (Optional<BuildJobQueueItem>) ReflectionTestUtils.invokeMethod(sshGitLocationResolverService, "findBuildJobForRepository", agentName,
+                uri);
+        return result == null ? Optional.empty() : result;
+    }
+
     private boolean mayRead(String agentName, LocalVCRepositoryUri uri) {
-        return Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(sshGitLocationResolverService, "isRepositoryOfCurrentBuildJob", agentName, uri));
+        return buildJobFound(agentName, uri).isPresent();
     }
 
     @Test
@@ -115,5 +122,21 @@ class SshBuildAgentJobScopingTest {
         sshGitLocationResolverService = new SshGitLocationResolverService(null, null, Optional.empty(), Optional.empty());
 
         assertThat(mayRead(AGENT_NAME, uriOf("/git/TESTEXERCISE/testexercise-student1.git"))).isFalse();
+    }
+
+    /**
+     * The scope check has to yield the matching job, not merely a yes. The ssh read is audited like the https one, and
+     * an access log entry that cannot name the build job says no more than "some agent read this" - which is what the
+     * entry exists to improve on.
+     */
+    @Test
+    void shouldIdentifyWhichBuildJobAuthorizesTheReadSoItCanBeAudited() {
+        LocalVCRepositoryUri assignment = uriOf("/git/TESTEXERCISE/testexercise-student1.git");
+        LocalVCRepositoryUri tests = uriOf("/git/TESTEXERCISE/testexercise-tests.git");
+        when(distributedDataAccessService.getProcessingJobsForAgentByName(AGENT_NAME)).thenReturn(List.of(buildJobFor(assignment.toString(), tests.toString())));
+
+        assertThat(buildJobFound(AGENT_NAME, assignment)).get().extracting(BuildJobQueueItem::id).isEqualTo("job-1");
+        assertThat(buildJobFound(AGENT_NAME, tests)).get().extracting(BuildJobQueueItem::id).isEqualTo("job-1");
+        assertThat(buildJobFound(AGENT_NAME, uriOf("/git/TESTEXERCISE/testexercise-student2.git"))).isEmpty();
     }
 }

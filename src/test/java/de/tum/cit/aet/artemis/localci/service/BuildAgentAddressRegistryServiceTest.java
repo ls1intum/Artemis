@@ -285,6 +285,26 @@ class BuildAgentAddressRegistryServiceTest {
     }
 
     /**
+     * An agent observed outside the allowlist must keep its observed address in the snapshot, because absence from the
+     * snapshot means "origin not observable" and permits every address. Dropping it would make the agent flagged as
+     * suspicious the only one with no origin binding, and its credential usable from anywhere inside the allowed
+     * ranges - the exact inversion of what the allowlist is for.
+     */
+    @Test
+    void shouldNotExemptAnAgentObservedOutsideTheAllowlistFromOriginBinding() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("203.0.113.9"))));
+        BuildAgentAddressRegistryService service = createService(List.of("10.0.0.0/8"));
+
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.50"))
+                .as("an address the agent was never observed at must not be accepted just because the agent is outside the allowlist").isFalse();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "203.0.113.9")).as("the observed address stays registered; the allowlist is applied to the request address")
+                .isTrue();
+        assertThat(registeredAddresses.get("agent-1").withinAllowlist()).as("the allowlist verdict is still recorded for the admin UI").isFalse();
+    }
+
+    /**
      * The provider surfaces no client-connected callback, so the registry learns of a new agent from these two
      * listeners and the scheduled reconcile. Losing the registration would leave every reconnected agent waiting for
      * the next reconcile.

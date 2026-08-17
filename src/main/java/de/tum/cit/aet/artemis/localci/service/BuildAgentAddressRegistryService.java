@@ -196,13 +196,22 @@ public class BuildAgentAddressRegistryService {
         }
     }
 
+    /**
+     * Rebuilds the snapshot the git paths are answered from.
+     * <p>
+     * Every observed agent enters it, including one connected from outside the allowlist. Filtering those out here
+     * looks like defence in depth and is the opposite: {@link #isRegisteredAddressOfAgent} reads the absence of an
+     * entry as "this agent's origin cannot be observed" and permits any address, so excluding an agent would turn the
+     * one flagged as suspicious into the only one with no origin binding at all - its credential would then be usable
+     * from any address that happens to sit inside the allowed ranges. The allowlist is applied to the address of the
+     * request instead, by {@link BuildAgentNetworkPolicy#isWithinAllowedRanges} at each call site, which is where it
+     * constrains rather than exempts. {@code withinAllowlist} stays on the entry for the admin UI and the startup log.
+     */
     private void refreshLocalSnapshot() {
         Map<String, Set<String>> snapshot = new HashMap<>();
         for (var entry : distributedDataAccessService.getBuildAgentAddressMap().entrySet()) {
             BuildAgentAddressInfo info = entry.getValue();
-            if (info != null && info.withinAllowlist()) {
-                // Only agents inside the allowlist enter the snapshot, so the git paths need a single lookup rather
-                // than a lookup plus a separate allowlist decision.
+            if (info != null) {
                 snapshot.put(entry.getKey(), new HashSet<>(info.addresses()));
             }
         }

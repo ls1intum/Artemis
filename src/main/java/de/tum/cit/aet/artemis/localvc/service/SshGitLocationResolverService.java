@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -11,6 +13,7 @@ import java.util.Optional;
 import org.apache.sshd.git.GitLocationResolver;
 import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.lib.Repository;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +22,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -91,10 +95,15 @@ public class SshGitLocationResolverService implements GitLocationResolver {
             // every repository in the installation. The processing list is the authority and needs no expiry of its
             // own, because a job leaves it when it finishes, is cancelled, or hits the build timeout.
             String agentName = session.getAttribute(SshConstants.BUILD_AGENT_NAME_KEY);
-            if (!isRepositoryOfCurrentBuildJob(agentName, localVCRepositoryUri)) {
+            var buildJob = findBuildJobForRepository(agentName, localVCRepositoryUri);
+            if (buildJob.isEmpty()) {
                 log.warn("Build agent {} tried to read {}, which belongs to none of the build jobs it is currently running", agentName, localVCRepositoryUri);
                 throw new AccessDeniedException("This repository does not belong to a build job of this build agent");
             }
+            // Audited like the https path, and for the same reason: an agent reads student code, so the read has to be
+            // attributable. This branch returns before the user authorization below, which is what writes the log for
+            // everyone else, and a build agent session carries no user to attribute an entry to anyway.
+            localVCServletService.saveBuildAgentVcsAccessLog(localVCRepositoryUri, agentName, buildJob.get().id(), hostOf(session.getClientAddress()), AuthenticationMechanism.SSH);
         }
         else {
             try {
@@ -124,17 +133,32 @@ public class SshGitLocationResolverService implements GitLocationResolver {
      * the public key already established which agent is connected: the missing constraint was only which repositories
      * that agent legitimately needs right now, and the processing list answers exactly that.
      *
+     * Returns the job rather than a boolean, because the access log entry has to name which build job the read belongs
+     * to. A yes/no answer would leave the audit entry unable to say more than "some agent read this".
+     *
      * @param agentName            the short name of the authenticated build agent, may be null on a session that
      *                                 predates this attribute being set
      * @param localVCRepositoryUri the repository the agent is asking to read
-     * @return whether one of the agent's running build jobs declares this repository
+     * @return the agent's running build job that declares this repository, or empty if none does
      */
-    private boolean isRepositoryOfCurrentBuildJob(String agentName, LocalVCRepositoryUri localVCRepositoryUri) {
+    private Optional<BuildJobQueueItem> findBuildJobForRepository(String agentName, LocalVCRepositoryUri localVCRepositoryUri) {
         if (agentName == null || distributedDataAccessService.isEmpty() || buildJobCloneTokenService.isEmpty()) {
-            return false;
+            return Optional.empty();
         }
         var tokenService = buildJobCloneTokenService.get();
         return distributedDataAccessService.get().getProcessingJobsForAgentByName(agentName).stream()
-                .anyMatch(buildJob -> tokenService.coversRepository(buildJob, localVCRepositoryUri));
+                .filter(buildJob -> tokenService.coversRepository(buildJob, localVCRepositoryUri)).findFirst();
+    }
+
+    /**
+     * @param address the ssh client address, already the real client where the proxy protocol is in use
+     * @return the address as a plain host string for the access log, or null if it is not an ip socket
+     */
+    @Nullable
+    private static String hostOf(@Nullable SocketAddress address) {
+        if (address instanceof InetSocketAddress inetSocketAddress && inetSocketAddress.getAddress() != null) {
+            return inetSocketAddress.getAddress().getHostAddress();
+        }
+        return null;
     }
 }
