@@ -62,6 +62,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -84,6 +85,7 @@ describe('ExamParticipationComponent', () => {
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
     let examManagementService: ExamManagementService;
+    let courseOverviewTabDataService: CourseOverviewTabDataService;
 
     function setupActivatedRouteMock() {
         return {
@@ -163,6 +165,7 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(ArtemisDatePipe),
                 MockProvider(ExamManagementService),
                 MockProvider(DialogService),
+                MockProvider(CourseOverviewTabDataService),
                 { provide: ProfileService, useClass: MockProfileService },
             ],
         }).compileComponents();
@@ -181,6 +184,8 @@ describe('ExamParticipationComponent', () => {
         courseService = TestBed.inject(CourseManagementService);
         courseStorageService = TestBed.inject(CourseStorageService);
         examManagementService = TestBed.inject(ExamManagementService);
+        courseOverviewTabDataService = TestBed.inject(CourseOverviewTabDataService);
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([]));
         // Ensure the mocked service has the currentlyLoadedStudentExam Subject in place; otherwise pipelines triggered
         // by tests below would crash with "Cannot read 'next' of undefined" during teardown.
         examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
@@ -362,10 +367,10 @@ describe('ExamParticipationComponent', () => {
         exam.id = 2;
         exam.examMode = ExamMode.TEST;
         exam.endDate = dayjs().subtract(1, 'hour');
-        const course: Course = { id: 1, exams: [exam] };
 
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([exam as any]));
         const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
 
         comp.ngOnInit();
@@ -383,14 +388,14 @@ describe('ExamParticipationComponent', () => {
         exam.startDate = dayjs().subtract(10, 'minutes').toISOString() as any;
         exam.workingTime = 3600;
         exam.endDate = dayjs().add(2, 'hours');
-        const course: Course = { id: 1, exams: [exam] };
         const simulationAttempt = new StudentExam();
         simulationAttempt.exam = exam;
         simulationAttempt.startedDate = dayjs().subtract(5, 'minutes');
         simulationAttempt.submitted = true;
 
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([exam as any]));
         examParticipationService.testStudentExams.set([simulationAttempt]);
         const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
 
@@ -409,12 +414,12 @@ describe('ExamParticipationComponent', () => {
         exam.startDate = dayjs().subtract(10, 'minutes');
         exam.workingTime = 3600;
         exam.endDate = dayjs().add(2, 'hours');
-        const course: Course = { id: 1, exams: [exam] };
         const studentExam = new StudentExam();
         studentExam.exam = exam;
 
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([exam as any]));
         examParticipationService.testStudentExams.set([]);
         const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
 
@@ -429,7 +434,6 @@ describe('ExamParticipationComponent', () => {
         exam.id = 2;
         exam.examMode = ExamMode.TEST;
         exam.endDate = dayjs().subtract(1, 'hour');
-        const course: Course = { id: 1, exams: [exam] };
         const studentExamWithExercises = new StudentExam();
         studentExamWithExercises.id = 3;
         studentExamWithExercises.exam = exam;
@@ -440,7 +444,8 @@ describe('ExamParticipationComponent', () => {
             },
         };
         activatedRoute.params = of({ courseId: '1', examId: '2' });
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([exam as any]));
         const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
         const loadStudentExamWithExercisesForSummarySpy = vi
             .spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary')
@@ -490,7 +495,7 @@ describe('ExamParticipationComponent', () => {
         const courseStorageServiceSpy = vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
         comp.ngOnInit();
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
-        expect(courseStorageServiceSpy).toHaveBeenCalledTimes(2);
+        expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
         expect(comp.isAtLeastTutor()).toBe(true);
     });
 
@@ -508,7 +513,7 @@ describe('ExamParticipationComponent', () => {
         comp.ngOnInit();
         await Promise.resolve();
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
-        expect(courseStorageServiceSpy).toHaveBeenCalledTimes(2);
+        expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
         expect(courseServiceSpy).toHaveBeenCalledOnce();
         expect(comp.isAtLeastTutor()).toBe(true);
     });

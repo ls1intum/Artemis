@@ -9,8 +9,8 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam, testExamSimulationEndDate } from 'app/exam/overview/exam.utils';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
+import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, map, switchMap, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -51,6 +51,8 @@ import {
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
+import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -116,6 +118,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
+    private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
 
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
@@ -257,17 +260,27 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 });
             } else if (this.testExam() && this.studentExamId()) {
                 this.loadTestExamStudentExamForSummary();
-            } else if (this.shouldSkipTestExamAttemptRequest()) {
-                this.loadingExam.set(false);
             } else {
-                this.examLoadSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
-                    next: (studentExam) => {
-                        this.handleStudentExam(studentExam);
-                    },
-                    error: () => {
-                        this.handleNoStudentExam();
-                    },
-                });
+                this.examLoadSubscription = this.courseOverviewTabDataService
+                    .loadExamsIfNeeded(this.courseId())
+                    .pipe(
+                        switchMap((exams) => {
+                            const exam = exams?.find((e) => e.id === this.examId());
+                            if (this.shouldSkipTestExamAttemptRequest(exam)) {
+                                this.loadingExam.set(false);
+                                return EMPTY;
+                            }
+                            return this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId());
+                        }),
+                    )
+                    .subscribe({
+                        next: (studentExam) => {
+                            this.handleStudentExam(studentExam);
+                        },
+                        error: () => {
+                            this.handleNoStudentExam();
+                        },
+                    });
             }
         });
 
@@ -277,8 +290,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
     }
 
-    private shouldSkipTestExamAttemptRequest(): boolean {
-        const exam = this.courseStorageService.getCourse(this.courseId())?.exams?.find((courseExam) => courseExam.id === this.examId());
+    private shouldSkipTestExamAttemptRequest(exam?: ExamForOverview): boolean {
         if (isRealExam(exam)) {
             return false;
         }
