@@ -60,7 +60,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -656,13 +656,7 @@ describe('CourseLectureDetailsComponent', () => {
         };
 
         // Deep-cloned, so nested fixture state is not shared between responses or test cases.
-        const lectureWith = (units: AttachmentVideoUnit[], id = 1) => {
-            const body = deepClone(lecture);
-            body.id = id;
-            body.lectureUnits = units;
-            body.attachments = [];
-            return new HttpResponse({ body, status: 200 });
-        };
+        const lectureWith = (units: AttachmentVideoUnit[], id = 1) => new HttpResponse({ body: cloneWith(lecture, { id, lectureUnits: units, attachments: [] }), status: 200 });
 
         /** Answers the lecture request right away. */
         const respondWith = (units: AttachmentVideoUnit[], id = 1) => {

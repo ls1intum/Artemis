@@ -5,7 +5,7 @@ import { EMPTY, Observable, Subscription, catchError, finalize, of, shareReplay,
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { currentNavigationId } from 'app/course/overview/services/navigation-scope';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -279,7 +279,7 @@ export class CourseOverviewExercisesService implements OnDestroy {
                     return exercise;
                 }
                 didUpdate = true;
-                return { ...exercise, studentAssignedTeamId: teamAssignment.teamId, studentParticipations: teamAssignment.studentParticipations };
+                return cloneWith(exercise, { studentAssignedTeamId: teamAssignment.teamId, studentParticipations: teamAssignment.studentParticipations });
             });
             return didUpdate ? updated : exercises;
         });
@@ -297,7 +297,7 @@ export class CourseOverviewExercisesService implements OnDestroy {
         if (exercises === source) {
             return;
         }
-        const data = { ...current.data, exercises };
+        const data = cloneWith(current.data, { exercises });
         this.state.set({ courseId, navigationId: currentNavigationId(this.router), data });
         this.publishExercisesToStoredCourse(courseId, data);
     }

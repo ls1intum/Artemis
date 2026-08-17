@@ -5,7 +5,9 @@ type MockApollonOptions = Pick<ApollonOptions, 'model' | 'collaboration'>;
 
 // Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
 const { MockApollonEditor } = vi.hoisted(() => {
-    const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
+    // vi.hoisted runs before imports, so the real deepClone from app/foundation/util/deep-clone.util is not
+    // available here. A JSON round trip is enough for the plain Apollon UML models this mock stores.
+    const jsonRoundTripClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
 
     class MockApollonEditorClass {
         _model: any;
@@ -46,7 +48,7 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         constructor(_container: HTMLElement, options?: MockApollonOptions) {
             this._options = options;
-            this._model = options?.model ? deepClone(options.model) : {};
+            this._model = options?.model ? jsonRoundTripClone(options.model) : {};
         }
 
         get model() {
@@ -81,12 +83,12 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
-import { cloneDeep } from 'lodash-es';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ModelingEditorComponent', () => {
     let fixture: ComponentFixture<ModelingEditorComponent>;
@@ -95,7 +97,7 @@ describe('ModelingEditorComponent', () => {
     const course = { id: 123 } as Course;
     const diagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
     // @ts-ignore
-    const classDiagram = cloneDeep(testClassDiagram as UMLModel); // note: clone is needed to prevent weird errors with setters, because testClassDiagram is not an actual object
+    const classDiagram = deepClone(testClassDiagram as UMLModel); // note: clone is needed to prevent weird errors with setters, because testClassDiagram is not an actual object
     const route = { params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -207,7 +209,7 @@ describe('ModelingEditorComponent', () => {
         fixture.detectChanges();
         await component.ngAfterViewInit();
 
-        const changedModel = cloneDeep(model) as any;
+        const changedModel = deepClone(model) as any;
         // Apollon v4 uses nodes/edges instead of elements/relationships
         changedModel.nodes = {};
         changedModel.edges = {};
