@@ -166,10 +166,49 @@ jobs:
             if (existing) await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
             else await github.rest.issues.createComment({ ...context.repo, issue_number: prNumber, body });
 
+      # Pre-deploy gate: only proceed if the SHA this run resolved is STILL the PR's current
+      # head (and the PR is still open) AND the immutable image is actually published.
+      #  - Ordering: runs are serialized per PR (cancel-in-progress:false) but GitHub does not
+      #    guarantee queued runs execute in commit order, and the immutable sha-<...> tag means
+      #    a superseded run would otherwise roll the env back to an older commit. A stale run
+      #    no-ops here; the run whose SHA matches head is the one that applies.
+      #  - Image presence: a green-but-imageless CI (e.g. an earlier draft run that skipped the
+      #    image build) would otherwise wedge the env in ImagePullBackOff for the full helm
+      #    --timeout while holding the concurrency lock.
+      - name: Verify head is current and image is published
+        if: steps.ctx.outputs.mode == 'deploy' && steps.capacity.outputs.over_capacity == 'false'
+        id: freshness
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.ctx.outputs.pr_number }}
+          WANT_SHA: ${{ steps.ctx.outputs.head_sha }}
+        run: |
+          set -Eeuo pipefail
+          data=$(gh api "repos/$REPO/pulls/$PR_NUMBER")
+          cur=$(printf '%s' "$data" | jq -r '.head.sha')
+          state=$(printf '%s' "$data" | jq -r '.state')
+          if [ "$state" != "open" ] || [ "$cur" != "$WANT_SHA" ]; then
+            echo "::notice::Superseded: resolved $WANT_SHA but current head=$cur (state=$state); skipping deploy."
+            echo "fresh=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # The Artemis image package is public, so an anonymous pull token suffices - no
+          # extra workflow permission needed.
+          pkg=$(printf '%s' "$INTERNAL_REPO" | tr '[:upper:]' '[:lower:]')
+          token=$(curl -sf "https://ghcr.io/token?scope=repository:${pkg}:pull" | jq -r '.token')
+          code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $token" \
+            -H "Accept: application/vnd.oci.image.index.v1+json" \
+            "https://ghcr.io/v2/${pkg}/manifests/sha-${WANT_SHA}")
+          if [ "$code" != "200" ]; then
+            echo "::notice::Image sha-${WANT_SHA} not published yet (HTTP $code); will deploy once CI publishes it."
+            echo "fresh=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "fresh=true" >> "$GITHUB_OUTPUT"
+
       # Create the namespace WITH the Rancher project annotation set at creation time so
       # Rancher assigns the project (and injects its ResourceQuota/LimitRange) from the start.
       - name: Create namespace in the Rancher project
-        if: steps.ctx.outputs.mode == 'deploy' && steps.capacity.outputs.over_capacity == 'false'
+        if: steps.ctx.outputs.mode == 'deploy' && steps.capacity.outputs.over_capacity == 'false' && steps.freshness.outputs.fresh == 'true'
         env:
           NAMESPACE: ${{ steps.ctx.outputs.namespace }}
           RANCHER_PROJECT_ID: ${{ vars.RANCHER_PROJECT_ID }}
@@ -192,30 +231,63 @@ jobs:
           done
 
       - name: Deploy Helm release
-        if: steps.ctx.outputs.mode == 'deploy' && steps.capacity.outputs.over_capacity == 'false'
+        if: steps.ctx.outputs.mode == 'deploy' && steps.capacity.outputs.over_capacity == 'false' && steps.freshness.outputs.fresh == 'true'
         env:
           NAMESPACE: ${{ steps.ctx.outputs.namespace }}
           HOSTNAME: ${{ steps.ctx.outputs.hostname }}
           PR_NUMBER: ${{ steps.ctx.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.ctx.outputs.head_sha }}
           ACME_EMAIL: ${{ vars.PR_DEPLOY_ACME_EMAIL }}
           ACME_SERVER: ${{ vars.PR_DEPLOY_ACME_SERVER }}
           HADES_URL: ${{ vars.HADES_URL }}
           HADES_AUTH_KEY: ${{ secrets.HADES_AUTH_KEY }}
         run: |
           set -Eeuo pipefail
-          # Ephemeral per-PR secrets (throwaway env - no shared secret sprawl).
-          JWT_SECRET="$(openssl rand -base64 64 | tr -d '\n')"
-          ADMIN_PW="$(openssl rand -hex 24)"
-          GIT_PW="$(openssl rand -hex 24)"
-          DB_PW="$(openssl rand -hex 24)"
-          REGISTRY_PW="$(openssl rand -hex 24)"
-          BROKER_PW="$(openssl rand -hex 24)"
-          RESULT_TOKEN="$(openssl rand -hex 24)"
+          # Secrets must stay STABLE across redeploys: the Postgres PVC is initialized with
+          # the DB password on first install and ignores it thereafter, so regenerating it
+          # on a redeploy would break the DB connection (and rotating the JWT secret would
+          # drop every session on each push). Generate fresh secrets only on the FIRST
+          # deploy; on redeploy reuse the values Helm already stored for this release.
+          gen() { openssl rand -hex 24; }
+          gen_b64() { openssl rand -base64 64 | tr -d '\n'; }
+          if PREV="$(helm get values artemis --namespace "$NAMESPACE" -o json 2>/dev/null)" \
+             && [ "$(printf '%s' "$PREV" | jq -r '.postgresql.auth.password // empty')" != "" ]; then
+            echo "Existing release found; reusing persisted secrets."
+            # `// empty` (not the default `null`) so a missing field yields "" and falls back
+            # to a freshly generated value rather than the literal string "null". DB_PW is
+            # guaranteed present by the guard above (it is the PVC-bound one that must not change).
+            pv() { printf '%s' "$PREV" | jq -r "$1 // empty"; }
+            DB_PW="$(pv '.postgresql.auth.password')"
+            JWT_SECRET="$(pv '.artemis.config.jwtBase64Secret')";                        [ -n "$JWT_SECRET" ] || JWT_SECRET="$(gen_b64)"
+            ADMIN_PW="$(pv '.artemis.config.admin.password')";                            [ -n "$ADMIN_PW" ] || ADMIN_PW="$(gen)"
+            GIT_PW="$(pv '.artemis.config.versionControl.buildAgentGitPassword')";        [ -n "$GIT_PW" ] || GIT_PW="$(gen)"
+            REGISTRY_PW="$(pv '.registry.password')";                                     [ -n "$REGISTRY_PW" ] || REGISTRY_PW="$(gen)"
+            BROKER_PW="$(pv '.broker.auth.password')";                                    [ -n "$BROKER_PW" ] || BROKER_PW="$(gen)"
+            RESULT_TOKEN="$(pv '.artemis.config.hades.artemisAuthenticationTokenValue')"; [ -n "$RESULT_TOKEN" ] || RESULT_TOKEN="$(gen)"
+          else
+            echo "First deploy; generating fresh per-PR secrets."
+            # A prior --atomic install that FAILED uninstalls the release (dropping its stored
+            # values) but leaves the Postgres PVC behind; that stale PVC keeps the old db
+            # password and would reject the newly generated one. These envs are throwaway, so
+            # wipe any leftover PVCs to guarantee a clean init that matches the fresh secrets.
+            kubectl --namespace "$NAMESPACE" delete pvc --all --ignore-not-found
+            JWT_SECRET="$(gen_b64)"
+            ADMIN_PW="$(gen)"
+            GIT_PW="$(gen)"
+            DB_PW="$(gen)"
+            REGISTRY_PW="$(gen)"
+            BROKER_PW="$(gen)"
+            RESULT_TOKEN="$(gen)"
+          fi
 
+          # Deploy the IMMUTABLE per-commit tag (CI builds sha-<headSHA> alongside the
+          # mutable pr-<N>). A distinct tag per commit forces Helm to roll the pods on
+          # every push - pinning pr-<N> would render an identical manifest and silently
+          # keep the old image running - and makes the live version unambiguous.
           helm upgrade --install artemis ./helm/artemis \
             --namespace "$NAMESPACE" \
             --atomic --wait --timeout 20m \
-            --set-string image.tag="pr-${PR_NUMBER}" \
+            --set-string image.tag="sha-${HEAD_SHA}" \
             --set-string gateway.hostname="$HOSTNAME" \
             --set-string gateway.className="envoy" \
             --set-string gateway.ssh.mode="none" \
@@ -235,16 +307,30 @@ jobs:
             --set-string registry.password="$REGISTRY_PW" \
             --set-string broker.auth.password="$BROKER_PW"
 
+          # Stamp the namespace with the commit that is now live (only reached on a
+          # successful, non-rolled-back deploy). Makes `kubectl get ns -o yaml` / the
+          # Rancher UI authoritative about which version each PR env is running.
+          kubectl annotate namespace "$NAMESPACE" --overwrite \
+            "artemis.aet.cit.tum.de/pr=${PR_NUMBER}" \
+            "artemis.aet.cit.tum.de/commit=${HEAD_SHA}" \
+            "artemis.aet.cit.tum.de/deployed-at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
       - name: Comment deployment URL
-        if: steps.ctx.outputs.mode == 'deploy' && steps.capacity.outputs.over_capacity == 'false'
+        if: steps.ctx.outputs.mode == 'deploy' && steps.capacity.outputs.over_capacity == 'false' && steps.freshness.outputs.fresh == 'true'
         uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const marker = '<!-- k8s-pr-deploy -->';
             const url = `https://${{ steps.ctx.outputs.hostname }}`;
+            const sha = '${{ steps.ctx.outputs.head_sha }}';
+            const shortSha = sha.slice(0, 7);
+            const commitUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/commit/${sha}`;
+            const deployedAt = new Date().toISOString().replace('T', ' ').replace(/\..*/, ' UTC');
             const body = `${marker}\n:rocket: **PR environment deployed** → ${url}\n\n` +
-              `Admin login is \`artemis_admin\` (password is generated per deploy). ` +
+              `Running commit [\`${shortSha}\`](${commitUrl}) (updated ${deployedAt}). ` +
+              `Pushing a new commit redeploys automatically once its CI passes.\n\n` +
+              `Admin login is \`artemis_admin\` (password generated on first deploy, stable across redeploys). ` +
               `The environment is removed automatically when the PR is closed, the \`ready for review\` label is removed, ` +
               `or the PR goes stale.`;
             const prNumber = Number('${{ steps.ctx.outputs.pr_number }}');

@@ -12,12 +12,25 @@ the workflows just install it per PR with per-PR values.
 - **Isolation**: one namespace per PR, **`artemis-pr-<N>`**, created inside a designated **Rancher project** (the
   `field.cattle.io/projectId` annotation is set at namespace creation so Rancher applies the project's quota/limits).
 - **URL**: **`https://pr-<N>.artemis.envoy.stud.k8s.aet.cit.tum.de`**, posted as a sticky PR comment when ready.
+- **Updates**: pushing a new commit redeploys the env once that commit's CI passes. The deploy pins the
+  **immutable per-commit image** `sha-<headSHA>` (CI builds it alongside the mutable `pr-<N>`), so every push
+  actually rolls the pods - pinning `pr-<N>` would render an identical manifest and silently keep the old image. The
+  sticky comment shows the **live commit + update time**, and the namespace is annotated
+  (`artemis.aet.cit.tum.de/commit`, `.../deployed-at`, `.../pr`) so `kubectl get ns -o yaml` and the Rancher UI are
+  authoritative about which version each env runs.
+- **Concurrent pushes**: runs are serialized per PR (`cancel-in-progress: false`, so a `helm --wait` is never killed
+  mid-upgrade). Because GitHub does not guarantee queued runs execute in commit order, each run re-checks - right before
+  deploying - that its SHA is still the PR's current head; a superseded (older) run no-ops, so the env never rolls back to
+  an older commit. The same gate also confirms the `sha-<headSHA>` image is actually published before deploying, so a
+  green-but-imageless CI can't wedge the env in `ImagePullBackOff` while holding the lock.
 - **Networking / TLS**: every PR gets its own Gateway with a **per-host Let's Encrypt cert (HTTP-01)**. Envoy Gateway's
   **`mergeGateways`** collapses all per-PR Gateways onto **one** LoadBalancer IP, so a single **wildcard DNS**
   `*.artemis.envoy.stud.k8s.aet.cit.tum.de` covers every PR. git-over-SSH is disabled for PR envs (`gateway.ssh.mode=none`);
   exercise repos are cloned over HTTPS.
-- **Secrets**: all app secrets (admin/JWT/DB/registry/broker/git passwords, result token) are **generated fresh per deploy**.
-  Only the shared Hades URL + auth key come from repo secrets.
+- **Secrets**: all app secrets (admin/JWT/DB/registry/broker/git passwords, result token) are **generated on the first
+  deploy and reused on redeploys** (read back from the stored Helm values). They must stay stable - the Postgres PVC is
+  initialized with the DB password on first install and ignores later changes, so regenerating it would break the DB
+  connection. Only the shared Hades URL + auth key come from repo secrets.
 - **Teardown**: the env is removed when the PR is **closed**, the **label is removed**, or the PR goes **stale**
   (`.github/workflows/k8s-pr-teardown.yml`). Stale is automatic - `actions/stale` removes the `ready for review` label,
   firing the `unlabeled` teardown. A nightly **GC** (`.github/workflows/k8s-pr-gc.yml`) prunes any orphaned namespace.
