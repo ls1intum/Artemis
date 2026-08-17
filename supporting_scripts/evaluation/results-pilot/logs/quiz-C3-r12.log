@@ -1,9 +1,0 @@
-2026-08-05T19:57:30.517+02:00  INFO 2907 --- [Artemis] [at-handler-1689] .a.a.h.w.HyperionExerciseVariantResource : Started variant generation job [442f9a93-7e15-41b4-9783-1fadb37aaad9] for exercise [264]
-2026-08-05T19:57:30.525+02:00  INFO 2907 --- [Artemis] [  variant-job-1] .t.c.a.a.h.s.v.ExerciseVariantJobService : Variant job 442f9a93-7e15-41b4-9783-1fadb37aaad9 entering phase ANALYZING
-2026-08-05T19:57:30.543+02:00  INFO 2907 --- [Artemis] [  variant-job-1] .t.c.a.a.h.s.v.ExerciseVariantJobService : Variant job 442f9a93-7e15-41b4-9783-1fadb37aaad9 entering phase PLANNING
-2026-08-05T19:57:46.688+02:00  INFO 2907 --- [Artemis] [  variant-job-1] .t.c.a.a.h.s.v.ExerciseVariantJobService : Variant job 442f9a93-7e15-41b4-9783-1fadb37aaad9 entering phase PROVISIONING
-2026-08-05T19:57:46.991+02:00  INFO 2907 --- [Artemis] [  variant-job-1] .t.c.a.a.h.s.v.ExerciseVariantJobService : Variant job 442f9a93-7e15-41b4-9783-1fadb37aaad9 entering phase TRANSFORMING
-2026-08-05T19:59:33.138+02:00  INFO 2907 --- [Artemis] [  variant-job-1] .t.c.a.a.h.s.v.ExerciseVariantJobService : Variant job 442f9a93-7e15-41b4-9783-1fadb37aaad9 entering phase VERIFYING
-2026-08-05T20:00:05.569+02:00  INFO 2907 --- [Artemis] [  variant-job-1] .t.c.a.a.h.s.v.ExerciseVariantJobService : Variant job 442f9a93-7e15-41b4-9783-1fadb37aaad9 entering phase FINALIZING
-2026-08-05T20:00:05.611+02:00  INFO 2907 --- [Artemis] [  variant-job-1] .t.c.a.a.h.s.v.ExerciseVariantJobService : Variant job 442f9a93-7e15-41b4-9783-1fadb37aaad9 telemetry — tool calls: [getQuestions=1x/22ms, validateQuiz=1x/26ms, updateQuestions=1x/309ms], builds: []
-2026-08-05T20:00:05.611+02:00  INFO 2907 --- [Artemis] [  variant-job-1] .h.s.v.ExerciseVariantGenerationPipeline : Variant generation job 442f9a93-7e15-41b4-9783-1fadb37aaad9 finished with COMPLETED for exercise 264 -> variant 331
