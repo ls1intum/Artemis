@@ -79,7 +79,7 @@ export class Exam implements BaseEntity {
         const rebuilt = new Exam();
         rebuilt.id = exam.id;
         rebuilt.title = exam.title;
-        rebuilt.testExam = exam.testExam;
+        rebuilt.examMode = exam.examMode;
         rebuilt.examWithAttendanceCheck = exam.examWithAttendanceCheck;
         rebuilt.visibleDate = exam.visibleDate;
         rebuilt.startDate = exam.startDate;
