@@ -12,6 +12,7 @@ import { TheiaService } from 'app/programming/shared/services/theia.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MAX_PACKAGE_NAME_LENGTH } from 'app/foundation/constants/input.constants';
+import { PROFILE_HADES } from 'app/app.constants';
 
 /**
  * Typed view onto the `packageNameField` viewChild signal so the spec can stub it directly
@@ -68,6 +69,22 @@ describe('ProgrammingExerciseLanguageComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
+    });
+
+    it('should validate only the docker image field for Hades custom build plans', () => {
+        comp.programmingExercise().customizeBuildPlan = true;
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { customBuildPlansSupported: PROFILE_HADES }));
+
+        const stub = (dockerImageValid: boolean) =>
+            ((comp as unknown as { programmingExerciseCustomBuildPlanComponent: unknown }).programmingExerciseCustomBuildPlanComponent = () => ({
+                programmingExerciseDockerImageComponent: () => ({ dockerImageField: () => ({ valid: dockerImageValid }) }),
+            }));
+
+        stub(true);
+        expect(comp.isCustomBuildPlanValid()).toBe(true);
+
+        stub(false);
+        expect(comp.isCustomBuildPlanValid()).toBe(false);
     });
 
     it('should not load TheiaComponent when online IDE is not allowed', () => {

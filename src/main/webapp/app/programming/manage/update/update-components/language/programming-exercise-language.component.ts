@@ -2,7 +2,7 @@ import { AfterViewChecked, AfterViewInit, Component, EventEmitter, OnDestroy, in
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { PROFILE_LOCALCI } from 'app/app.constants';
+import { PROFILE_HADES, PROFILE_LOCALCI } from 'app/app.constants';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { Subject, Subscription } from 'rxjs';
@@ -52,6 +52,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
 
     faExclamationTriangle = faExclamationTriangle;
     protected readonly PROFILE_LOCALCI = PROFILE_LOCALCI;
+    protected readonly PROFILE_HADES = PROFILE_HADES;
 
     readonly DOCKER_REGISTRY_LINKS = {
         ghcrLink: 'https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry',
@@ -109,11 +110,14 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
             return true;
         }
 
+        const dockerImageComponent = this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent();
         if (this.programmingExerciseCreationConfig().customBuildPlansSupported === PROFILE_LOCALCI) {
-            return (
-                (this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent()?.dockerImageField()?.valid ?? false) &&
-                (this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent()?.timeoutField()?.valid ?? false)
-            );
+            return (dockerImageComponent?.dockerImageField()?.valid ?? false) && (dockerImageComponent?.timeoutField()?.valid ?? false);
+        }
+
+        // Hades only offers the Docker image field (no timeout), so validate just that.
+        if (this.programmingExerciseCreationConfig().customBuildPlansSupported === PROFILE_HADES) {
+            return dockerImageComponent?.dockerImageField()?.valid ?? false;
         }
 
         return true;

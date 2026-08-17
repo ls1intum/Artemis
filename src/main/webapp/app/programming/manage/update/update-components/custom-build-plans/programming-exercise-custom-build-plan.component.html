@@ -11,9 +11,12 @@
             (dockerImageChange)="setDockerImage($event)"
             [timeout]="programmingExercise().buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise().buildConfig!.timeoutSeconds!"
             (timeoutChange)="setTimeout($event)"
+            [dockerImageOnly]="dockerImageOnly()"
         />
-        <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
-        <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.help" />
-        <jhi-build-phases-editor [phases]="phases()" [isExamMode]="isExamMode()" (phasesChange)="onPhasesChange($event)" />
+        @if (!dockerImageOnly()) {
+            <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
+            <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.help" />
+            <jhi-build-phases-editor [phases]="phases()" [isExamMode]="isExamMode()" (phasesChange)="onPhasesChange($event)" />
+        }
     }
 </div>

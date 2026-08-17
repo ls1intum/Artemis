@@ -56,6 +56,29 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.timeoutChange.emit(20);
     });
 
+    it('should render all build configuration fields by default', () => {
+        fixture.detectChanges();
+        const element = fixture.nativeElement;
+        expect(element.querySelector('#field_dockerImage')).toBeTruthy();
+        expect(element.querySelector('#field_timeout')).toBeTruthy();
+        expect(element.querySelector('#field_dockerCpuCount')).toBeTruthy();
+        expect(element.querySelector('#field_memory')).toBeTruthy();
+        expect(element.querySelector('#field_memorySwap')).toBeTruthy();
+        expect(element.querySelector('#envVarsTable')).toBeTruthy();
+    });
+
+    it('should only render the docker image field when dockerImageOnly is set', () => {
+        fixture.componentRef.setInput('dockerImageOnly', true);
+        fixture.detectChanges();
+        const element = fixture.nativeElement;
+        expect(element.querySelector('#field_dockerImage')).toBeTruthy();
+        expect(element.querySelector('#field_timeout')).toBeFalsy();
+        expect(element.querySelector('#field_dockerCpuCount')).toBeFalsy();
+        expect(element.querySelector('#field_memory')).toBeFalsy();
+        expect(element.querySelector('#field_memorySwap')).toBeFalsy();
+        expect(element.querySelector('#envVarsTable')).toBeFalsy();
+    });
+
     it('should set profile values', () => {
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
             buildTimeoutMin: undefined,

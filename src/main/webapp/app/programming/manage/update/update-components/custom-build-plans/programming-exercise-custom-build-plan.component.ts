@@ -23,6 +23,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
     readonly programmingExercise = input.required<ProgrammingExercise>();
     readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     readonly isExamMode = input(false);
+    /** When true (e.g. Hades CI), only the Docker image field is shown; build phases, timeout and Docker flags are hidden. */
+    readonly dockerImageOnly = input(false);
 
     readonly programmingExerciseDockerImageComponent = viewChild(ProgrammingExerciseBuildConfigurationComponent);
 

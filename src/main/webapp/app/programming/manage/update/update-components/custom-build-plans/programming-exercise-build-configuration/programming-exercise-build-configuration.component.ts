@@ -32,6 +32,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     programmingExercise = input<ProgrammingExercise>();
     dockerImage = input.required<string>();
     dockerImageChange = output<string>();
+    /** When true (e.g. Hades CI), only the Docker image field is shown; timeout and Docker flags are hidden. */
+    dockerImageOnly = input(false);
 
     timeout = input<number>();
     timeoutChange = output<number>();
