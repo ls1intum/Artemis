@@ -152,6 +152,21 @@ artemis:
 A connection from a listed address must begin with a valid PROXY protocol header and is refused otherwise. A connection from any other address is handled as ordinary SSH and keeps its socket peer, so direct connections are unaffected. The list is keyed on the source address rather than on whether a header is present, because believing a header from any sender would let anyone who can reach the port claim an arbitrary client address.
 
 <Callout variant={CalloutVariant.warning}>
+    **Name the proxy exactly, and keep the list as narrow as you can.** A PROXY protocol header carries no signature and
+    no shared secret; it is plain text that the connecting party writes. Nothing about the header proves it is genuine.
+    What makes it trustworthy is only *who is allowed to send one*, and that is decided by the TCP source address of the
+    connection, which an attacker cannot choose: completing a TCP handshake from a forged address is not possible unless
+    they are on the network path.
+
+    The consequence is that **anything able to open a connection from a listed address can name any client address it
+    likes**, and so bypass the build agent origin check. Listing your load balancer's single address costs nothing.
+    Listing `10.0.0.0/8` extends that ability to every host in your internal network.
+
+    Restricting port 7921 at the firewall so that only the load balancer can reach it removes the residual risk
+    entirely, and is worth doing regardless of how narrow the list is.
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
     These two settings must change together. `proxy_protocol on` without the matching `trusted-sources` breaks every
     SSH connection through that proxy, and `trusted-sources` without `proxy_protocol on` refuses them. The Docker
     Compose setups in this repository already ship both.
