@@ -2,7 +2,7 @@ import { Component, effect, inject, input, output, signal } from '@angular/core'
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import {
     TumUiAutoCompleteComponent,
     TumUiAutoCompleteSearchEvent,
@@ -46,9 +46,11 @@ export class PresentationAssessmentFormDialogComponent {
     readonly exercises = input<Exercise[]>([]);
     readonly saved = output<PresentationAssessmentFormDialogResult>();
     readonly cancelled = output<void>();
+    readonly deleteRequested = output<PresentationAssessment>();
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
+    protected readonly faTrash = faTrash;
     readonly filteredExercises = signal<Exercise[]>([]);
 
     editForm = this.formBuilder.group({
@@ -87,6 +89,13 @@ export class PresentationAssessmentFormDialogComponent {
 
     cancel(): void {
         this.cancelled.emit();
+    }
+
+    requestDelete(): void {
+        const presentationAssessment = this.presentationAssessment();
+        if (presentationAssessment?.id) {
+            this.deleteRequested.emit(presentationAssessment);
+        }
     }
 
     private createFromForm(): PresentationAssessment {

@@ -39,8 +39,11 @@
 
 .presentation-assessment-actions {
     display: flex;
-    justify-content: flex-end;
     gap: 0.5rem;
+}
+
+.presentation-assessment-actions-main {
+    margin-left: auto;
 }
 
 .presentation-assessment-date-field {
@@ -62,5 +65,9 @@
 
     .presentation-assessment-actions {
         flex-direction: column-reverse;
+    }
+
+    .presentation-assessment-actions-main {
+        margin-left: 0;
     }
 }

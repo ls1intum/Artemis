@@ -42,13 +42,21 @@
     </div>
 
     <div class="presentation-assessment-actions">
-        <tum-ui-button severity="secondary" type="button" (clicked)="cancel()">
-            <fa-icon [icon]="faBan" />
-            <span jhiTranslate="entity.action.cancel"></span>
-        </tum-ui-button>
-        <tum-ui-button type="submit">
-            <fa-icon [icon]="faSave" />
-            <span jhiTranslate="entity.action.save"></span>
-        </tum-ui-button>
+        @if (presentationAssessment()?.id) {
+            <tum-ui-button severity="danger" type="button" (clicked)="requestDelete()">
+                <fa-icon [icon]="faTrash" />
+                <span jhiTranslate="entity.action.delete"></span>
+            </tum-ui-button>
+        }
+        <div class="presentation-assessment-actions-main flex gap-2">
+            <tum-ui-button severity="secondary" type="button" (clicked)="cancel()">
+                <fa-icon [icon]="faBan" />
+                <span jhiTranslate="entity.action.cancel"></span>
+            </tum-ui-button>
+            <tum-ui-button type="submit">
+                <fa-icon [icon]="faSave" />
+                <span jhiTranslate="entity.action.save"></span>
+            </tum-ui-button>
+        </div>
     </div>
 </form>

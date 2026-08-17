@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260816171500-1" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="presentation_assessment_instance" columnName="remark"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="presentation_assessment_instance">
+            <column name="remark" type="varchar(1000)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

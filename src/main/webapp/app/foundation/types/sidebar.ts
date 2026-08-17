@@ -12,7 +12,7 @@ export type TutorialGroupCategory = 'allGroups' | 'registeredGroups' | 'furtherG
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
 export type AccordionGroups = Record<
     TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string,
-    { entityData: SidebarCardElement[]; isHideCount?: boolean }
+    { entityData: SidebarCardElement[]; isHideCount?: boolean; translationKey?: string }
 >;
 export type ChannelGroupCategory =
     | 'unreadMessages'
@@ -40,6 +40,8 @@ export interface SidebarData {
     sidebarType?: SidebarTypes;
     groupedData?: AccordionGroups;
     ungroupedData?: SidebarCardElement[];
+    /** Items rendered above accordion groups, e.g. an overview entry. */
+    pinnedData?: SidebarCardElement[];
     storageId?: string;
     showAccordionLeadingIcon?: boolean;
     messagingEnabled?: boolean;
@@ -89,6 +91,10 @@ export interface SidebarCardElement {
      * the item.
      */
     routerLink?: string;
+    /** Prevents route navigation while preserving the sidebar selection event. */
+    disableNavigation?: boolean;
+    /** Renders this item as a non-interactive section heading. */
+    sectionLabel?: boolean;
     /**
      * Set for Exercises
      */

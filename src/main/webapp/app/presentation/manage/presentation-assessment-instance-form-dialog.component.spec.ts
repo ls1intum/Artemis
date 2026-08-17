@@ -64,4 +64,12 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         const savedInstance = saved.mock.calls[0][0];
         expect(savedInstance.presentationDate.format('YYYY-MM-DD HH:mm')).toBe('2026-08-10 14:45');
     });
+
+    it('should include a trimmed remark when saving an instance', () => {
+        component.editForm.controls.remark.setValue('  Strong presentation  ');
+
+        component.save();
+
+        expect(saved.mock.calls[0][0].remark).toBe('Strong presentation');
+    });
 });

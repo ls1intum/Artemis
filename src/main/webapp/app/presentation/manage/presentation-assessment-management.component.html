@@ -1,135 +1,237 @@
-<div class="flex flex-col gap-4">
-    <div *titleBarActions class="flex items-center justify-end gap-3">
-        <div class="presentation-view-toggle" role="group">
-            <tum-ui-button
-                size="small"
-                [variant]="viewMode() === 'presentations' ? 'solid' : 'text'"
-                severity="secondary"
-                [icon]="faList"
-                (clicked)="setViewMode('presentations')"
-                data-testid="presentation-view-button"
-            >
-                <span jhiTranslate="artemisApp.presentationAssessment.byPresentation"></span>
-            </tum-ui-button>
-            <tum-ui-button
-                size="small"
-                [variant]="viewMode() === 'students' ? 'solid' : 'text'"
-                severity="secondary"
-                [icon]="faUsers"
-                (clicked)="setViewMode('students')"
-                data-testid="student-view-button"
-            >
-                <span jhiTranslate="artemisApp.presentationAssessment.byStudent"></span>
-            </tum-ui-button>
-        </div>
+<div class="flex flex-col gap-3">
+    <div *titleBarActions class="flex items-center justify-end">
         <tum-ui-button id="create-presentation-assessment" size="small" [icon]="faPlus" (clicked)="startCreate()">
             <span jhiTranslate="artemisApp.presentationAssessment.home.createLabel"></span>
         </tum-ui-button>
     </div>
 
-    @if (presentationAssessments().length) {
-        @if (viewMode() === 'presentations') {
-            <div class="presentation-master-detail" data-testid="presentation-master-detail">
-                <nav class="presentation-list" aria-label="Presentations">
-                    @for (presentationAssessment of presentationAssessments(); track presentationAssessment.id) {
-                        <button
-                            type="button"
-                            class="presentation-list-item"
-                            [class.selected]="selectedPresentation()?.id === presentationAssessment.id"
-                            (click)="selectPresentation(presentationAssessment)"
-                        >
-                            {{ presentationAssessment.title }}
-                        </button>
-                    }
-                </nav>
+    <div class="presentation-workspace" data-testid="presentation-master-detail">
+        <aside class="presentation-sidebar">
+            <jhi-sidebar
+                [courseId]="courseId()"
+                [sidebarData]="sidebarData()"
+                [collapseState]="sidebarCollapseState"
+                [sidebarItemAlwaysShow]="sidebarItemAlwaysShow"
+                [itemSelected]="viewMode() === 'presentations'"
+                (onSelectItem)="onSidebarItemSelected($event)"
+            />
+        </aside>
 
-                @if (selectedPresentation(); as presentationAssessment) {
-                    <section class="presentation-detail">
-                        <div class="flex items-start justify-between gap-3">
-                            <h3 class="mt-0">{{ presentationAssessment.title }}</h3>
-                            <div class="flex gap-2">
-                                <tum-ui-button size="small" variant="text" [icon]="faPencilAlt" ariaLabel="Edit" (clicked)="startEdit(presentationAssessment)" />
-                                <button
-                                    jhiDeleteButton
-                                    id="delete-presentation-assessment-{{ presentationAssessment.id }}"
-                                    [entityTitle]="presentationAssessment.title || ''"
-                                    deleteQuestion="artemisApp.presentationAssessment.delete.question"
-                                    deleteConfirmationText="artemisApp.presentationAssessment.delete.typeNameToConfirm"
-                                    (delete)="deletePresentationAssessment(presentationAssessment)"
-                                    [dialogError]="dialogError$"
-                                >
-                                    <fa-icon [icon]="faTrash" />
-                                </button>
-                            </div>
-                        </div>
-
-                        <h4 jhiTranslate="artemisApp.presentationAssessment.overview"></h4>
-                        <div class="presentation-description">{{ presentationAssessment.description || '-' }}</div>
-
-                        <div class="presentation-overview-meta mt-3">
-                            <div>
-                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></span>:
-                                <strong class="ml-2">{{ presentationAssessment.maxPoints }}</strong>
-                            </div>
-                            @if (presentationAssessment.exerciseTitle) {
-                                <div>
-                                    <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.linkedExercise"></span>
+        <main class="presentation-content">
+            @if (presentationAssessments().length) {
+                @if (viewMode() === 'presentations') {
+                    @if (selectedPresentation(); as presentationAssessment) {
+                        <section class="presentation-detail">
+                            <header class="presentation-detail-header">
+                                <strong class="presentation-detail-title">{{ presentationAssessment.title }}</strong>
+                                <div class="flex flex-wrap items-center gap-2">
                                     @if (getLinkedExerciseRoute(presentationAssessment); as exerciseRoute) {
-                                        <a class="ml-2 font-bold" [routerLink]="exerciseRoute">{{ presentationAssessment.exerciseTitle }}</a>
-                                    } @else {
-                                        <strong class="ml-2">{{ presentationAssessment.exerciseTitle }}</strong>
+                                        <a tumUiButton size="small" severity="secondary" variant="outlined" [routerLink]="exerciseRoute">
+                                            <fa-icon [icon]="faArrowUpRightFromSquare" />
+                                            <span>{{ presentationAssessment.exerciseTitle }}</span>
+                                        </a>
                                     }
+                                    <tum-ui-button size="small" severity="secondary" variant="outlined" [icon]="faPencilAlt" (clicked)="startEdit(presentationAssessment)">
+                                        <span jhiTranslate="entity.action.edit"></span>
+                                    </tum-ui-button>
                                 </div>
-                            }
-                        </div>
+                            </header>
 
-                        <div class="mt-5 flex items-center justify-between">
-                            <h4 class="m-0" jhiTranslate="artemisApp.presentationAssessment.grading"></h4>
-                            <div class="flex items-center gap-2">
-                                <div class="presentation-view-toggle">
-                                    <tum-ui-button
-                                        size="small"
-                                        [variant]="instanceTimeFilter() === 'all' ? 'solid' : 'text'"
-                                        severity="secondary"
-                                        (clicked)="setInstanceTimeFilter('all')"
-                                        ><span jhiTranslate="artemisApp.presentationAssessment.filter.all"></span
-                                    ></tum-ui-button>
-                                    <tum-ui-button
-                                        size="small"
-                                        [variant]="instanceTimeFilter() === 'future' ? 'solid' : 'text'"
-                                        severity="secondary"
-                                        (clicked)="setInstanceTimeFilter('future')"
-                                        ><span jhiTranslate="artemisApp.presentationAssessment.filter.future"></span
-                                    ></tum-ui-button>
+                            <div class="presentation-summary">{{ presentationAssessment.description || '-' }}</div>
+
+                            <div class="presentation-grading-toolbar">
+                                <div class="student-search">
+                                    <fa-icon class="student-search-icon text-muted-color" [icon]="faSearch" />
+                                    <input
+                                        tumUiInput
+                                        type="search"
+                                        class="student-search-input w-full"
+                                        [ngModel]="studentSearchTerm()"
+                                        (ngModelChange)="updateStudentSearch($event)"
+                                        placeholder="{{ 'artemisApp.presentationAssessment.searchStudent' | artemisTranslate }}"
+                                        data-testid="selected-presentation-student-search"
+                                    />
                                 </div>
-                                <tum-ui-button
-                                    size="small"
-                                    [rounded]="true"
-                                    variant="text"
-                                    [icon]="faPlus"
-                                    ariaLabel="Add presentation instance"
-                                    (clicked)="startCreateInstance(presentationAssessment)"
-                                    data-testid="create-instance-button"
+                                <div class="flex items-center">
+                                    <tum-ui-button size="small" [icon]="faPlus" (clicked)="startCreateInstance(presentationAssessment)" data-testid="create-instance-button">
+                                        <span jhiTranslate="artemisApp.presentationAssessment.enterGrade"></span>
+                                    </tum-ui-button>
+                                </div>
+                            </div>
+
+                            <table tumUiTable data-testid="presentation-instances-table">
+                                <thead>
+                                    <tr>
+                                        <th><span jhiTranslate="artemisApp.presentationAssessment.student"></span></th>
+                                        <th><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
+                                        <th><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
+                                        <th><span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span></th>
+                                        <th><span jhiTranslate="artemisApp.presentationAssessment.remark"></span></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (row of filteredSelectedPresentationStudentRows(); track row.studentLogin) {
+                                        <tr [class.cursor-pointer]="row.instance" (click)="toggleStudentRowDetails(row)">
+                                            <td>
+                                                <div class="flex items-center gap-3">
+                                                    <span class="student-avatar">{{ row.studentLogin.slice(0, 2).toUpperCase() }}</span>
+                                                    <div class="flex flex-col">
+                                                        <strong>
+                                                            {{
+                                                                row.student.name ||
+                                                                    (row.student.firstName || row.student.lastName
+                                                                        ? (row.student.firstName ?? '') + ' ' + (row.student.lastName ?? '')
+                                                                        : row.studentLogin)
+                                                            }}
+                                                        </strong>
+                                                        <small class="text-muted-color">{{ row.student.email || row.studentLogin }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if (hasResultPoints(row.instance?.resultPoints)) {
+                                                    <tum-ui-tag severity="success" [rounded]="true" [value]="'artemisApp.presentationAssessment.assessed' | artemisTranslate" />
+                                                } @else {
+                                                    <tum-ui-tag severity="warn" [rounded]="true" [value]="'artemisApp.presentationAssessment.pending' | artemisTranslate" />
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (hasResultPoints(row.instance?.resultPoints)) {
+                                                    <tum-ui-tag severity="info" [rounded]="true" [value]="row.instance!.resultPoints + ' / ' + presentationAssessment.maxPoints" />
+                                                } @else {
+                                                    <span class="text-muted-color">-</span>
+                                                }
+                                            </td>
+                                            <td>{{ row.instance?.presentationDate ? (row.instance?.presentationDate | artemisDate) : '-' }}</td>
+                                            <td class="text-muted-color">{{ row.instance?.remark || '-' }}</td>
+                                            <td>
+                                                @if (row.instance; as instance) {
+                                                    <div class="flex justify-end gap-2" (click)="$event.stopPropagation()">
+                                                        <tum-ui-button
+                                                            size="small"
+                                                            variant="text"
+                                                            [icon]="faPencilAlt"
+                                                            ariaLabel="Edit"
+                                                            (clicked)="startEditInstance(presentationAssessment, instance, row.studentLogin)"
+                                                        />
+                                                        <tum-ui-button
+                                                            size="small"
+                                                            severity="danger"
+                                                            variant="text"
+                                                            [icon]="faTrash"
+                                                            ariaLabel="Delete"
+                                                            (clicked)="deleteInstance(presentationAssessment, instance, row.studentLogin)"
+                                                        />
+                                                    </div>
+                                                }
+                                            </td>
+                                        </tr>
+                                        @if (row.instance && isStudentRowExpanded(row)) {
+                                            <tr class="presentation-detail-row">
+                                                <td colspan="6">
+                                                    <div class="instance-detail-grid">
+                                                        <div>
+                                                            <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.language"></span>:
+                                                            {{ row.instance.language || '-' }}
+                                                        </div>
+                                                        <div>
+                                                            <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.mode.label"></span>:
+                                                            {{
+                                                                row.instance.mode === PresentationAssessmentMode.ONLINE
+                                                                    ? ('artemisApp.presentationAssessment.mode.online' | artemisTranslate)
+                                                                    : ('artemisApp.presentationAssessment.mode.inPerson' | artemisTranslate)
+                                                            }}
+                                                        </div>
+                                                        @if (row.instance.mode === PresentationAssessmentMode.ONLINE) {
+                                                            <div>
+                                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></span>:
+                                                                <a [href]="row.instance.meetingLink" target="_blank">{{ row.instance.meetingLink || '-' }}</a>
+                                                            </div>
+                                                        } @else {
+                                                            <div>
+                                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.location"></span>:
+                                                                {{ row.instance.location || '-' }}
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    } @empty {
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </section>
+                    }
+                } @else {
+                    <div class="flex flex-col gap-3">
+                        <div class="presentation-overall-toolbar flex flex-wrap items-center justify-between gap-2">
+                            <div class="student-search">
+                                <fa-icon class="student-search-icon text-muted-color" [icon]="faSearch" />
+                                <input
+                                    tumUiInput
+                                    type="search"
+                                    class="student-search-input w-full"
+                                    [ngModel]="studentSearchTerm()"
+                                    (ngModelChange)="updateStudentSearch($event)"
+                                    placeholder="{{ 'artemisApp.presentationAssessment.searchStudent' | artemisTranslate }}"
+                                    data-testid="student-search"
                                 />
                             </div>
+                            <div class="presentation-view-toggle">
+                                <tum-ui-button
+                                    size="small"
+                                    [variant]="instanceTimeFilter() === 'all' ? 'solid' : 'text'"
+                                    severity="secondary"
+                                    (clicked)="setInstanceTimeFilter('all')"
+                                    ><span jhiTranslate="artemisApp.presentationAssessment.filter.all"></span
+                                ></tum-ui-button>
+                                <tum-ui-button
+                                    size="small"
+                                    [variant]="instanceTimeFilter() === 'future' ? 'solid' : 'text'"
+                                    severity="secondary"
+                                    (clicked)="setInstanceTimeFilter('future')"
+                                    ><span jhiTranslate="artemisApp.presentationAssessment.filter.future"></span
+                                ></tum-ui-button>
+                            </div>
                         </div>
-                        <table tumUiTable data-testid="presentation-instances-table">
+                        <table
+                            tumUiTable
+                            [sortField]="studentSortField()"
+                            [sortOrder]="studentSortOrder()"
+                            (sortChange)="onStudentSort($event)"
+                            data-testid="presentation-student-overview-table"
+                        >
                             <thead>
                                 <tr>
-                                    <th>
+                                    <th tumUiSortableColumn="studentLogin">
                                         <span jhiTranslate="artemisApp.presentationAssessment.presenter"></span>
                                     </th>
-                                    <th><span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span></th>
-                                    <th><span jhiTranslate="artemisApp.presentationAssessment.score"></span></th>
+                                    <th tumUiSortableColumn="presentationTitle">
+                                        <span jhiTranslate="artemisApp.presentationAssessment.presentation"></span>
+                                    </th>
+                                    <th tumUiSortableColumn="presentationDate">
+                                        <span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span>
+                                    </th>
+                                    <th tumUiSortableColumn="resultPoints">
+                                        <span jhiTranslate="artemisApp.presentationAssessment.score"></span>
+                                    </th>
+                                    <th><span jhiTranslate="artemisApp.presentationAssessment.exercise"></span></th>
                                     <th></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (instance of selectedInstances(); track instance.id) {
-                                    <tr class="cursor-pointer" (click)="toggleInstanceDetails(instance)">
-                                        <td>{{ (instance.studentLogins ?? []).join(', ') }}</td>
-                                        <td>{{ instance.presentationDate | artemisDate }}</td>
-                                        <td>{{ instance.resultPoints ?? '-' }} / {{ presentationAssessment.maxPoints }}</td>
+                                @for (row of filteredStudentRows(); track row.instance.id + ':' + row.studentLogin; let rowIndex = $index) {
+                                    <tr class="cursor-pointer" [class.presentation-student-row-striped]="rowIndex % 2 === 0" (click)="toggleStudentRowDetails(row)">
+                                        <td>{{ row.studentLogin }}</td>
+                                        <td>{{ row.presentationAssessment.title }}</td>
+                                        <td>{{ row.instance.presentationDate | artemisDate }}</td>
+                                        <td>{{ row.instance.resultPoints ?? '-' }} / {{ row.presentationAssessment.maxPoints }}</td>
+                                        <td>{{ row.presentationAssessment.exerciseTitle || '-' }}</td>
                                         <td>
                                             <div class="flex justify-end gap-2" (click)="$event.stopPropagation()">
                                                 <tum-ui-button
@@ -137,7 +239,7 @@
                                                     variant="text"
                                                     [icon]="faPencilAlt"
                                                     ariaLabel="Edit"
-                                                    (clicked)="startEditInstance(presentationAssessment, instance)"
+                                                    (clicked)="startEditInstance(row.presentationAssessment, row.instance, row.studentLogin)"
                                                 />
                                                 <tum-ui-button
                                                     size="small"
@@ -145,182 +247,66 @@
                                                     variant="text"
                                                     [icon]="faTrash"
                                                     ariaLabel="Delete"
-                                                    (clicked)="deleteInstance(presentationAssessment, instance)"
+                                                    (clicked)="deleteInstance(row.presentationAssessment, row.instance, row.studentLogin)"
                                                 />
                                             </div>
                                         </td>
                                     </tr>
-                                    @if (isInstanceExpanded(instance)) {
-                                        <tr class="presentation-detail-row">
-                                            <td colspan="4">
+                                    @if (isStudentRowExpanded(row)) {
+                                        <tr class="presentation-detail-row" [class.presentation-student-row-striped]="rowIndex % 2 === 0">
+                                            <td colspan="6">
                                                 <div class="instance-detail-grid">
                                                     <div>
+                                                        <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.description"></span>:
+                                                        {{ row.presentationAssessment.description || '-' }}
+                                                    </div>
+                                                    <div>
+                                                        <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.exercise"></span>:
+                                                        {{ row.presentationAssessment.exerciseTitle || '-' }}
+                                                    </div>
+                                                    <div>
                                                         <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.language"></span>:
-                                                        {{ instance.language || '-' }}
+                                                        {{ row.instance.language || '-' }}
                                                     </div>
                                                     <div>
                                                         <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.mode.label"></span>:
                                                         {{
-                                                            instance.mode === PresentationAssessmentMode.ONLINE
+                                                            row.instance.mode === PresentationAssessmentMode.ONLINE
                                                                 ? ('artemisApp.presentationAssessment.mode.online' | artemisTranslate)
                                                                 : ('artemisApp.presentationAssessment.mode.inPerson' | artemisTranslate)
                                                         }}
                                                     </div>
-                                                    @if (instance.mode === PresentationAssessmentMode.ONLINE) {
+                                                    @if (row.instance.mode === PresentationAssessmentMode.ONLINE) {
                                                         <div>
                                                             <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></span>:
-                                                            <a [href]="instance.meetingLink" target="_blank">{{ instance.meetingLink || '-' }}</a>
+                                                            <a [href]="row.instance.meetingLink" target="_blank">{{ row.instance.meetingLink || '-' }}</a>
                                                         </div>
                                                     } @else {
                                                         <div>
                                                             <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.location"></span>:
-                                                            {{ instance.location || '-' }}
+                                                            {{ row.instance.location || '-' }}
                                                         </div>
                                                     }
                                                 </div>
                                             </td>
                                         </tr>
                                     }
+                                } @empty {
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
+                                    </tr>
                                 }
                             </tbody>
                         </table>
-                    </section>
+                    </div>
                 }
-            </div>
-        } @else {
-            <div class="flex flex-col gap-3">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <div class="student-search relative">
-                        <fa-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-color" [icon]="faSearch" />
-                        <input
-                            tumUiInput
-                            type="search"
-                            class="w-full pl-10"
-                            [ngModel]="studentSearchTerm()"
-                            (ngModelChange)="updateStudentSearch($event)"
-                            placeholder="{{ 'artemisApp.presentationAssessment.searchStudent' | artemisTranslate }}"
-                            data-testid="student-search"
-                        />
-                    </div>
-                    <div class="presentation-view-toggle">
-                        <tum-ui-button size="small" [variant]="instanceTimeFilter() === 'all' ? 'solid' : 'text'" severity="secondary" (clicked)="setInstanceTimeFilter('all')"
-                            ><span jhiTranslate="artemisApp.presentationAssessment.filter.all"></span
-                        ></tum-ui-button>
-                        <tum-ui-button
-                            size="small"
-                            [variant]="instanceTimeFilter() === 'future' ? 'solid' : 'text'"
-                            severity="secondary"
-                            (clicked)="setInstanceTimeFilter('future')"
-                            ><span jhiTranslate="artemisApp.presentationAssessment.filter.future"></span
-                        ></tum-ui-button>
-                    </div>
-                </div>
-                <table
-                    tumUiTable
-                    [sortField]="studentSortField()"
-                    [sortOrder]="studentSortOrder()"
-                    (sortChange)="onStudentSort($event)"
-                    data-testid="presentation-student-overview-table"
-                >
-                    <thead>
-                        <tr>
-                            <th tumUiSortableColumn="studentLogin">
-                                <span jhiTranslate="artemisApp.presentationAssessment.presenter"></span>
-                            </th>
-                            <th tumUiSortableColumn="presentationTitle">
-                                <span jhiTranslate="artemisApp.presentationAssessment.presentation"></span>
-                            </th>
-                            <th tumUiSortableColumn="presentationDate">
-                                <span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span>
-                            </th>
-                            <th tumUiSortableColumn="resultPoints">
-                                <span jhiTranslate="artemisApp.presentationAssessment.score"></span>
-                            </th>
-                            <th><span jhiTranslate="artemisApp.presentationAssessment.exercise"></span></th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (row of filteredStudentRows(); track row.instance.id + ':' + row.studentLogin; let rowIndex = $index) {
-                            <tr class="cursor-pointer" [class.presentation-student-row-striped]="rowIndex % 2 === 0" (click)="toggleStudentRowDetails(row)">
-                                <td>{{ row.studentLogin }}</td>
-                                <td>{{ row.presentationAssessment.title }}</td>
-                                <td>{{ row.instance.presentationDate | artemisDate }}</td>
-                                <td>{{ row.instance.resultPoints ?? '-' }} / {{ row.presentationAssessment.maxPoints }}</td>
-                                <td>{{ row.presentationAssessment.exerciseTitle || '-' }}</td>
-                                <td>
-                                    <div class="flex justify-end gap-2" (click)="$event.stopPropagation()">
-                                        <tum-ui-button
-                                            size="small"
-                                            variant="text"
-                                            [icon]="faPencilAlt"
-                                            ariaLabel="Edit"
-                                            (clicked)="startEditInstance(row.presentationAssessment, row.instance)"
-                                        />
-                                        <tum-ui-button
-                                            size="small"
-                                            severity="danger"
-                                            variant="text"
-                                            [icon]="faTrash"
-                                            ariaLabel="Delete"
-                                            (clicked)="deleteInstance(row.presentationAssessment, row.instance)"
-                                        />
-                                    </div>
-                                </td>
-                            </tr>
-                            @if (isStudentRowExpanded(row)) {
-                                <tr class="presentation-detail-row" [class.presentation-student-row-striped]="rowIndex % 2 === 0">
-                                    <td colspan="6">
-                                        <div class="instance-detail-grid">
-                                            <div>
-                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.description"></span>:
-                                                {{ row.presentationAssessment.description || '-' }}
-                                            </div>
-                                            <div>
-                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.exercise"></span>:
-                                                {{ row.presentationAssessment.exerciseTitle || '-' }}
-                                            </div>
-                                            <div>
-                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.language"></span>:
-                                                {{ row.instance.language || '-' }}
-                                            </div>
-                                            <div>
-                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.mode.label"></span>:
-                                                {{
-                                                    row.instance.mode === PresentationAssessmentMode.ONLINE
-                                                        ? ('artemisApp.presentationAssessment.mode.online' | artemisTranslate)
-                                                        : ('artemisApp.presentationAssessment.mode.inPerson' | artemisTranslate)
-                                                }}
-                                            </div>
-                                            @if (row.instance.mode === PresentationAssessmentMode.ONLINE) {
-                                                <div>
-                                                    <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></span>:
-                                                    <a [href]="row.instance.meetingLink" target="_blank">{{ row.instance.meetingLink || '-' }}</a>
-                                                </div>
-                                            } @else {
-                                                <div>
-                                                    <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.location"></span>:
-                                                    {{ row.instance.location || '-' }}
-                                                </div>
-                                            }
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        } @empty {
-                            <tr>
-                                <td colspan="6" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    } @else {
-        <tum-ui-message severity="secondary" data-testid="presentation-assessments-empty-message">
-            <span jhiTranslate="artemisApp.presentationAssessment.noExisting"></span>
-        </tum-ui-message>
-    }
+            } @else {
+                <tum-ui-message severity="secondary" data-testid="presentation-assessments-empty-message">
+                    <span jhiTranslate="artemisApp.presentationAssessment.noExisting"></span>
+                </tum-ui-message>
+            }
+        </main>
+    </div>
 
     <tum-ui-dialog
         [(visible)]="presentationDialogVisible"
@@ -334,6 +320,7 @@
                 [presentationAssessment]="dialogPresentationAssessment()"
                 [exercises]="exercises()"
                 (saved)="handlePresentationDialogSave($event)"
+                (deleteRequested)="handlePresentationDialogDelete($event)"
                 (cancelled)="handlePresentationDialogCancel()"
             />
         }

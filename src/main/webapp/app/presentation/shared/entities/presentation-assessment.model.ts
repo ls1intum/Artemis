@@ -5,7 +5,7 @@ export interface PresentationAssessment {
     title?: string;
     description?: string;
     maxPoints?: number;
-    resultPoints?: number;
+    resultPoints?: number | null;
     presentationDate?: dayjs.Dayjs;
     courseId?: number;
     studentLogins?: string[];
@@ -17,12 +17,13 @@ export interface PresentationAssessment {
 export interface PresentationAssessmentInstance {
     id?: number;
     presentationDate?: dayjs.Dayjs;
-    resultPoints?: number;
+    resultPoints?: number | null;
     studentLogins?: string[];
     language?: string;
     mode?: PresentationAssessmentMode;
     location?: string;
     meetingLink?: string;
+    remark?: string;
 }
 
 export enum PresentationAssessmentMode {

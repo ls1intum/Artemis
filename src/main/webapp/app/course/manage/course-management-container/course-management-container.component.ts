@@ -97,6 +97,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private autoOrchestrationCourseId?: number;
     private autoOrchestrationActive = false;
+    private presentationAssessmentsToggleInitialized = false;
 
     protected readonly faTimes = faTimes;
     protected readonly faEye = faEye;
@@ -128,6 +129,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     operationProgress = signal<CourseOperationProgressDTO | undefined>(undefined);
 
     private learningPathsActive = signal(false);
+    private presentationAssessmentsActive = signal(true);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
 
@@ -181,6 +183,17 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((isActive) => {
                 this.learningPathsActive.set(isActive);
+            });
+
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.PresentationAssessments)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isActive) => {
+                this.presentationAssessmentsActive.set(isActive);
+                if (this.presentationAssessmentsToggleInitialized) {
+                    this.sidebarItems.set(this.getSidebarItems());
+                }
+                this.presentationAssessmentsToggleInitialized = true;
             });
 
         this.featureToggleService
@@ -346,7 +359,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (this.lectureEnabled && isEditor) {
             sidebarItems.push(this.sidebarItemService.getLecturesItem(courseId));
         }
-        if (isInstructor && currentCourse.presentationAssessmentsEnabled) {
+        if (isInstructor && this.presentationAssessmentsActive() && currentCourse.presentationAssessmentsEnabled) {
             sidebarItems.push(this.sidebarItemService.getPresentationAssessmentsItem(courseId));
         }
         sidebarItems.push(...this.addTutorialGroupsItem(currentCourse, isInstructor));

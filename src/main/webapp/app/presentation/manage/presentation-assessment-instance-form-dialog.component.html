@@ -55,6 +55,11 @@
         }
     </div>
 
+    <div class="flex flex-col gap-2">
+        <label for="presentation-instance-remark" jhiTranslate="artemisApp.presentationAssessment.remark"></label>
+        <textarea id="presentation-instance-remark" tumUiTextarea class="w-full" rows="3" formControlName="remark"></textarea>
+    </div>
+
     <jhi-course-group
         [(allGroupUsers)]="assignedStudents"
         [courseRoleSlug]="studentsCourseGroup"

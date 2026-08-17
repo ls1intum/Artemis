@@ -93,6 +93,15 @@ describe('PresentationAssessmentService', () => {
         req.flush([{ id: 1, login: 'student1' }]);
     });
 
+    it('should find all students in the course', () => {
+        service.findCourseStudents(courseId).subscribe((response) => {
+            expect(response.body?.[0].login).toBe('student1');
+        });
+
+        const req = httpMock.expectOne({ method: 'GET', url: `api/course/courses/${courseId}/students` });
+        req.flush([{ id: 1, login: 'student1' }]);
+    });
+
     it('should add a student to a presentation assessment', () => {
         service.addStudent(courseId, 1, 'student1').subscribe((response) => {
             expect(response.ok).toBe(true);

@@ -49,6 +49,9 @@ public class PresentationAssessmentInstance extends DomainObject {
     @Column(name = "meeting_link", length = 1000)
     private String meetingLink;
 
+    @Column(name = "remark", length = 1000)
+    private String remark;
+
     @ManyToMany
     @JoinTable(name = "presentation_assessment_instance_student", joinColumns = @JoinColumn(name = "presentation_assessment_instance_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
     private Set<User> students = new HashSet<>();
@@ -107,6 +110,14 @@ public class PresentationAssessmentInstance extends DomainObject {
 
     public void setMeetingLink(String meetingLink) {
         this.meetingLink = meetingLink;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     public Set<User> getStudents() {

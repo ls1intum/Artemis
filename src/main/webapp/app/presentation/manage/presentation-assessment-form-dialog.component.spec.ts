@@ -10,6 +10,7 @@ describe('PresentationAssessmentFormDialogComponent', () => {
     let component: PresentationAssessmentFormDialogComponent;
     let saved: ReturnType<typeof vi.fn>;
     let cancelled: ReturnType<typeof vi.fn>;
+    let deleteRequested: ReturnType<typeof vi.fn>;
 
     const courseId = 1;
     const presentationAssessment: PresentationAssessment = {
@@ -24,6 +25,7 @@ describe('PresentationAssessmentFormDialogComponent', () => {
     beforeEach(async () => {
         saved = vi.fn();
         cancelled = vi.fn();
+        deleteRequested = vi.fn();
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentFormDialogComponent],
@@ -40,6 +42,7 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         fixture.componentRef.setInput('exercises', [exercise]);
         component.saved.subscribe(saved);
         component.cancelled.subscribe(cancelled);
+        component.deleteRequested.subscribe(deleteRequested);
         fixture.detectChanges();
     });
 
@@ -68,5 +71,11 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         component.cancel();
 
         expect(cancelled).toHaveBeenCalledOnce();
+    });
+
+    it('should request deletion for an existing presentation', () => {
+        component.requestDelete();
+
+        expect(deleteRequested).toHaveBeenCalledWith(presentationAssessment);
     });
 });

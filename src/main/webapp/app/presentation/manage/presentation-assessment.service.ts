@@ -69,6 +69,10 @@ export class PresentationAssessmentService {
         return this.http.get<User[]>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students`, { observe: 'response' });
     }
 
+    findCourseStudents(courseId: number): Observable<HttpResponse<User[]>> {
+        return this.http.get<User[]>(`api/course/courses/${courseId}/students`, { observe: 'response' });
+    }
+
     addStudent(courseId: number, presentationAssessmentId: number, studentLogin: string): Observable<HttpResponse<void>> {
         return this.http.post<void>(
             `api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students/${studentLogin}`,

@@ -89,6 +89,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             mode: [PresentationAssessmentMode.IN_PERSON, Validators.required],
             location: ['', Validators.maxLength(255)],
             meetingLink: ['', Validators.maxLength(1000)],
+            remark: ['', Validators.maxLength(1000)],
         },
         { validators: resultPointsDoNotExceedMaxPoints },
     );
@@ -106,6 +107,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
                 mode: instance?.mode ?? PresentationAssessmentMode.IN_PERSON,
                 location: instance?.location ?? '',
                 meetingLink: instance?.meetingLink ?? '',
+                remark: instance?.remark ?? '',
             });
         });
     }
@@ -138,6 +140,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             mode: value.mode ?? undefined,
             location: value.mode === PresentationAssessmentMode.IN_PERSON ? value.location?.trim() || undefined : undefined,
             meetingLink: value.mode === PresentationAssessmentMode.ONLINE ? value.meetingLink?.trim() || undefined : undefined,
+            remark: value.remark?.trim() || undefined,
         } satisfies PresentationAssessmentInstance);
     }
 

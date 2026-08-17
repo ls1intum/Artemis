@@ -183,6 +183,7 @@ public class PresentationAssessmentService {
         instance.setMode(dto.mode());
         instance.setLocation(dto.mode() == de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentMode.IN_PERSON ? dto.location() : null);
         instance.setMeetingLink(dto.mode() == de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentMode.ONLINE ? dto.meetingLink() : null);
+        instance.setRemark(dto.remark());
     }
 
     /**
