@@ -47,6 +47,7 @@ public interface TestCaseFeedbackRepository extends ArtemisJpaRepository<TestCas
             SELECT feedback
             FROM TestCaseFeedback feedback
                 LEFT JOIN FETCH feedback.message
+                LEFT JOIN FETCH feedback.testCase
                 JOIN FETCH feedback.result r
                 JOIN FETCH r.submission s
                 JOIN FETCH s.participation

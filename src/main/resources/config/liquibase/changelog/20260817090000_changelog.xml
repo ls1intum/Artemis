@@ -282,22 +282,55 @@
     <!-- Indexes and foreign keys (after the backfill: faster to build in bulk) -->
     <!-- ===================================================================== -->
 
-    <changeSet id="20260817090000-08-index-and-fks" author="krusche">
+    <!-- One DDL statement per changeset: on MySQL every DDL auto-commits, so a multi-statement changeset
+         that fails halfway (FK validation over ~34M rows can hit lock/disk limits) would leave committed
+         objects behind while staying unrecorded, and the automatic re-run would die on the duplicate.
+         The existence preconditions make a re-run after any partial failure self-healing. -->
+    <changeSet id="20260817090000-08a-index-test-case" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="test_case_feedback" indexName="ix_test_case_feedback_test_case"/>
+            </not>
+        </preConditions>
         <createIndex tableName="test_case_feedback" indexName="ix_test_case_feedback_test_case">
             <column name="test_case_id"/>
         </createIndex>
-        <!-- Same safety net as the previous feedback.test_case_id FK (changelog 20260713120000): the async
-             build-result processing can race a concurrent programming-exercise deletion, so the database
-             removes test feedback when its test case is deleted. -->
+    </changeSet>
+
+    <!-- Same safety net as the previous feedback.test_case_id FK (changelog 20260713120000): the async
+         build-result processing can race a concurrent programming-exercise deletion, so the database
+         removes test feedback when its test case is deleted. -->
+    <changeSet id="20260817090000-08b-fk-test-case" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyTableName="test_case_feedback" foreignKeyName="fk_test_case_feedback_test_case"/>
+            </not>
+        </preConditions>
         <addForeignKeyConstraint baseTableName="test_case_feedback" baseColumnNames="test_case_id"
                                  constraintName="fk_test_case_feedback_test_case"
                                  referencedTableName="programming_exercise_test_case" referencedColumnNames="id"
                                  onDelete="CASCADE"/>
-        <!-- The result FKs use the primary-key prefix as their supporting index on MySQL. -->
+    </changeSet>
+
+    <!-- The result FKs use the primary-key prefix as their supporting index on MySQL. -->
+    <changeSet id="20260817090000-08c-fk-test-case-feedback-result" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyTableName="test_case_feedback" foreignKeyName="fk_test_case_feedback_result"/>
+            </not>
+        </preConditions>
         <addForeignKeyConstraint baseTableName="test_case_feedback" baseColumnNames="result_id"
                                  constraintName="fk_test_case_feedback_result"
                                  referencedTableName="result" referencedColumnNames="id"
                                  onDelete="RESTRICT"/>
+    </changeSet>
+
+    <changeSet id="20260817090000-08d-fk-sca-feedback-result" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyTableName="sca_feedback" foreignKeyName="fk_sca_feedback_result"/>
+            </not>
+        </preConditions>
         <addForeignKeyConstraint baseTableName="sca_feedback" baseColumnNames="result_id"
                                  constraintName="fk_sca_feedback_result"
                                  referencedTableName="result" referencedColumnNames="id"
@@ -328,11 +361,17 @@
     <!-- Drop the now-unused feedback.test_case_id (column + FK + 1.3 GB index) -->
     <!-- ===================================================================== -->
 
-    <changeSet id="20260817090000-10-drop-feedback-test-case-id" author="krusche">
+    <changeSet id="20260817090000-10a-drop-feedback-test-case-fk" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyTableName="feedback" foreignKeyName="FK_feedback_test_case_id"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="feedback" constraintName="FK_feedback_test_case_id"/>
+    </changeSet>
+
+    <changeSet id="20260817090000-10b-drop-feedback-test-case-column" author="krusche">
         <preConditions onFail="MARK_RAN">
             <columnExists tableName="feedback" columnName="test_case_id"/>
         </preConditions>
-        <dropForeignKeyConstraint baseTableName="feedback" constraintName="FK_feedback_test_case_id"/>
         <dropColumn tableName="feedback" columnName="test_case_id"/>
     </changeSet>
 

@@ -20,7 +20,9 @@ import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
@@ -38,11 +40,17 @@ public class LongFeedbackTextResource {
 
     private final TestCaseFeedbackRepository testCaseFeedbackRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final ExerciseDateService exerciseDateService;
+
     public LongFeedbackTextResource(LongFeedbackTextRepository longFeedbackTextRepository, ParticipationAuthorizationCheckService participationAuthorizationCheckService,
-            TestCaseFeedbackRepository testCaseFeedbackRepository) {
+            TestCaseFeedbackRepository testCaseFeedbackRepository, AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService) {
         this.longFeedbackTextRepository = longFeedbackTextRepository;
         this.participationAuthorizationCheckService = participationAuthorizationCheckService;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.authorizationCheckService = authorizationCheckService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -75,12 +83,31 @@ public class LongFeedbackTextResource {
         int seq = ProgrammingFeedbackSynthesizerService.seqFromSyntheticId(syntheticFeedbackId);
         TestCaseFeedback feedback = testCaseFeedbackRepository.findWithMessageAndParticipationByResultIdAndSeq(resultId, seq)
                 .orElseThrow(() -> new EntityNotFoundException("TestCaseFeedback", syntheticFeedbackId));
-        participationAuthorizationCheckService.checkCanAccessParticipationElseThrow(feedback.getResult().getSubmission().getParticipation());
+        Participation participation = feedback.getResult().getSubmission().getParticipation();
+        participationAuthorizationCheckService.checkCanAccessParticipationElseThrow(participation);
+        checkTestCaseVisibilityElseThrow(feedback, participation, syntheticFeedbackId);
         String message = feedback.getMessageText();
         if (message == null) {
             throw new EntityNotFoundException("TestCaseFeedback message", syntheticFeedbackId);
         }
         return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(message);
+    }
+
+    /**
+     * The synthetic ids encode (resultId, seq) and are enumerable, so unlike the surrogate ids of manual
+     * feedback they cannot act as capability tokens: without this check a student could fetch the messages
+     * of hidden (visibility NEVER) or not-yet-visible (AFTER_DUE_DATE before the due date) test cases of
+     * their own submission, which every other read path filters out (see Result#filterSensitiveFeedbacks).
+     */
+    private void checkTestCaseVisibilityElseThrow(TestCaseFeedback feedback, Participation participation, long syntheticFeedbackId) {
+        if (authorizationCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
+            return;
+        }
+        boolean hiddenBeforeDueDate = feedback.isAfterDueDate() && exerciseDateService.isBeforeDueDate(participation);
+        if (feedback.isInvisible() || hiddenBeforeDueDate) {
+            // 404 (not 403) so that the existence of hidden test feedback is not revealed either
+            throw new EntityNotFoundException("TestCaseFeedback message", syntheticFeedbackId);
+        }
     }
 
     private void checkCanAccessResultElseThrow(final LongFeedbackText longFeedbackText) {
