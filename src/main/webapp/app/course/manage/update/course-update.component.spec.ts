@@ -24,7 +24,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { By } from '@angular/platform-browser';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
@@ -39,6 +38,7 @@ import { ProgrammingLanguage } from 'app/programming/shared/entities/programming
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FileService } from 'app/foundation/service/file.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('Course Management Update Component', () => {
     let comp: CourseUpdateComponent;
@@ -384,7 +384,7 @@ describe('Course Management Update Component', () => {
             previousCourse.title = 'previous title';
             comp.course = previousCourse;
 
-            const updatedCourse = cloneDeep(previousCourse);
+            const updatedCourse = deepClone(previousCourse);
             updatedCourse.title = 'updated title';
             comp.courseForm = new FormGroup({
                 title: new FormControl(updatedCourse.title),

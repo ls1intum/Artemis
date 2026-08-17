@@ -137,7 +137,9 @@ public class ChannelResource extends ConversationManagementResource {
             channelDTOs = filterVisibleChannelsForNonInstructors(channelDTOs);
         }
 
-        return ResponseEntity.ok(channelDTOs.sorted(Comparator.comparing(ChannelDTO::getName)).toList());
+        var sortedChannelDTOs = channelDTOs.sorted(Comparator.comparing(ChannelDTO::getName)).toList();
+        conversationDTOService.fillSubTypeReferenceDates(sortedChannelDTOs);
+        return ResponseEntity.ok(sortedChannelDTOs);
     }
 
     /**

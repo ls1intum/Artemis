@@ -83,15 +83,12 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @ManyToOne
     private Participation participation;
 
-    // No @Cache: appended on every save; NONSTRICT produced stale version lists for concurrent readers, same class of bug as #12574.
     @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     private Set<SubmissionVersion> versions = new HashSet<>();
 
     /**
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
-     * CacheStrategy.NONSTRICT_READ_WRITE leads to problems with the deletion of a submission, because first the results
-     * are deleted in a transactional method.
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn(name = "results_order")
@@ -284,10 +281,26 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getFirstManualResult() {
-        if (results != null && !results.isEmpty()) {
-            return this.getManualResults().getFirst();
-        }
-        return null;
+        // Guard on the manual results, not on all results: a submission can carry only automatic or Athena results, and
+        // getFirst() on the then empty manual list would throw instead of returning null as declared.
+        List<Result> manualResults = results == null ? List.of() : getManualResults();
+        return manualResults.isEmpty() ? null : manualResults.getFirst();
+    }
+
+    /**
+     * Get the last manual result of the submission, i.e. the newest correction round.
+     * <p>
+     * Deliberately different from {@link #getLatestResult()}, which returns the result with the highest id and therefore
+     * can return an automatic or Athena result. Operations that act on what a tutor is assessing have to use this one,
+     * because automatic results are not correction rounds and never carry an assessor.
+     *
+     * @return a {@link Result} or null if the submission has no manual result
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getLatestManualResult() {
+        List<Result> manualResults = results == null ? List.of() : getManualResults();
+        return manualResults.isEmpty() ? null : manualResults.getLast();
     }
 
     /**

@@ -699,6 +699,16 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
     accessed through the load balancer on `http(s)://localhost`.
 </Callout>
 
+These instances run under the `prod` profile, and `docker/artemis/config/prod-multinode.env` therefore does not contain a
+JWT signing key: a key committed to the repository would be readable by everyone. Export one before starting the
+containers, so that all three instances share it:
+
+```bash
+export ARTEMIS_E2E_JWT_SECRET="$(openssl rand -base64 64 | tr -d '\n')"
+```
+
+The E2E runner scripts (`run-e2e-tests-local-multinode.sh` and its variants) do this for you.
+
 <Callout variant={CalloutVariant.info}>
     You may run into the following error when starting the containers
     `No member group is available to assign partition ownership...`. This issue should resolve itself after a few

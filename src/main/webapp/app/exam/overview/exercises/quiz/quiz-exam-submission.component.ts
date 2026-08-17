@@ -16,7 +16,6 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { cloneDeep } from 'lodash-es';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
@@ -30,6 +29,7 @@ import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.m
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
 import { parseJson } from 'app/foundation/util/json.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -211,7 +211,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         if (submittedAnswer) {
                             const selectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions;
                             // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
-                            this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, selectedOptions ? cloneDeep(selectedOptions) : []));
+                            this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, selectedOptions ? deepClone(selectedOptions) : []));
                         } else {
                             // not found, set to empty array
                             this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, []));
@@ -222,7 +222,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         if (submittedAnswer) {
                             const mappings = (submittedAnswer as DragAndDropSubmittedAnswer).mappings;
                             // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
-                            this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, mappings ? cloneDeep(mappings) : []));
+                            this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, mappings ? deepClone(mappings) : []));
                         } else {
                             // not found, set to empty array
                             this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, []));
@@ -233,7 +233,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         if (submittedAnswer) {
                             const submittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts;
                             // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
-                            this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, submittedTexts ? cloneDeep(submittedTexts) : []));
+                            this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, submittedTexts ? deepClone(submittedTexts) : []));
                         } else {
                             // not found, set to empty array
                             this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));

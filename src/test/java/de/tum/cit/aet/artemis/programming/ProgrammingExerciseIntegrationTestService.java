@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENGTH;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
@@ -1163,6 +1164,15 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
+    void createProgrammingExercise_packageNameIsTooLong_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setShortName("testShortName");
+        programmingExercise.setPackageName("a".repeat(MAX_PACKAGE_NAME_LENGTH + 1));
+        request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/programming/programming-exercises/setup")).contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsString(programmingExercise))).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("packagenameTooLong"));
+    }
+
     void createProgrammingExercise_maxScoreIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(null);
@@ -2177,8 +2187,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
-        ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
+        ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExercise),
                 HttpStatus.FORBIDDEN);
     }
@@ -2188,13 +2197,31 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
-        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
-        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
-        ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
-        ProgrammingExercise programmingExerciseToBeConflicted = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().get(1);
+        ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
+        ProgrammingExercise programmingExerciseToBeConflicted = createCourseWithProgrammingExerciseForReEvaluation();
 
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExerciseToBeConflicted),
                 HttpStatus.CONFLICT);
+    }
+
+    /**
+     * Creates a course with one programming exercise and returns that exercise, loaded with the associations
+     * {@link UpdateProgrammingExerciseDTO#of} needs.
+     * <p>
+     * The exercise is looked up through the course it was just created in, rather than by taking an element out of
+     * {@link ProgrammingExerciseTestRepository#findAllWithEagerTemplateAndSolutionParticipations()}. The setup of this
+     * class already puts two programming exercises in the database - one in a course and one in an exam - and that
+     * query has no {@code ORDER BY}, so its row order is whatever the database returns. When the exam exercise came
+     * first, the request ran against an exercise whose course is only reachable through its exercise group,
+     * {@code getCourseViaExerciseGroupOrCourseMember()} returned null, and the endpoint answered 500 instead of the
+     * expected status.
+     *
+     * @return the programming exercise of the newly created course
+     */
+    private ProgrammingExercise createCourseWithProgrammingExerciseForReEvaluation() {
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
+        ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        return programmingExerciseTestRepository.findWithEagerTemplateAndSolutionParticipationsById(exercise.getId()).orElseThrow();
     }
 
     void testGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {
