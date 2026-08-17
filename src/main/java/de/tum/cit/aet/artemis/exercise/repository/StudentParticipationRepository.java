@@ -1538,23 +1538,23 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
-                LISTAGG(CAST(f.id AS string), ',') WITHIN GROUP (ORDER BY f.id),
-                COUNT(f.id),
+                LISTAGG(CAST(-(f.id.resultId * 100000 + f.id.seq) AS string), ',') WITHIN GROUP (ORDER BY f.id.resultId),
+                COUNT(f.id.resultId),
                 0,
-                f.detailText,
-                f.testCase.testName,
+                COALESCE(MIN(m.text), ''),
+                tc.testName,
                 COALESCE((
                     SELECT MAX(t.taskName)
                     FROM ProgrammingExerciseTask t
                     LEFT JOIN t.testCases tct
-                    WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
+                    WHERE t.exercise.id = :exerciseId AND tct.testName = tc.testName
                 ), 'Not assigned to task'),
                 CASE
-                    WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
-                    WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
+                    WHEN MIN(m.text) LIKE 'ARES Security Error%' THEN 'Ares Error'
+                    WHEN MIN(m.text) LIKE 'Unwanted Statement found%' THEN 'AST Error'
                     ELSE 'Student Error'
                 END,
-                f.hasLongFeedbackText
+                CASE WHEN MAX(LENGTH(m.text)) > 1000 THEN TRUE ELSE FALSE END
             )
             FROM ProgrammingExerciseStudentParticipation p
             INNER JOIN p.submissions s
@@ -1563,25 +1563,27 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 FROM Submission s2 JOIN s2.results r2
                 WHERE s2.participation = p
             )
-            INNER JOIN r.feedbacks f
+            INNER JOIN r.testCaseFeedbacks f
+            INNER JOIN f.testCase tc
+            LEFT JOIN f.message m
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND f.positive = FALSE
-                AND (:searchTerm = '' OR LOWER(f.detailText) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(:searchTerm, '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
-                AND (:#{#filterTestCases != NULL && #filterTestCases.size() < 1} = TRUE OR f.testCase.testName IN (:filterTestCases))
-                AND (:#{#filterTaskNames != NULL && #filterTaskNames.size() < 1} = TRUE OR f.testCase.testName NOT IN (
+                AND (:searchTerm = '' OR LOWER(m.text) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(:searchTerm, '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
+                AND (:#{#filterTestCases != NULL && #filterTestCases.size() < 1} = TRUE OR tc.testName IN (:filterTestCases))
+                AND (:#{#filterTaskNames != NULL && #filterTaskNames.size() < 1} = TRUE OR tc.testName NOT IN (
                         SELECT tct.testName
                         FROM ProgrammingExerciseTask t
                         LEFT JOIN t.testCases tct
                         WHERE t.taskName IN (:filterTaskNames)
                     ))
                 AND (:#{#filterErrorCategories != NULL && #filterErrorCategories.size() < 1} = TRUE OR CASE
-                            WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
-                            WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
+                            WHEN m.text LIKE 'ARES Security Error%' THEN 'Ares Error'
+                            WHEN m.text LIKE 'Unwanted Statement found%' THEN 'AST Error'
                             ELSE 'Student Error'
                         END IN (:filterErrorCategories))
-            GROUP BY f.detailText, f.testCase.testName, f.hasLongFeedbackText
-            HAVING COUNT(f.id) BETWEEN :minOccurrence AND :maxOccurrence
+            GROUP BY m.id, tc.testName
+            HAVING COUNT(f.id.resultId) BETWEEN :minOccurrence AND :maxOccurrence
             """)
     Page<FeedbackDetailDTO> findFilteredFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm,
             @Param("filterTestCases") List<String> filterTestCases, @Param("filterTaskNames") List<String> filterTaskNames, @Param("minOccurrence") long minOccurrence,
@@ -1623,7 +1625,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     // TODO: move this query to a more appropriate repository, either feedbackRepository or exerciseRepository
     @Query("""
             SELECT MAX(feedbackCounts.feedbackCount) FROM (
-                SELECT COUNT(f.id) AS feedbackCount
+                SELECT COUNT(f.id.resultId) AS feedbackCount
                 FROM ProgrammingExerciseStudentParticipation p
                 INNER JOIN p.submissions s
                 INNER JOIN s.results r ON r.id = (
@@ -1632,11 +1634,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     INNER JOIN ps.results sr
                     WHERE ps.participation.id = p.id
                 )
-                INNER JOIN r.feedbacks f
+                INNER JOIN r.testCaseFeedbacks f
+                LEFT JOIN f.message m
                 WHERE p.exercise.id = :exerciseId
                     AND p.testRun = FALSE
                     AND f.positive = FALSE
-                GROUP BY f.detailText, f.testCase.testName
+                GROUP BY m.id, f.testCase.id
             ) AS feedbackCounts
             """)
     long findMaxCountForExercise(@Param("exerciseId") long exerciseId);
@@ -1664,13 +1667,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 FROM Submission s2 JOIN s2.results r2
                 WHERE s2.participation = p
             )
-            INNER JOIN r.feedbacks f
             WHERE p.exercise.id = :exerciseId
-                  AND f.id IN :feedbackIds
+                  AND r.id IN :resultIds
                   AND p.testRun = FALSE
             ORDER BY p.student.firstName ASC
             """)
-    List<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackIds(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds);
+    List<FeedbackAffectedStudentDTO> findAffectedStudentsByResultIds(@Param("exerciseId") long exerciseId, @Param("resultIds") List<Long> resultIds);
 
     /**
      * Retrieves the logins of students affected by a specific feedback detail text in a given exercise.
@@ -1689,10 +1691,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 FROM Submission s2 JOIN s2.results r2
                 WHERE s2.participation = p
             )
-            INNER JOIN r.feedbacks f
+            INNER JOIN r.testCaseFeedbacks f
+            INNER JOIN f.testCase tc
+            LEFT JOIN f.message m
             WHERE p.exercise.id = :exerciseId
-              AND f.detailText IN :detailTexts
-              AND f.testCase.testName = :testCaseName
+              AND COALESCE(m.text, '') IN :detailTexts
+              AND tc.testName = :testCaseName
               AND p.testRun = FALSE
             """)
     List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailTexts") List<String> detailTexts,

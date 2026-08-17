@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -36,6 +37,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
@@ -120,6 +123,10 @@ public class ProgrammingExerciseGradingService {
 
     private final FeedbackMessageService feedbackMessageService;
 
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private final ScaFeedbackRepository scaFeedbackRepository;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, FeedbackService feedbackService,
@@ -127,7 +134,8 @@ public class ProgrammingExerciseGradingService {
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
-            MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService, FeedbackMessageService feedbackMessageService) {
+            MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService, FeedbackMessageService feedbackMessageService,
+            TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -147,6 +155,8 @@ public class ProgrammingExerciseGradingService {
         this.feedbackService = feedbackService;
         this.mavenCentralRateLimitNotificationService = mavenCentralRateLimitNotificationService;
         this.feedbackMessageService = feedbackMessageService;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.scaFeedbackRepository = scaFeedbackRepository;
     }
 
     /**
@@ -567,6 +577,7 @@ public class ProgrammingExerciseGradingService {
         if (result == null) {
             return Optional.empty();
         }
+        hydrateTypedFeedback(result);
 
         boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
         final Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = isBeforeDueDate ? testCasesBeforeDueDate : testCasesAfterDueDate;
@@ -574,6 +585,25 @@ public class ProgrammingExerciseGradingService {
         calculateScoreForResult(allTestCases, testCasesForCurrentDate, result, exercise, applySubmissionPolicy);
 
         return Optional.of(result);
+    }
+
+    /**
+     * Loads the typed automatic feedback (test-case and SCA rows) of a stored result if the (lazy)
+     * collections are not initialized yet. Score re-calculation iterates these collections, and the
+     * results processed here are detached entities loaded without them.
+     *
+     * @param result the result to hydrate
+     */
+    private void hydrateTypedFeedback(Result result) {
+        if (result.getId() == null) {
+            return;
+        }
+        if (!Hibernate.isInitialized(result.getTestCaseFeedbacks())) {
+            result.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId())));
+        }
+        if (!Hibernate.isInitialized(result.getScaFeedbacks())) {
+            result.setScaFeedbacks(scaFeedbackRepository.findByResultIds(List.of(result.getId())));
+        }
     }
 
     /**

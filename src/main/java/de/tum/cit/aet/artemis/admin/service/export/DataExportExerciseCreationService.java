@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -73,6 +74,8 @@ public class DataExportExerciseCreationService {
     static final String CSV_FILE_EXTENSION = ".csv";
 
     private final Path repoClonePath;
+
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
     private static final Logger log = LoggerFactory.getLogger(DataExportExerciseCreationService.class);
 
@@ -98,7 +101,8 @@ public class DataExportExerciseCreationService {
     public DataExportExerciseCreationService(@Value("${artemis.repo-download-clone-path}") Path repoClonePath, FileService fileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService,
             Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<ModelingApollonApi> modelingApollonApi, ComplaintRepository complaintRepository,
-            ExerciseRepository exerciseRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+            ExerciseRepository exerciseRepository, ResultService resultService, AuthorizationCheckService authCheckService,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.fileService = fileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
@@ -109,6 +113,7 @@ public class DataExportExerciseCreationService {
         this.repoClonePath = repoClonePath;
         this.resultService = resultService;
         this.authCheckService = authCheckService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -316,6 +321,8 @@ public class DataExportExerciseCreationService {
                 if (programmingExerciseBeforeAssessmentDueDate && result.getAssessmentType() != AssessmentType.AUTOMATIC && !isInstructor) {
                     continue;
                 }
+                // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy views
+                programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result);
                 resultService.filterSensitiveInformationIfNecessary(submission.getParticipation(), List.of(result), Optional.of(user));
                 var score = result.getScore();
                 if (score != null) {

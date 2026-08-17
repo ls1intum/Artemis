@@ -249,6 +249,8 @@ public final class Constants {
 
     public static final String RE_EVALUATE_RESULTS = "RE_EVALUATE_RESULTS";
 
+    public static final String UPDATE_GRADING_CONFIGURATION = "UPDATE_GRADING_CONFIGURATION";
+
     public static final String RESET_GRADING = "RESET_GRADING";
 
     /**

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -41,6 +42,17 @@ public interface TestCaseFeedbackRepository extends ArtemisJpaRepository<TestCas
             WHERE feedback.id.resultId IN :resultIds
             """)
     List<TestCaseFeedback> findWithTestCaseByResultIds(@Param("resultIds") Collection<Long> resultIds);
+
+    @Query("""
+            SELECT feedback
+            FROM TestCaseFeedback feedback
+                LEFT JOIN FETCH feedback.message
+                JOIN FETCH feedback.result r
+                JOIN FETCH r.submission s
+                JOIN FETCH s.participation
+            WHERE feedback.id.resultId = :resultId AND feedback.id.seq = :seq
+            """)
+    Optional<TestCaseFeedback> findWithMessageAndParticipationByResultIdAndSeq(@Param("resultId") long resultId, @Param("seq") int seq);
 
     @Modifying
     @Transactional // ok because of delete

@@ -80,6 +80,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -825,7 +826,13 @@ public class ResultService {
      * @return A {@link List} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
     public List<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackIds(long exerciseId, List<Long> feedbackIds) {
-        return studentParticipationRepository.findAffectedStudentsByFeedbackIds(exerciseId, feedbackIds);
+        // The ids of automatic test-case feedback are synthetic (negative) and encode (resultId, seq);
+        // affected students are identified by the result, so decoding the result id suffices.
+        List<Long> resultIds = feedbackIds.stream().filter(id -> id != null && id < 0).map(ProgrammingFeedbackSynthesizerService::resultIdFromSyntheticId).distinct().toList();
+        if (resultIds.isEmpty()) {
+            return List.of();
+        }
+        return studentParticipationRepository.findAffectedStudentsByResultIds(exerciseId, resultIds);
     }
 
     /**

@@ -15,10 +15,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -32,13 +36,21 @@ public class LongFeedbackTextResource {
 
     private final ParticipationAuthorizationCheckService participationAuthorizationCheckService;
 
-    public LongFeedbackTextResource(LongFeedbackTextRepository longFeedbackTextRepository, ParticipationAuthorizationCheckService participationAuthorizationCheckService) {
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    public LongFeedbackTextResource(LongFeedbackTextRepository longFeedbackTextRepository, ParticipationAuthorizationCheckService participationAuthorizationCheckService,
+            TestCaseFeedbackRepository testCaseFeedbackRepository) {
         this.longFeedbackTextRepository = longFeedbackTextRepository;
         this.participationAuthorizationCheckService = participationAuthorizationCheckService;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
     }
 
     /**
      * Gets the long feedback associated with the specified feedback.
+     * <p>
+     * Negative ids are synthetic ids of automatic test-case feedback (see
+     * {@link ProgrammingFeedbackSynthesizerService}): they encode {@code (resultId, seq)} of a
+     * {@code test_case_feedback} row whose full message is served from the deduplicated message table.
      *
      * @param feedbackId The feedback for which the long feedback should be fetched.
      * @return The long feedback text belonging to the feedback with id {@code feedbackId}.
@@ -48,10 +60,27 @@ public class LongFeedbackTextResource {
     public ResponseEntity<String> getLongFeedback(@PathVariable Long feedbackId) {
         log.debug("REST request to get long feedback: {}", feedbackId);
 
+        if (ProgrammingFeedbackSynthesizerService.isSyntheticId(feedbackId)) {
+            return getLongFeedbackForTestCaseFeedback(feedbackId);
+        }
+
         final LongFeedbackText longFeedbackText = longFeedbackTextRepository.findByFeedbackIdWithFeedbackAndResultAndParticipationElseThrow(feedbackId);
         checkCanAccessResultElseThrow(longFeedbackText);
 
         return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(longFeedbackText.getText());
+    }
+
+    private ResponseEntity<String> getLongFeedbackForTestCaseFeedback(long syntheticFeedbackId) {
+        long resultId = ProgrammingFeedbackSynthesizerService.resultIdFromSyntheticId(syntheticFeedbackId);
+        int seq = ProgrammingFeedbackSynthesizerService.seqFromSyntheticId(syntheticFeedbackId);
+        TestCaseFeedback feedback = testCaseFeedbackRepository.findWithMessageAndParticipationByResultIdAndSeq(resultId, seq)
+                .orElseThrow(() -> new EntityNotFoundException("TestCaseFeedback", syntheticFeedbackId));
+        participationAuthorizationCheckService.checkCanAccessParticipationElseThrow(feedback.getResult().getSubmission().getParticipation());
+        String message = feedback.getMessageText();
+        if (message == null) {
+            throw new EntityNotFoundException("TestCaseFeedback message", syntheticFeedbackId);
+        }
+        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(message);
     }
 
     private void checkCanAccessResultElseThrow(final LongFeedbackText longFeedbackText) {
