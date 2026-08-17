@@ -21,12 +21,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     const maxPoints = parseNumber(control.get('maxPoints')?.value);
     const resultPoints = parseNumber(control.get('resultPoints')?.value);
-
-    if (maxPoints === undefined || maxPoints === null || resultPoints === undefined || resultPoints === null) {
-        return null;
-    }
-
-    return resultPoints > maxPoints ? { resultPointsExceedMaxPoints: true } : null;
+    return maxPoints !== undefined && resultPoints !== undefined && resultPoints > maxPoints ? { resultPointsExceedMaxPoints: true } : null;
 };
 
 const numberRequired: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
@@ -35,29 +30,20 @@ const numberRequired: ValidatorFn = (control: AbstractControl): ValidationErrors
 
 const optionalNumber: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     const value = control.value;
-    if (isBlank(value)) {
-        return null;
-    }
-    return parseNumber(value) === undefined ? { numberRequired: true } : null;
+    return !isBlank(value) && parseNumber(value) === undefined ? { numberRequired: true } : null;
 };
 
 const numberMin =
     (min: number): ValidatorFn =>
     (control: AbstractControl): ValidationErrors | null => {
         const value = parseNumber(control.value);
-        if (value === undefined) {
-            return null;
-        }
-        return value < min ? { min: true } : null;
+        return value !== undefined && value < min ? { min: true } : null;
     };
 
 const isBlank = (value: unknown): boolean => value === undefined || value === null || value === '';
 
 const parseNumber = (value: unknown): number | undefined => {
-    if (isBlank(value)) {
-        return undefined;
-    }
-    const parsedValue = typeof value === 'string' ? Number(value.trim().replace(',', '.')) : Number(value);
+    const parsedValue = isBlank(value) ? undefined : typeof value === 'string' ? Number(value.trim().replace(',', '.')) : Number(value);
     return Number.isFinite(parsedValue) ? parsedValue : undefined;
 };
 

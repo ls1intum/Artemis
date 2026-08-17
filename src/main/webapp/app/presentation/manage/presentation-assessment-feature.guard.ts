@@ -9,12 +9,7 @@ export const presentationAssessmentFeatureGuard: CanActivateFn = (route) => {
     const router = inject(Router);
     const courseManagementService = inject(CourseManagementService);
 
-    return courseManagementService.find(courseId).pipe(
-        map((response) => {
-            if (response.body?.presentationAssessmentsEnabled) {
-                return true;
-            }
-            return router.createUrlTree(['/course-management', courseId, 'lectures']);
-        }),
-    );
+    return courseManagementService
+        .find(courseId)
+        .pipe(map((response) => response.body?.presentationAssessmentsEnabled || router.createUrlTree(['/course-management', courseId, 'lectures'])));
 };

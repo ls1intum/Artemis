@@ -15,11 +15,13 @@
             <input id="presentation-assessment-max-points" tumUiInput class="w-full" type="text" inputmode="decimal" formControlName="maxPoints" />
             @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
                 <tum-ui-message severity="error" data-testid="presentation-max-points-error">
-                    @if (editForm.controls.maxPoints.hasError('numberRequired')) {
-                        <span jhiTranslate="artemisApp.presentationAssessment.validation.numberRequired"></span>
-                    } @else {
-                        <span jhiTranslate="artemisApp.presentationAssessment.validation.maxPointsMin"></span>
-                    }
+                    <span
+                        [jhiTranslate]="
+                            editForm.controls.maxPoints.hasError('numberRequired')
+                                ? 'artemisApp.presentationAssessment.validation.numberRequired'
+                                : 'artemisApp.presentationAssessment.validation.maxPointsMin'
+                        "
+                    ></span>
                 </tum-ui-message>
             }
         </div>
@@ -29,11 +31,13 @@
             <input id="presentation-assessment-result-points" tumUiInput class="w-full" type="text" inputmode="decimal" formControlName="resultPoints" />
             @if (editForm.controls.resultPoints.invalid && editForm.controls.resultPoints.touched) {
                 <tum-ui-message severity="error" data-testid="presentation-result-points-error">
-                    @if (editForm.controls.resultPoints.hasError('numberRequired')) {
-                        <span jhiTranslate="artemisApp.presentationAssessment.validation.numberRequired"></span>
-                    } @else {
-                        <span jhiTranslate="artemisApp.presentationAssessment.validation.resultPointsMin"></span>
-                    }
+                    <span
+                        [jhiTranslate]="
+                            editForm.controls.resultPoints.hasError('numberRequired')
+                                ? 'artemisApp.presentationAssessment.validation.numberRequired'
+                                : 'artemisApp.presentationAssessment.validation.resultPointsMin'
+                        "
+                    ></span>
                 </tum-ui-message>
             }
             @if (editForm.hasError('resultPointsExceedMaxPoints') && (editForm.controls.resultPoints.touched || editForm.controls.maxPoints.touched)) {
