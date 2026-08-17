@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
@@ -175,7 +175,26 @@ describe('GlobalSearchLectureResultsComponent', () => {
             component.handleKeydown(event);
 
             expect(preventDefaultSpy).toHaveBeenCalled();
-            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams });
+            // Not the page currently on screen, so the jump keeps its own history entry.
+            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams, replaceUrl: false });
+        });
+
+        it('should replace the history entry when the selected result is the page already open', () => {
+            const router = TestBed.inject(Router);
+            // What isActive reads to find out where the user currently is.
+            Object.defineProperty(router, 'lastSuccessfulNavigation', {
+                value: () => ({ finalUrl: router.parseUrl(mockResult.lectureUnit.link) }),
+                configurable: true,
+            });
+            (component as any).lectureResults.set([mockResult]);
+            fixture.componentRef.setInput('selectedIndex', 0);
+            fixture.detectChanges();
+            const navigateSpy = vi.spyOn(router, 'navigate');
+
+            component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+            // Without this the jump pushes a second entry for the same page, and Back appears to do nothing.
+            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], expect.objectContaining({ replaceUrl: true }));
         });
 
         it('should not navigate when Enter is pressed with no selection', () => {

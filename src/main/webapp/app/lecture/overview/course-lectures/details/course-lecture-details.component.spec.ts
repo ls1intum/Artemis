@@ -803,6 +803,24 @@ describe('CourseLectureDetailsComponent', () => {
             expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
         });
 
+        it('should ignore a lecture response that arrives after its lecture was left', () => {
+            // Lecture 2 is asked for and does not answer yet.
+            const deliverLeftLecture = respondLater([attachmentUnit(7, { link: '/path/to/slides.pdf' })], 2);
+            reInit({}, '2');
+
+            // Lecture 3 is opened and answers, carrying a jump of its own.
+            respondWith([attachmentUnit(9, { link: '/path/to/deck.pdf' })], 3);
+            reInit({ unit: '9', page: '2' }, '3');
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 9 }));
+
+            deliverLeftLecture();
+
+            // The late answer must not put its lecture back under lecture 3's route, which would leave the executed
+            // jump pointing into units it was never meant for.
+            expect(courseLecturesDetailsComponent.lecture()?.id).toBe(3);
+            expect(courseLecturesDetailsComponent.lectureUnits().map((unit) => unit.id)).toEqual([9]);
+        });
+
         it('should forget an executed jump when another lecture is opened', () => {
             respondWith([attachmentUnit(7, { link: '/path/to/slides.pdf' })]);
             reInit({ unit: '7', page: '4' });

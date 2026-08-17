@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, injec
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faChevronUp, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -13,6 +13,8 @@ import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iri
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
+import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
+import { deepLinkStaysOnCurrentPage } from 'app/lecture/overview/course-lectures/lecture-deep-link.navigation';
 
 /** Number of lines shown before the answer is clamped. Must match the CSS `max-height` on `.iris-answer-text.is-clamped`. */
 const CLAMP_LINE_COUNT = 4;
@@ -50,6 +52,15 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly moreOpen = signal(false);
     protected readonly shouldClamp = computed(() => this.isOverflowing() && !this.isExpanded());
     protected readonly sources = computed(() => this.irisResult()?.sources ?? []);
+    private readonly router = inject(Router);
+
+    /**
+     * Whether opening this source lands on the page the user is already looking at, in which case the jump replaces the
+     * current history entry instead of pushing an identical one. See {@link deepLinkStaysOnCurrentPage}.
+     */
+    protected staysOnCurrentPage(source: LectureSearchResult): boolean {
+        return deepLinkStaysOnCurrentPage(this.router, this.router.parseUrl(source.lectureUnit.link));
+    }
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly INITIAL_VISIBLE_SOURCE_COUNT = 2;

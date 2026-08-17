@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, HostListener, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Router, isActive } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+import { deepLinkStaysOnCurrentPage, lectureDetailsRoute } from 'app/lecture/overview/course-lectures/lecture-deep-link.navigation';
 import { IrisCitationParsed } from './iris-citation-text.model';
 import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
@@ -313,18 +314,10 @@ export class IrisCitationTextComponent {
             queryParams.page = page;
         }
 
-        const lectureRoute = ['/courses', courseId, 'lectures', lectureId];
-        // Jumping around inside the lecture the student is already reading is not navigation, and an entry in the
-        // history that leads back to the same page only costs them a press that visibly does nothing. Coming from
-        // anywhere else it is a page change like any other and keeps its entry, so the way back stays intact.
-        const staysOnCurrentLecture = isActive(this.router.createUrlTree(lectureRoute), this.router, {
-            paths: 'exact',
-            queryParams: 'ignored',
-            fragment: 'ignored',
-            matrixParams: 'ignored',
-        })();
+        const lectureRoute = lectureDetailsRoute(courseId, lectureId);
+        const replaceUrl = deepLinkStaysOnCurrentPage(this.router, this.router.createUrlTree(lectureRoute));
 
-        void this.router.navigate(lectureRoute, { queryParams, replaceUrl: staysOnCurrentLecture });
+        void this.router.navigate(lectureRoute, { queryParams, replaceUrl });
     }
 
     /**

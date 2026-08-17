@@ -9,6 +9,7 @@ import { LectureSearchService } from 'app/core/navbar/global-search/services/lec
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
 import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
+import { deepLinkStaysOnCurrentPage } from 'app/lecture/overview/course-lectures/lecture-deep-link.navigation';
 
 @Component({
     selector: 'jhi-global-search-lecture-results',
@@ -81,7 +82,15 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
         const result = this.lectureResults()[index];
         if (result) {
             event.preventDefault();
-            void this.router.navigate([result.lectureUnit.link], { queryParams: result.lectureUnit.queryParams });
+            void this.router.navigate([result.lectureUnit.link], { queryParams: result.lectureUnit.queryParams, replaceUrl: this.staysOnCurrentPage(result) });
         }
+    }
+
+    /**
+     * Whether opening this result lands on the page the user is already looking at, in which case the jump replaces the
+     * current history entry instead of pushing an identical one. See {@link deepLinkStaysOnCurrentPage}.
+     */
+    protected staysOnCurrentPage(result: LectureSearchResult): boolean {
+        return deepLinkStaysOnCurrentPage(this.router, this.router.parseUrl(result.lectureUnit.link));
     }
 }

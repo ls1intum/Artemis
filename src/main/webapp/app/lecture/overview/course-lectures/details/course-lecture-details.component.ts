@@ -246,15 +246,27 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     loadData() {
         this.isLoading.set(true);
         if (this.lectureId) {
+            // Requests are not cancelled when another lecture is opened, so an earlier one can still answer once its
+            // lecture is gone from the page. Everything below therefore only acts while the lecture it asked for is
+            // still the one the route selects; otherwise it would put its lecture back under another one's route, and
+            // a deep link already executed for that other lecture would be left pointing into the wrong units.
+            const requestedLectureId = this.lectureId;
+            const isStillCurrent = () => requestedLectureId === this.lectureId;
             this.lectureService
-                .findWithDetails(this.lectureId)
+                .findWithDetails(requestedLectureId)
                 .pipe(
                     finalize(() => {
-                        this.isLoading.set(false);
+                        if (isStillCurrent()) {
+                            this.isLoading.set(false);
+                        }
                     }),
                 )
                 .subscribe({
                     next: (findLectureResult) => {
+                        if (!isStillCurrent()) {
+                            return;
+                        }
+
                         const lecture = findLectureResult.body!;
                         this.lecture.set(lecture);
                         lecture.attachments?.forEach((attachment) => {
@@ -284,7 +296,12 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         }
                         this.informationBoxData.set(informationBoxData);
                     },
-                    error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                    error: (errorResponse: HttpErrorResponse) => {
+                        // A lecture the user has already left failing is not something to interrupt them about.
+                        if (isStillCurrent()) {
+                            onError(this.alertService, errorResponse);
+                        }
+                    },
                 });
         }
     }
