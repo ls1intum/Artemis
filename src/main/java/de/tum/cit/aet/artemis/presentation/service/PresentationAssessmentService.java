@@ -12,9 +12,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepository;
@@ -29,11 +30,11 @@ public class PresentationAssessmentService {
 
     private final PresentationAssessmentRepository presentationAssessmentRepository;
 
-    private final CourseAccessService courseAccessService;
+    private final UserRepository userRepository;
 
-    public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, CourseAccessService courseAccessService) {
+    public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository) {
         this.presentationAssessmentRepository = presentationAssessmentRepository;
-        this.courseAccessService = courseAccessService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -106,7 +107,7 @@ public class PresentationAssessmentService {
             }
             uniqueLogins.add(login.trim());
         }
-        Set<User> students = courseAccessService.findCourseStudentsByLogins(course, uniqueLogins);
+        Set<User> students = new HashSet<>(userRepository.findAllByCourseIdAndRoleAndLoginIn(course.getId(), CourseRole.STUDENT, uniqueLogins));
         Set<String> foundLogins = students.stream().map(User::getLogin).collect(Collectors.toSet());
         if (!foundLogins.containsAll(uniqueLogins)) {
             throw new BadRequestAlertException("At least one user is not a student in the course", PresentationAssessment.ENTITY_NAME, "studentNotInCourse");

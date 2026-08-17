@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.course.service.CourseServiceUtil.removeUser
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,7 +21,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
@@ -58,8 +56,6 @@ public class CourseAccessService {
 
     private final UserCourseRoleRepository userCourseRoleRepository;
 
-    private final UserRepository userRepository;
-
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final AuditEventRepository auditEventRepository;
@@ -69,14 +65,13 @@ public class CourseAccessService {
     private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
 
     public CourseAccessService(AuthorizationCheckService authCheckService, EnrollmentService enrollmentService, CourseRepository courseRepository, UserService userService,
-            UserCourseRoleRepository userCourseRoleRepository, UserRepository userRepository, Optional<LearnerProfileApi> learnerProfileApi,
-            AuditEventRepository auditEventRepository, Optional<LearningPathApi> learningPathApi, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
+            UserCourseRoleRepository userCourseRoleRepository, Optional<LearnerProfileApi> learnerProfileApi, AuditEventRepository auditEventRepository,
+            Optional<LearningPathApi> learningPathApi, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
         this.authCheckService = authCheckService;
         this.enrollmentService = enrollmentService;
         this.courseRepository = courseRepository;
         this.userService = userService;
         this.userCourseRoleRepository = userCourseRoleRepository;
-        this.userRepository = userRepository;
         this.learnerProfileApi = learnerProfileApi;
         this.auditEventRepository = auditEventRepository;
         this.learningPathApi = learningPathApi;
@@ -125,20 +120,6 @@ public class CourseAccessService {
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.ENROLL_IN_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has successfully enrolled in course {}", user.getLogin(), course.getTitle());
-    }
-
-    /**
-     * Finds users with the given logins that have the student role in the course.
-     *
-     * @param course the course in whose students users should be searched
-     * @param logins the logins to search for
-     * @return the matching course students
-     */
-    public Set<User> findCourseStudentsByLogins(Course course, Set<String> logins) {
-        if (logins == null || logins.isEmpty()) {
-            return Set.of();
-        }
-        return new HashSet<>(userRepository.findAllByCourseIdAndRoleAndLoginIn(course.getId(), CourseRole.STUDENT, logins));
     }
 
     /**
