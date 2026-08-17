@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -22,8 +21,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
-import inet.ipaddr.IPAddress;
-import inet.ipaddr.IPAddressString;
+import de.tum.cit.aet.artemis.core.util.IpAddresses;
 
 /**
  * Records which network addresses each build agent connects to the cluster from, so that the git authorization paths
@@ -126,8 +124,9 @@ public class BuildAgentAddressRegistryService {
     /**
      * Reconciles the observed client addresses into the distributed map and refreshes the local snapshot.
      * <p>
-     * Runs on every core node. Entries for agents that are no longer connected are removed, so a stale address cannot
-     * keep authorizing clones after the agent it belonged to has gone.
+     * Runs on every core node. An agent that is no longer connected loses its addresses, so a stale address cannot keep
+     * authorizing clones after the agent it belonged to has gone, and its entry is kept until the agent can no longer
+     * authenticate anything - see the reasoning at the removal loop below.
      */
     @Scheduled(initialDelay = 10_000, fixedDelay = REFRESH_INTERVAL_MS)
     public void refreshRegisteredAddresses() {
@@ -168,12 +167,38 @@ public class BuildAgentAddressRegistryService {
                 }
             }
 
-            // Safe to remove now: the middleware answered, so an agent missing from the answer really is disconnected
-            // rather than merely unobservable. That distinction is the whole reason the provider returns an Optional.
+            // The middleware answered, so an agent missing from the answer really is disconnected rather than merely
+            // unobservable. That distinction is the whole reason the provider returns an Optional.
+            //
+            // Disconnected is not the same as gone, and deleting the entry outright would be a security hole rather
+            // than mere cleanup: an absent entry means "origin not observable" to isRegisteredAddressOfAgent, which
+            // then permits any address. The agent's identity in buildAgentInformation and its orphaned jobs in the
+            // processing list are cleaned by different listeners, so between this removal and theirs a leaked key or
+            // token would still name a known agent, still match a listed job, and no longer be bound to any address -
+            // and if that cleanup fails, the window stays open. So an agent that can still be named or still holds jobs
+            // keeps an entry with no addresses: known, observable, and matching nothing, which denies rather than
+            // exempts. The entry is dropped only once the agent can no longer authenticate anything anyway.
             for (String registeredAgent : Set.copyOf(registeredAddresses.keySet())) {
-                if (!observed.containsKey(registeredAgent)) {
+                if (observed.containsKey(registeredAgent)) {
+                    continue;
+                }
+                if (canStillAuthenticate(registeredAgent)) {
+                    registeredAddresses.lock(registeredAgent);
+                    try {
+                        BuildAgentAddressInfo previous = registeredAddresses.get(registeredAgent);
+                        if (previous != null && !previous.addresses().isEmpty()) {
+                            registeredAddresses.put(registeredAgent, new BuildAgentAddressInfo(registeredAgent, Set.of(), observedAt, previous.withinAllowlist()));
+                            log.info("Build agent {} is no longer connected. Its addresses are cleared, and it may not clone until its registration and jobs are cleaned up.",
+                                    registeredAgent);
+                        }
+                    }
+                    finally {
+                        registeredAddresses.unlock(registeredAgent);
+                    }
+                }
+                else {
                     registeredAddresses.remove(registeredAgent);
-                    log.debug("Removed network addresses of build agent {}, which is no longer connected", registeredAgent);
+                    log.debug("Removed network addresses of build agent {}, which is no longer connected and no longer registered", registeredAgent);
                 }
             }
 
@@ -267,12 +292,27 @@ public class BuildAgentAddressRegistryService {
     }
 
     /**
+     * Decides whether an agent that is no longer connected could still authenticate a git request, and therefore still
+     * needs its origin constrained.
+     *
+     * @param agentName the build agent that disappeared from the observed connections
+     * @return whether the agent can still be named as a build agent or still holds a job whose token would match
+     */
+    private boolean canStillAuthenticate(String agentName) {
+        if (distributedDataAccessService.getDistributedBuildAgentInformation().get(agentName) != null) {
+            return true;
+        }
+        return !distributedDataAccessService.getProcessingJobsForAgentByName(agentName).isEmpty();
+    }
+
+    /**
      * @param agentName the build agent to look up
-     * @return whether this node knows any address for that agent, i.e. whether its origin can be constrained at all
+     * @return whether this node has an entry for that agent, whether or not it currently holds addresses. An entry with
+     *         no addresses is a disconnected agent that has not been cleaned up yet, and it must deny rather than fall
+     *         through to the not-observable exemption, so presence is the question here and not emptiness.
      */
     private boolean hasRegisteredAddresses(String agentName) {
-        Set<String> addresses = addressesByAgentName.get(agentName);
-        return addresses != null && !addresses.isEmpty();
+        return addressesByAgentName.containsKey(agentName);
     }
 
     private boolean matchesRegisteredAddress(String agentName, String ipAddress) {
@@ -285,12 +325,10 @@ public class BuildAgentAddressRegistryService {
         }
         // Compare the parsed addresses too, because the two sides are formatted independently: the middleware reports
         // whatever InetAddress or Redis produced, while the request side comes from the servlet container. The same
-        // address can therefore appear as ::1 and 0:0:0:0:0:0:0:1, or as ::ffff:10.0.0.5 and 10.0.0.5.
-        IPAddress requested = new IPAddressString(ipAddress).getAddress();
-        if (requested == null) {
-            return false;
-        }
-        return addresses.stream().map(address -> new IPAddressString(address).getAddress()).filter(Objects::nonNull).anyMatch(requested::equals);
+        // address can therefore appear as ::1 and 0:0:0:0:0:0:0:1, or as ::ffff:10.0.0.5 and 10.0.0.5. The second of
+        // those needs a conversion that neither string equality nor IPAddress.equals performs, which is why this goes
+        // through IpAddresses rather than comparing parsed values directly.
+        return addresses.stream().anyMatch(address -> IpAddresses.sameHost(address, ipAddress));
     }
 
     /**

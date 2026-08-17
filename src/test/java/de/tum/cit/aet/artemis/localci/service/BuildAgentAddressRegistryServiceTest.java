@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkConfiguration;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
@@ -35,6 +36,13 @@ class BuildAgentAddressRegistryServiceTest {
 
     private Map<String, BuildAgentAddressInfo> registeredAddresses;
 
+    /**
+     * The agent registration map, consulted when an agent disappears from the observed connections: an agent still
+     * listed here can still authenticate, so its address entry has to be kept as a denying tombstone rather than
+     * deleted.
+     */
+    private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
+
     @BeforeEach
     void setUp() {
         distributedDataAccessService = mock(DistributedDataAccessService.class);
@@ -49,7 +57,13 @@ class BuildAgentAddressRegistryServiceTest {
         // put returns void, so it has to be stubbed the other way round
         doAnswer(invocation -> registeredAddresses.put(invocation.getArgument(0), invocation.getArgument(1))).when(map).put(any(), any());
 
+        @SuppressWarnings("unchecked")
+        DistributedMap<String, BuildAgentInformation> agentInformationMap = mock(DistributedMap.class);
+        buildAgentInformation = agentInformationMap;
+
         when(distributedDataAccessService.isConnectedToCluster()).thenReturn(true);
+        when(distributedDataAccessService.getDistributedBuildAgentInformation()).thenReturn(buildAgentInformation);
+        when(distributedDataAccessService.getProcessingJobsForAgentByName(any())).thenReturn(List.of());
         when(distributedDataAccessService.getDistributedBuildAgentAddresses()).thenReturn(map);
         when(distributedDataAccessService.getBuildAgentAddressMap()).thenAnswer(_ -> Map.copyOf(registeredAddresses));
     }
@@ -227,6 +241,62 @@ class BuildAgentAddressRegistryServiceTest {
      * The opposite case, which must still work: the provider answered and genuinely reports nothing connected, so the
      * stale entry has to go.
      */
+    /**
+     * The window between an agent disconnecting and its registration and jobs being cleaned up, which different
+     * listeners do. Deleting the address entry here would flip the agent from constrained to unconstrained, because an
+     * absent entry means "origin not observable" and permits any address - so a leaked key or token would still name a
+     * known agent, still match a listed job, and no longer be bound to an address. The entry therefore stays, with no
+     * addresses, and denies.
+     */
+    @Test
+    void shouldDenyADisconnectedAgentThatIsStillRegistered() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        // The agent is gone from the observed connections, but its registration has not been cleaned up yet.
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+        when(buildAgentInformation.get("agent-1")).thenReturn(mock(BuildAgentInformation.class));
+        service.refreshRegisteredAddresses();
+
+        assertThat(registeredAddresses).as("the entry must survive as a tombstone rather than be deleted").containsKey("agent-1");
+        assertThat(registeredAddresses.get("agent-1").addresses()).isEmpty();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).as("its former address must stop working").isFalse();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.50")).as("and it must not become exempt from origin binding either").isFalse();
+    }
+
+    /**
+     * The other end of that lifecycle: once the agent is neither registered nor holding jobs it cannot authenticate
+     * anything, so keeping a tombstone would only grow the map.
+     */
+    @Test
+    void shouldDropTheEntryOnceTheAgentIsFullyGone() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+        service.refreshRegisteredAddresses();
+
+        assertThat(registeredAddresses).isEmpty();
+    }
+
+    /**
+     * A dual-stack socket reports an IPv4 client as an IPv4-mapped IPv6 address, so the two sides of this comparison
+     * legitimately disagree on notation. Neither string equality nor {@code IPAddress.equals} bridges that, and getting
+     * it wrong refuses a working build agent.
+     */
+    @Test
+    void shouldMatchAnIpv4MappedIpv6AddressAgainstItsIpv4Form() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("::ffff:10.0.0.5"), "agent-2", Set.of("10.0.0.9"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).as("observed as IPv4-mapped, requested as IPv4").isTrue();
+        assertThat(service.isRegisteredAddressOfAgent("agent-2", "::ffff:10.0.0.9")).as("observed as IPv4, requested as IPv4-mapped").isTrue();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.6")).as("normalising must not make unrelated addresses match").isFalse();
+    }
+
     @Test
     void shouldClearTheRegistryWhenTheProviderReportsNoClients() {
         when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
