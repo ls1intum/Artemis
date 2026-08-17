@@ -18,12 +18,15 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.modeling.api.ModelingFeedbackApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.text.api.TextFeedbackApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * Handles Athena AI feedback requests for submitted test exams: dispatching feedback generation for eligible
@@ -100,8 +103,11 @@ public class StudentExamAthenaFeedbackService {
         }
 
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
+        // Exclude participations whose latest submission is empty: the feedback generators below skip empty submissions
+        // silently, so including them here would consume a cap slot without ever generating feedback.
         List<StudentParticipation> eligibleParticipations = participations.stream()
-                .filter(participation -> participation.getExercise() != null && eligibleExerciseIds.contains(participation.getExercise().getId())).toList();
+                .filter(participation -> participation.getExercise() != null && eligibleExerciseIds.contains(participation.getExercise().getId()))
+                .filter(StudentExamAthenaFeedbackService::hasNonEmptySupportedSubmission).toList();
         if (eligibleParticipations.isEmpty()) {
             throw new BadRequestAlertException("No exam exercises with course-level Athena formative feedback enabled", "StudentExam", "noCourseLevelAthenaFormativeEnabled", true);
         }
@@ -146,5 +152,24 @@ public class StudentExamAthenaFeedbackService {
     public AthenaFeedbackUsageDTO getAthenaFeedbackUsage(Long userId, Long examId) {
         long used = studentExamRepository.countTestExamAttemptsWithAthenaFeedbackRequestedByUserIdAndExamId(userId, examId);
         return new AthenaFeedbackUsageDTO(used, allowedFeedbackRequests);
+    }
+
+    /**
+     * Determines whether the participation's latest submission is a non-empty text or modeling submission, i.e. one
+     * that the corresponding feedback generator will actually process instead of skipping.
+     */
+    private static boolean hasNonEmptySupportedSubmission(StudentParticipation participation) {
+        Optional<Submission> latestSubmission = participation.findLatestSubmission();
+        if (latestSubmission.isEmpty()) {
+            return false;
+        }
+        Submission submission = latestSubmission.get();
+        if (submission instanceof TextSubmission textSubmission) {
+            return !textSubmission.isEmpty();
+        }
+        if (submission instanceof ModelingSubmission modelingSubmission) {
+            return !modelingSubmission.isEmpty();
+        }
+        return false;
     }
 }

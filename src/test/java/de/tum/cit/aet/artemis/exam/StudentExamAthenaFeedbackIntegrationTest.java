@@ -348,6 +348,41 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             assertThatExceptionOfType(BadRequestAlertException.class)
                     .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
         }
+
+        @Test
+        void requestAthenaFeedback_shouldRejectAndNotConsumeCapSlotWhenOnlySubmissionIsEmpty() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            TextExercise textExercise = addTextExerciseToExam(testExam);
+            enableAthenaForCourse();
+
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
+
+            // the feedback generator skips empty submissions silently, so this attempt must be rejected rather than
+            // reserving a cap slot for a request that will never generate feedback
+            StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
+            addTextSubmission(participation, "");
+
+            studentExam.getStudentParticipations().add(participation);
+            studentExam = studentExamRepository.save(studentExam);
+
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now());
+            studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+
+            detachExerciseParticipationsCollection(studentExam);
+
+            StudentExam finalStudentExam = studentExam;
+            assertThatExceptionOfType(BadRequestAlertException.class)
+                    .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+
+            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+            assertThat(usage.used()).isZero();
+        }
     }
 
     @Nested
