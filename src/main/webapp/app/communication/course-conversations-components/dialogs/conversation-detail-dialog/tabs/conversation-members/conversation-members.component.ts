@@ -23,6 +23,7 @@ import { ConversationMemberSearchFilter, ConversationService } from 'app/communi
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { SelectModule } from 'primeng/select';
 import { TranslateService } from '@ngx-translate/core';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 interface SearchQuery {
     searchTerm: string;
@@ -98,13 +99,15 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
-        const ref = this.dialogService.open(ConversationAddUsersDialogComponent, {
-            ...defaultSecondLayerDialogOptions,
-            data: {
-                course: this.course(),
-                activeConversation: this.activeConversation(),
-            },
-        });
+        const ref = this.dialogService.open(
+            ConversationAddUsersDialogComponent,
+            cloneWith(defaultSecondLayerDialogOptions, {
+                data: {
+                    course: this.course(),
+                    activeConversation: this.activeConversation(),
+                },
+            }),
+        );
         ref?.onClose
             .pipe(
                 filter((result) => !!result),
@@ -221,10 +224,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
             // might have changed because of user deletion or addition
             this.activeConversation.update((current) => {
                 if (current) {
-                    return {
-                        ...current,
-                        numberOfMembers: this.totalItems(),
-                    };
+                    return cloneWith(current, { numberOfMembers: this.totalItems() });
                 }
                 return current;
             });

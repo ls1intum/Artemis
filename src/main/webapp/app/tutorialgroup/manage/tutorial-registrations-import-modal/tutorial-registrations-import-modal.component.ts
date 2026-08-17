@@ -15,6 +15,7 @@ import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicato
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialGroupStudentImportData } from 'app/openapi/model/tutorial-group-student-import-data';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export enum ImportFlowStep {
     EXPLANATION = 'EXPLANATION',
@@ -169,17 +170,11 @@ export class TutorialRegistrationsImportModalComponent {
                 ];
             case ImportFlowStep.CONFIRMATION:
                 return this.parsedStudents().map((student) => {
-                    return {
-                        ...student,
-                        markFilledCells: false,
-                    };
+                    return cloneWith(student, { markFilledCells: false });
                 });
             case ImportFlowStep.RESULTS:
                 return this.importResults().map((result) => {
-                    return {
-                        ...result.student,
-                        markFilledCells: !result.exists,
-                    };
+                    return cloneWith(result.student, { markFilledCells: !result.exists });
                 });
         }
     }
