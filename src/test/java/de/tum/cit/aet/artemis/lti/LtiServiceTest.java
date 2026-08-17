@@ -232,8 +232,6 @@ class LtiServiceTest {
     }
 
     @Test
-
-    @Test
     void authenticateLtiUser_caseInsensitiveEmailLookup() throws Exception {
         SecurityContextHolder.getContext().setAuthentication(null);
 
