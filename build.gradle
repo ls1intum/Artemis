@@ -107,6 +107,7 @@ ext.tumUiRuntimeSources = fileTree("packages/tum-ui/src") {
 apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
 apply from: "gradle/sbom.gradle"
+apply from: "gradle/dependency-families.gradle"
 
 if (project.hasProperty("prod")) {
     apply from: "gradle/profile_prod.gradle"

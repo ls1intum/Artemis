@@ -1,0 +1,124 @@
+// Guards dependency families that must move in lockstep.
+//
+// WHY: bumping one member of a tightly-coupled family and leaving its siblings behind produces a runtime
+// LinkageError, not a build failure, so it reaches production. Two real incidents:
+//
+//   * PR #12638 raised httpclient5 5.5.1 -> 5.6.1. httpcore5 stayed on the 5.3 line, but httpclient5 5.6.x
+//     references org.apache.hc.core5.io.IOFunction, which only exists from httpcore5 5.4. Every Eureka registry
+//     fetch then threw NoClassDefFoundError; DiscoveryClient swallows Throwable, so getInstances() simply returned
+//     0 and every node formed its own single-member Hazelcast cluster. Reverted in PR #12652 with the cause
+//     misattributed to IPv6 Basic auth, which cost a second investigation to disprove.
+//   * A later sweep raised bcprov-jdk18on to 1.85.2 while bcpkix/bcpg/bcutil stayed on 1.85. Bouncy Castle requires
+//     its modules to share a version; that one was caught in review rather than by a build.
+//
+// WHAT IS CHECKED, against the RESOLVED graph (so transitive members count too):
+//   A. Every module of a watched family resolves to a single version.
+//   B. No module of a watched family resolves BELOW a version that some other module asked for. This is the #12638
+//      shape: a managed/pinned version silently holding a family member under what its sibling needs. It reads the
+//      requested versions out of the graph, so it stays correct without a hand-maintained compatibility table.
+//
+// Wired into `check`, and therefore into CI, but it resolves runtimeClasspath so it is not free — it is deliberately
+// not wired into `compileJava`.
+
+/** Families whose members must share one version. Keyed by Maven group. */
+def watchedFamilies = [
+    'org.apache.httpcomponents.client5',
+    'org.apache.httpcomponents.core5',
+    'org.bouncycastle',
+    'org.eclipse.jgit',
+    'org.apache.sshd',
+]
+
+/** Compares Maven-style versions numerically segment by segment, tolerating suffixes like `.Final` or `-r`. */
+static int compareVersions(String a, String b) {
+    def pa = a.split(/[.\-]/)
+    def pb = b.split(/[.\-]/)
+    for (int i = 0; i < Math.max(pa.length, pb.length); i++) {
+        def x = i < pa.length ? pa[i] : ''
+        def y = i < pb.length ? pb[i] : ''
+        if (x.isInteger() && y.isInteger()) {
+            int c = (x as int) <=> (y as int)
+            if (c != 0) {
+                return c
+            }
+        } else if (x != y) {
+            return x <=> y
+        }
+    }
+    return 0
+}
+
+tasks.register('verifyDependencyFamilies') {
+    group = 'verification'
+    description = 'Fails if a tightly-coupled dependency family (HttpComponents, Bouncy Castle, JGit, SSHD) resolves to mixed or downgraded versions.'
+
+    def resolutionResult = configurations.named('runtimeClasspath').map { it.incoming.resolutionResult.root }
+    def families = watchedFamilies
+
+    doLast {
+        def problems = []
+        def selectedByGroup = [:].withDefault { [:] }
+        def requestedFor = [:].withDefault { [] as Set }
+
+        def visited = [] as Set
+        def walk
+        walk = { component ->
+            if (!visited.add(component.id.displayName)) {
+                return
+            }
+            component.dependencies.each { dependency ->
+                if (!(dependency instanceof org.gradle.api.artifacts.result.ResolvedDependencyResult)) {
+                    return
+                }
+                def requested = dependency.requested
+                def selected = dependency.selected
+                if (requested instanceof org.gradle.api.artifacts.component.ModuleComponentSelector) {
+                    def group = requested.group
+                    if (families.contains(group) && requested.version) {
+                        requestedFor["${group}:${requested.module}"] << requested.version
+                    }
+                }
+                def selectedId = selected.moduleVersion
+                if (selectedId != null && families.contains(selectedId.group)) {
+                    selectedByGroup[selectedId.group][selectedId.name] = selectedId.version
+                }
+                walk(selected)
+            }
+        }
+        walk(resolutionResult.get())
+
+        // Rule A: one version per family.
+        selectedByGroup.each { group, modules ->
+            def versions = modules.values().toSet()
+            if (versions.size() > 1) {
+                def detail = modules.sort().collect { name, version -> "    ${group}:${name}:${version}" }.join('\n')
+                problems << "Family '${group}' resolves to mixed versions ${versions.sort()}. Its modules are built and released together and must share one version:\n${detail}"
+            }
+        }
+
+        // Rule B: nothing in a watched family resolved below a version another module asked for.
+        requestedFor.each { coordinate, requestedVersions ->
+            def (group, name) = coordinate.split(':', 2)
+            def selected = selectedByGroup[group][name]
+            if (selected == null) {
+                return
+            }
+            requestedVersions.findAll { !it.startsWith('[') && !it.startsWith('(') && !it.endsWith('+') }.each { requested ->
+                if (compareVersions(selected, requested) < 0) {
+                    problems << "'${group}:${name}' resolved to ${selected}, below the ${requested} that another module on the classpath asks for. " +
+                            'A pinned or BOM-managed version is holding it under what its sibling needs, which is a LinkageError at runtime rather than a build failure ' +
+                            "(see the httpclient5/httpcore5 note in gradle/dependency-families.gradle). Raise the pin for '${group}:${name}' to at least ${requested}."
+                }
+            }
+        }
+
+        if (problems) {
+            throw new GradleException("Dependency family verification failed:\n\n" + problems.collect { "  - ${it}" }.join('\n\n') + '\n')
+        }
+        logger.lifecycle("Dependency families verified: ${families.size()} families, all consistent.")
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'verifyDependencyFamilies'
+}
