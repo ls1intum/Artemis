@@ -13,8 +13,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
 class BuildJobGitServiceTest extends AbstractArtemisBuildAgentTest {
@@ -164,5 +169,61 @@ class BuildJobGitServiceTest extends AbstractArtemisBuildAgentTest {
 
         assertThat(username.getValue()).as("a blank credential must not become an exception on the build thread").isEmpty();
         assertThat(password.getValue()).isEmpty();
+    }
+
+    /**
+     * The warning that explains an unauthorizable git operation has to be emitted per operation, not once per agent
+     * process. The fallback provider is built once and cached, so warning while building it would explain the first
+     * affected build job and no later one - and the one that needs explaining is the build that fails hours after
+     * anybody read the startup log.
+     */
+    @Test
+    void shouldWarnOnEveryUnauthorizableOperationRatherThanOncePerProcess() {
+        ReflectionTestUtils.setField(buildJobGitService, "buildAgentGitUsername", "");
+        ReflectionTestUtils.setField(buildJobGitService, "buildAgentGitPassword", "");
+        ReflectionTestUtils.setField(buildJobGitService, "credentialsProvider", null);
+        buildJobGitService.clearCloneTokenForCurrentThread();
+
+        var logger = (Logger) LoggerFactory.getLogger(BuildJobGitService.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            ReflectionTestUtils.invokeMethod(buildJobGitService, "getCredentialsProvider");
+            ReflectionTestUtils.invokeMethod(buildJobGitService, "getCredentialsProvider");
+            ReflectionTestUtils.invokeMethod(buildJobGitService, "getCredentialsProvider");
+        }
+        finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+
+        assertThat(appender.list).filteredOn(event -> event.getLevel() == Level.WARN && event.getFormattedMessage().contains("no clone token")).hasSize(3);
+    }
+
+    /**
+     * The counterpart: a job that carries a token authenticates with it, so nothing is wrong and nothing may be logged.
+     * A warning here would fire on every build of a correctly configured installation.
+     */
+    @Test
+    void shouldNotWarnWhenTheJobCarriesACloneToken() {
+        ReflectionTestUtils.setField(buildJobGitService, "buildAgentGitUsername", "");
+        ReflectionTestUtils.setField(buildJobGitService, "buildAgentGitPassword", "");
+        buildJobGitService.setCloneTokenForCurrentThread("bjct-the-token");
+
+        var logger = (Logger) LoggerFactory.getLogger(BuildJobGitService.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            ReflectionTestUtils.invokeMethod(buildJobGitService, "getCredentialsProvider");
+        }
+        finally {
+            logger.detachAppender(appender);
+            appender.stop();
+            buildJobGitService.clearCloneTokenForCurrentThread();
+        }
+
+        assertThat(appender.list).filteredOn(event -> event.getLevel() == Level.WARN).isEmpty();
     }
 }
