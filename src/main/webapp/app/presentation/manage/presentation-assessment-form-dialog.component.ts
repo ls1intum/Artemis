@@ -154,13 +154,7 @@ export class PresentationAssessmentFormDialogComponent {
             this.currentTitle.set(this.editForm.controls.title.value ?? '');
         });
 
-        effect(() => {
-            if (this.isSaving()) {
-                this.editForm.disable({ emitEvent: false });
-            } else {
-                this.editForm.enable({ emitEvent: false });
-            }
-        });
+        effect(() => (this.isSaving() ? this.editForm.disable({ emitEvent: false }) : this.editForm.enable({ emitEvent: false })));
     }
 
     save(): void {
@@ -188,8 +182,7 @@ export class PresentationAssessmentFormDialogComponent {
         this.cancelled.emit();
     }
 
-    studentSearch = (loginOrName: string): Observable<HttpResponse<User[]>> =>
-        this.isSaving() ? of(new HttpResponse<User[]>({ body: [] })) : this.courseManagementService.searchStudents(this.courseId(), loginOrName);
+    studentSearch = (loginOrName: string): Observable<HttpResponse<User[]>> => this.courseManagementService.searchStudents(this.courseId(), loginOrName);
 
     addStudentToPresentation = (): Observable<HttpResponse<void>> => of(new HttpResponse<void>());
 
