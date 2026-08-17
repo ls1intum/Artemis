@@ -255,6 +255,7 @@ class LtiServiceTest {
         assertThat(auth.getPrincipal()).isEqualTo(user.getLogin());
     }
 
+    @Test
     void isNotLtiCreatedUser() {
         user.setLtiCreated(false);
 
