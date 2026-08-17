@@ -65,23 +65,36 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         });
         await getExercise(page, quizExercise.id!).locator('#save-exam').click();
         await failedSave;
+        // Record every SUCCESSFUL re-send from here on. Registered before the outage is lifted, so no pre-reload save
+        // can be counted (every save so far was answered 503) and none can be missed either - the client may fire the
+        // re-send during its own start-up, which a waitForResponse registered after the reload would never see.
+        const successfulResends: string[] = [];
+        page.on('response', (response) => {
+            if (response.url().includes(`/quiz/exercises/${quizExercise.id}/submissions/exam`) && response.request().method() === 'PUT' && response.status() === 200) {
+                successfulResends.push(response.url());
+            }
+        });
+
         // Stop failing saves so the post-reload re-send can succeed.
         await page.unroute(quizSaveUrl);
+        await page.reload();
 
-        // On reload the restored answer must be re-sent to the server (successful PUT for THIS quiz exercise). Wait for
-        // the response and the reload together via Promise.all so only a POST-reload re-send can satisfy this; setting up
-        // the wait before reload (without Promise.all) could otherwise be satisfied by a pre-reload autosave retry.
-        await Promise.all([
-            page.waitForResponse(
-                (response) => response.url().includes(`/quiz/exercises/${quizExercise.id}/submissions/exam`) && response.request().method() === 'PUT' && response.status() === 200,
-                { timeout: 30000 },
-            ),
-            page.reload(),
-        ]);
-
-        // The restored answer is still selected in the UI.
+        // The restored answer is still selected in the UI: the client read it back out of local storage.
         await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
         await expect(getExercise(page, quizExercise.id!).locator('#answer-option-0')).toHaveClass(/selected/, { timeout: 15000 });
+
+        // Trigger the re-send instead of waiting for the autosave to do it. AUTOSAVE_EXERCISE_INTERVAL is 30s and the
+        // timer restarts at 0 on reload, so the previous 30s `waitForResponse` was racing the very timer it depended
+        // on - it started counting before the page had finished loading and lost whenever the reload was slow, which
+        // is the whole of this test's flakiness. Forcing the save still covers the regression: an answer wrongly
+        // marked as already synced is not re-sent by an explicit save either, so the assertion below still fails.
+        await getExercise(page, quizExercise.id!).locator('#save-exam').click();
+        await expect
+            .poll(() => successfulResends.length, {
+                message: 'the answer restored from local storage was never re-sent to the server',
+                timeout: 30000,
+            })
+            .toBeGreaterThan(0);
     });
 
     test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
