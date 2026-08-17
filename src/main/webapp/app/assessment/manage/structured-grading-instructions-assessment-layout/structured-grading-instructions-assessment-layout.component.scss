@@ -48,20 +48,35 @@
         flex: 0 0 auto;
     }
 
-    /* Tutor-facing guidance on when to select this criterion (instructionDescription): muted, secondary line. */
-    &__scale {
+    &__identity {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+    }
+
+    /* Short Likert-style scale label, e.g. Good / Poor. */
+    &__level {
+        font-weight: 600;
+        font-size: 0.875rem;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    /* Tutor-only notes on when to apply this scale level. */
+    &__guidance {
         color: var(--secondary);
         font-size: 0.875rem;
     }
 
-    /* The feedback shown to the student: the primary, full-contrast line. */
-    &__description {
+    /* The feedback shown to the student. */
+    &__student-feedback {
         color: var(--body-color);
     }
 
     /* jhiMarkdown wraps its output in a <p>; drop the trailing margin so single lines stay compact. */
-    &__scale ::ng-deep p:last-child,
-    &__description ::ng-deep p:last-child {
+    &__guidance ::ng-deep p:last-child,
+    &__student-feedback ::ng-deep p:last-child {
         margin-bottom: 0;
     }
 

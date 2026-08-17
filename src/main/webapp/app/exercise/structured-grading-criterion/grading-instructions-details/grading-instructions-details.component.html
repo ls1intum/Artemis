@@ -88,6 +88,7 @@
                                                         class="form-control input-lg"
                                                         [(ngModel)]="instruction.gradingScale"
                                                         type="text"
+                                                        [placeholder]="'artemisApp.exercise.gradingScalePlaceholder' | artemisTranslate"
                                                         (change)="updateGradingInstruction(instruction, criterion)"
                                                     />
                                                 </td>
@@ -97,6 +98,7 @@
                                                         [(ngModel)]="instruction.instructionDescription"
                                                         type="text"
                                                         rows="2"
+                                                        [placeholder]="'artemisApp.exercise.descriptionPlaceholder' | artemisTranslate"
                                                         (change)="updateGradingInstruction(instruction, criterion)"
                                                     ></textarea>
                                                 </td>
@@ -106,6 +108,7 @@
                                                         [(ngModel)]="instruction.feedback"
                                                         type="text"
                                                         rows="2"
+                                                        [placeholder]="'artemisApp.exercise.feedbackPlaceholder' | artemisTranslate"
                                                         (change)="updateGradingInstruction(instruction, criterion)"
                                                     ></textarea>
                                                 </td>

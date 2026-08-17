@@ -49,7 +49,12 @@
                         id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
                     >
                         <div class="sgi-item__top">
-                            <tum-ui-tag class="sgi-item__points" [severity]="pointsSeverity(instruction.credits)" [value]="pointsLabel(instruction.credits)" />
+                            <div class="sgi-item__identity">
+                                <tum-ui-tag class="sgi-item__points" [severity]="pointsSeverity(instruction.credits)" [value]="pointsLabel(instruction.credits)" />
+                                @if (instruction.gradingScale) {
+                                    <span class="sgi-item__level">{{ instruction.gradingScale }}</span>
+                                }
+                            </div>
                             <div class="sgi-item__control">
                                 @if (selectable()) {
                                     @if (showUsageStepper(instruction)) {
@@ -99,10 +104,9 @@
                                 }
                             </div>
                         </div>
-                        <!-- Tutor-facing guidance on when this criterion applies (muted), followed by the exact
-                             wording the student will see once it is applied (prominent). -->
-                        <div class="sgi-item__scale markdown-preview" [jhiMarkdown]="instruction!.instructionDescription!"></div>
-                        <div class="sgi-item__description markdown-preview" [jhiMarkdown]="instruction!.feedback!"></div>
+                        <!-- Tutor notes on when this scale level applies (muted), then the student-facing feedback. -->
+                        <div class="sgi-item__guidance markdown-preview" [jhiMarkdown]="instruction!.instructionDescription!"></div>
+                        <div class="sgi-item__student-feedback markdown-preview" [jhiMarkdown]="instruction!.feedback!"></div>
                     </div>
                 }
             </div>
