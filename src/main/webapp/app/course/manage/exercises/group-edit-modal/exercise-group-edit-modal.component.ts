@@ -8,6 +8,7 @@ import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/cours
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Declarative group-edit dialog. The edited group comes in via {@link group} and is shown while {@link visible} is
@@ -100,8 +101,7 @@ export class ExerciseGroupEditModalComponent {
     }
 
     onSave(): void {
-        const updated: CourseExerciseGroup = {
-            ...this.group(),
+        const updated: CourseExerciseGroup = cloneWith(this.group(), {
             title: this.draftTitle().trim(),
             maxPoints: this.draftMaxPoints(),
             releaseDate: this.draftReleaseDate(),
@@ -109,7 +109,7 @@ export class ExerciseGroupEditModalComponent {
             dueDate: this.draftDueDate(),
             assessmentDueDate: this.draftAssessmentDueDate(),
             exampleSolutionPublicationDate: this.draftExampleSolutionPublicationDate(),
-        };
+        });
         // Nothing edited: close without a `saved` event, so the openers skip the persistence call.
         if (!this.isUnchanged(updated)) {
             this.saved.emit(updated);

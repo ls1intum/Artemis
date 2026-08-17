@@ -44,6 +44,7 @@ import { FileService } from 'app/foundation/service/file.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
 import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /** Shown when a deep link points at a lecture unit that no longer exists. Worded for the mechanism rather than for one caller, since a citation is only one way to get here. */
 const DEEP_LINK_UNIT_GONE_ERROR_KEY = 'artemisApp.lectureUnit.deepLink.unitGone';
@@ -312,7 +313,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
         this.lectureUnitService.completeLectureUnit(this.lecture()!, event, () => {
             // Replace the unit with a new reference so the card's signal input reacts and the checkmark updates immediately.
-            this.lectureUnits.update((units) => units.map((unit) => (unit.id === event.lectureUnit.id ? Object.assign({}, unit, { completed: event.completed }) : unit)));
+            this.lectureUnits.update((units) => units.map((unit) => (unit.id === event.lectureUnit.id ? cloneWith(unit, { completed: event.completed }) : unit)));
         });
     }
 

@@ -10,6 +10,7 @@ import requireChartAccessibleName from './require-chart-accessible-name.mjs';
 import noNavigationInEffect from './no-navigation-in-effect.mjs';
 import noAsUnknownCast from './no-as-unknown-cast.mjs';
 import noAsAnyCast from './no-as-any-cast.mjs';
+import preferDeepClone from './prefer-deep-clone.mjs';
 
 export default {
     rules: {
@@ -25,5 +26,6 @@ export default {
         'no-navigation-in-effect': noNavigationInEffect,
         'no-as-unknown-cast': noAsUnknownCast,
         'no-as-any-cast': noAsAnyCast,
+        'prefer-deep-clone': preferDeepClone,
     },
 };
