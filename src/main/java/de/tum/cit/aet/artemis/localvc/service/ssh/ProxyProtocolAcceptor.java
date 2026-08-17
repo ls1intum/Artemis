@@ -260,6 +260,13 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
         if (session instanceof AbstractServerSession serverSession) {
             // Idempotent: this method runs again for the same session whenever the ssh identification line that
             // follows the header arrives in pieces, and it then sets the same address a second time.
+            //
+            // The static analyser reports SSRF here because header-derived data reaches an InetSocketAddress. Nothing
+            // in this class opens a connection: the address is recorded as session metadata, and is only ever read
+            // afterwards as a rate limiting key, an access log field and an allowlist comparison. There is no request
+            // for an attacker to redirect. It is also not a name resolution sink - the address arrives either as raw
+            // bytes from a v2 header or parsed strictly as a literal from a v1 line, never resolved.
+            // nosemgrep
             serverSession.setClientAddress(new InetSocketAddress(address, port));
             log.debug("Resolved the ssh client behind the proxy as {}:{}", address.getHostAddress(), port);
         }
