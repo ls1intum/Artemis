@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Covering index for the statement that dominated the production slow query log.
+
+    The active user metrics (StatisticsRepository#findLastSubmissionPerActiveUser) scan a 30 day window of submissions
+    and only need the participation of each row. With the existing single column index on submission_date every
+    matching row still had to be read from the clustered index; the composite index turns that into an index-only
+    range scan ("Covering index range scan" in EXPLAIN ANALYZE).
+
+    Measured on a production dump over a 30 day window (419k submissions, 3483 active users), warm buffer pool:
+    the replaced aggregation took 6.71s, the rewritten query 0.51s with the indexes that exist today, and 0.34s with
+    this index.
+
+    The pre-existing index on submission(submission_date) becomes a redundant leftmost prefix of the new index and is
+    dropped, so that INSERTs into the largest table of the schema do not maintain both.
+
+    Note for deployment: creating an index on submission touches every row of the largest table in the schema (~17
+    million rows in production). MySQL builds it in place and allows concurrent DML, but the migration takes a few
+    minutes and Liquibase runs it during startup.
+    -->
+
+    <changeSet id="20260817-01-add-submission-date-participation-index" author="krusche">
+        <createIndex indexName="idx_submission_date_participation" tableName="submission">
+            <column name="submission_date"/>
+            <column name="participation_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- The single column index is a leftmost prefix of the composite one created above and therefore redundant -->
+    <changeSet id="20260817-02-drop-redundant-submission-date-index" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="submission" indexName="submission_date"/>
+        </preConditions>
+        <dropIndex indexName="submission_date" tableName="submission"/>
+    </changeSet>
+
+</databaseChangeLog>
