@@ -232,6 +232,29 @@ class LtiServiceTest {
     }
 
     @Test
+
+    @Test
+    void authenticateLtiUser_caseInsensitiveEmailLookup() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(null);
+
+        // Set trustExternalLTISystems to true via reflection
+        var field = LtiService.class.getDeclaredField("trustExternalLTISystems");
+        field.setAccessible(true);
+        field.set(ltiService, true);
+
+        String emailInDb = "John.Doe@test.com";
+        String emailFromLti = "john.doe@test.com";
+        user.setEmail(emailInDb);
+
+        when(userRepository.findOneByEmailIgnoreCase(emailFromLti)).thenReturn(Optional.of(user));
+        when(userRepository.findOneWithAuthoritiesByEmailIgnoreCase(emailFromLti)).thenReturn(Optional.of(user));
+
+        ltiService.authenticateLtiUser(emailFromLti, "username", "firstname", "lastname", false);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertThat(auth.getPrincipal()).isEqualTo(user.getLogin());
+    }
+
     void isNotLtiCreatedUser() {
         user.setLtiCreated(false);
 
