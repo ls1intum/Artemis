@@ -13,6 +13,7 @@ import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { TimeZoneWarningComponent } from 'app/shared-ui/date-time-picker/time-zone-warning.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface TimelineItem {
     kind: 'required' | 'optional';
@@ -173,11 +174,10 @@ export class ExerciseTimelineComponent {
                 violationKey = this.translateService.instant('artemisApp.exercise.timelineOtherRequiredDateTooltip', { otherInputName });
             }
 
-            return {
-                ...item,
+            return cloneWith(item, {
                 internalDate: date?.toDate(),
                 violationKey,
-            };
+            });
         });
     }
 

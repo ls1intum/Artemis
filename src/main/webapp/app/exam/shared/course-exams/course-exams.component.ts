@@ -1,7 +1,7 @@
-import { Component, computed, effect, inject, signal, DestroyRef } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
-import { of, Subscription, distinctUntilChanged } from 'rxjs';
+import { Subscription, distinctUntilChanged, of } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
@@ -19,7 +19,7 @@ import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
-import { cloneDeep } from 'lodash-es';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
@@ -67,8 +67,10 @@ export class CourseExamsComponent implements SidebarView {
     readonly exams = signal<ExamForOverview[] | undefined>(undefined);
 
     private readonly visibleExams = computed(
-        () => this.exams()?.filter((exam) => this.isVisible(exam))
-            .sort((exam1, exam2) => this.sortExamsByStartDate(exam1, exam2)) ?? [],
+        () =>
+            this.exams()
+                ?.filter((exam) => this.isVisible(exam))
+                .sort((exam1, exam2) => this.sortExamsByStartDate(exam1, exam2)) ?? [],
     );
 
     protected readonly realExamsOfCourse = computed(() => this.visibleExams().filter((exam) => isRealExam(exam)));
@@ -101,12 +103,14 @@ export class CourseExamsComponent implements SidebarView {
      * subscribe to changes in the course and fetch course by the path parameter
      */
     constructor() {
-        toObservable(this.courseId).pipe(distinctUntilChanged(), takeUntilDestroyed()).subscribe(
-            (courseId) => this.activateCourse(courseId)
-        );
+        toObservable(this.courseId)
+            .pipe(distinctUntilChanged(), takeUntilDestroyed())
+            .subscribe((courseId) => this.activateCourse(courseId));
 
         // Selecting the exams tab while already on it acts as a refresh
-        this.courseTabRefreshService.reselections(this.route).pipe(takeUntilDestroyed())
+        this.courseTabRefreshService
+            .reselections(this.route)
+            .pipe(takeUntilDestroyed())
             .subscribe(() => this.loadExams(this.courseId()));
     }
 
@@ -133,15 +137,19 @@ export class CourseExamsComponent implements SidebarView {
     private loadExams(courseId: number): void {
         // test exams have multiple attempts, therefore those need to be loaded so the attempts can be viewed by the student
         this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
-        this.studentExamTestExamInitialFetchSubscription = this.examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId)
-            .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        this.studentExamTestExamInitialFetchSubscription = this.examParticipationService
+            .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
                 next: () => this.testStudentExamsLoaded.set(true),
                 error: () => this.testStudentExamsLoaded.set(true),
             });
 
         this.examsSubscription?.unsubscribe();
-        this.examsSubscription = this.courseOverviewTabDataService.loadExamsIfNeeded(courseId)
-            .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        this.examsSubscription = this.courseOverviewTabDataService
+            .loadExamsIfNeeded(courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
                 next: (exams) => {
                     this.exams.set(exams);
                     // If no exam is selected navigate to the last selected or upcoming Exam
@@ -150,15 +158,14 @@ export class CourseExamsComponent implements SidebarView {
                 error: () => {
                     this.exams.set([]);
                     this.navigateToExam();
-                }
+                },
             });
 
         // load real exam working times for the current student as a student may have an adjusted working time
-        this.examParticipationService.getRealExamSidebarData(courseId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(
-            (studentExams) => this.realExamWorkingTimeByExamId.set(new Map(
-                studentExams.map((studentExam) => [studentExam.id ?? 0, studentExam.workingTime ?? 0])
-            ))
-        );
+        this.examParticipationService
+            .getRealExamSidebarData(courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((studentExams) => this.realExamWorkingTimeByExamId.set(new Map(studentExams.map((studentExam) => [studentExam.id ?? 0, studentExam.workingTime ?? 0]))));
     }
 
     private navigateToExam() {
@@ -215,7 +222,7 @@ export class CourseExamsComponent implements SidebarView {
     }
 
     protected groupExamsByRealOrTestOrAttempt(realExams: Exam[], testExams: Exam[], testExamAttemptsMap: Map<number, StudentExamOrDTO[]>): AccordionGroups {
-        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
+        const groupedExamGroups = deepClone(DEFAULT_UNIT_GROUPS);
 
         const realExamWorkingTimeByExamId = this.realExamWorkingTimeByExamId();
         for (const realExam of realExams) {

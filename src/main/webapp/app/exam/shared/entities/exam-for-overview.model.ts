@@ -17,5 +17,5 @@ export interface ExamForOverview {
     endDate?: dayjs.Dayjs;
     workingTime?: number;
     examMaxPoints?: number;
-    examMode?: ExamMode
+    examMode?: ExamMode;
 }
