@@ -9,10 +9,9 @@ import java.util.Optional;
 import javax.sql.DataSource;
 
 import org.apache.commons.lang3.Strings;
+import org.semver4j.Semver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.vdurmont.semver4j.Semver;
 
 import de.tum.cit.aet.artemis.core.util.ArtemisVersionUtil;
 import de.tum.cit.aet.helios.HeliosClient;

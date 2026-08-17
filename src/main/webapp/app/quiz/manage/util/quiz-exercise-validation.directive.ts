@@ -23,7 +23,10 @@ export abstract class QuizExerciseValidationDirective {
 
     readonly warningQuizCache = signal(false);
     readonly quizIsValid = signal<boolean>(false);
-    readonly quizExercise = signal<QuizExercise>(undefined!);
+    // `equal: () => false` so the signal emits even when `set` receives the same reference: the editor mutates the
+    // exercise and its questions in place, and rebuilding the object to change its identity would detach the
+    // questions the child editors hold.
+    readonly quizExercise = signal<QuizExercise>(undefined!, { equal: () => false });
 
     savedEntity!: QuizExercise; // assigned in the subclass init()/save flow before pending-change checks read it
     readonly isExamMode = signal<boolean>(false);

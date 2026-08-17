@@ -13,6 +13,7 @@ import { captureException } from '@sentry/angular';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /** Host element augmented with the Apollon editor instance exposed for E2E test access. */
 type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
@@ -95,7 +96,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
             try {
                 // work on a copy if removeAssessments mutates
-                const umlModel = { ...model };
+                const umlModel = deepClone(model);
                 ModelingEditorComponent.removeAssessments(umlModel);
                 this.apollonEditor.model = umlModel;
             } catch (err) {
