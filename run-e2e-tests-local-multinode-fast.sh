@@ -209,10 +209,36 @@ fi
 
 mkdir -p "$LOCAL_DIR"
 
-# Pre-clear ports we will claim. --skip-up still benefits from this (orphan from a prior crash).
-for port in "${ALL_PORTS[@]}"; do
-    check_port_available "$port" "Artemis host JVM"
-done
+# Pre-clear ports we will claim, so a leftover process from an earlier crash cannot block the launch.
+#
+# With --skip-up the running nodes are exactly what we intend to reuse, so killing whatever holds their
+# ports would defeat the flag: the pre-clear tore the stack down, and Step 4 then "reused" the PID it had
+# just killed and aborted the whole run when that process finished dying. Under --skip-up a node port is
+# therefore only cleared when its node does not answer /management/health/readiness, i.e. when it is a crashed
+# leftover rather than the stack we were asked to keep.
+node_port_is_healthy() {
+    # Bounded on purpose: a wedged JVM can accept the connection and never answer, and an unbounded curl here would
+    # hang the pre-flight instead of deciding that this stack cannot be reused.
+    curl -sf --connect-timeout 2 --max-time 5 "http://localhost:$1/management/health/readiness" >/dev/null 2>&1
+}
+
+# All or nothing: the running nodes own their Hazelcast and management ports as well, so a healthy stack
+# has to be kept whole. If any node is missing, everything is cleared and all three are relaunched.
+REUSE_RUNNING_NODES=false
+if [ "$SKIP_UP" = true ]; then
+    REUSE_RUNNING_NODES=true
+    for port in "${HTTP_PORTS[@]}"; do
+        node_port_is_healthy "$port" || REUSE_RUNNING_NODES=false
+    done
+fi
+
+if [ "$REUSE_RUNNING_NODES" = true ]; then
+    echo -e "${GREEN}All three nodes answer /management/health/readiness — keeping the running stack (--skip-up).${NC}"
+else
+    for port in "${ALL_PORTS[@]}"; do
+        check_port_available "$port" "Artemis host JVM"
+    done
+fi
 echo -e "${GREEN}Prerequisites OK${NC}"
 
 # =============================================================================
@@ -408,8 +434,11 @@ launch_node() {
     local log_file="$LOCAL_DIR/server-${n}.log"
     local pid_file="$LOCAL_DIR/server-${n}.pid"
 
-    if [ "$SKIP_UP" = true ] && [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
-        echo "node-${n} already running (PID $(cat "$pid_file")), reusing."
+    # Reuse a node only when it actually serves requests. A live PID is not enough: a JVM that is shutting
+    # down still passes `kill -0` for several seconds, and reusing it means waiting on a health endpoint
+    # that will never come up again. Anything else gets relaunched, after clearing the port it may hold.
+    if [ "$REUSE_RUNNING_NODES" = true ] && node_port_is_healthy "$http_port"; then
+        echo "node-${n} already serving on :${http_port}, reusing."
         return
     fi
 
@@ -461,7 +490,7 @@ launch_node() {
 # against the same database (PSQLException: duplicate key value violates unique constraint
 # "artemis_version_pkey"). The Docker multi-node compose avoids this with
 # `depends_on: artemis-app-node-1: condition: service_healthy`. We mirror that here by
-# launching each node only after the previous one is reachable on /management/health.
+# launching each node only after the previous one is reachable on /management/health/readiness.
 # =============================================================================
 wait_for_node() {
     local n=$1
@@ -470,9 +499,14 @@ wait_for_node() {
     local log_file="$LOCAL_DIR/server-${n}.log"
     local pid; pid=$(cat "$pid_file")
 
-    echo "Waiting for node-${n} on http://localhost:${port}/management/health ..."
+    # Readiness rather than the aggregate health: the aggregate turns DOWN (and the endpoint answers 503, which
+    # `curl -sf` treats as a failure) whenever an external integration cannot be reached from a developer machine —
+    # the push-notification relay is enough on its own. The node then serves requests perfectly well while the gate
+    # waits out its full budget and aborts the run. Readiness covers what this wait is actually about: the node
+    # accepting traffic.
+    echo "Waiting for node-${n} on http://localhost:${port}/management/health/readiness ..."
     local TIMEOUT=420 ELAPSED=0
-    until curl -sf "http://localhost:${port}/management/health" >/dev/null 2>&1; do
+    until curl -sf "http://localhost:${port}/management/health/readiness" >/dev/null 2>&1; do
         if ! kill -0 "$pid" 2>/dev/null; then
             echo -e "${RED}ERROR: node-${n} (PID $pid) died. Last 20 lines of $log_file:${NC}"
             tail -20 "$log_file"

@@ -21,6 +21,7 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -105,9 +106,7 @@ export class ProgrammingExerciseService {
         return this.http
             .get<PlagiarismResultDTO>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
-                params: {
-                    ...options?.toParams(),
-                },
+                params: deepClone(options?.toParams()),
             })
             .pipe(map((response: HttpResponse<PlagiarismResultDTO>) => response.body!));
     }
@@ -121,9 +120,7 @@ export class ProgrammingExerciseService {
         return this.http.get(`${this.resourceUrl}/${exerciseId}/check-plagiarism-jplag-report`, {
             observe: 'response',
             responseType: 'blob',
-            params: {
-                ...options?.toParams(),
-            },
+            params: deepClone(options?.toParams()),
         });
     }
 
@@ -391,10 +388,9 @@ export class ProgrammingExerciseService {
      * @param exercise for which the data should be converted
      */
     convertDataFromClient(exercise: ProgrammingExercise) {
-        const copy = {
-            ...ExerciseService.convertExerciseDatesFromClient(exercise),
+        const copy = cloneWith(ExerciseService.convertExerciseDatesFromClient(exercise), {
             buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(exercise.buildAndTestStudentSubmissionsAfterDueDate),
-        };
+        });
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
