@@ -36,6 +36,7 @@ import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/co
 import { ExamConductionComponent } from 'app/exam/manage/exams/update/exam-conduction/exam-conduction.component';
 import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -493,18 +494,19 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 /**
  * Prepares the exam for import by omitting all properties that should not be imported.
  */
-export const prepareExamForImport = (exam: Exam): Exam => ({
-    ...omit(exam, [
-        'id',
-        'visibleDate',
-        'startDate',
-        'endDate',
-        'publishResultsDate',
-        'examStudentReviewStart',
-        'examStudentReviewEnd',
-        'examSummaryPublicationDate',
-        'examUsers',
-        'studentExams',
-    ]),
-    workingTime: 0,
-});
+export const prepareExamForImport = (exam: Exam): Exam =>
+    cloneWith(
+        omit(exam, [
+            'id',
+            'visibleDate',
+            'startDate',
+            'endDate',
+            'publishResultsDate',
+            'examStudentReviewStart',
+            'examStudentReviewEnd',
+            'examSummaryPublicationDate',
+            'examUsers',
+            'studentExams',
+        ]),
+        { workingTime: 0 },
+    );

@@ -2,14 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import dayjs from 'dayjs/esm';
-import { Course } from 'app/course/shared/entities/course.model';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
+import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
+import { provideHttpClient } from '@angular/common/http';
 import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
-import { Exam } from 'app/exam/shared/entities/exam.model';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
@@ -17,32 +14,50 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
+/** Builds a full set of tab flags, overriding the ones a test cares about. */
+const tabs = (overrides: Partial<CourseAvailableTabs> = {}): CourseAvailableTabs => ({
+    lectures: false,
+    exams: false,
+    competencies: false,
+    tutorialGroups: false,
+    iris: false,
+    faq: false,
+    learningPaths: false,
+    communication: false,
+    training: false,
+    ...overrides,
+});
+
 describe('CourseOverviewGuard', () => {
     let guard: CourseOverviewGuard;
-    let courseStorageService: CourseStorageService;
     let courseManagementService: CourseManagementService;
+    let availableTabsService: CourseAvailableTabsService;
     let router: Router;
 
-    const visibleRealExam = {
-        id: 1,
-        visibleDate: dayjs().subtract(1, 'days'),
-        startDate: dayjs().subtract(30, 'minutes'),
-        examMode: ExamMode.REAL,
-    } as Exam;
+    /** Flags for a course where every guarded tab is available. */
+    const allTabs = tabs({
+        lectures: true,
+        exams: true,
+        competencies: true,
+        tutorialGroups: true,
+        iris: true,
+        faq: true,
+        learningPaths: true,
+        communication: true,
+        training: true,
+    });
 
-    const lecture = new Lecture();
-
-    const mockCourse: Course = { id: 1, lectures: [lecture], exams: [visibleRealExam], numberOfAcceptedFaqs: 3 } as Course;
-
-    const responseFakeCourse = { body: mockCourse } as HttpResponse<Course>;
+    const route = (path: string, courseId: string | undefined = '1') =>
+        ({ parent: { paramMap: { get: () => courseId } }, routeConfig: { path } }) as unknown as ActivatedRouteSnapshot;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [{ provide: AccountService, useClass: MockAccountService }, provideHttpClient(), MockProvider(AlertService)],
         });
         guard = TestBed.inject(CourseOverviewGuard);
-        courseStorageService = TestBed.inject(CourseStorageService);
         courseManagementService = TestBed.inject(CourseManagementService);
+        availableTabsService = TestBed.inject(CourseAvailableTabsService);
+        availableTabsService.clear();
         router = TestBed.inject(Router);
         vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
     });
@@ -52,199 +67,84 @@ describe('CourseOverviewGuard', () => {
     });
 
     describe('canActivate', () => {
-        it('should return false if courseId is not present', () => {
-            const route = { parent: { paramMap: { get: () => undefined } }, routeConfig: { path: CourseOverviewRoutePath.EXERCISES } } as unknown as ActivatedRouteSnapshot;
+        it('should return false without fetching when courseId is not present', () => {
+            const noCourseRoute = { parent: { paramMap: { get: () => undefined } }, routeConfig: { path: CourseOverviewRoutePath.EXERCISES } } as unknown as ActivatedRouteSnapshot;
+            const fetchSpy = vi.spyOn(courseManagementService, 'getCourseAvailableTabs');
             let resultValue = true;
-            guard.canActivate(route).subscribe((result) => {
-                resultValue = result;
-            });
+            guard.canActivate(noCourseRoute).subscribe((result) => (resultValue = result));
             expect(resultValue).toBe(false);
-        });
-
-        it('should load the full course once and decide before activation when it is not yet loaded (first navigation into the course)', () => {
-            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
-            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
-            const fetchSpy = vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
-            let resultValue = false;
-            guard.canActivate(route).subscribe((result) => {
-                resultValue = result;
-            });
-            // The guard loads the course up-front so an inaccessible tab never mounts; findOneForDashboard stores it for the container to reuse
-            expect(fetchSpy).toHaveBeenCalledExactlyOnceWith(1);
-            expect(resultValue).toBe(true);
-        });
-
-        it('should decide from the stored course without fetching when the full course is already loaded', () => {
-            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
-            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
-            vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
-            const fetchSpy = vi.spyOn(courseManagementService, 'findOneForDashboard');
-            let resultValue = false;
-            guard.canActivate(route).subscribe((result) => {
-                resultValue = result;
-            });
-            expect(resultValue).toBe(true);
             expect(fetchSpy).not.toHaveBeenCalled();
         });
 
-        it('should load the full course and decide when only the slim course from the course list is stored', () => {
-            // The course list stores slim courses (e.g. exams and lectures emptied, counters missing); deciding on them
-            // would wrongly deny e.g. the "open exam" deep link from the course overview. The guard loads the full
-            // course first so the access decision (and the redirect on denial) uses the complete data.
-            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.EXAMS } } as unknown as ActivatedRouteSnapshot;
-            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1, exams: [] } as Course);
-            vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(false);
-            const fetchSpy = vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
-            const navigateSpy = vi.spyOn(router, 'navigate');
+        it('should fetch the available tabs and allow an available tab', () => {
+            const fetchSpy = vi.spyOn(courseManagementService, 'getCourseAvailableTabs').mockReturnValue(of(allTabs));
             let resultValue = false;
-            guard.canActivate(route).subscribe((result) => {
-                resultValue = result;
-            });
-            // mockCourse has a visible exam, so EXAMS is accessible
+            guard.canActivate(route(CourseOverviewRoutePath.LECTURES)).subscribe((result) => (resultValue = result));
             expect(fetchSpy).toHaveBeenCalledExactlyOnceWith(1);
             expect(resultValue).toBe(true);
-            expect(navigateSpy).not.toHaveBeenCalled();
         });
 
-        it('should deny and redirect after loading the course when the target route is inaccessible', () => {
-            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
-            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
-            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of({ body: { id: 1 } as Course } as HttpResponse<Course>));
+        it('should not fetch again when the tabs are already held for the course (tab switching is free)', () => {
+            const fetchSpy = vi.spyOn(courseManagementService, 'getCourseAvailableTabs').mockReturnValue(of(allTabs));
+            guard.canActivate(route(CourseOverviewRoutePath.LECTURES)).subscribe();
+            guard.canActivate(route(CourseOverviewRoutePath.EXAMS)).subscribe();
+            guard.canActivate(route(CourseOverviewRoutePath.FAQ)).subscribe();
+            expect(fetchSpy).toHaveBeenCalledExactlyOnceWith(1);
+        });
+
+        it('should fetch again for a different course', () => {
+            const fetchSpy = vi.spyOn(courseManagementService, 'getCourseAvailableTabs').mockReturnValue(of(allTabs));
+            guard.canActivate(route(CourseOverviewRoutePath.LECTURES, '1')).subscribe();
+            guard.canActivate(route(CourseOverviewRoutePath.LECTURES, '2')).subscribe();
+            expect(fetchSpy).toHaveBeenCalledTimes(2);
+            expect(fetchSpy).toHaveBeenLastCalledWith(2);
+        });
+
+        it('should deny and redirect to exercises when the target tab is unavailable', () => {
+            vi.spyOn(courseManagementService, 'getCourseAvailableTabs').mockReturnValue(of(tabs({ lectures: false })));
             const navigateSpy = vi.spyOn(router, 'navigate');
             let resultValue = true;
-            guard.canActivate(route).subscribe((result) => {
-                resultValue = result;
-            });
+            guard.canActivate(route(CourseOverviewRoutePath.LECTURES)).subscribe((result) => (resultValue = result));
             expect(resultValue).toBe(false);
             expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
         });
 
-        it('should allow activation when loading the course fails (the container then handles the error)', () => {
-            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
-            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
-            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(throwError(() => new Error('network error')));
+        it('should allow activation when loading the available tabs fails (the container then handles the error)', () => {
+            vi.spyOn(courseManagementService, 'getCourseAvailableTabs').mockReturnValue(throwError(() => new Error('network error')));
             let resultValue = false;
-            guard.canActivate(route).subscribe((result) => {
-                resultValue = result;
-            });
+            guard.canActivate(route(CourseOverviewRoutePath.LECTURES)).subscribe((result) => (resultValue = result));
             expect(resultValue).toBe(true);
-        });
-
-        it('should deny and redirect based on the stored full course', () => {
-            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
-            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
-            vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
-            const navigateSpy = vi.spyOn(router, 'navigate');
-            let resultValue = true;
-            guard.canActivate(route).subscribe((result) => {
-                resultValue = result;
-            });
-            expect(resultValue).toBe(false);
-            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
         });
     });
 
-    describe('handleReturn', () => {
-        it('should return true if type is lectures and course has lectures', () => {
-            let resultValue = true;
-            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.LECTURES);
-            result.subscribe((value) => {
-                resultValue = value;
-            });
-
-            expect(resultValue).toBe(true);
-        });
-
-        it('should return true if type is exams and course has visible exams', () => {
-            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.EXAMS);
-            let resultValue = true;
-            result.subscribe((value) => {
-                resultValue = value;
-            });
-            expect(resultValue).toBe(true);
-        });
-
-        it('should return false if type is exams and course has no visible exams', () => {
-            mockCourse.exams = [];
-            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.EXAMS);
-            let resultValue = true;
-            result.subscribe((value) => {
-                resultValue = value;
-            });
-            expect(resultValue).toBe(false);
-        });
-
-        it('should return true if type is competencies and course has competencies', () => {
-            mockCourse.numberOfCompetencies = 1;
-            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.COMPETENCIES);
-            let resultValue = true;
-            result.subscribe((value) => {
-                resultValue = value;
-            });
-            expect(resultValue).toBe(true);
-        });
-
-        it('should return true if type is competencies and course has prerequisits', () => {
-            mockCourse.numberOfPrerequisites = 1;
-            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.COMPETENCIES);
-            let resultValue = true;
-            result.subscribe((value) => {
-                resultValue = value;
-            });
-            expect(resultValue).toBe(true);
-        });
-
-        it('should return true if type is tutorial-groups and course has tutorial groups', () => {
-            mockCourse.numberOfTutorialGroups = 1;
-            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.TUTORIAL_GROUPS);
-            let resultValue = true;
-            result.subscribe((value) => {
-                resultValue = value;
-            });
-            expect(resultValue).toBe(true);
-        });
-
-        it('should return true if type is iris and course has irisEnabledInCourse', () => {
-            mockCourse.irisEnabledInCourse = true;
-            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.IRIS);
-            let resultValue = true;
-            result.subscribe((value) => {
-                resultValue = value;
-            });
-            expect(resultValue).toBe(true);
-        });
-
-        it('should return true if type is faq and course has accepted faqs', () => {
-            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.FAQ);
-            let resultValue = true;
-            result.subscribe((value) => {
-                resultValue = value;
-            });
-            expect(resultValue).toBe(true);
-        });
-
-        it('should return true if type is learning-path and course has learningPathsEnabled', () => {
-            mockCourse.learningPathsEnabled = true;
-            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.LEARNING_PATH);
-            let resultValue = true;
-            result.subscribe((value) => {
-                resultValue = value;
-            });
-            expect(resultValue).toBe(true);
-        });
-
-        it('should return false if type is unknown', () => {
-            const result = guard.handleReturn(mockCourse, 'unknown');
-            let resultValue = true;
-            result.subscribe((value) => {
-                resultValue = value;
-            });
-            expect(resultValue).toBe(false);
-        });
-
-        it('should navigate to exercises if type is unknown', () => {
+    describe('decideAccess', () => {
+        it.each([
+            { path: CourseOverviewRoutePath.EXERCISES, available: tabs() },
+            { path: CourseOverviewRoutePath.LECTURES, available: tabs({ lectures: true }) },
+            { path: CourseOverviewRoutePath.EXAMS, available: tabs({ exams: true }) },
+            { path: CourseOverviewRoutePath.COMPETENCIES, available: tabs({ competencies: true }) },
+            { path: CourseOverviewRoutePath.TUTORIAL_GROUPS, available: tabs({ tutorialGroups: true }) },
+            { path: CourseOverviewRoutePath.IRIS, available: tabs({ iris: true }) },
+            { path: CourseOverviewRoutePath.FAQ, available: tabs({ faq: true }) },
+            { path: CourseOverviewRoutePath.LEARNING_PATH, available: tabs({ learningPaths: true }) },
+            { path: CourseOverviewRoutePath.COMMUNICATION, available: tabs({ communication: true }) },
+            { path: CourseOverviewRoutePath.TRAINING, available: tabs({ training: true }) },
+            { path: CourseOverviewRoutePath.TRAINING_QUIZ, available: tabs({ training: true }) },
+        ])('should grant access to $path when its flag is set', ({ path, available }) => {
             const navigateSpy = vi.spyOn(router, 'navigate');
-            guard.handleReturn(mockCourse, 'unknown');
+            expect(guard.decideAccess(1, available, path)).toBe(true);
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should deny and redirect to exercises for a guarded tab whose flag is not set', () => {
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            expect(guard.decideAccess(1, tabs(), CourseOverviewRoutePath.EXAMS)).toBe(false);
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
+        });
+
+        it('should deny and redirect to exercises for an unknown path', () => {
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            expect(guard.decideAccess(1, allTabs, 'unknown')).toBe(false);
             expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
         });
     });

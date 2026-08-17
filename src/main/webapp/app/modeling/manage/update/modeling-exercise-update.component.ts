@@ -38,7 +38,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { parseJson } from 'app/foundation/util/json.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
-import { cloneDeep, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
@@ -46,6 +46,7 @@ import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { isRealExam } from 'app/exam/overview/exam.utils';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 
 @Component({
@@ -182,7 +183,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 this.exampleSolution.set(importDiagram(parseJson(this.modelingExercise.exampleSolutionModel)));
             }
 
-            this.backupExercise = cloneDeep(this.modelingExercise);
+            this.backupExercise = deepClone(this.modelingExercise);
         });
 
         this.activatedRoute.url

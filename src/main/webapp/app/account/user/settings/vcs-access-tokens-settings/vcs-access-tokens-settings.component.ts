@@ -42,7 +42,8 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
 
-    readonly currentUser = signal<User | undefined>(undefined);
+    // `equal: () => false` so re-setting the same reference emits after the token fields are assigned in place.
+    readonly currentUser = signal<User | undefined>(undefined, { equal: () => false });
 
     private authStateSubscription!: Subscription; // assigned in ngOnInit(), before ngOnDestroy() unsubscribes
     expiryDate?: dayjs.Dayjs;
@@ -76,7 +77,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
                 if (current) {
                     current.vcsAccessTokenExpiryDate = undefined;
                     current.vcsAccessToken = undefined;
-                    this.currentUser.set(Object.assign(new User(), current));
+                    this.currentUser.set(current);
                 }
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteSuccess');
             },
@@ -103,7 +104,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
                     const user = res.body as User;
                     current.vcsAccessToken = user.vcsAccessToken;
                     current.vcsAccessTokenExpiryDate = user.vcsAccessTokenExpiryDate;
-                    this.currentUser.set(Object.assign(new User(), current));
+                    this.currentUser.set(current);
                     this.edit.set(false);
                 }
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.addSuccess');

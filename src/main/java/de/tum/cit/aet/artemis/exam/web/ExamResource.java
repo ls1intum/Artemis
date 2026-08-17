@@ -112,7 +112,6 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exam.dto.LockedExamSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamForConductionDTO;
@@ -1280,19 +1279,29 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/real-exam-working-times : Get individual working times for real exams in a course.
-     * For the content see {@link ExamWorkingTimeDTO}
+     * @GetMapping("courses/{courseId}/exams-for-overview")
+     *
+     * @EnforceAtLeastStudentInCourse
+     *                                public ResponseEntity<Set<ExamForOverviewDTO>> getExamsForCourseOverview(@PathVariable long courseId) {
+     *                                log.debug("REST request to get the exams of course {} for the course overview", courseId);
+     *                                User user = userRepository.getUser();
+     *                                return ResponseEntity.ok(examRepository.findAllForOverviewByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now()));
+     *                                }
+     *
+     *                                /**
+     *                                GET /courses/{courseId}/real-exams-sidebar-data : Get sidebar data for real exams in a course.
+     *                                For the content see {@link ExamSidebarDataDTO}
      *
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and with the found working times as body
      */
-    @GetMapping("courses/{courseId}/real-exam-working-times")
+    @GetMapping("courses/{courseId}/real-exams-sidebar-data")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Set<ExamWorkingTimeDTO>> getWorkingTimesForRealExams(@PathVariable long courseId) {
-        log.debug("REST request to get individual working times for real exams in course {}", courseId);
+    public ResponseEntity<Set<ExamSidebarDataDTO>> getSidebarDataForRealExams(@PathVariable long courseId) {
+        log.debug("REST request to get sidebar data for exams in course {}", courseId);
         User user = userRepository.getUser();
-        Set<ExamWorkingTimeDTO> workingTimes = examRepository.findWorkingTimesForRealStudentExamsByCourseId(courseId, ZonedDateTime.now(), user.getId());
-        return ResponseEntity.ok(workingTimes);
+        Set<ExamSidebarDataDTO> sidebarData = examRepository.findSidebarDataForRealStudentExamsByCourseId(courseId, ZonedDateTime.now(), user.getId());
+        return ResponseEntity.ok(sidebarData);
     }
 
     /**

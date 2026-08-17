@@ -1,6 +1,6 @@
 import { Component, Signal, computed, effect, inject, signal } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs/operators';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { filter, map } from 'rxjs/operators';
@@ -16,18 +16,20 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/foundation/types/sidebar';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
     imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective],
 })
-export class CourseTutorialGroupsComponent {
+export class CourseTutorialGroupsComponent implements SidebarView {
     protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {
         allGroups: true,
         registeredGroups: false,
@@ -53,10 +55,12 @@ export class CourseTutorialGroupsComponent {
     private lectureService = inject(LectureService);
     private courseOverviewService = inject(CourseOverviewService);
     private sessionStorageService = inject(SessionStorageService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     courseId = this.getCurrentCourseIdSignal();
-    tutorialGroups = signal<TutorialGroup[]>([]);
-    tutorialLectures = signal<Lecture[]>([]);
+    // Undefined until loaded, so a refresh that legitimately returns nothing is distinguishable from the initial state
+    tutorialGroups = signal<TutorialGroup[] | undefined>(undefined);
+    tutorialLectures = signal<Lecture[] | undefined>(undefined);
     sidebarData = signal<SidebarData | undefined>(undefined);
     itemSelected = this.getItemSelectedSignal();
     readonly isCollapsed = signal(false);
@@ -76,13 +80,30 @@ export class CourseTutorialGroupsComponent {
             }
         });
 
+        // Selecting this tab while already on it acts as a refresh. It goes to the loaders directly rather than through
+        // setTutorialGroupsAndTutorialLectures, which prefers whatever the stored course already holds and would
+        // therefore make the refresh a no-op.
+        this.courseTabRefreshService
+            .reselections(this.activatedRoute)
+            .pipe(takeUntilDestroyed())
+            .subscribe(() => {
+                const courseId = this.courseId();
+                if (courseId) {
+                    this.loadAndSetTutorialGroups(courseId);
+                    this.loadAndSetTutorialLectures(courseId);
+                }
+            });
+
         effect(() => {
             const tutorialGroups = this.tutorialGroups();
             const tutorialLectures = this.tutorialLectures();
-            if (tutorialGroups.length || tutorialLectures.length) {
-                this.prepareSidebarData(tutorialGroups, tutorialLectures);
-                this.autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups);
+            // Rebuild as soon as either side has loaded, empty result included. Skipping the rebuild when both came
+            // back empty left the previous course's — or a since-deleted group's — cards on screen after a refresh.
+            if (tutorialGroups === undefined && tutorialLectures === undefined) {
+                return;
             }
+            this.prepareSidebarData(tutorialGroups ?? [], tutorialLectures ?? []);
+            this.autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups ?? []);
         });
 
         effect(() => {
@@ -138,9 +159,7 @@ export class CourseTutorialGroupsComponent {
         const course = this.courseStorageService.getCourse(courseId);
         if (course) {
             course.tutorialGroups = tutorialGroups;
-            // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
-            // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
-            this.courseStorageService.updateCourse(course, this.courseStorageService.isCourseFullyLoaded(courseId));
+            this.courseStorageService.updateCourse(course);
         }
     }
 
@@ -161,11 +180,16 @@ export class CourseTutorialGroupsComponent {
             return;
         }
         const existingLectures = course.lectures ?? [];
-        const remainingLectures = existingLectures.filter((existing) => !lecturesToUpdate.some((updated) => updated.id === existing.id));
-        course.lectures = [...remainingLectures, ...lecturesToUpdate];
+        // Replace the tutorial subset wholesale rather than merging by id. Merging cannot express a deletion: a refresh
+        // that returns nothing removed nothing, so a deleted tutorial lecture stayed in the stored course and came
+        // straight back the next time the tab read its cache. Non-tutorial lectures belong to the lectures tab and are
+        // kept, as is anything the fresh response re-supplies under a different flag.
+        const freshLectureIds = new Set(lecturesToUpdate.map((lecture) => lecture.id));
+        const retainedLectures = existingLectures.filter((existing) => !existing.isTutorialLecture && !freshLectureIds.has(existing.id));
+        course.lectures = [...retainedLectures, ...lecturesToUpdate];
         // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
         // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
-        this.courseStorageService.updateCourse(course, this.courseStorageService.isCourseFullyLoaded(courseId));
+        this.courseStorageService.updateCourse(course);
     }
 
     private prepareSidebarData(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]) {

@@ -39,6 +39,23 @@ const noNgZoneImport = {
         'NgZone is forbidden: the client is zoneless (provideZonelessChangeDetection). Drive change detection with signals (signal/computed/effect), markForCheck, afterNextRender, or output emits — NgZone.run/runOutsideAngular are no-ops under zoneless.',
 };
 
+// Object copying goes through one choke point: `deepClone` / `cloneWith` / `hydrate` in
+// `app/foundation/util/deep-clone.util`. Importing lodash's `cloneDeep` directly bypasses it, which splits the
+// codebase between two spellings of the same operation and leaves nowhere to change the implementation later.
+// The wrapper itself holds the single sanctioned import (line-level disabled). Like `noNgZoneImport`, this must
+// be repeated in every `no-restricted-imports` block, because the foundation/ and shared-ui/ blocks override the
+// rule rather than extending it. Companion to `localRules/prefer-deep-clone`.
+const noDirectCloneDeepImports = [
+    {
+        name: 'lodash-es',
+        importNames: ['cloneDeep', 'cloneDeepWith'],
+        message: "Import deepClone / cloneWith / hydrate from 'app/foundation/util/deep-clone.util' instead of lodash cloneDeep.",
+    },
+    {
+        name: 'lodash-es/cloneDeep',
+        message: "Import deepClone / cloneWith / hydrate from 'app/foundation/util/deep-clone.util' instead of lodash cloneDeep.",
+    },
+];
 const tumUiConsumerImportPatterns = [
     {
         group: ['@tumaet/ui-angular/**'],
@@ -193,6 +210,12 @@ export default tseslint.config(
                     caughtErrors: 'none',
                 },
             ],
+            // The core `no-redeclare` rule does not understand TypeScript function overloads and reports every
+            // signature after the first as a redeclaration (e.g. the `hydrate` overloads in deep-clone.util.ts).
+            // Swap in the typescript-eslint extension, which is overload-aware and otherwise equivalent; genuine
+            // redeclarations remain errors, and tsc catches them independently.
+            'no-redeclare': 'off',
+            '@typescript-eslint/no-redeclare': 'error',
             'no-unused-private-class-members': 'error',
             'no-case-declarations': 'off',
             'prefer-const': 'warn',
@@ -218,6 +241,7 @@ export default tseslint.config(
                             message: "Please import from 'lodash-es' instead.",
                         },
                         noNgZoneImport,
+                        ...noDirectCloneDeepImports,
                     ],
                     patterns: tumUiConsumerImportPatterns,
                 },
@@ -362,6 +386,23 @@ export default tseslint.config(
             'localRules/prefer-signal-template-state': 'error',
         },
     },
+    // Copy objects with deepClone, never with object spread, Object.assign or structuredClone. All three
+    // alternatives are wrong in ways the type checker cannot see: structuredClone drops prototypes, so a cloned
+    // dayjs date loses its methods while isDayjs() still returns true (the bug behind PR #11910); spread and
+    // Object.assign copy one level, so nested objects and arrays stay shared and editing the copy edits the
+    // original. Object.assign(target, source) additionally mutates in place, which emits no signal notification
+    // because a signal compares with Object.is. Use deepClone(x), cloneWith(x, { … }) or hydrate(new X(), dto)
+    // from app/foundation/util/deep-clone.util. Array spread, call spread and object rest destructuring are
+    // unaffected; specs may build fixtures freely (excluded below). Companion to the `no-restricted-imports`
+    // entry that keeps lodash cloneDeep behind the same wrapper. Full rationale:
+    // documentation/docs/developer/guidelines/client-development.mdx ("Cloning objects").
+    {
+        files: ['src/main/webapp/app/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'localRules/prefer-deep-clone': 'error',
+        },
+    },
     // Module-boundary rules: enforce the foundation ← shared-ui ← editor layering.
     // foundation/ is the base layer (no DOM/UI), shared-ui/ holds generic UI primitives,
     // editor/ holds the code/markdown editor stacks. The intent:
@@ -379,6 +420,7 @@ export default tseslint.config(
                         { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
                         { name: 'lodash', message: "Please import from 'lodash-es' instead." },
                         noNgZoneImport,
+                        ...noDirectCloneDeepImports,
                     ],
                     patterns: [
                         ...tumUiConsumerImportPatterns,
@@ -410,6 +452,7 @@ export default tseslint.config(
                         { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
                         { name: 'lodash', message: "Please import from 'lodash-es' instead." },
                         noNgZoneImport,
+                        ...noDirectCloneDeepImports,
                     ],
                     patterns: [
                         ...tumUiConsumerImportPatterns,

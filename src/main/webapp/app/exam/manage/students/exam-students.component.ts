@@ -53,6 +53,7 @@ import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } f
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 interface MenuCommandEvent {
@@ -445,10 +446,7 @@ export class ExamStudentsComponent implements OnDestroy {
 
         const currentRequestId = ++this.requestId;
         const query = buildDbQueryFromLazyEvent(event);
-        const search: ExamStudentSearch = {
-            ...query,
-            filterProp: this.activeFilter() !== 'All' ? this.activeFilter() : undefined,
-        };
+        const search: ExamStudentSearch = cloneWith(query, { filterProp: this.activeFilter() !== 'All' ? this.activeFilter() : undefined });
         this.isLoading.set(true);
         this.examManagementService.findExamStudentsPaged(this.courseId(), examId, search).subscribe({
             next: (result) => {

@@ -83,15 +83,12 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @ManyToOne
     private Participation participation;
 
-    // No @Cache: appended on every save; NONSTRICT produced stale version lists for concurrent readers, same class of bug as #12574.
     @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     private Set<SubmissionVersion> versions = new HashSet<>();
 
     /**
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
-     * CacheStrategy.NONSTRICT_READ_WRITE leads to problems with the deletion of a submission, because first the results
-     * are deleted in a transactional method.
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn(name = "results_order")

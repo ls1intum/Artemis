@@ -3,7 +3,6 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import dayjs from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
 import { Component } from '@angular/core';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, UrlSegment, provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -40,6 +39,7 @@ import { By } from '@angular/platform-browser';
 import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     template: '',
@@ -882,6 +882,9 @@ describe('ExamUpdateComponent', () => {
             expectedExam.course = course;
             // Only import one of two exercises
             component.examExerciseImportComponent().selectedExercises = new Map([[exerciseGroup1, new Set([textExercise])]]);
+            // prepareExamForImport now returns a copy detached from the fixture, so mirror what save() does: it replaces
+            // the groups with the selected ones from mapSelectedExercisesToExerciseGroups.
+            expectedExam.exerciseGroups = [exerciseGroup1];
             const alertSpy = vi.spyOn(alertService, 'error');
             const navigateSpy = vi.spyOn(router, 'navigate');
             const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(of(new HttpResponse({ status: 200, body: { exam: examForImport } })));
@@ -920,7 +923,7 @@ describe('ExamUpdateComponent', () => {
             const modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
             modelingExercise2.id = 2;
             exerciseGroup2.exercises = [modelingExercise2];
-            const examWithError = cloneDeep(examForImport);
+            const examWithError = deepClone(examForImport);
             examWithError.exerciseGroups = [exerciseGroup2];
 
             component.exam = examWithError;

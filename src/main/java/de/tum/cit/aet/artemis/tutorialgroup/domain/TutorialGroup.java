@@ -143,7 +143,6 @@ public class TutorialGroup extends DomainObject {
     @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
     private TutorialGroupSchedule tutorialGroupSchedule;
 
-    // No @Cache here on purpose: mutated when sessions are generated / adjusted for the schedule. See #12574 / #12584.
     @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "tutorialGroup, tutorialGroupSchedule", allowSetters = true)
     private Set<TutorialGroupSession> tutorialGroupSessions = new HashSet<>();

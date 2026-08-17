@@ -40,7 +40,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
-import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ParticipationScoreDTO } from './participation-score-dto.model';
 import { ParticipationScoreSearch } from 'app/foundation/pagination/pageable-table';
 import { TableLazyLoadEvent } from 'primeng/table';
@@ -54,6 +55,7 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Filter properties for a result
@@ -311,12 +313,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
         const requestId = ++this.currentLoadRequestId;
         const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
-        const search: ParticipationScoreSearch = {
-            ...base,
+        const search: ParticipationScoreSearch = cloneWith(base, {
             filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
             scoreRangeLower: this.rangeFilter()?.lowerBound,
             scoreRangeUpper: this.rangeFilter()?.upperBound,
-        };
+        });
 
         this.participationService.searchParticipationScores(ex.id, search).subscribe({
             next: (result) => {
@@ -452,32 +453,28 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             type: ex?.type === ExerciseType.PROGRAMMING ? ParticipationType.PROGRAMMING : ParticipationType.STUDENT,
             exercise: ex,
             submissionCount: dto.submissionCount,
-            submissions: dto.submissionId
-                ? [
-                      {
-                          id: dto.submissionId,
-                          results: dto.resultId
-                              ? [
-                                    {
-                                        id: dto.resultId,
-                                        score: dto.score,
-                                        successful: dto.successful,
-                                        completionDate: dto.completionDate,
-                                        assessmentType: dto.assessmentType,
-                                        testCaseCount: dto.testCaseCount,
-                                        passedTestCaseCount: dto.passedTestCaseCount,
-                                        codeIssueCount: dto.codeIssueCount,
-                                    },
-                                ]
-                              : [],
-                          ...(ex?.type === ExerciseType.PROGRAMMING && {
-                              submissionExerciseType: 'programming' as SubmissionExerciseType,
-                              buildFailed: dto.buildFailed,
-                          }),
-                      },
-                  ]
-                : [],
+            submissions: dto.submissionId ? [this.toSubmission(dto)] : [],
         };
+    }
+
+    /**
+     * Builds the minimal submission that {@link toParticipation} embeds.
+     *
+     * Programming exercises get a real {@link ProgrammingSubmission}, which is where `buildFailed` is declared and
+     * which sets `submissionExerciseType` in its constructor. The previous conditional spread smuggled `buildFailed`
+     * into a plain Submission literal, which only type-checked because spreads skip excess-property checking.
+     */
+    private toSubmission(dto: ParticipationScoreDTO): Submission {
+        const result = this.toResult(dto);
+        const results = result ? [result] : [];
+        if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
+            const submission = new ProgrammingSubmission();
+            submission.id = dto.submissionId;
+            submission.results = results;
+            submission.buildFailed = dto.buildFailed;
+            return submission;
+        }
+        return { id: dto.submissionId, results };
     }
 
     /**

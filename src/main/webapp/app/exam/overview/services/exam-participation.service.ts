@@ -4,10 +4,13 @@ import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
+import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { StudentExamDTO, StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { toSubmitStudentExamDTO } from 'app/exam/overview/services/submit-student-exam-dto.mapper';
 import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
@@ -16,11 +19,10 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
-import { ExamWorkingTimeDTO } from 'app/exam/shared/entities/exam-working-time-dto.model';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
@@ -179,10 +181,27 @@ export class ExamParticipationService {
             }),
         );
     }
+    public getExamsForOverview(courseId: number): Observable<ExamForOverview[]> {
+        return this.httpClient.get<ExamForOverview[]>(`api/exam/courses/${courseId}/exams-for-overview`).pipe(
+            map((exams) =>
+                exams.map((exam) =>
+                    cloneWith(exam, {
+                        visibleDate: convertDateFromServer(exam.visibleDate),
+                        startDate: convertDateFromServer(exam.startDate),
+                        endDate: convertDateFromServer(exam.endDate),
+                    }),
+                ),
+            ),
+        );
+    }
 
-    public getRealExamWorkingTimes(courseId: number): Observable<ExamWorkingTimeDTO[]> {
-        const url = `api/exam/courses/${courseId}/real-exam-working-times`;
-        return this.httpClient.get<ExamWorkingTimeDTO[]>(url);
+    public getRealExamSidebarData(courseId: number): Observable<Exam[]> {
+        const url = `api/exam/courses/${courseId}/real-exams-sidebar-data`;
+        return this.httpClient.get<Exam[]>(url).pipe(
+            map((exams: Exam[]) => {
+                return exams.map((exam) => ExamParticipationService.convertExamDateFromServer(exam)).filter((exam) => exam !== undefined);
+            }),
+        );
     }
 
     public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
@@ -310,7 +329,7 @@ export class ExamParticipationService {
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
         // if the following code fails, this should never affect the exam
         try {
-            const studentExamCopy = cloneDeep(studentExam);
+            const studentExamCopy = deepClone(studentExam);
             ExamParticipationService.breakCircularDependency(studentExamCopy);
             this.localStorageService.store(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId), studentExamCopy);
         } catch (error) {
@@ -352,7 +371,17 @@ export class ExamParticipationService {
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         // Add a default exercise group to connect exercises with the exam.
         studentExam.exercises = studentExam.exercises.map((exercise: Exercise) => {
-            exercise.exerciseGroup = { ...exercise.exerciseGroup!, exam: studentExam.exam };
+            // Built field by field, not copied: the group's `exercises` are the very objects being mapped here, so they
+            // must stay the same instances. `?? new ExerciseGroup()` keeps the previous spread behaviour, which produced
+            // a group carrying only the exam when the server sent none.
+            const group = exercise.exerciseGroup ?? new ExerciseGroup();
+            const groupWithExam = new ExerciseGroup();
+            groupWithExam.id = group.id;
+            groupWithExam.title = group.title;
+            groupWithExam.isMandatory = group.isMandatory;
+            groupWithExam.exercises = group.exercises;
+            groupWithExam.exam = studentExam.exam;
+            exercise.exerciseGroup = groupWithExam;
             return exercise;
         });
         return studentExam;
