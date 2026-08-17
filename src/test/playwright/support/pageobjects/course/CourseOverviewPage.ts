@@ -1,5 +1,5 @@
 import { BASE_API } from '../../constants';
-import { Locator, Page, expect } from '@playwright/test';
+import { Locator, Page, Response, expect } from '@playwright/test';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Overview page (/courses/*).
@@ -40,25 +40,57 @@ export class CourseOverviewPage {
      * header. Works for both the first attempt and subsequent attempts (the button reappears after each submit).
      * @param exerciseId The id of the quiz exercise to practice.
      */
+    /** Polls a condition until it holds or the timeout passes, reporting which happened rather than throwing. */
+    private async waitUntil(condition: () => boolean, timeout: number): Promise<boolean> {
+        const deadline = Date.now() + timeout;
+        while (Date.now() < deadline) {
+            if (condition()) {
+                return true;
+            }
+            await this.page.waitForTimeout(200);
+        }
+        return condition();
+    }
+
     async startQuizPractice(exerciseId: number) {
         const button = this.page.locator(`#quiz-start-practice-${exerciseId}`);
         await button.waitFor({ state: 'visible', timeout: 30_000 });
 
         // Starting a practice attempt loads the quiz for the student, both for the first attempt and for a restart in
-        // the same session. Waiting for that request is what proves the click started an attempt: the exercise page
-        // re-renders its header while the details settle, and a click lost to that re-render leaves the caller waiting
-        // for a question that was never requested. Retry until an attempt is actually under way.
-        for (let attempt = 0; attempt < 3; attempt++) {
-            const quizLoaded = this.page
-                .waitForResponse((response) => response.url().includes(`/quiz-exercises/${exerciseId}/for-student`) && response.ok(), { timeout: 15_000 })
-                .catch(() => undefined);
-            await button.click({ timeout: 10_000 });
-            if (await quizLoaded) {
-                return;
+        // the same session, and then renders its first question. Both are required as proof that the click started an
+        // attempt: the exercise page loads the same quiz on its own, so a load request alone is also satisfied by a
+        // click that the header's re-render swallowed, and the caller is then left waiting for a question that no
+        // attempt is behind. Counting the requests seen since the click is what separates the two.
+        let quizLoads = 0;
+        const countQuizLoad = (response: Response) => {
+            if (response.url().includes(`/quiz-exercises/${exerciseId}/for-student`) && response.ok()) {
+                quizLoads++;
             }
-            await button.waitFor({ state: 'visible', timeout: 10_000 });
+        };
+        this.page.on('response', countQuizLoad);
+        try {
+            const question = this.page.locator('#question0');
+            for (let attempt = 0; attempt < 3; attempt++) {
+                const loadsBeforeClick = quizLoads;
+                // The click is part of what is retried: the same re-render that swallows a click also detaches the
+                // button, and letting that error escape would end the helper instead of trying again.
+                await button.click({ timeout: 10_000 }).catch(() => undefined);
+                const loaded = await this.waitUntil(() => quizLoads > loadsBeforeClick, 15_000);
+                if (
+                    loaded &&
+                    (await question.waitFor({ state: 'visible', timeout: 15_000 }).then(
+                        () => true,
+                        () => false,
+                    ))
+                ) {
+                    return;
+                }
+                await button.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => undefined);
+            }
+        } finally {
+            this.page.off('response', countQuizLoad);
         }
-        throw new Error(`Could not start a practice attempt for quiz ${exerciseId}: the quiz was never loaded for the student after clicking start practice.`);
+        throw new Error(`Could not start a practice attempt for quiz ${exerciseId}: no attempt loaded a question after clicking start practice.`);
     }
 
     /**

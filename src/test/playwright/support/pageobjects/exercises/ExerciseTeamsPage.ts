@@ -254,8 +254,16 @@ export class ExerciseTeamsPage {
         // Ensure the input is mounted before we start typing — under parallel CI load the dialog
         // body can render late and pressSequentially against an absent element silently no-ops.
         await inputLocator.waitFor({ state: 'visible', timeout: 30_000 });
+        // A deadline for the search as a whole, not only for its individual actions: four attempts of bounded steps
+        // still add up to minutes, and the caller adds several students in sequence inside one test budget. Attempts
+        // stop once the deadline passes, so the helper reports its own error while the test can still act on it.
+        const startedAt = Date.now();
+        const deadline = startedAt + 90_000;
         for (let attempt = 0; attempt < 4; attempt++) {
             if (attempt > 0) {
+                if (Date.now() > deadline) {
+                    break;
+                }
                 await this.page.waitForTimeout(500);
             }
 
@@ -275,9 +283,12 @@ export class ExerciseTeamsPage {
                 await option.click({ timeout: 10_000 });
                 return;
             } catch {
-                if (attempt === 3) throw new Error(`Student search autocomplete did not appear after 4 attempts for '${username}'`);
+                if (attempt === 3 || Date.now() > deadline) {
+                    throw new Error(`Student search autocomplete did not appear for '${username}' within ${Math.round((Date.now() - startedAt) / 1000)}s`);
+                }
             }
         }
+        throw new Error(`Student search autocomplete did not appear for '${username}' before the search deadline`);
     }
 
     /**
