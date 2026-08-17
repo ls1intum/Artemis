@@ -107,17 +107,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
              AND result.completionDate IS NOT NULL
              AND result.score IS NOT NULL
              AND submission.submissionDate IS NOT NULL
-             AND NOT EXISTS (
-                 SELECT innerSubmission
+             AND submission.submissionDate = (
+                 SELECT MIN(innerSubmission.submissionDate)
                  FROM Submission innerSubmission
                  WHERE innerSubmission.participation = participation
-                 AND innerSubmission.submissionDate < submission.submissionDate
                  )
-                 AND NOT EXISTS (
-                 SELECT innerResult
+             AND result.completionDate = (
+                 SELECT MAX(innerResult.completionDate)
                  FROM Result innerResult
                  WHERE innerResult.submission = submission
-                 AND innerResult.completionDate > result.completionDate
                  )
             """)
     Set<CourseGradeScoreDTO> findIndividualQuizGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
@@ -146,8 +144,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<CourseGradeScoreDTO> findIndividualGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
@@ -175,8 +173,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
@@ -287,8 +285,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate < s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MIN(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<CourseGradeScoreDTO> findIndividualQuizGradesByCourseId(@Param("courseId") long courseId);
 
@@ -316,8 +314,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<CourseGradeScoreDTO> findIndividualGradesByCourseId(@Param("courseId") long courseId);
 
@@ -345,8 +343,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseId(@Param("courseId") long courseId);
 
@@ -375,8 +373,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<ExamGradeScoreDTO> findGradesByExamIdAndStudentId(@Param("examId") long examId, @Param("studentId") long studentId);
 
@@ -391,7 +389,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND p.testRun = TRUE
                 AND p.student.id = :studentId
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
                 AND((r.completionDate IS NULL) OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s))
             """)
     Set<ExamGradeScoreDTO> findGradesByExamIdAndStudentIdForTestRun(@Param("examId") long examId, @Param("studentId") long studentId);
@@ -411,8 +409,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
                 AND s.submissionDate IS NOT NULL
-                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
-                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<ExamGradeScoreDTO> findGradesByExamId(@Param("examId") long examId);
 

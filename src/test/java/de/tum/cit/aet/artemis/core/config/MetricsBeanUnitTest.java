@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -91,14 +90,14 @@ class MetricsBeanUnitTest {
 
     @Test
     void shouldExposeFailedBuildsFromBuildJobStatistics() {
-        when(buildJobRepository.getBuildJobsResultsStatistics(any(ZonedDateTime.class), isNull())).thenReturn(List.of(new BuildJobResultCountDTO(BuildStatus.FAILED, 2),
+        when(buildJobRepository.getBuildJobsResultsStatistics(any(ZonedDateTime.class))).thenReturn(List.of(new BuildJobResultCountDTO(BuildStatus.FAILED, 2),
                 new BuildJobResultCountDTO(BuildStatus.ERROR, 3), new BuildJobResultCountDTO(BuildStatus.MISSING, 1), new BuildJobResultCountDTO(BuildStatus.SUCCESSFUL, 4)));
 
         metricsBean.calculateBuildJobResultMetrics();
 
         assertThat(meterRegistry.get("artemis.global.buildjobs.failed").gauge().value()).isEqualTo(5);
         assertThat(meterRegistry.get("artemis.global.buildjobs.missing_results").gauge().value()).isEqualTo(1);
-        verify(buildJobRepository).getBuildJobsResultsStatistics(any(ZonedDateTime.class), isNull());
+        verify(buildJobRepository).getBuildJobsResultsStatistics(any(ZonedDateTime.class));
     }
 
     /**

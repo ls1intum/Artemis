@@ -362,7 +362,7 @@ public class MetricsBean {
 
     private BuildJobsStatisticsDTO extractBuildJobStatistics() {
         // calculate build statistics in the last 24 hours for all courses by passing null as courseId
-        var buildResultStatistics = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(1), null);
+        var buildResultStatistics = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(1));
         return BuildJobsStatisticsDTO.of(buildResultStatistics);
     }
 

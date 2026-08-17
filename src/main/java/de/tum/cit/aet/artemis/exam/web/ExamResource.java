@@ -1399,7 +1399,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         User user = userRepository.getUserWithAuthorities();
 
-        List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);
+        List<Submission> submissions = submissionService.getLockedSubmissions(examRepository.findExerciseIdsByExamId(examId), user);
         // one batched query for the submission counts the assessment-locks table renders; never one query per row
         List<Long> participationIds = submissions.stream().map(submission -> submission.getParticipation().getId()).distinct().toList();
         Map<Long, Integer> submissionCounts = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(participationIds);
