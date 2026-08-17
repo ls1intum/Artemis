@@ -41,9 +41,11 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
@@ -75,6 +77,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
@@ -127,6 +130,9 @@ public class ParticipationUtilService {
 
     @Autowired
     private FeedbackRepository feedbackRepo;
+
+    @Autowired
+    private FeedbackMessageService feedbackMessageService;
 
     @Autowired
     private RatingRepository ratingRepo;
@@ -542,6 +548,26 @@ public class ParticipationUtilService {
     public Result addFeedbackToResult(Feedback feedback, Result result) {
         feedbackRepo.save(feedback);
         result.addFeedback(feedback);
+        return resultRepo.save(result);
+    }
+
+    /**
+     * Creates and saves an automatic test-case feedback row (typed table) for the given Result.
+     *
+     * @param result      The Result the feedback belongs to
+     * @param testCase    The test case the feedback belongs to
+     * @param positive    Whether the test passed (null = not executed)
+     * @param messageText The (deduplicated) message text, may be null for pass markers
+     * @return The updated Result
+     */
+    public Result addTestCaseFeedbackToResult(Result result, ProgrammingExerciseTestCase testCase, Boolean positive, String messageText) {
+        TestCaseFeedback feedback = new TestCaseFeedback();
+        feedback.setTestCase(testCase);
+        feedback.setPositive(positive);
+        if (messageText != null && !messageText.isEmpty()) {
+            feedback.setMessage(feedbackMessageService.getOrCreate(messageText));
+        }
+        result.addTestCaseFeedback(feedback);
         return resultRepo.save(result);
     }
 

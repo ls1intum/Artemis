@@ -9,9 +9,8 @@ import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
-import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -44,9 +43,11 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     }
 
     private String createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful) {
-        var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
-        return feedbackCreationService.createFeedbackFromTestCase(testName, testMessages, successful, programmingExercise, activeTestCases)
-                .map(TestCaseFeedback::getMessageText).orElse(null);
+        // pass all test cases (not only active ones) so that the message-processing pipeline is exercised
+        // regardless of the fixture's active flags
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        return feedbackCreationService.createFeedbackFromTestCase(testName, testMessages, successful, programmingExercise, testCases).map(TestCaseFeedback::getMessageText)
+                .orElse(null);
     }
 
     @Test

@@ -27,8 +27,8 @@ import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -42,10 +42,10 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -424,7 +424,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // Assertions resultMF - missing feedback will be created but is negative
         assertThat(resultMF.getScore()).isEqualTo(55D, Offset.offset(offsetByTenThousandth));
         assertThat(resultMF.isSuccessful()).isFalse();
-        assertThat(resultMF.getFeedbacks()).hasSize(3); // Feedback is created for test cases if missing
+        assertThat(resultMF.getTestCaseFeedbacks()).hasSize(3); // Feedback is created for test cases if missing
     }
 
     @Test
@@ -1443,7 +1443,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         Exercise exercise = result.getSubmission().getParticipation().getExercise();
         result.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId())));
         result.setScaFeedbacks(scaFeedbackRepository.findByResultIds(List.of(result.getId())));
-        double calculatedScore = result.calculateTotalPointsForProgrammingExercises(gradingService.calculateTestCasePoints((ProgrammingExercise) exercise, result)) / exercise.getMaxPoints() * 100.;
+        double calculatedScore = result.calculateTotalPointsForProgrammingExercises(gradingService.calculateTestCasePoints((ProgrammingExercise) exercise, result))
+                / exercise.getMaxPoints() * 100.;
         calculatedScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculatedScore, exercise.getCourseViaExerciseGroupOrCourseMember());
         assertThat(calculatedScore).isEqualTo(score);
     }
@@ -1480,7 +1481,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
         resultRepository.save(result);
     }
-
 
     private static TestCaseFeedback addTestCaseFeedback(Result result, ProgrammingExerciseTestCase testCase, Boolean positive) {
         TestCaseFeedback feedback = new TestCaseFeedback();

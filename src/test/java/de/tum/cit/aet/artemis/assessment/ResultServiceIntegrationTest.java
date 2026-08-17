@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -713,11 +714,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        Feedback feedback = new Feedback();
-        feedback.setPositive(false);
-        feedback.setDetailText("Some feedback");
-        feedback.setTestCase(testCase);
-        participationUtilService.addFeedbackToResult(feedback, result);
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "Some feedback");
 
         String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
                 + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false";
@@ -744,23 +741,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
 
-        Feedback feedback1 = new Feedback();
-        feedback1.setPositive(false);
-        feedback1.setDetailText("Some feedback");
-        feedback1.setTestCase(testCase);
-        participationUtilService.addFeedbackToResult(feedback1, result1);
+        participationUtilService.addTestCaseFeedbackToResult(result1, testCase, false, "Some feedback");
 
-        Feedback feedback2 = new Feedback();
-        feedback2.setPositive(false);
-        feedback2.setDetailText("Some feedback");
-        feedback2.setTestCase(testCase);
-        participationUtilService.addFeedbackToResult(feedback2, result2);
+        participationUtilService.addTestCaseFeedbackToResult(result2, testCase, false, "Some feedback");
 
-        Feedback feedback3 = new Feedback();
-        feedback3.setPositive(false);
-        feedback3.setDetailText("Some different feedback");
-        feedback3.setTestCase(testCase);
-        participationUtilService.addFeedbackToResult(feedback3, result1);
+        participationUtilService.addTestCaseFeedbackToResult(result1, testCase, false, "Some different feedback");
 
         String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
                 + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false";
@@ -799,17 +784,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
 
-        Feedback feedback1 = new Feedback();
-        feedback1.setPositive(false);
-        feedback1.setDetailText("Some feedback");
-        feedback1.setTestCase(testCase);
-        participationUtilService.addFeedbackToResult(feedback1, result1);
+        participationUtilService.addTestCaseFeedbackToResult(result1, testCase, false, "Some feedback");
 
-        Feedback feedback2 = new Feedback();
-        feedback2.setPositive(false);
-        feedback2.setDetailText("Some feedbacks");
-        feedback2.setTestCase(testCase);
-        participationUtilService.addFeedbackToResult(feedback2, result2);
+        participationUtilService.addTestCaseFeedbackToResult(result2, testCase, false, "Some feedbacks");
 
         String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
                 + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=true";
@@ -839,11 +816,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
 
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        Feedback feedback = new Feedback();
-        feedback.setPositive(false);
-        feedback.setDetailText("Some feedback");
-        feedback.setTestCase(testCase);
-        participationUtilService.addFeedbackToResult(feedback, result);
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "Some feedback");
 
         long maxCount = request.get("/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details-max-count", HttpStatus.OK, Long.class);
 
@@ -859,17 +832,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
 
-        Feedback feedback1 = new Feedback();
-        feedback1.setPositive(false);
-        feedback1.setDetailText("Some feedback");
-        feedback1.setTestCase(testCase);
-        participationUtilService.addFeedbackToResult(feedback1, result1);
+        participationUtilService.addTestCaseFeedbackToResult(result1, testCase, false, "Some feedback");
 
-        Feedback feedback2 = new Feedback();
-        feedback2.setPositive(false);
-        feedback2.setDetailText("Some feedback");
-        feedback2.setTestCase(testCase);
-        participationUtilService.addFeedbackToResult(feedback2, result2);
+        participationUtilService.addTestCaseFeedbackToResult(result2, testCase, false, "Some feedback");
 
         long maxCount = request.get("/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details-max-count", HttpStatus.OK, Long.class);
 
@@ -883,15 +848,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
 
-        Feedback feedback = new Feedback();
-        feedback.setPositive(false);
-        feedback.setDetailText("The AttributeTest test can only run if the structural oracle (test.json) is present. If you do not provide it, delete AttributeTest.java!");
-        feedback.setTestCase(testCase);
-        feedback = feedbackRepository.saveAndFlush(feedback);
+        result = participationUtilService.addTestCaseFeedbackToResult(result, testCase, false,
+                "The AttributeTest test can only run if the structural oracle (test.json) is present. If you do not provide it, delete AttributeTest.java!");
+        // the feedback analysis works with synthetic ids that encode (resultId, seq) of the typed row
+        long feedbackId = ProgrammingFeedbackSynthesizerService.syntheticId(result.getId(), 1);
 
-        participationUtilService.addFeedbackToResult(feedback, result);
-
-        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details-participation?feedbackId1=" + feedback.getId();
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details-participation?feedbackId1=" + feedbackId;
 
         var response = request.get(url, HttpStatus.OK, List.class);
         assertThat(response).hasSize(1);

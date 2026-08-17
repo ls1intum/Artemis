@@ -14,8 +14,6 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.BatchSize;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
@@ -81,7 +79,6 @@ public class ScaFeedback {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "message_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
-    @BatchSize(size = 50)
     @JsonIgnore
     private FeedbackMessage message;
 
