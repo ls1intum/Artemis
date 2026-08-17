@@ -12,13 +12,16 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.sshd.common.io.IoSession;
 import org.apache.sshd.common.util.buffer.Buffer;
 import org.apache.sshd.common.util.buffer.ByteArrayBuffer;
 import org.apache.sshd.server.session.AbstractServerSession;
+import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -38,6 +41,12 @@ import de.tum.cit.aet.artemis.core.config.SshProxyProtocolConfiguration;
 class ProxyProtocolAcceptorTest {
 
     private static final byte[] V2_SIGNATURE = { 0x0D, 0x0A, 0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A };
+
+    private static final int V2_HEADER_LENGTH = 16;
+
+    private static final int V2_FAMILY_INET_STREAM = 0x11;
+
+    private static final int V2_FAMILY_INET6_STREAM = 0x21;
 
     private static final String SSH_IDENTIFICATION = "SSH-2.0-OpenSSH_9.0\r\n";
 
@@ -256,6 +265,186 @@ class ProxyProtocolAcceptorTest {
         Buffer secondAttempt = bufferOf(content);
         assertThat(acceptor.acceptServerProxyMetadata(session, secondAttempt)).isTrue();
         assertThat(secondAttempt.rpos()).isEqualTo(header.length());
+    }
+
+    /**
+     * A client reaching the balancer over IPv6 is the case a v4-only parser silently drops: the header parses, no
+     * address is applied, and every such session is attributed to the balancer with nothing in the log to say so.
+     */
+    @Test
+    void shouldParseAVersion2Ipv6Header() throws Exception {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting("10.0.0.0/8");
+        AbstractServerSession session = sessionFrom("10.0.0.1");
+        byte[] sourceAddress = new byte[16];
+        sourceAddress[0] = 0x20;
+        sourceAddress[1] = 0x01;
+        sourceAddress[2] = 0x0D;
+        sourceAddress[3] = (byte) 0xB8;
+        sourceAddress[15] = 0x07;
+        byte[] header = version2Header(V2_FAMILY_INET6_STREAM, sourceAddress, new byte[16], 56324);
+        Buffer buffer = bufferOf(concat(header, SSH_IDENTIFICATION.getBytes(StandardCharsets.US_ASCII)));
+
+        assertThat(acceptor.acceptServerProxyMetadata(session, buffer)).isTrue();
+
+        InetSocketAddress clientAddress = capturedClientAddress(session);
+        assertThat(clientAddress.getAddress().getHostAddress()).isEqualTo("2001:db8:0:0:0:0:0:7");
+        assertThat(clientAddress.getPort()).isEqualTo(56324);
+    }
+
+    /**
+     * AF_UNSPEC is what a balancer sends for a connection it cannot describe in IP terms. There is no address to apply,
+     * and treating that as a failure would close a connection the specification considers valid.
+     */
+    @Test
+    void shouldKeepTheSocketPeerForAVersion2UnspecifiedFamily() throws Exception {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting("10.0.0.0/8");
+        AbstractServerSession session = sessionFrom("10.0.0.1");
+        byte[] header = version2Header(0x00, new byte[4], new byte[4], 56324);
+        Buffer buffer = bufferOf(concat(header, SSH_IDENTIFICATION.getBytes(StandardCharsets.US_ASCII)));
+
+        assertThat(acceptor.acceptServerProxyMetadata(session, buffer)).isTrue();
+
+        verify(session, never()).setClientAddress(any());
+        assertThat(buffer.rpos()).isEqualTo(header.length);
+    }
+
+    /**
+     * Both of the next two are the reason the version and length checks sit ahead of the wait for more data. Returning
+     * false here instead would hold the connection open until the idle timeout collected it, because the bytes the
+     * header announces are never going to arrive - a cheap way to accumulate sessions on the ssh listener.
+     */
+    @Test
+    void shouldRejectAnUnsupportedVersion2HeaderVersionImmediately() throws Exception {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting("10.0.0.0/8");
+        AbstractServerSession session = sessionFrom("10.0.0.1");
+        byte[] header = version2Header(V2_FAMILY_INET_STREAM, new byte[] { (byte) 198, 51, 100, 7 }, new byte[4], 56324);
+        header[12] = 0x31; // version 3
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> acceptor.acceptServerProxyMetadata(session, bufferOf(header)))
+                .withMessageContaining("Unsupported PROXY protocol version");
+        verify(session, never()).setClientAddress(any());
+    }
+
+    @Test
+    void shouldRejectAVersion2HeaderDeclaringAnOversizedAddressBlockImmediately() throws Exception {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting("10.0.0.0/8");
+        AbstractServerSession session = sessionFrom("10.0.0.1");
+        byte[] header = version2Header(V2_FAMILY_INET_STREAM, new byte[] { (byte) 198, 51, 100, 7 }, new byte[4], 56324);
+        header[14] = 0x10; // 4096 announced address bytes
+        header[15] = 0x00;
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> acceptor.acceptServerProxyMetadata(session, bufferOf(header))).withMessageContaining("4096")
+                .withMessageContaining("536");
+        verify(session, never()).setClientAddress(any());
+    }
+
+    /**
+     * The legitimate counterpart of the two above: a header whose declared length is acceptable but whose address bytes
+     * have not all arrived yet is a normal partial read, so it has to wait rather than fail.
+     */
+    @Test
+    void shouldWaitForTheAnnouncedVersion2AddressBytes() throws Exception {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting("10.0.0.0/8");
+        AbstractServerSession session = sessionFrom("10.0.0.1");
+        byte[] header = version2Header(V2_FAMILY_INET_STREAM, new byte[] { (byte) 198, 51, 100, 7 }, new byte[4], 56324);
+        Buffer buffer = bufferOf(Arrays.copyOfRange(header, 0, V2_HEADER_LENGTH + 4));
+
+        assertThat(acceptor.acceptServerProxyMetadata(session, buffer)).isFalse();
+        verify(session, never()).setClientAddress(any());
+    }
+
+    /**
+     * The v1 line is bounded by the specification. Without the bound a line with no terminator of its own would run on
+     * into the ssh identification line that follows and the two would be parsed as one header.
+     */
+    @Test
+    void shouldRejectAVersion1HeaderWithNoTerminatorWithinTheMaximumLength() {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting("10.0.0.0/8");
+        AbstractServerSession session = sessionFrom("10.0.0.1");
+        Buffer buffer = bufferOf(("PROXY TCP4 198.51.100.7 10.0.0.5 " + "9".repeat(120)).getBytes(StandardCharsets.US_ASCII));
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> acceptor.acceptServerProxyMetadata(session, buffer)).withMessageContaining("107");
+        verify(session, never()).setClientAddress(any());
+    }
+
+    @Test
+    void shouldRejectAnUnparsableClientPort() {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting("10.0.0.0/8");
+        AbstractServerSession session = sessionFrom("10.0.0.1");
+        Buffer buffer = bufferOf(("PROXY TCP4 198.51.100.7 10.0.0.5 not-a-port 7921\r\n" + SSH_IDENTIFICATION).getBytes(StandardCharsets.US_ASCII));
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> acceptor.acceptServerProxyMetadata(session, buffer)).withMessageContaining("not-a-port");
+        verify(session, never()).setClientAddress(any());
+    }
+
+    /**
+     * A peer that is not an IP socket at all - a unix domain socket, or a mock in a test - has no address to compare
+     * against the trusted sources. That is an ordinary "not a proxy", not an error: throwing here would turn an
+     * unexpected transport into a failed ssh handshake.
+     */
+    @Test
+    void shouldTreatANonIpPeerAsUntrusted() throws Exception {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting("10.0.0.0/8");
+        AbstractServerSession session = mock(AbstractServerSession.class);
+        IoSession ioSession = mock(IoSession.class);
+        when(session.getIoSession()).thenReturn(ioSession);
+        when(ioSession.getRemoteAddress()).thenReturn(new SocketAddress() {
+        });
+        Buffer buffer = bufferOf(("PROXY TCP4 1.2.3.4 5.6.7.8 1111 2222\r\n" + SSH_IDENTIFICATION).getBytes(StandardCharsets.US_ASCII));
+
+        assertThat(acceptor.acceptServerProxyMetadata(session, buffer)).isTrue();
+
+        verify(session, never()).setClientAddress(any());
+    }
+
+    /**
+     * {@code setClientAddress} is declared on {@link AbstractServerSession}, not on the {@link ServerSession} interface
+     * this method receives. An implementation that is not one has to be logged rather than cast, or a valid header
+     * would end in a ClassCastException out of the handshake.
+     */
+    @Test
+    void shouldNotFailOnASessionThatCannotRecordAClientAddress() throws Exception {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting("10.0.0.0/8");
+        ServerSession session = mock(ServerSession.class);
+        IoSession ioSession = mock(IoSession.class);
+        when(session.getIoSession()).thenReturn(ioSession);
+        when(ioSession.getRemoteAddress()).thenReturn(new InetSocketAddress("10.0.0.1", 51234));
+        String header = "PROXY TCP4 198.51.100.7 10.0.0.5 56324 7921\r\n";
+        Buffer buffer = bufferOf((header + SSH_IDENTIFICATION).getBytes(StandardCharsets.US_ASCII));
+
+        assertThat(acceptor.acceptServerProxyMetadata(session, buffer)).isTrue();
+        assertThat(buffer.rpos()).isEqualTo(header.length());
+    }
+
+    /**
+     * The startup log is the only place an operator can see that the property they set in the balancer and the property
+     * they set in Artemis do not agree, so it has to say which of the two states this node is in.
+     */
+    @Test
+    void shouldLogWhetherProxyProtocolIsActive() {
+        assertThatCode(() -> {
+            acceptorTrusting().logConfiguredSources();
+            acceptorTrusting("10.0.0.0/8").logConfiguredSources();
+        }).doesNotThrowAnyException();
+        assertThat(acceptorTrusting().isEnabled()).isFalse();
+        assertThat(acceptorTrusting("10.0.0.0/8").isEnabled()).isTrue();
+    }
+
+    private static byte[] version2Header(int familyAndProtocol, byte[] sourceAddress, byte[] destinationAddress, int sourcePort) throws IOException {
+        var out = new ByteArrayOutputStream();
+        out.write(V2_SIGNATURE);
+        out.write(0x21); // version 2, PROXY
+        out.write(familyAndProtocol);
+        int addressLength = sourceAddress.length + destinationAddress.length + 4;
+        out.write((addressLength >> 8) & 0xFF);
+        out.write(addressLength & 0xFF);
+        out.write(sourceAddress);
+        out.write(destinationAddress);
+        out.write((sourcePort >> 8) & 0xFF);
+        out.write(sourcePort & 0xFF);
+        out.write(0x1E); // destination port 7921
+        out.write(0xF1);
+        return out.toByteArray();
     }
 
     private static byte[] version2Ipv4Header(byte[] sourceAddress, int sourcePort) throws IOException {

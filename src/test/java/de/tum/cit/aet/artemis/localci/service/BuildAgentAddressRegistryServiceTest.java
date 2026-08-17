@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
@@ -249,5 +250,52 @@ class BuildAgentAddressRegistryServiceTest {
         service.refreshRegisteredAddresses();
 
         assertThat(service.isRegisteredAddressOfAgent("agent-1", "::1")).as("::1 and 0:0:0:0:0:0:0:1 are the same address").isTrue();
+    }
+
+    /**
+     * An agent that reconnects gets a new source port and, behind NAT, possibly a new address, while it starts claiming
+     * jobs immediately. Waiting for the scheduled reconcile would refuse its clones for up to that interval, so a miss
+     * refreshes once before deciding.
+     */
+    @Test
+    void shouldRefreshOnceBeforeRefusingAnUnknownAddress() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        // The agent reconnected from elsewhere without this node having reconciled yet.
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.9"))));
+
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.9")).as("the miss must trigger a refresh rather than refuse a build of a live agent").isTrue();
+    }
+
+    /**
+     * Reached from inside an authorization decision, where an exception would deny a legitimate build, so neither a
+     * missing argument nor an unusable address may do anything but return false.
+     */
+    @Test
+    void shouldRefuseMissingOrUnusableArguments() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredAddressOfAgent(null, "10.0.0.5")).isFalse();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", null)).isFalse();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "not-an-address")).isFalse();
+    }
+
+    /**
+     * The provider surfaces no client-connected callback, so the registry learns of a new agent from these two
+     * listeners and the scheduled reconcile. Losing the registration would leave every reconnected agent waiting for
+     * the next reconcile.
+     */
+    @Test
+    void shouldSubscribeToConnectionAndDisconnectionEvents() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+
+        createService(List.of()).registerListeners();
+
+        verify(distributedDataAccessService).addConnectionStateListener(any());
+        verify(distributedDataAccessService).addClientDisconnectionListener(any());
     }
 }

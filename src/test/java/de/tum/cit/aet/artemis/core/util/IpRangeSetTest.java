@@ -129,4 +129,14 @@ class IpRangeSetTest {
     void shouldReportTheRangesAsConfiguredForDisplay() {
         assertThat(IpRangeSet.parse(List.of("10.0.0.0/8", "192.168.1.7"), PROPERTY).getConfiguredRanges()).containsExactly("10.0.0.0/8", "192.168.1.7");
     }
+
+    /**
+     * The startup log lines that tell an operator what is enforced interpolate this set directly, so it has to render
+     * the ranges rather than an object identity.
+     */
+    @Test
+    void shouldRenderTheConfiguredRanges() {
+        assertThat(IpRangeSet.parse(List.of("10.0.0.0/8", "192.168.1.7"), PROPERTY)).hasToString("[10.0.0.0/8, 192.168.1.7]");
+        assertThat(IpRangeSet.parse(List.of(), PROPERTY)).hasToString("[]");
+    }
 }

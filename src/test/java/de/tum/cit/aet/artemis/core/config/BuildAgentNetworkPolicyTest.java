@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.List;
@@ -103,5 +104,21 @@ class BuildAgentNetworkPolicyTest {
         BuildAgentNetworkPolicy policy = policyWith(List.of(), List.of());
 
         assertThat(policy.isTrustedProxy("10.1.2.3")).as("without configured proxies no forwarding header may be believed").isFalse();
+    }
+
+    /**
+     * An unrestricted node and a restricted one behave identically until something is refused, so the startup log is
+     * where a deployment that meant to bound its build agents finds out that it did not. Exercised for both states,
+     * because the misleading one is the state where the property was set but did not take effect.
+     */
+    @Test
+    void shouldLogWhatIsEnforced() {
+        assertThatCode(() -> {
+            policyWith(List.of(), List.of()).logConfiguredPolicy();
+            policyWith(List.of("10.0.0.0/8"), List.of("192.168.1.0/24")).logConfiguredPolicy();
+        }).doesNotThrowAnyException();
+
+        assertThat(policyWith(List.of(), List.of()).isAllowlistConfigured()).isFalse();
+        assertThat(policyWith(List.of("10.0.0.0/8"), List.of()).isAllowlistConfigured()).isTrue();
     }
 }
