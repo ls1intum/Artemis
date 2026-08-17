@@ -133,9 +133,8 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         if (agentName == null || distributedDataAccessService.isEmpty() || buildJobCloneTokenService.isEmpty()) {
             return false;
         }
-        String requestedRepositoryUri = localVCRepositoryUri.toString();
         var tokenService = buildJobCloneTokenService.get();
         return distributedDataAccessService.get().getProcessingJobsForAgentByName(agentName).stream()
-                .anyMatch(buildJob -> tokenService.getRepositoryUris(buildJob).contains(requestedRepositoryUri));
+                .anyMatch(buildJob -> tokenService.coversRepository(buildJob, localVCRepositoryUri));
     }
 }

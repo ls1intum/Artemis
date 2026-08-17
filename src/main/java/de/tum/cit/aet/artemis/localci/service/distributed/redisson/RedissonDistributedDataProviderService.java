@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localci.service.distributed.redisson;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -139,9 +140,9 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     }
 
     @Override
-    public Map<String, Set<String>> getConnectedClientAddresses() {
-        // Redis reports the address it accepted each connection from in CLIENT LIST, which is observed rather
-        // than self-reported and therefore usable for authorizing git requests.
+    public Optional<Map<String, Set<String>>> getConnectedClientAddresses() {
+        // Redis reports the address it accepted each connection from in CLIENT LIST. Empty when that query failed,
+        // which must stay distinguishable from a successful query that found no clients.
         return redisClientListResolver.getClientAddressesByName();
     }
 

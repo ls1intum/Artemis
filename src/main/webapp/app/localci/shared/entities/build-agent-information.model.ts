@@ -32,7 +32,8 @@ export class BuildAgentInformation implements BaseEntity {
 export class BuildAgentAddressInfo {
     public agentName?: string;
     public addresses?: string[];
-    public observedAt?: dayjs.Dayjs;
+    /** ISO timestamp as sent by the server; not parsed into dayjs because nothing renders it yet. */
+    public observedAt?: string;
     /** False when an observed address lies outside the configured build agent networks; such an agent cannot clone. */
     public withinAllowlist?: boolean;
 }

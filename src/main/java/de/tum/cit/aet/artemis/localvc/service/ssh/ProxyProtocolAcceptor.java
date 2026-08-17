@@ -8,7 +8,6 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
 
 import jakarta.annotation.PostConstruct;
 
@@ -21,10 +20,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.SshProxyProtocolConfiguration;
+import de.tum.cit.aet.artemis.core.util.IpRangeSet;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 
@@ -72,6 +71,12 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
     /** Signature, version/command byte, family/protocol byte and the 2 byte length field. */
     private static final int V2_HEADER_LENGTH = 16;
 
+    /**
+     * Largest address block this accepts: the 36 bytes of an IPv6 address pair plus room for the specification's type
+     * length value extensions. The field itself allows up to 65535, which is only ever a malformed or hostile header.
+     */
+    private static final int V2_MAX_ADDRESS_LENGTH = 536;
+
     private static final int V2_VERSION_2 = 0x20;
 
     private static final int V2_COMMAND_PROXY = 0x01;
@@ -80,22 +85,10 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
 
     private static final int V2_FAMILY_INET6 = 0x20;
 
-    private final List<String> trustedSources;
-
-    private final List<IpAddressMatcher> trustedSourceMatchers;
+    private final IpRangeSet trustedSources;
 
     public ProxyProtocolAcceptor(SshProxyProtocolConfiguration configuration) {
-        this.trustedSources = List.copyOf(configuration.getTrustedSources());
-        this.trustedSourceMatchers = this.trustedSources.stream().map(source -> {
-            try {
-                return new IpAddressMatcher(source);
-            }
-            catch (IllegalArgumentException e) {
-                throw new IllegalStateException("Cannot parse '" + source + "' in " + TRUSTED_SOURCES_PROPERTY
-                        + " as an IP address or CIDR block. Refusing to start rather than silently never matching, which would leave every ssh connection attributed to the "
-                        + "load balancer.", e);
-            }
-        }).toList();
+        this.trustedSources = IpRangeSet.parse(configuration.getTrustedSources(), TRUSTED_SOURCES_PROPERTY);
     }
 
     /**
@@ -104,7 +97,7 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
      */
     @PostConstruct
     public void logConfiguredSources() {
-        if (trustedSourceMatchers.isEmpty()) {
+        if (trustedSources.isEmpty()) {
             log.info("PROXY protocol is disabled for the git ssh server ({} is empty). If ssh reaches this node through a load balancer, every connection will be attributed to "
                     + "the balancer rather than to the client.", TRUSTED_SOURCES_PROPERTY);
         }
@@ -117,12 +110,12 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
      * @return whether any trusted source is configured, i.e. whether this acceptor does anything
      */
     public boolean isEnabled() {
-        return !trustedSourceMatchers.isEmpty();
+        return !trustedSources.isEmpty();
     }
 
     @Override
     public boolean acceptServerProxyMetadata(ServerSession session, Buffer buffer) throws Exception {
-        if (trustedSourceMatchers.isEmpty()) {
+        if (trustedSources.isEmpty()) {
             return true;
         }
 
@@ -130,7 +123,7 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
         // when the ssh identification line that follows the header arrives incomplete, and by then getClientAddress()
         // would already return the address we parsed out of the header.
         String peer = hostOf(session.getIoSession().getRemoteAddress());
-        if (peer == null || !isTrustedSource(peer)) {
+        if (!trustedSources.contains(peer)) {
             // Not a load balancer we operate, so no header is expected and none may be believed. Leave the read
             // position untouched so the ssh identification line is read from the start of the data.
             return true;
@@ -161,7 +154,9 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
      * Parses the human-readable v1 line, {@code PROXY TCP4 <src> <dst> <srcPort> <dstPort>\r\n}.
      */
     private boolean parseVersion1(ServerSession session, Buffer buffer, byte[] data, int start, int length) throws UnknownHostException {
-        int lineEnd = indexOfCrLf(data, start, length);
+        // Bounded to the maximum permitted line length: without this, a malformed line with no terminator of its own
+        // would find the CRLF of the ssh identification line that follows and parse the two as one header.
+        int lineEnd = indexOfCrLf(data, start, Math.min(length, V1_MAX_LENGTH));
         if (lineEnd < 0) {
             if (length >= V1_MAX_LENGTH) {
                 throw new IllegalStateException("Received a PROXY protocol v1 header longer than the permitted " + V1_MAX_LENGTH + " bytes without a line terminator");
@@ -197,11 +192,18 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
         int addressLength = ((data[start + 14] & 0xFF) << 8) | (data[start + 15] & 0xFF);
         int totalLength = V2_HEADER_LENGTH + addressLength;
 
-        if (length < totalLength) {
-            return false;
-        }
+        // Both checks precede the wait for more data below. A header that declares a length we will never accept, or a
+        // version we do not speak, has to fail now: waiting first would stall the connection until the idle timeout
+        // collects it, because the announced bytes are never going to arrive.
         if ((versionAndCommand & 0xF0) != V2_VERSION_2) {
             throw new IllegalStateException("Unsupported PROXY protocol version in header byte 0x" + Integer.toHexString(versionAndCommand));
+        }
+        if (addressLength > V2_MAX_ADDRESS_LENGTH) {
+            throw new IllegalStateException("PROXY protocol v2 header declares " + addressLength + " address bytes, more than the " + V2_MAX_ADDRESS_LENGTH + " this accepts");
+        }
+
+        if (length < totalLength) {
+            return false;
         }
 
         buffer.rpos(start + totalLength);
@@ -264,20 +266,6 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
         else {
             log.warn("Cannot record the client address of an ssh session of type {}", session.getClass().getName());
         }
-    }
-
-    private boolean isTrustedSource(String ipAddress) {
-        for (IpAddressMatcher matcher : trustedSourceMatchers) {
-            try {
-                if (matcher.matches(ipAddress)) {
-                    return true;
-                }
-            }
-            catch (IllegalArgumentException e) {
-                log.debug("Cannot match '{}' against a configured proxy protocol source", ipAddress, e);
-            }
-        }
-        return false;
     }
 
     private static String hostOf(SocketAddress address) {

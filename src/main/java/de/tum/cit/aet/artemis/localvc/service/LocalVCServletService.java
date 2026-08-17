@@ -180,6 +180,12 @@ public class LocalVCServletService {
 
     public static final String BUILD_USER_NAME = "buildjob_user";
 
+    /**
+     * Marks a request that was authorized as a build agent cloning for one of its build jobs. Set once the credential
+     * has been accepted, so later stages can recognise build agent traffic without guessing from the username.
+     */
+    private static final String BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE = "artemis.buildAgentClone";
+
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             RepositoryAccessService repositoryAccessService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
@@ -528,14 +534,17 @@ public class LocalVCServletService {
                 return false;
             }
 
-            var processingJobs = distributedDataAccessService.get().getProcessingJobsForAgentByName(agentName);
-            if (processingJobs.isEmpty()) {
-                // Either not a build agent name at all, or an agent with nothing running. Both mean no token can match
+            // Cheapest possible gate first, and deliberately so. This method runs for every read request that carries
+            // any Basic header, ahead of the rate limiter, so anything expensive here is reachable by an unauthenticated
+            // caller in a loop. A single-key lookup rejects a username that is not a build agent at all; only past this
+            // point may the more expensive whole-map reads below run.
+            if (distributedDataAccessService.get().getDistributedBuildAgentInformation().get(agentName) == null) {
                 return false;
             }
 
             // Origin before secret: a token read out of the queue by some other party is useless unless it is also
-            // presented from the address the agent that holds the job is connected from.
+            // presented from the address the agent that holds the job is connected from. Both checks are answered from
+            // local state, so they stay ahead of anything that touches the cluster.
             String peerIpAddress = getPeerIpString(request, buildAgentNetworkPolicy::isTrustedProxy);
             if (!buildAgentNetworkPolicy.isWithinAllowedRanges(peerIpAddress)) {
                 log.warn("Rejecting a build agent clone for agent {} from {}, which is outside the configured build agent networks", agentName, peerIpAddress);
@@ -546,17 +555,27 @@ public class LocalVCServletService {
                 return false;
             }
 
+            var processingJobs = distributedDataAccessService.get().getProcessingJobsForAgentByName(agentName);
+            if (processingJobs.isEmpty()) {
+                // A registered agent from a registered address, but running nothing, so no token can match
+                return false;
+            }
+
             LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
             var tokenService = buildJobCloneTokenService.get();
             for (BuildJobQueueItem buildJob : processingJobs) {
                 if (!tokenService.tokenMatches(buildJob, presentedToken)) {
                     continue;
                 }
-                if (!tokenService.getRepositoryUris(buildJob).contains(localVCRepositoryUri.toString())) {
-                    log.warn("Build agent {} presented the token of build job {} for repository {}, which is not one of that job's repositories", agentName, buildJob.id(),
-                            localVCRepositoryUri);
+                if (!tokenService.coversRepository(buildJob, localVCRepositoryUri)) {
+                    log.warn("Build agent {} presented the token of build job {} for repository {}, which is not one of that job's repositories {}", agentName, buildJob.id(),
+                            localVCRepositoryUri, tokenService.getRepositoryIdentities(buildJob));
                     return false;
                 }
+                // Tells the pre-upload hook that this request is a build agent clone, so that it does not relabel
+                // whichever access log entry happens to be newest for this repository. It used to recognise a build
+                // agent by the literal buildjob_user, which an agent presenting its own short name never matches.
+                request.setAttribute(BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE, agentName);
                 // Only on the handshake, like the rate limiter above: git follows /info/refs with a git-upload-pack
                 // using the same credentials, and one clone should leave one audit entry rather than two.
                 if (request.getRequestURI().endsWith("/info/refs")) {
@@ -564,6 +583,10 @@ public class LocalVCServletService {
                 }
                 return true;
             }
+            // The one case that looks like credential guessing against a live agent, so it must not be the one case
+            // that leaves no trace. It is also the signal for a misconfigured proxy, where the token is right but the
+            // address the request appears to come from is not the agent's.
+            log.warn("Build agent {} from {} presented a credential matching none of its {} running build jobs", agentName, peerIpAddress, processingJobs.size());
             return false;
         }
         catch (Exception e) {
@@ -586,6 +609,11 @@ public class LocalVCServletService {
                     localVCRepositoryUri.toString(), exercise);
             String commitHash = getCommitHash(localVCRepositoryUri);
             vcsAccessLogService.ifPresent(service -> service.saveBuildAgentAccessLog(participation, agentName, buildJobId, commitHash, ipAddress));
+        }
+        catch (EntityNotFoundException e) {
+            // An auxiliary repository has no participation of its own, so there is nothing to attribute the access to.
+            // Expected for those, and it happens on every build, so it must not be a warning.
+            log.debug("No participation to record a build agent access against for {}", localVCRepositoryUri);
         }
         catch (Exception e) {
             log.warn("Could not write a VCS access log entry for build agent {} cloning {}: {}", agentName, localVCRepositoryUri, e.getMessage());
@@ -1373,6 +1401,13 @@ public class LocalVCServletService {
      */
     public void updateAndStoreVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, String authorizationHeader, int clientOffered) {
         if (!request.getMethod().equals("POST")) {
+            return;
+        }
+        // A build agent clone has its own audit entry already, and this method updates whichever entry is newest for
+        // the repository, so running it here would relabel a student's entry as the agent's clone. Keyed on the
+        // attribute the authorization set rather than on a username: an agent presenting its own short name never
+        // matches the literal below, and neither does an installation that renamed the shared credential.
+        if (request.getAttribute(BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE) != null) {
             return;
         }
         try {

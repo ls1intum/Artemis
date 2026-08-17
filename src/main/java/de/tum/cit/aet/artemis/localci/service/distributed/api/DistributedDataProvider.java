@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localci.service.distributed.api;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -120,10 +121,13 @@ public interface DistributedDataProvider {
      * that cannot observe client connections return an empty map, which callers must treat as "unknown", never
      * as "no client is connected".
      *
-     * @return connected client name to its observed remote addresses (host only, without port), or an empty map
-     *         if running as a client or the provider does not support client tracking
+     * @return connected client name to its observed remote addresses (host only, without port), or
+     *         {@link Optional#empty()} when this question cannot be answered at all - running as a client, an
+     *         unsupported provider, or a failed query. An empty {@code Optional} and an empty map mean different things
+     *         and callers must not conflate them: the first is "unknown", the second is "nothing is connected", and
+     *         treating a failed query as the latter would drop every registered address.
      */
-    Map<String, Set<String>> getConnectedClientAddresses();
+    Optional<Map<String, Set<String>>> getConnectedClientAddresses();
 
     /**
      * Checks if the distributed data provider is connected and ready to use.

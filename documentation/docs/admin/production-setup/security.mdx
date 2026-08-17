@@ -117,7 +117,24 @@ artemis:
 ```
 
 - `allowed-ranges` accepts CIDR blocks and single addresses, IPv4 and IPv6. An agent connecting from outside them is refused, which is what stops a host that reached your cluster from registering itself as a build agent. **Leaving it empty means no restriction**, so upgrading does not stop existing agents.
-- `trusted-proxies` names the reverse proxies whose `X-Forwarded-For` header may be believed for HTTP git requests. Any client can set that header, so it is only consulted when the request's TCP peer is one of these addresses. Leave it empty when Artemis is reached directly.
+- `trusted-proxies` names the reverse proxies whose `X-Forwarded-For` header may be believed for HTTP git requests. Any client can set that header, so it is only consulted when the request's immediate peer is one of these addresses. Leave it empty when Artemis is reached directly.
+
+<Callout variant={CalloutVariant.warning}>
+    `trusted-proxies` is the narrower of **two** filters, not the only one. Artemis runs with
+    `server.forward-headers-strategy: native`, so Tomcat's `RemoteIpValve` already resolves `X-Forwarded-For` for any
+    peer matching `server.tomcat.remoteip.internal-proxies`, which defaults to the private ranges
+    (`10/8`, `172.16/12`, `192.168/16`, `127/8`, link-local). The addresses whose forwarding headers are believed are
+    therefore the **union** of that regex and `trusted-proxies`.
+
+    Two consequences. A reverse proxy on a private address is already handled, which is why HTTP git works behind the
+    shipped nginx without configuring `trusted-proxies` at all. But anything else able to reach Artemis from a private
+    address is equally believed, so narrow `server.tomcat.remoteip.internal-proxies` to your proxies if the private
+    network is not a space you fully control.
+
+    Conversely, if your proxy has a **public** address it matches neither list by default: `X-Forwarded-For` is ignored,
+    every build agent appears to come from the proxy, and HTTPS clones are refused. List it in `trusted-proxies` (or in
+    the Tomcat property) in that case.
+</Callout>
 
 <Callout variant={CalloutVariant.info}>
     Several agents on one host share a source address, which is normal behind NAT and fully supported. The allowlist

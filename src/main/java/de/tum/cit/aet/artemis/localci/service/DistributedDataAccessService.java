@@ -297,9 +297,10 @@ public class DistributedDataAccessService {
      * refresh {@link #getDistributedBuildAgentAddresses()}. Callers that want to authorize a git request should read
      * the registry instead, which is maintained by the core nodes and does not require a provider-specific call.
      *
-     * @return connected client name to observed remote host addresses, empty if the provider cannot observe clients
+     * @return connected client name to observed remote host addresses, or empty if the provider cannot observe clients
+     *         or the query failed. That is different from a present but empty map, which means no client is connected.
      */
-    public Map<String, Set<String>> getConnectedClientAddresses() {
+    public Optional<Map<String, Set<String>>> getConnectedClientAddresses() {
         return distributedDataProvider.getConnectedClientAddresses();
     }
 

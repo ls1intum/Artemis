@@ -10,12 +10,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 
 /**
  * Issues and checks the credential a build agent uses to clone the repositories of one specific build job.
@@ -34,6 +37,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 @Profile(PROFILE_LOCALCI)
 @Lazy
 public class BuildJobCloneTokenService {
+
+    private static final Logger log = LoggerFactory.getLogger(BuildJobCloneTokenService.class);
 
     /**
      * Marks the credential in a log line or a git configuration as a build job token rather than a user's password or
@@ -81,30 +86,68 @@ public class BuildJobCloneTokenService {
      * <p>
      * A token is accepted for these and nothing else, which is what turns "this caller is a build agent" into "this
      * caller is the build of this participation".
+     * <p>
+     * Each repository is identified by its project key and slug rather than by its full URI. The job's URIs are
+     * persisted strings, written when the repository was created, while the requested URI is rebuilt from the current
+     * {@code artemis.version-control.url}. An installation that changed that base URL after its participations were
+     * created would compare a stale string against a fresh one and silently deny every clone; the project key and slug
+     * survive such a change.
      *
      * @param buildJob the build job, may be null
-     * @return the repository URIs of that job, empty if it has none
+     * @return the repositories of that job, empty if it has none
      */
-    public Set<String> getRepositoryUris(@Nullable BuildJobQueueItem buildJob) {
+    public Set<RepositoryIdentity> getRepositoryIdentities(@Nullable BuildJobQueueItem buildJob) {
         if (buildJob == null || buildJob.repositoryInfo() == null) {
             return Set.of();
         }
         RepositoryInfo repositoryInfo = buildJob.repositoryInfo();
-        Set<String> repositoryUris = new HashSet<>();
-        addIfPresent(repositoryUris, repositoryInfo.assignmentRepositoryUri());
-        addIfPresent(repositoryUris, repositoryInfo.testRepositoryUri());
-        addIfPresent(repositoryUris, repositoryInfo.solutionRepositoryUri());
+        Set<RepositoryIdentity> repositories = new HashSet<>();
+        addIfPresent(repositories, repositoryInfo.assignmentRepositoryUri());
+        addIfPresent(repositories, repositoryInfo.testRepositoryUri());
+        addIfPresent(repositories, repositoryInfo.solutionRepositoryUri());
         if (repositoryInfo.auxiliaryRepositoryUris() != null) {
             for (String auxiliaryRepositoryUri : repositoryInfo.auxiliaryRepositoryUris()) {
-                addIfPresent(repositoryUris, auxiliaryRepositoryUri);
+                addIfPresent(repositories, auxiliaryRepositoryUri);
             }
         }
-        return repositoryUris;
+        return repositories;
     }
 
-    private static void addIfPresent(Set<String> repositoryUris, @Nullable String repositoryUri) {
-        if (repositoryUri != null && !repositoryUri.isBlank()) {
-            repositoryUris.add(repositoryUri);
+    /**
+     * Checks whether a build job may read the given repository.
+     *
+     * @param buildJob             the build job whose scope to check against, may be null
+     * @param localVCRepositoryUri the repository being requested
+     * @return whether that repository is one of the job's own
+     */
+    public boolean coversRepository(@Nullable BuildJobQueueItem buildJob, LocalVCRepositoryUri localVCRepositoryUri) {
+        return getRepositoryIdentities(buildJob).contains(RepositoryIdentity.of(localVCRepositoryUri));
+    }
+
+    private static void addIfPresent(Set<RepositoryIdentity> repositories, @Nullable String repositoryUri) {
+        if (repositoryUri == null || repositoryUri.isBlank()) {
+            return;
+        }
+        try {
+            repositories.add(RepositoryIdentity.of(new LocalVCRepositoryUri(repositoryUri)));
+        }
+        catch (RuntimeException e) {
+            // A URI that cannot be parsed cannot be matched either. Skipping it denies access to that one repository
+            // rather than failing the whole request, which would take the job's other repositories down with it.
+            log.warn("Ignoring unparsable repository uri '{}' while determining what a build job may read", repositoryUri, e);
+        }
+    }
+
+    /**
+     * Identifies a repository by the two parts that do not depend on the configured base URL.
+     *
+     * @param projectKey     the project key of the exercise
+     * @param repositorySlug the slug of the individual repository
+     */
+    public record RepositoryIdentity(String projectKey, String repositorySlug) {
+
+        static RepositoryIdentity of(LocalVCRepositoryUri localVCRepositoryUri) {
+            return new RepositoryIdentity(localVCRepositoryUri.getProjectKey(), localVCRepositoryUri.repositorySlug());
         }
     }
 }

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -37,7 +38,7 @@ public class RedisClientListResolver {
      * @return a set of unique client names starting with "artemis"
      */
     public Set<String> getUniqueClients() {
-        Set<String> uniqueClients = getClientAddressesByName().keySet();
+        Set<String> uniqueClients = getClientAddressesByName().map(Map::keySet).orElseGet(Set::of);
         log.debug("Redis client list based on names: {}", uniqueClients);
 
         return uniqueClients;
@@ -53,21 +54,27 @@ public class RedisClientListResolver {
      * A client that reconnects can briefly appear under two addresses, and clients behind one NAT gateway share an
      * address, so the value is a set.
      *
-     * @return Artemis client name to the host addresses it is connected from; empty if the client list is unavailable
+     * <p>
+     * A failed or timed out query returns {@link Optional#empty()} rather than an empty map. The difference matters to
+     * callers: an empty map means Redis answered and no Artemis client is connected, while empty means Redis did not
+     * answer at all. Conflating the two would let a two second timeout look like every build agent disconnecting.
+     *
+     * @return Artemis client name to the host addresses it is connected from, or empty if the client list could not be
+     *         retrieved
      */
-    public Map<String, Set<String>> getClientAddressesByName() {
+    public Optional<Map<String, Set<String>>> getClientAddressesByName() {
         List<RedisClientInfo> clients;
         try {
             clients = reactiveRedisConnectionFactory.getReactiveConnection().serverCommands().getClientList().collectList().block(Duration.ofSeconds(2));
         }
         catch (RuntimeException e) {
             log.error("Failed to fetch Redis client list within timeout", e);
-            return Map.of();
+            return Optional.empty();
         }
 
         if (clients == null) {
             log.error("Redis client list is null");
-            return Map.of();
+            return Optional.empty();
         }
 
         Map<String, Set<String>> addressesByClientName = new HashMap<>();
@@ -84,7 +91,7 @@ public class RedisClientListResolver {
             }
         }
 
-        return addressesByClientName;
+        return Optional.of(addressesByClientName);
     }
 
     /**

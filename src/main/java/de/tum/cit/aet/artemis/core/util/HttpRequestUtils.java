@@ -64,6 +64,13 @@ public final class HttpRequestUtils {
      * The list is walked from the right, taking the last entry that did not come from a trusted proxy. Entries to the
      * left of that one were supplied by the client and cannot be relied upon: a client may send an
      * {@code X-Forwarded-For} of its own, and the proxy appends to it rather than replacing it.
+     * <p>
+     * <b>Note on the starting point.</b> Artemis runs with {@code server.forward-headers-strategy: native}, so Tomcat's
+     * {@code RemoteIpValve} has already replaced {@link HttpServletRequest#getRemoteAddr()} with an
+     * {@code X-Forwarded-For} derived value whenever the immediate peer matched {@code server.tomcat.remoteip.internal-proxies}
+     * (private ranges by default). This method is therefore the second, narrower filter rather than the only one: the
+     * effective set of addresses whose forwarding headers are believed is the union of that regex and
+     * {@code trustedProxies}. Narrow the Tomcat property alongside this one where the distinction matters.
      *
      * @param request        the HTTP request
      * @param isTrustedProxy tells whether an address is a reverse proxy this installation operates

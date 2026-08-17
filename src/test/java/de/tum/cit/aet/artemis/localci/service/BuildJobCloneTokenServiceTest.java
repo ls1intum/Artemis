@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
@@ -33,6 +34,10 @@ class BuildJobCloneTokenServiceTest {
         var buildConfig = new BuildConfig("script", "image", "commit", "assignmentCommit", "testCommit", "main", null, null, false, false, List.of(), 0, null, null, null, null);
         return new BuildJobQueueItem("job-1", "name", new BuildAgentDTO("agent-1", "address", "display"), 1L, 2L, 3L, 0, 1, null, repositoryInfo, jobTimingInfo, buildConfig, null,
                 cloneToken);
+    }
+
+    private static String uri(String slug) {
+        return "http://localhost:8000/git/TESTEXERCISE/testexercise-" + slug + ".git";
     }
 
     private static RepositoryInfo repositoryInfo(String assignment, String tests, String solution, String... auxiliary) {
@@ -77,28 +82,55 @@ class BuildJobCloneTokenServiceTest {
 
     @Test
     void shouldScopeToEveryRepositoryOfTheJob() {
-        BuildJobQueueItem job = buildJob(repositoryInfo("assignment.git", "tests.git", "solution.git", "aux1.git", "aux2.git"), "bjct-x");
+        BuildJobQueueItem job = buildJob(repositoryInfo(uri("student1"), uri("tests"), uri("solution"), uri("aux1"), uri("aux2")), "bjct-x");
 
-        assertThat(service.getRepositoryUris(job)).containsExactlyInAnyOrder("assignment.git", "tests.git", "solution.git", "aux1.git", "aux2.git");
+        assertThat(service.getRepositoryIdentities(job)).hasSize(5);
+        for (String slug : List.of("student1", "tests", "solution", "aux1", "aux2")) {
+            assertThat(service.coversRepository(job, new LocalVCRepositoryUri(uri(slug)))).as(slug).isTrue();
+        }
     }
 
     @Test
     void shouldOmitRepositoriesTheJobDoesNotUse() {
-        BuildJobQueueItem job = buildJob(repositoryInfo("assignment.git", "tests.git", null), "bjct-x");
+        BuildJobQueueItem job = buildJob(repositoryInfo(uri("student1"), uri("tests"), null), "bjct-x");
 
-        assertThat(service.getRepositoryUris(job)).as("a job that does not check out the solution must not be able to read it").containsExactlyInAnyOrder("assignment.git",
-                "tests.git");
+        assertThat(service.coversRepository(job, new LocalVCRepositoryUri(uri("solution")))).as("a job that does not check out the solution must not be able to read it").isFalse();
+        assertThat(service.coversRepository(job, new LocalVCRepositoryUri(uri("student2")))).as("another participant's repository must never be covered").isFalse();
     }
 
     @Test
     void shouldIgnoreBlankRepositoryUris() {
-        BuildJobQueueItem job = buildJob(repositoryInfo("assignment.git", "", "   "), "bjct-x");
+        BuildJobQueueItem job = buildJob(repositoryInfo(uri("student1"), "", "   "), "bjct-x");
 
-        assertThat(service.getRepositoryUris(job)).containsExactly("assignment.git");
+        assertThat(service.getRepositoryIdentities(job)).hasSize(1);
     }
 
     @Test
     void shouldReturnNoRepositoriesForAJobWithoutRepositoryInfo() {
-        assertThat(service.getRepositoryUris(null)).isEmpty();
+        assertThat(service.getRepositoryIdentities(null)).isEmpty();
+        assertThat(service.coversRepository(null, new LocalVCRepositoryUri(uri("student1")))).isFalse();
+    }
+
+    /**
+     * The reason the comparison is on project key and slug rather than the full URI: an installation that changed
+     * artemis.version-control.url after its participations were created holds persisted URIs with the old base, and a
+     * string comparison would deny every clone.
+     */
+    @Test
+    void shouldMatchAcrossAChangedBaseUrl() {
+        BuildJobQueueItem job = buildJob(repositoryInfo("http://old-host:8000/git/TESTEXERCISE/testexercise-student1.git", null, null), "bjct-x");
+
+        assertThat(service.coversRepository(job, new LocalVCRepositoryUri("https://new-host/git/TESTEXERCISE/testexercise-student1.git")))
+                .as("the same repository behind a renamed server must still be covered").isTrue();
+    }
+
+    /**
+     * A repository uri that cannot be parsed must cost only itself, not the whole job.
+     */
+    @Test
+    void shouldIgnoreAnUnparsableRepositoryUri() {
+        BuildJobQueueItem job = buildJob(repositoryInfo(uri("student1"), "not-a-uri", null), "bjct-x");
+
+        assertThat(service.coversRepository(job, new LocalVCRepositoryUri(uri("student1")))).isTrue();
     }
 }

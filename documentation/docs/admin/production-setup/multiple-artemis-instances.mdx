@@ -588,19 +588,23 @@ You can make following adaptations to the `application-prod.yml`:
 
 3. Furthermore, you will need some configuration related to version control and continuous integration.
 
-    Build agents require access to the VC server. Therefore, you need to add credentials so the build agent can access the repositories.
-    These credentials are used to clone repositories via HTTPS. You must also add these credentials to the localvc nodes.
-
-    These shared credentials are deprecated and can be omitted: a build agent authenticates with the clone token of the build job it is running, or with an SSH key as described after the example below. Configure them only if Jenkins clones from this installation.
+    Build agents need to reach the VC server to clone repositories. They authenticate themselves: over HTTPS with the clone token of the build job they are running, or with an SSH key as described after the example below. Neither needs any configuration here.
 
     ```yaml
     artemis:
         version-control:
             url: <url-to-your-vc-server>
             default-branch: main # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
-            # Artemis admin credentials
-            build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc
-            build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. You can otherwise use an ssh key
+    ```
+
+    Add the shared credential pair **only** if [Jenkins with LocalVC](/admin/jenkins-localvc) clones from this installation. Jenkins is not an Artemis build agent, so it has neither a key nor a build job and this pair is the only mechanism left for it. It is deprecated, and a core node accepts it for read access to *every* repository, so leave it out otherwise:
+
+    ```yaml
+    artemis:
+        version-control:
+            # Deprecated, and only needed for Jenkins with LocalVC. Set the same values on the Jenkins side.
+            build-agent-git-username: buildjob_user # Replace with more secure credentials for production
+            build-agent-git-password: buildjob_password # Replace with more secure credentials for production
     ```
 
     Preferably, set `artemis.version-control.build-agent-use-ssh: true` to have every agent generate an SSH key pair at startup and authenticate with it. Set it on the build agents first — localvc nodes accept a registered agent's key regardless of their own setting, so builds keep working — and only afterwards on the localvc nodes, where it stops the shared pair from granting read access to every repository.

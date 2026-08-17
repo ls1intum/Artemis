@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -60,14 +61,14 @@ class BuildAgentAddressRegistryServiceTest {
 
     @Test
     void shouldRegisterTheAddressAnAgentConnectsFrom() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Map.of("agent-1", Set.of("10.0.0.5")));
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"), "agent-2", Set.of("10.0.0.9"))));
         BuildAgentAddressRegistryService service = createService(List.of());
 
         service.refreshRegisteredAddresses();
 
         assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).isTrue();
         assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.6")).isFalse();
-        assertThat(service.isRegisteredAddressOfAgent("agent-2", "10.0.0.5")).as("an address registered for one agent must not authorize another").isFalse();
+        assertThat(service.isRegisteredAddressOfAgent("agent-2", "10.0.0.5")).as("an address registered for one agent must not authorize another observed agent").isFalse();
     }
 
     /**
@@ -75,7 +76,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldAllowSeveralAgentsBehindOneAddress() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Map.of("agent-1", Set.of("10.0.0.5"), "agent-2", Set.of("10.0.0.5")));
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"), "agent-2", Set.of("10.0.0.5"))));
         BuildAgentAddressRegistryService service = createService(List.of());
 
         service.refreshRegisteredAddresses();
@@ -90,7 +91,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldAcceptEveryObservedAddressOfAnAgent() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Map.of("agent-1", Set.of("10.0.0.5", "10.0.0.6")));
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5", "10.0.0.6"))));
         BuildAgentAddressRegistryService service = createService(List.of());
 
         service.refreshRegisteredAddresses();
@@ -101,32 +102,31 @@ class BuildAgentAddressRegistryServiceTest {
 
     @Test
     void shouldRemoveAnAgentThatDisconnected() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Map.of("agent-1", Set.of("10.0.0.5"), "agent-2", Set.of("10.0.0.6")));
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"), "agent-2", Set.of("10.0.0.6"))));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Map.of("agent-1", Set.of("10.0.0.5")));
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
         service.refreshRegisteredAddresses();
 
         assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).isTrue();
-        assertThat(service.isRegisteredAddressOfAgent("agent-2", "10.0.0.6")).as("a stale address must not keep authorizing clones after the agent is gone").isFalse();
-        assertThat(registeredAddresses).doesNotContainKey("agent-2");
+        assertThat(registeredAddresses).as("a stale address must not linger after the agent is gone").doesNotContainKey("agent-2");
     }
 
     @Test
     void shouldMarkAnAgentOutsideTheAllowlist() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Map.of("agent-1", Set.of("203.0.113.9")));
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("203.0.113.9"))));
         BuildAgentAddressRegistryService service = createService(List.of("10.0.0.0/8"));
 
         service.refreshRegisteredAddresses();
 
-        assertThat(registeredAddresses.get("agent-1").withinAllowlist()).isFalse();
-        assertThat(service.isRegisteredAddressOfAgent("agent-1", "203.0.113.9")).as("an agent outside the configured networks must not be able to clone").isFalse();
+        assertThat(registeredAddresses.get("agent-1").withinAllowlist()).as("an agent outside the configured networks is recorded as such, and BuildAgentNetworkPolicy refuses it")
+                .isFalse();
     }
 
     @Test
     void shouldKeepAnAgentInsideTheAllowlist() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Map.of("agent-1", Set.of("10.0.0.5")));
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
         BuildAgentAddressRegistryService service = createService(List.of("10.0.0.0/8"));
 
         service.refreshRegisteredAddresses();
@@ -141,7 +141,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldNotConstrainAnythingWhenTheProviderCannotObserveAddresses() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Map.of());
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.empty());
         BuildAgentAddressRegistryService service = createService(List.of());
 
         service.refreshRegisteredAddresses();
@@ -150,9 +150,41 @@ class BuildAgentAddressRegistryServiceTest {
         assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).as("an unanswerable question must not deny every build").isTrue();
     }
 
+    /**
+     * The single-node topology, which this check must not break. A build agent sharing a JVM with the core node opens no
+     * client connection to the middleware, so the middleware answers with an empty list of clients and there is simply
+     * nothing to observe for that agent. It has to stay unconstrained; treating "answered, but this agent is not in the
+     * answer" as a rejection refused every clone on every single-node installation.
+     */
+    @Test
+    void shouldNotConstrainAnAgentThatOpensNoClientConnection() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+        BuildAgentAddressRegistryService service = createService(List.of());
+
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredAddressOfAgent("co-located-agent", "127.0.0.1")).as("an agent with no observable cluster connection has no origin to check").isTrue();
+    }
+
+    /**
+     * The other half of the per-agent rule: once an agent *is* observed somewhere, it is held to that address even
+     * though other agents may be unobservable.
+     */
+    @Test
+    void shouldStillConstrainAnObservedAgentWhileAnotherIsUnobservable() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("observed-agent", Set.of("10.0.0.5"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredAddressOfAgent("observed-agent", "10.0.0.5")).isTrue();
+        assertThat(service.isRegisteredAddressOfAgent("observed-agent", "203.0.113.9")).as("an observed agent is bound to where it was observed").isFalse();
+        assertThat(service.isRegisteredAddressOfAgent("co-located-agent", "127.0.0.1")).as("an unobserved agent stays unconstrained").isTrue();
+    }
+
     @Test
     void shouldNotWipeTheRegistryWhenTheProviderTemporarilyReportsNothing() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Map.of("agent-1", Set.of("10.0.0.5")));
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
@@ -170,5 +202,52 @@ class BuildAgentAddressRegistryServiceTest {
         service.refreshRegisteredAddresses();
 
         assertThat(registeredAddresses).isEmpty();
+    }
+
+    /**
+     * The failure both reviewers of this change asked to be pinned down. Redis returns nothing when its CLIENT LIST
+     * query times out, which is indistinguishable in the data from "no agent is connected". Treating it as the latter
+     * would empty the registry and reject every clone in the cluster until a later successful refresh.
+     */
+    @Test
+    void shouldKeepTheRegistryWhenTheProviderStopsBeingAbleToAnswer() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.empty());
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).as("a query that could not be answered must not look like every agent disconnecting").isTrue();
+        assertThat(registeredAddresses).containsKey("agent-1");
+    }
+
+    /**
+     * The opposite case, which must still work: the provider answered and genuinely reports nothing connected, so the
+     * stale entry has to go.
+     */
+    @Test
+    void shouldClearTheRegistryWhenTheProviderReportsNoClients() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+        service.refreshRegisteredAddresses();
+
+        assertThat(registeredAddresses).isEmpty();
+    }
+
+    /**
+     * The same address written in its other textual form must still match, because the two sides are formatted by
+     * different components: the middleware and the servlet container.
+     */
+    @Test
+    void shouldMatchTheSameAddressInAnotherNotation() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("0:0:0:0:0:0:0:1"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "::1")).as("::1 and 0:0:0:0:0:0:0:1 are the same address").isTrue();
     }
 }

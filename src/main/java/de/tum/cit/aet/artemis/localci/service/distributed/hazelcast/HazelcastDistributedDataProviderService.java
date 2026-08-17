@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -317,17 +318,17 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
      * clients behind one gateway therefore share an entry, which is why the value is a set rather than a
      * single address.
      *
-     * @return connected client name to its observed remote host addresses, or an empty map if running as a client
+     * @return connected client name to its observed remote host addresses, or empty when the question cannot be answered
      */
     @Override
-    public Map<String, Set<String>> getConnectedClientAddresses() {
+    public Optional<Map<String, Set<String>>> getConnectedClientAddresses() {
         if (!isInstanceRunning()) {
-            return Map.of();
+            return Optional.empty();
         }
 
         // Client service is only available on cluster members, not on clients
         if (hazelcastInstance instanceof HazelcastClientProxy) {
-            return Map.of();
+            return Optional.empty();
         }
 
         try {
@@ -341,11 +342,11 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
                 // make every entry unstable without adding anything an authorization decision can use.
                 addressesByClientName.computeIfAbsent(client.getName(), _ -> new HashSet<>()).add(socketAddress.getAddress().getHostAddress());
             }
-            return addressesByClientName;
+            return Optional.of(addressesByClientName);
         }
         catch (UnsupportedOperationException e) {
-            // Client service not available
-            return Map.of();
+            // Client service not available, which is "unknown" rather than "no client is connected"
+            return Optional.empty();
         }
     }
 

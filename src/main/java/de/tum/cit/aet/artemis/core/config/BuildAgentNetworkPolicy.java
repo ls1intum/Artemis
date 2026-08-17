@@ -12,16 +12,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Component;
+
+import de.tum.cit.aet.artemis.core.util.IpRangeSet;
 
 /**
  * Answers the two network questions the build agent authorization paths ask: whether an address is inside the
  * configured build agent networks, and whether an address is a reverse proxy this installation operates.
  * <p>
- * The configured ranges are parsed once here rather than per request. {@link IpAddressMatcher} rejects a malformed
- * value in its constructor, so an unusable configuration fails startup with the offending value named instead of
- * silently never matching, which on an allowlist would mean refusing every build agent.
+ * The configured ranges are parsed once here rather than per request, by {@link IpRangeSet}, which rejects a malformed
+ * value at startup with the offending value named rather than letting it silently never match - on an allowlist that
+ * would mean refusing every build agent - and which treats an address of another family as a plain non-match rather
+ * than an error.
  * <p>
  * This deliberately does not use {@link de.tum.cit.aet.artemis.core.util.HttpRequestUtils#getIpStringFromRequest} to
  * obtain the address it is asked about. That helper returns the first {@code X-Forwarded-For} value whenever the
@@ -43,33 +45,13 @@ public class BuildAgentNetworkPolicy {
 
     private static final String TRUSTED_PROXIES_PROPERTY = "artemis.continuous-integration.build-agent-network.trusted-proxies";
 
-    private final List<String> allowedRanges;
+    private final IpRangeSet allowedRanges;
 
-    private final List<IpAddressMatcher> allowedRangeMatchers;
-
-    private final List<String> trustedProxies;
-
-    private final List<IpAddressMatcher> trustedProxyMatchers;
+    private final IpRangeSet trustedProxies;
 
     public BuildAgentNetworkPolicy(BuildAgentNetworkConfiguration configuration) {
-        this.allowedRanges = List.copyOf(configuration.getAllowedRanges());
-        this.allowedRangeMatchers = parse(this.allowedRanges, ALLOWED_RANGES_PROPERTY);
-        this.trustedProxies = List.copyOf(configuration.getTrustedProxies());
-        this.trustedProxyMatchers = parse(this.trustedProxies, TRUSTED_PROXIES_PROPERTY);
-    }
-
-    private static List<IpAddressMatcher> parse(List<String> ranges, String propertyName) {
-        return ranges.stream().map(range -> {
-            try {
-                return new IpAddressMatcher(range);
-            }
-            catch (IllegalArgumentException e) {
-                throw new IllegalStateException(
-                        "Cannot parse '" + range + "' in " + propertyName + " as an IP address or CIDR block. Use a single address such as 192.168.1.7 or a block such as "
-                                + "10.0.0.0/8 or 2001:db8::/32. Refusing to start rather than silently never matching, which on an allowlist would refuse every build agent.",
-                        e);
-            }
-        }).toList();
+        this.allowedRanges = IpRangeSet.parse(configuration.getAllowedRanges(), ALLOWED_RANGES_PROPERTY);
+        this.trustedProxies = IpRangeSet.parse(configuration.getTrustedProxies(), TRUSTED_PROXIES_PROPERTY);
     }
 
     /**
@@ -78,15 +60,16 @@ public class BuildAgentNetworkPolicy {
      */
     @PostConstruct
     public void logConfiguredPolicy() {
-        if (allowedRangeMatchers.isEmpty()) {
+        if (allowedRanges.isEmpty()) {
             log.info("No build agent networks are configured ({} is empty), so build agents may clone from any address. Configure it to bound which hosts may act as build agents.",
                     ALLOWED_RANGES_PROPERTY);
         }
         else {
             log.info("Build agents may only clone from {}", allowedRanges);
         }
-        if (!trustedProxyMatchers.isEmpty()) {
-            log.info("X-Forwarded-For is believed for HTTP git requests arriving from {}", trustedProxies);
+        if (!trustedProxies.isEmpty()) {
+            log.info("X-Forwarded-For is believed for HTTP git requests arriving from {}. Note that Tomcat's server.tomcat.remoteip.internal-proxies is applied first and "
+                    + "defaults to the private ranges, so the effective set is the union of the two.", trustedProxies);
         }
     }
 
@@ -95,7 +78,7 @@ public class BuildAgentNetworkPolicy {
      *         returns {@code true}.
      */
     public boolean isAllowlistConfigured() {
-        return !allowedRangeMatchers.isEmpty();
+        return !allowedRanges.isEmpty();
     }
 
     /**
@@ -106,11 +89,11 @@ public class BuildAgentNetworkPolicy {
      *         null or unparsable address whenever networks are configured.
      */
     public boolean isWithinAllowedRanges(String ipAddress) {
-        if (allowedRangeMatchers.isEmpty()) {
+        if (allowedRanges.isEmpty()) {
             // An empty allowlist means no restriction, never "deny all" - see BuildAgentNetworkConfiguration.
             return true;
         }
-        return matchesAny(allowedRangeMatchers, ipAddress);
+        return allowedRanges.contains(ipAddress);
     }
 
     /**
@@ -121,32 +104,13 @@ public class BuildAgentNetworkPolicy {
      * @return whether the address is a configured trusted proxy
      */
     public boolean isTrustedProxy(String ipAddress) {
-        return matchesAny(trustedProxyMatchers, ipAddress);
-    }
-
-    private static boolean matchesAny(List<IpAddressMatcher> matchers, String ipAddress) {
-        if (ipAddress == null || ipAddress.isBlank()) {
-            return false;
-        }
-        for (IpAddressMatcher matcher : matchers) {
-            try {
-                if (matcher.matches(ipAddress)) {
-                    return true;
-                }
-            }
-            catch (IllegalArgumentException e) {
-                // An unparsable address cannot match anything. Keep checking the remaining matchers rather than
-                // letting a malformed value abort the whole decision.
-                log.debug("Cannot match '{}' against a configured range", ipAddress, e);
-            }
-        }
-        return false;
+        return trustedProxies.contains(ipAddress);
     }
 
     /**
      * @return the configured build agent networks, for display in the admin UI
      */
     public List<String> getAllowedRanges() {
-        return allowedRanges;
+        return allowedRanges.getConfiguredRanges();
     }
 }

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
@@ -165,6 +166,13 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
                 // a load balancer this is the client address recovered from the PROXY protocol header rather than the
                 // balancer, which is the whole reason ProxyProtocolAcceptor exists.
                 String clientAddress = hostOf(session.getClientAddress());
+                if (clientAddress == null) {
+                    // No usable address means the origin cannot be established. Refuse rather than fall through to the
+                    // checks below, both of which answer "yes" when they have nothing to constrain: an unconfigured
+                    // allowlist permits everything, and the registry permits everything while it cannot observe.
+                    log.warn("Refusing build agent {} because its client address could not be determined from {}", agent.name(), session.getClientAddress());
+                    return false;
+                }
                 if (!buildAgentNetworkPolicy.isWithinAllowedRanges(clientAddress)) {
                     log.warn("Refusing build agent {} authenticating from {}, which is outside the configured build agent networks", agent.name(), clientAddress);
                     return false;
@@ -184,7 +192,7 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
         return false;
     }
 
-    private static String hostOf(java.net.SocketAddress address) {
+    private static String hostOf(SocketAddress address) {
         if (address instanceof InetSocketAddress inetSocketAddress && inetSocketAddress.getAddress() != null) {
             return inetSocketAddress.getAddress().getHostAddress();
         }
