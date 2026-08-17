@@ -264,6 +264,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.examLoadSubscription = this.courseOverviewTabDataService
                     .loadExamsIfNeeded(this.courseId())
                     .pipe(
+                        catchError(() => of(undefined)),
                         switchMap((exams) => {
                             const exam = exams?.find((e) => e.id === this.examId());
                             if (this.shouldSkipTestExamAttemptRequest(exam)) {

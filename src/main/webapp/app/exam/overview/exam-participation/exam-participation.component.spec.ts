@@ -283,6 +283,23 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam()).not.toEqual(studentExam);
     });
 
+    it('should continue to load own student exam if overview request fails', () => {
+        const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
+        studentExam.workingTime = 100;
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(throwError(() => new Error('HTTP 500')));
+        const loadStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+
+        comp.ngOnInit();
+
+        expect(loadStudentExamSpy).toHaveBeenCalledOnce();
+        expect(comp.studentExam()).toEqual(studentExam);
+        expect(comp.exam()).toEqual(studentExam.exam);
+    });
+
     it('should redirect to exam summary after test run is over', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
