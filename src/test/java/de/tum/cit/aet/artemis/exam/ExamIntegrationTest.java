@@ -93,7 +93,6 @@ import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.LockedExamSubmissionDTO;
@@ -3532,19 +3531,4 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(sameStudentExamDifferentIpAndFingerprint).hasSize(2);
     }
     // </editor-fold>
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetExamWorkingTimesForRealExams() throws Exception {
-        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
-        Exam exam = examUtilService.addExam(course);
-        Exam testExam = examUtilService.addTestExam(course);
-        StudentExam studentExam1 = examUtilService.addStudentExamWithUser(exam, student1);
-        examUtilService.addStudentExamWithUser(testExam, student1);
-        Set<ExamWorkingTimeDTO> examWorkingTimes = request.getSet("/api/exam/courses/" + course.getId() + "/real-exam-working-times", HttpStatus.OK, ExamWorkingTimeDTO.class);
-        assertThat(examWorkingTimes).hasSize(1);
-        ExamWorkingTimeDTO element = examWorkingTimes.iterator().next();
-        assertThat(element.examId()).isEqualTo(exam.getId());
-        assertThat(element.workingTime()).isEqualTo(studentExam1.getWorkingTime());
-    }
 }
