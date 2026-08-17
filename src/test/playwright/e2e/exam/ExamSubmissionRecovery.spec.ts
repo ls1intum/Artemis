@@ -7,6 +7,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Exercise, ExerciseType } from '../../support/constants';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { SEED_COURSES } from '../../support/seedData';
+import { POLLING_INTERVAL, RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
 
 /**
  * Regression test for silent exam answer loss after a failed save.
@@ -32,6 +33,12 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
     // also the global default in playwright.config.ts; this test keeps its own declaration because its route-based
     // outage injection is correctness-critical, not merely flake mitigation.
     test.use({ serviceWorkers: 'block' });
+
+    // The slow-tests project allows 90s per test, and the setup below (start participation, navigate, tick, forced
+    // failed save) spends much of it before the reload even happens. The reload then has to re-bootstrap the client
+    // with the HTTP cache disabled, re-fetch the exam and re-send the restored answer. Give this one test headroom
+    // rather than leaving it permanently one slow bootstrap away from the cap.
+    test.setTimeout(180_000);
 
     let exam: Exam;
     let quizExercise: Exercise;
@@ -79,22 +86,26 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         await page.unroute(quizSaveUrl);
         await page.reload();
 
-        // The restored answer is still selected in the UI: the client read it back out of local storage.
-        await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
-        await expect(getExercise(page, quizExercise.id!).locator('#answer-option-0')).toHaveClass(/selected/, { timeout: 15000 });
-
-        // Trigger the re-send instead of waiting for the autosave to do it. AUTOSAVE_EXERCISE_INTERVAL is 30s and the
-        // timer restarts at 0 on reload, so the previous 30s `waitForResponse` was racing the very timer it depended
-        // on - it started counting before the page had finished loading and lost whenever the reload was slow, which
-        // is the whole of this test's flakiness. Forcing the save still covers the regression: an answer wrongly
-        // marked as already synced is not re-sent by an explicit save either, so the assertion below still fails.
-        await getExercise(page, quizExercise.id!).locator('#save-exam').click();
+        // The client re-sends the restored answer by itself while starting up, so the only thing to do is wait for it.
+        // Nothing is clicked here on purpose: by the time the exercise is on screen the save button is already
+        // `disabled`, because the re-send has happened and there is nothing left to save. An earlier version of this
+        // test clicked it anyway and hung for the whole per-test budget on "element is not enabled".
+        //
+        // The budget is the point. A reload re-bootstraps the client with Playwright's per-context HTTP cache disabled,
+        // so the bundle and its lazy chunks are re-fetched before the exam is even requested; under parallel CI load
+        // that regularly exceeds 30s, which is why RELOAD_RENDER_TIMEOUT exists. The previous version allowed exactly
+        // 30000ms for reload plus bootstrap plus re-fetch plus re-send, and every failure was that wait expiring.
         await expect
             .poll(() => successfulResends.length, {
                 message: 'the answer restored from local storage was never re-sent to the server',
-                timeout: 30000,
+                timeout: RELOAD_RENDER_TIMEOUT,
+                intervals: [POLLING_INTERVAL],
             })
             .toBeGreaterThan(0);
+
+        // The restored answer is still selected in the UI: the client read it back out of local storage.
+        await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
+        await expect(getExercise(page, quizExercise.id!).locator('#answer-option-0')).toHaveClass(/selected/);
     });
 
     test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
