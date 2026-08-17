@@ -2,6 +2,8 @@
  * Vitest tests for AdminFeatureToggleComponent.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -341,6 +343,26 @@ describe('AdminFeatureToggleComponentTest', () => {
             for (const classes of [active, inactive]) {
                 expect(classes).not.toMatch(/(bg|border)-(red|green|blue|gray)-\d/);
             }
+        });
+    });
+
+    describe('translation coverage', () => {
+        // A toggle added to the enum without its entry here renders as `translation-not-found[...]` on this page, and
+        // nothing else catches it: the CI translation checker only compares the two languages against each other, so a
+        // key missing from both passes it. Asserted through the component's own key builders, so renaming one of them
+        // without moving the translations turns this red as well.
+        const bundleFor = (language: 'en' | 'de') => JSON.parse(readFileSync(join('src/main/webapp/i18n', language, 'featureToggles.json'), 'utf8'));
+
+        const translationFor = (bundle: unknown, key: string): unknown => key.split('.').reduce<any>((node, part) => node?.[part], bundle);
+
+        it.each(['en', 'de'] as const)('names, describes and warns about every runtime feature toggle in %s', (language) => {
+            const bundle = bundleFor(language);
+
+            const missing = Object.values(FeatureToggle).flatMap((feature) =>
+                [comp.getFeatureNameKey(feature), comp.getFeatureDescriptionKey(feature), comp.getFeatureWarningKey(feature)].filter((key) => !translationFor(bundle, key)),
+            );
+
+            expect(missing).toEqual([]);
         });
     });
 });
