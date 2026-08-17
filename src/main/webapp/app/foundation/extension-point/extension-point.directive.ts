@@ -1,4 +1,5 @@
 import { Directive, EmbeddedViewRef, TemplateRef, ViewContainerRef, effect, inject, input, untracked } from '@angular/core';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 /**
  * @whatItDoes marks parts of a (parent) template as extendable to allow other (child) components to override them.
@@ -67,7 +68,7 @@ export class ExtensionPointDirective {
                         delete target[key];
                     }
                 }
-                Object.assign(target, context);
+                hydrate(target, context);
             }
         });
     }

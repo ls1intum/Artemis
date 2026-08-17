@@ -64,7 +64,7 @@
                                     @if (mode() === 'preview') {
                                         <jhi-button
                                             id="submit-quiz"
-                                            (onClick)="onSubmit()"
+                                            (onClick)="submitExercise()"
                                             [btnSize]="ButtonSize.SMALL"
                                             [btnType]="ButtonType.PRIMARY"
                                             [title]="shouldTreatAsSubmittedForUi() ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
@@ -229,7 +229,7 @@
             </div>
             <div class="row sticky-bottom mb-0 mt-auto">
                 @if (mode() === 'live') {
-                    <hr class="mb-0" />
+                    <!-- The status row below sits on the card's own surface at its bottom edge, so it needs no rule above it. -->
                     <div class="container d-flex fs-small align-items-center justify-content-between module-bg mb-n3 py-2">
                         @if (!showingResult()) {
                             @if (!waitingForQuizStart()) {

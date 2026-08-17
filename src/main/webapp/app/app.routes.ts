@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { Router, Routes, UrlTree } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
@@ -133,21 +133,6 @@ const routes: Routes = [
             usesModuleBackground: true,
         },
     },
-    // ===== TEAM ====
-    {
-        path: 'course-management/:courseId/exercises/:exerciseId/teams',
-        loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
-        data: {
-            usesModuleBackground: true,
-        },
-    },
-    {
-        path: 'courses/:courseId/exercises/:exerciseId/teams',
-        loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
-        data: {
-            usesModuleBackground: true,
-        },
-    },
     // ===== ACCOUNT ====
     {
         path: 'account',
@@ -213,28 +198,33 @@ const routes: Routes = [
     {
         path: 'course-management',
         loadChildren: () => import('./course/manage/course-management.route').then((m) => m.courseManagementRoutes),
+        // No canActivate here, so `authorities` is read only by RoleAwarePreloadingStrategy: it lets eligible
+        // staff warm this lazy parent (so its management children are discovered and preloaded) while a pure
+        // student is still pruned. IS_AT_LEAST_TUTOR is the least-privileged authority any child requires;
+        // per-child access control stays with each child's own guard.
         data: {
             usesModuleBackground: true,
+            authorities: IS_AT_LEAST_TUTOR,
         },
     },
     {
         path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
         loadChildren: () => import('app/programming/manage/code-editor/code-editor-management-routes').then((m) => m.codeEditorManagementRoutes),
+        // Preload-only authorities (no canActivate): least-privileged authority the code-editor routes require.
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+        },
     },
 
     {
         path: 'courses',
         loadChildren: () => import('app/course/overview/courses.route').then((m) => m.courseRoutes),
-    },
-    // ===== GRADING SYSTEM =====
-    {
-        path: 'courses/:courseId/grading',
-        loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
+        // Preload-only authorities (no canActivate): the student course overview — warm for every authenticated
+        // user so their reachable course routes are discovered and preloaded.
         data: {
-            usesModuleBackground: true,
+            authorities: IS_AT_LEAST_STUDENT,
         },
     },
-
     {
         path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
         pathMatch: 'full',
@@ -258,6 +248,10 @@ const routes: Routes = [
     {
         path: 'course-management/:courseId/exams',
         loadChildren: () => import('./exam/manage/exam-management.route').then((m) => m.examManagementRoutes),
+        // Preload-only authorities (no canActivate): least-privileged authority the exam-management routes require.
+        data: {
+            authorities: IS_AT_LEAST_TUTOR,
+        },
     },
     {
         path: 'courses/:courseId/exams/:examId/grading',
@@ -266,6 +260,10 @@ const routes: Routes = [
     {
         path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository',
         loadChildren: () => import('./programming/overview/programming-repository.route').then((m) => m.programmingRepositoryRoutes),
+        // Preload-only authorities (no canActivate): least-privileged authority the repository routes require.
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+        },
     },
     {
         path: 'exams/rooms',

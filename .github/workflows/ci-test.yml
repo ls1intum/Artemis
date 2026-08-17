@@ -114,11 +114,11 @@ jobs:
           path: build/test-results/test/*.xml
       - name: Print failed tests
         if: failure()
-        # DataExportResourceIntegrationTest has a parameterized test with a FAILED enum and
-        # needs to be excluded, as it is not an actual test failure.
+        # DataExportResourceIntegrationTest (and others) have parameterized tests with a FAILED enum and
+        # need to be excluded from matching 'Test > ... FAILED', as they are not actual test failures.
         run: |
           set -Eeuo pipefail
-          FAILED_TESTS=$(grep "Test >.* FAILED\$" tests.log | grep -v "Starting logs for .* > .*state = FAILED\$" || true)
+          FAILED_TESTS=$(grep "Test >.* FAILED\$" tests.log | grep -v "Starting logs for" || true)
           if [ -n "$FAILED_TESTS" ]; then
             echo "$FAILED_TESTS"
             exit 1

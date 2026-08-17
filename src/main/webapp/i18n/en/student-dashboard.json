@@ -37,6 +37,7 @@
         },
         "courseOverview": {
             "noCourseIcon": "No course icon available",
+            "exerciseLoadFailed": "The exercises could not be loaded. Please try again.",
             "showMore": "Show more",
             "showLess": "Show less",
             "general": {
@@ -280,6 +281,7 @@
             },
             "lectureDetails": {
                 "description": "Description",
+                "lectureContent": "Lecture content",
                 "lectureUnits": "Lecture Content",
                 "attachments": "Attachments",
                 "noAttachments": "There are no attachments available for this lecture.",
