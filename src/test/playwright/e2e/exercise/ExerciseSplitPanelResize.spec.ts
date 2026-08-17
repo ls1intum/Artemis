@@ -48,6 +48,10 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
                     return box.width;
                 }
                 previous = box.width;
+            } else {
+                // The reads have to be consecutive: keeping the width from before a render gap would let it agree with
+                // one from after the gap and pass a layout that was never stable across two polls as settled.
+                previous = undefined;
             }
             await panel.page().waitForTimeout(100);
         }

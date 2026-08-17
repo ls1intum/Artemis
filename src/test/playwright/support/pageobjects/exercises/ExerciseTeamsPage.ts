@@ -259,36 +259,37 @@ export class ExerciseTeamsPage {
         // stop once the deadline passes, so the helper reports its own error while the test can still act on it.
         const startedAt = Date.now();
         const deadline = startedAt + 90_000;
-        for (let attempt = 0; attempt < 4; attempt++) {
+        // Every step is capped by what is left of the deadline, not only by its own maximum. Bounding the steps alone
+        // still let an attempt start just before the deadline and run for another minute past it, and the caller adds
+        // several students in sequence inside one test budget.
+        const remaining = (maximum: number) => Math.max(1, Math.min(maximum, deadline - Date.now()));
+        for (let attempt = 0; attempt < 4 && Date.now() < deadline; attempt++) {
             if (attempt > 0) {
-                if (Date.now() > deadline) {
-                    break;
-                }
-                await this.page.waitForTimeout(500);
+                await this.page.waitForTimeout(Math.min(500, remaining(500)));
             }
 
             try {
-                // Typing into the field belongs inside the retry, and every step is bounded. Without a timeout these
-                // actions inherit the test's whole budget, so an input that never becomes actionable - the dialog
-                // re-renders under load and detaches it - hung the entire test instead of failing this attempt, and
-                // the run reported a 10 minute timeout rather than the clear message below.
-                await inputLocator.click({ timeout: 10_000 });
-                await inputLocator.fill('', { timeout: 10_000 });
-                await this.page.waitForTimeout(300);
-                await inputLocator.pressSequentially(username, { delay: 100, timeout: 20_000 });
+                // Typing into the field belongs inside the retry. Without a timeout these actions inherit the test's
+                // whole budget, so an input that never becomes actionable - the dialog re-renders under load and
+                // detaches it - hung the entire test instead of failing this attempt, and the run reported a 10 minute
+                // timeout rather than the clear message below.
+                await inputLocator.click({ timeout: remaining(10_000) });
+                await inputLocator.fill('', { timeout: remaining(10_000) });
+                await this.page.waitForTimeout(Math.min(300, remaining(300)));
+                await inputLocator.pressSequentially(username, { delay: 100, timeout: remaining(20_000) });
 
-                await listbox.waitFor({ state: 'visible', timeout: 15000 });
+                await listbox.waitFor({ state: 'visible', timeout: remaining(15_000) });
                 const option = listbox.getByText(new RegExp(escapeRegExp(username), 'i')).first();
-                await option.waitFor({ state: 'visible', timeout: 5000 });
-                await option.click({ timeout: 10_000 });
+                await option.waitFor({ state: 'visible', timeout: remaining(5_000) });
+                await option.click({ timeout: remaining(10_000) });
                 return;
             } catch {
-                if (attempt === 3 || Date.now() > deadline) {
-                    throw new Error(`Student search autocomplete did not appear for '${username}' within ${Math.round((Date.now() - startedAt) / 1000)}s`);
+                if (attempt === 3 || Date.now() >= deadline) {
+                    break;
                 }
             }
         }
-        throw new Error(`Student search autocomplete did not appear for '${username}' before the search deadline`);
+        throw new Error(`Student search autocomplete did not appear for '${username}' within ${Math.round((Date.now() - startedAt) / 1000)}s`);
     }
 
     /**
