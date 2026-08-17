@@ -81,7 +81,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
+import de.tum.cit.aet.artemis.programming.service.TestCasePointsService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -144,7 +144,7 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
-    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
+    private final TestCasePointsService testCasePointsService;
 
     private final TestCaseFeedbackRepository testCaseFeedbackRepository;
 
@@ -157,8 +157,8 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService, ProgrammingExerciseGradingService programmingExerciseGradingService,
-            TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
+            ParticipationFilterService participationFilterService, TestCasePointsService testCasePointsService, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -183,7 +183,7 @@ public class ExerciseService {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
-        this.programmingExerciseGradingService = programmingExerciseGradingService;
+        this.testCasePointsService = testCasePointsService;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
     }
@@ -749,7 +749,7 @@ public class ExerciseService {
                 resultRepository.submitResult(result, exercise);
             }
             else {
-                result.calculateScoreForProgrammingExercise(programmingExercise, programmingExerciseGradingService.calculateTestCasePoints(programmingExercise, result));
+                result.calculateScoreForProgrammingExercise(programmingExercise, testCasePointsService.calculateTestCasePoints(programmingExercise, result));
                 resultRepository.save(result);
             }
         }

@@ -61,13 +61,13 @@ public class ProgrammingFeedbackSynthesizerService {
 
     private final ScaFeedbackRepository scaFeedbackRepository;
 
-    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
+    private final TestCasePointsService testCasePointsService;
 
     public ProgrammingFeedbackSynthesizerService(TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository,
-            @Lazy ProgrammingExerciseGradingService programmingExerciseGradingService) {
+            TestCasePointsService testCasePointsService) {
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
-        this.programmingExerciseGradingService = programmingExerciseGradingService;
+        this.testCasePointsService = testCasePointsService;
     }
 
     public static long syntheticId(long resultId, int seq) {
@@ -110,7 +110,7 @@ public class ProgrammingFeedbackSynthesizerService {
             return;
         }
 
-        Map<Long, Double> pointsByTestCaseId = testCaseFeedbacks.isEmpty() ? Map.of() : programmingExerciseGradingService.calculateTestCasePoints(programmingExercise, result);
+        Map<Long, Double> pointsByTestCaseId = testCaseFeedbacks.isEmpty() ? Map.of() : testCasePointsService.calculateTestCasePoints(programmingExercise, result);
 
         long resultId = result.getId();
         testCaseFeedbacks.forEach(feedback -> result.getFeedbacks().add(synthesizeTestCaseFeedback(feedback, resultId, pointsByTestCaseId)));

@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -128,6 +127,8 @@ public class ProgrammingExerciseGradingService {
 
     private final ScaFeedbackRepository scaFeedbackRepository;
 
+    private final TestCasePointsService testCasePointsService;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, FeedbackService feedbackService,
@@ -136,7 +137,7 @@ public class ProgrammingExerciseGradingService {
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
             MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService, FeedbackMessageService feedbackMessageService,
-            TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
+            TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository, TestCasePointsService testCasePointsService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -158,6 +159,7 @@ public class ProgrammingExerciseGradingService {
         this.feedbackMessageService = feedbackMessageService;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
+        this.testCasePointsService = testCasePointsService;
     }
 
     /**
@@ -761,6 +763,14 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
+     * See {@link TestCasePointsService#calculateTestCasePoints(ProgrammingExercise, Result)}.
+     *
+     * @param exercise the programming exercise
+     * @param result   the result whose participation determines special weight handling
+     * @return derived points per test-case id
+     */
+
+    /**
      * Calculates the derived points per test-case id for a result of the given exercise, loading the
      * exercise's active test cases. Convenience variant for callers outside the grading flow (e.g. manual
      * assessment).
@@ -770,9 +780,7 @@ public class ProgrammingExerciseGradingService {
      * @return derived points per test-case id
      */
     public Map<Long, Double> calculateTestCasePoints(ProgrammingExercise exercise, Result result) {
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
-        var scoreCalculationData = new ScoreCalculationData(exercise, result, testCases, Set.of(), List.of());
-        return calculateTestCasePoints(scoreCalculationData);
+        return testCasePointsService.calculateTestCasePoints(exercise, result);
     }
 
     private void createSubmissionPolicyFeedback(Result result, ProgrammingExercise exercise) {
@@ -934,29 +942,9 @@ public class ProgrammingExerciseGradingService {
      * @return the points which should be awarded for successfully completing the test case.
      */
     private double calculatePointsForTestCase(final ProgrammingExerciseTestCase testCase, ScoreCalculationData scoreCalculationData) {
-        final int totalTestCaseCount = scoreCalculationData.testCases().size();
-
-        final boolean isWeightSumZero = RoundingUtil.equalsWithinEpsilon(scoreCalculationData.weightSum(), 0, 1E-8);
-        final double testPoints;
-        double exerciseMaxPoints = scoreCalculationData.exercise().getMaxPoints();
-
-        // In case of a weight-sum of zero the instructor must be able to distinguish between a working solution
-        // (all tests passed, 0 points) and a solution with test failures.
-        // Only the second case should show a warning while the first case is considered as 100%.
-        // Therefore, all test cases have equal weight in such a case.
-        if (isWeightSumZero && scoreCalculationData.participation() instanceof SolutionProgrammingExerciseParticipation) {
-            testPoints = (1.0 / totalTestCaseCount) * exerciseMaxPoints;
-        }
-        else if (isWeightSumZero) {
-            // this test case must have zero weight as well; avoid division by zero
-            testPoints = 0D;
-        }
-        else {
-            double testWeight = testCase.getWeight() * testCase.getBonusMultiplier();
-            testPoints = (testWeight / scoreCalculationData.weightSum()) * exerciseMaxPoints;
-        }
-
-        return testPoints + testCase.getBonusPoints();
+        boolean isSolutionParticipation = scoreCalculationData.result() != null && scoreCalculationData.participation() instanceof SolutionProgrammingExerciseParticipation;
+        return testCasePointsService.calculatePointsForTestCase(testCase, scoreCalculationData.testCases(), scoreCalculationData.exercise(), scoreCalculationData.weightSum(),
+                isSolutionParticipation);
     }
 
     /**

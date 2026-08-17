@@ -47,7 +47,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
-    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
+    private final TestCasePointsService testCasePointsService;
 
     private final TestCaseFeedbackRepository testCaseFeedbackRepository;
 
@@ -57,19 +57,18 @@ public class ProgrammingAssessmentService extends AssessmentService {
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, Optional<ExamDateApi> examDateApi, UserRepository userRepository, Optional<LtiApi> ltiApi,
             SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService, Optional<AthenaFeedbackApi> athenaFeedbackApi,
-            @Lazy ProgrammingExerciseGradingService programmingExerciseGradingService, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository) {
+            TestCasePointsService testCasePointsService, TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
                 submissionRepository, examDateApi, userRepository, ltiApi, singleUserNotificationService, resultWebsocketService);
         this.athenaFeedbackApi = athenaFeedbackApi;
-        this.programmingExerciseGradingService = programmingExerciseGradingService;
+        this.testCasePointsService = testCasePointsService;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
     }
 
     @Override
     protected Map<Long, Double> calculateTestCasePoints(ProgrammingExercise exercise, Result result) {
-        return programmingExerciseGradingService.calculateTestCasePoints(exercise, result);
+        return testCasePointsService.calculateTestCasePoints(exercise, result);
     }
 
     /**
