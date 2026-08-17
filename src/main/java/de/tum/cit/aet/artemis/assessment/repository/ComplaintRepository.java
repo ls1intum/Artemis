@@ -223,35 +223,35 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
 
     /**
      * Given a course id, retrieve all complaints related to assessments related to that course.
-     * Uses the denormalized complaint.exerciseId to avoid expensive joins through submission -> participation -> exercise.
+     * Filters the denormalized complaint.exerciseId, so the exercise predicate needs no join at all.
      *
      * @param exerciseIds - the ids of the exercises in the course
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation.exercise", "result.assessor", "complaintResponse.reviewer" })
-    List<Complaint> findAllByResult_ExerciseIdIn(Set<Long> exerciseIds);
+    List<Complaint> findAllByExerciseIdIn(Set<Long> exerciseIds);
 
     /**
      * Given a user id and an exercise id retrieve all complaints related to assessments made by that assessor in that exercise.
-     * Uses the denormalized complaint.exerciseId to avoid expensive joins.
+     * Filters the denormalized complaint.exerciseId; the result is only joined for the assessor.
      *
      * @param assessorId - the id of the assessor
      * @param exerciseId - the id of the exercise
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation.exercise", "result.assessor", "complaintResponse.reviewer" })
-    List<Complaint> findAllByResult_Assessor_IdAndResult_ExerciseId(Long assessorId, Long exerciseId);
+    List<Complaint> findAllByResult_Assessor_IdAndExerciseId(Long assessorId, Long exerciseId);
 
     /**
      * Given a user id and exercise ids retrieve all complaints related to assessments made by that assessor in those exercises.
-     * Uses the denormalized complaint.exerciseId to avoid expensive joins through submission -> participation -> exercise -> course.
+     * Filters the denormalized complaint.exerciseId; the result is only joined for the assessor.
      *
      * @param assessorId  - the id of the assessor
      * @param exerciseIds - the ids of the exercises (e.g., from a course)
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation.exercise", "result.assessor", "complaintResponse.reviewer" })
-    List<Complaint> findAllByResult_Assessor_IdAndResult_ExerciseIdIn(Long assessorId, Set<Long> exerciseIds);
+    List<Complaint> findAllByResult_Assessor_IdAndExerciseIdIn(Long assessorId, Set<Long> exerciseIds);
 
     /**
      * Get the number of Complaints for all tutors of a course.
