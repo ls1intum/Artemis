@@ -1,0 +1,75 @@
+package de.tum.cit.aet.artemis.assessment.domain;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+
+/**
+ * A deduplicated, content-addressed feedback message text.
+ * <p>
+ * Programming-exercise feedback text is massively duplicated (identical test failure messages and static
+ * code analysis messages repeat across students, builds, and courses). Instead of storing the text on
+ * every {@link TestCaseFeedback} / {@link ScaFeedback} row, the text is stored once here, addressed by
+ * its SHA-256 hash ({@code ux_feedback_message_hash} unique constraint).
+ * <p>
+ * Rows are <b>immutable</b>: a message is never edited in place — writers compute the hash of the new
+ * text and re-point the referencing row ({@code FeedbackMessageService#getOrCreate}). The referencing
+ * columns intentionally carry no database foreign key and no index (an index over ~34M referencing rows
+ * would cost ~0.6 GB and no query filters by message); unreferenced messages are garbage-collected by the
+ * scheduled data cleanup with a scan-based query.
+ */
+@Entity
+@Table(name = "feedback_message")
+public class FeedbackMessage extends DomainObject {
+
+    @Column(name = "hash", nullable = false)
+    private byte[] hash;
+
+    @Column(name = "text", nullable = false)
+    private String text;
+
+    public byte[] getHash() {
+        return hash;
+    }
+
+    public void setHash(byte[] hash) {
+        this.hash = hash;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    /**
+     * Computes the content address of a message text: the SHA-256 hash of its UTF-8 bytes. This must stay
+     * in sync with the hashing used by the Liquibase backfill (MySQL {@code UNHEX(SHA2(text, 256))},
+     * PostgreSQL {@code sha256(convert_to(text, 'UTF8'))}).
+     *
+     * @param text the message text, never null
+     * @return the 32-byte SHA-256 hash of the text
+     */
+    public static byte[] hashOf(String text) {
+        try {
+            return MessageDigest.getInstance("SHA-256").digest(text.getBytes(StandardCharsets.UTF_8));
+        }
+        catch (NoSuchAlgorithmException e) {
+            // SHA-256 is guaranteed to be available on every JVM
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "FeedbackMessage{id=" + getId() + ", textLength=" + (text == null ? 0 : text.length()) + '}';
+    }
+}

@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -104,6 +105,23 @@ public class Result extends DomainObject implements Comparable<Result> {
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     private Set<Feedback> feedbacks = new HashSet<>();
+
+    /**
+     * Automatic test-case feedback of programming exercises, split out of {@link #feedbacks} into a compact
+     * table (one row per executed test; credits and visibility derived from the test case). Only populated
+     * for programming-exercise results. See {@link TestCaseFeedback}.
+     */
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<TestCaseFeedback> testCaseFeedbacks = new HashSet<>();
+
+    /**
+     * Static-code-analysis feedback of programming exercises, split out of {@link #feedbacks} into a
+     * structured table. Only populated for programming-exercise results. See {@link ScaFeedback}.
+     */
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<ScaFeedback> scaFeedbacks = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn()
@@ -376,6 +394,103 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
+     * Returns the live, mutable set of test-case feedback rows attached to this result. Only meaningful for
+     * programming-exercise results; empty otherwise.
+     *
+     * @return the live {@link Set} of test-case feedback; mutations are persisted by the Hibernate session
+     */
+    @JsonIgnore
+    public Set<TestCaseFeedback> getTestCaseFeedbacks() {
+        return testCaseFeedbacks;
+    }
+
+    /**
+     * Replaces the test-case feedback collection, wiring the owning side of each row. Orphaned rows are
+     * deleted via {@code orphanRemoval}. Replaces the field reference for the same lazy-initialization
+     * reason as {@link #setFeedbacks(Collection)}.
+     *
+     * @param testCaseFeedbacks the new collection (may be {@code null} or empty to clear)
+     */
+    public void setTestCaseFeedbacks(Collection<TestCaseFeedback> testCaseFeedbacks) {
+        Set<TestCaseFeedback> newSet = new HashSet<>();
+        if (testCaseFeedbacks != null) {
+            for (TestCaseFeedback feedback : testCaseFeedbacks) {
+                if (feedback == null) {
+                    continue;
+                }
+                feedback.setResult(this);
+                newSet.add(feedback);
+            }
+        }
+        this.testCaseFeedbacks = newSet;
+    }
+
+    /**
+     * Adds the given test-case feedback to this result, assigning the next free sequence number and wiring
+     * the owning side.
+     *
+     * @param feedback the test-case feedback to attach
+     */
+    public void addTestCaseFeedback(TestCaseFeedback feedback) {
+        if (feedback == null) {
+            return;
+        }
+        feedback.setResult(this);
+        feedback.setSeq(nextFeedbackItemSeq(testCaseFeedbacks.stream().mapToInt(TestCaseFeedback::getSeq)));
+        this.testCaseFeedbacks.add(feedback);
+    }
+
+    /**
+     * Returns the live, mutable set of static-code-analysis feedback rows attached to this result. Only
+     * meaningful for programming-exercise results; empty otherwise.
+     *
+     * @return the live {@link Set} of SCA feedback; mutations are persisted by the Hibernate session
+     */
+    @JsonIgnore
+    public Set<ScaFeedback> getScaFeedbacks() {
+        return scaFeedbacks;
+    }
+
+    /**
+     * Replaces the SCA feedback collection, wiring the owning side of each row. See
+     * {@link #setTestCaseFeedbacks(Collection)}.
+     *
+     * @param scaFeedbacks the new collection (may be {@code null} or empty to clear)
+     */
+    public void setScaFeedbacks(Collection<ScaFeedback> scaFeedbacks) {
+        Set<ScaFeedback> newSet = new HashSet<>();
+        if (scaFeedbacks != null) {
+            for (ScaFeedback feedback : scaFeedbacks) {
+                if (feedback == null) {
+                    continue;
+                }
+                feedback.setResult(this);
+                newSet.add(feedback);
+            }
+        }
+        this.scaFeedbacks = newSet;
+    }
+
+    /**
+     * Adds the given SCA feedback to this result, assigning the next free sequence number and wiring the
+     * owning side.
+     *
+     * @param feedback the SCA feedback to attach
+     */
+    public void addScaFeedback(ScaFeedback feedback) {
+        if (feedback == null) {
+            return;
+        }
+        feedback.setResult(this);
+        feedback.setSeq(nextFeedbackItemSeq(scaFeedbacks.stream().mapToInt(ScaFeedback::getSeq)));
+        this.scaFeedbacks.add(feedback);
+    }
+
+    private static int nextFeedbackItemSeq(IntStream existingSeqs) {
+        return existingSeqs.max().orElse(0) + 1;
+    }
+
+    /**
      * Assigns the given feedback list to the result. It first sets the positive flag and the feedback type of every feedback element, clears the existing list of feedback and
      * assigns the new feedback afterwards. IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
      *
@@ -466,10 +581,13 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * Determines the assessment type based on the feedback types. Sets the type to SEMI_AUTOMATIC if any feedback is automatic or automatically adapted.
+     * Automatic test-case and SCA feedback live in their own collections, so their (initialized) presence also makes the result SEMI_AUTOMATIC.
      */
     public void determineAssessmentType() {
         setAssessmentType(AssessmentType.MANUAL);
-        if (feedbacks.stream().filter(Objects::nonNull)
+        boolean hasAutomaticTypedFeedback = (Hibernate.isInitialized(testCaseFeedbacks) && !testCaseFeedbacks.isEmpty())
+                || (Hibernate.isInitialized(scaFeedbacks) && !scaFeedbacks.isEmpty());
+        if (hasAutomaticTypedFeedback || feedbacks.stream().filter(Objects::nonNull)
                 .anyMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC || feedback.getType() == FeedbackType.AUTOMATIC_ADAPTED)) {
             setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         }
@@ -601,6 +719,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     public void filterSensitiveFeedbacks(boolean removeHiddenFeedback, Exercise exercise) {
         var filteredFeedback = createFilteredFeedbacks(removeHiddenFeedback, exercise);
         setFeedbacks(filteredFeedback);
+        filterSensitiveTypedFeedbacks(removeHiddenFeedback, exercise);
 
         if (exercise instanceof ProgrammingExercise) {
             updateTestCaseCount();
@@ -608,9 +727,39 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
+     * Removes test-case feedback that should not be passed to the student from the (initialized) typed
+     * collections: visibility is derived from the test case. Also strips test names when the exercise
+     * hides them. Like {@link #filterSensitiveFeedbacks(boolean, Exercise)}, this must only be called on
+     * detached entities right before serialization — on an attached entity {@code orphanRemoval} would
+     * delete the filtered rows.
+     *
+     * @param removeHiddenFeedback true if feedback with visibility 'after due date' should also be removed
+     * @param exercise             used to check if students can see the test case names
+     */
+    private void filterSensitiveTypedFeedbacks(boolean removeHiddenFeedback, Exercise exercise) {
+        if (Hibernate.isInitialized(testCaseFeedbacks)) {
+            var filtered = testCaseFeedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !removeHiddenFeedback || !feedback.isAfterDueDate())
+                    .collect(Collectors.toCollection(HashSet::new));
+            this.testCaseFeedbacks = filtered;
+
+            if (exercise instanceof ProgrammingExercise programmingExercise && !Boolean.TRUE.equals(programmingExercise.getShowTestNamesToStudents())) {
+                filtered.stream().filter(feedback -> feedback.getTestCase() != null).forEach(feedback -> feedback.getTestCase().setTestName(null));
+            }
+        }
+        // SCA feedback has no visibility concept (it is always visible together with the result)
+    }
+
+    /**
      * Updates the testCaseCount and passedTestCaseCount attributes after filtering the feedback.
+     * Test-case feedback lives in {@link #testCaseFeedbacks}; the legacy branch over {@link #feedbacks}
+     * only matters for unsaved results whose typed collections were not populated (e.g. in tests).
      */
     private void updateTestCaseCount() {
+        if (Hibernate.isInitialized(testCaseFeedbacks) && !testCaseFeedbacks.isEmpty()) {
+            setTestCaseCount(testCaseFeedbacks.size());
+            setPassedTestCaseCount((int) testCaseFeedbacks.stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
+            return;
+        }
         var testCaseFeedback = feedbacks.stream().filter(Objects::nonNull).filter(Feedback::isTestFeedback).toList();
 
         // TODO: this is not good code!
