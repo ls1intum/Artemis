@@ -84,6 +84,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForConductionDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForQuestionPoolDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
@@ -1482,8 +1483,47 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamsForOverview() throws Exception {
+        // Exam1 is REAL, but student1 is not registered, so it is not visible unless they are registered.
+        // We'll register student1 for exam1.
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 1, 1);
+
+        // Add a TEST exam. Test exams are visible to all students in the course.
+        Exam testExam = examUtilService.addExam(course1);
+        testExam.setExamMode(ExamMode.TEST);
+        examRepository.save(testExam);
+
+        // Add a TEST_WITH_SIMULATION exam. Test exams are visible to all students in the course.
+        Exam simulationExam = examUtilService.addExam(course1);
+        simulationExam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        examRepository.save(simulationExam);
+
+        var exams = request.getSet("/api/exam/courses/" + course1.getId() + "/exams-for-overview", HttpStatus.OK, de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO.class);
+
+        assertThat(exams).hasSize(3);
+
+        ExamForOverviewDTO returnedExam1 = exams.stream().filter(e -> e.id() == exam1.getId()).findFirst().orElseThrow();
+        assertThat(returnedExam1.examMode()).isEqualTo(ExamMode.REAL);
+
+        ExamForOverviewDTO returnedTestExam = exams.stream().filter(e -> e.id() == testExam.getId()).findFirst().orElseThrow();
+        assertThat(returnedTestExam.examMode()).isEqualTo(ExamMode.TEST);
+
+        ExamForOverviewDTO returnedSimulationExam = exams.stream().filter(e -> e.id() == simulationExam.getId()).findFirst().orElseThrow();
+        assertThat(returnedSimulationExam.examMode()).isEqualTo(ExamMode.TEST_WITH_SIMULATION);
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetCurrentAndUpcomingExams() throws Exception {
+        // Create TEST and TEST_WITH_SIMULATION exams to verify all three modes render properly in the admin overview.
+        Exam testExam = examUtilService.addExam(course1);
+        testExam.setExamMode(ExamMode.TEST);
+        examRepository.save(testExam);
+        Exam simulationExam = examUtilService.addExam(course1);
+        simulationExam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        examRepository.save(simulationExam);
+
         // One query for the exams (the course is fetch-joined). Without the join, each row triggers a secondary
         // select for its course, so this guards the data-economy fix rather than just the response shape.
         var exams = assertThatDb(() -> request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, UpcomingExamDTO.class)).hasBeenCalledAtMostTimes(3);
@@ -1502,11 +1542,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // The response content reflects a concrete created exam (title / course / dates), not just a 200 status.
         UpcomingExamDTO createdExam = exams.stream().filter(exam -> exam.id().equals(exam1.getId())).findFirst().orElseThrow();
         assertThat(createdExam.title()).isEqualTo(exam1.getTitle());
-        assertThat(createdExam.testExam()).isEqualTo(!exam1.getExamMode().isReal());
+        assertThat(createdExam.examMode()).isEqualTo(ExamMode.REAL);
         assertThat(createdExam.course().id()).isEqualTo(course1.getId());
         assertThat(createdExam.course().title()).isEqualTo(course1.getTitle());
         assertThat(createdExam.visibleDate()).isNotNull();
         assertThat(createdExam.startDate()).isNotNull();
+
+        UpcomingExamDTO createdTestExam = exams.stream().filter(exam -> exam.id().equals(testExam.getId())).findFirst().orElseThrow();
+        assertThat(createdTestExam.examMode()).isEqualTo(ExamMode.TEST);
+        UpcomingExamDTO createdSimulationExam = exams.stream().filter(exam -> exam.id().equals(simulationExam.getId())).findFirst().orElseThrow();
+        assertThat(createdSimulationExam.examMode()).isEqualTo(ExamMode.TEST_WITH_SIMULATION);
     }
 
     @Test

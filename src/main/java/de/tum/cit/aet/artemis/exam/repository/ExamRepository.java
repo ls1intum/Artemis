@@ -90,13 +90,13 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      */
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO(
-                e.id, e.title, e.moduleNumber, e.visibleDate, e.startDate, e.endDate, e.workingTime, e.examMaxPoints, e.testExam
+                e.id, e.title, e.moduleNumber, e.visibleDate, e.startDate, e.endDate, e.workingTime, e.examMaxPoints, e.examMode
             )
             FROM Exam e
             WHERE e.course.id = :courseId
                 AND e.visibleDate <= :now
                 AND (
-                    e.testExam = TRUE
+                    e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                     OR EXISTS (SELECT 1 FROM ExamUser eu WHERE eu.exam = e AND eu.user.id = :userId)
                     OR EXISTS (SELECT 1 FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
                 )
