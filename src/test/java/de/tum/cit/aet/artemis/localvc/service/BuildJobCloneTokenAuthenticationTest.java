@@ -262,15 +262,33 @@ class BuildJobCloneTokenAuthenticationTest {
     }
 
     /**
-     * The same ordering property for a known agent calling from an address it is not connected from: the origin is
-     * checked before anything expensive, and before the token is compared at all.
+     * The ordering that replaced "origin before the token", and the reason it was reversed. The origin check is no longer
+     * answerable from local state: on a miss it reconciles against the middleware, querying the connected clients and
+     * taking a lock that other requests wait on. The username that gets this far is only an identifier - the
+     * middleware's client name, which is rendered in the admin UI and guessable - so with the origin check first, a
+     * caller presenting any password could force that work in a loop, ahead of the rate limiter this path deliberately
+     * precedes. Requiring the token first means only a caller who already holds a live job's secret can cause it.
+     * <p>
+     * The cost of the reversal is that a wrong password now reaches the processing-list read, which the earlier ordering
+     * kept behind the origin check. That read is bounded and gated by the single-key agent lookup above, and it is far
+     * cheaper than a provider query plus a lock other requests block on, so this is the better of the two exposures
+     * rather than a free improvement.
      */
     @Test
-    void shouldRejectAnUnregisteredAddressWithoutReadingTheProcessingJobs() {
-        when(buildAgentAddressRegistryService.isRegisteredAddressOfAgent(AGENT_NAME, "203.0.113.9")).thenReturn(false);
+    void shouldNotCheckTheOriginForARequestWithoutAValidToken() {
+        assertThat(authenticate(request(AGENT_NAME, "bjct-not-the-token", "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
 
-        assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", "203.0.113.9"))).isFalse();
+        verify(buildAgentAddressRegistryService, never()).isRegisteredAddressOfAgent(any(), any());
+    }
 
-        verify(distributedDataAccessService, never()).getProcessingJobsForAgentByName(any());
+    /**
+     * And the same for a password that is not even shaped like a token, which is what a credential-stuffing flood looks
+     * like. Nothing that can reach the middleware may run for it.
+     */
+    @Test
+    void shouldNotCheckTheOriginForAnArbitraryPassword() {
+        assertThat(authenticate(request(AGENT_NAME, "hunter2", "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
+
+        verify(buildAgentAddressRegistryService, never()).isRegisteredAddressOfAgent(any(), any());
     }
 }

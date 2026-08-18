@@ -542,52 +542,66 @@ public class LocalVCServletService {
                 return false;
             }
 
-            // Origin before secret: a token read out of the queue by some other party is useless unless it is also
-            // presented from the address the agent that holds the job is connected from. Both checks are answered from
-            // local state, so they stay ahead of anything that touches the cluster.
+            // The allowlist is pure local state and costs nothing, so it stays here: a caller outside the configured
+            // build agent networks is rejected before any of the work below.
             String peerIpAddress = getPeerIpString(request, buildAgentNetworkPolicy::isTrustedProxy);
             if (!buildAgentNetworkPolicy.isWithinAllowedRanges(peerIpAddress)) {
                 log.warn("Rejecting a build agent clone for agent {} from {}, which is outside the configured build agent networks", agentName, peerIpAddress);
                 return false;
             }
-            if (!buildAgentAddressRegistryService.get().isRegisteredAddressOfAgent(agentName, peerIpAddress)) {
-                log.warn("Rejecting a build agent clone claiming to be agent {} from {}, which is not an address that agent is connected from", agentName, peerIpAddress);
-                return false;
-            }
 
             var processingJobs = distributedDataAccessService.get().getProcessingJobsForAgentByName(agentName);
             if (processingJobs.isEmpty()) {
-                // A registered agent from a registered address, but running nothing, so no token can match
+                // A registered agent running nothing, so no token can match
                 return false;
             }
 
             LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
             var tokenService = buildJobCloneTokenService.get();
+            BuildJobQueueItem matchingBuildJob = null;
             for (BuildJobQueueItem buildJob : processingJobs) {
-                if (!tokenService.tokenMatches(buildJob, presentedToken)) {
-                    continue;
+                if (tokenService.tokenMatches(buildJob, presentedToken)) {
+                    matchingBuildJob = buildJob;
+                    break;
                 }
-                if (!tokenService.coversRepository(buildJob, localVCRepositoryUri)) {
-                    log.warn("Build agent {} presented the token of build job {} for repository {}, which is not one of that job's repositories {}", agentName, buildJob.id(),
-                            localVCRepositoryUri, tokenService.getRepositoryIdentities(buildJob));
-                    return false;
-                }
-                // Tells the pre-upload hook that this request is a build agent clone, so that it does not relabel
-                // whichever access log entry happens to be newest for this repository. It used to recognise a build
-                // agent by the literal buildjob_user, which an agent presenting its own short name never matches.
-                request.setAttribute(BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE, agentName);
-                // Only on the handshake, like the rate limiter above: git follows /info/refs with a git-upload-pack
-                // using the same credentials, and one clone should leave one audit entry rather than two.
-                if (request.getRequestURI().endsWith("/info/refs")) {
-                    saveBuildAgentVcsAccessLog(localVCRepositoryUri, agentName, buildJob.id(), peerIpAddress, AuthenticationMechanism.BUILD_JOB_TOKEN);
-                }
-                return true;
             }
-            // The one case that looks like credential guessing against a live agent, so it must not be the one case
-            // that leaves no trace. It is also the signal for a misconfigured proxy, where the token is right but the
-            // address the request appears to come from is not the agent's.
-            log.warn("Build agent {} from {} presented a credential matching none of its {} running build jobs", agentName, peerIpAddress, processingJobs.size());
-            return false;
+            if (matchingBuildJob == null) {
+                // The one case that looks like credential guessing against a live agent, so it must not be the one case
+                // that leaves no trace.
+                log.warn("Build agent {} from {} presented a credential matching none of its {} running build jobs", agentName, peerIpAddress, processingJobs.size());
+                return false;
+            }
+
+            // Origin after the token, which is the opposite of what this used to do. The origin check is no longer
+            // answerable from local state alone: on a miss it reconciles against the middleware, which queries the
+            // connected clients and takes a lock other requests wait on. The name that reaches this far is only an
+            // identifier - it is the middleware's client name, rendered in the admin UI and guessable - so with the
+            // origin check first, a caller presenting any password at all could force that work in a loop, ahead of the
+            // rate limiter this path deliberately sits in front of. Requiring the token first means only a caller who
+            // already holds a live job's secret can cause it. Both conditions still have to pass, so nothing is
+            // weakened: a token read out of the queue by another party remains useless away from the agent's address.
+            if (!buildAgentAddressRegistryService.get().isRegisteredAddressOfAgent(agentName, peerIpAddress)) {
+                // Also the signal for a misconfigured proxy, where the token is right but the address the request
+                // appears to come from is not the agent's.
+                log.warn("Rejecting a build agent clone claiming to be agent {} from {}, which is not an address that agent is connected from", agentName, peerIpAddress);
+                return false;
+            }
+
+            if (!tokenService.coversRepository(matchingBuildJob, localVCRepositoryUri)) {
+                log.warn("Build agent {} presented the token of build job {} for repository {}, which is not one of that job's repositories {}", agentName, matchingBuildJob.id(),
+                        localVCRepositoryUri, tokenService.getRepositoryIdentities(matchingBuildJob));
+                return false;
+            }
+            // Tells the pre-upload hook that this request is a build agent clone, so that it does not relabel
+            // whichever access log entry happens to be newest for this repository. It used to recognise a build
+            // agent by the literal buildjob_user, which an agent presenting its own short name never matches.
+            request.setAttribute(BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE, agentName);
+            // Only on the handshake, like the rate limiter above: git follows /info/refs with a git-upload-pack
+            // using the same credentials, and one clone should leave one audit entry rather than two.
+            if (request.getRequestURI().endsWith("/info/refs")) {
+                saveBuildAgentVcsAccessLog(localVCRepositoryUri, agentName, matchingBuildJob.id(), peerIpAddress, AuthenticationMechanism.BUILD_JOB_TOKEN);
+            }
+            return true;
         }
         catch (Exception e) {
             // Anything unexpected here means this is not a valid build agent clone. Fall through rather than reject,
