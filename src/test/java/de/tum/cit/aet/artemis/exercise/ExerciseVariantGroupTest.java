@@ -156,14 +156,12 @@ class ExerciseVariantGroupTest {
     }
 
     @Test
-    void testExampleSolutionPublicationDateBeforeDueDateIsAllowed() {
-        // Unlike a single exercise, the group cannot decide the "example solution not before the due date" rule
-        // (it has no IncludedInOverallScore); each member exercise re-validates it when the group timeline is applied.
+    void testExampleSolutionPublicationDateBeforeDueDateIsInvalid() {
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setDueDate(BASE.plusDays(2));
         group.setExampleSolutionPublicationDate(BASE.plusDays(1));
 
-        assertThat(group.areDatesValid()).isTrue();
+        assertThat(group.areDatesValid()).isFalse();
     }
 
     @Test
@@ -176,8 +174,27 @@ class ExerciseVariantGroupTest {
     }
 
     @Test
-    void testEqualBoundaryDatesAreValid() {
-        // The ordering rules are inclusive (not strictly increasing), so coincident dates are allowed.
+    void testExampleSolutionPublicationDateBeforeAssessmentDueDateIsInvalid() {
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setDueDate(BASE.plusDays(1));
+        group.setAssessmentDueDate(BASE.plusDays(3));
+        group.setExampleSolutionPublicationDate(BASE.plusDays(2));
+
+        assertThat(group.areDatesValid()).isFalse();
+    }
+
+    @Test
+    void testExampleSolutionPublicationDateEqualToAssessmentDueDateIsInvalid() {
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setDueDate(BASE.plusDays(1));
+        group.setAssessmentDueDate(BASE.plusDays(2));
+        group.setExampleSolutionPublicationDate(BASE.plusDays(2));
+
+        assertThat(group.areDatesValid()).isFalse();
+    }
+
+    @Test
+    void testEqualBoundaryDatesAreInvalid() {
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setReleaseDate(BASE);
         group.setStartDate(BASE);
@@ -185,7 +202,7 @@ class ExerciseVariantGroupTest {
         group.setAssessmentDueDate(BASE);
         group.setExampleSolutionPublicationDate(BASE);
 
-        assertThat(group.areDatesValid()).isTrue();
+        assertThat(group.areDatesValid()).isFalse();
     }
 
     @Test

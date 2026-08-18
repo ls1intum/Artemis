@@ -154,21 +154,19 @@ public class ExerciseVariantGroup extends DomainObject {
     }
 
     /**
-     * Whether this group's timeline fields are internally consistent, mirroring {@link Exercise#validateDates()}
-     * (release &lt;= start &lt;= due, assessment due not before release or due). The example solution date only needs to
-     * follow the release date; the stricter "not before due date" rule depends on {@code IncludedInOverallScore}, which a
-     * group lacks, so it is enforced per member when the timeline is applied.
+     * Whether this group's timeline fields are internally consistent, mirroring {@link Exercise#validateBaseDates()}. All
+     * configured dates must follow the strict ordering used for course exercises, and an assessment due date requires a due
+     * date.
      *
      * @return {@code true} if the set dates do not contradict each other
      */
     public boolean areDatesValid() {
         //@formatter:off
-        return isNotAfterAndNotNull(releaseDate, dueDate)
-                && isNotAfterAndNotNull(releaseDate, startDate)
-                && isNotAfterAndNotNull(startDate, dueDate)
-                && isValidAssessmentDueDate(startDate, dueDate, assessmentDueDate)
-                && isValidAssessmentDueDate(releaseDate, dueDate, assessmentDueDate)
-                && isNotAfterAndNotNull(releaseDate, exampleSolutionPublicationDate);
+        return BaseExercise.isStrictlyBeforeIfBothSet(releaseDate, startDate)
+                && BaseExercise.isStrictlyBeforeIfBothSet(releaseDate, dueDate)
+                && BaseExercise.isStrictlyBeforeIfBothSet(startDate, dueDate)
+                && BaseExercise.isValidAssessmentDueDate(releaseDate, startDate, dueDate, assessmentDueDate)
+                && BaseExercise.isValidExampleSolutionPublicationDate(releaseDate, startDate, dueDate, assessmentDueDate, exampleSolutionPublicationDate);
         //@formatter:on
     }
 
@@ -177,24 +175,6 @@ public class ExerciseVariantGroup extends DomainObject {
         if (!areDatesValid()) {
             throw new BadRequestAlertException("The group dates are not valid", "exerciseVariantGroup", "noValidDates");
         }
-    }
-
-    private static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
-        if (assessmentDueDate == null) {
-            return true;
-        }
-        // There cannot be an assessmentDueDate without a dueDate.
-        if (dueDate == null) {
-            return false;
-        }
-        return isNotAfterAndNotNull(dueDate, assessmentDueDate) && isNotAfterAndNotNull(releaseDate, assessmentDueDate);
-    }
-
-    private static boolean isNotAfterAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
-        if (previousDate == null || laterDate == null) {
-            return true;
-        }
-        return !previousDate.isAfter(laterDate);
     }
 
     @Override

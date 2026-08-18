@@ -880,7 +880,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 && isStrictlyBeforeIfBothSet(getReleaseDate(), getDueDate())
                 && isStrictlyBeforeIfBothSet(getStartDate(), getDueDate())
                 && isValidAssessmentDueDate(getReleaseDate(), getStartDate(), getDueDate(), getAssessmentDueDate())
-                && isValidExampleSolutionPublicationDate(getReleaseDate(), getStartDate(), getDueDate(), getExampleSolutionPublicationDate());
+                && isValidExampleSolutionPublicationDate(getReleaseDate(), getStartDate(), getDueDate(), getAssessmentDueDate(), getExampleSolutionPublicationDate());
         //@formatter:on
 
         if (!areDatesValid) {

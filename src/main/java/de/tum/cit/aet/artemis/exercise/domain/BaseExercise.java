@@ -213,20 +213,20 @@ public abstract class BaseExercise extends DomainObject {
 
     /**
      * This method is used to validate the exampleSolutionPublicationDate of an exercise. An exampleSolutionPublicationDate is valid if it is strictly after the releaseDate,
-     * startDate, and dueDate if present.
-     * Any given exampleSolutionPublicationDate is valid if releaseDate, startDate, and dueDate are not set.
-     * exampleSolutionPublicationDate is valid if it is not set.
+     * startDate, dueDate, and assessmentDueDate if present.
+     * Any given exampleSolutionPublicationDate is valid if releaseDate, startDate, dueDate, and assessmentDueDate are not set. exampleSolutionPublicationDate is valid if it is
+     * not set.
      *
      * @return true if there is no exampleSolutionPublicationDateError
      */
-    protected static boolean isValidExampleSolutionPublicationDate(ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
+    protected static boolean isValidExampleSolutionPublicationDate(ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
             ZonedDateTime exampleSolutionPublicationDate) {
         if (exampleSolutionPublicationDate == null) {
             return true;
         }
 
         return isStrictlyBeforeIfBothSet(releaseDate, exampleSolutionPublicationDate) && isStrictlyBeforeIfBothSet(startDate, exampleSolutionPublicationDate)
-                && isStrictlyBeforeIfBothSet(dueDate, exampleSolutionPublicationDate);
+                && isStrictlyBeforeIfBothSet(dueDate, exampleSolutionPublicationDate) && isStrictlyBeforeIfBothSet(assessmentDueDate, exampleSolutionPublicationDate);
     }
 
     /**

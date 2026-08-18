@@ -2715,17 +2715,28 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(exercise.getDueDate());
 
         request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        exercise.setReleaseDate(baseTime.plusHours(1));
+        exercise.setDueDate(baseTime.plusHours(2));
+        exercise.setAssessmentDueDate(baseTime.plusHours(4));
+        exercise.setExampleSolutionPublicationDate(baseTime.plusHours(3));
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        exercise.setExampleSolutionPublicationDate(exercise.getAssessmentDueDate());
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     // TEST
     public void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
         final var baseTime = ZonedDateTime.now();
 
-        exercise.setAssessmentDueDate(null);
+        exercise.setAssessmentDueDate(baseTime.plusHours(3));
 
         exercise.setReleaseDate(baseTime.plusHours(1));
         exercise.setDueDate(baseTime.plusHours(2));
-        var exampleSolutionPublicationDate = baseTime.plusHours(3);
+        var exampleSolutionPublicationDate = baseTime.plusHours(4);
         exercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
         exercise.setChannelName("testchannel-pe");
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);

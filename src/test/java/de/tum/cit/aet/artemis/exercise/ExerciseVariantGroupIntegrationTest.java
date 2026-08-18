@@ -476,7 +476,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testUpdateGroupToMemberInvalidTimeline_badRequestLeavesGroupDatesUnchanged() throws Exception {
+    void testUpdateGroupToInvalidTimeline_badRequestLeavesGroupDatesUnchanged() throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
         CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Loop variants", 100.0, release, null, due, null, null);
@@ -486,19 +486,23 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         // Snapshot the group's stored timeline after the member joined, to prove the rejected update leaves it untouched.
         ExerciseVariantGroupDTO before = request.get(groupsUrl() + "/" + created.id(), HttpStatus.OK, ExerciseVariantGroupDTO.class);
 
-        // Valid at group level, but the member text exercise (INCLUDED_COMPLETELY) requires exampleSolution >= dueDate, so
-        // applying it must fail with 400 before anything is saved.
-        ZonedDateTime exampleSolutionBeforeDue = ZonedDateTime.now().plusDays(3).truncatedTo(ChronoUnit.MILLIS);
-        UpdateExerciseVariantGroupDTO invalidUpdate = new UpdateExerciseVariantGroupDTO(created.id(), "Loop variants", 100.0, release, null, due, null, exampleSolutionBeforeDue);
+        // The example solution is after the due date, but before the assessment due date. Group validation must reject the
+        // update before either the group or its member is saved.
+        ZonedDateTime assessmentDue = due.plusDays(2);
+        ZonedDateTime exampleSolutionBeforeAssessmentDue = due.plusDays(1);
+        UpdateExerciseVariantGroupDTO invalidUpdate = new UpdateExerciseVariantGroupDTO(created.id(), "Loop variants", 100.0, release, null, due, assessmentDue,
+                exampleSolutionBeforeAssessmentDue);
         request.put(groupsUrl() + "/" + created.id(), invalidUpdate, HttpStatus.BAD_REQUEST);
 
         // The rejected update changed neither the stored group dates nor the member exercise's dates.
         ExerciseVariantGroupDTO after = request.get(groupsUrl() + "/" + created.id(), HttpStatus.OK, ExerciseVariantGroupDTO.class);
         assertThat(after.releaseDate().toInstant()).isEqualTo(before.releaseDate().toInstant());
         assertThat(after.dueDate().toInstant()).isEqualTo(before.dueDate().toInstant());
+        assertThat(after.assessmentDueDate()).isNull();
         assertThat(after.exampleSolutionPublicationDate()).isNull();
         Exercise reloaded = exerciseRepository.findByIdElseThrow(exercise.getId());
         assertThat(reloaded.getDueDate().toInstant()).isEqualTo(due.toInstant());
+        assertThat(reloaded.getAssessmentDueDate()).isNull();
         assertThat(reloaded.getExampleSolutionPublicationDate()).isNull();
     }
 
@@ -506,12 +510,19 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testAssignProgrammingExerciseInvalidTimeline_badRequestLeavesExerciseUngrouped() throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
-        ZonedDateTime exampleSolutionBeforeDue = ZonedDateTime.now().plusDays(3).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
-        // Valid at group level, but the programming exercise (INCLUDED_COMPLETELY) requires exampleSolution >= dueDate. The
-        // rejected assignment must not persist the membership (the programming path used to save before validating).
-        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Programming variants", null, release, null, due, null, exampleSolutionBeforeDue);
+        ZonedDateTime assessmentDue = due.plusDays(2);
+        ZonedDateTime exampleSolutionAfterAssessmentDue = assessmentDue.plusDays(1);
+        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Programming variants", null, release, null, due, assessmentDue,
+                exampleSolutionAfterAssessmentDue);
         ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+
+        // Persist an invalid legacy timeline directly, bypassing the resource validation. Assignment still validates the
+        // applied dates before it persists membership.
+        ExerciseVariantGroup invalidGroup = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(created.id(), course.getId());
+        invalidGroup.setExampleSolutionPublicationDate(due.plusDays(1));
+        exerciseVariantGroupRepository.save(invalidGroup);
+
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         ProgrammingExercise before = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
         String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/variant-group";

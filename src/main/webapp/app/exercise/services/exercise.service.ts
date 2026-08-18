@@ -104,7 +104,7 @@ export class ExerciseService {
 
     hasExampleSolutionPublicationDateError(exercise: Exercise) {
         if (exercise.exampleSolutionPublicationDate) {
-            const previousDate = exercise.dueDate ?? exercise.startDate ?? exercise.releaseDate;
+            const previousDate = exercise.assessmentDueDate ?? exercise.dueDate ?? exercise.startDate ?? exercise.releaseDate;
             const publicationDate = dayjs(exercise.exampleSolutionPublicationDate);
             return previousDate !== undefined && !publicationDate.isAfter(previousDate);
         }

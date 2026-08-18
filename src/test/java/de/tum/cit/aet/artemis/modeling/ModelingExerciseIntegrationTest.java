@@ -1118,6 +1118,19 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
 
+        modelingExercise.setReleaseDate(baseTime.plusHours(1));
+        modelingExercise.setDueDate(baseTime.plusHours(2));
+        modelingExercise.setAssessmentDueDate(baseTime.plusHours(4));
+        modelingExercise.setExampleSolutionPublicationDate(baseTime.plusHours(3));
+
+        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+
+        modelingExercise.setExampleSolutionPublicationDate(modelingExercise.getAssessmentDueDate());
+
+        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+
+        modelingExercise.setAssessmentDueDate(null);
+
         modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         modelingExercise.setReleaseDate(baseTime.plusHours(1));
         modelingExercise.setDueDate(baseTime.plusHours(3));
@@ -1143,12 +1156,12 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         final Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         ModelingExercise modelingExercise = modelingExerciseTestRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         modelingExercise.setId(null);
-        modelingExercise.setAssessmentDueDate(null);
+        modelingExercise.setAssessmentDueDate(baseTime.plusHours(3));
         modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
 
         modelingExercise.setReleaseDate(baseTime.plusHours(1));
         modelingExercise.setDueDate(baseTime.plusHours(2));
-        var exampleSolutionPublicationDate = baseTime.plusHours(3);
+        var exampleSolutionPublicationDate = baseTime.plusHours(4);
         modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
         modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
         var result = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);

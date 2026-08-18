@@ -682,6 +682,19 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
+        fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
+        fileUploadExercise.setDueDate(baseTime.plusHours(2));
+        fileUploadExercise.setAssessmentDueDate(baseTime.plusHours(4));
+        fileUploadExercise.setExampleSolutionPublicationDate(baseTime.plusHours(3));
+
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        fileUploadExercise.setExampleSolutionPublicationDate(fileUploadExercise.getAssessmentDueDate());
+
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        fileUploadExercise.setAssessmentDueDate(null);
+
         fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
         fileUploadExercise.setDueDate(baseTime.plusHours(3));
@@ -707,12 +720,12 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         final Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         fileUploadExercise.setId(null);
-        fileUploadExercise.setAssessmentDueDate(null);
+        fileUploadExercise.setAssessmentDueDate(baseTime.plusHours(3));
         fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
 
         fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
         fileUploadExercise.setDueDate(baseTime.plusHours(2));
-        var exampleSolutionPublicationDate = baseTime.plusHours(3);
+        var exampleSolutionPublicationDate = baseTime.plusHours(4);
         fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
         fileUploadExercise.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 4));

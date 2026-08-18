@@ -126,7 +126,7 @@ describe('Exercise Service', () => {
         exercise.startDate = currentDate.add(2, 'day');
         exercise.dueDate = currentDate.add(3, 'day');
         exercise.assessmentDueDate = currentDate.add(4, 'day');
-        exercise.exampleSolutionPublicationDate = currentDate.add(4, 'day');
+        exercise.exampleSolutionPublicationDate = currentDate.add(5, 'day');
 
         service.validateDate(exercise);
 
@@ -134,6 +134,28 @@ describe('Exercise Service', () => {
         expect(exercise.dueDateError).toBe(false);
         expect(exercise.assessmentDueDateError).toBe(false);
         expect(exercise.exampleSolutionPublicationDateError).toBe(false);
+    });
+
+    it('should reject an example solution publication date before the assessment due date', () => {
+        exercise.dueDate = currentDate.add(2, 'day');
+        exercise.assessmentDueDate = currentDate.add(4, 'day');
+        exercise.exampleSolutionPublicationDate = currentDate.add(3, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.assessmentDueDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(true);
+    });
+
+    it('should reject an example solution publication date equal to the assessment due date', () => {
+        exercise.dueDate = currentDate.add(2, 'day');
+        exercise.assessmentDueDate = currentDate.add(3, 'day');
+        exercise.exampleSolutionPublicationDate = currentDate.add(3, 'day');
+
+        service.validateDate(exercise);
+
+        expect(exercise.assessmentDueDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(true);
     });
 
     it('should set errors on invalid due and assessment due dates', () => {

@@ -1842,6 +1842,19 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
 
+        textExercise.setReleaseDate(baseTime.plusHours(1));
+        textExercise.setDueDate(baseTime.plusHours(2));
+        textExercise.setAssessmentDueDate(baseTime.plusHours(4));
+        textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(3));
+
+        request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        textExercise.setExampleSolutionPublicationDate(textExercise.getAssessmentDueDate());
+
+        request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        textExercise.setAssessmentDueDate(null);
+
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         textExercise.setReleaseDate(baseTime.plusHours(1));
         textExercise.setDueDate(baseTime.plusHours(3));
@@ -1865,12 +1878,12 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void createTextExercise_setValidExampleSolutionPublicationDate() throws Exception {
         final var baseTime = ZonedDateTime.now();
         textExercise.setId(null);
-        textExercise.setAssessmentDueDate(null);
+        textExercise.setAssessmentDueDate(baseTime.plusHours(3));
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
 
         textExercise.setReleaseDate(baseTime.plusHours(1));
         textExercise.setDueDate(baseTime.plusHours(2));
-        var exampleSolutionPublicationDate = baseTime.plusHours(3);
+        var exampleSolutionPublicationDate = baseTime.plusHours(4);
         textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
         textExercise.setChannelName("test");
 
