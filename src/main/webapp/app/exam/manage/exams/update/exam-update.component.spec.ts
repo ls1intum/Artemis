@@ -346,7 +346,7 @@ describe('ExamUpdateComponent', () => {
         it('should calculate the working time for real exams correctly', () => {
             fixture.detectChanges();
 
-            examWithoutExercises.testExam = false;
+            examWithoutExercises.examMode = ExamMode.REAL;
 
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
@@ -373,7 +373,7 @@ describe('ExamUpdateComponent', () => {
 
         it('should not calculate the working time for test exams', () => {
             fixture.detectChanges();
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(12, 'hours');
@@ -400,7 +400,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the working time for test exams correctly', () => {
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.workingTime = undefined;
             fixture.changeDetectorRef.detectChanges();
             expect(component.validateWorkingTime).toBe(false);
@@ -425,7 +425,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the working time for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
+            examWithoutExercises.examMode = ExamMode.REAL;
 
             examWithoutExercises.workingTime = undefined;
             examWithoutExercises.startDate = undefined;
@@ -637,7 +637,7 @@ describe('ExamUpdateComponent', () => {
             fixture.detectChanges();
 
             // Set up exam as a test exam with a long exam window
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(35, 'days'); // Long exam window
 

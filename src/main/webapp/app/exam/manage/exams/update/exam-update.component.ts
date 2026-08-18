@@ -477,7 +477,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * and must not exceed 30 days (2592000 seconds).
      */
     get validateWorkingTime(): boolean {
-        if (isRealExam(this.exam)) {
+        if (!isRealExam(this.exam)) {
             if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
                 return false;
             }
