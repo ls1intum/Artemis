@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.lti.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -239,37 +239,37 @@ public class Lti13Service {
             return;
         }
 
-        participation.getStudents().forEach(student -> {
-            // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
-            // to launch the exercise (for example multiple lms)
-            Collection<LtiResourceLaunch> launches = launchRepository.findByUserAndExercise(student, participation.getExercise());
+        // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
+        // to launch the exercise (for example multiple lms); for team participations, every student may have launches
+        List<LtiResourceLaunch> launches = participation.getStudents().stream()
+                .flatMap(student -> launchRepository.findByUserAndExercise(student, participation.getExercise()).stream()).toList();
 
-            if (launches.isEmpty()) {
-                return;
-            }
+        if (launches.isEmpty()) {
+            return;
+        }
 
-            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        // the result (and its synthesized feedback) is identical for all launches - load and synthesize it once
+        Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
-            if (result.isEmpty()) {
-                log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
-                return;
-            }
+        if (result.isEmpty()) {
+            log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
+            return;
+        }
 
-            if (participation.getExercise() instanceof ProgrammingExercise programmingExercise) {
-                // the automatic test-case and SCA feedback lives in typed tables - attach the synthesized
-                // legacy views so the LMS score comment keeps containing it (explicit exercise context, the
-                // loaded result graph is detached)
-                programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result.get(), programmingExercise, false);
-            }
+        if (participation.getExercise() instanceof ProgrammingExercise programmingExercise) {
+            // the automatic test-case and SCA feedback lives in typed tables - attach the synthesized
+            // legacy views so the LMS score comment keeps containing it (explicit exercise context, the
+            // loaded result graph is detached)
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result.get(), programmingExercise, false);
+        }
 
-            String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
+        String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
+        Double score = result.get().getScore();
 
-            launches.forEach(launch -> {
-                LtiPlatformConfiguration returnPlatform = launch.getLtiPlatformConfiguration();
-                ClientRegistration returnClient = onlineCourseConfigurationService.getClientRegistration(returnPlatform);
-                submitScore(launch, returnClient, concatenatedFeedbacks, result.get().getScore());
-
-            });
+        launches.forEach(launch -> {
+            LtiPlatformConfiguration returnPlatform = launch.getLtiPlatformConfiguration();
+            ClientRegistration returnClient = onlineCourseConfigurationService.getClientRegistration(returnPlatform);
+            submitScore(launch, returnClient, concatenatedFeedbacks, score);
         });
     }
 

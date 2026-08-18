@@ -75,6 +75,7 @@ public class FeedbackService {
         ScaFeedback feedback = new ScaFeedback();
         feedback.setTool(originalFeedback.getTool());
         feedback.setCategory(originalFeedback.getCategory());
+        feedback.setToolCategory(originalFeedback.getToolCategory());
         feedback.setRule(originalFeedback.getRule());
         feedback.setFilePath(originalFeedback.getFilePath());
         feedback.setStartLine(originalFeedback.getStartLine());
