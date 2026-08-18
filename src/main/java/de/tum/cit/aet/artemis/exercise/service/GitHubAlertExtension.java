@@ -225,7 +225,11 @@ public final class GitHubAlertExtension implements Parser.ParserExtension, HtmlR
             // The title paragraph is synthetic and has no node of its own, so no attribute provider applies to it.
             html.tag("p", Map.of("class", CLASS_PREFIX + "-title"));
             html.raw(ICON_PLACEHOLDER_PREFIX + alert.type + ICON_PLACEHOLDER_SUFFIX);
-            html.text(alert.title);
+            // Raw, not escaped: the client interpolates the title into the alert markup and lets DOMPurify decide what
+            // survives, so `[!WARNING] <em>Read</em>` is italic there. Escaping here would show the tags instead, which
+            // is the toggle changing content that both pipelines consider valid. The jsoup safelist runs over this
+            // output immediately afterwards and is the counterpart of DOMPurify, so the title is filtered either way.
+            html.raw(alert.title);
             html.tag("/p");
             html.line();
             Node child = alert.getFirstChild();

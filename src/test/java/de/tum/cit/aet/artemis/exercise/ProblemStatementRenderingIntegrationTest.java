@@ -559,6 +559,32 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderMarkupInACustomAlertTitle() throws Exception {
+        // The client interpolates the title into the alert markup and lets its sanitizer decide, so an inline element
+        // in a title is an element there. Escaping it here would show the tags to the reader instead.
+        String markdown = "> [!WARNING] <em>Read</em> this\n> Body\n";
+        var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("<em>Read</em> this").doesNotContain("&lt;em&gt;");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldStripDisallowedMarkupFromACustomAlertTitle() throws Exception {
+        // The title takes the same route as every other authored fragment: through the safelist. This is what makes
+        // rendering it raw safe, and it is the server-side counterpart of the client's sanitizer.
+        String markdown = "> [!NOTE] <script>alert(1)</script>Careful\n> Body\n";
+        var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("<script>alert(1)</script>").contains("Careful");
+    }
+
+    @Test
     void shouldRefuseANegativeTestResultLimit() {
         // The limit is compared with `>`, so a negative one rejects even an empty list and the endpoint answers 422 to
         // every request that carries test results at all. Failing while the configuration binds surfaces the typo.
