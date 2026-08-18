@@ -87,10 +87,16 @@ public class BuildAgentAddressRegistryService {
     private volatile Map<String, Set<String>> addressesByAgentName = Map.of();
 
     /**
-     * Whether the middleware has ever reported a client connection on this node. Diagnostics only: the authorization
-     * decision is made per agent in {@link #isRegisteredAddressOfAgent}, because whether an agent can be observed
-     * depends on the agent, not on the node. A build agent sharing a JVM with a core node opens no client connection at
-     * all, so on a single-node installation this stays false while everything works normally.
+     * Whether the middleware has ever answered a request for the connected clients on this node, an empty list included.
+     * <p>
+     * Not merely diagnostic. {@link #isRegisteredAddressOfAgent} uses it to tell a deployment that can never report
+     * client addresses from one that normally can and has just failed, because the provider reports both as "no answer"
+     * and only the former makes a missing entry mean "not observable". It stays false for the whole life of an
+     * installation whose provider does not support the query, and flips to true on the first answer otherwise.
+     * <p>
+     * Deliberately not used as a global gate on the binding: whether an agent can be observed depends on the agent, not
+     * on the node - an agent sharing a JVM with a core node opens no client connection even where the query works
+     * perfectly - and gating globally on this once refused every clone on every single-node installation.
      */
     private volatile boolean addressObservationAvailable = false;
 
@@ -334,32 +340,43 @@ public class BuildAgentAddressRegistryService {
             // Nothing was established, so there is nothing to grant an exemption on the strength of. Denying costs
             // nothing extra here: reaching this means the middleware is not answering, and the token and job-scope
             // checks that follow read the processing list from that same middleware, so the request was going to fail
-            // anyway. This is deliberately not the same as UNOBSERVABLE below, which is a working deployment.
+            // anyway. Deliberately not the same as UNOBSERVABLE, handled below, which can be a working deployment.
             log.warn("Could not reconcile the build agent addresses while deciding whether {} may act as build agent {}, so the request is refused", ipAddress, agentName);
             return false;
-        }
-        if (outcome == ObservationOutcome.UNOBSERVABLE) {
-            // The provider cannot report client addresses on this node - a Redis deployment without CLIENT LIST access,
-            // or a Hazelcast client - so no agent's origin is observable and the binding cannot apply to anyone. Denying
-            // here would refuse every build on such a deployment, which is why the provider distinguishes "cannot
-            // answer" from "nobody is connected" in the first place.
-            log.debug("Client addresses cannot be observed on this node, so the origin of build agent {} cannot be constrained", agentName);
-            return true;
         }
         if (matchesRegisteredAddress(agentName, ipAddress)) {
             return true;
         }
 
-        // The decision is per agent, not global: an agent with no entry at all is one whose origin this node cannot
-        // observe, and that is a legitimate topology rather than an attack. A build agent co-located with the core node
-        // in a single JVM never opens a client connection to the middleware, so there is nothing to observe for it, and
-        // the same is true of a provider that cannot report client addresses. Refusing those would break every
-        // single-node installation. An agent that *is* observed is held to the addresses it was observed at.
+        // Everything below turns on whether "this agent has no entry" is informative. It is what grants the exemption,
+        // so it may only do so when a reconcile could actually have entered the agent and did not.
         //
-        // Reached only after a reconcile completed, which is what makes "no entry" mean "not observable" rather than
-        // "not looked at yet". An agent that has just published itself and is about to be registered would otherwise be
-        // granted this exemption for as long as the snapshot lagged.
-        if (!hasRegisteredAddresses(agentName)) {
+        // The exemption itself is not optional. An agent with no entry is normally one whose origin this node cannot
+        // observe - one sharing a JVM with a core node opens no client connection to the middleware at all - and refusing
+        // those would break every single-node installation. An agent that *is* observed is held to the addresses it was
+        // observed at.
+        boolean absenceIsInformative;
+        if (outcome == ObservationOutcome.OBSERVED) {
+            // A reconcile newer than this request answered, so absence means the provider did not report this agent.
+            absenceIsInformative = true;
+        }
+        else {
+            // The provider returned no answer at all, and that has two meanings which must not be conflated: a
+            // deployment that can never report client addresses, and one that normally can but just failed or timed out.
+            // Only the first makes absence informative. Told apart by whether this node has ever obtained an answer,
+            // because a deployment where the query works will have answered at least once since startup - so a first-ever
+            // failure is treated as the permanent case, which is the safe direction for availability, and every
+            // subsequent one as transient.
+            absenceIsInformative = !addressObservationAvailable;
+            if (!absenceIsInformative) {
+                // The preserved snapshot from the last good reconcile is still enforced above, which is the point: a
+                // provider hiccup must not lift an origin binding that has already been established for this agent.
+                log.warn("Client addresses could not be observed while deciding whether {} may act as build agent {}. The addresses from the last successful observation still "
+                        + "apply, and an agent that is not among them is refused.", ipAddress, agentName);
+            }
+        }
+
+        if (!hasRegisteredAddresses(agentName) && absenceIsInformative) {
             log.debug("Build agent {} has no observed cluster connection, so its origin cannot be constrained", agentName);
             return true;
         }

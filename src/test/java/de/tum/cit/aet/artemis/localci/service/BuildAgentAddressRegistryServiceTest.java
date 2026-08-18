@@ -399,6 +399,42 @@ class BuildAgentAddressRegistryServiceTest {
     }
 
     /**
+     * A provider hiccup must not lift a binding that has already been established. The provider reports "cannot observe"
+     * and "the query failed" identically, so a Redis timeout used to be read as a permanently unobservable deployment and
+     * exempted the agent outright - handing a valid token or key the wrong-address bypass for the duration of the
+     * hiccup, even though a perfectly good snapshot said where that agent connects from.
+     */
+    @Test
+    void shouldKeepEnforcingTheLastGoodSnapshotWhenTheProviderStopsAnswering() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        // The query now fails or times out, which the provider can only report as "no answer".
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.empty());
+
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.99")).as("an address outside the preserved snapshot must still be refused").isFalse();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).as("and the observed address must keep working, or the hiccup fails every build").isTrue();
+    }
+
+    /**
+     * The other reading of the same signal, which is why it cannot simply fail closed. A deployment whose provider never
+     * supports the query has no snapshot to preserve and never will, so absence there really does mean "not observable"
+     * and denying would refuse every build permanently rather than for the length of a hiccup. Told apart by whether an
+     * answer was ever obtained on this node.
+     */
+    @Test
+    void shouldStillExemptAgentsWhereTheProviderNeverAnswers() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.empty());
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isAddressObservationAvailable()).as("no answer was ever obtained, so this is the unsupported case").isFalse();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).isTrue();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "203.0.113.9")).as("with nothing observable there is no address to prefer over another").isTrue();
+    }
+
+    /**
      * The sequential form of the same hole, which a "was there a reconcile recently?" test cannot catch. There is no
      * connect-side callback, so an agent can connect and publish itself immediately after a reconcile completes. A
      * request arriving in that gap must not be answered from the earlier observation: at that point the agent was not
