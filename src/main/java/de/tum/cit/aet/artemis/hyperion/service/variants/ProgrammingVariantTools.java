@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -51,22 +52,19 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  * (checked-out repositories, the touched-test-repo flag).
  *
  * All tools operate ONLY on the variant's repositories (never the source). Diff-style edits of existing files
- * ("transform, don't regenerate") are the main consistency lever. Validation errors (file not found, ambiguous
- * search text, unsafe path) are returned TO THE MODEL as the tool result.
+ * ("transform, don't regenerate") are the main consistency lever, and validation errors (file not found,
+ * ambiguous search text, unsafe path) are returned TO THE MODEL as the tool result.
  *
- * Cancellation: once the cancel flag is set, every tool short-circuits with an instruction to stop, so the
- * round converges quickly without doing further work; the pipeline performs the actual abort and cleanup at the
- * next round boundary (cancellation is cooperative and never interrupts a running LLM call).
+ * Cancellation: once the cancel flag is set, every tool short-circuits with an instruction to stop; the pipeline
+ * performs the actual abort at the next round boundary, so cancellation never interrupts a running LLM call.
  */
 class ProgrammingVariantTools implements VariantToolset {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingVariantTools.class);
 
     /**
-     * The only path segment the agent may never write to: git's own metadata directory. Everything else in the
-     * repository — including build files (build.gradle, settings.gradle, pom.xml) and dotfiles — is editable,
-     * because a domain re-theme legitimately has to rename the build's project/artifact name, and a generation
-     * that cannot do so fails the build it is judged by.
+     * The only path segment the agent may never write to. Everything else — build files included — must stay
+     * editable: a domain re-theme has to rename the build's project name, or it fails the build it is judged by.
      */
     private static final String GIT_METADATA_SEGMENT = ".git";
 
@@ -82,11 +80,7 @@ class ProgrammingVariantTools implements VariantToolset {
     /** Per-round tool-call budget (see {@link #stopNotice()}); higher than the quiz budget — repo work needs more calls. */
     private static final int TOOL_CALL_BUDGET = 60;
 
-    /**
-     * Total character budget for {@link #prefetchContext}'s file-content section (performance lever A4): bounds
-     * how many extra prompt tokens the prefetch can add, so cutting the agent's blind opening reads never turns
-     * into an unbounded token-cost regression on a large exercise.
-     */
+    /** Character budget for {@link #prefetchContext}'s file-content section — bounds the prompt tokens it adds. */
     private static final int MAX_PREFETCH_CONTENT_CHARS = 30_000;
 
     /** Upper bound on distinct files prefetched, independent of the char budget — keeps the prefetch focused. */
@@ -132,13 +126,11 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private final Map<RepositoryType, Repository> checkouts = new EnumMap<>(RepositoryType.class);
 
-    /** Read-only checkouts of the source exercise's repositories, lazily resolved by {@link #diffFile}. */
+    /** Read-only checkouts of the source exercise's repositories, resolved lazily. */
     private final Map<RepositoryType, Repository> sourceCheckouts = new EnumMap<>(RepositoryType.class);
 
-    /** Lazily resolved source file paths backing {@link #studentOwnedTemplateRefusal}; null until first read. */
-    private Set<String> sourceTemplatePaths;
-
-    private Set<String> sourceSolutionPaths;
+    /** Source file paths per repository, resolved once per round, backing {@link #studentOwnedTemplateRefusal}. */
+    private final Map<RepositoryType, Set<String>> sourcePaths = new EnumMap<>(RepositoryType.class);
 
     private boolean touchedTestRepo;
 
@@ -181,9 +173,6 @@ class ProgrammingVariantTools implements VariantToolset {
         return touchedTestRepo;
     }
 
-    // Performance lever A4: the transform agent otherwise starts every round blind and spends its first several
-    // calls on listFiles/readFiles just to see what it's working with — a ChatClient call has no memory of a
-    // previous round's reads (each round is a fresh conversation), so this cost repeats on every repair round too.
     @Override
     public String prefetchContext(ChangePlan plan) {
         StringBuilder context = new StringBuilder();
@@ -193,11 +182,8 @@ class ProgrammingVariantTools implements VariantToolset {
                 context.append("=== ").append(repositoryType).append(" file tree ===\n").append(tree).append('\n');
             }
         }
-        // The SOURCE template's file list is the ground truth for the "template gains no implemented pieces"
-        // invariant — the single hardest rule to satisfy blind, since the agent otherwise cannot tell which
-        // classes the source deliberately leaves for the student to create. Observed live: without it, rounds
-        // create student-owned classes in TEMPLATE, the template scores far above its required 0%, and repair
-        // rounds patch the stubs instead of deleting the files they added.
+        // Ground truth for the "template gains no implemented pieces" invariant: without it the agent cannot tell
+        // which classes the source deliberately leaves for the student, and creates them in the variant TEMPLATE.
         String sourceTemplateTree = sourceFileTree(RepositoryType.TEMPLATE);
         if (sourceTemplateTree != null) {
             context.append("=== SOURCE TEMPLATE file tree (the exercise this variant is generated from) ===\n")
@@ -212,45 +198,41 @@ class ProgrammingVariantTools implements VariantToolset {
 
     /** @return the sorted, newline-joined file paths of a repository, or {@code null} when it could not be read. */
     private String fileTree(RepositoryType repositoryType) {
-        return fileTree(() -> checkout(repositoryType));
-    }
-
-    /** {@link #fileTree(RepositoryType)} for the SOURCE exercise's repositories. */
-    private String sourceFileTree(RepositoryType repositoryType) {
-        return fileTree(() -> checkoutSource(repositoryType));
-    }
-
-    private String fileTree(CheckoutSupplier checkoutSupplier) {
         try {
-            Repository checkout = checkoutSupplier.get();
-            return repositoryService.getFiles(checkout).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).sorted()
-                    .collect(Collectors.joining("\n"));
+            return String.join("\n", filePaths(checkout(repositoryType)));
         }
         catch (Exception e) {
             return null;
         }
     }
 
-    /** Resolves a repository checkout, so {@link #fileTree(CheckoutSupplier)} can serve the variant and the source alike. */
-    @FunctionalInterface
-    private interface CheckoutSupplier {
+    /** {@link #fileTree(RepositoryType)} for the SOURCE exercise's repositories. */
+    private String sourceFileTree(RepositoryType repositoryType) {
+        try {
+            return String.join("\n", filePaths(checkoutSource(repositoryType)));
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
 
-        Repository get() throws GitAPIException;
+    /** @return the sorted repository-relative paths of every FILE (not directory) in the checkout. */
+    private List<String> filePaths(Repository checkout) {
+        return repositoryService.getFiles(checkout).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).sorted().toList();
     }
 
     /**
-     * Appends the full content of files that plausibly need editing — every file across the three repositories
-     * whose content contains one of the backtick-quoted identifiers in the plan's intendedChanges (the format the
-     * planning prompt is instructed to use, e.g. "rename `BankAccount` to `CargoBay`") — bounded by
-     * {@link #MAX_PREFETCH_FILES} and {@link #MAX_PREFETCH_CONTENT_CHARS}. Falls back to tree-only (no content
-     * section) when the plan names no identifiers this way, or the budget is exhausted before a file is added.
+     * Appends the full content of files that plausibly need editing — those containing one of the backtick-quoted
+     * identifiers in the plan's intendedChanges (the format the planning prompt uses, e.g. "rename `BankAccount`
+     * to `CargoBay`") — bounded by {@link #MAX_PREFETCH_FILES} and {@link #MAX_PREFETCH_CONTENT_CHARS}. Falls back
+     * to tree-only when the plan names no identifiers this way.
      */
     private void appendPlannedFileContents(StringBuilder context, ChangePlan plan) {
         Set<String> identifiers = extractBacktickedIdentifiers(plan.intendedChanges());
         if (identifiers.isEmpty()) {
             return;
         }
-        Set<String> alreadyAdded = new LinkedHashSet<>();
+        int addedFiles = 0;
         int remainingBudget = MAX_PREFETCH_CONTENT_CHARS;
         outer: for (RepositoryType repositoryType : List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS)) {
             Repository checkout;
@@ -260,12 +242,9 @@ class ProgrammingVariantTools implements VariantToolset {
             catch (Exception e) {
                 continue;
             }
-            List<String> paths = repositoryService.getFiles(checkout).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).sorted()
-                    .toList();
-            for (String path : paths) {
-                String key = repositoryType + ":" + path;
-                if (alreadyAdded.contains(key) || alreadyAdded.size() >= MAX_PREFETCH_FILES) {
-                    continue;
+            for (String path : filePaths(checkout)) {
+                if (addedFiles >= MAX_PREFETCH_FILES) {
+                    break outer;
                 }
                 String content;
                 try {
@@ -283,27 +262,15 @@ class ProgrammingVariantTools implements VariantToolset {
                 }
                 context.append("\n=== ").append(repositoryType).append(":").append(path).append(" (prefetched — plan references an identifier found here) ===\n").append(content)
                         .append('\n');
-                alreadyAdded.add(key);
+                addedFiles++;
                 remainingBudget -= content.length();
             }
         }
     }
 
     private static Set<String> extractBacktickedIdentifiers(List<String> intendedChanges) {
-        Set<String> identifiers = new LinkedHashSet<>();
-        for (String change : intendedChanges) {
-            if (change == null) {
-                continue;
-            }
-            Matcher matcher = BACKTICKED_IDENTIFIER.matcher(change);
-            while (matcher.find()) {
-                String identifier = matcher.group(1).trim();
-                if (!identifier.isBlank()) {
-                    identifiers.add(identifier);
-                }
-            }
-        }
-        return identifiers;
+        return intendedChanges.stream().filter(Objects::nonNull).flatMap(change -> BACKTICKED_IDENTIFIER.matcher(change).results().map(match -> match.group(1).trim()))
+                .filter(identifier -> !identifier.isBlank()).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @Override
@@ -323,8 +290,7 @@ class ProgrammingVariantTools implements VariantToolset {
                 markTouched(entry.getKey());
             }
             catch (GitAPIException e) {
-                // Losing the commit means losing the round's work while verification would pass on the stale
-                // pushed state — fail the round loudly instead.
+                // Losing the commit loses the round's work while verification passes on the stale pushed state.
                 throw new IllegalStateException("Could not persist pending " + entry.getKey() + " repository changes after the agent round: " + e.getMessage(), e);
             }
         }
@@ -341,9 +307,7 @@ class ProgrammingVariantTools implements VariantToolset {
             return invalidRepositoryMessage(repository);
         }
         try {
-            Repository checkout = checkout(repositoryType);
-            return repositoryService.getFiles(checkout).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).sorted()
-                    .collect(Collectors.joining("\n"));
+            return String.join("\n", filePaths(checkout(repositoryType)));
         }
         catch (Exception e) {
             return "Error: could not list files of the " + repositoryType + " repository: " + e.getMessage();
@@ -420,11 +384,9 @@ class ProgrammingVariantTools implements VariantToolset {
         }
         try {
             Repository checkout = checkout(repositoryType);
-            List<String> paths = repositoryService.getFiles(checkout).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).sorted()
-                    .toList();
             StringBuilder matches = new StringBuilder();
             int matchCount = 0;
-            for (String path : paths) {
+            for (String path : filePaths(checkout)) {
                 String content;
                 try {
                     content = new String(repositoryService.getFile(checkout, path), StandardCharsets.UTF_8);
@@ -452,10 +414,7 @@ class ProgrammingVariantTools implements VariantToolset {
         }
     }
 
-    /**
-     * One search-and-replace edit for the batch {@link #applyEdits} tool, targeting its own repository so a batch
-     * can span all three repositories in one call instead of one call per repository.
-     */
+    /** One search-and-replace edit for the batch {@link #applyEdits} tool, targeting its own repository. */
     public record BatchEdit(@JsonPropertyDescription("the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
             @JsonPropertyDescription("the file path relative to the repository root") String path,
             @JsonPropertyDescription("the exact text to search for; must match exactly one occurrence in the (current) file") String search,
@@ -476,9 +435,8 @@ class ProgrammingVariantTools implements VariantToolset {
         if (edits == null || edits.isEmpty()) {
             return "Error: no edits were provided. Pass at least one { repository, path, search, replace } edit.";
         }
-        // In-memory content per repository and touched file so later edits see earlier ones (sequential
-        // semantics, per file) and each file is read once and written once, instead of a read+delete+create per
-        // edit. Repository checkouts are resolved lazily and cached, same as every other tool in this round.
+        // In-memory content per repository and touched file, so later edits see earlier ones (sequential
+        // semantics, per file) and each file is read once and written once instead of once per edit.
         Map<RepositoryType, Map<String, String>> contentsByRepository = new EnumMap<>(RepositoryType.class);
         Map<RepositoryType, Set<String>> changedPathsByRepository = new EnumMap<>(RepositoryType.class);
         StringBuilder report = new StringBuilder();
@@ -521,12 +479,28 @@ class ProgrammingVariantTools implements VariantToolset {
                 }
                 contents.put(normalizedPath, content);
             }
-            EditOutcome outcome = applySearchReplace(content, normalizedPath, edit.search(), edit.replace());
-            if (outcome.failed()) {
-                report.append("Error: ").append(outcome.error()).append('\n');
+            String search = edit.search();
+            if (search == null || search.isEmpty()) {
+                report.append("Error: the search text must not be empty for '").append(normalizedPath).append("'.\n");
                 continue;
             }
-            contents.put(normalizedPath, outcome.updatedContent());
+            // Without this check the concatenation below would silently write the literal text "null" into the
+            // file and still report success.
+            if (edit.replace() == null) {
+                report.append("Error: the replace text must not be null for '").append(normalizedPath).append("'. Use an empty string \"\" to delete the matched text.\n");
+                continue;
+            }
+            int firstIndex = content.indexOf(search);
+            if (firstIndex < 0) {
+                report.append("Error: the search text was not found in '").append(normalizedPath).append("'. Read the file again and use the exact current text.\n");
+                continue;
+            }
+            if (content.indexOf(search, firstIndex + 1) >= 0) {
+                report.append("Error: the search text occurs more than once in '").append(normalizedPath)
+                        .append("'. Extend the search text so it matches exactly one occurrence.\n");
+                continue;
+            }
+            contents.put(normalizedPath, content.substring(0, firstIndex) + edit.replace() + content.substring(firstIndex + search.length()));
             changedPathsByRepository.computeIfAbsent(repositoryType, key -> new LinkedHashSet<>()).add(normalizedPath);
             appliedCount++;
             report.append("applied.\n");
@@ -547,47 +521,6 @@ class ProgrammingVariantTools implements VariantToolset {
         }
         report.append(appliedCount).append(" of ").append(edits.size()).append(" edit(s) applied.");
         return report.toString();
-    }
-
-    /**
-     * Applies a single search-and-replace to {@code content} without touching the repository — one definition of
-     * a valid edit (unique-match requirement, error wording) shared by every entry the batch {@link #applyEdits}
-     * tool applies. Returns the updated content or a precise error.
-     */
-    private static EditOutcome applySearchReplace(String content, String path, String search, String replace) {
-        if (search == null || search.isEmpty()) {
-            return EditOutcome.error("the search text must not be empty for '" + path + "'.");
-        }
-        if (replace == null) {
-            // Without this check, string concatenation below would silently turn a null replace into the
-            // literal 4-character text "null" in the file instead of erroring — a real, silent corruption
-            // observed only by code review, never by a failing test, since the tool would still report success.
-            return EditOutcome.error("the replace text must not be null for '" + path + "'. Use an empty string \"\" to delete the matched text.");
-        }
-        int firstIndex = content.indexOf(search);
-        if (firstIndex < 0) {
-            return EditOutcome.error("the search text was not found in '" + path + "'. Read the file again and use the exact current text.");
-        }
-        if (content.indexOf(search, firstIndex + 1) >= 0) {
-            return EditOutcome.error("the search text occurs more than once in '" + path + "'. Extend the search text so it matches exactly one occurrence.");
-        }
-        return EditOutcome.ok(content.substring(0, firstIndex) + replace + content.substring(firstIndex + search.length()));
-    }
-
-    /** Result of {@link #applySearchReplace}: either the updated content or a precise, model-facing error. */
-    private record EditOutcome(String updatedContent, String error) {
-
-        static EditOutcome ok(String updatedContent) {
-            return new EditOutcome(updatedContent, null);
-        }
-
-        static EditOutcome error(String error) {
-            return new EditOutcome(null, error);
-        }
-
-        boolean failed() {
-            return error != null;
-        }
     }
 
     /** One create-or-overwrite entry for the batch {@link #writeFiles} tool, targeting its own repository. */
@@ -629,8 +562,7 @@ class ProgrammingVariantTools implements VariantToolset {
             }
             try {
                 Repository checkout = checkout(repositoryType);
-                // Checked BEFORE the write: creating a student-owned class in the template is refused outright
-                // (see studentOwnedTemplateRefusal), not merely warned about.
+                // Checked BEFORE the write: a student-owned class in the template is refused, not just warned about.
                 boolean newTemplateFile = repositoryType == RepositoryType.TEMPLATE && gitService.getFileByName(checkout, normalizedPath).isEmpty();
                 String refusal = newTemplateFile ? studentOwnedTemplateRefusal(normalizedPath) : null;
                 if (refusal != null) {
@@ -652,25 +584,20 @@ class ProgrammingVariantTools implements VariantToolset {
     }
 
     /**
-     * Refuses creating a file in the TEMPLATE repository that holds a class the STUDENT is meant to write.
+     * Refuses creating a file in the TEMPLATE repository that holds a class the STUDENT is meant to write. Such a
+     * template passes the structural tests it is required to fail, so the "template scores exactly 0%" gate can
+     * never go green however many repair rounds follow — unrecoverable within the attempt budget, and it kept
+     * happening with the rule stated in the system prompt, so it is enforced rather than advised.
      * <p>
-     * This is by far the most damaging thing a round can do, and it is unrecoverable within the attempt budget:
-     * the template then passes the structural tests it is required to fail, so the "template scores exactly 0%"
-     * gate can never go green however many repair rounds follow. It kept happening across runs even with the rule
-     * stated in the system prompt, the source template's file tree supplied as context, and the failing build
-     * naming the cause — including on runs whose plan correctly scoped nothing to the template. Prompt text alone
-     * does not hold here, so this is enforced rather than advised.
-     * <p>
-     * The discriminator is exact and needs no LLM judgement: a student-owned class is one the SOURCE SOLUTION has
-     * and the SOURCE TEMPLATE deliberately lacks. A genuinely new given domain type the plan introduces (a
-     * {@code Patient}/{@code Order}/{@code Flight} for a re-theme) exists in NEITHER source repository, so it is
-     * still allowed through — which is why this cannot simply reject every new template file.
+     * The discriminator needs no LLM judgement: a student-owned class is one the SOURCE SOLUTION has and the
+     * SOURCE TEMPLATE deliberately lacks. A new given domain type the plan introduces exists in NEITHER source
+     * repository and is still allowed through, which is why this cannot simply reject every new template file.
      *
      * @param path the normalized repository-relative path the round is trying to create in the template
      * @return the refusal to report for this entry, or {@code null} when the write is legitimate
      */
     private String studentOwnedTemplateRefusal(String path) {
-        if (!sourceSolutionPaths().contains(path) || sourceTemplatePaths().contains(path)) {
+        if (!sourcePaths(RepositoryType.SOLUTION).contains(path) || sourcePaths(RepositoryType.TEMPLATE).contains(path)) {
             return null;
         }
         return "REFUSED: '" + path + "' exists in the source SOLUTION but deliberately NOT in the source TEMPLATE — it is a class the student has to write from scratch, so the "
@@ -678,27 +605,14 @@ class ProgrammingVariantTools implements VariantToolset {
                 + "can undo. Nothing was written. Apply this change to the SOLUTION and TESTS repositories only; in the template, reflect it in Client.java's TODO comments.";
     }
 
-    /** The source template's file paths, resolved once per round; empty when the source template cannot be read. */
-    private Set<String> sourceTemplatePaths() {
-        if (sourceTemplatePaths == null) {
-            sourceTemplatePaths = sourcePaths(RepositoryType.TEMPLATE);
-        }
-        return sourceTemplatePaths;
-    }
-
-    /** The source solution's file paths, resolved once per round; empty when the source solution cannot be read. */
-    private Set<String> sourceSolutionPaths() {
-        if (sourceSolutionPaths == null) {
-            sourceSolutionPaths = sourcePaths(RepositoryType.SOLUTION);
-        }
-        return sourceSolutionPaths;
-    }
-
+    /** The source exercise's file paths, resolved once per round and repository. */
     private Set<String> sourcePaths(RepositoryType repositoryType) {
-        String tree = sourceFileTree(repositoryType);
-        // An unreadable source repository must not silently turn the refusal above into a no-op OR into a blanket
-        // block: an empty solution set means nothing is ever classified student-owned, which fails open.
-        return tree == null ? Set.of() : Set.copyOf(List.of(tree.split("\n")));
+        return sourcePaths.computeIfAbsent(repositoryType, type -> {
+            String tree = sourceFileTree(type);
+            // Fails open: an unreadable source repository yields an empty set, so nothing is classified
+            // student-owned — never a blanket block on every new template file.
+            return tree == null ? Set.of() : Set.copyOf(List.of(tree.split("\n")));
+        });
     }
 
     /** One delete entry for the batch {@link #deleteFiles} tool, targeting its own repository. */
@@ -767,10 +681,9 @@ class ProgrammingVariantTools implements VariantToolset {
         if (stop != null) {
             return stop;
         }
-        // Test cases are only discovered from build results, so anything written to the test repository this
-        // round is invisible here until a build has executed it. Rather than let the agent guess a name — a
-        // guessed reference silently unlinks its task from grading — commit the round's work and run one
-        // solution build, but ONLY when the test repository actually changed since the last one.
+        // Test cases are only discovered from build results, so tests written this round are invisible here until
+        // a build has executed them. A guessed name silently unlinks its task from grading, so commit and run one
+        // solution build instead — but ONLY when the test repository actually changed since the last one.
         if (touchedTestRepo) {
             flushPendingChanges();
             solutionBuildForTestDiscovery.run(exercise, jobId);
@@ -781,11 +694,9 @@ class ProgrammingVariantTools implements VariantToolset {
             return "No test cases are registered yet for this exercise. Test cases are discovered from build results — run a build first.";
         }
         List<String> names = testCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList();
-        // Framed as "the complete set, copy verbatim" rather than as a bare list: the names below are the only
-        // strings a task marker can contain, and several are generated per member (testClass[SortStrategy]) in a
-        // set that is deliberately not symmetric — a class having testMethods[X] implies nothing about
-        // testClass[X] existing. Agents were observed rewriting these into tidier-looking names, which silently
-        // unlinks the task from grading.
+        // Framed as "the complete set, copy verbatim" rather than as a bare list: several names are generated per
+        // member (testClass[SortStrategy]) in a set that is deliberately not symmetric, and agents were observed
+        // rewriting them into tidier-looking names, which silently unlinks the task from grading.
         return "These " + names.size() + " names are the complete set of tests that exist, and the only strings a task marker may reference. "
                 + "Copy one character for character — no parentheses, no parameter list, no rewording — or the task loses its grading link:\n" + String.join("\n", names);
     }
@@ -829,13 +740,10 @@ class ProgrammingVariantTools implements VariantToolset {
     }
 
     /**
-     * Reports task-marker references that match no real test case, together with the names that do exist.
-     * <p>
-     * The same check runs later as the TEST_REFERENCES verification gate, but only after a full build round and
-     * only when the build gate is already clean — so an agent that invents a name learns about it minutes later,
-     * or (when the build is red) never. Reporting it in the tool's own return value closes the loop where the
-     * mistake is made, while the statement is still in hand. Deliberately not an error: the statement is saved
-     * either way, since a partially-linked statement is still better than none and the agent may be mid-repair.
+     * Reports task-marker references that match no real test case, together with the names that do exist. The same
+     * check runs later as the TEST_REFERENCES verification gate, but only after a full build round and only when
+     * the build gate is already clean — reporting it here closes the loop where the mistake is made. Deliberately
+     * not an error: the statement is saved either way, since a partially-linked statement is better than none.
      *
      * @param exercise the freshly persisted variant exercise
      * @return an empty string when everything resolves, otherwise a correction notice
@@ -859,17 +767,12 @@ class ProgrammingVariantTools implements VariantToolset {
     }
 
     /**
-     * Unwraps {@code <testid>} tags whose content is not a numeric test-case id, keeping the inner text.
-     * <p>
-     * Artemis resolves a task marker's test reference either by plain NAME or, when it is wrapped in
-     * {@code <testid>}, by parsing the content as a numeric id
-     * ({@code ProgrammingExerciseTaskService#findTestCaseFromProblemStatement}). A saved statement therefore shows
-     * {@code <testid>27</testid>}, and models reproduce that syntax while filling in the only thing they know — the
-     * test NAME. The resulting {@code <testid>testBubbleSort()</testid>} matches neither branch: the id parse fails
-     * and no name comparison is ever attempted, so every task silently loses its grading link and the
-     * TEST_REFERENCES gate reports the whole tag as an unresolved test. Observed burning an entire 5-attempt
-     * budget on one variant. The rewrite is unambiguous — a non-numeric payload is never a valid id — and yields
-     * exactly the name form Artemis converts back to ids on its own.
+     * Unwraps {@code <testid>} tags whose content is not a numeric test-case id, keeping the inner text. Artemis
+     * resolves a task's test reference either by plain NAME or, inside {@code <testid>}, by parsing the content as
+     * a numeric id. Models reproduce the stored {@code <testid>27</testid>} syntax but fill in the test NAME, and
+     * {@code <testid>testBubbleSort()</testid>} matches neither branch — the task silently loses its grading link.
+     * The rewrite is unambiguous (a non-numeric payload is never a valid id) and yields the plain-name form
+     * Artemis converts back to ids on its own.
      *
      * @param problemStatement the statement as written by the model
      * @return the statement with non-numeric {@code <testid>} wrappers removed
@@ -942,8 +845,8 @@ class ProgrammingVariantTools implements VariantToolset {
         }
     }
 
-    // returnDirect ends the internal tool loop immediately — no extra LLM round after the model finishes,
-    // and the "budget exhausted, call finish" directive has a guaranteed exit.
+    // returnDirect ends the internal tool loop immediately, so the "budget exhausted, call finish" directive has a
+    // guaranteed exit and no extra LLM round follows.
     @Tool(returnDirect = true, description = "Signal that you are done with this round and provide a short summary of what you changed and verified.")
     public String finish(@ToolParam(description = "a short summary of the changes made in this round") String summary) {
         this.finishSummary = summary;
@@ -951,14 +854,11 @@ class ProgrammingVariantTools implements VariantToolset {
     }
 
     /**
-     * Combined stop check for cancellation and the per-round tool budget — every tool except finish
-     * short-circuits with the returned directive.
-     *
-     * Short-circuit instead of throwing: Spring AI returns tool exceptions to the model as ordinary tool
-     * results anyway, so an exception cannot abort the round — an explicit stop instruction converges the
-     * round fastest. The pipeline performs the actual abort at the next round boundary.
-     * The budget exists because Spring AI's internal tool loop has no iteration cap and a model that keeps
-     * re-reading and re-reasoning would loop indefinitely.
+     * Combined stop check for cancellation and the per-round tool budget — every tool except finish short-circuits
+     * with the returned directive. Short-circuit instead of throwing: Spring AI returns tool exceptions to the
+     * model as ordinary tool results, so an exception cannot abort the round; the pipeline performs the actual
+     * abort at the next round boundary. The budget exists because Spring AI's internal tool loop has no iteration
+     * cap, and a model that keeps re-reading and re-reasoning would loop indefinitely.
      */
     private String stopNotice() {
         // Every tool call is a liveness signal for the long internal agent round (see the job's staleness handling).
@@ -974,37 +874,28 @@ class ProgrammingVariantTools implements VariantToolset {
     }
 
     private Repository checkout(RepositoryType repositoryType) throws GitAPIException {
-        Repository cached = checkouts.get(repositoryType);
-        if (cached != null) {
-            return cached;
-        }
-        LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(repositoryType);
-        if (repositoryUri == null) {
-            throw new IllegalStateException("No " + repositoryType + " repository URI for exercise " + exercise.getId());
-        }
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch, false);
-        if (repository == null) {
-            throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
-        }
-        checkouts.put(repositoryType, repository);
-        return repository;
+        return checkout(exercise, checkouts, repositoryType, "");
     }
 
-    /** Read-only counterpart of {@link #checkout} resolving the SOURCE exercise's repositories, for {@link #diffFile}. */
+    /** Read-only counterpart of {@link #checkout} resolving the SOURCE exercise's repositories. */
     private Repository checkoutSource(RepositoryType repositoryType) throws GitAPIException {
-        Repository cached = sourceCheckouts.get(repositoryType);
+        return checkout(sourceExercise, sourceCheckouts, repositoryType, "source ");
+    }
+
+    private Repository checkout(ProgrammingExercise checkedOutExercise, Map<RepositoryType, Repository> cache, RepositoryType repositoryType, String label) throws GitAPIException {
+        Repository cached = cache.get(repositoryType);
         if (cached != null) {
             return cached;
         }
-        LocalVCRepositoryUri repositoryUri = sourceExercise.getRepositoryURI(repositoryType);
+        LocalVCRepositoryUri repositoryUri = checkedOutExercise.getRepositoryURI(repositoryType);
         if (repositoryUri == null) {
-            throw new IllegalStateException("No " + repositoryType + " repository URI for source exercise " + sourceExercise.getId());
+            throw new IllegalStateException("No " + repositoryType + " repository URI for " + label + "exercise " + checkedOutExercise.getId());
         }
         Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch, false);
         if (repository == null) {
-            throw new IllegalStateException("Could not check out the source " + repositoryType + " repository");
+            throw new IllegalStateException("Could not check out the " + label + repositoryType + " repository");
         }
-        sourceCheckouts.put(repositoryType, repository);
+        cache.put(repositoryType, repository);
         return repository;
     }
 
@@ -1021,9 +912,7 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private void markTouched(RepositoryType repositoryType) {
         if (repositoryType == RepositoryType.TESTS) {
-            // A test-repo change invalidates the previous round's build evidence (build-dependency constraint):
-            // the VERIFYING gate always re-triggers both builds regardless, but this flag tells the pipeline to
-            // treat both as unverified even if this round never itself checked them.
+            // A test-repo change invalidates the previous round's build evidence for BOTH builds.
             touchedTestRepo = true;
         }
     }
@@ -1051,8 +940,7 @@ class ProgrammingVariantTools implements VariantToolset {
 
     /**
      * Normalizes a model-supplied path and rejects anything that would escape the repository working copy or
-     * corrupt its git metadata. Every remaining path inside the repository is writable — see
-     * {@link #GIT_METADATA_SEGMENT}.
+     * corrupt its git metadata; every remaining path inside the repository is writable.
      *
      * @return the normalized repository-relative path, or {@code null} when the path is not writable
      */
@@ -1074,8 +962,7 @@ class ProgrammingVariantTools implements VariantToolset {
                 return null;
             }
             for (String segment : normalized.split("/")) {
-                // Case-insensitive: on a case-insensitive filesystem (macOS default, Windows) ".GIT"/".Git"
-                // resolves to the same directory as ".git" and must be blocked the same way.
+                // Case-insensitive: on macOS/Windows ".GIT" resolves to the same directory as ".git".
                 if (GIT_METADATA_SEGMENT.equalsIgnoreCase(segment)) {
                     return null;
                 }
