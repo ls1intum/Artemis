@@ -62,6 +62,7 @@ export class CourseExamsComponent implements SidebarView {
 
     private examsSubscription?: Subscription;
     private studentExamTestExamInitialFetchSubscription?: Subscription;
+    private realExamWorkingTimeSubscription?: Subscription;
 
     /** The exams of the course visible to the user, loaded by this tab rather than shipped with the course. */
     readonly exams = signal<ExamForOverview[] | undefined>(undefined);
@@ -162,7 +163,8 @@ export class CourseExamsComponent implements SidebarView {
             });
 
         // load real exam working times for the current student as a student may have an adjusted working time
-        this.examParticipationService
+        this.realExamWorkingTimeSubscription?.unsubscribe();
+        this.realExamWorkingTimeSubscription = this.examParticipationService
             .getRealExamSidebarData(courseId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((studentExams) => this.realExamWorkingTimeByExamId.set(new Map(studentExams.map((studentExam) => [studentExam.id ?? 0, studentExam.workingTime ?? 0]))));

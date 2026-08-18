@@ -293,6 +293,41 @@ describe('CourseExamsComponent', () => {
         expect(component['realExamWorkingTimeByExamId']().has(newExam.id!)).toBe(true);
     });
 
+    it('should cancel previous request when a new course is loaded', async () => {
+        // Destroy the component created in beforeEach to avoid duplicate subscriptions
+        componentFixture.destroy();
+
+        const subject1 = new Subject<StudentExamDTO[]>();
+        const subject2 = new Subject<StudentExamDTO[]>();
+
+        const getRealExamSidebarDataSpy = vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValueOnce(subject1).mockReturnValueOnce(subject2);
+
+        // Recreate the component
+        componentFixture = TestBed.createComponent(CourseExamsComponent);
+        component = componentFixture.componentInstance;
+
+        // Triggers initial loadExams(1)
+        componentFixture.detectChanges();
+        await Promise.resolve();
+
+        expect(getRealExamSidebarDataSpy).toHaveBeenCalledWith(1);
+
+        // Switch to a new course
+        parentParamsSubject.next({ courseId: '2' });
+        componentFixture.detectChanges();
+        await Promise.resolve();
+
+        expect(getRealExamSidebarDataSpy).toHaveBeenCalledWith(2);
+
+        // Resolve out-of-order (course 2 responds first, course 1 responds late)
+        subject2.next([{ id: 43, workingTime: 120 } as StudentExamDTO]);
+        subject1.next([{ id: 42, workingTime: 60 } as StudentExamDTO]);
+
+        // Course 1 map should be ignored because its subscription was cancelled
+        expect(component['realExamWorkingTimeByExamId']().has(42)).toBe(false);
+        expect(component['realExamWorkingTimeByExamId']().get(43)).toBe(120);
+    });
+
     it('should correctly return visible real exams ordered according to startedDate', async () => {
         componentFixture.detectChanges();
         await Promise.resolve();
