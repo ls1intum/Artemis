@@ -596,6 +596,10 @@ public class StudentExamService {
     /**
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
      * Resolves the exercise ids, then calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
+     * <p>
+     * Resolution and save share the exam-row lock the random generation paths take, so a concurrent exercise-group
+     * move cannot commit between reading the exercises and persisting the selection. The participation setup runs
+     * afterwards: it only needs the persisted selection and would hold the lock for the length of the setup.
      *
      * @param exam        the exam the test run belongs to
      * @param exerciseIds the ids of the exercises to include in the test run, in the exact order they should be persisted
@@ -603,8 +607,11 @@ public class StudentExamService {
      * @return the created testRun studentExam
      */
     public StudentExam createTestRun(Exam exam, List<Long> exerciseIds, Integer workingTime) {
-        List<Exercise> exercises = resolveExamExercises(exam, exerciseIds);
-        StudentExam testRun = generateTestRun(exam, exercises, workingTime);
+        StudentExam testRun = transactionTemplate.execute(status -> {
+            examRepository.findByIdWithPessimisticWriteLockElseThrow(exam.getId());
+            List<Exercise> exercises = resolveExamExercises(exam, exerciseIds);
+            return generateTestRun(exam, exercises, workingTime);
+        });
         setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
         return testRun;
     }
