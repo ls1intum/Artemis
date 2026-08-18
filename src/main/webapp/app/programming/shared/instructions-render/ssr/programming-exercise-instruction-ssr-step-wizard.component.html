@@ -7,12 +7,15 @@
                 <!-- The tooltip sits on the wrapper, not on the button: it wires aria-describedby into its host, and on
                      the button that would repeat the aria-label verbatim to a screen reader. Hover and focus still
                      reach it here (focusin bubbles from the button), so the visual behavior is unchanged. -->
+                <!-- A task whose refs resolved to no test id at all has nothing to show: openTaskFeedback returns
+                     early for it. Disabling the button keeps the wizard in step with the shadow-content path,
+                     which withholds role="button" and tabindex in exactly the same case. -->
                 <div class="stepwizard-step" [tumUiTooltip]="task.taskName">
                     <button
                         type="button"
                         class="stepwizard-circle"
                         [attr.aria-label]="task.taskName"
-                        [disabled]="!interactive()"
+                        [disabled]="!interactive() || !task.testIds.length"
                         [class.stepwizard-step--success]="task.status === 'success'"
                         [class.stepwizard-step--failed]="task.status === 'fail'"
                         [class.stepwizard-step--not-executed]="task.status === 'not-executed'"

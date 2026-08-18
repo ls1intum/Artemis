@@ -81,6 +81,31 @@ describe('ProgrammingExerciseInstructionSsrStepWizardComponent', () => {
         expect(emitted).not.toHaveBeenCalled();
     });
 
+    // The server emits an empty `data-test-ids` for two reachable cases: a task that authored no references at all
+    // ("no-tests"), and a task whose name-only references resolved to nothing, which still shows a green circle when
+    // the request declared that all tests passed. `openTaskFeedback` returns early for both, so an enabled button
+    // would be a focusable control that does nothing.
+    it.each([
+        { status: 'no-tests' as const, case: 'a task that authored no test references' },
+        { status: 'success' as const, case: 'an all-passed task whose name-only references did not resolve' },
+    ])('disables a step without test ids while the rest stays interactive: $case', ({ status }) => {
+        const emitted = vi.fn();
+        comp.taskSelected.subscribe(emitted);
+        fixture.componentRef.setInput('tasks', [{ index: 1, taskName: 'Nothing to show', testIds: [], status, authoredCount: 0, notExecutedCount: 0 }, tasks[0]]);
+        fixture.componentRef.setInput('interactive', true);
+        fixture.detectChanges();
+
+        const circles = fixture.nativeElement.querySelectorAll('.stepwizard-circle');
+        expect(circles[0].disabled).toBe(true);
+        expect(circles[1].disabled).toBe(false);
+
+        circles[0].click();
+        expect(emitted).not.toHaveBeenCalled();
+
+        circles[1].click();
+        expect(emitted).toHaveBeenCalledExactlyOnceWith(tasks[0]);
+    });
+
     it('renders nothing without tasks', () => {
         fixture.componentRef.setInput('tasks', []);
         fixture.detectChanges();

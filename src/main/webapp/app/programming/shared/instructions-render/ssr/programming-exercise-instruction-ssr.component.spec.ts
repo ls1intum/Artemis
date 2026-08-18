@@ -97,6 +97,23 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         fixture.detectChanges();
     };
 
+    /**
+     * Fails a render the way the reader actually experiences it. A network error is transient, so the render service
+     * retries it once before the failure reaches this component at all; a test that answers only the first attempt
+     * leaves the stream pending and never sees a banner.
+     */
+    const failRenderWithNetworkError = () => {
+        vi.useFakeTimers();
+        try {
+            httpMock.expectOne(RENDER_URL_MATCHER).error(new ProgressEvent('network error'));
+            vi.advanceTimersByTime(300);
+            httpMock.expectOne(RENDER_URL_MATCHER).error(new ProgressEvent('network error'));
+        } finally {
+            vi.useRealTimers();
+        }
+        fixture.detectChanges();
+    };
+
     it('strips scripts from the rendered html and hands it to the shadow-DOM content child', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
@@ -256,8 +273,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
 
         resultSubject.next({ id: 9, feedbacks: [{ testCase: { id: 1, testName: 'testA' }, positive: false }] } as Result);
         fixture.detectChanges();
-        httpMock.expectOne(RENDER_URL_MATCHER).error(new ProgressEvent('network error'));
-        fixture.detectChanges();
+        failRenderWithNetworkError();
 
         expect(comp.renderedHtml()).toBe(before);
         expect(comp.refreshFailed()).toBe(true);
@@ -495,8 +511,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         flushRender();
         currentTheme.set(Theme.DARK);
         fixture.detectChanges();
-        httpMock.expectOne(RENDER_URL_MATCHER).error(new ProgressEvent('network error'));
-        fixture.detectChanges();
+        failRenderWithNetworkError();
         expect(comp.refreshFailed()).toBe(true);
 
         fixture.componentRef.setInput('exercise', undefined);
