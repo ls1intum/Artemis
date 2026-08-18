@@ -37,12 +37,12 @@
                 (click)="onCardClick(card.type)"
                 type="button"
             >
-                <div class="card-icon-wrapper shadow-md">
+                <div class="exercise-card-icon shadow-md">
                     <fa-icon [icon]="card.icon" />
                 </div>
                 <h6 [jhiTranslate]="card.labelKey"></h6>
                 <p [jhiTranslate]="card.descriptionKey"></p>
-                <span class="card-cta">
+                <span class="exercise-card-cta">
                     <span
                         [jhiTranslate]="activeTab() === 'import' ? 'artemisApp.exerciseManagement.addModal.cta.select' : 'artemisApp.exerciseManagement.addModal.cta.create'"
                     ></span>

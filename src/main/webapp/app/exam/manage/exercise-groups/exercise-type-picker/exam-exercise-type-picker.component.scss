@@ -89,7 +89,7 @@
     }
 }
 
-.card-icon-wrapper {
+.exercise-card-icon {
     width: 44px;
     height: 44px;
     border-radius: 12px;
@@ -105,7 +105,7 @@
 }
 
 // Uses the accessible brand foreground (light: --primary-dark); plain --primary would miss WCAG AA at this size.
-.card-cta {
+.exercise-card-cta {
     font-weight: 600;
     font-size: 0.8rem;
     color: var(--tumaet-ui-accent-color);
