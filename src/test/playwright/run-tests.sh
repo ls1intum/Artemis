@@ -143,12 +143,17 @@ echo "E2E counts: ${E2E_PASSED} passed, ${E2E_FLAKY} flaky, ${E2E_FAILED} failed
 # moving the real report into place, so CI never consumes an outdated report.
 echo "--- Finalizing test reports ---"
 rm -f ./test-reports/results.xml
-if [ -f ./test-reports/results-parallel.xml ] && [ -f ./test-reports/results-multinode.xml ]; then
-    pnpm exec junit-merge ./test-reports/results-parallel.xml ./test-reports/results-multinode.xml -o ./test-reports/results.xml
-elif [ -f ./test-reports/results-parallel.xml ]; then
-    mv ./test-reports/results-parallel.xml ./test-reports/results.xml
-elif [ -f ./test-reports/results-multinode.xml ]; then
-    mv ./test-reports/results-multinode.xml ./test-reports/results.xml
+# Collected rather than enumerated per combination: each invocation above writes its own
+# results-<type>.xml, and a report left out here is invisible to the JUnit report and to the failure
+# classifier, so a failure in it cannot even be named while the script still exits nonzero.
+REPORTS=()
+for report in ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml ./test-reports/results-multinode.xml; do
+    [ -f "$report" ] && REPORTS+=("$report")
+done
+if [ ${#REPORTS[@]} -gt 1 ]; then
+    pnpm exec junit-merge "${REPORTS[@]}" -o ./test-reports/results.xml
+elif [ ${#REPORTS[@]} -eq 1 ]; then
+    mv "${REPORTS[0]}" ./test-reports/results.xml
 fi
 pnpm run merge-coverage-reports || true
 

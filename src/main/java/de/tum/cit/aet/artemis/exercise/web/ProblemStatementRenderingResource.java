@@ -47,6 +47,12 @@ public class ProblemStatementRenderingResource {
 
     public ProblemStatementRenderingResource(ProblemStatementRenderingService renderingService,
             @Value("${artemis.problem-statement-rendering.max-test-results:1000}") int maxTestResults) {
+        // A negative limit would reject every request carrying test results, including an empty list, with 422. That
+        // is silent from the outside: the endpoint keeps answering, just never with a rendering. Refusing to start is
+        // the honest response to a limit that cannot be satisfied.
+        if (maxTestResults < 0) {
+            throw new IllegalArgumentException("artemis.problem-statement-rendering.max-test-results must not be negative, but was " + maxTestResults);
+        }
         this.renderingService = renderingService;
         this.maxTestResults = maxTestResults;
     }

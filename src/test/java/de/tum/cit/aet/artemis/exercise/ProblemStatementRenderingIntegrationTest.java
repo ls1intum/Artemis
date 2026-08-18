@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -30,6 +31,8 @@ import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
+import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingService;
+import de.tum.cit.aet.artemis.exercise.web.ProblemStatementRenderingResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -42,6 +45,9 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ProblemStatementRenderingService renderingService;
 
     @BeforeEach
     void setUp() {
@@ -491,6 +497,13 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         assertThat(result.html()).doesNotContain("testsColor");
+    }
+
+    @Test
+    void shouldRefuseToBuildWithANegativeTestResultLimit() {
+        // The limit is compared with `>`, so a negative one rejects even an empty list and the endpoint answers 422
+        // to every request that carries test results at all. Failing at construction surfaces the typo instead.
+        assertThatIllegalArgumentException().isThrownBy(() -> new ProblemStatementRenderingResource(renderingService, -1)).withMessageContaining("must not be negative");
     }
 
     @Test
