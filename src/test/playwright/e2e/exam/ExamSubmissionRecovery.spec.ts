@@ -29,9 +29,11 @@ const quizSaveUrl = /\/api\/quiz\/exercises\/\d+\/submissions\/exam/;
 // runner, where the re-send is preceded by a full client re-bootstrap with Playwright's per-context HTTP cache
 // disabled - bundle and lazy chunks re-fetched, then the exam re-fetched, then the answer restored and sent. A 30s
 // ceiling (the RELOAD_RENDER_TIMEOUT default) was measurably too tight there: CI saw zero re-sends inside it while the
-// same code re-sent in ~2s locally. Paired with the test.setTimeout in the describe block below, which keeps the
-// worst case inside the per-test cap: the setup before the reload spends roughly 50s of it.
-const RESEND_TIMEOUT = 3 * RELOAD_RENDER_TIMEOUT;
+// same code re-sent in ~2s locally. Measured: this test takes ~4s end to end against the local dev server and
+// ~113s in CI against the containerised production WAR, so the multiplier is sized for the slow environment
+// rather than the fast one - every previous budget here was sized to the happy path and kept expiring.
+// Paired with the test.setTimeout in the describe block below, which keeps the worst case inside the cap.
+const RESEND_TIMEOUT = 4 * RELOAD_RENDER_TIMEOUT;
 
 test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, () => {
     // Block the Angular service worker for this test. The production WAR registers ngsw-worker.js, which handles the
@@ -43,11 +45,11 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
     // outage injection is correctness-critical, not merely flake mitigation.
     test.use({ serviceWorkers: 'block' });
 
-    // The slow-tests project allows 90s per test, and the setup below (start participation, navigate, tick, forced
-    // failed save) spends much of it before the reload even happens. The reload then has to re-bootstrap the client
-    // with the HTTP cache disabled, re-fetch the exam and re-send the restored answer. Give this one test headroom
-    // rather than leaving it permanently one slow bootstrap away from the cap.
-    test.setTimeout(180_000);
+    // The slow-tests project allows 90s per test, which this test cannot meet in CI: it was measured at ~113s there,
+    // because the setup (start participation, navigate, tick, forced failed save) runs before a reload that has to
+    // re-bootstrap the client with the HTTP cache disabled, re-fetch the exam and re-send the restored answer.
+    // Raised well past the measurement rather than just past it, so a slower runner does not put it back at the cap.
+    test.setTimeout(240_000);
 
     let exam: Exam;
     let quizExercise: Exercise;
