@@ -35,6 +35,11 @@ const quizSaveUrl = /\/api\/quiz\/exercises\/\d+\/submissions\/exam/;
 // Paired with the test.setTimeout in the describe block below, which keeps the worst case inside the cap.
 const RESEND_TIMEOUT = 4 * RELOAD_RENDER_TIMEOUT;
 
+// Everything in the test that is not the post-reload wait: participation start, navigation, ticking the answer, the
+// forced failing save, and the final UI assertion. Measured at roughly 50s in CI; doubled so the per-test timeout
+// derived from it does not sit right on the measurement.
+const SETUP_AND_ASSERTION_ALLOWANCE = 120_000;
+
 test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, () => {
     // Block the Angular service worker for this test. The production WAR registers ngsw-worker.js, which handles the
     // quiz exam-save fetch; Playwright's page.route does NOT intercept service-worker-handled requests, so the 503
@@ -48,8 +53,12 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
     // The slow-tests project allows 90s per test, which this test cannot meet in CI: it was measured at ~113s there,
     // because the setup (start participation, navigate, tick, forced failed save) runs before a reload that has to
     // re-bootstrap the client with the HTTP cache disabled, re-fetch the exam and re-send the restored answer.
-    // Raised well past the measurement rather than just past it, so a slower runner does not put it back at the cap.
-    test.setTimeout(240_000);
+    //
+    // Derived from RESEND_TIMEOUT rather than hard-coded, so the two cannot drift apart: RELOAD_RENDER_TIMEOUT is
+    // overridable via RELOAD_RENDER_TIMEOUT_MS, and a fixed cap here would silently become smaller than the wait it
+    // is supposed to contain. SETUP_AND_ASSERTION_ALLOWANCE covers everything outside that wait, generously - the
+    // measured setup is roughly 50s.
+    test.setTimeout(RESEND_TIMEOUT + SETUP_AND_ASSERTION_ALLOWANCE);
 
     let exam: Exam;
     let quizExercise: Exercise;
@@ -83,11 +92,25 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         });
         await getExercise(page, quizExercise.id!).locator('#save-exam').click();
         await failedSave;
-        // Record every SUCCESSFUL re-send from here on. Registered before the outage is lifted, so no pre-reload save
-        // can be counted (every save so far was answered 503) and none can be missed either - the client may fire the
-        // re-send during its own start-up, which a waitForResponse registered after the reload would never see.
+        // Record SUCCESSFUL re-sends, but only ones issued after the reload has committed.
+        //
+        // Both boundaries matter. The listener is attached before the outage is lifted so it cannot miss a re-send the
+        // client fires during its own start-up, which a waitForResponse registered after page.reload() would never
+        // see. But attaching it that early leaves a window between unroute() and reload() in which the existing
+        // page's autosave could fire a successful PUT: that would satisfy the poll below while proving nothing, since
+        // the reload would then restore an answer the server already had. Gating on the main-frame navigation closes
+        // that window - the reload is the next main-frame navigation after this point.
+        let reloadCommitted = false;
+        page.on('framenavigated', (frame) => {
+            if (frame === page.mainFrame()) {
+                reloadCommitted = true;
+            }
+        });
         const successfulResends: string[] = [];
         page.on('response', (response) => {
+            if (!reloadCommitted) {
+                return;
+            }
             if (response.url().includes(`/quiz/exercises/${quizExercise.id}/submissions/exam`) && response.request().method() === 'PUT' && response.status() === 200) {
                 successfulResends.push(response.url());
             }
