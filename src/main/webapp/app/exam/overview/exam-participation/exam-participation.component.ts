@@ -67,7 +67,7 @@ import { Message } from 'primeng/message';
 import { ButtonDirective } from 'primeng/button';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { TumUiMessageComponent } from '@tumaet/ui-angular';
-import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -504,6 +504,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (studentExam) {
             // Keep working time
             studentExam.workingTime = this.studentExam()?.workingTime ?? studentExam.workingTime;
+            studentExam.exam = cloneWith(this.exam(), studentExam.exam ?? {});
             this.studentExam.set(studentExam);
             // no need to change the whole page layout for test runs
             if (this.testRunId()) {
