@@ -120,11 +120,10 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateTestExam_asInstructor_withVisibleDateEqualsStartDate() throws Exception {
-        // Test the creation of a test exam, where visibleDate equals StartDate
+    void testCreateTestExam_asInstructor_failsWithVisibleDateEqualsStartDate() throws Exception {
         Exam examB = ExamFactory.generateTestExam(course1);
         examB.setVisibleDate(examB.getStartDate());
-        request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
 
         verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
     }

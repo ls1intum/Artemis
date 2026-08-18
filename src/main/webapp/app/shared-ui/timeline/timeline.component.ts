@@ -1,4 +1,4 @@
-import { Component, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, Signal, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -11,17 +11,13 @@ import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
-import { TimeZoneWarningComponent } from 'app/shared-ui/date-time-picker/time-zone-warning.component';
-import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface TimelineItem {
     kind: 'required' | 'optional';
     labelStringKey: string;
     date: WritableSignal<Dayjs | undefined>;
+    warningStringKey?: Signal<string | undefined>;
     otherRequiredItem?: TimelineItem;
-    mustBeStrictlyAfterPrevious?: boolean;
-    helpKey?: string;
     /**
      * Restricts the ordering check to these items. The default (no item may precede any earlier one) is too strict for
      * e.g. a group's example solution publication date, which only needs `>= releaseDate`.
@@ -29,33 +25,33 @@ export interface TimelineItem {
     orderCheckAgainst?: TimelineItem[];
 }
 
-export interface ExerciseTimelineStatus {
+export interface TimelineStatus {
     valid: boolean;
     empty: boolean;
 }
 
 type InternalTimelineItem = TimelineItem & {
     internalDate: Date | undefined;
-    violationKey: string | undefined;
+    isInputRequiredButUndefined: boolean;
+    hasInvalidDateOrder: boolean;
+    isOtherRequiredItemDateUndefined: boolean;
+    isInvalidInput: boolean;
+    hasWarning: boolean;
+    tooltip: string | undefined;
 };
 
+export enum TimelineValidationMode {
+    SEQUENTIALLY_STRICT = 'SEQUENTIALLY_STRICT',
+    SEQUENTIALLY_ALLOW_EQUAL = 'SEQUENTIALLY_ALLOW_EQUAL',
+}
+
 @Component({
-    selector: 'jhi-exercise-timeline',
-    imports: [
-        DatePickerModule,
-        FormsModule,
-        TooltipModule,
-        TumUiTooltipDirective,
-        FaIconComponent,
-        TranslateDirective,
-        ArtemisTranslatePipe,
-        TimeZoneWarningComponent,
-        HelpIconComponent,
-    ],
-    templateUrl: './exercise-timeline.component.html',
-    styleUrl: './exercise-timeline.component.scss',
+    selector: 'jhi-timeline',
+    imports: [DatePickerModule, FormsModule, TooltipModule, TumUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    templateUrl: './timeline.component.html',
+    styleUrl: './timeline.component.scss',
 })
-export class ExerciseTimelineComponent {
+export class TimelineComponent {
     private translateService = inject(TranslateService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private readonly fullDateTimePattern = /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/;
@@ -65,18 +61,18 @@ export class ExerciseTimelineComponent {
     /** Label keys of items whose typed text is non-empty but not a valid date. Drives the invalid state. */
     private invalidInputKeys = signal<Set<string>>(new Set());
 
-    readonly timelineItems = input.required<TimelineItem[]>();
-    readonly readonly = input<boolean>(false);
-    readonly showInvalidBeforeTouched = input<boolean>(false);
+    timelineItems = input.required<TimelineItem[]>();
+    validationMode = input<TimelineValidationMode>(TimelineValidationMode.SEQUENTIALLY_ALLOW_EQUAL);
+    readonly = input<boolean>(false);
     /** Dates governed by the variant group: datepickers are disabled and clicks emit {@link lockedClick}. */
-    readonly lockedToGroup = input<boolean>(false);
+    lockedToGroup = input<boolean>(false);
     /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
-    readonly lockedClick = output<void>();
+    lockedClick = output<void>();
     /** Effective read-only state: either explicitly {@link readonly} or locked to the variant group. */
-    readonly isReadonly = computed<boolean>(() => this.readonly() || this.lockedToGroup());
-    readonly internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
-    readonly timelineStatus = computed<ExerciseTimelineStatus>(() => this.computeExerciseTimelineStatus());
-    readonly timelineStatusChange = output<ExerciseTimelineStatus>();
+    isReadonly = computed<boolean>(() => this.readonly() || this.lockedToGroup());
+    internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
+    timelineStatus = computed<TimelineStatus>(() => this.computeExerciseTimelineStatus());
+    timelineStatusChange = output<TimelineStatus>();
 
     constructor() {
         effect(() => {
@@ -148,44 +144,66 @@ export class ExerciseTimelineComponent {
         return this.timelineItems().map((item, index, items) => {
             this.currentLocale();
             const date = item.date();
-            const violatesPreviousDate =
+            const itemsToCheckAgainst = item.orderCheckAgainst ?? items.slice(0, index);
+            const hasInvalidDateOrder =
                 date !== undefined &&
-                (item.orderCheckAgainst ?? items.slice(0, index)).some((previousItem) => {
+                itemsToCheckAgainst.some((previousItem) => {
                     const previousDate = previousItem.date();
-                    return previousDate !== undefined && (date.isBefore(previousDate) || (item.mustBeStrictlyAfterPrevious && date.isSame(previousDate)));
+                    return previousDate !== undefined && this.isDateOrderInvalid(date, previousDate);
                 });
             const isInputRequiredButUndefined = item.kind === 'required' && date === undefined;
             const otherRequiredItem = item.otherRequiredItem;
             const isOtherRequiredItemDateUndefined = date !== undefined && otherRequiredItem !== undefined && otherRequiredItem.date() === undefined;
             const isInvalidInput = invalidInputKeys.has(item.labelStringKey);
-            let violationKey: string | undefined = undefined;
+            const hasError = isInvalidInput || hasInvalidDateOrder || isInputRequiredButUndefined || isOtherRequiredItemDateUndefined;
+            const warningStringKey = item.warningStringKey?.();
+            const hasWarning = !hasError && warningStringKey !== undefined;
+            let tooltip: string | undefined;
             if (isInvalidInput) {
-                violationKey = this.translateService.instant('artemisApp.exercise.timelineDateInvalidTooltip');
-            } else if (violatesPreviousDate) {
-                if (item.mustBeStrictlyAfterPrevious) {
-                    violationKey = this.translateService.instant('artemisApp.exercise.timelineDateStrictOrderTooltip');
-                } else {
-                    violationKey = this.translateService.instant('artemisApp.exercise.timelineDateOrderTooltip');
-                }
+                tooltip = this.translateService.instant('artemisApp.exercise.timelineDateInvalidTooltip');
+            } else if (hasInvalidDateOrder) {
+                const tooltipKey =
+                    this.validationMode() === TimelineValidationMode.SEQUENTIALLY_STRICT
+                        ? 'artemisApp.exercise.timelineDateStrictOrderTooltip'
+                        : 'artemisApp.exercise.timelineDateOrderTooltip';
+                tooltip = this.translateService.instant(tooltipKey);
             } else if (isInputRequiredButUndefined) {
-                violationKey = this.translateService.instant('artemisApp.exercise.timelineDateRequiredTooltip');
+                tooltip = this.translateService.instant('artemisApp.exercise.timelineDateRequiredTooltip');
             } else if (isOtherRequiredItemDateUndefined && otherRequiredItem) {
                 const otherInputName = this.translateService.instant(otherRequiredItem.labelStringKey);
-                violationKey = this.translateService.instant('artemisApp.exercise.timelineOtherRequiredDateTooltip', { otherInputName });
+                tooltip = this.translateService.instant('artemisApp.exercise.timelineOtherRequiredDateTooltip', { otherInputName });
+            } else if (warningStringKey !== undefined) {
+                tooltip = this.translateService.instant(warningStringKey);
             }
 
-            return cloneWith(item, {
+            return {
+                kind: item.kind,
+                labelStringKey: item.labelStringKey,
+                date: item.date,
+                otherRequiredItem: item.otherRequiredItem,
                 internalDate: date?.toDate(),
-                violationKey,
-            });
+                isInputRequiredButUndefined,
+                hasInvalidDateOrder,
+                isOtherRequiredItemDateUndefined,
+                isInvalidInput,
+                hasWarning,
+                tooltip,
+            };
         });
     }
 
-    private computeExerciseTimelineStatus(): ExerciseTimelineStatus {
+    private isDateOrderInvalid(date: Dayjs, previousDate: Dayjs): boolean {
+        if (this.validationMode() === TimelineValidationMode.SEQUENTIALLY_STRICT) {
+            return !date.isAfter(previousDate);
+        }
+        return date.isBefore(previousDate);
+    }
+
+    private computeExerciseTimelineStatus(): TimelineStatus {
         const items = this.internalTimelineItems();
         return {
-            valid: items.every((item) => !item.violationKey),
-            empty: items.every((item) => item.date() === undefined),
+            valid: items.every((item) => !item.hasInvalidDateOrder && !item.isInputRequiredButUndefined && !item.isOtherRequiredItemDateUndefined && !item.isInvalidInput),
+            empty: items.some((item) => item.date() === undefined),
         };
     }
 }

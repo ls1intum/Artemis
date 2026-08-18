@@ -13,12 +13,15 @@
             <fa-icon [icon]="faLock" class="timeline-lock-icon text-muted-color" />
         </div>
     }
-    @let showInvalidBeforeTouchedValue = showInvalidBeforeTouched();
-    @for (internalItem of internalTimelineItems(); track $index; let index = $index, first = $first, last = $last) {
+    @for (internalItem of internalTimelineItems(); track $index; let index = $index) {
         <div class="timeline-item-row">
-            @let isInvalid = (!!dateModel.touched || showInvalidBeforeTouchedValue) && !!internalItem.violationKey;
+            @let isInvalid =
+                internalItem.isInvalidInput ||
+                internalItem.hasInvalidDateOrder ||
+                internalItem.isOtherRequiredItemDateUndefined ||
+                (dateModel.touched && internalItem.isInputRequiredButUndefined);
             <div class="timeline-graphic">
-                <div class="timeline-graphic-line" [class.hidden]="first"></div>
+                <div class="timeline-graphic-line"></div>
                 <div
                     class="timeline-graphic-circle"
                     [class.required]="internalItem.kind === 'required'"
@@ -30,23 +33,21 @@
                         <div class="timeline-graphic-circle-dot" [class.invalid]="isInvalid"></div>
                     }
                 </div>
-                <div class="timeline-graphic-line" [class.hidden]="last"></div>
+                <div class="timeline-graphic-line"></div>
             </div>
             <div class="label-and-input">
                 @if (index > 0) {
                     <div class="spacer"></div>
                 }
-                <div class="label-grouper">
-                    <label class="label" [for]="'datepicker-' + index" [jhiTranslate]="internalItem.labelStringKey"></label>
-                    @if (!!internalItem.helpKey) {
-                        <jhi-help-icon [text]="internalItem.helpKey" />
-                    }
-                    <jhi-time-zone-warning />
-                </div>
+                <label class="label" [for]="'datepicker-' + index" [jhiTranslate]="internalItem.labelStringKey"></label>
                 <div class="datepicker-and-info">
-                    <p-date-picker
+                    <p-datepicker
                         styleClass="timeline-datepicker"
-                        [inputStyle]="{ width: '100%', 'box-sizing': 'border-box' }"
+                        [inputStyle]="{
+                            width: '100%',
+                            'box-sizing': 'border-box',
+                            'border-color': internalItem.hasWarning && !isInvalid ? 'var(--warning)' : undefined,
+                        }"
                         [inputId]="'datepicker-' + index"
                         [ngModel]="internalItem.internalDate"
                         (onInput)="handleManualInput(internalItem, $event)"
@@ -68,8 +69,13 @@
                         [invalid]="isInvalid"
                         [disabled]="isReadonly()"
                     />
-                    @if (isInvalid) {
-                        <i class="pi pi-info-circle timeline-datepicker-info-icon" [tumUiTooltip]="internalItem.violationKey" tumUiTooltipPlacement="right"></i>
+                    @if (isInvalid || internalItem.hasWarning) {
+                        <i
+                            class="pi pi-info-circle timeline-datepicker-info-icon"
+                            [class.warning]="internalItem.hasWarning && !isInvalid"
+                            [pTooltip]="internalItem.tooltip"
+                            tooltipPosition="right"
+                        ></i>
                     }
                 </div>
             </div>
