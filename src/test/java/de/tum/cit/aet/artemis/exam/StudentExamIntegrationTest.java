@@ -3976,6 +3976,54 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testConductionOfTestExam_secondAttemptReusesExercises() throws Exception {
+        Exam testExamWithExercises = examUtilService.addTestExam(course1);
+        testExamWithExercises = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithExercises, false, true);
+        testExamWithExercises.setExamMaxPoints(19);
+        testExamWithExercises.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithExercises.setStartDate(ZonedDateTime.now().minusMinutes(30));
+        testExamWithExercises.setWorkingTime(6000);
+        var examUser = new ExamUser();
+        examUser.setExam(testExamWithExercises);
+        examUser.setUser(student1);
+        examUserRepository.save(examUser);
+        testExamWithExercises.addExamUser(examUser);
+        testExamWithExercises = examRepository.save(testExamWithExercises);
+
+        StudentExam studentExam1 = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/own-student-exam", HttpStatus.OK,
+                StudentExam.class);
+        studentExam1 = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/student-exams/" + studentExam1.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class);
+
+        // Explicitly restore the user to fix the test security context because the previous call mutated it
+        // when startExercises -> setUpExerciseParticipationsAndSubmissions invoked SecurityUtils.setAuthorizationObject()
+        userUtilService.changeUser("studexamstudent1");
+
+        var body = objectMapper.createObjectNode();
+        body.put("id", studentExam1.getId());
+        body.set("exercises", objectMapper.createArrayNode());
+
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/student-exams/submit", body, HttpStatus.OK);
+
+        StudentExam studentExam2 = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/own-student-exam", HttpStatus.OK,
+                StudentExam.class);
+        assertThat(studentExam2.getId()).isNotEqualTo(studentExam1.getId());
+        studentExam2 = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/student-exams/" + studentExam2.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class);
+
+        assertThat(studentExam2.getExercises()).hasSize(3);
+        long participationsCount = studentExam2.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).count();
+        assertThat(participationsCount).isEqualTo(3);
+
+        var p1Ids = studentExam1.getExercises().stream().flatMap(e -> e.getStudentParticipations().stream())
+                .map(de.tum.cit.aet.artemis.exercise.domain.participation.Participation::getId).toList();
+        var p2Ids = studentExam2.getExercises().stream().flatMap(e -> e.getStudentParticipations().stream())
+                .map(de.tum.cit.aet.artemis.exercise.domain.participation.Participation::getId).toList();
+        assertThat(p1Ids).doesNotContainAnyElementsOf(p2Ids);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testConductionOfTestExamWithSimulationUsesFixedSimulationEndDate() throws Exception {
         Exam testExamWithSimulation = examUtilService.addTestExam(course1);
         testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);

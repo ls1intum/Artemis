@@ -759,8 +759,9 @@ public class StudentExamResource {
             if (setupTestExamNeeded) {
                 // For test exam with simulation it can happen that the student has not started their
                 // prepared (simulation) attempt and therefore the participations are already prepared
-                var existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam);
-                if (existingParticipations.isEmpty()) {
+                var studentExamWithParticipations = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+                boolean isFullyPrepared = studentExamWithParticipations.getStudentParticipations().size() == studentExam.getExercises().size();
+                if (!isFullyPrepared) {
                     // Set up new participations for the Exercises
                     studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
                 }
