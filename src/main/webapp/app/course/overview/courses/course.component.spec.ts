@@ -35,6 +35,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TumUiButtonDirective } from '@tumaet/ui-angular';
 import { By } from '@angular/platform-browser';
+import { User } from 'app/account/user/user.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -74,6 +75,10 @@ const course2Dashboard = { course: course2 } as CourseForDashboardDTO;
 const coursesInDashboard: CourseForDashboardDTO[] = [course1Dashboard, course2Dashboard];
 const courses: Course[] = [course1, course2];
 const coursesDashboard = { courses: coursesInDashboard } as CoursesForDashboardDTO;
+
+function createAuthenticatedUser(authority: Authority): User {
+    return new User(1, 'test-user', 'Test', 'User', 'test-user@example.com', true, 'en', [authority]);
+}
 
 @Component({
     template: '',
@@ -283,7 +288,7 @@ describe('CoursesComponent', () => {
     });
 
     it('should show the course request action to instructors', () => {
-        accountService.authenticate({ authorities: [Authority.INSTRUCTOR] });
+        accountService.authenticate(createAuthenticatedUser(Authority.INSTRUCTOR));
         component.coursesLoaded.set(true);
         fixture.detectChanges();
 
@@ -295,7 +300,7 @@ describe('CoursesComponent', () => {
     });
 
     it('should show the course creation action to administrators', () => {
-        accountService.authenticate({ authorities: [Authority.ADMIN] });
+        accountService.authenticate(createAuthenticatedUser(Authority.ADMIN));
         component.coursesLoaded.set(true);
         fixture.detectChanges();
 
@@ -307,7 +312,7 @@ describe('CoursesComponent', () => {
     });
 
     it('should show primary course enrollment without course management actions to students', () => {
-        accountService.authenticate({ authorities: [Authority.STUDENT] });
+        accountService.authenticate(createAuthenticatedUser(Authority.STUDENT));
         component.coursesLoaded.set(true);
         fixture.detectChanges();
 

@@ -39,7 +39,7 @@
             </div>
             <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="my-0" />
             @if (coursesLoaded()) {
-                <div class="col-sm-auto d-flex">
+                <div class="flex sm:w-auto">
                     <a id="course-enrollment" tumUiButton [severity]="canRequestCourse() || isAdmin() ? 'secondary' : 'primary'" [routerLink]="['/courses/enroll']" size="small">
                         <fa-icon [icon]="faDoorOpen" />
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.studentDashboard.enroll.title"></span>
@@ -73,8 +73,8 @@
     }
     @if (coursesLoaded() && !regularCourses().length && !recentlyAccessedCourses().length) {
         @if (!testCourses().length) {
-            <div class="mt-5 mb-5">
-                <h4 class="text-secondary text-center" jhiTranslate="artemisApp.studentDashboard.noCourses"></h4>
+            <div class="my-12">
+                <h4 class="text-center text-muted-color" jhiTranslate="artemisApp.studentDashboard.noCourses"></h4>
             </div>
         }
     } @else {
@@ -82,8 +82,8 @@
     }
 </div>
 @if (testCourses().length) {
-    <div class="mt-5">
-        <h3 class="fw-medium mb-3">{{ 'artemisApp.studentDashboard.testCourses' | artemisTranslate }} ({{ testCourses().length }})</h3>
+    <div class="mt-12">
+        <h3 class="mb-4 font-medium">{{ 'artemisApp.studentDashboard.testCourses' | artemisTranslate }} ({{ testCourses().length }})</h3>
         <ng-container *ngTemplateOutlet="courseCardTemplate; context: { $implicit: testCourses() }" />
     </div>
 }

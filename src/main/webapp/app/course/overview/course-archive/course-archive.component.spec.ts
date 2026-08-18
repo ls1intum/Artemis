@@ -97,7 +97,7 @@ describe('CourseArchiveComponent', () => {
         });
 
         it('should separate archived test courses from regular courses', () => {
-            const archivedTestCourse = { id: 8, title: 'Test Course', semester: 'WS23/24', testCourse: true } as CourseForArchiveDTO;
+            const archivedTestCourse = { id: 8, title: 'Test Course', semester: 'WS23/24', testCourse: true, color: '', icon: '', canManage: false } as CourseForArchiveDTO;
             const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: [...courses, archivedTestCourse], headers: new HttpHeaders() })));
 

@@ -25,21 +25,21 @@
     </ng-template>
 
     @if (showArchiveManagementAction()) {
-        <div class="d-flex h-100" [ngStyle]="{ color: titleColor() }">
-            <a class="archive-card-zone archive-course-zone d-flex align-items-center px-2" [ngStyle]="{ color: titleColor() }" [routerLink]="['/courses', courseId()]">
+        <div class="flex h-full" [ngStyle]="{ color: titleColor() }">
+            <a class="archive-card-zone archive-course-zone flex items-center px-2" [ngStyle]="{ color: titleColor() }" [routerLink]="['/courses', courseId()]">
                 <ng-container *ngTemplateOutlet="courseIdentity" />
             </a>
             <a
-                class="archive-card-zone archive-management-zone d-flex flex-column align-items-center justify-content-center gap-1 px-2"
+                class="archive-card-zone archive-management-zone flex flex-col items-center justify-center gap-1 px-2"
                 [ngStyle]="{ color: titleColor() }"
                 [routerLink]="['/course-management', courseId()]"
             >
                 <fa-icon [icon]="faWrench" />
-                <span class="small" jhiTranslate="artemisApp.course.archive.manage"></span>
+                <span class="text-sm" jhiTranslate="artemisApp.course.archive.manage"></span>
             </a>
         </div>
     } @else {
-        <div class="d-flex align-items-center justify-content-between gap-1 h-100 px-3">
+        <div class="flex h-full items-center justify-between gap-1 px-3">
             <ng-container *ngTemplateOutlet="courseIdentity" />
             <a class="stretched-link" [routerLink]="['/courses', courseId()]"></a>
         </div>
