@@ -10,7 +10,6 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -31,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
+import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingConfiguration;
 import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingService;
 
 @Profile(PROFILE_CORE)
@@ -45,18 +45,9 @@ public class ProblemStatementRenderingResource {
 
     private final int maxTestResults;
 
-    public ProblemStatementRenderingResource(ProblemStatementRenderingService renderingService,
-            @Value("${artemis.problem-statement-rendering.max-test-results:1000}") int maxTestResults) {
-        // A negative limit would reject every request carrying test results, including an empty list, with 422, and
-        // that is silent from the outside: the endpoint keeps answering, just never with a rendering. Failing here
-        // turns it into a logged error naming the property and its value instead. The application runs with
-        // `spring.main.lazy-initialization`, so this fires when the endpoint is first used rather than at startup;
-        // that is late, but still the first moment the bad value could have had any effect.
-        if (maxTestResults < 0) {
-            throw new IllegalArgumentException("artemis.problem-statement-rendering.max-test-results must not be negative, but was " + maxTestResults);
-        }
+    public ProblemStatementRenderingResource(ProblemStatementRenderingService renderingService, ProblemStatementRenderingConfiguration renderingConfiguration) {
         this.renderingService = renderingService;
-        this.maxTestResults = maxTestResults;
+        this.maxTestResults = renderingConfiguration.getMaxTestResults();
     }
 
     /**

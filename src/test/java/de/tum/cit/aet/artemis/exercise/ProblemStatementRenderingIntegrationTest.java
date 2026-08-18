@@ -31,8 +31,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
-import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingService;
-import de.tum.cit.aet.artemis.exercise.web.ProblemStatementRenderingResource;
+import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingConfiguration;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -45,9 +44,6 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private ProblemStatementRenderingService renderingService;
 
     @BeforeEach
     void setUp() {
@@ -517,10 +513,13 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    void shouldRefuseToBuildWithANegativeTestResultLimit() {
-        // The limit is compared with `>`, so a negative one rejects even an empty list and the endpoint answers 422
-        // to every request that carries test results at all. Failing at construction surfaces the typo instead.
-        assertThatIllegalArgumentException().isThrownBy(() -> new ProblemStatementRenderingResource(renderingService, -1)).withMessageContaining("must not be negative");
+    void shouldRefuseANegativeTestResultLimit() {
+        // The limit is compared with `>`, so a negative one rejects even an empty list and the endpoint answers 422 to
+        // every request that carries test results at all. Failing while the configuration binds surfaces the typo.
+        var configuration = new ProblemStatementRenderingConfiguration();
+        configuration.setMaxTestResults(-1);
+
+        assertThatIllegalArgumentException().isThrownBy(configuration::rejectNegativeMaxTestResults).withMessageContaining("must not be negative");
     }
 
     @Test
@@ -777,8 +776,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
      * because the latter forks the Spring test context (see {@code SpringContextConfigurationArchitectureTest}).
      * <p>
      * The two tests below bracket the limit, so they fail for any effective value other than this constant. They do
-     * not cover that the limit is configurable: the {@code @Value} fallback in {@code ProblemStatementRenderingResource}
-     * is 1000 as well, so a mistyped property key would keep the same behaviour and stay unnoticed here.
+     * not cover that the limit is configurable: the field default in {@code ProblemStatementRenderingConfiguration} is
+     * 1000 as well, so a mistyped property key would keep the same behaviour and stay unnoticed here.
      */
     private static final int MAX_TEST_RESULTS = 1000;
 
