@@ -647,8 +647,10 @@ public class SubmissionService {
         // copy feedback from automatic result
         if (existingAutomaticResult.isPresent()) {
             draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-            // also saves the draft assessment
             draftAssessment.setFeedbacks(copyFeedbackToNewResult(draftAssessment, existingAutomaticResult.get()));
+            // copyFeedbackToNewResult saves the draft before the typed test-case/SCA copies are attached -
+            // save again so the typed rows are persisted with the draft
+            draftAssessment = resultRepository.save(draftAssessment);
         }
 
         return draftAssessment;

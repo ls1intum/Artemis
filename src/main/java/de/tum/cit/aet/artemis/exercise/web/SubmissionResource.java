@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -42,8 +43,10 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 /**
  * REST controller for managing Submission.
@@ -79,9 +82,12 @@ public class SubmissionResource {
 
     private final SubmissionVersionRepository submissionVersionRepository;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, BuildLogEntryService buildLogEntryService,
             ResultService resultService, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, SubmissionVersionRepository submissionVersionRepository) {
+            ExerciseRepository exerciseRepository, SubmissionVersionRepository submissionVersionRepository,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.buildLogEntryService = buildLogEntryService;
@@ -91,6 +97,7 @@ public class SubmissionResource {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.submissionVersionRepository = submissionVersionRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -156,6 +163,11 @@ public class SubmissionResource {
                 latestSubmission.addResult(submissionService.prepareTestRunSubmissionForAssessment(latestSubmission));
             }
             latestSubmission.removeAutomaticResults();
+            if (exercise instanceof ProgrammingExercise) {
+                // the draft's automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
+                // attach the synthesized legacy views so the tutor sees the automatic feedback
+                latestSubmission.getResults().stream().filter(Objects::nonNull).forEach(programmingFeedbackSynthesizerService::attachSynthesizedFeedback);
+            }
             return ResponseEntity.ok().body(List.of(latestSubmission));
         }
         else {
