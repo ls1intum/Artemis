@@ -3691,9 +3691,8 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetAllCoursesForCourseArchiveWithNonNullSemestersAndEndDate() throws Exception {
+    public void testGetAllCoursesForCourseArchive() throws Exception {
         List<Course> expectedOldCourses = new ArrayList<>();
-        // we have to set the semester of all existing courses to null to avoid them being selected by the archive logic
         courseRepo.clearSemester();
         for (int i = 1; i <= 4; i++) {
             expectedOldCourses.add(courseUtilService.createEnrolledCourse(userPrefix));
@@ -3705,18 +3704,26 @@ public class CourseTestService {
         expectedOldCourses.get(1).setEndDate(ZonedDateTime.now().minusDays(10));
         expectedOldCourses.get(2).setSemester("WS21/22");
         expectedOldCourses.get(2).setEndDate(ZonedDateTime.now().minusDays(10));
-        expectedOldCourses.get(3).setSemester(null); // will be filtered out
+        expectedOldCourses.get(3).setSemester(null);
+        expectedOldCourses.get(3).setEndDate(ZonedDateTime.now().minusDays(10));
 
         courseRepo.saveAll(expectedOldCourses);
 
         final Set<CourseForArchiveDTO> actualOldCourses = request.getSet("/api/course/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
-        assertThat(actualOldCourses).as("Course archive has 3 courses").hasSize(3);
-        assertThat(actualOldCourses).as("Course archive has the correct semesters").extracting("semester").containsExactlyInAnyOrder(expectedOldCourses.get(0).getSemester(),
-                expectedOldCourses.get(1).getSemester(), expectedOldCourses.get(2).getSemester());
-        assertThat(actualOldCourses).as("Course archive got the correct courses").extracting("id").containsExactlyInAnyOrder(expectedOldCourses.get(0).getId(),
-                expectedOldCourses.get(1).getId(), expectedOldCourses.get(2).getId());
-        Optional<CourseForArchiveDTO> notFound = actualOldCourses.stream().filter(c -> Objects.equals(c.id(), expectedOldCourses.get(3).getId())).findFirst();
-        assertThat(notFound).as("Course archive did not fetch the last course").isNotPresent();
+        assertThat(actualOldCourses).as("Course archive got the expected courses").extracting("id").contains(expectedOldCourses.stream().map(Course::getId).toArray(Long[]::new));
+        Optional<CourseForArchiveDTO> semesterIndependentCourse = actualOldCourses.stream().filter(c -> Objects.equals(c.id(), expectedOldCourses.get(3).getId())).findFirst();
+        assertThat(semesterIndependentCourse).as("Course archive contains the semester-independent course").isPresent();
+        assertThat(semesterIndependentCourse.orElseThrow().semester()).isNull();
+
+        Course testCourseWithoutSemester = courseUtilService.createEnrolledCourse(userPrefix);
+        testCourseWithoutSemester.setTestCourse(true);
+        testCourseWithoutSemester.setSemester(null);
+        testCourseWithoutSemester.setEndDate(ZonedDateTime.now().minusDays(10));
+        courseRepo.save(testCourseWithoutSemester);
+
+        final Set<CourseForArchiveDTO> coursesIncludingTestCourse = request.getSet("/api/course/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
+        assertThat(coursesIncludingTestCourse).extracting("id").contains(testCourseWithoutSemester.getId());
+        assertThat(coursesIncludingTestCourse.stream().filter(course -> course.id() == testCourseWithoutSemester.getId()).findFirst().orElseThrow().testCourse()).isTrue();
     }
 
     // Test

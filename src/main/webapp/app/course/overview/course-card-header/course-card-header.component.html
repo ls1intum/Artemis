@@ -1,10 +1,10 @@
 <div
     id="course-{{ courseId() }}-header"
-    class="card-header text-white px-3"
-    [ngClass]="{ 'rounded-bottom-4': archiveMode() }"
+    class="course-card-header text-white"
+    [ngClass]="{ 'rounded-bottom-4': archiveMode(), 'archive-mode-card': archiveMode(), 'dual-zone-card': showArchiveManagementAction() }"
     [ngStyle]="{ '--background-color-for-hover': color() }"
 >
-    <div class="d-flex align-items-center justify-content-between gap-1">
+    <ng-template #courseIdentity>
         <div class="position-relative">
             <jhi-course-notification-bubble class="card-header-notification-bubble" [totalAmount]="courseNotificationCount()" />
             @if (courseIcon()) {
@@ -17,13 +17,31 @@
                 </div>
             }
         </div>
-        <div class="text-center px-2">
+        <div class="course-title-container text-center px-2">
             <h5 class="card-title" [ngStyle]="{ color: titleColor() }">
                 {{ courseTitle() }}
             </h5>
         </div>
-        <div>
+    </ng-template>
+
+    @if (showArchiveManagementAction()) {
+        <div class="d-flex h-100" [ngStyle]="{ color: titleColor() }">
+            <a class="archive-card-zone archive-course-zone d-flex align-items-center px-2" [ngStyle]="{ color: titleColor() }" [routerLink]="['/courses', courseId()]">
+                <ng-container *ngTemplateOutlet="courseIdentity" />
+            </a>
+            <a
+                class="archive-card-zone archive-management-zone d-flex flex-column align-items-center justify-content-center gap-1 px-2"
+                [ngStyle]="{ color: titleColor() }"
+                [routerLink]="['/course-management', courseId()]"
+            >
+                <fa-icon [icon]="faWrench" />
+                <span class="small" jhiTranslate="artemisApp.course.archive.manage"></span>
+            </a>
+        </div>
+    } @else {
+        <div class="d-flex align-items-center justify-content-between gap-1 h-100 px-3">
+            <ng-container *ngTemplateOutlet="courseIdentity" />
             <a class="stretched-link" [routerLink]="['/courses', courseId()]"></a>
         </div>
-    </div>
+    }
 </div>

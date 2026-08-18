@@ -135,6 +135,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly currentRoute = getCurrentRouteSignal(this.router);
     readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
     readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
+    readonly showPerspectiveSwitch = computed(() => {
+        const courseId = this.currentCourse()?.id;
+        if (!courseId) {
+            return false;
+        }
+
+        const path = this.currentRoute().split('?')[0];
+        return [`/courses/${courseId}`, `/course-management/${courseId}`].some((basePath) => path === basePath || path.startsWith(`${basePath}/`));
+    });
     readonly studentViewLink = computed(() => this.getStudentViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
     readonly managementViewLink = computed(() => this.getManagementViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
 
@@ -783,16 +792,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private getManagementViewLinkFromRoute(url: string, course: Course | undefined): string[] {
-        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/course-management'];
+        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/courses'];
 
         const courseId = course?.id?.toString();
         const isAtLeastTutorInCourse = !!course?.isAtLeastTutor;
         const isAtLeastEditorInCourse = !!course?.isAtLeastEditor;
         const isAtLeastInstructorInCourse = !!course?.isAtLeastInstructor;
 
-        if (!isAtLeastTutorInCourse) return ['/course-management'];
+        if (!isAtLeastTutorInCourse || !courseId) return ['/courses'];
 
-        const baseManagementPath = courseId ? ['/course-management', courseId] : ['/course-management'];
+        const baseManagementPath = ['/course-management', courseId];
         const routeMappings = [
             { urlParts: ['exams'], targetPath: [...baseManagementPath, 'exams'] },
             { urlParts: ['exercises'], targetPath: [...baseManagementPath, 'exercises'] },

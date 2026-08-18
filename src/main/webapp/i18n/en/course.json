@@ -155,10 +155,12 @@
             "archive": {
                 "title": "Archive",
                 "sort": "Sort",
-                "tip": "The archive enables you to view all your past courses, organized by semester. Click on a semester to expand and see the courses you were enrolled in during that period.",
+                "tip": "The archive shows all your past courses, grouped by semester where available. Courses without a semester appear under Semester-independent.",
                 "noCoursesPreviousSemester": "No courses found from previous semesters",
                 "winterSemester": "Winter semester 20{{ param }}",
-                "summerSemester": "Summer semester 20{{ param }}"
+                "summerSemester": "Summer semester 20{{ param }}",
+                "semesterIndependent": "Semester-independent",
+                "manage": "Manage"
             },
             "showActive": "Show only active courses",
             "totalScore": "Total Score:",

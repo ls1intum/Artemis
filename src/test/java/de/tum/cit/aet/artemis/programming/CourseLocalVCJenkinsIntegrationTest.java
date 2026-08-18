@@ -983,8 +983,8 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAllCoursesForCourseArchiveWithNonNullSemesters() throws Exception {
-        courseTestService.testGetAllCoursesForCourseArchiveWithNonNullSemestersAndEndDate();
+    void testGetAllCoursesForCourseArchive() throws Exception {
+        courseTestService.testGetAllCoursesForCourseArchive();
     }
 
     @Test

@@ -649,27 +649,38 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     boolean hasLearningPathsEnabled(@Param("courseId") long courseId);
 
     /**
-     * Retrieves all inactive courses (end date in the past) with a non-null semester that the user has access to.
+     * Retrieves all inactive courses that the user has access to.
      * Returns all such courses for admins, otherwise only courses where the user has any role.
      *
      * @param isAdmin whether the user is an admin
      * @param userId  the id of the user
      * @param now     the current time used to determine whether a course is inactive
-     * @return a set of inactive courses belonging to a specific semester that the user can access
+     * @return a set of inactive courses that the user can access
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO(c.id, c.title, c.semester, c.color, c.courseIcon)
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO(
+                c.id, c.title, c.semester, c.color, c.courseIcon, c.testCourse,
+                CASE WHEN :isAdmin = TRUE OR EXISTS (
+                    SELECT managementRole FROM UserCourseRole managementRole
+                    WHERE managementRole.course.id = c.id
+                        AND managementRole.user.id = :userId
+                        AND managementRole.role IN (
+                            de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                            de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                            de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+                        )
+                ) THEN TRUE ELSE FALSE END
+            )
             FROM Course c
             WHERE (:isAdmin = TRUE
                    OR EXISTS (
                        SELECT ucr FROM UserCourseRole ucr
                        WHERE ucr.course.id = c.id AND ucr.user.id = :userId
                    ))
-                AND c.semester IS NOT NULL
                 AND c.endDate IS NOT NULL
                 AND c.endDate < :now
             """)
-    Set<CourseForArchiveDTO> findInactiveCoursesForUserRolesWithNonNullSemester(@Param("isAdmin") boolean isAdmin, @Param("userId") Long userId, @Param("now") ZonedDateTime now);
+    Set<CourseForArchiveDTO> findInactiveCoursesForUserRolesForArchive(@Param("isAdmin") boolean isAdmin, @Param("userId") Long userId, @Param("now") ZonedDateTime now);
 
     /**
      * Finds all courses where the user has at least a teaching assistant role (TA, editor, or instructor),

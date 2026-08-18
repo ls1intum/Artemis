@@ -29,6 +29,12 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { Authority } from 'app/foundation/constants/authority.constants';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -83,6 +89,7 @@ describe('CoursesComponent', () => {
     let router: Router;
     let location: Location;
     let httpMock: HttpTestingController;
+    let accountService: AccountService;
 
     const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
 
@@ -102,6 +109,8 @@ describe('CoursesComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseRowComponent },
                 MockProvider(AlertService),
+                MockProvider(WebsocketService),
+                MockProvider(FeatureToggleService),
                 MockProvider(CourseAccessStorageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -120,6 +129,7 @@ describe('CoursesComponent', () => {
         TestBed.inject(AlertService);
         httpMock = TestBed.inject(HttpTestingController);
         router = TestBed.inject(Router);
+        accountService = TestBed.inject(AccountService);
         fixture.detectChanges();
     });
 
@@ -146,6 +156,8 @@ describe('CoursesComponent', () => {
 
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
             expect(component.courses()).toEqual(courses);
+            expect(component.regularCourses()).toEqual([course1]);
+            expect(component.testCourses()).toEqual([course2]);
             expect(component.nextRelevantExams()).toHaveLength(0);
         });
 
@@ -270,6 +282,41 @@ describe('CoursesComponent', () => {
         expect(searchedCourse).toBe(component.searchCourseText());
     });
 
+    it('should show the course request action to instructors', () => {
+        accountService.authenticate({ authorities: [Authority.INSTRUCTOR] });
+        component.coursesLoaded.set(true);
+        fixture.detectChanges();
+
+        const requestCourseButton = fixture.debugElement.query(By.css('#request-course')).injector.get(TumUiButtonDirective);
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumUiButtonDirective);
+        expect(requestCourseButton.severity()).toBe('primary');
+        expect(enrollmentButton.severity()).toBe('secondary');
+        expect(fixture.nativeElement.querySelector('#create-course')).toBeNull();
+    });
+
+    it('should show the course creation action to administrators', () => {
+        accountService.authenticate({ authorities: [Authority.ADMIN] });
+        component.coursesLoaded.set(true);
+        fixture.detectChanges();
+
+        const createCourseButton = fixture.debugElement.query(By.css('#create-course')).injector.get(TumUiButtonDirective);
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumUiButtonDirective);
+        expect(createCourseButton.severity()).toBe('primary');
+        expect(enrollmentButton.severity()).toBe('secondary');
+        expect(fixture.nativeElement.querySelector('#request-course')).toBeNull();
+    });
+
+    it('should show primary course enrollment without course management actions to students', () => {
+        accountService.authenticate({ authorities: [Authority.STUDENT] });
+        component.coursesLoaded.set(true);
+        fixture.detectChanges();
+
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumUiButtonDirective);
+        expect(enrollmentButton.severity()).toBe('primary');
+        expect(fixture.nativeElement.querySelector('#request-course')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#create-course')).toBeNull();
+    });
+
     it('should adjust sort direction by clicking on sort icon', () => {
         const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
         findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
@@ -281,8 +328,10 @@ describe('CoursesComponent', () => {
 
         const onSortSpy = vi.spyOn(component, 'onSort');
         const button = fixture.debugElement.nativeElement.querySelector('#test-sort');
+        const sortButton = fixture.debugElement.query(By.css('#test-sort')).injector.get(TumUiButtonDirective);
         button.click();
         expect(onSortSpy).toHaveBeenCalledOnce();
         expect(component.isSortAscending()).toBe(false);
+        expect(sortButton.variant()).toBe('text');
     });
 });

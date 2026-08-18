@@ -236,6 +236,20 @@ describe('NavbarComponent', () => {
             isAtLeastInstructor: true,
         } as Course;
 
+        it('should hide the perspective switch on the course overview', () => {
+            currentCourseContextService.setCourse(tutorCourse);
+            router.setUrl('/courses');
+
+            expect(component.showPerspectiveSwitch()).toBe(false);
+        });
+
+        it('should show the perspective switch within an individual course', () => {
+            currentCourseContextService.setCourse(tutorCourse);
+            router.setUrl('/courses/123/exercises');
+
+            expect(component.showPerspectiveSwitch()).toBe(true);
+        });
+
         beforeEach(() => {
             currentCourseContextService.setCourse(instructorCourse);
         });
@@ -269,7 +283,7 @@ describe('NavbarComponent', () => {
                 router.setUrl(url);
 
                 expect(component.studentViewLink()).toEqual(['/courses']);
-                expect(component.managementViewLink()).toEqual(['/course-management']);
+                expect(component.managementViewLink()).toEqual(['/courses']);
             },
         );
 
@@ -297,7 +311,7 @@ describe('NavbarComponent', () => {
         });
 
         it.each([
-            { course: studentCourse, url: '/courses/123/exercises', expected: ['/course-management'] },
+            { course: studentCourse, url: '/courses/123/exercises', expected: ['/courses'] },
             { course: tutorCourse, url: '/courses/123/lectures/1', expected: ['/course-management', '123'] },
             { course: editorCourse, url: '/courses/123/learning-path', expected: ['/course-management', '123'] },
             { course: editorCourse, url: '/courses/123/competencies', expected: ['/course-management', '123'] },
@@ -313,7 +327,7 @@ describe('NavbarComponent', () => {
             router.setUrl('/courses');
 
             expect(component.studentViewLink()).toEqual(['/courses']);
-            expect(component.managementViewLink()).toEqual(['/course-management']);
+            expect(component.managementViewLink()).toEqual(['/courses']);
         });
     });
 
