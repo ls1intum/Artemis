@@ -756,9 +756,9 @@ describe('CourseExerciseDetailsComponent', () => {
 
         const toggleFn = vi.fn();
         comp.setSidebarToggle(true, toggleFn);
-        expect(comp.isSidebarCollapsed()).toBe(true);
-        expect(comp.showSidebarToggle()).toBe(true);
-        comp.toggleSidebar();
+        expect((comp as any).isSidebarCollapsed()).toBe(true);
+        expect((comp as any).showSidebarToggle()).toBe(true);
+        (comp as any).toggleSidebar();
         expect(toggleFn).toHaveBeenCalledOnce();
     });
 

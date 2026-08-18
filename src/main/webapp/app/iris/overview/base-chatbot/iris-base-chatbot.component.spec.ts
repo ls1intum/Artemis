@@ -32,7 +32,7 @@ import {
     mockWebsocketServerMessage,
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
-import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
@@ -3120,7 +3120,7 @@ describe('IrisBaseChatbotComponent', () => {
         it('should ignore an mcq answer change for a message without an id', () => {
             const saveSpy = vi.spyOn(httpService, 'saveMcqResponse');
 
-            component.onMcqAnswerChanged({ ...mockServerMessage, id: undefined } as IrisAssistantMessage, { selectedIndex: 0, submitted: true });
+            component.onMcqAnswerChanged({ ...mockServerMessage, id: undefined } as unknown as IrisAssistantMessage, { selectedIndex: 0, submitted: true });
 
             expect(saveSpy).not.toHaveBeenCalled();
         });
@@ -3158,7 +3158,7 @@ describe('IrisBaseChatbotComponent', () => {
         it('should ignore an mcq response save for a message without an id', () => {
             const saveSpy = vi.spyOn(httpService, 'saveMcqResponse');
 
-            component.onMcqResponseSaved({ ...mockServerMessage, id: undefined } as IrisAssistantMessage, { selectedIndex: 1, submitted: true });
+            component.onMcqResponseSaved({ ...mockServerMessage, id: undefined } as unknown as IrisAssistantMessage, { selectedIndex: 1, submitted: true });
 
             expect(saveSpy).not.toHaveBeenCalled();
         });

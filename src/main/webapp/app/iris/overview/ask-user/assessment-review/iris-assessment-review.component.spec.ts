@@ -22,7 +22,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 describe('IrisAssessmentReviewComponent', () => {
     let fixture: ComponentFixture<IrisAssessmentReviewComponent>;
     let component: IrisAssessmentReviewComponent;
-    let routeData: BehaviorSubject<Record<string, IrisAssessmentReviewResolvedData>>;
+    let routeData: BehaviorSubject<{ reviewData: IrisAssessmentReviewResolvedData }>;
     let assessmentReviewService: {
         acceptAnswers: ReturnType<typeof vi.fn>;
         rejectAnswers: ReturnType<typeof vi.fn>;
@@ -44,7 +44,7 @@ describe('IrisAssessmentReviewComponent', () => {
         }) as IrisAssessment;
 
     beforeEach(async () => {
-        routeData = new BehaviorSubject({ reviewData: { course, exercise, assessment: assessment(), rows } });
+        routeData = new BehaviorSubject<{ reviewData: IrisAssessmentReviewResolvedData }>({ reviewData: { course, exercise, assessment: assessment(), rows } });
         assessmentReviewService = {
             acceptAnswers: vi.fn(() => of(new HttpResponse<void>())),
             rejectAnswers: vi.fn(() => of(new HttpResponse<void>())),

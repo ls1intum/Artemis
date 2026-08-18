@@ -11,7 +11,6 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
-import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { CourseForArchiveDTO } from 'app/course/shared/entities/course-for-archive-dto';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -223,7 +222,7 @@ describe('Course Management Service', () => {
     });
 
     it('should get course statistics for the detail view', () => {
-        const detailViewDto = { numberOfStudents: 10 } as CourseManagementDetailViewDto;
+        const detailViewDto = { numberOfStudents: 10 } as unknown as CourseManagementDetailViewDto;
         courseManagementService
             .getCourseStatisticsForDetailView(course.id!)
             .pipe(take(1))

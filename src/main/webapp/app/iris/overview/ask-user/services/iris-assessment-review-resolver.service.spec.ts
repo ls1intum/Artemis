@@ -30,7 +30,7 @@ describe('IrisAssessmentReviewResolver', () => {
         ({
             paramMap: convertToParamMap(parameters),
             data: { inClass },
-        }) as ActivatedRouteSnapshot;
+        }) as unknown as ActivatedRouteSnapshot;
 
     beforeEach(() => {
         courseManagementService = {

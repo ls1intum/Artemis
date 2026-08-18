@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterOutlet } from '@angular/router';
-import { Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizParticipationBase } from 'app/quiz/overview/participation/quiz-participation.base';
@@ -25,11 +24,8 @@ import { IrisAskUserHttpService } from 'app/iris/overview/ask-user/services/iris
 import { IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask-user.service';
 import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 import dayjs from 'dayjs/esm';
-import { signal } from '@angular/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
@@ -263,7 +259,7 @@ describe('ExerciseSplitPanelComponent', () => {
     });
 
     it('should activate the Iris panel when the user starts an ask-user quiz', () => {
-        const exercise = { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true } as Exercise;
+        const exercise = { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true } as unknown as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
         irisAskUserService.exercise.set(exercise);
         fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);
@@ -651,32 +647,32 @@ describe('ExerciseSplitPanelComponent', () => {
 
         it('should submit a text editor component', () => {
             const fake = Object.create(TextEditorComponent.prototype);
-            fake.submit = vi.fn();
+            fake.submitExercise = vi.fn();
             childrenOutletContexts.onChildOutletCreated('primary', { isActivated: true, component: fake } as any);
 
             component.submitExercise();
 
-            expect(fake.submit).toHaveBeenCalledOnce();
+            expect(fake.submitExercise).toHaveBeenCalledOnce();
         });
 
         it('should commit a code editor student container component', () => {
             const fake = Object.create(CodeEditorStudentContainerComponent.prototype);
-            fake.commit = vi.fn();
+            fake.submitExercise = vi.fn();
             childrenOutletContexts.onChildOutletCreated('primary', { isActivated: true, component: fake } as any);
 
             component.submitExercise();
 
-            expect(fake.commit).toHaveBeenCalledOnce();
+            expect(fake.submitExercise).toHaveBeenCalledOnce();
         });
 
         it('should submit a modeling submission component', () => {
             const fake = Object.create(ModelingSubmissionComponent.prototype);
-            fake.submit = vi.fn();
+            fake.submitExercise = vi.fn();
             childrenOutletContexts.onChildOutletCreated('primary', { isActivated: true, component: fake } as any);
 
             component.submitExercise();
 
-            expect(fake.submit).toHaveBeenCalledOnce();
+            expect(fake.submitExercise).toHaveBeenCalledOnce();
         });
 
         it('should submit a file upload submission component', () => {
@@ -691,12 +687,12 @@ describe('ExerciseSplitPanelComponent', () => {
 
         it('should submit a quiz participation component', () => {
             const fake = Object.create(QuizParticipationComponent.prototype);
-            fake.onSubmit = vi.fn();
+            fake.submitExercise = vi.fn();
             childrenOutletContexts.onChildOutletCreated('primary', { isActivated: true, component: fake } as any);
 
             component.submitExercise();
 
-            expect(fake.onSubmit).toHaveBeenCalledOnce();
+            expect(fake.submitExercise).toHaveBeenCalledOnce();
         });
     });
 
@@ -803,7 +799,13 @@ describe('ExerciseSplitPanelComponent', () => {
  * the small surface `ExerciseSplitPanelComponent` actually reads, instead of pulling in the full quiz component's
  * dependency tree.
  */
-function createFakeQuizComponent(): QuizParticipationComponent {
+function createFakeQuizComponent(): QuizParticipationComponent & {
+    quizStartedEvent: Subject<void>;
+    quizSubmittedEvent: Subject<QuizSubmission>;
+    liveQuizStatusChange: Subject<LiveQuizParticipationStatus | undefined>;
+    practiceParticipationChanged: Subject<StudentParticipation>;
+    liveQuizResultParticipation: Subject<StudentParticipation>;
+} {
     const fake = Object.create(QuizParticipationComponent.prototype);
     fake.quizStartedEvent = new Subject<void>();
     fake.quizSubmittedEvent = new Subject<QuizSubmission>();
@@ -815,5 +817,5 @@ function createFakeQuizComponent(): QuizParticipationComponent {
     fake.isSubmitDisabled = signal(false);
     fake.submitTitleKey = signal('entity.action.submit');
     fake.liveHeaderInfo = signal(undefined);
-    return fake as QuizParticipationComponent;
+    return fake;
 }

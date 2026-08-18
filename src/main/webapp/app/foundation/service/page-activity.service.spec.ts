@@ -8,7 +8,7 @@ import { PageActivityService } from 'app/foundation/service/page-activity.servic
 describe('PageActivityService', () => {
     let service: PageActivityService;
     let routerEvents: Subject<unknown>;
-    let pageLeavingSpy: ReturnType<typeof vi.fn>;
+    let pageLeavingSpy: ReturnType<typeof vi.fn<() => void>>;
     let subscription: Subscription;
 
     beforeEach(() => {
