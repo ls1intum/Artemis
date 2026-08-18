@@ -500,6 +500,23 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldLeaveMarkersInsideNonBacktickCodeBlocksAlone() throws Exception {
+        // CommonMark knows three more code constructs than the backtick fence: the tilde fence, the indented block,
+        // and a multi-backtick inline span. A marker inside any of them is content the reader wants written out, not
+        // something to expand, and the legacy pipeline leaves all of them alone.
+        String markdown = "~~~\n[task][Tilde](testA)\n@startuml\nclass A\n@enduml\n~~~\n\n    [task][Indented](testB)\n\n``[task][Inline](testC)``\n";
+        var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // `data-task-name` rather than the class: the embedded stylesheet mentions `artemis-task` in its own
+        // rules, so a class check would match the CSS instead of generated markup.
+        assertThat(result.html()).doesNotContain("data-task-name").doesNotContain("<svg");
+        assertThat(result.html()).contains("[task][Tilde](testA)").contains("[task][Indented](testB)").contains("[task][Inline](testC)");
+    }
+
+    @Test
     void shouldRefuseToBuildWithANegativeTestResultLimit() {
         // The limit is compared with `>`, so a negative one rejects even an empty list and the endpoint answers 422
         // to every request that carries test results at all. Failing at construction surfaces the typo instead.

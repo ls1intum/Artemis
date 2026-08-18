@@ -12,6 +12,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -25,6 +26,13 @@ import java.util.stream.Collectors;
 import org.commonmark.ext.autolink.AutolinkExtension;
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.node.AbstractVisitor;
+import org.commonmark.node.Code;
+import org.commonmark.node.FencedCodeBlock;
+import org.commonmark.node.IndentedCodeBlock;
+import org.commonmark.node.Node;
+import org.commonmark.node.SourceSpan;
+import org.commonmark.parser.IncludeSourceSpans;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jsoup.Jsoup;
@@ -122,7 +130,6 @@ public class ProblemStatementRenderingService {
     private static final String CODE_BLOCK_PLACEHOLDER_SUFFIX = "\u0000";
 
     /** Fenced code blocks ({@code ```...```}) and inline code ({@code `...`}). */
-    private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("```[\\s\\S]*?```|`[^`\n]+`");
 
     private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([\\s\\S]*?)@enduml");
 
@@ -157,6 +164,13 @@ public class ProblemStatementRenderingService {
             GitHubAlertExtension.create());
 
     private static final Parser COMMONMARK_PARSER = Parser.builder().extensions(COMMONMARK_EXTENSIONS).build();
+
+    /**
+     * Parser used only to locate code constructs before the transformation passes run. It carries the same
+     * extensions as the rendering parser so both agree on what is code, and it is the only one that needs source
+     * spans, which the rendering parse would otherwise pay for without using them.
+     */
+    private static final Parser SPAN_PARSER = Parser.builder().extensions(COMMONMARK_EXTENSIONS).includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES).build();
 
     private final PlantUmlService plantUmlService;
 
@@ -649,19 +663,61 @@ public class ProblemStatementRenderingService {
     }
 
     /**
-     * Replaces fenced code blocks and inline code with opaque placeholders so downstream passes
-     * (PlantUML, math, tasks, testid stripping) skip their contents.
+     * Replaces every code construct with an opaque placeholder so downstream passes (PlantUML, math, tasks, testid
+     * stripping) skip their contents.
+     * <p>
+     * The spans come from CommonMark itself rather than from a regex. A regex has to enumerate the syntaxes it knows,
+     * and the ones it forgets silently become expandable: a {@code [task]} inside a tilde fence, an indented block, or
+     * a multi-backtick inline span used to be rewritten into generated markup even though the reader authored it to be
+     * displayed. Asking the parser removes that class of gap, since it recognizes exactly what it will later render as
+     * code.
      */
     private static String maskCodeBlocks(String markdown, List<String> codeBlocks) {
-        Matcher matcher = CODE_BLOCK_PATTERN.matcher(markdown);
-        StringBuilder sb = new StringBuilder();
-        while (matcher.find()) {
-            int index = codeBlocks.size();
-            codeBlocks.add(matcher.group());
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(CODE_BLOCK_PLACEHOLDER_PREFIX + index + CODE_BLOCK_PLACEHOLDER_SUFFIX));
+        List<int[]> ranges = new ArrayList<>();
+        SPAN_PARSER.parse(markdown).accept(new AbstractVisitor() {
+
+            @Override
+            public void visit(FencedCodeBlock fencedCodeBlock) {
+                addRange(fencedCodeBlock);
+            }
+
+            @Override
+            public void visit(IndentedCodeBlock indentedCodeBlock) {
+                addRange(indentedCodeBlock);
+            }
+
+            @Override
+            public void visit(Code code) {
+                addRange(code);
+            }
+
+            private void addRange(Node node) {
+                List<SourceSpan> spans = node.getSourceSpans();
+                if (spans.isEmpty()) {
+                    return;
+                }
+                SourceSpan last = spans.getLast();
+                ranges.add(new int[] { spans.getFirst().getInputIndex(), last.getInputIndex() + last.getLength() });
+            }
+        });
+
+        // A code span can only ever sit inside a code block, never the other way round, and the visitor reports the
+        // block before descending. Sorting by start and dropping anything that begins inside the previous range keeps
+        // the outermost one, so no placeholder is ever nested into another.
+        ranges.sort(Comparator.comparingInt(range -> range[0]));
+        StringBuilder masked = new StringBuilder();
+        int copiedUpTo = 0;
+        for (int[] range : ranges) {
+            if (range[0] < copiedUpTo) {
+                continue;
+            }
+            masked.append(markdown, copiedUpTo, range[0]);
+            masked.append(CODE_BLOCK_PLACEHOLDER_PREFIX).append(codeBlocks.size()).append(CODE_BLOCK_PLACEHOLDER_SUFFIX);
+            codeBlocks.add(markdown.substring(range[0], range[1]));
+            copiedUpTo = range[1];
         }
-        matcher.appendTail(sb);
-        return sb.toString();
+        masked.append(markdown, copiedUpTo, markdown.length());
+        return masked.toString();
     }
 
     private static String restoreCodeBlocks(String markdown, List<String> codeBlocks) {

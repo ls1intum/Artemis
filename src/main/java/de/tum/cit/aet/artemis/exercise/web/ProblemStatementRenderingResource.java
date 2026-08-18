@@ -47,9 +47,11 @@ public class ProblemStatementRenderingResource {
 
     public ProblemStatementRenderingResource(ProblemStatementRenderingService renderingService,
             @Value("${artemis.problem-statement-rendering.max-test-results:1000}") int maxTestResults) {
-        // A negative limit would reject every request carrying test results, including an empty list, with 422. That
-        // is silent from the outside: the endpoint keeps answering, just never with a rendering. Refusing to start is
-        // the honest response to a limit that cannot be satisfied.
+        // A negative limit would reject every request carrying test results, including an empty list, with 422, and
+        // that is silent from the outside: the endpoint keeps answering, just never with a rendering. Failing here
+        // turns it into a logged error naming the property and its value instead. The application runs with
+        // `spring.main.lazy-initialization`, so this fires when the endpoint is first used rather than at startup;
+        // that is late, but still the first moment the bad value could have had any effect.
         if (maxTestResults < 0) {
             throw new IllegalArgumentException("artemis.problem-statement-rendering.max-test-results must not be negative, but was " + maxTestResults);
         }
