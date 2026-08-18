@@ -21,6 +21,13 @@ describe('no-bind-in-template-binding', () => {
                 { code: '<jhi-table [rows]="rebindCount" />' },
                 // Static attributes are never re-evaluated bindings.
                 { code: '<jhi-table loadAll="loadAll.bind(this)" />' },
+                // A string literal that merely mentions .bind() is not a call. The rule walks the parsed expression
+                // rather than the raw source, so these must not be flagged.
+                { code: `<jhi-table [label]="'pass handler.bind(this) to the child'" />` },
+                { code: `<jhi-table [label]="'.bind('" />` },
+                // Other member calls in a binding are a different concern and not this rule's business.
+                { code: '<jhi-table [rows]="items.map(toRow)" />' },
+                { code: '<jhi-table [rows]="rebind(items)" />' },
             ],
             invalid: [
                 {
@@ -34,6 +41,11 @@ describe('no-bind-in-template-binding', () => {
                 // Whitespace between the member and the call must still match.
                 {
                     code: '<jhi-table [loadAll]="loadAll.bind (this)" />',
+                    errors: [{ messageId: 'bindInBinding' }],
+                },
+                // Nested inside a larger expression, where a source-text match would be the only alternative.
+                {
+                    code: '<jhi-table [rows]="items.map(format.bind(this))" />',
                     errors: [{ messageId: 'bindInBinding' }],
                 },
                 // Each offending binding is reported separately.

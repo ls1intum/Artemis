@@ -107,8 +107,13 @@ for (const file of walk(ROOT)) {
     for (const mem of members(text)) {
         const hits = CHURN.filter((c) => c.re.test(mem.body)).map((c) => c.kind);
         if (!hits.length) continue;
-        if (!new RegExp(`[^\\w$.]${mem.name}\\s*(\\(|[)\\s|}!?.=<>&+\\]])`).test(tpl)) continue;
-        const asInput = new RegExp(`\\[[\\w.$-]+\\]\\s*=\\s*"[^"]*\\b${mem.name}\\b`).test(tpl);
+        // Escape the member name before interpolating it: observable-suffixed members like `stateReplaced$` are
+        // common here, and an unescaped `$` is a regex end anchor, so those members were silently dropped. For the
+        // same reason the boundaries below are explicit lookaround rather than `\b`, which does not treat `$` as
+        // part of an identifier.
+        const name = mem.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (!new RegExp(`[^\\w$.]${name}\\s*(\\(|[)\\s|}!?.=<>&+\\]])`).test(tpl)) continue;
+        const asInput = new RegExp(`\\[[\\w.$-]+\\]\\s*=\\s*"[^"]*(?<![\\w$])${name}(?![\\w$])`).test(tpl);
         const scalar = /^(number|boolean|string|void)(\s*\|\s*undefined)?$/.test(mem.retType) || /\.length\b|^!/.test(mem.firstReturn);
         rows.push({ ...mem, file, hits, asInput, scalar });
     }

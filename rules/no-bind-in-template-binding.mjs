@@ -33,10 +33,45 @@ export default {
         schema: [],
     },
     create(context) {
+        /**
+         * True when the expression contains a call to a member named `bind`.
+         *
+         * Walks the parsed expression rather than matching the raw source text, so a string literal that merely
+         * mentions `.bind()` is not flagged: `[label]="'pass handler.bind(this)'"` parses to a LiteralPrimitive with
+         * no Call node, while `[loadAll]="loadAll.bind(this)"` parses to a Call whose receiver is a PropertyRead
+         * named `bind`. Members named `bind` on the component are matched the same way, which is intended - calling
+         * one in a binding still yields a fresh value per pass.
+         *
+         * Duck-typed on shape (a call has an `args` array and a `receiver`) rather than on AST class names, so it
+         * survives the parser renaming its node classes.
+         */
+        const callsBind = (node, depth = 0) => {
+            if (!node || typeof node !== 'object' || depth > 20) {
+                return false;
+            }
+            if (Array.isArray(node.args) && node.receiver?.name === 'bind') {
+                return true;
+            }
+            for (const key of Object.keys(node)) {
+                // Spans carry offsets and parent-ish references; skipping them keeps the walk cheap and acyclic.
+                if (key.endsWith('Span') || key === 'span') {
+                    continue;
+                }
+                const value = node[key];
+                if (Array.isArray(value)) {
+                    if (value.some((entry) => callsBind(entry, depth + 1))) {
+                        return true;
+                    }
+                } else if (callsBind(value, depth + 1)) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
         return {
             BoundAttribute(node) {
-                const source = node.value?.source;
-                if (typeof source !== 'string' || !/\.bind\s*\(/.test(source)) {
+                if (!callsBind(node.value?.ast)) {
                     return;
                 }
                 context.report({ node, messageId: 'bindInBinding', data: { name: node.name } });
