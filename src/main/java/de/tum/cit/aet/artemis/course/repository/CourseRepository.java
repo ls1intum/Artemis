@@ -165,6 +165,29 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     List<Course> findAllActiveWhereUserHasAnyRole(@Param("userId") long userId, @Param("now") ZonedDateTime now);
 
     /**
+     * Returns all courses for the consolidated course dashboard. Active courses are included for every enrolled role;
+     * courses that have not started yet are included only when the user has a management role.
+     *
+     * @param userId the id of the user
+     * @param now    the current time used to determine whether a course is active or has ended
+     * @return the courses visible to the user on the consolidated dashboard
+     */
+    @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+                JOIN UserCourseRole ucr ON ucr.course = c AND ucr.user.id = :userId
+            WHERE (c.endDate >= :now OR c.endDate IS NULL)
+                AND (
+                    c.startDate <= :now
+                    OR c.startDate IS NULL
+                    OR ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                                    de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                                    de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+                )
+            """)
+    List<Course> findAllForDashboardWhereUserHasAnyRole(@Param("userId") long userId, @Param("now") ZonedDateTime now);
+
+    /**
      * Returns the active courses with learning paths enabled in which the given user holds any role. Equivalent to
      * {@link #findAllActiveWhereUserHasAnyRole} with the additional {@code learningPathsEnabled} filter, so callers
      * that need learning-path courses for a specific user avoid loading all such courses and filtering in memory.

@@ -376,8 +376,14 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
-        courseTestService.testGetCoursesAccurateTimezoneEvaluation();
+    void testGetCoursesAccurateTimezoneEvaluationAsTutor() throws Exception {
+        courseTestService.testGetCoursesAccurateTimezoneEvaluation(true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCoursesAccurateTimezoneEvaluationAsStudent() throws Exception {
+        courseTestService.testGetCoursesAccurateTimezoneEvaluation(false);
     }
 
     @Test
