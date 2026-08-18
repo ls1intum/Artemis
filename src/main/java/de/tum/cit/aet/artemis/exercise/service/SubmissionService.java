@@ -456,9 +456,12 @@ public class SubmissionService {
         if (oldResult == null || oldResult.getId() == null) {
             return;
         }
-        testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyTestCaseFeedback)
+        // fetch the shared message rows eagerly: the copies keep the message reference, and the new result
+        // may be synthesized for serialization right away (e.g. exam test-run drafts) - a lazy proxy would
+        // fail there with a LazyInitializationException
+        testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyTestCaseFeedback)
                 .forEach(newResult::addTestCaseFeedback);
-        scaFeedbackRepository.findByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyScaFeedback).forEach(newResult::addScaFeedback);
+        scaFeedbackRepository.findWithMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyScaFeedback).forEach(newResult::addScaFeedback);
     }
 
     /**
@@ -649,8 +652,11 @@ public class SubmissionService {
             draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
             draftAssessment.setFeedbacks(copyFeedbackToNewResult(draftAssessment, existingAutomaticResult.get()));
             // copyFeedbackToNewResult saves the draft before the typed test-case/SCA copies are attached -
-            // save again so the typed rows are persisted with the draft
-            draftAssessment = resultRepository.save(draftAssessment);
+            // save again so the typed rows are persisted with the draft. Deliberately keep (and return) the
+            // original object instead of the merge result: the merge replaces the eagerly fetched test-case
+            // and message associations of the copies with uninitialized proxies, which would break the
+            // synthesized serialization of the draft.
+            resultRepository.save(draftAssessment);
         }
 
         return draftAssessment;

@@ -70,6 +70,7 @@ import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 
@@ -113,6 +114,9 @@ class Lti13ServiceTest {
     @Mock
     private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
+    @Mock
+    private ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     private OidcIdToken oidcIdToken;
 
     private String clientRegistrationId;
@@ -127,7 +131,8 @@ class Lti13ServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         lti13Service = new Lti13Service(userRepository, exerciseRepository, Optional.of(lectureRepositoryApi), courseRepository, launchRepository, ltiService, resultRepository,
-                tokenRetriever, onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider, ltiPlatformConfigurationRepository);
+                tokenRetriever, onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider, ltiPlatformConfigurationRepository,
+                programmingFeedbackSynthesizerService);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");

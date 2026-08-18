@@ -94,6 +94,9 @@
                 <constraints nullable="false"/>
             </column>
             <column name="category" type="VARCHAR(100)"/>
+            <!-- the category as reported by the tool (e.g. BAD_PRACTICE), distinct from the Artemis grading
+                 category above; the legacy JSON exposed the tool category to the client -->
+            <column name="tool_category" type="VARCHAR(50)"/>
             <column name="rule" type="VARCHAR(255)"/>
             <column name="file_path" type="VARCHAR(512)"/>
             <column name="start_line" type="INT"/>
@@ -224,11 +227,12 @@
 
     <changeSet id="20260817090000-07-backfill-sca-feedback-mysql" author="krusche" dbms="mysql">
         <sql>
-            INSERT INTO sca_feedback (result_id, seq, tool, category, rule, file_path, start_line, end_line, start_column, end_column, priority, penalty, message_id)
+            INSERT INTO sca_feedback (result_id, seq, tool, category, tool_category, rule, file_path, start_line, end_line, start_column, end_column, priority, penalty, message_id)
             SELECT j.result_id,
                    ROW_NUMBER() OVER (PARTITION BY j.result_id ORDER BY j.id),
                    j.reference,
                    NULLIF(SUBSTRING(j.text, 23), ''),
+                   LEFT(JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.category')), 50),
                    LEFT(JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.rule')), 255),
                    LEFT(JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.filePath')), 512),
                    JSON_EXTRACT(j.doc, '$.startLine'),
@@ -260,11 +264,12 @@
             $$ LANGUAGE plpgsql IMMUTABLE;
         </sql>
         <sql>
-            INSERT INTO sca_feedback (result_id, seq, tool, category, rule, file_path, start_line, end_line, start_column, end_column, priority, penalty, message_id)
+            INSERT INTO sca_feedback (result_id, seq, tool, category, tool_category, rule, file_path, start_line, end_line, start_column, end_column, priority, penalty, message_id)
             SELECT f.result_id,
                    ROW_NUMBER() OVER (PARTITION BY f.result_id ORDER BY f.id),
                    f.reference,
                    NULLIF(SUBSTRING(f.text FROM 23), ''),
+                   LEFT(tmp_sca_json_field(f.detail_text, 'category'), 50),
                    LEFT(tmp_sca_json_field(f.detail_text, 'rule'), 255),
                    LEFT(tmp_sca_json_field(f.detail_text, 'filePath'), 512),
                    CAST(tmp_sca_json_field(f.detail_text, 'startLine') AS INT),

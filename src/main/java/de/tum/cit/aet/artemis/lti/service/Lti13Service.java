@@ -60,6 +60,8 @@ import de.tum.cit.aet.artemis.lti.dto.Lti13LaunchRequest;
 import de.tum.cit.aet.artemis.lti.dto.Scopes;
 import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 @Lazy
 @Service
@@ -101,6 +103,8 @@ public class Lti13Service {
 
     private final ResultRepository resultRepository;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     private final Lti13TokenRetriever tokenRetriever;
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
@@ -118,7 +122,8 @@ public class Lti13Service {
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
             CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultRepository resultRepository,
             Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService, RestTemplate restTemplate,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
@@ -126,6 +131,7 @@ public class Lti13Service {
         this.ltiService = ltiService;
         this.launchRepository = launchRepository;
         this.resultRepository = resultRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
         this.tokenRetriever = tokenRetriever;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.restTemplate = restTemplate;
@@ -247,6 +253,13 @@ public class Lti13Service {
             if (result.isEmpty()) {
                 log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
                 return;
+            }
+
+            if (participation.getExercise() instanceof ProgrammingExercise programmingExercise) {
+                // the automatic test-case and SCA feedback lives in typed tables - attach the synthesized
+                // legacy views so the LMS score comment keeps containing it (explicit exercise context, the
+                // loaded result graph is detached)
+                programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result.get(), programmingExercise, false);
             }
 
             String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));

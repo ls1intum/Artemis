@@ -199,7 +199,7 @@ public class ProgrammingExerciseFeedbackCreationService {
             for (final StaticCodeAnalysisIssue issue : report.issues()) {
                 ScaFeedback scaFeedback = new ScaFeedback();
                 scaFeedback.setTool(tool);
-                scaFeedback.setToolCategory(issue.category());
+                scaFeedback.setToolCategory(StringUtils.truncate(issue.category(), ScaFeedback.MAX_TOOL_CATEGORY_LENGTH));
                 scaFeedback.setRule(StringUtils.truncate(issue.rule(), ScaFeedback.MAX_RULE_LENGTH));
                 scaFeedback.setFilePath(StringUtils.truncate(removeCIDirectoriesFromPath(issue.filePath()), ScaFeedback.MAX_FILE_PATH_LENGTH));
                 scaFeedback.setStartLine(issue.startLine());
@@ -406,9 +406,9 @@ public class ProgrammingExerciseFeedbackCreationService {
 
         for (Iterator<ScaFeedback> iterator = staticCodeAnalysisFeedback.iterator(); iterator.hasNext();) {
             var scaFeedback = iterator.next();
-            // Determine the Artemis category for this issue. Freshly parsed rows carry the tool-reported
-            // category transiently; on re-categorization (re-evaluation) of stored rows the Artemis
-            // category has already been resolved, so nothing needs to change except the penalty.
+            // Determine the Artemis category for this issue via the (persisted) tool-reported category;
+            // rows without one (migrated rows whose legacy JSON was unparseable) fall back to their
+            // already-resolved Artemis category.
             Optional<StaticCodeAnalysisCategory> category = findCategoryForIssue(scaFeedback, categoryPairs);
 
             if (category.isEmpty() || category.get().getState() == CategoryState.INACTIVE) {

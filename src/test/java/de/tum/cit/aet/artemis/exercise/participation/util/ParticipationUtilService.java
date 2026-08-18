@@ -589,16 +589,18 @@ public class ParticipationUtilService {
     /**
      * Creates and saves an automatic SCA feedback row (typed table) for the given Result.
      *
-     * @param result      The Result the feedback belongs to
-     * @param tool        The static code analysis tool that reported the issue
-     * @param category    The SCA category name
-     * @param messageText The (deduplicated) message text, may be null
+     * @param result       The Result the feedback belongs to
+     * @param tool         The static code analysis tool that reported the issue
+     * @param category     The Artemis grading category name
+     * @param toolCategory The category as reported by the tool (exposed in the synthesized issue JSON)
+     * @param messageText  The (deduplicated) message text, may be null
      * @return The updated Result
      */
-    public Result addScaFeedbackToResult(Result result, StaticCodeAnalysisTool tool, String category, String messageText) {
+    public Result addScaFeedbackToResult(Result result, StaticCodeAnalysisTool tool, String category, String toolCategory, String messageText) {
         ScaFeedback feedback = new ScaFeedback();
         feedback.setTool(tool);
         feedback.setCategory(category);
+        feedback.setToolCategory(toolCategory);
         if (messageText != null && !messageText.isEmpty()) {
             feedback.setMessage(feedbackMessageService.getOrCreate(messageText));
         }

@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
@@ -123,6 +124,9 @@ class HyperionCodeGenerationExecutionServiceTest {
     @Mock
     private ExerciseVersionService exerciseVersionService;
 
+    @Mock
+    private ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     private HyperionCodeGenerationExecutionService service;
 
     private User user;
@@ -138,7 +142,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         this.service = new HyperionCodeGenerationExecutionService("main", gitService, repositoryService, solutionProgrammingExerciseParticipationRepository,
                 templateProgrammingExerciseParticipationRepository, programmingSubmissionRepository, resultRepository, continuousIntegrationTriggerService,
                 programmingExerciseParticipationService, repositoryStructureService, solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService,
-                consistencyCheckService, reviewCommentContextRendererService, exerciseVersionService);
+                consistencyCheckService, reviewCommentContextRendererService, exerciseVersionService, programmingFeedbackSynthesizerService);
 
         this.user = new User();
         user.setLogin("testuser");

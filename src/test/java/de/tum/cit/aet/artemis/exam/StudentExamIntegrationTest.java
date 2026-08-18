@@ -784,6 +784,39 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetTestRunSubmissionsForProgrammingExerciseKeepsAutomaticFeedback() throws Exception {
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(4);
+        var examEndDate = ZonedDateTime.now().plusMinutes(3);
+        exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
+        var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        var programmingExercise = (ProgrammingExercise) testRun.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findFirst().orElseThrow();
+
+        // give the test-run submission an automatic result with typed test-case feedback (including a
+        // deduplicated message) - the assessment draft must copy and expose it
+        var testRunParticipation = studentParticipationRepository
+                .findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(), List.of(programmingExercise)).getFirst();
+        var submission = testRunParticipation.findLatestSubmission().orElseThrow();
+        var automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), submission);
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testRunTest");
+        participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "test-run failure message");
+
+        List<Submission> response = request.getList("/api/exercise/exercises/" + programmingExercise.getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
+
+        assertThat(response).hasSize(1);
+        var draft = response.getFirst().getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findFirst().orElseThrow();
+        // the automatic feedback was copied into the draft as typed rows and is exposed as synthesized views
+        assertThat(draft.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getId()).isNegative();
+            assertThat(feedback.getDetailText()).isEqualTo("test-run failure message");
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise_notExamExercise() throws Exception {
         course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course2, false);

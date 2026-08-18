@@ -210,7 +210,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
         participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "Some feedback");
-        participationUtilService.addScaFeedbackToResult(result, StaticCodeAnalysisTool.SPOTBUGS, "Bad Practice", "sca issue message");
+        participationUtilService.addScaFeedbackToResult(result, StaticCodeAnalysisTool.SPOTBUGS, "Bad Practice", "BAD_PRACTICE", "sca issue message");
 
         List<Feedback> feedbacks = request.getList(
                 "/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
@@ -220,6 +220,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(feedbacks).hasSize(2);
         assertThat(feedbacks.stream().map(Feedback::getId)).containsExactlyInAnyOrder(ProgrammingFeedbackSynthesizerService.syntheticId(result.getId(), 1),
                 ProgrammingFeedbackSynthesizerService.syntheticScaId(result.getId(), 1));
+
+        // the synthesized issue JSON exposes the tool-reported category (legacy contract), not the Artemis
+        // grading category (which is carried by the feedback text)
+        Feedback scaView = feedbacks.stream().filter(Feedback::isStaticCodeAnalysisFeedback).findFirst().orElseThrow();
+        assertThat(scaView.getDetailText()).contains("\"category\":\"BAD_PRACTICE\"");
+        assertThat(scaView.getText()).isEqualTo(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "Bad Practice");
     }
 
     @Test

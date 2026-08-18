@@ -12,7 +12,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -56,6 +55,8 @@ public class ScaFeedback {
 
     public static final int MAX_PRIORITY_LENGTH = 25;
 
+    public static final int MAX_TOOL_CATEGORY_LENGTH = 50;
+
     @Column(name = "category")
     private String category;
 
@@ -92,12 +93,12 @@ public class ScaFeedback {
     private FeedbackMessage message;
 
     /**
-     * The tool-reported category of the issue (e.g. a checkstyle rule group). Only needed transiently
-     * between report parsing and the categorization step, which maps it to the Artemis
-     * {@code StaticCodeAnalysisCategory} stored in {@link #category}. Never persisted.
+     * The category of the issue as reported by the tool (e.g. {@code BAD_PRACTICE} from SpotBugs, or a
+     * checkstyle rule group). Distinct from the Artemis grading category in {@link #category}, which the
+     * categorization step derives from it: the legacy JSON exposed the tool category to the client, so it
+     * is persisted and used for the synthesized {@code StaticCodeAnalysisIssue.category} field.
      */
-    @Transient
-    @JsonIgnore
+    @Column(name = "tool_category", length = MAX_TOOL_CATEGORY_LENGTH)
     private String toolCategory;
 
     public FeedbackItemId getId() {

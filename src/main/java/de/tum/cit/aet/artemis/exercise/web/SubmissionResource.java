@@ -163,10 +163,12 @@ public class SubmissionResource {
                 latestSubmission.addResult(submissionService.prepareTestRunSubmissionForAssessment(latestSubmission));
             }
             latestSubmission.removeAutomaticResults();
-            if (exercise instanceof ProgrammingExercise) {
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
                 // the draft's automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
-                // attach the synthesized legacy views so the tutor sees the automatic feedback
-                latestSubmission.getResults().stream().filter(Objects::nonNull).forEach(programmingFeedbackSynthesizerService::attachSynthesizedFeedback);
+                // attach the synthesized legacy views so the tutor sees the automatic feedback. The exercise
+                // context is passed explicitly: the test-run participation's exercise is a lazy proxy here.
+                latestSubmission.getResults().stream().filter(Objects::nonNull)
+                        .forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
             }
             return ResponseEntity.ok().body(List.of(latestSubmission));
         }

@@ -62,11 +62,13 @@ public class ProgrammingExerciseService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ResultRepository resultRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ExerciseSpecificationService exerciseSpecificationService) {
+            ExerciseSpecificationService exerciseSpecificationService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -74,6 +76,7 @@ public class ProgrammingExerciseService {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.exerciseSpecificationService = exerciseSpecificationService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     public static Path getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
@@ -209,6 +212,10 @@ public class ProgrammingExerciseService {
         if (!programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().isEmpty()) {
             Optional<Result> latestResultForLatestSubmissionOfTemplate = resultRepository
                     .findLatestResultWithFeedbacksForSubmission(programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().getId());
+            // the automatic test-case and SCA feedback lives in typed tables - attach the synthesized legacy
+            // views so the method keeps its feedback promise (explicit exercise context, the result graph is detached)
+            latestResultForLatestSubmissionOfTemplate
+                    .ifPresent(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExerciseWithTemplate, false));
             List<Result> resultsForLatestSubmissionTemplate = new ArrayList<>();
             latestResultForLatestSubmissionOfTemplate.ifPresent(resultsForLatestSubmissionTemplate::add);
             programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().setResults(resultsForLatestSubmissionTemplate);
@@ -219,6 +226,8 @@ public class ProgrammingExerciseService {
         if (!solutionParticipationWithLatestSubmission.getSubmissions().isEmpty()) {
             Optional<Result> latestResultForLatestSubmissionOfSolution = resultRepository
                     .findLatestResultWithFeedbacksForSubmission(solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().getId());
+            latestResultForLatestSubmissionOfSolution
+                    .ifPresent(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExerciseWithTemplate, true));
             List<Result> resultsForLatestSubmissionSolution = new ArrayList<>();
             latestResultForLatestSubmissionOfSolution.ifPresent(resultsForLatestSubmissionSolution::add);
             solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().setResults(resultsForLatestSubmissionSolution);

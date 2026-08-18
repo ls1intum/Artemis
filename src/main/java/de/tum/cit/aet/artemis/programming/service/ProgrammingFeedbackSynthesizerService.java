@@ -123,17 +123,32 @@ public class ProgrammingFeedbackSynthesizerService {
      * @param result the (detached) result about to be serialized
      */
     public void attachSynthesizedFeedback(Result result) {
-        if (exerciseOf(result) == null) {
+        ProgrammingExercise programmingExercise = exerciseOf(result);
+        if (programmingExercise == null) {
             return;
         }
-        ProgrammingExercise programmingExercise = exerciseOf(result);
+        attachSynthesizedFeedback(result, programmingExercise, TestCasePointsService.isForSolutionParticipation(result));
+    }
 
+    /**
+     * Variant of {@link #attachSynthesizedFeedback(Result)} for callers whose result graph is detached or
+     * partial (the submission → participation → exercise chain would trigger lazy loading), providing the
+     * context explicitly instead.
+     *
+     * @param result                  the (detached) result about to be serialized
+     * @param exercise                the programming exercise the result belongs to
+     * @param isSolutionParticipation true if the result belongs to the solution participation
+     */
+    public void attachSynthesizedFeedback(Result result, ProgrammingExercise exercise, boolean isSolutionParticipation) {
+        if (result == null || result.getId() == null || exercise == null) {
+            return;
+        }
         List<TestCaseFeedback> testCaseFeedbacks = hasAuthoritativeTestCaseFeedback(result) ? List.copyOf(result.getTestCaseFeedbacks())
                 : testCaseFeedbackRepository.findWithTestCaseAndMessageByResultId(result.getId());
         List<ScaFeedback> scaFeedbacks = hasAuthoritativeScaFeedback(result) ? List.copyOf(result.getScaFeedbacks())
                 : scaFeedbackRepository.findWithMessageByResultId(result.getId());
 
-        Map<Long, Double> pointsByTestCaseId = testCaseFeedbacks.isEmpty() ? Map.of() : testCasePointsService.calculateTestCasePoints(programmingExercise, result);
+        Map<Long, Double> pointsByTestCaseId = testCaseFeedbacks.isEmpty() ? Map.of() : testCasePointsService.calculateTestCasePoints(exercise, isSolutionParticipation);
         synthesizeAndAttach(result, testCaseFeedbacks, scaFeedbacks, pointsByTestCaseId);
     }
 
@@ -252,8 +267,11 @@ public class ProgrammingFeedbackSynthesizerService {
         view.setReference(source.getTool() == null ? null : source.getTool().name());
         view.setCredits(source.getCredits());
 
+        // the legacy JSON exposed the tool-reported category; migrated rows whose original JSON was
+        // unparseable have no tool category and fall back to the Artemis category
+        String issueCategory = source.getToolCategory() != null ? source.getToolCategory() : source.getCategory();
         StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(source.getFilePath(), source.getStartLine(), source.getEndLine(), source.getStartColumn(),
-                source.getEndColumn(), source.getRule(), source.getCategory(), source.getMessageText(), source.getPriority(), source.getPenalty());
+                source.getEndColumn(), source.getRule(), issueCategory, source.getMessageText(), source.getPriority(), source.getPenalty());
         try {
             view.setDetailTextTruncated(objectMapper.writeValueAsString(issue));
         }
