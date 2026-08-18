@@ -68,12 +68,6 @@ public class BuildAgentAddressRegistryService {
     private static final long REFRESH_INTERVAL_MS = 30_000;
 
     /**
-     * Shortest gap between two refreshes triggered by a lookup miss. Bounds the work a caller presenting an unknown
-     * address can cause, while still closing the window after an agent reconnects.
-     */
-    private static final long MIN_REFRESH_ON_MISS_INTERVAL_MS = 2_000;
-
-    /**
      * How long a request waits for a reconcile that another request is already performing. Generous relative to the
      * providers' own timeouts, so that reaching it means the middleware is not answering at all rather than merely
      * being busy - which is why the caller then refuses instead of falling back to the not-observable exemption.
@@ -113,10 +107,24 @@ public class BuildAgentAddressRegistryService {
     private final ReentrantLock refreshOnMissLock = new ReentrantLock(true);
 
     /**
-     * When a reconcile triggered by a lookup miss last <em>completed</em>, used to debounce them. Measured from
-     * completion rather than from the start, so a request that waited for a refresh does not immediately start another.
+     * When the last reconcile performed for a decision completed, on {@link System#nanoTime}'s monotonic clock so that
+     * a wall-clock adjustment cannot make a stale observation look recent.
+     * <p>
+     * Compared against the arrival of each request rather than against "how long ago": see {@link #reconcileForDecision}.
+     * <p>
+     * Initialised to the clock at construction rather than to a sentinel such as {@code Long.MIN_VALUE}. The comparison
+     * there is an overflow-safe subtraction, which is only valid while the two values lie within a single nanoTime
+     * period of each other; a sentinel breaks that and made the very first request read as "already observed", taking
+     * the initial outcome below and refusing every build until the first scheduled reconcile. A timestamp from before
+     * any request can arrive is both truthful - nothing has been observed for a decision yet - and safe to subtract.
      */
-    private volatile long lastRefreshOnMissCompletedAt = 0;
+    private volatile long lastDecisionObservationAt = System.nanoTime();
+
+    /**
+     * What that reconcile established, so a request which waited for someone else's reconcile learns its outcome
+     * instead of assuming it succeeded.
+     */
+    private volatile ObservationOutcome lastDecisionOutcome = ObservationOutcome.FAILED;
 
     public BuildAgentAddressRegistryService(DistributedDataAccessService distributedDataAccessService, BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
         this.distributedDataAccessService = distributedDataAccessService;
@@ -310,6 +318,8 @@ public class BuildAgentAddressRegistryService {
         if (agentName == null || ipAddress == null) {
             return false;
         }
+        // Stamped before anything that can block, because this is what the reconcile below has to be newer than.
+        long arrivedAt = System.nanoTime();
         if (matchesRegisteredAddress(agentName, ipAddress)) {
             return true;
         }
@@ -319,7 +329,7 @@ public class BuildAgentAddressRegistryService {
         // to the refresh interval, and fail them in a way that looks like a configuration problem. Refreshing on a miss
         // closes that window; the coordination inside bounds how much work a wrong address can cause.
         log.debug("No registered address matches {} for build agent {}, reconciling the registry before deciding", ipAddress, agentName);
-        ObservationOutcome outcome = refreshedOnMiss();
+        ObservationOutcome outcome = reconcileForDecision(arrivedAt);
         if (outcome == ObservationOutcome.FAILED) {
             // Nothing was established, so there is nothing to grant an exemption on the strength of. Denying costs
             // nothing extra here: reaching this means the middleware is not answering, and the token and job-scope
@@ -357,20 +367,27 @@ public class BuildAgentAddressRegistryService {
     }
 
     /**
-     * Brings the snapshot up to date for a decision that missed, coordinating with any refresh already in flight.
+     * Brings the snapshot up to date for a decision that missed, coordinating with any reconcile already in flight.
      * <p>
-     * Every caller either performs the reconcile or waits for the one in progress, and only then decides. Letting the
-     * waiters proceed immediately - which a compare-and-set debounce does - means deciding on the snapshot that the
-     * in-flight reconcile is about to replace, and since a missing entry is what grants the not-observable exemption,
-     * a caller could be exempted during the very refresh that was about to register the agent's address. Two concurrent
-     * requests with a leaked credential were enough: one refreshes, the other is admitted.
+     * The condition is that a reconcile <b>completed after this request arrived</b>, not that one completed recently.
+     * "Recently" cannot speak for a particular agent: there is no connect-side callback, so an agent may connect and
+     * publish its identity immediately after a reconcile finishes, and a request using its credential would then find no
+     * entry and be handed the not-observable exemption on the strength of an observation taken before the agent existed.
+     * Arrival ordering rules that out, because in both the legitimate and the stolen-credential case the agent connected
+     * before the request could be made: a reconcile that finishes after the request arrived therefore also saw whatever
+     * connection the agent had.
      * <p>
-     * The debounce is kept for the work it bounds, but measured from the completion of the last reconcile, so a waiter
-     * that has just been handed a fresh snapshot does not start another round on top of it.
+     * That criterion coalesces rather than multiplies work. A burst of requests all arriving before one reconcile
+     * completes is satisfied by that single reconcile, and the fair lock keeps at most one running, so the cost is
+     * bounded by reconcile duration rather than by request count. It has no minimum interval on purpose: an interval
+     * would mean answering some requests from an observation older than they are, which is the defect above. What limits
+     * who can trigger this at all is upstream - a request only reaches here after the caller has established that the
+     * name belongs to a registered build agent, by a single-key lookup over https or by a key match over ssh.
      *
-     * @return what backs the decision now: this call's own reconcile, or the one it waited for
+     * @param arrivedAt when the deciding request arrived, on {@link System#nanoTime}'s clock
+     * @return what the reconcile backing this decision established, whether this call performed it or waited for it
      */
-    private ObservationOutcome refreshedOnMiss() {
+    private ObservationOutcome reconcileForDecision(long arrivedAt) {
         try {
             if (!refreshOnMissLock.tryLock(REFRESH_ON_MISS_WAIT_MS, TimeUnit.MILLISECONDS)) {
                 return ObservationOutcome.FAILED;
@@ -381,15 +398,15 @@ public class BuildAgentAddressRegistryService {
             return ObservationOutcome.FAILED;
         }
         try {
-            if (System.currentTimeMillis() - lastRefreshOnMissCompletedAt <= MIN_REFRESH_ON_MISS_INTERVAL_MS) {
-                // A reconcile completed while this request was waiting for the lock, or moments before it arrived. The
-                // snapshot is already as fresh as one more round would make it.
-                return ObservationOutcome.OBSERVED;
+            if (lastDecisionObservationAt - arrivedAt > 0) {
+                // Subtraction rather than a plain comparison, so this stays correct across a nanoTime overflow. A
+                // reconcile finished while this request was waiting for the lock, so its observation covers this
+                // request and repeating it would establish nothing new.
+                return lastDecisionOutcome;
             }
             ObservationOutcome outcome = reconcileObservedAddresses();
-            if (outcome == ObservationOutcome.OBSERVED) {
-                lastRefreshOnMissCompletedAt = System.currentTimeMillis();
-            }
+            lastDecisionOutcome = outcome;
+            lastDecisionObservationAt = System.nanoTime();
             return outcome;
         }
         finally {

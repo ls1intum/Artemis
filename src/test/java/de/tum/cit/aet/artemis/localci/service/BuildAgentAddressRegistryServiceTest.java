@@ -399,6 +399,30 @@ class BuildAgentAddressRegistryServiceTest {
     }
 
     /**
+     * The sequential form of the same hole, which a "was there a reconcile recently?" test cannot catch. There is no
+     * connect-side callback, so an agent can connect and publish itself immediately after a reconcile completes. A
+     * request arriving in that gap must not be answered from the earlier observation: at that point the agent was not
+     * yet connected, so its absence from the snapshot says nothing about whether its origin is observable.
+     * <p>
+     * Under a global debounce this returned true - no entry, so the not-observable exemption - from an address the agent
+     * was never observed at.
+     */
+    @Test
+    void shouldNotExemptAnAgentThatAppearedAfterTheLastReconcile() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+        assertThat(registeredAddresses).as("nothing is connected yet").isEmpty();
+
+        // The agent connects and publishes itself; no callback tells this node, and the scheduled reconcile is not due.
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.99")).as("the decision must reconcile rather than reuse an observation taken before the agent connected")
+                .isFalse();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).as("and the address it did connect from still works").isTrue();
+    }
+
+    /**
      * The race the coordinated refresh exists for. An agent that has just published itself is briefly absent from the
      * snapshot, and absence is what grants the not-observable exemption, so a request arriving in that window must not
      * be exempted just because another request happens to be doing the reconcile that would have registered the agent.
