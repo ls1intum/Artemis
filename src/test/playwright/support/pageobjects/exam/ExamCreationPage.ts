@@ -1,16 +1,22 @@
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
-import { enterDate, setMonacoEditorContent } from '../../utils';
+import { enterDate, fillDateTimePicker, setMonacoEditorContent } from '../../utils';
+
+const VISIBLE_DATE_PICKER_INDEX = 0;
+const START_DATE_PICKER_INDEX = 1;
+const END_DATE_PICKER_INDEX = 2;
 
 /**
  * A class which encapsulates UI selectors and actions for the exam creation page.
  */
 export class ExamCreationPage {
     private readonly page: Page;
+    private readonly examTimelineDatePickers: Locator;
 
     constructor(page: Page) {
         this.page = page;
+        this.examTimelineDatePickers = page.locator('jhi-exam-timeline p-datepicker');
     }
 
     /**
@@ -33,21 +39,26 @@ export class ExamCreationPage {
      * @param date the date from when the exam should be visible
      */
     async setVisibleDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#visibleDate', date);
+        await this.setTimelineDate(VISIBLE_DATE_PICKER_INDEX, date);
     }
 
     /**
      * @param date the date when the exam starts
      */
     async setStartDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#startDate', date);
+        await this.setTimelineDate(START_DATE_PICKER_INDEX, date);
     }
 
     /**
      * @param date the date when the exam will end
      */
     async setEndDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#endDate', date);
+        await this.setTimelineDate(END_DATE_PICKER_INDEX, date);
+    }
+
+    private async setTimelineDate(index: number, date: dayjs.Dayjs) {
+        const dateInput = this.examTimelineDatePickers.nth(index).locator('input');
+        await fillDateTimePicker(dateInput, date);
     }
 
     /**
