@@ -1169,7 +1169,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // suggestion options) and exam.numberOfCorrectionRoundsInExam (assessment controls); they must survive the DTO.
         assertThat(examRef.id()).as("nested exam id").isEqualTo(exam.getId());
         assertThat(examRef.title()).as("nested exam title for the detail-page exam link").isEqualTo(exam.getTitle());
-        assertThat(examRef.testExam()).as("nested exam test-exam flag gating feedback-suggestion options").isEqualTo(!exam.getExamMode().isReal());
+        assertThat(examRef.examMode()).as("nested exam mode gating feedback-suggestion options").isEqualTo(exam.getExamMode());
         assertThat(examRef.numberOfCorrectionRoundsInExam()).as("nested exam correction-round count for the assessment controls")
                 .isEqualTo(exam.getNumberOfCorrectionRoundsInExam());
     }
