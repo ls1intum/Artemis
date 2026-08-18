@@ -17,6 +17,7 @@ import monaco from 'monaco-editor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/communication/service/metis.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
@@ -35,6 +36,8 @@ import { UrlAction } from 'app/editor/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/editor/monaco-editor/model/actions/attachment.action';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { EmojiAction } from 'app/editor/monaco-editor/model/actions/emoji.action';
+import { EmojiCompletionAction } from 'app/editor/monaco-editor/model/actions/communication/emoji-completion.action';
+import { EmojiSearch } from '@ctrl/ngx-emoji-mart';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { BulletedListAction } from 'app/editor/monaco-editor/model/actions/bulleted-list.action';
 import { OrderedListAction } from 'app/editor/monaco-editor/model/actions/ordered-list.action';
@@ -65,7 +68,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     private fileService = inject(FileService);
     private courseManagementService = inject(CourseManagementService);
     private lectureService = inject(LectureService);
+    private exerciseService = inject(ExerciseService);
     private channelService = inject(ChannelService);
+    private emojiSearch = inject(EmojiSearch);
     viewContainerRef = inject(ViewContainerRef);
     private positionBuilder = inject(OverlayPositionBuilder);
 
@@ -113,6 +118,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new UnderlineAction(),
             new StrikethroughAction(),
             new EmojiAction(this.viewContainerRef, this.overlay, this.positionBuilder),
+            new EmojiCompletionAction(this.emojiSearch),
             new BulletedListAction(),
             new OrderedListAction(),
             new QuoteAction(),
@@ -121,7 +127,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new UrlAction(),
             new AttachmentAction(),
             ...messagingOnlyActions,
-            new ExerciseReferenceAction(this.metisService),
+            new ExerciseReferenceAction(this.metisService, this.exerciseService),
             new FaqReferenceAction(this.metisService),
         ]);
 

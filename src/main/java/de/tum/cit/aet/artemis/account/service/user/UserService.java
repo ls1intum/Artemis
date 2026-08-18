@@ -42,6 +42,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
+import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
@@ -51,6 +53,7 @@ import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -66,8 +69,6 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
-import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
-import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.UserCourseNotificationStatusService;
@@ -114,13 +115,13 @@ public class UserService {
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
-    private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
-
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final SavedPostRepository savedPostRepository;
 
-    private final UserSshPublicKeyService userSshPublicKeyService;
+    private final AccountCredentialRevocationService accountCredentialRevocationService;
+
+    private final AccountSecurityNotificationService accountSecurityNotificationService;
 
     private final CourseNotificationSettingService courseNotificationSettingService;
 
@@ -131,8 +132,8 @@ public class UserService {
     public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
             AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
-            Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
+            AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
             CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
             GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
@@ -146,10 +147,10 @@ public class UserService {
         this.fileService = fileService;
         this.scienceEventApi = scienceEventApi;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
-        this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
         this.learnerProfileApi = learnerProfileApi;
         this.savedPostRepository = savedPostRepository;
-        this.userSshPublicKeyService = userSshPublicKeyService;
+        this.accountCredentialRevocationService = accountCredentialRevocationService;
+        this.accountSecurityNotificationService = accountSecurityNotificationService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
         this.globalNotificationSettingService = globalNotificationSettingService;
@@ -188,11 +189,30 @@ public class UserService {
         Optional<User> existingInternalAdmin = userRepository.findOneWithAuthoritiesByLogin(internalAdminUsername);
         if (existingInternalAdmin.isPresent()) {
             log.info("Update internal admin user {}", internalAdminUsername);
-            existingInternalAdmin.get().setActivated(true);
-            existingInternalAdmin.get().setPassword(passwordService.hashPassword(internalAdminPassword));
+            User internalAdmin = existingInternalAdmin.get();
+            if (!internalAdmin.isInternal()) {
+                // An instance that started up between #13394 and this change has an admin that was created as an externally
+                // managed account and therefore cannot use the password configured for it. Creating it correctly is not
+                // enough for those instances: the account exists, so only this branch is reached. The account belongs to
+                // Artemis by configuration and its password is set right here on every startup, so owning the flag as well
+                // is what makes that configuration mean something.
+                //
+                // Warned rather than logged quietly, and spelled out, because the flag decides more than the password check:
+                // LdapAuthenticationProvider skips internal users, so this account stops authenticating against the
+                // directory, and prepareUserForPasswordReset accepts internal users, so it becomes eligible for the e-mail
+                // password reset. For the dedicated local admin this property is meant for, all of that is intended. An
+                // operator who pointed it at a directory account instead needs to see it.
+                log.warn("The configured internal admin {} exists as an externally managed account and is now marked internal: it will authenticate with the "
+                        + "configured password instead of the external directory, and it becomes eligible for the Artemis password reset. The flag cannot be "
+                        + "changed back through the admin UI, which offers it only while creating a user. Point "
+                        + "artemis.user-management.internal-admin.username at a dedicated local account if that is not what you want.", internalAdminUsername);
+                internalAdmin.setInternal(true);
+            }
+            internalAdmin.setActivated(true);
+            internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
             // needs to be mutable --> new HashSet<>(Set.of(...))
-            existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
-            saveUser(existingInternalAdmin.get());
+            internalAdmin.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
+            saveUser(internalAdmin);
         }
         else {
             log.info("Create internal admin user {}", internalAdminUsername);
@@ -206,6 +226,12 @@ public class UserService {
         userDto.setLogin(login);
         userDto.setPassword(password);
         userDto.setActivated(true);
+        // Set explicitly because #13394 made the flag caller-controlled - UserCreationService.createUser used to force
+        // internal = true for everyone - and UserDTO defaults it to false. Without this the admin is stored as an externally
+        // managed account and the password configured right here is unusable, because
+        // ArtemisInternalAuthenticationProvider only ever looks for internal users. The update branch above repairs an
+        // account that was created in between.
+        userDto.setInternal(true);
         userDto.setFirstName("Administrator");
         userDto.setLastName("Administrator");
         userDto.setEmail(artemisInternalAdminEmail.orElse("admin@localhost"));
@@ -246,17 +272,25 @@ public class UserService {
     /**
      * Reset user password for given reset key
      *
-     * @param newPassword new password string
-     * @param key         reset key
+     * @param newPassword      new password string
+     * @param key              reset key
+     * @param revocationChoice which of the user's other credentials to revoke alongside the reset
      * @return user for whom the password was performed
      */
-    public Optional<User> completePasswordReset(String newPassword, String key) {
+    public Optional<User> completePasswordReset(String newPassword, String key, CredentialRevocationChoiceDTO revocationChoice) {
         log.debug("Reset user password for reset key {}", key);
         return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
             user.setPassword(passwordService.hashPassword(newPassword));
             user.setResetKey(null);
             user.setResetDate(null);
             saveUser(user);
+            // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
+            // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
+            // exactly as they do when changing a password from inside the account - with the difference that a reset
+            // defaults to revoking everything (see KeyAndPasswordVM#revokeCredentialsOrAll), because completing one
+            // only proves control of the mailbox.
+            accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password reset completed");
+            accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.RESET);
             return user;
         });
     }
@@ -464,10 +498,10 @@ public class UserService {
      */
     public void softDeleteUser(String login) {
         userRepository.findOneByLogin(login).ifPresent(user -> {
-            participationVCSAccessTokenService.deleteAllByUserId(user.getId());
-            repositoryVcsAccessTokenService.deleteAllByUserId(user.getId());
+            // Covers the participation and repository tokens and the SSH keys this method used to delete individually,
+            // and additionally the passkeys and the personal VCS access token, which it did not.
+            accountCredentialRevocationService.revokeAllCredentials(user, "user soft deleted");
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
-            userSshPublicKeyService.deleteAllByUserId(user.getId());
             globalNotificationSettingService.deleteAllByUserId(user.getId());
             userCourseRoleRepository.deleteByUser_Id(user.getId());
             user.setDeleted(true);
@@ -531,12 +565,14 @@ public class UserService {
     }
 
     /**
-     * Change password of current user
+     * Change password of current user, revoking the credential types the user selected along with it.
      *
      * @param currentClearTextPassword cleartext password
      * @param newPassword              new password string
+     * @param revocationChoice         which of the user's other credentials to revoke; only the user knows whether the old
+     *                                     password may have been seen by someone else, which is what decides this
      */
-    public void changePassword(String currentClearTextPassword, String newPassword) {
+    public void changePassword(String currentClearTextPassword, String newPassword, CredentialRevocationChoiceDTO revocationChoice) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
             String currentPasswordHash = user.getPassword();
             if (!passwordService.checkPasswordMatch(currentClearTextPassword, currentPasswordHash)) {
@@ -545,6 +581,10 @@ public class UserService {
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);
             saveUser(user);
+            // What else is revoked is the user's decision: only they know whether the old password may have been seen by
+            // someone else, and that is what decides whether losing their enrolled authenticators and keys is warranted.
+            accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password changed");
+            accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.OWNER);
 
             log.debug("Changed password for User: {}", user);
         });

@@ -6,6 +6,8 @@ import { ChartData, ChartOptions, TooltipItem } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
 import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -26,7 +28,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { sortBy } from 'lodash-es';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, distinctUntilChanged, map } from 'rxjs';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -123,6 +125,9 @@ enum ChartBarTitle {
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
     controlsRendered = new EventEmitter<void>();
     private courseStorageService = inject(CourseStorageService);
+    private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private tabReselectionSubscription?: Subscription;
     private scoresStorageService = inject(ScoresStorageService);
     private translateService = inject(TranslateService);
     private route = inject(ActivatedRoute);
@@ -137,6 +142,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
     private translateSubscription?: Subscription;
+    private exercisesLoadSubscription?: Subscription;
+    private gradeSubscription?: Subscription;
     readonly course = signal<Course | undefined>(undefined);
     readonly numberOfAppliedFilters = signal<number>(0);
 
@@ -151,6 +158,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     // overall points
     readonly overallPoints = signal<number>(0);
     overallPointsPerExercise = new Map<ExerciseType, number>();
+
+    // overall points the student would have if the points of exercise variants were not capped at their group's maxPoints.
+    // Only relevant (and shown) when the course has exercise variant groups; see courseHasExerciseVariants.
+    readonly overallPointsTotal = signal<number>(0);
+
+    // whether the course contains exercise variant groups with a configured points cap. If so, the statistics page shows
+    // both the total (uncapped) and the credited (capped) points to make the variant capping transparent.
+    readonly courseHasExerciseVariants = computed<boolean>(() =>
+        (this.course()?.exercises ?? []).some((exercise) => exercise.exerciseVariantGroup?.id !== undefined && exercise.exerciseVariantGroup.maxPoints !== undefined),
+    );
 
     // relative score
     readonly totalRelativeScore = signal<number>(0);
@@ -294,19 +311,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     };
 
     ngOnInit() {
-        // Note: due to lazy loading and router outlet, we use parent 2x here
-        this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
-        });
-
-        this.course.set(this.courseStorageService.getCourse(this.courseId));
-        this.onCourseLoad();
-
-        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.course.set(course);
-            this.onCourseLoad();
-        });
-
         // update titles based on the initial language selection
         this.updateExerciseTitles();
 
@@ -316,7 +320,87 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.groupExercisesByType(this.courseExercises);
         });
 
-        this.calculateCourseGrade();
+        // Note: due to lazy loading and router outlet, we use parent 2x here. Angular reuses this component when only
+        // the course parameter changes, so every distinct id must cancel and rebuild its course-scoped state.
+        this.paramSubscription = this.route.parent?.parent?.params
+            .pipe(
+                map((params) => parseInt(params['courseId'], 10)),
+                distinctUntilChanged(),
+            )
+            .subscribe((courseId) => this.activateCourse(courseId));
+
+        // Selecting the statistics tab while already on it acts as a refresh
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.route).subscribe(() => this.loadExercises(this.courseId));
+    }
+
+    private activateCourse(courseId: number): void {
+        this.courseUpdatesSubscription?.unsubscribe();
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.gradeSubscription?.unsubscribe();
+        this.resetCourseState();
+
+        this.courseId = courseId;
+        this.course.set(this.courseStorageService.getCourse(courseId));
+        this.onCourseLoad();
+
+        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(courseId).subscribe((course: Course) => {
+            this.course.set(course);
+            this.onCourseLoad();
+        });
+
+        // The exercises and their scores are not part of the course itself, so this tab loads them. The result arrives
+        // through the course update subscription above and through the ScoresStorageService.
+        this.loadExercises(courseId);
+    }
+
+    /**
+     * Fetches the exercises and their scores without clearing the rendered charts.
+     *
+     * Also the refresh path: selecting the statistics tab while already on it re-runs this, so newly graded work is
+     * reflected without a page reload, and the charts keep showing the previous figures until the new ones arrive.
+     *
+     * @param courseId the course to load the exercises and scores of
+     */
+    private loadExercises(courseId: number): void {
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(courseId).subscribe(() => {
+            this.calculateCourseGrade();
+        });
+    }
+
+    private resetCourseState(): void {
+        this.course.set(undefined);
+        this.courseExercises = [];
+        this.courseExercisesNotIncludedInScore = [];
+        this.courseExercisesFilteredByCategories = [];
+        this.currentlyHidingNotIncludedInScoreExercises.set(false);
+        this.filteredExerciseIDs.set([]);
+        this.numberOfAppliedFilters.set(0);
+        this.categoryFilter.filterMap.clear();
+        this.categoryFilter.setupCategoryFilter([]);
+
+        this.overallPoints.set(0);
+        this.overallPointsTotal.set(0);
+        this.totalRelativeScore.set(0);
+        this.overallMaxPoints.set(0);
+        this.reachablePoints.set(0);
+        this.currentRelativeScore.set(0);
+        this.overallPresentationScore.set(0);
+        this.reachablePresentationPoints.set(0);
+        this.overallPointsPerExercise = new Map();
+        this.relativeScoresPerExercise = new Map();
+        this.overallMaxPointsPerExercise = new Map();
+        this.reachablePointsPerExercise = new Map();
+        this.currentRelativeScoresPerExercise = new Map();
+        this.presentationScoresPerExercise = new Map();
+        this.presentationScoreEnabled = new Map();
+        this.exerciseGroupsInProgress = new Map();
+        this.ngxExerciseGroups.set(new Map());
+        this.doughnutChartEntries.set([]);
+
+        this.gradingScaleExists.set(false);
+        this.isBonus.set(false);
+        this.gradeDTO.set(undefined);
     }
 
     private updateExerciseTitles() {
@@ -337,13 +421,22 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     ngOnDestroy() {
+        this.tabReselectionSubscription?.unsubscribe();
         this.translateSubscription?.unsubscribe();
         this.courseUpdatesSubscription?.unsubscribe();
         this.paramSubscription?.unsubscribe();
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.gradeSubscription?.unsubscribe();
     }
 
     private calculateCourseGrade(): void {
-        this.gradingService.matchPercentageToGradeStep(this.totalRelativeScore(), this.courseId).subscribe((gradeDTO) => {
+        this.gradeSubscription?.unsubscribe();
+        const relativeScore = this.totalRelativeScore();
+        // NaN when no total scores are stored for the course yet; asking the server to match it is meaningless
+        if (!Number.isFinite(relativeScore)) {
+            return;
+        }
+        this.gradeSubscription = this.gradingService.matchPercentageToGradeStep(relativeScore, this.courseId).subscribe((gradeDTO) => {
             if (gradeDTO) {
                 this.gradingScaleExists.set(true);
                 this.gradeDTO.set(gradeDTO);
@@ -490,6 +583,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const fileUploadExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.FILE_UPLOAD, ScoreType.ABSOLUTE_SCORE);
         const course = this.course();
         this.overallPoints.set(this.retrieveTotalScoreByScoreType(ScoreType.ABSOLUTE_SCORE));
+        this.overallPointsTotal.set(this.retrieveTotalScoreByScoreType(ScoreType.ABSOLUTE_SCORE_TOTAL));
         const totalPresentationPoints = course?.presentationScore ? 0 : this.retrieveTotalScoreByScoreType(ScoreType.PRESENTATION_SCORE);
         let totalMissedPoints = this.reachablePoints() - this.overallPoints();
         if (totalMissedPoints < 0) {
@@ -653,6 +747,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 return scores.reachablePoints;
             case ScoreType.ABSOLUTE_SCORE:
                 return scores.studentScores.absoluteScore;
+            case ScoreType.ABSOLUTE_SCORE_TOTAL:
+                return scores.studentScores.absoluteScoreTotal;
             case ScoreType.RELATIVE_SCORE:
                 return scores.studentScores.relativeScore;
             case ScoreType.CURRENT_RELATIVE_SCORE:

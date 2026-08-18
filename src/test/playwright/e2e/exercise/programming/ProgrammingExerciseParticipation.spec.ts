@@ -273,7 +273,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             team = await response.json();
         });
 
-        test('Team members make git submissions', async ({ login, page, courseList, courseOverview, programmingExerciseOverview, waitForParticipationBuildToFinish }) => {
+        test('Team members make git submissions', async ({ login, page, courseOverview, programmingExerciseOverview, waitForParticipationBuildToFinish }) => {
             test.slow();
             const firstSubmission = submissions[0];
             const firstParticipationId = await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, firstSubmission.student);
@@ -285,8 +285,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                 const { student, submission, commitMessage } = submissions[i];
                 await login(student, '/');
                 await page.waitForURL(/\/courses/);
-                await courseList.openCourse(course.id!);
-                await courseOverview.openExercise(exercise.title!);
+                await courseOverview.openExerciseById(course.id!, exercise.id!);
                 submission.deleteFiles = [];
                 await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, student, submission, commitMessage);
                 await programmingExerciseOverview.checkResultScoreAfterBuild(course.id!, exercise.id!, submission.expectedResult);
@@ -294,16 +293,14 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
 
             await login(studentFour, '/');
             await page.waitForURL(/\/courses/);
-            await courseList.openCourse(course.id!);
-            await courseOverview.openExercise(exercise.title!);
+            await courseOverview.openExerciseById(course.id!, exercise.id!);
             await expect(programmingExerciseOverview.getCodeButton()).not.toBeVisible();
         });
 
-        test('Students without a team can not participate in the team exercise', async ({ login, page, courseList, courseOverview, programmingExerciseOverview }) => {
+        test('Students without a team can not participate in the team exercise', async ({ login, page, courseOverview, programmingExerciseOverview }) => {
             await login(studentFour, '/');
             await page.waitForURL(/\/courses/);
-            await courseList.openCourse(course.id!);
-            await courseOverview.openExercise(exercise.title!);
+            await courseOverview.openExerciseById(course.id!, exercise.id!);
             await expect(programmingExerciseOverview.getExerciseDetails().getByText('No team yet')).toBeVisible();
             await expect(courseOverview.getStartExerciseButton(exercise.id!)).not.toBeVisible();
             await expect(programmingExerciseOverview.getCodeButton()).not.toBeVisible();
@@ -314,7 +311,6 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             userManagementAPIRequests,
             exerciseAPIRequests,
             page,
-            courseList,
             courseOverview,
             programmingExerciseOverview,
         }) => {
@@ -325,12 +321,16 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
 
             await login(studentFour, '/');
             await page.waitForURL(/\/courses/);
-            await courseList.openCourse(course.id!);
-            await courseOverview.openExercise(exercise.title!);
+            await courseOverview.openExerciseById(course.id!, exercise.id!);
             await expect(programmingExerciseOverview.getCodeButton()).not.toBeVisible();
             await expect(programmingExerciseOverview.getExerciseDetails().getByText('Not yet started')).toBeVisible();
             await courseOverview.startExercise(exercise.id!);
-            await expect(programmingExerciseOverview.getExerciseDetails().getByText('No graded result')).toBeVisible();
+            // Starting gives this student their own fresh participation, so the header shows the graded-result
+            // placeholder `artemisApp.result.noGradedResult` ("Not graded") instead of the other team's score. The text
+            // asserted before ("No graded result") belongs to `courseOverview.exerciseDetails.noGradedResult`, a
+            // translation key the client stopped rendering in 2019 — long before this test was added — so the
+            // assertion could never match and failed deterministically.
+            await expect(programmingExerciseOverview.getExerciseDetails().getByText('Not graded')).toBeVisible();
         });
 
         test.describe('Check team participation', () => {

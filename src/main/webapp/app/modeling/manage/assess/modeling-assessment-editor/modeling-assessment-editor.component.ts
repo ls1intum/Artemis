@@ -126,6 +126,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
 
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return this.feedback;
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
     /**
      * Retrieve unreferenced entries from the feedback suggestions loaded from Athena.
      * The suggestions are displayed in cards underneath the modeling editor canvas.
@@ -559,7 +566,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     onCancelAssessment() {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.modelingAssessmentService.cancelAssessment(this.submission()!.id!).subscribe(() => {
+            this.modelingAssessmentService.cancelAssessment(this.submission()!.id!, this.result()?.id).subscribe(() => {
                 this.navigateBack();
             });
         }
@@ -589,7 +596,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.isLoading.set(false);
 
                 const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, undefined, submission.id!, this.examId, this.exerciseGroupId);
-                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
+                // Merge rather than replace: a supplied queryParams object drops every other parameter, testRun among them.
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() }, queryParamsHandling: 'merge' });
             },
             error: (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy.set(false);

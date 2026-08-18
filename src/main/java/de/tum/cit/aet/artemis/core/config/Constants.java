@@ -33,6 +33,8 @@ public final class Constants {
 
     public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
 
+    public static final int MAX_PACKAGE_NAME_LENGTH = 100;
+
     /**
      * The default REST/URL-path prefix for accessing file uploads.
      * Don't use this constant elsewhere than in the Presentation-Layer to reduce
@@ -248,6 +250,26 @@ public final class Constants {
     public static final String RE_EVALUATE_RESULTS = "RE_EVALUATE_RESULTS";
 
     public static final String RESET_GRADING = "RESET_GRADING";
+
+    /**
+     * Audit event: a user changed their own password from inside their account.
+     */
+    public static final String CHANGE_OWN_PASSWORD = "CHANGE_OWN_PASSWORD";
+
+    /**
+     * Audit event: a user completed a password reset from an emailed link.
+     */
+    public static final String COMPLETE_PASSWORD_RESET = "COMPLETE_PASSWORD_RESET";
+
+    /**
+     * Audit event: an administrator replaced a user's password through the user management form.
+     */
+    public static final String ADMIN_CHANGE_USER_PASSWORD = "ADMIN_CHANGE_USER_PASSWORD";
+
+    /**
+     * Audit event: a user revoked their own passkeys, SSH keys or VCS access tokens without changing their password.
+     */
+    public static final String REVOKE_OWN_CREDENTIALS = "REVOKE_OWN_CREDENTIALS";
 
     public static final String TRIGGER_INSTRUCTOR_BUILD = "TRIGGER_INSTRUCTOR_BUILD";
 
