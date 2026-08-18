@@ -11,12 +11,12 @@ import java.util.regex.Pattern;
 
 import org.commonmark.Extension;
 import org.commonmark.node.AbstractVisitor;
+import org.commonmark.node.Block;
 import org.commonmark.node.BlockQuote;
 import org.commonmark.node.Code;
 import org.commonmark.node.CustomBlock;
 import org.commonmark.node.HardLineBreak;
 import org.commonmark.node.Node;
-import org.commonmark.node.Paragraph;
 import org.commonmark.node.SoftLineBreak;
 import org.commonmark.node.Text;
 import org.commonmark.parser.Parser;
@@ -150,11 +150,11 @@ public final class GitHubAlertExtension implements Parser.ParserExtension, HtmlR
             // blockquote_open to the first blockquote_close, so only the outermost blockquote of a nesting is ever
             // considered. `> > [!NOTE]` therefore turns the OUTER quote into the alert and keeps the inner one as
             // a blockquote inside it, and a nested marker under a non-matching outer quote stays a blockquote.
-            Paragraph paragraph = firstParagraph(blockQuote);
-            if (paragraph == null) {
+            Block markerBlock = firstInlineHost(blockQuote);
+            if (markerBlock == null) {
                 return;
             }
-            List<Node> markerLine = firstLineNodes(paragraph);
+            List<Node> markerLine = firstLineNodes(markerBlock);
             Matcher matcher = ALERT_PATTERN.matcher(plainText(markerLine));
             if (!matcher.lookingAt()) {
                 return;
@@ -166,7 +166,7 @@ public final class GitHubAlertExtension implements Parser.ParserExtension, HtmlR
             // line. Dropping that line and the line break behind it is the AST equivalent of the client slicing
             // the matched prefix off the inline token and trimming the leading newline.
             markerLine.forEach(Node::unlink);
-            Node lineBreak = paragraph.getFirstChild();
+            Node lineBreak = markerBlock.getFirstChild();
             if (lineBreak instanceof SoftLineBreak || lineBreak instanceof HardLineBreak) {
                 lineBreak.unlink();
             }
@@ -225,12 +225,25 @@ public final class GitHubAlertExtension implements Parser.ParserExtension, HtmlR
     }
 
     /** The first paragraph anywhere below {@code node} in document order, mirroring the client's "first inline token". */
-    private static @Nullable Paragraph firstParagraph(Node node) {
+    /**
+     * The first block inside the quote that carries inline content, in document order.
+     * <p>
+     * This mirrors the client, which takes the first {@code inline} token of the blockquote. markdown-it emits such a
+     * token for every block holding inline content, a heading as much as a paragraph, so looking only for the first
+     * paragraph would disagree in both directions: {@code > # Intro} followed by a marker line would become an alert
+     * here while staying a blockquote there, and a marker written as {@code > # [!NOTE]} would become an alert there
+     * while staying a blockquote here. The toggle would then change authored content.
+     * <p>
+     * A block holds inline content exactly when its first child is not itself a block, which is what separates a
+     * paragraph or heading from a nested quote or list, and what leaves childless blocks such as a fenced code block
+     * out, matching the non-{@code inline} tokens the client skips.
+     */
+    private static @Nullable Block firstInlineHost(Node node) {
         for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
-            if (child instanceof Paragraph paragraph) {
-                return paragraph;
+            if (child instanceof Block block && block.getFirstChild() != null && !(block.getFirstChild() instanceof Block)) {
+                return block;
             }
-            Paragraph nested = firstParagraph(child);
+            Block nested = firstInlineHost(child);
             if (nested != null) {
                 return nested;
             }
@@ -238,10 +251,10 @@ public final class GitHubAlertExtension implements Parser.ParserExtension, HtmlR
         return null;
     }
 
-    /** The paragraph's inline children up to, but excluding, its first line break. */
-    private static List<Node> firstLineNodes(Paragraph paragraph) {
+    /** The block's inline children up to, but excluding, its first line break. */
+    private static List<Node> firstLineNodes(Block block) {
         List<Node> nodes = new ArrayList<>();
-        for (Node child = paragraph.getFirstChild(); child != null; child = child.getNext()) {
+        for (Node child = block.getFirstChild(); child != null; child = child.getNext()) {
             if (child instanceof SoftLineBreak || child instanceof HardLineBreak) {
                 break;
             }

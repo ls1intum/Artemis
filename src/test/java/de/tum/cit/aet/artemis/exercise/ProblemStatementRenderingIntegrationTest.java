@@ -513,6 +513,30 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDecideAnAlertOnTheFirstInlineBlockOfTheQuote() throws Exception {
+        // The client picks the first `inline` token of the blockquote, which markdown-it emits for a heading just as
+        // for a paragraph. Looking only at the first paragraph disagreed in both directions, so the toggle would have
+        // changed authored content: the heading below holds no marker and must keep the quote a quote.
+        String headingFirst = "> # Intro\n> [!NOTE]\n> Body\n";
+        var headingFirstBody = new ProblemStatementRenderRequestDTO(headingFirst, null, null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO quoted = request.postWithResponseBody(POST_URL, headingFirstBody, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // Matched on the opening tag, not the bare class name: the embedded stylesheet carries `.markdown-alert`
+        // rules of its own, so a bare check would find the CSS instead of generated markup.
+        assertThat(quoted.html()).contains("<blockquote>").doesNotContain("<div class=\"markdown-alert");
+
+        // ... and the mirror image: the marker sits in the heading, which is the first inline token, so it does apply.
+        String markerInHeading = "> # [!NOTE]\n> Body\n";
+        var markerInHeadingBody = new ProblemStatementRenderRequestDTO(markerInHeading, null, null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO alerted = request.postWithResponseBody(POST_URL, markerInHeadingBody, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(alerted.html()).contains("<div class=\"markdown-alert markdown-alert-note\">").doesNotContain("<blockquote>");
+    }
+
+    @Test
     void shouldRefuseANegativeTestResultLimit() {
         // The limit is compared with `>`, so a negative one rejects even an empty list and the endpoint answers 422 to
         // every request that carries test results at all. Failing while the configuration binds surfaces the typo.
