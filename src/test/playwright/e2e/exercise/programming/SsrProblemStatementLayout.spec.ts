@@ -9,9 +9,10 @@ const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
  * Layout coverage for the server-side-rendered problem statement. Neither Vitest nor the parity harness can see
  * layout: jsdom performs no layout at all, so the only way to prove the panel still behaves is in a real browser.
  *
- * Scope note: the student code editor is NOT covered here. `code-editor-student-container.component.ts:101` sets
+ * Scope note: the student code editor is NOT covered here. `code-editor-student-container.component.ts:102` sets
  * `lightweight` to `!exercise?.exerciseGroup`, so for a course exercise the instructions panel renders with `d-none`
- * and is never visible. It only shows for exam exercises, which this migration deliberately excludes. The remaining
+ * and is never visible. It only shows for exam exercises, which `ProblemStatementRendererComponent.serverRendered`
+ * keeps on the legacy renderer whatever the toggle says, so there is no SSR rendering to assert there. The remaining
  * editor host is the LocalVC repository view, which needs a prepared participation repository.
  */
 // `@sequential`, not `@fast`: the feature toggle below is global server state, and `fast-tests` is fully parallel

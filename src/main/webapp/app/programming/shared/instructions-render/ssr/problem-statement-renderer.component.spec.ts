@@ -58,6 +58,27 @@ describe('ProblemStatementRendererComponent', () => {
         expect(fixture.nativeElement.querySelector('.legacy')).toBeFalsy();
     });
 
+    // The student code editor hides its instructions pane for course exercises and shows it only for exam ones, so an
+    // exam participant would be the first reader migrated by the toggle rather than an excluded one. The exclusion
+    // therefore lives here, where it covers every host, instead of in the hosts that cannot see it.
+    it('keeps an exam exercise on the legacy renderer even with the toggle on', () => {
+        toggle.next(true);
+        fixture.componentRef.setInput('exercise', { id: 1, exerciseGroup: { id: 2 } });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.legacy')).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('.ssr')).toBeFalsy();
+    });
+
+    it('renders a course exercise on the server once the toggle is on', () => {
+        toggle.next(true);
+        fixture.componentRef.setInput('exercise', { id: 1, course: { id: 3 } });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.ssr')).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('.legacy')).toBeFalsy();
+    });
+
     it('forwards liveUpdates to the SSR child unchanged', () => {
         toggle.next(true);
         fixture.componentRef.setInput('liveUpdates', 'shared');

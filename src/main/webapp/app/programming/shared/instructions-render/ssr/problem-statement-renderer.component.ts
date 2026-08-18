@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -54,4 +54,15 @@ export class ProblemStatementRendererComponent {
     // It stays as a defensive fail-closed default (prefer the legacy renderer) in case that guarantee ever breaks,
     // and it keeps `ssrEnabled` typed as `boolean` instead of `boolean | undefined`.
     readonly ssrEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.SsrProblemStatement), { initialValue: false });
+
+    /**
+     * Exam exercises stay on the legacy renderer whatever the toggle says. The exclusion is central here rather than
+     * per host because a host cannot see which renderer it ends up with: the student code editor, for one, hides its
+     * instructions pane for course exercises and shows it only for exam ones, so its problem statement is an exam
+     * problem statement whenever it is visible at all.
+     *
+     * The marker is `exerciseGroup`, the same positive test the code editor uses to decide that visibility, rather
+     * than the absence of a course, which is also what an exercise whose course was not loaded looks like.
+     */
+    readonly serverRendered = computed(() => this.ssrEnabled() && this.exercise()?.exerciseGroup === undefined);
 }
