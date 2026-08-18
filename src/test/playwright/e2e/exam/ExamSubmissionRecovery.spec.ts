@@ -24,6 +24,15 @@ const course = { id: SEED_COURSES.examParticipation.id } as any;
 // save below. A RegExp keeps the match unambiguous against the absolute request URL.
 const quizSaveUrl = /\/api\/quiz\/exercises\/\d+\/submissions\/exam/;
 
+// Ceiling for the post-reload re-send. Generous on purpose, and it costs nothing when things are fast: expect.poll
+// returns as soon as the re-send lands, which locally is about two seconds. The ceiling only matters on a loaded CI
+// runner, where the re-send is preceded by a full client re-bootstrap with Playwright's per-context HTTP cache
+// disabled - bundle and lazy chunks re-fetched, then the exam re-fetched, then the answer restored and sent. A 30s
+// ceiling (the RELOAD_RENDER_TIMEOUT default) was measurably too tight there: CI saw zero re-sends inside it while the
+// same code re-sent in ~2s locally. Paired with the test.setTimeout in the describe block below, which keeps the
+// worst case inside the per-test cap: the setup before the reload spends roughly 50s of it.
+const RESEND_TIMEOUT = 3 * RELOAD_RENDER_TIMEOUT;
+
 test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, () => {
     // Block the Angular service worker for this test. The production WAR registers ngsw-worker.js, which handles the
     // quiz exam-save fetch; Playwright's page.route does NOT intercept service-worker-handled requests, so the 503
@@ -91,14 +100,12 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         // `disabled`, because the re-send has happened and there is nothing left to save. An earlier version of this
         // test clicked it anyway and hung for the whole per-test budget on "element is not enabled".
         //
-        // The budget is the point. A reload re-bootstraps the client with Playwright's per-context HTTP cache disabled,
-        // so the bundle and its lazy chunks are re-fetched before the exam is even requested; under parallel CI load
-        // that regularly exceeds 30s, which is why RELOAD_RENDER_TIMEOUT exists. The previous version allowed exactly
-        // 30000ms for reload plus bootstrap plus re-fetch plus re-send, and every failure was that wait expiring.
+        // The budget is the point: the previous version allowed exactly 30000ms for reload plus bootstrap plus exam
+        // re-fetch plus re-send, and every failure was that one wait expiring. See RESEND_TIMEOUT above.
         await expect
             .poll(() => successfulResends.length, {
                 message: 'the answer restored from local storage was never re-sent to the server',
-                timeout: RELOAD_RENDER_TIMEOUT,
+                timeout: RESEND_TIMEOUT,
                 intervals: [POLLING_INTERVAL],
             })
             .toBeGreaterThan(0);
