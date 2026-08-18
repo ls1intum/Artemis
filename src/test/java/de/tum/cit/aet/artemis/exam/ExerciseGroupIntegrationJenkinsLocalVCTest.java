@@ -600,7 +600,8 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testMoveExerciseToGroup_asEditor() throws Exception {
-        ExerciseGroup targetGroup = ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
+        // The factory adds the group to exam1, which the save below cascades; the returned instance is not needed.
+        ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
         examRepository.save(exam1);
         ExerciseGroup savedTargetGroup = examRepository.findWithExerciseGroupsById(exam1.getId()).orElseThrow().getExerciseGroups().stream()
                 .filter(group -> "target".equals(group.getTitle())).findFirst().orElseThrow();
@@ -614,18 +615,37 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testMoveExerciseToGroup_examIdMismatch() throws Exception {
+    void testMoveExerciseToGroup_targetGroupFromOtherExam() throws Exception {
         ExerciseGroup otherExamGroup = exam2.getExerciseGroups().getFirst();
 
-        // The exam-scoped access check (shared with every exam endpoint) rejects a cross-exam group with 409, not 400.
+        // The exam-scoped access check (shared with every exam endpoint) rejects a cross-exam target group with 409, not 400.
         request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises/" + textExercise1.getId() + "/exercise-group",
                 new ExamExerciseGroupAssignmentDTO(otherExamGroup.getId()), HttpStatus.CONFLICT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testMoveExerciseToGroup_exerciseFromOtherExam() throws Exception {
+        // The target group is a legitimate exam1 group, so the access check passes and the exercise-side guard decides.
+        ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
+        examRepository.save(exam1);
+        ExerciseGroup savedTargetGroup = examRepository.findWithExerciseGroupsById(exam1.getId()).orElseThrow().getExerciseGroups().stream()
+                .filter(group -> "target".equals(group.getTitle())).findFirst().orElseThrow();
+
+        ExerciseGroup otherExamGroup = exam2.getExerciseGroups().getFirst();
+        TextExercise foreignExercise = textExerciseUtilService.createTextExerciseForExam(otherExamGroup);
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises/" + foreignExercise.getId() + "/exercise-group",
+                new ExamExerciseGroupAssignmentDTO(savedTargetGroup.getId()), HttpStatus.BAD_REQUEST);
+
+        TextExercise unchanged = textExerciseRepository.findById(foreignExercise.getId()).orElseThrow();
+        assertThat(unchanged.getExerciseGroup().getId()).isEqualTo(otherExamGroup.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testMoveExerciseToGroup_blockedOnceStudentExamsGenerated() throws Exception {
-        ExerciseGroup targetGroup = ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
+        ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
         examRepository.save(exam1);
         ExerciseGroup savedTargetGroup = examRepository.findWithExerciseGroupsById(exam1.getId()).orElseThrow().getExerciseGroups().stream()
                 .filter(group -> "target".equals(group.getTitle())).findFirst().orElseThrow();
