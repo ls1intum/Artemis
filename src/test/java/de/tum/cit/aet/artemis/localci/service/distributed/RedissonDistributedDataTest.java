@@ -40,7 +40,7 @@ class RedissonDistributedDataTest extends AbstractDistributedDataTest {
 
     @BeforeAll
     static void beforeAll() {
-        redis = new RedisStackContainer(RedisStackContainer.DEFAULT_IMAGE_NAME.withTag(RedisStackContainer.DEFAULT_TAG));
+        redis = new RedisStackContainer(RedisStackContainer.DEFAULT_IMAGE_NAME.withTag("7.4.0-v8"));
         redis.start();
         System.setProperty("spring.data.redis.host", redis.getHost());
         System.setProperty("spring.data.redis.port", redis.getMappedPort(6379).toString());
