@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment.domain;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -37,6 +38,18 @@ public class FeedbackMessage extends DomainObject {
     @Column(name = "text", nullable = false)
     private String text;
 
+    /**
+     * Creation timestamp, used as a safety window by the garbage collection: a message row is committed
+     * before the feedback rows that reference it (there is no surrounding transaction), so the cleanup
+     * only deletes unreferenced messages older than a grace period.
+     */
+    @Column(name = "created_date", nullable = false)
+    private ZonedDateTime createdDate = ZonedDateTime.now();
+
+    public ZonedDateTime getCreatedDate() {
+        return createdDate;
+    }
+
     public byte[] getHash() {
         return hash;
     }
@@ -55,7 +68,8 @@ public class FeedbackMessage extends DomainObject {
 
     /**
      * Computes the content address of a message text: the SHA-256 hash of its UTF-8 bytes. This must stay
-     * in sync with the hashing used by the Liquibase backfill (MySQL {@code UNHEX(SHA2(text, 256))},
+     * in sync with the hashing used by the Liquibase backfill, which hashes explicitly UTF-8-encoded bytes
+     * regardless of the column charset (MySQL {@code UNHEX(SHA2(CONVERT(text USING utf8mb4), 256))},
      * PostgreSQL {@code sha256(convert_to(text, 'UTF8'))}).
      *
      * @param text the message text, never null

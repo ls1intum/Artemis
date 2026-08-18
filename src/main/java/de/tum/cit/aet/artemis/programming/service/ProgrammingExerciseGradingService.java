@@ -129,6 +129,8 @@ public class ProgrammingExerciseGradingService {
 
     private final TestCasePointsService testCasePointsService;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, FeedbackService feedbackService,
@@ -137,7 +139,8 @@ public class ProgrammingExerciseGradingService {
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
             MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService, FeedbackMessageService feedbackMessageService,
-            TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository, TestCasePointsService testCasePointsService) {
+            TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository, TestCasePointsService testCasePointsService,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -160,6 +163,7 @@ public class ProgrammingExerciseGradingService {
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
         this.testCasePointsService = testCasePointsService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -212,9 +216,10 @@ public class ProgrammingExerciseGradingService {
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
 
             // Determine if the build failed based on whether tests were expected.
-            // When tests are expected: build failed if all feedbacks are SCA (no test results at all).
+            // When tests are expected: build failed if the build produced no test results at all
+            // (SCA-only feedback does not count - test results live in the typed collection).
             // When tests are NOT expected (compile-only phase): build failed if the script exited with non-zero.
-            final boolean noTestFeedbacks = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
+            final boolean noTestFeedbacks = newResult.getTestCaseFeedbacks().isEmpty();
             final Integer exitCode = buildResult.buildScriptExitCode();
             final boolean scriptFailed = exitCode != null && exitCode != 0;
             final var buildFailed = testsExpected ? noTestFeedbacks : scriptFailed;
@@ -472,9 +477,9 @@ public class ProgrammingExerciseGradingService {
 
         final List<StudentParticipation> studentParticipations = new ArrayList<>();
         // We only update the latest automatic results here, later manual assessments are not affected
-        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCases(exercise.getId()));
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId()));
         // Also update manual results
-        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacksAndTestCases(exercise.getId()));
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId()));
 
         final Stream<Result> updatedStudentResults = updateResults(exercise, testCases, studentParticipations);
 
@@ -496,9 +501,9 @@ public class ProgrammingExerciseGradingService {
 
         final List<StudentParticipation> studentParticipations = new ArrayList<>();
         // We only update the latest automatic results here, later manual assessments are not affected
-        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(exercise.getId()));
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacksWithoutIndividualDueDate(exercise.getId()));
         // Also update manual results
-        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(exercise.getId()));
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacksWithoutIndividualDueDate(exercise.getId()));
 
         final Stream<Result> updatedStudentResults = updateResults(exercise, testCases, studentParticipations);
 
@@ -519,7 +524,7 @@ public class ProgrammingExerciseGradingService {
         final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(testCases, true);
         final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(testCases, false);
 
-        final Optional<Result> updatedAutomaticResult = studentParticipationRepository.findByIdWithLatestAutomaticResultAndFeedbacksAndTestCases(participation.getId())
+        final Optional<Result> updatedAutomaticResult = studentParticipationRepository.findByIdWithLatestAutomaticResultAndFeedbacks(participation.getId())
                 .flatMap(studentParticipation -> updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, true));
         final Optional<Result> updatedManualResult = studentParticipationRepository.findByIdWithManualResultAndFeedbacks(participation.getId())
                 .flatMap(studentParticipation -> updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, true));
@@ -553,11 +558,11 @@ public class ProgrammingExerciseGradingService {
      */
     private Stream<Result> updateTemplateAndSolutionResults(final ProgrammingExercise exercise, final Set<ProgrammingExerciseTestCase> testCases) {
         final Optional<Result> templateResult = templateProgrammingExerciseParticipationRepository
-                .findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(exercise.getId())
+                .findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
                 .flatMap(templateParticipation -> updateLatestResult(exercise, templateParticipation, testCases, testCases, testCases, false));
 
         final Optional<Result> solutionResult = solutionProgrammingExerciseParticipationRepository
-                .findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(exercise.getId())
+                .findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
                 .flatMap(solutionParticipation -> updateLatestResult(exercise, solutionParticipation, testCases, testCases, testCases, false));
 
         return Stream.of(templateResult, solutionResult).flatMap(Optional::stream);
@@ -591,32 +596,22 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Loads the typed automatic feedback (test-case and SCA rows) of a stored result if the (lazy)
-     * collections are not initialized yet. Score re-calculation iterates these collections, and the
-     * results processed here are detached entities loaded without them.
-     *
-     * @param result the result to hydrate
-     */
-    /**
      * Bulk variant of {@link #hydrateTypedFeedback(Result)}: loads the typed automatic feedback of many
      * results with two queries.
      *
      * @param results the results to hydrate
      */
     private void hydrateTypedFeedbackBulk(Collection<Result> results) {
-        List<Long> resultIds = results.stream().map(Result::getId).filter(Objects::nonNull).toList();
-        if (resultIds.isEmpty()) {
-            return;
-        }
-        var testCaseFeedbackByResult = testCaseFeedbackRepository.findWithTestCaseByResultIds(resultIds).stream()
-                .collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
-        var scaFeedbackByResult = scaFeedbackRepository.findByResultIds(resultIds).stream().collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
-        for (Result result : results) {
-            result.setTestCaseFeedbacks(testCaseFeedbackByResult.getOrDefault(result.getId(), List.of()));
-            result.setScaFeedbacks(scaFeedbackByResult.getOrDefault(result.getId(), List.of()));
-        }
+        programmingFeedbackSynthesizerService.hydrateTypedFeedback(results);
     }
 
+    /**
+     * Loads the typed automatic feedback (test-case and SCA rows) of a stored result if the (lazy)
+     * collections are not initialized yet. Score re-calculation iterates these collections, and the
+     * results processed here are detached entities loaded without them.
+     *
+     * @param result the result to hydrate
+     */
     private void hydrateTypedFeedback(Result result) {
         if (result.getId() == null) {
             return;
@@ -763,17 +758,9 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * See {@link TestCasePointsService#calculateTestCasePoints(ProgrammingExercise, Result)}.
-     *
-     * @param exercise the programming exercise
-     * @param result   the result whose participation determines special weight handling
-     * @return derived points per test-case id
-     */
-
-    /**
      * Calculates the derived points per test-case id for a result of the given exercise, loading the
      * exercise's active test cases. Convenience variant for callers outside the grading flow (e.g. manual
-     * assessment).
+     * assessment). See {@link TestCasePointsService#calculateTestCasePoints(ProgrammingExercise, Result)}.
      *
      * @param exercise the programming exercise
      * @param result   the result whose participation determines special weight handling
@@ -821,8 +808,13 @@ public class ProgrammingExerciseGradingService {
      * @param testCases of the given programming exercise.
      */
     private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> testCases) {
+        var notExecutedTestCases = testCases.stream().filter(testCase -> testCase.wasNotExecuted(result)).toList();
+        if (notExecutedTestCases.isEmpty()) {
+            // common case: all test cases were executed - avoid the message lookup entirely
+            return;
+        }
         var notExecutedMessage = feedbackMessageService.getOrCreate(NOT_EXECUTED_MESSAGE);
-        testCases.stream().filter(testCase -> testCase.wasNotExecuted(result)).forEach(testCase -> {
+        notExecutedTestCases.forEach(testCase -> {
             TestCaseFeedback feedback = new TestCaseFeedback();
             feedback.setTestCase(testCase);
             feedback.setPositive(null);
@@ -979,6 +971,9 @@ public class ProgrammingExerciseGradingService {
      * @return The sum of all penalties, capped at the maximum allowed penalty
      */
     private double calculateStaticCodeAnalysisPenalty(final List<ScaFeedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
+        // reset stale penalties from earlier grading runs - the loop below only assigns penalties for rows
+        // in currently GRADED categories, so a category switched away from GRADED must not keep its old value
+        staticCodeAnalysisFeedback.forEach(feedback -> feedback.setPenalty(null));
         final var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(feedback -> Objects.requireNonNullElse(feedback.getCategory(), "")));
         final double maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getMaxStaticCodeAnalysisPenalty(), 100) / 100.0 * programmingExercise.getMaxPoints();
         double overallPenaltyPoints = 0;
@@ -1069,7 +1064,7 @@ public class ProgrammingExerciseGradingService {
             categoryIssuesStudentsMap.put(category.getName(), new HashMap<>());
         }
 
-        final var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(exerciseId);
+        final var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(exerciseId);
         hydrateTypedFeedbackBulk(results);
         for (Result result : results) {
             // Count the number of detected issues per category for the current result

@@ -46,8 +46,6 @@ import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
-import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
@@ -81,6 +79,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.TestCasePointsService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -146,9 +145,7 @@ public class ExerciseService {
 
     private final TestCasePointsService testCasePointsService;
 
-    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
-
-    private final ScaFeedbackRepository scaFeedbackRepository;
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
@@ -157,8 +154,8 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService, TestCasePointsService testCasePointsService, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository) {
+            ParticipationFilterService participationFilterService, TestCasePointsService testCasePointsService,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -184,8 +181,7 @@ public class ExerciseService {
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
         this.testCasePointsService = testCasePointsService;
-        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
-        this.scaFeedbackRepository = scaFeedbackRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -730,8 +726,13 @@ public class ExerciseService {
 
         // programming results need their (lazy) typed automatic feedback for the score re-calculation below
         if (exercise instanceof ProgrammingExercise) {
-            attachTypedFeedbackToResults(results);
+            programmingFeedbackSynthesizerService.hydrateTypedFeedback(results);
         }
+
+        // the derived points map is identical for all results of the exercise (except for the solution
+        // participation), so compute each variant at most once instead of loading the test cases per result
+        Map<Long, Double> pointsForStudentResults = null;
+        Map<Long, Double> pointsForSolutionResults = null;
 
         // re-calculate the results after updating the feedback
         for (Result result : results) {
@@ -749,29 +750,22 @@ public class ExerciseService {
                 resultRepository.submitResult(result, exercise);
             }
             else {
-                result.calculateScoreForProgrammingExercise(programmingExercise, testCasePointsService.calculateTestCasePoints(programmingExercise, result));
+                Map<Long, Double> pointsByTestCaseId;
+                if (TestCasePointsService.isForSolutionParticipation(result)) {
+                    if (pointsForSolutionResults == null) {
+                        pointsForSolutionResults = testCasePointsService.calculateTestCasePoints(programmingExercise, true);
+                    }
+                    pointsByTestCaseId = pointsForSolutionResults;
+                }
+                else {
+                    if (pointsForStudentResults == null) {
+                        pointsForStudentResults = testCasePointsService.calculateTestCasePoints(programmingExercise, false);
+                    }
+                    pointsByTestCaseId = pointsForStudentResults;
+                }
+                result.calculateScoreForProgrammingExercise(programmingExercise, pointsByTestCaseId);
                 resultRepository.save(result);
             }
-        }
-    }
-
-    /**
-     * Bulk-loads the typed automatic feedback (test-case and SCA rows) of the given results and attaches it,
-     * so that score calculations on the (detached) results can iterate the collections.
-     *
-     * @param results the results to hydrate
-     */
-    private void attachTypedFeedbackToResults(List<Result> results) {
-        List<Long> resultIds = results.stream().map(Result::getId).filter(Objects::nonNull).toList();
-        if (resultIds.isEmpty()) {
-            return;
-        }
-        var testCaseFeedbackByResult = testCaseFeedbackRepository.findWithTestCaseByResultIds(resultIds).stream()
-                .collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
-        var scaFeedbackByResult = scaFeedbackRepository.findByResultIds(resultIds).stream().collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
-        for (Result result : results) {
-            result.setTestCaseFeedbacks(testCaseFeedbackByResult.getOrDefault(result.getId(), List.of()));
-            result.setScaFeedbacks(scaFeedbackByResult.getOrDefault(result.getId(), List.of()));
         }
     }
 

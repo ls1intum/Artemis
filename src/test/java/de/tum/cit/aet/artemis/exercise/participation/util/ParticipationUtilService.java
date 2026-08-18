@@ -41,10 +41,12 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
@@ -81,6 +83,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.UriService;
@@ -134,6 +137,9 @@ public class ParticipationUtilService {
 
     @Autowired
     private TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    @Autowired
+    private ScaFeedbackRepository scaFeedbackRepository;
 
     @Autowired
     private FeedbackMessageService feedbackMessageService;
@@ -577,6 +583,29 @@ public class ParticipationUtilService {
         int nextSeq = testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId())).stream().mapToInt(TestCaseFeedback::getSeq).max().orElse(0) + 1;
         feedback.setSeq(nextSeq);
         testCaseFeedbackRepository.save(feedback);
+        return result;
+    }
+
+    /**
+     * Creates and saves an automatic SCA feedback row (typed table) for the given Result.
+     *
+     * @param result      The Result the feedback belongs to
+     * @param tool        The static code analysis tool that reported the issue
+     * @param category    The SCA category name
+     * @param messageText The (deduplicated) message text, may be null
+     * @return The updated Result
+     */
+    public Result addScaFeedbackToResult(Result result, StaticCodeAnalysisTool tool, String category, String messageText) {
+        ScaFeedback feedback = new ScaFeedback();
+        feedback.setTool(tool);
+        feedback.setCategory(category);
+        if (messageText != null && !messageText.isEmpty()) {
+            feedback.setMessage(feedbackMessageService.getOrCreate(messageText));
+        }
+        feedback.setResult(result);
+        int nextSeq = scaFeedbackRepository.findByResultIds(List.of(result.getId())).stream().mapToInt(ScaFeedback::getSeq).max().orElse(0) + 1;
+        feedback.setSeq(nextSeq);
+        scaFeedbackRepository.save(feedback);
         return result;
     }
 

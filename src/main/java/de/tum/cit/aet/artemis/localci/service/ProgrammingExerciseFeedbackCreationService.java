@@ -200,13 +200,13 @@ public class ProgrammingExerciseFeedbackCreationService {
                 ScaFeedback scaFeedback = new ScaFeedback();
                 scaFeedback.setTool(tool);
                 scaFeedback.setToolCategory(issue.category());
-                scaFeedback.setRule(StringUtils.truncate(issue.rule(), 255));
-                scaFeedback.setFilePath(StringUtils.truncate(removeCIDirectoriesFromPath(issue.filePath()), 512));
+                scaFeedback.setRule(StringUtils.truncate(issue.rule(), ScaFeedback.MAX_RULE_LENGTH));
+                scaFeedback.setFilePath(StringUtils.truncate(removeCIDirectoriesFromPath(issue.filePath()), ScaFeedback.MAX_FILE_PATH_LENGTH));
                 scaFeedback.setStartLine(issue.startLine());
                 scaFeedback.setEndLine(issue.endLine());
                 scaFeedback.setStartColumn(issue.startColumn());
                 scaFeedback.setEndColumn(issue.endColumn());
-                scaFeedback.setPriority(StringUtils.truncate(issue.priority(), 25));
+                scaFeedback.setPriority(StringUtils.truncate(issue.priority(), ScaFeedback.MAX_PRIORITY_LENGTH));
                 scaFeedback.setMessage(feedbackMessageService.getOrCreate(truncateSCADetailMessage(issue.message())));
                 feedbackList.add(scaFeedback);
             }

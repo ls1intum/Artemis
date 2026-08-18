@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -212,6 +213,13 @@ public class DataExportExerciseCreationService {
         boolean includeResults = (exercise.isExamExercise() && exercise.getExam().resultsPublished())
                 || (exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise) && !(exercise instanceof QuizExercise))
                 || (exercise.isCourseExercise() && exercise instanceof QuizExercise quizExercise && quizExercise.isQuizEnded()) || isInstructor;
+        if (exercise instanceof ProgrammingExercise) {
+            // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy
+            // views for all exported results at once - two grouped queries instead of two per result
+            var allResults = exercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
+                    .flatMap(submission -> submission.getResults().stream()).filter(Objects::nonNull).toList();
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(allResults);
+        }
         for (var participation : exercise.getStudentParticipations()) {
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
@@ -321,8 +329,6 @@ public class DataExportExerciseCreationService {
                 if (programmingExerciseBeforeAssessmentDueDate && result.getAssessmentType() != AssessmentType.AUTOMATIC && !isInstructor) {
                     continue;
                 }
-                // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy views
-                programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result);
                 resultService.filterSensitiveInformationIfNecessary(submission.getParticipation(), List.of(result), Optional.of(user));
                 var score = result.getScore();
                 if (score != null) {

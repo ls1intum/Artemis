@@ -73,7 +73,9 @@ public class PageUtil {
         FEEDBACK_ANALYSIS(Map.of(
             "count", "COUNT(f.id.resultId)",
             "detailTexts", "MIN(m.text)",
-            "testCaseName", "tc.testName",
+            // MIN(...) is equivalent under the query's GROUP BY tc.testName and routes the sort through
+            // JpaSort.unsafe, so Spring Data cannot prefix the join alias with the root alias
+            "testCaseName", "MIN(tc.testName)",
             "taskName", """
                     COALESCE((
                     SELECT MAX(t.taskName)

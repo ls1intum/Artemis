@@ -214,7 +214,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
         when(buildResult.isSuccessful()).thenReturn(true);
         when(buildResult.getScore()).thenReturn(100.0);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
@@ -283,7 +283,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(50.0);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
 
@@ -323,7 +323,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(50.0);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
 
@@ -456,7 +456,7 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         assertThat(result).isNull();
         verify(programmingSubmissionRepository, never()).findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(anyLong(), anyString());
-        verify(resultRepository, never()).findLatestResultWithFeedbacksAndTestcasesForSubmission(anyLong());
+        verify(resultRepository, never()).findLatestResultWithFeedbacksForSubmission(anyLong());
         verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
         verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.CI_TRIGGER_FAILED, Map.of(), 1,
                 "Solution files were generated and committed to the solution repository, but Hyperion could not trigger the CI build.");
@@ -493,7 +493,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(0.0);
         when(buildResult.getTestCaseCount()).thenReturn(1);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TEMPLATE)).thenReturn(false);
@@ -888,7 +888,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(99L, "commit-hash")).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
         when(buildResult.isSuccessful()).thenReturn(true);
         when(buildResult.getScore()).thenReturn(100.0);
 
@@ -908,7 +908,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(100L, "commit-hash")).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(50.0);
 
         Object outcome = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.SOLUTION);
@@ -927,7 +927,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(templateParticipation));
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(101L, "commit-hash")).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(0.0);
         when(buildResult.getTestCaseCount()).thenReturn(1);
 
@@ -947,7 +947,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(templateParticipation));
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(102L, "commit-hash")).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(0.0);
         when(buildResult.getTestCaseCount()).thenReturn(0);
 
@@ -986,7 +986,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(88L), eq("new-hash"))).thenReturn(submission);
-        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestResultWithFeedbacksForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(25.0);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TEMPLATE)).thenReturn(false);
 

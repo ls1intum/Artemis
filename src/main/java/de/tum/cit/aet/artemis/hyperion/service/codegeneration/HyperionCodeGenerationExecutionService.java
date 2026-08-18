@@ -767,7 +767,7 @@ public class HyperionCodeGenerationExecutionService {
                         .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), commitHash);
 
                 if (submission != null) {
-                    Optional<Result> result = resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId());
+                    Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId());
 
                     if (result.isPresent()) {
                         log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);

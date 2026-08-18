@@ -2,9 +2,6 @@ package de.tum.cit.aet.artemis.assessment.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -46,22 +43,6 @@ public class FeedbackMessageService {
         }
         byte[] hash = FeedbackMessage.hashOf(text);
         return feedbackMessageRepository.findByHash(hash).orElseGet(() -> insertOrReRead(hash, text));
-    }
-
-    /**
-     * Resolves message rows for many texts in one go, reusing lookups for identical texts.
-     *
-     * @param texts the message texts (null/empty entries allowed)
-     * @return a map from each distinct non-empty text to its shared message row
-     */
-    public Map<String, FeedbackMessage> getOrCreateAll(Iterable<String> texts) {
-        Map<String, FeedbackMessage> messagesByText = new HashMap<>();
-        for (String text : texts) {
-            if (text != null && !text.isEmpty()) {
-                messagesByText.computeIfAbsent(text, this::getOrCreate);
-            }
-        }
-        return messagesByText;
     }
 
     private FeedbackMessage insertOrReRead(byte[] hash, String text) {

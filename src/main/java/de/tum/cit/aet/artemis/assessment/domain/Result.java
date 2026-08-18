@@ -408,19 +408,28 @@ public class Result extends DomainObject implements Comparable<Result> {
     /**
      * Replaces the test-case feedback collection, wiring the owning side of each row. Orphaned rows are
      * deleted via {@code orphanRemoval}. Replaces the field reference for the same lazy-initialization
-     * reason as {@link #setFeedbacks(Collection)}.
+     * reason as {@link #setFeedbacks(Collection)}. Rows without a sequence number yet (freshly constructed,
+     * {@code seq <= 0}) get the next free one assigned, so a mixed collection cannot produce a primary-key
+     * collision on {@code (result_id, seq)}.
      *
      * @param testCaseFeedbacks the new collection (may be {@code null} or empty to clear)
      */
     public void setTestCaseFeedbacks(Collection<TestCaseFeedback> testCaseFeedbacks) {
         Set<TestCaseFeedback> newSet = new HashSet<>();
         if (testCaseFeedbacks != null) {
+            int maxSeq = 0;
             for (TestCaseFeedback feedback : testCaseFeedbacks) {
                 if (feedback == null) {
                     continue;
                 }
                 feedback.setResult(this);
+                maxSeq = Math.max(maxSeq, feedback.getSeq());
                 newSet.add(feedback);
+            }
+            for (TestCaseFeedback feedback : newSet) {
+                if (feedback.getSeq() <= 0) {
+                    feedback.setSeq(++maxSeq);
+                }
             }
         }
         this.testCaseFeedbacks = newSet;
@@ -428,7 +437,9 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * Adds the given test-case feedback to this result, assigning the next free sequence number and wiring
-     * the owning side.
+     * the owning side. Requires the target collection to be initialized (deriving the next sequence number
+     * iterates it) — use {@link #setTestCaseFeedbacks(Collection)} on detached results with uninitialized
+     * collections.
      *
      * @param feedback the test-case feedback to attach
      */
@@ -453,20 +464,27 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Replaces the SCA feedback collection, wiring the owning side of each row. See
-     * {@link #setTestCaseFeedbacks(Collection)}.
+     * Replaces the SCA feedback collection, wiring the owning side of each row and assigning missing
+     * sequence numbers. See {@link #setTestCaseFeedbacks(Collection)}.
      *
      * @param scaFeedbacks the new collection (may be {@code null} or empty to clear)
      */
     public void setScaFeedbacks(Collection<ScaFeedback> scaFeedbacks) {
         Set<ScaFeedback> newSet = new HashSet<>();
         if (scaFeedbacks != null) {
+            int maxSeq = 0;
             for (ScaFeedback feedback : scaFeedbacks) {
                 if (feedback == null) {
                     continue;
                 }
                 feedback.setResult(this);
+                maxSeq = Math.max(maxSeq, feedback.getSeq());
                 newSet.add(feedback);
+            }
+            for (ScaFeedback feedback : newSet) {
+                if (feedback.getSeq() <= 0) {
+                    feedback.setSeq(++maxSeq);
+                }
             }
         }
         this.scaFeedbacks = newSet;
@@ -474,7 +492,9 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * Adds the given SCA feedback to this result, assigning the next free sequence number and wiring the
-     * owning side.
+     * owning side. Requires the target collection to be initialized (deriving the next sequence number
+     * iterates it) — use {@link #setScaFeedbacks(Collection)} on detached results with uninitialized
+     * collections.
      *
      * @param feedback the SCA feedback to attach
      */

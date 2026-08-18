@@ -61,7 +61,7 @@ public interface SolutionProgrammingExerciseParticipationRepository
                 LEFT JOIN FETCH r.feedbacks f
             WHERE p.programmingExercise.id = :exerciseId
             """)
-    Optional<SolutionProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(@Param("exerciseId") long exerciseId);
+    Optional<SolutionProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<SolutionProgrammingExerciseParticipation> findWithEagerSubmissionsByProgrammingExerciseId(long exerciseId);

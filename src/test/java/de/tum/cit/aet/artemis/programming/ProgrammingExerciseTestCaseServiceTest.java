@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackMessage;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
@@ -88,6 +89,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
 
         assertThat(testCaseRepository.findById(testCase.getId())).isEmpty();
         assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId()))).isEmpty();
+        assertThat(feedbackMessageRepository.findByHash(FeedbackMessage.hashOf("x".repeat(1500)))).isPresent();
     }
 
     private void testResetTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) {

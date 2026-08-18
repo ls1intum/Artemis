@@ -53,6 +53,12 @@
             <column name="text" type="${messageTextType}">
                 <constraints nullable="false"/>
             </column>
+            <!-- creation timestamp used as a safety window by the garbage collection: a message row is
+                 committed before the feedback rows that reference it (no surrounding transaction), so the
+                 cleanup only deletes unreferenced messages older than a grace period -->
+            <column name="created_date" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
 
@@ -110,7 +116,7 @@
     <changeSet id="20260817090000-04-backfill-messages-test-mysql" author="krusche" dbms="mysql">
         <sql>
             INSERT IGNORE INTO feedback_message (hash, text)
-            SELECT UNHEX(SHA2(src.txt, 256)), src.txt
+            SELECT UNHEX(SHA2(CONVERT(src.txt USING utf8mb4), 256)), src.txt
             FROM (
                 SELECT COALESCE(l.feedback_text, f.detail_text) AS txt
                 FROM feedback f
@@ -141,7 +147,7 @@
     <changeSet id="20260817090000-05-backfill-messages-sca-mysql" author="krusche" dbms="mysql">
         <sql>
             INSERT IGNORE INTO feedback_message (hash, text)
-            SELECT UNHEX(SHA2(src.txt, 256)), src.txt
+            SELECT UNHEX(SHA2(CONVERT(src.txt USING utf8mb4), 256)), src.txt
             FROM (
                 SELECT CASE WHEN JSON_VALID(f.detail_text) THEN JSON_UNQUOTE(JSON_EXTRACT(f.detail_text, '$.message')) ELSE f.detail_text END AS txt
                 FROM feedback f
@@ -190,7 +196,7 @@
                    fm.id
             FROM feedback f
             LEFT JOIN long_feedback_text l ON l.feedback_id = f.id
-            LEFT JOIN feedback_message fm ON fm.hash = UNHEX(SHA2(COALESCE(l.feedback_text, f.detail_text), 256))
+            LEFT JOIN feedback_message fm ON fm.hash = UNHEX(SHA2(CONVERT(COALESCE(l.feedback_text, f.detail_text) USING utf8mb4), 256))
             WHERE f.result_id IS NOT NULL AND f.test_case_id IS NOT NULL;
         </sql>
     </changeSet>
@@ -239,7 +245,7 @@
                 WHERE f.result_id IS NOT NULL AND f.text LIKE 'SCAFeedbackIdentifier%'
             ) j
             LEFT JOIN feedback_message fm
-                   ON fm.hash = UNHEX(SHA2(CASE WHEN j.doc IS NOT NULL THEN JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.message')) ELSE j.detail_text END, 256));
+                   ON fm.hash = UNHEX(SHA2(CONVERT(CASE WHEN j.doc IS NOT NULL THEN JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.message')) ELSE j.detail_text END USING utf8mb4), 256));
         </sql>
     </changeSet>
 

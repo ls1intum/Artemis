@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -200,6 +201,25 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 "/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
 
         assertThat(feedbacks).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldSynthesizeDistinctIdsForTestCaseAndScaFeedbackWithSameSeq() throws Exception {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "Some feedback");
+        participationUtilService.addScaFeedbackToResult(result, StaticCodeAnalysisTool.SPOTBUGS, "Bad Practice", "sca issue message");
+
+        List<Feedback> feedbacks = request.getList(
+                "/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+
+        // both rows carry seq = 1 - without the SCA seq offset the two synthesized views would collide on
+        // the same synthetic id and one of them would be dropped from the (Set-backed) feedback collection
+        assertThat(feedbacks).hasSize(2);
+        assertThat(feedbacks.stream().map(Feedback::getId)).containsExactlyInAnyOrder(ProgrammingFeedbackSynthesizerService.syntheticId(result.getId(), 1),
+                ProgrammingFeedbackSynthesizerService.syntheticScaId(result.getId(), 1));
     }
 
     @Test
@@ -730,6 +750,24 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
 
         assertThat(response.totalItems()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetAllFeedbackDetailsForExerciseSortedByTestCaseName() throws Exception {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCaseB = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "bTest");
+        ProgrammingExerciseTestCase testCaseA = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "aTest");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCaseB, false, "Feedback B");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCaseA, false, "Feedback A");
+
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=testCaseName&sortingOrder=ASCENDING"
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false";
+
+        FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
+
+        assertThat(response.feedbackDetails().getResultsOnPage()).extracting(FeedbackDetailDTO::testCaseName).containsExactly("aTest", "bTest");
     }
 
     @Test

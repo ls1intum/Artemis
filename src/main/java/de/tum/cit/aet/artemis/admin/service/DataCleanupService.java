@@ -169,7 +169,9 @@ public class DataCleanupService {
         int deletedScaFeedbackForOrphanResults = scaFeedbackCleanupRepository.deleteScaFeedbackForOrphanResults();
         log.info("Deleted {} SCA feedback entries for orphan results", deletedScaFeedbackForOrphanResults);
 
-        int deletedUnreferencedFeedbackMessages = feedbackMessageCleanupRepository.deleteUnreferencedFeedbackMessages();
+        // the one-day grace period protects messages created by an in-flight build-result transaction
+        // whose referencing feedback rows are not committed yet (the columns carry no foreign key)
+        int deletedUnreferencedFeedbackMessages = feedbackMessageCleanupRepository.deleteUnreferencedFeedbackMessages(ZonedDateTime.now().minusDays(1));
         log.info("Deleted {} unreferenced feedback messages", deletedUnreferencedFeedbackMessages);
 
         int deletedOrphanRatings = ratingCleanupRepository.deleteOrphanRating();
@@ -417,12 +419,16 @@ public class DataCleanupService {
         // Rated: delete referencing rows (long feedback texts, text blocks) before the feedback they belong to.
         int ratedLongFeedbackTexts = longFeedbackTextCleanupRepository.deleteLongFeedbackTextForRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
         int ratedTextBlocks = textBlockCleanupRepository.deleteTextBlockForRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
-        int ratedFeedback = feedbackCleanupRepository.deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
+        int ratedFeedback = feedbackCleanupRepository.deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
+                + testCaseFeedbackCleanupRepository.deleteOldTestCaseFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
+                + scaFeedbackCleanupRepository.deleteOldScaFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
 
         // Non-rated
         int nonRatedLongFeedbackTexts = longFeedbackTextCleanupRepository.deleteLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
         int nonRatedTextBlocks = textBlockCleanupRepository.deleteTextBlockForNonRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
-        int nonRatedFeedback = feedbackCleanupRepository.deleteOldNonRatedFeedbackWhereCourseDateBetween(FAR_PAST, cutoff);
+        int nonRatedFeedback = feedbackCleanupRepository.deleteOldNonRatedFeedbackWhereCourseDateBetween(FAR_PAST, cutoff)
+                + testCaseFeedbackCleanupRepository.deleteOldNonRatedTestCaseFeedbackWhereCourseDateBetween(FAR_PAST, cutoff)
+                + scaFeedbackCleanupRepository.deleteOldNonRatedScaFeedbackWhereCourseDateBetween(FAR_PAST, cutoff);
 
         log.info("Deleted feedback of non-latest results of old courses (ended before {}): {} long feedback texts, {} text blocks, {} feedback entries", cutoff,
                 ratedLongFeedbackTexts + nonRatedLongFeedbackTexts, ratedTextBlocks + nonRatedTextBlocks, ratedFeedback + nonRatedFeedback);
@@ -442,7 +448,11 @@ public class DataCleanupService {
         int textBlock = textBlockCleanupRepository.countTextBlockForRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
                 + textBlockCleanupRepository.countTextBlockForNonRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff);
         int feedback = feedbackCleanupRepository.countOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
-                + feedbackCleanupRepository.countOldNonRatedFeedbackWhereCourseDateBetween(FAR_PAST, cutoff);
+                + feedbackCleanupRepository.countOldNonRatedFeedbackWhereCourseDateBetween(FAR_PAST, cutoff)
+                + testCaseFeedbackCleanupRepository.countOldTestCaseFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
+                + testCaseFeedbackCleanupRepository.countOldNonRatedTestCaseFeedbackWhereCourseDateBetween(FAR_PAST, cutoff)
+                + scaFeedbackCleanupRepository.countOldScaFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(FAR_PAST, cutoff)
+                + scaFeedbackCleanupRepository.countOldNonRatedScaFeedbackWhereCourseDateBetween(FAR_PAST, cutoff);
         return new OldFeedbackCleanupCountDTO(longFeedbackText, textBlock, feedback);
     }
 

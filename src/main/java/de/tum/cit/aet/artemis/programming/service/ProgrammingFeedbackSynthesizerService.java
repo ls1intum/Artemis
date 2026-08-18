@@ -2,8 +2,12 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -22,6 +26,7 @@ import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
@@ -51,9 +56,11 @@ public class ProgrammingFeedbackSynthesizerService {
 
     /**
      * Factor encoding {@code (resultId, seq)} into one synthetic id; supports up to 100&nbsp;000 feedback
-     * items per result (the sequence is a SMALLINT, so the real bound is far lower).
+     * items per result (the sequence is a SMALLINT, so the real bound is far lower). SCA views additionally
+     * offset the seq part by {@link Constants#SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET} so that a test view and an
+     * SCA view with the same sequence number never share an id.
      */
-    public static final long SYNTHETIC_ID_FACTOR = 100_000L;
+    public static final long SYNTHETIC_ID_FACTOR = Constants.SYNTHETIC_FEEDBACK_ID_FACTOR;
 
     private static final ObjectMapper objectMapper = JsonObjectMapper.get();
 
@@ -74,6 +81,19 @@ public class ProgrammingFeedbackSynthesizerService {
         return -(resultId * SYNTHETIC_ID_FACTOR + seq);
     }
 
+    /**
+     * Synthetic id of an SCA view: like {@link #syntheticId(long, int)}, but with the seq part offset by
+     * {@link Constants#SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET} so it cannot collide with a test view of the same
+     * result (the two row types allocate their sequence numbers independently).
+     *
+     * @param resultId the id of the result the SCA row belongs to
+     * @param seq      the sequence number of the SCA row
+     * @return the synthetic (negative) id of the SCA view
+     */
+    public static long syntheticScaId(long resultId, int seq) {
+        return -(resultId * SYNTHETIC_ID_FACTOR + Constants.SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET + seq);
+    }
+
     public static boolean isSyntheticId(long feedbackId) {
         return feedbackId < 0;
     }
@@ -82,6 +102,14 @@ public class ProgrammingFeedbackSynthesizerService {
         return (-syntheticId) / SYNTHETIC_ID_FACTOR;
     }
 
+    /**
+     * Decodes the seq part of a synthetic id. For SCA ids the returned value still carries the
+     * {@link Constants#SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET}, so a lookup in the test-case feedback table
+     * (the only consumer - SCA views never have long feedback) finds no row and correctly yields a 404.
+     *
+     * @param syntheticId the synthetic (negative) feedback id
+     * @return the encoded seq part
+     */
     public static int seqFromSyntheticId(long syntheticId) {
         return (int) ((-syntheticId) % SYNTHETIC_ID_FACTOR);
     }
@@ -95,23 +123,106 @@ public class ProgrammingFeedbackSynthesizerService {
      * @param result the (detached) result about to be serialized
      */
     public void attachSynthesizedFeedback(Result result) {
-        if (result.getId() == null || result.getSubmission() == null || result.getSubmission().getParticipation() == null
-                || !(result.getSubmission().getParticipation().getExercise() instanceof ProgrammingExercise programmingExercise)) {
+        if (exerciseOf(result) == null) {
+            return;
+        }
+        ProgrammingExercise programmingExercise = exerciseOf(result);
+
+        List<TestCaseFeedback> testCaseFeedbacks = hasAuthoritativeTestCaseFeedback(result) ? List.copyOf(result.getTestCaseFeedbacks())
+                : testCaseFeedbackRepository.findWithTestCaseAndMessageByResultId(result.getId());
+        List<ScaFeedback> scaFeedbacks = hasAuthoritativeScaFeedback(result) ? List.copyOf(result.getScaFeedbacks())
+                : scaFeedbackRepository.findWithMessageByResultId(result.getId());
+
+        Map<Long, Double> pointsByTestCaseId = testCaseFeedbacks.isEmpty() ? Map.of() : testCasePointsService.calculateTestCasePoints(programmingExercise, result);
+        synthesizeAndAttach(result, testCaseFeedbacks, scaFeedbacks, pointsByTestCaseId);
+    }
+
+    /**
+     * Bulk variant of {@link #attachSynthesizedFeedback(Result)}: loads the typed feedback of all given
+     * programming results with two grouped queries and derives the per-exercise points map once per
+     * (exercise, participation-type) pair — instead of up to three queries per result.
+     *
+     * @param results the (detached) results about to be serialized; non-programming results are skipped
+     */
+    public void attachSynthesizedFeedback(Collection<Result> results) {
+        List<Result> programmingResults = results.stream().filter(result -> result != null && exerciseOf(result) != null).toList();
+        if (programmingResults.isEmpty()) {
             return;
         }
 
-        List<TestCaseFeedback> testCaseFeedbacks = Hibernate.isInitialized(result.getTestCaseFeedbacks()) && !result.getTestCaseFeedbacks().isEmpty()
-                ? List.copyOf(result.getTestCaseFeedbacks())
-                : testCaseFeedbackRepository.findWithTestCaseAndMessageByResultId(result.getId());
-        List<ScaFeedback> scaFeedbacks = Hibernate.isInitialized(result.getScaFeedbacks()) && !result.getScaFeedbacks().isEmpty() ? List.copyOf(result.getScaFeedbacks())
-                : scaFeedbackRepository.findWithMessageByResultId(result.getId());
+        List<Long> idsToLoad = programmingResults.stream().filter(result -> !hasAuthoritativeTestCaseFeedback(result) || !hasAuthoritativeScaFeedback(result)).map(Result::getId)
+                .distinct().toList();
+        Map<Long, List<TestCaseFeedback>> loadedTestCaseFeedback = idsToLoad.isEmpty() ? Map.of()
+                : testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(idsToLoad).stream().collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
+        Map<Long, List<ScaFeedback>> loadedScaFeedback = idsToLoad.isEmpty() ? Map.of()
+                : scaFeedbackRepository.findWithMessageByResultIds(idsToLoad).stream().collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
 
+        Map<String, Map<Long, Double>> pointsCache = new HashMap<>();
+        for (Result result : programmingResults) {
+            ProgrammingExercise programmingExercise = exerciseOf(result);
+            List<TestCaseFeedback> testCaseFeedbacks = hasAuthoritativeTestCaseFeedback(result) ? List.copyOf(result.getTestCaseFeedbacks())
+                    : loadedTestCaseFeedback.getOrDefault(result.getId(), List.of());
+            List<ScaFeedback> scaFeedbacks = hasAuthoritativeScaFeedback(result) ? List.copyOf(result.getScaFeedbacks())
+                    : loadedScaFeedback.getOrDefault(result.getId(), List.of());
+
+            Map<Long, Double> pointsByTestCaseId = Map.of();
+            if (!testCaseFeedbacks.isEmpty()) {
+                boolean isSolutionParticipation = TestCasePointsService.isForSolutionParticipation(result);
+                pointsByTestCaseId = pointsCache.computeIfAbsent(programmingExercise.getId() + "|" + isSolutionParticipation,
+                        key -> testCasePointsService.calculateTestCasePoints(programmingExercise, isSolutionParticipation));
+            }
+            synthesizeAndAttach(result, testCaseFeedbacks, scaFeedbacks, pointsByTestCaseId);
+        }
+    }
+
+    /**
+     * Bulk-loads the typed automatic feedback (test-case and SCA rows, without messages) of the given
+     * results with two queries and replaces the results' collections — the light-weight hydration used by
+     * score re-calculation flows on detached results. Results absent from the database get empty
+     * collections.
+     *
+     * @param results the results to hydrate
+     */
+    public void hydrateTypedFeedback(Collection<Result> results) {
+        List<Long> resultIds = results.stream().map(Result::getId).filter(Objects::nonNull).toList();
+        if (resultIds.isEmpty()) {
+            return;
+        }
+        var testCaseFeedbackByResult = testCaseFeedbackRepository.findWithTestCaseByResultIds(resultIds).stream()
+                .collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
+        var scaFeedbackByResult = scaFeedbackRepository.findByResultIds(resultIds).stream().collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
+        for (Result result : results) {
+            result.setTestCaseFeedbacks(testCaseFeedbackByResult.getOrDefault(result.getId(), List.of()));
+            result.setScaFeedbacks(scaFeedbackByResult.getOrDefault(result.getId(), List.of()));
+        }
+    }
+
+    private static ProgrammingExercise exerciseOf(Result result) {
+        if (result == null || result.getId() == null || result.getSubmission() == null || result.getSubmission().getParticipation() == null
+                || !(result.getSubmission().getParticipation().getExercise() instanceof ProgrammingExercise programmingExercise)) {
+            return null;
+        }
+        return programmingExercise;
+    }
+
+    /**
+     * An initialized, non-empty in-memory collection is authoritative (e.g. a result fresh from build
+     * processing); an uninitialized or initialized-but-empty one is not — the rows are loaded instead,
+     * because a result deserialized from client input carries empty-initialized collections although the
+     * database has rows.
+     */
+    private static boolean hasAuthoritativeTestCaseFeedback(Result result) {
+        return Hibernate.isInitialized(result.getTestCaseFeedbacks()) && !result.getTestCaseFeedbacks().isEmpty();
+    }
+
+    private static boolean hasAuthoritativeScaFeedback(Result result) {
+        return Hibernate.isInitialized(result.getScaFeedbacks()) && !result.getScaFeedbacks().isEmpty();
+    }
+
+    private void synthesizeAndAttach(Result result, List<TestCaseFeedback> testCaseFeedbacks, List<ScaFeedback> scaFeedbacks, Map<Long, Double> pointsByTestCaseId) {
         if (testCaseFeedbacks.isEmpty() && scaFeedbacks.isEmpty()) {
             return;
         }
-
-        Map<Long, Double> pointsByTestCaseId = testCaseFeedbacks.isEmpty() ? Map.of() : testCasePointsService.calculateTestCasePoints(programmingExercise, result);
-
         long resultId = result.getId();
         testCaseFeedbacks.forEach(feedback -> result.getFeedbacks().add(synthesizeTestCaseFeedback(feedback, resultId, pointsByTestCaseId)));
         scaFeedbacks.forEach(feedback -> result.getFeedbacks().add(synthesizeScaFeedback(feedback, resultId)));
@@ -134,7 +245,7 @@ public class ProgrammingFeedbackSynthesizerService {
 
     private Feedback synthesizeScaFeedback(ScaFeedback source, long resultId) {
         Feedback view = new Feedback();
-        view.setId(syntheticId(resultId, source.getSeq()));
+        view.setId(syntheticScaId(resultId, source.getSeq()));
         view.setType(FeedbackType.AUTOMATIC);
         view.setPositive(false);
         view.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + (source.getCategory() == null ? "" : source.getCategory()));

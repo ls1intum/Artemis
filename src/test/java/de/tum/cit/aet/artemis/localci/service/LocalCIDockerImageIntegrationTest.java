@@ -290,7 +290,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         // Re-fetch the result with feedbacks + test cases eagerly loaded; the persistedSubmission
         // returned from the repository above is detached, so result.getFeedbacks() would otherwise
         // hit a LazyInitializationException.
-        var resultWithFeedbacks = resultRepository.findResultWithFeedbacksAndTestCasesById(resultId);
+        var resultWithFeedbacks = resultRepository.findResultWithFeedbacksById(resultId);
         if (resultWithFeedbacks.isEmpty() || resultWithFeedbacks.get().getFeedbacks().isEmpty()) {
             return "(no feedback recorded)";
         }

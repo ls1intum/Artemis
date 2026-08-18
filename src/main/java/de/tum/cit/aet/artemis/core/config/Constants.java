@@ -153,6 +153,22 @@ public final class Constants {
 
     public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
 
+    /**
+     * Factor encoding {@code (resultId, seq)} into one synthetic negative feedback id:
+     * {@code -(resultId * FACTOR + seq)}. Shared between the Java encoder/decoder
+     * (ProgrammingFeedbackSynthesizerService) and the JPQL feedback-analysis query that builds the same
+     * ids in the database, so the two sides cannot drift.
+     */
+    public static final long SYNTHETIC_FEEDBACK_ID_FACTOR = 100_000L;
+
+    /**
+     * Offset added to the {@code seq} part of synthetic SCA feedback ids. Test-case and SCA rows of the
+     * same result allocate their sequence numbers independently (two tables, two counters), so without the
+     * offset a test view and an SCA view could carry the same synthetic id. The sequence is a SMALLINT
+     * (max 32767), so offset + seq always stays below {@link #SYNTHETIC_FEEDBACK_ID_FACTOR}.
+     */
+    public static final long SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET = 50_000L;
+
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 
     // Note: Must be consistent with EXAM_TEXT_MAX_LENGTH in input.constants.ts

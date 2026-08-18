@@ -40,6 +40,14 @@ public interface ScaFeedbackRepository extends ArtemisJpaRepository<ScaFeedback,
             """)
     List<ScaFeedback> findByResultIds(@Param("resultIds") Collection<Long> resultIds);
 
+    @Query("""
+            SELECT feedback
+            FROM ScaFeedback feedback
+                LEFT JOIN FETCH feedback.message
+            WHERE feedback.id.resultId IN :resultIds
+            """)
+    List<ScaFeedback> findWithMessageByResultIds(@Param("resultIds") Collection<Long> resultIds);
+
     @Modifying
     @Transactional // ok because of delete
     @Query("""

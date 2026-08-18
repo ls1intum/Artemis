@@ -61,7 +61,7 @@ public interface ProgrammingSubmissionTestRepository extends ProgrammingSubmissi
     Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(Long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor" })
-    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksTestCasesAssessorById(long submissionId);
+    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksAssessorById(long submissionId);
 
     /**
      * Get the programming submission with the given id from the database. The submission is loaded together with exercise it belongs to, its result, the feedback of the result and
@@ -71,8 +71,8 @@ public interface ProgrammingSubmissionTestRepository extends ProgrammingSubmissi
      * @return the programming submission with the given id
      */
     @NonNull
-    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
-        return getValueElseThrow(findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId), submissionId);
+    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessor(long submissionId) {
+        return getValueElseThrow(findWithEagerResultsFeedbacksAssessorById(submissionId), submissionId);
     }
 
     @EntityGraph(type = LOAD, attributePaths = "results")

@@ -131,7 +131,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
         savedResult.setSubmission(submission);
 
         // Re-load result to fetch the test cases
-        newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(newManualResult.getId());
+        newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(newManualResult.getId());
 
         if (submit) {
             return submitManualAssessment(newManualResult, submission, participation, exercise);

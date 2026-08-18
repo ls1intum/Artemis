@@ -153,7 +153,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     Optional<ProgrammingSubmission> findWithEagerResultsAndFeedbacksAndBuildLogsById(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor" })
-    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksTestCasesAssessorById(long submissionId);
+    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksAssessorById(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
     Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(long submissionId);
@@ -182,8 +182,8 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      * @return the programming submission with the given id
      */
     @NonNull
-    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
-        return getValueElseThrow(findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId), submissionId);
+    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessor(long submissionId) {
+        return getValueElseThrow(findWithEagerResultsFeedbacksAssessorById(submissionId), submissionId);
     }
 
     @NonNull

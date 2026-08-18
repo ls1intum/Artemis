@@ -208,7 +208,7 @@ public class ProgrammingExerciseService {
         // if there are no submissions we can neither access a submission nor does it make sense to load a result
         if (!programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().isEmpty()) {
             Optional<Result> latestResultForLatestSubmissionOfTemplate = resultRepository
-                    .findLatestResultWithFeedbacksAndTestcasesForSubmission(programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().getId());
+                    .findLatestResultWithFeedbacksForSubmission(programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().getId());
             List<Result> resultsForLatestSubmissionTemplate = new ArrayList<>();
             latestResultForLatestSubmissionOfTemplate.ifPresent(resultsForLatestSubmissionTemplate::add);
             programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().setResults(resultsForLatestSubmissionTemplate);
@@ -218,7 +218,7 @@ public class ProgrammingExerciseService {
 
         if (!solutionParticipationWithLatestSubmission.getSubmissions().isEmpty()) {
             Optional<Result> latestResultForLatestSubmissionOfSolution = resultRepository
-                    .findLatestResultWithFeedbacksAndTestcasesForSubmission(solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().getId());
+                    .findLatestResultWithFeedbacksForSubmission(solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().getId());
             List<Result> resultsForLatestSubmissionSolution = new ArrayList<>();
             latestResultForLatestSubmissionOfSolution.ifPresent(resultsForLatestSubmissionSolution::add);
             solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().setResults(resultsForLatestSubmissionSolution);

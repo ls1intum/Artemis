@@ -46,6 +46,15 @@ public interface TestCaseFeedbackRepository extends ArtemisJpaRepository<TestCas
     @Query("""
             SELECT feedback
             FROM TestCaseFeedback feedback
+                LEFT JOIN FETCH feedback.testCase
+                LEFT JOIN FETCH feedback.message
+            WHERE feedback.id.resultId IN :resultIds
+            """)
+    List<TestCaseFeedback> findWithTestCaseAndMessageByResultIds(@Param("resultIds") Collection<Long> resultIds);
+
+    @Query("""
+            SELECT feedback
+            FROM TestCaseFeedback feedback
                 LEFT JOIN FETCH feedback.message
                 LEFT JOIN FETCH feedback.testCase
                 JOIN FETCH feedback.result r

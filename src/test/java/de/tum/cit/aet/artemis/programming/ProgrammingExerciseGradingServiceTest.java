@@ -1291,7 +1291,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldGetCorrectLatestAutomaticResults() {
         createTestParticipationsWithResults();
-        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(programmingExerciseSCAEnabled.getId());
+        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
         assertThat(results).hasSize(5);
     }
 
@@ -1300,7 +1300,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     void shouldGetCorrectLatestAutomaticResultsWithMultipleResults() {
         createTestParticipationsWithMultipleResults();
         // this method is tested. It should probably be improved as there is an inner query
-        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(programmingExerciseSCAEnabled.getId());
+        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
         var allResults = resultRepository.findAllBySubmissionParticipationExerciseId(programmingExerciseSCAEnabled.getId());
         assertThat(results).hasSize(5);
         assertThat(allResults).hasSize(6);

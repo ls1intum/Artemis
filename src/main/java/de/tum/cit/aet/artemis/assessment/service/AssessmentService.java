@@ -290,7 +290,7 @@ public class AssessmentService {
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText, long exerciseId) {
         Result result = null;
         if (resultId != null) {
-            result = resultRepository.findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(resultId).orElse(null);
+            result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(resultId).orElse(null);
         }
 
         if (result == null) {

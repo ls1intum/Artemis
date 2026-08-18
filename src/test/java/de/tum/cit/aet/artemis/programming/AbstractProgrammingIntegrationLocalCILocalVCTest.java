@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackMessageRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
@@ -54,6 +55,9 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
 
     @Autowired
     protected ScaFeedbackRepository scaFeedbackRepository;
+
+    @Autowired
+    protected FeedbackMessageRepository feedbackMessageRepository;
 
     // Repositories
     @Autowired

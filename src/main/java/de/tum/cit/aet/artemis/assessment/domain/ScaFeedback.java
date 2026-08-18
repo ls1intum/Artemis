@@ -47,13 +47,22 @@ public class ScaFeedback {
     @Column(name = "tool", nullable = false)
     private StaticCodeAnalysisTool tool;
 
+    /**
+     * Column lengths of the schema (changelog 20260817090000); the writer truncates to these limits.
+     */
+    public static final int MAX_RULE_LENGTH = 255;
+
+    public static final int MAX_FILE_PATH_LENGTH = 512;
+
+    public static final int MAX_PRIORITY_LENGTH = 25;
+
     @Column(name = "category")
     private String category;
 
-    @Column(name = "rule")
+    @Column(name = "rule", length = MAX_RULE_LENGTH)
     private String rule;
 
-    @Column(name = "file_path")
+    @Column(name = "file_path", length = MAX_FILE_PATH_LENGTH)
     private String filePath;
 
     @Column(name = "start_line")
@@ -68,7 +77,7 @@ public class ScaFeedback {
     @Column(name = "end_column")
     private Integer endColumn;
 
-    @Column(name = "priority")
+    @Column(name = "priority", length = MAX_PRIORITY_LENGTH)
     private String priority;
 
     @Column(name = "penalty")

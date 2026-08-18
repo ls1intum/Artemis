@@ -104,15 +104,41 @@ public class TestCasePointsService {
     /**
      * Derives the points per test-case id for a result of the given exercise, loading the exercise's active
      * test cases. Convenience variant for callers outside the grading flow (manual assessment, DTO assembly).
+     * <p>
+     * Precondition for the zero-weight-sum special case: the result's submission and participation must be
+     * reachable (loaded or within an open session) — see {@link #isForSolutionParticipation(Result)}.
+     * Callers that process many results of one exercise should use
+     * {@link #calculateTestCasePoints(ProgrammingExercise, boolean)} instead and reuse the map, because
+     * this variant loads the exercise's test cases on every call.
      *
      * @param exercise the programming exercise
      * @param result   the result whose participation determines the zero-weight-sum special case
      * @return derived points per test-case id
      */
     public Map<Long, Double> calculateTestCasePoints(ProgrammingExercise exercise, Result result) {
+        return calculateTestCasePoints(exercise, isForSolutionParticipation(result));
+    }
+
+    /**
+     * Derives the points per test-case id for the given exercise, loading its active test cases.
+     *
+     * @param exercise                the programming exercise
+     * @param isSolutionParticipation true if the map is used for results of the solution participation
+     * @return derived points per test-case id
+     */
+    public Map<Long, Double> calculateTestCasePoints(ProgrammingExercise exercise, boolean isSolutionParticipation) {
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
-        boolean isSolutionParticipation = result != null && result.getSubmission() != null
-                && result.getSubmission().getParticipation() instanceof SolutionProgrammingExerciseParticipation;
         return calculateTestCasePoints(testCases, exercise, isSolutionParticipation);
+    }
+
+    /**
+     * Whether the given result belongs to the solution participation (which gets the zero-weight-sum
+     * special treatment). Returns {@code false} when the submission or participation is not reachable.
+     *
+     * @param result the result to check (may be {@code null})
+     * @return true if the result belongs to a solution participation
+     */
+    public static boolean isForSolutionParticipation(Result result) {
+        return result != null && result.getSubmission() != null && result.getSubmission().getParticipation() instanceof SolutionProgrammingExerciseParticipation;
     }
 }

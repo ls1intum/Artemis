@@ -497,7 +497,7 @@ public class ResultService {
         // spring.jpa.open-in-view is disabled, so the entities returned here are detached. The assessor is included for the same reason - it is lazy but gets serialized.
         final Set<Long> relevantResultIds = relevantSubmissions.stream().map(submission -> submission.getLatestResult().getId()).collect(Collectors.toSet());
         final Map<Long, Result> resultsWithFeedbacks = relevantResultIds.isEmpty() ? Map.of()
-                : resultRepository.findResultsWithFeedbacksTestCaseAndAssessorByIdIn(relevantResultIds).stream().collect(Collectors.toMap(Result::getId, Function.identity()));
+                : resultRepository.findResultsWithFeedbacksAndAssessorByIdIn(relevantResultIds).stream().collect(Collectors.toMap(Result::getId, Function.identity()));
 
         final List<Result> results = new ArrayList<>();
         for (Submission submission : relevantSubmissions) {

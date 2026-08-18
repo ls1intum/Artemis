@@ -521,7 +521,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * <p>
      * Deliberately does <em>not</em> fetch {@code r.feedbacks}: callers select a single relevant result per participation and would discard the feedbacks of every other result.
      * Fetch-joining three collections ({@code submissions}, {@code results}, {@code feedbacks}) multiplies the row count by the feedback fan-out (~18x in production) for rows
-     * that are thrown away. Hydrate the selected results afterwards via {@code ResultRepository#findResultsWithFeedbacksTestCaseAndAssessorByIdIn}.
+     * that are thrown away. Hydrate the selected results afterwards via {@code ResultRepository#findResultsWithFeedbacksAndAssessorByIdIn}.
      * <p>
      * {@code student} and {@code team} are fetched explicitly because they are {@code @ManyToOne} (i.e. eager) and would otherwise cost one extra select per participation.
      *
@@ -579,7 +579,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                       AND r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 ))
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCases(@Param("exerciseId") long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(@Param("exerciseId") long exerciseId);
 
     /**
      * Get all participations without individual due date for an exercise with each latest {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
@@ -587,9 +587,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param exerciseId Exercise id.
      * @return participations for the exercise.
      */
-    default List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(long exerciseId) {
-        return findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCases(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null)
-                .toList();
+    default List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacksWithoutIndividualDueDate(long exerciseId) {
+        return findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
     }
 
     @Query("""
@@ -606,7 +605,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         AND r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 )
             """)
-    Optional<StudentParticipation> findByIdWithLatestAutomaticResultAndFeedbacksAndTestCases(@Param("participationId") long participationId);
+    Optional<StudentParticipation> findByIdWithLatestAutomaticResultAndFeedbacks(@Param("participationId") long participationId);
 
     // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
     @Query("""
@@ -619,10 +618,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
             """)
-    List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksAndTestCases(@Param("exerciseId") long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacks(@Param("exerciseId") long exerciseId);
 
-    default List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(long exerciseId) {
-        return findByExerciseIdWithManualResultAndFeedbacksAndTestCases(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+    default List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksWithoutIndividualDueDate(long exerciseId) {
+        return findByExerciseIdWithManualResultAndFeedbacks(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
     }
 
     @Query("""
@@ -1534,7 +1533,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
-                LISTAGG(CAST(-(f.id.resultId * 100000 + f.id.seq) AS string), ',') WITHIN GROUP (ORDER BY f.id.resultId),
+                LISTAGG(CAST(-(f.id.resultId * de.tum.cit.aet.artemis.core.config.Constants.SYNTHETIC_FEEDBACK_ID_FACTOR + f.id.seq) AS string), ',') WITHIN GROUP (ORDER BY f.id.resultId),
                 COUNT(f.id.resultId),
                 0,
                 COALESCE(MIN(m.text), ''),
@@ -1644,9 +1643,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * Retrieves a paginated list of students affected by specific feedback entries for a given programming exercise.
      * <br>
      *
-     * @param exerciseId  for which the affected student participation data is requested.
-     * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
-     * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
+     * @param exerciseId for which the affected student participation data is requested.
+     * @param resultIds  used to filter the participation to only those whose latest result is affected by the feedback.
+     * @return A list of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO(
