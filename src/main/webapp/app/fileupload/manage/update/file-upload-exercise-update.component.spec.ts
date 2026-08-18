@@ -98,7 +98,6 @@ import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warni
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ExerciseGroupTimelineLockStubComponent } from 'test/helpers/stubs/exercise/exercise-group-timeline-lock-stub.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
@@ -111,7 +110,7 @@ import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { FileUploadExerciseTimelineComponent } from 'app/fileupload/manage/file-upload-exercise-timeline/file-upload-exercise-timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 // NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
 // which causes static initializers to run before mocks are applied.
@@ -258,7 +257,6 @@ describe('FileUploadExerciseUpdateComponent', () => {
                         FaIconComponent,
                         NgbTooltip,
                         ArtemisTranslatePipe,
-                        MockComponent(FormDateTimePickerComponent),
                         StubExerciseTitleChannelNameComponent,
                         MockComponent(TeamConfigFormGroupComponent),
                         MockComponent(IncludedInOverallScorePickerComponent),
@@ -273,7 +271,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                         MockComponent(CompetencySelectionComponent),
                         MockMarkdownEditorMonacoComponent,
                         ExerciseGroupTimelineLockStubComponent,
-                        FileUploadExerciseTimelineComponent,
+                        ExerciseTimelineComponent,
                         MockComponent(ExerciseGroupDateNoticeComponent),
                     ],
                 },
@@ -313,6 +311,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
             exercise.startDate = dayjs().add(2, 'hours');
             exercise.dueDate = dayjs().add(1, 'day');
             exercise.assessmentDueDate = dayjs().add(2, 'days');
+            exercise.exampleSolutionPublicationDate = dayjs().add(3, 'days');
             routeData$.next({ fileUploadExercise: exercise });
 
             fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
@@ -320,14 +319,15 @@ describe('FileUploadExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const timelines = fixture.debugElement.queryAll(By.directive(FileUploadExerciseTimelineComponent));
-            const timeline = timelines[0].componentInstance as FileUploadExerciseTimelineComponent;
+            const timelines = fixture.debugElement.queryAll(By.directive(ExerciseTimelineComponent));
+            const timeline = timelines[0].componentInstance as ExerciseTimelineComponent;
 
             expect(timelines).toHaveLength(1);
             expect(timeline.releaseDate()).toBe(exercise.releaseDate);
             expect(timeline.startDate()).toBe(exercise.startDate);
             expect(timeline.dueDate()).toBe(exercise.dueDate);
             expect(timeline.assessmentDueDate()).toBe(exercise.assessmentDueDate);
+            expect(timeline.exampleSolutionPublicationDate()).toBe(exercise.exampleSolutionPublicationDate);
         });
 
         it('should render the group date notice first in the grading controls', async () => {
@@ -756,6 +756,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
             exercise.startDate = dayjs();
             exercise.dueDate = dayjs();
             exercise.assessmentDueDate = dayjs();
+            exercise.exampleSolutionPublicationDate = dayjs();
             routeData$.next({ fileUploadExercise: exercise });
             routeUrl$.next([{ path: 'import' } as UrlSegment]);
             routeParams$.next({ courseId: 123 });
@@ -770,6 +771,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
             expect(component.fileUploadExercise().startDate).toBeUndefined();
             expect(component.fileUploadExercise().dueDate).toBeUndefined();
             expect(component.fileUploadExercise().assessmentDueDate).toBeUndefined();
+            expect(component.fileUploadExercise().exampleSolutionPublicationDate).toBeUndefined();
         });
 
         it('should load exercise group when importing to exam', async () => {

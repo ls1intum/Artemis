@@ -95,7 +95,6 @@
             "exampleSolution": "Example Solution",
             "emptyExampleSolution": "(No example solution)",
             "exampleSolutionPublicationDateError": "The Example Solution Publication Date must be after the Release Date, Start Date, Due Date, and Assessment Due Date whenever those dates are set. Please check your selection again.",
-            "exampleSolutionPublicationDateImportInfo": "Setting not available on import. Please set it after import if required.",
             "feedbackSuggestionsEnabled": "Enable feedback suggestions from Athena",
             "feedbackSuggestionsEnabledTooltip": "If enabled, Athena will suggest feedback to tutors on some submissions.",
             "assessmentCriterion": "Assessment Criterion",

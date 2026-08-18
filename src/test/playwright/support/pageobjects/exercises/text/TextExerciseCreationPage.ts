@@ -7,7 +7,7 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
     private readonly PROBLEM_STATEMENT_SELECTOR = '#problemStatement';
     private readonly EXAMPLE_SOLUTION_SELECTOR = '#exampleSolution';
     private readonly ASSESSMENT_INSTRUCTIONS_SELECTOR = '#gradingInstructions';
-    private readonly TIMELINE_SELECTOR = 'jhi-text-exercise-timeline';
+    private readonly TIMELINE_SELECTOR = 'jhi-exercise-timeline';
 
     async typeMaxPoints(maxPoints: number) {
         await this.page.locator('#field_points').fill(maxPoints.toString());
@@ -27,6 +27,10 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
 
     async setAssessmentDueDate(date: Dayjs) {
         await this.setTimelineDate(3, date);
+    }
+
+    async setExampleSolutionPublicationDate(date: Dayjs) {
+        await this.setTimelineDate(4, date);
     }
 
     async typeProblemStatement(statement: string) {

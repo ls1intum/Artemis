@@ -35,7 +35,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ExerciseGroupTimelineLockStubComponent } from 'test/helpers/stubs/exercise/exercise-group-timeline-lock-stub.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
@@ -53,7 +52,7 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 // Mock ResizeObserver globally
@@ -235,7 +234,6 @@ describe('ModelingExerciseUpdateComponent', () => {
                         FaIconComponent,
                         NgbTooltip,
                         ArtemisTranslatePipe,
-                        MockComponent(FormDateTimePickerComponent),
                         StubExerciseTitleChannelNameComponent,
                         MockComponent(TeamConfigFormGroupComponent),
                         MockComponent(IncludedInOverallScorePickerComponent),
@@ -248,7 +246,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
-                        ModelingExerciseTimelineComponent,
+                        ExerciseTimelineComponent,
                         StubMarkdownEditorMonacoComponent,
                         StubModelingEditorComponent,
                         ExerciseGroupTimelineLockStubComponent,
@@ -271,6 +269,31 @@ describe('ModelingExerciseUpdateComponent', () => {
         if (fixture) {
             fixture.destroy();
         }
+    });
+
+    it('should render one timeline containing all exercise dates', async () => {
+        const modelingExercise = createModelingExercise(createCourse());
+        modelingExercise.releaseDate = dayjs().add(1, 'hour');
+        modelingExercise.startDate = dayjs().add(2, 'hours');
+        modelingExercise.dueDate = dayjs().add(1, 'day');
+        modelingExercise.assessmentDueDate = dayjs().add(2, 'days');
+        modelingExercise.exampleSolutionPublicationDate = dayjs().add(3, 'days');
+        routeData$.next({ modelingExercise });
+
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const timelines = fixture.debugElement.queryAll(By.directive(ExerciseTimelineComponent));
+        const timeline = timelines[0].componentInstance as ExerciseTimelineComponent;
+
+        expect(timelines).toHaveLength(1);
+        expect(timeline.releaseDate()).toBe(modelingExercise.releaseDate);
+        expect(timeline.startDate()).toBe(modelingExercise.startDate);
+        expect(timeline.dueDate()).toBe(modelingExercise.dueDate);
+        expect(timeline.assessmentDueDate()).toBe(modelingExercise.assessmentDueDate);
+        expect(timeline.exampleSolutionPublicationDate()).toBe(modelingExercise.exampleSolutionPublicationDate);
     });
 
     it('should render the group date notice first in the grading controls', async () => {
@@ -397,8 +420,10 @@ describe('ModelingExerciseUpdateComponent', () => {
             const modelingExercise = createModelingExercise(course);
             modelingExercise.id = 1;
             modelingExercise.releaseDate = dayjs();
+            modelingExercise.startDate = dayjs();
             modelingExercise.dueDate = dayjs();
             modelingExercise.assessmentDueDate = dayjs();
+            modelingExercise.exampleSolutionPublicationDate = dayjs();
 
             routeData$.next({ modelingExercise });
             routeUrl$.next([{ path: 'import' } as UrlSegment]);
@@ -418,7 +443,9 @@ describe('ModelingExerciseUpdateComponent', () => {
             expect(comp.isExamMode()).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
+            expect(comp.modelingExercise.startDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
+            expect(comp.modelingExercise.exampleSolutionPublicationDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseIdImportingCourse);
             expect(comp.existingCategories()).toEqual(categories);
         });

@@ -141,7 +141,6 @@
             "timelineOtherRequiredDateTooltip": "{{ otherInputName }} muss gesetzt sein, bevor dieses Datum gesetzt werden kann.",
             "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
             "exampleSolutionPublicationDateError": "Das Veröffentlichungsdatum der Beispiellösung muss nach dem Veröffentlichungsdatum, dem Startdatum, der Einreichungsfrist und der Bewertungsfrist liegen, sofern diese gesetzt sind. Bitte überprüfe deine Auswahl nochmal.",
-            "exampleSolutionPublicationDateImportInfo": "Einstellung nicht für den Import verfügbar. Bitte setze diese ggf. nach dem Import.",
             "feedbackSuggestionsEnabled": "Aktiviere Feedback-Vorschläge von Athena",
             "feedbackSuggestionsEnabledTooltip": "Wenn diese Option aktiviert ist, werden Tutor:innen Feedback-Vorschläge von Athena angezeigt.",
             "points": "Punktzahl",

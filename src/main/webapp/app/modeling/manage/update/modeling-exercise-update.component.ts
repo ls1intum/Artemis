@@ -25,7 +25,6 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/mod
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -42,7 +41,7 @@ import { cloneDeep, isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
-import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
@@ -64,13 +63,12 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
         ModelingEditorComponent,
-        FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
-        ModelingExerciseTimelineComponent,
+        ExerciseTimelineComponent,
         ExerciseFeedbackSuggestionOptionsComponent,
         ExerciseGroupTimelineLockComponent,
         ExerciseGroupDateNoticeComponent,
@@ -96,7 +94,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     readonly bonusPoints = viewChild<NgModel>('bonusPoints');
     readonly points = viewChild<NgModel>('points');
-    readonly solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
     readonly editFormEl = viewChild<ElementRef<HTMLFormElement>>('editForm');
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -255,13 +252,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(
-                    this.isExamMode() || (!this.modelingExercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true)),
-                ),
-                empty:
-                    isEmpty(this.modelingEditor()?.getCurrentModel()?.nodes) ||
-                    (!this.isExamMode() && !this.modelingExercise.exampleSolutionPublicationDate) ||
-                    !this.modelingExercise.exampleSolutionExplanation,
+                valid: true,
+                empty: isEmpty(this.modelingEditor()?.getCurrentModel()?.nodes) || !this.modelingExercise.exampleSolutionExplanation,
             },
             {
                 title: 'artemisApp.exercise.sections.grading',

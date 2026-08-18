@@ -23,7 +23,6 @@ import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/c
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
@@ -42,7 +41,7 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
-import { FileUploadExerciseTimelineComponent } from 'app/fileupload/manage/file-upload-exercise-timeline/file-upload-exercise-timeline.component';
+import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 @Component({
@@ -62,7 +61,6 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
-        FormDateTimePickerComponent,
         ExerciseGroupTimelineLockComponent,
         IncludedInOverallScorePickerComponent,
         FaIconComponent,
@@ -71,7 +69,7 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
-        FileUploadExerciseTimelineComponent,
+        ExerciseTimelineComponent,
         ExerciseGroupDateNoticeComponent,
     ],
 })
@@ -94,7 +92,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
 
     bonusPoints = viewChild<NgModel>('bonusPoints');
     points = viewChild<NgModel>('points');
-    solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
     exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
 
@@ -222,8 +219,8 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !exercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(this.isExamMode() || (!exercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true))),
-                empty: !exercise.exampleSolution || (!this.isExamMode() && !exercise.exampleSolutionPublicationDate),
+                valid: true,
+                empty: !exercise.exampleSolution,
             },
             {
                 title: 'artemisApp.exercise.sections.grading',
