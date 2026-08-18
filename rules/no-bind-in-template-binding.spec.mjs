@@ -48,6 +48,12 @@ describe('no-bind-in-template-binding', () => {
                     code: '<jhi-table [rows]="items.map(format.bind(this))" />',
                     errors: [{ messageId: 'bindInBinding' }],
                 },
+                // Nested far deeper than any fixed traversal limit would allow. A depth cap here would be a silent
+                // false negative, which is worse than a noisy rule.
+                {
+                    code: `<jhi-table [rows]="x1(x2(x3(x4(x5(x6(x7(x8(x9(x10(x11(x12(x13(x14(x15(x16(x17(x18(x19(x20(x21(x22(x23(x24(x25(y.bind(this))))))))))))))))))))))))))" />`,
+                    errors: [{ messageId: 'bindInBinding' }],
+                },
                 // Each offending binding is reported separately.
                 {
                     code: '<jhi-quiz [a]="x.bind(this)" [b]="y.bind(this)" />',

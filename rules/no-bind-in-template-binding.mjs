@@ -44,29 +44,38 @@ export default {
          *
          * Duck-typed on shape (a call has an `args` array and a `receiver`) rather than on AST class names, so it
          * survives the parser renaming its node classes.
+         *
+         * Cycles are guarded with a visited set rather than a depth limit: a limit is a silent false negative, and
+         * expression depth grows about one level per nesting level, so any cap is a guess about how convoluted a
+         * template is allowed to get.
          */
-        const callsBind = (node, depth = 0) => {
-            if (!node || typeof node !== 'object' || depth > 20) {
-                return false;
-            }
-            if (Array.isArray(node.args) && node.receiver?.name === 'bind') {
-                return true;
-            }
-            for (const key of Object.keys(node)) {
-                // Spans carry offsets and parent-ish references; skipping them keeps the walk cheap and acyclic.
-                if (key.endsWith('Span') || key === 'span') {
-                    continue;
+        const callsBind = (root) => {
+            const visited = new WeakSet();
+            const walk = (node) => {
+                if (!node || typeof node !== 'object' || visited.has(node)) {
+                    return false;
                 }
-                const value = node[key];
-                if (Array.isArray(value)) {
-                    if (value.some((entry) => callsBind(entry, depth + 1))) {
-                        return true;
-                    }
-                } else if (callsBind(value, depth + 1)) {
+                visited.add(node);
+                if (Array.isArray(node.args) && node.receiver?.name === 'bind') {
                     return true;
                 }
-            }
-            return false;
+                for (const key of Object.keys(node)) {
+                    // Spans carry offsets and parent-ish references; skipping them keeps the walk cheap.
+                    if (key.endsWith('Span') || key === 'span') {
+                        continue;
+                    }
+                    const value = node[key];
+                    if (Array.isArray(value)) {
+                        if (value.some((entry) => walk(entry))) {
+                            return true;
+                        }
+                    } else if (walk(value)) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+            return walk(root);
         };
 
         return {
