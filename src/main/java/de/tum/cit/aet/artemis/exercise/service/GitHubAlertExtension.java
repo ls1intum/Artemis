@@ -13,14 +13,12 @@ import org.commonmark.Extension;
 import org.commonmark.node.AbstractVisitor;
 import org.commonmark.node.Block;
 import org.commonmark.node.BlockQuote;
-import org.commonmark.node.Code;
 import org.commonmark.node.CustomBlock;
 import org.commonmark.node.HardLineBreak;
 import org.commonmark.node.Node;
 import org.commonmark.node.SoftLineBreak;
-import org.commonmark.node.Text;
+import org.commonmark.node.SourceSpan;
 import org.commonmark.parser.Parser;
-import org.commonmark.parser.PostProcessor;
 import org.commonmark.renderer.NodeRenderer;
 import org.commonmark.renderer.html.HtmlNodeRendererContext;
 import org.commonmark.renderer.html.HtmlRenderer;
@@ -57,11 +55,11 @@ public final class GitHubAlertExtension implements Parser.ParserExtension, HtmlR
     private static final String CLASS_PREFIX = "markdown-alert";
 
     /**
-     * The alert marker at the start of a blockquote. Unlike the client regex there is no optional leading
-     * backslash: CommonMark resolves the escape in {@code \[!NOTE]} to a literal {@code [} before this pattern
-     * ever sees it, so both spellings arrive here identically and both produce an alert, exactly as on the client.
+     * The alert marker at the start of a blockquote, including the client's optional leading backslash. The marker is
+     * matched against the markdown as authored, so the escape in {@code \[!NOTE]} is still present here, exactly as
+     * it is in the inline content the client matches against; both spellings produce an alert on both sides.
      */
-    private static final Pattern ALERT_PATTERN = Pattern.compile("^\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)]([^\\n\\r]*)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern ALERT_PATTERN = Pattern.compile("^\\\\?\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)]([^\\n\\r]*)", Pattern.CASE_INSENSITIVE);
 
     private static final String ICON_PLACEHOLDER_PREFIX = "<span class=\"" + CLASS_PREFIX + "-icon\" data-alert-type=\"";
 
@@ -91,7 +89,19 @@ public final class GitHubAlertExtension implements Parser.ParserExtension, HtmlR
 
     @Override
     public void extend(Parser.Builder parserBuilder) {
-        parserBuilder.postProcessor(new AlertPostProcessor());
+        // No post processor: a post processor only ever sees the AST, and the marker has to be matched against the
+        // markdown the author wrote (see AlertVisitor). Alerts are applied by applyAlerts(...) instead, which the
+        // caller invokes with the source it just parsed.
+    }
+
+    /**
+     * Turns every alert blockquote in the parsed document into a {@link GitHubAlertBlock}.
+     *
+     * @param document the parsed document, from a parser built with {@code IncludeSourceSpans.BLOCKS_AND_INLINES}
+     * @param source   the markdown that document was parsed from, used to read the marker line as authored
+     */
+    public static void applyAlerts(Node document, String source) {
+        document.accept(new AlertVisitor(source));
     }
 
     @Override
@@ -133,16 +143,13 @@ public final class GitHubAlertExtension implements Parser.ParserExtension, HtmlR
         }
     }
 
-    private static final class AlertPostProcessor implements PostProcessor {
-
-        @Override
-        public Node process(Node node) {
-            node.accept(new AlertVisitor());
-            return node;
-        }
-    }
-
     private static final class AlertVisitor extends AbstractVisitor {
+
+        private final String source;
+
+        private AlertVisitor(String source) {
+            this.source = source;
+        }
 
         @Override
         public void visit(BlockQuote blockQuote) {
@@ -155,7 +162,15 @@ public final class GitHubAlertExtension implements Parser.ParserExtension, HtmlR
                 return;
             }
             List<Node> markerLine = firstLineNodes(markerBlock);
-            Matcher matcher = ALERT_PATTERN.matcher(plainText(markerLine));
+            // Matched against the line as authored, not against the flattened inline text. The client applies its
+            // regex to markdown-it's raw inline content, so `> **[!NOTE]**` starts with `**` there and stays a
+            // blockquote; flattening first would hide those delimiters and turn it into an alert. The same reading
+            // keeps a custom title's delimiters, which the client also carries through verbatim.
+            String authoredLine = authoredFirstLine(markerLine, source);
+            if (authoredLine == null) {
+                return;
+            }
+            Matcher matcher = ALERT_PATTERN.matcher(authoredLine);
             if (!matcher.lookingAt()) {
                 return;
             }
@@ -224,7 +239,27 @@ public final class GitHubAlertExtension implements Parser.ParserExtension, HtmlR
         }
     }
 
-    /** The first paragraph anywhere below {@code node} in document order, mirroring the client's "first inline token". */
+    /**
+     * The marker line exactly as the author wrote it, or {@code null} when the parser reported no span for it.
+     * <p>
+     * Spanned across the inline nodes rather than taken from the block's own first line: a block span covers the whole
+     * source line including its opening marker, so a heading would arrive here as {@code # [!NOTE]} and never match,
+     * while the client sees only the inline content the heading holds.
+     */
+    private static @Nullable String authoredFirstLine(List<Node> markerLine, String source) {
+        if (markerLine.isEmpty()) {
+            return null;
+        }
+        List<SourceSpan> firstSpans = markerLine.getFirst().getSourceSpans();
+        List<SourceSpan> lastSpans = markerLine.getLast().getSourceSpans();
+        if (firstSpans.isEmpty() || lastSpans.isEmpty()) {
+            return null;
+        }
+        SourceSpan start = firstSpans.getFirst();
+        SourceSpan end = lastSpans.getLast();
+        return source.substring(start.getInputIndex(), end.getInputIndex() + end.getLength());
+    }
+
     /**
      * The first block inside the quote that carries inline content, in document order.
      * <p>
@@ -261,26 +296,6 @@ public final class GitHubAlertExtension implements Parser.ParserExtension, HtmlR
             nodes.add(child);
         }
         return nodes;
-    }
-
-    private static String plainText(List<Node> nodes) {
-        StringBuilder text = new StringBuilder();
-        for (Node node : nodes) {
-            appendPlainText(node, text);
-        }
-        return text.toString();
-    }
-
-    private static void appendPlainText(Node node, StringBuilder text) {
-        switch (node) {
-            case Text value -> text.append(value.getLiteral());
-            case Code value -> text.append(value.getLiteral());
-            default -> {
-                for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
-                    appendPlainText(child, text);
-                }
-            }
-        }
     }
 
     private static String capitalize(String type) {

@@ -163,7 +163,8 @@ public class ProblemStatementRenderingService {
     private static final List<org.commonmark.Extension> COMMONMARK_EXTENSIONS = List.of(TablesExtension.create(), StrikethroughExtension.create(), AutolinkExtension.create(),
             GitHubAlertExtension.create());
 
-    private static final Parser COMMONMARK_PARSER = Parser.builder().extensions(COMMONMARK_EXTENSIONS).build();
+    /** Source spans are on because the alert extension matches its marker against the markdown as authored. */
+    private static final Parser COMMONMARK_PARSER = Parser.builder().extensions(COMMONMARK_EXTENSIONS).includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES).build();
 
     /**
      * Parser used only to locate code constructs before the transformation passes run. It carries the same
@@ -543,7 +544,11 @@ public class ProblemStatementRenderingService {
     }
 
     private String renderWithCommonMark(String markdown) {
-        String html = commonMarkRenderer.render(COMMONMARK_PARSER.parse(markdown));
+        Node document = COMMONMARK_PARSER.parse(markdown);
+        // Applied here rather than as a parser post processor: the alert marker has to be read from the markdown the
+        // author wrote, and a post processor is handed the AST alone.
+        GitHubAlertExtension.applyAlerts(document, markdown);
+        String html = commonMarkRenderer.render(document);
         return Jsoup.clean(html, HTML_SAFELIST);
     }
 

@@ -537,6 +537,28 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReadTheAlertMarkerAsAuthoredRatherThanFlattened() throws Exception {
+        // The client matches its regex against markdown-it's raw inline content, so a marker wrapped in emphasis
+        // starts with `**` there and never matches. Flattening the AST first would drop those delimiters and turn the
+        // quote into an alert, which is the toggle changing authored content.
+        String emphasised = "> **[!NOTE]**\n> Body\n";
+        var emphasisedBody = new ProblemStatementRenderRequestDTO(emphasised, null, null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO quoted = request.postWithResponseBody(POST_URL, emphasisedBody, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(quoted.html()).contains("<blockquote>").doesNotContain("<div class=\"markdown-alert");
+
+        // The same reading keeps a custom title's delimiters, which the client carries through verbatim as well.
+        String formattedTitle = "> [!WARNING] **Read** this\n> Body\n";
+        var formattedTitleBody = new ProblemStatementRenderRequestDTO(formattedTitle, null, null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO alerted = request.postWithResponseBody(POST_URL, formattedTitleBody, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(alerted.html()).contains("<div class=\"markdown-alert markdown-alert-warning\">").contains("**Read** this");
+    }
+
+    @Test
     void shouldRefuseANegativeTestResultLimit() {
         // The limit is compared with `>`, so a negative one rejects even an empty list and the endpoint answers 422 to
         // every request that carries test results at all. Failing while the configuration binds surfaces the typo.
