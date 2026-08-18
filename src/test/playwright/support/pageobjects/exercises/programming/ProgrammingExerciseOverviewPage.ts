@@ -87,8 +87,6 @@ export class ProgrammingExerciseOverviewPage {
 
         const codeButtonLocator = codeButton ?? this.getCodeButton();
         await Commands.reloadUntilFound(this.page, codeButtonLocator, 10000, 40000);
-        await codeButtonLocator.click();
-        await this.page.locator('.popover-body').waitFor({ state: 'visible' });
 
         // The popover loads SSH-key / token status asynchronously after it opens (see
         // code-button.component: getCachedSshKeys / getVcsAccessToken run in ngOnInit). As those
@@ -96,13 +94,26 @@ export class ProgrammingExerciseOverviewPage {
         // ngb repositions it — so the `.https-or-ssh-button` toggle and the dropdown options
         // re-render and briefly detach. Under heavy multi-node load this churn window is long
         // enough that a single click races a detach ("element is not stable" / "element was
-        // detached from the DOM"). Retry the toggle + option selection as a unit, re-finding the
-        // elements each attempt and only re-toggling when the dropdown is not already open.
+        // detached from the DOM"). Retry opening the popover plus the toggle and option selection as
+        // a unit, re-finding the elements each attempt and only re-toggling when the dropdown is not
+        // already open.
+        const popover = this.page.locator('.popover-body');
         const toggle = this.page.locator('.https-or-ssh-button');
         const cloneMethodOption = this.page.locator(gitCloneMethodSelector[cloneMethod]);
         const maxAttempts = 5;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
             try {
+                // Opening the popover belongs inside the retry: the page keeps rendering after
+                // `reloadUntilFound` returns, and because the popover is attached to `body` with
+                // `autoClose: 'outside'`, any re-render of the code button dismisses it again. The toggle
+                // exists only while the popover is open, so waiting for the toggle alone cannot recover
+                // from that — every attempt would wait out its timeout on an element that can no longer
+                // appear. Reopen instead, and skip the click when the popover is already showing (clicking
+                // the trigger again would close it).
+                if (!(await popover.isVisible())) {
+                    await codeButtonLocator.click();
+                    await popover.waitFor({ state: 'visible', timeout: 15_000 });
+                }
                 await toggle.waitFor({ state: 'visible', timeout: 15_000 });
                 if (!(await cloneMethodOption.isVisible())) {
                     await toggle.click({ timeout: 10_000 });
@@ -120,13 +131,42 @@ export class ProgrammingExerciseOverviewPage {
         }
     }
 
-    async getCloneUrl() {
-        return (await this.page.locator('.clone-url').innerText()).trim();
+    /**
+     * Reads the clone URL from the code popover, waiting until it belongs to the selected clone method.
+     * <p>
+     * The popover keeps showing the previously selected URL until the switch has propagated through its async
+     * re-render, so a URL read too early is the wrong one. An ssh test then cloned the https URL, which carries no
+     * credentials, and the server rejected it as invalid credentials - a failure that reads like a broken token but
+     * is only a stale read.
+     *
+     * @param cloneMethod the clone method whose URL is expected to be on screen.
+     */
+    async getCloneUrl(cloneMethod: GitCloneMethod = GitCloneMethod.https) {
+        const cloneUrl = this.page.locator('.clone-url');
+        await expect.poll(async () => this.cloneUrlBelongsTo(cloneMethod, (await cloneUrl.innerText()).trim()), { timeout: 15000 }).toBeTruthy();
+        return (await cloneUrl.innerText()).trim();
+    }
+
+    /**
+     * Whether the displayed clone URL is the one of the given method. The two HTTPS variants share a scheme and differ
+     * only in their credentials, so the token has to be part of the check: waiting for the scheme alone accepts the
+     * tokenized URL left over from a previous selection and clones with the wrong credential mode.
+     */
+    private cloneUrlBelongsTo(cloneMethod: GitCloneMethod, url: string): boolean {
+        if (cloneMethod === GitCloneMethod.ssh) {
+            return url.startsWith('ssh://');
+        }
+        if (!url.startsWith('http')) {
+            return false;
+        }
+        // `//login:token@host` - the plain HTTPS URL carries at most the login, never a password.
+        const carriesToken = /\/\/[^/@]+:[^/@]+@/.test(url);
+        return cloneMethod === GitCloneMethod.httpsWithToken ? carriesToken : !carriesToken;
     }
 
     async copyCloneUrl(cloneMethod: GitCloneMethod = GitCloneMethod.https, codeButton?: Locator) {
         if (cloneMethod !== GitCloneMethod.httpsWithToken) {
-            return await this.getCloneUrl();
+            return await this.getCloneUrl(cloneMethod);
         }
         const codeButtonLocator = codeButton ?? this.getCodeButton();
         await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);

@@ -607,7 +607,7 @@ public class UserTestService {
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
-        repoUser.setLtiCreated(true);   // mark as LTI-created (replaces legacy LTI_GROUP_NAME group)
+        repoUser.setLtiCreated(true);
         userTestRepository.save(repoUser);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
@@ -629,7 +629,7 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
-        user.setLtiCreated(true);   // mark as LTI-created (replaces legacy LTI_GROUP_NAME group)
+        user.setLtiCreated(true);
         userTestRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
