@@ -162,7 +162,6 @@
                 "semesterIndependent": "Semesterunabhängig",
                 "manage": "Verwalten"
             },
-            "showActive": "Nur aktive Kurse anzeigen",
             "totalScore": "Gesamtergebnis:",
             "title": "Titel",
             "color": "Farbe",
@@ -207,7 +206,6 @@
             "semester": "Semester",
             "language": "Sprache",
             "ltiConfiguration": "LTI Konfiguration",
-            "recentlyAccessed": "Zuletzt verwendet",
             "maxPoints": {
                 "title": "Max. Punktzahl des Kurses",
                 "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mithilfe der im Kurs erreichbaren Punkte berechnet.",
@@ -365,11 +363,6 @@
                 "profilePicture": "Profilbild"
             },
             "averageScore": "Durchschnittliche Punktzahl",
-            "releasedSoon": "Bald veröffentlicht",
-            "currentWorking": "Derzeitig in Bearbeitung",
-            "inAssessment": "Derzeitig in Bewertung",
-            "pastExercises": "Vergangene Übungen ({{ amount }} von {{ total }})",
-            "noExercises": "Keine aktiven Übungen vorhanden",
             "assessmentProgress": "Bewertungen",
             "releaseDate": "Freigabe",
             "dueDate": "Einreichung",

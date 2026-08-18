@@ -382,12 +382,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAllCoursesWithUserStats() throws Exception {
-        courseTestService.testGetAllCoursesWithUserStats();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCourseWithExercisesAndLecturesAndCompetencies() throws Exception {
         courseTestService.testGetCourseWithExercisesAndLecturesAndCompetencies();
     }
@@ -824,24 +818,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllCoursesForManagementOverview() throws Exception {
         courseTestService.testGetAllCoursesForManagementOverview();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetExercisesForCourseOverview() throws Exception {
-        courseTestService.testGetExercisesForCourseOverview();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetExerciseStatsForCourseOverview() throws Exception {
-        courseTestService.testGetExerciseStatsForCourseOverview();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetExerciseStatsForCourseOverviewWithPastExercises() throws Exception {
-        courseTestService.testGetExerciseStatsForCourseOverviewWithPastExercises();
     }
 
     @Test

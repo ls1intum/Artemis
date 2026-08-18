@@ -7,7 +7,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -357,16 +356,6 @@ describe('Course Management Service', () => {
         requestAndExpectDateConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, course, true);
     });
 
-    it('should get all courses together with user stats', () => {
-        const params = { testParam: 'testParamValue' };
-        returnedFromService = [{ ...course }];
-        courseManagementService
-            .getWithUserStats(params)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/with-user-stats?testParam=testParamValue`, returnedFromService, course, true);
-    });
-
     it('should get all courses for overview', () => {
         const params = { testParam: 'testParamValue' };
         returnedFromService = [{ ...course }];
@@ -377,26 +366,6 @@ describe('Course Management Service', () => {
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/course-management-overview?testParam=testParamValue` });
         req.flush(returnedFromService);
         expectAccessRightsToBeCalled(1, 1, 1);
-    });
-
-    it('should get all exercise details', () => {
-        returnedFromService = [{ ...course }] as Course[];
-        courseManagementService
-            .getExercisesForManagementOverview(true)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/exercises-for-management-overview?onlyActive=true`, returnedFromService, course);
-    });
-
-    it('should get all stats for overview', () => {
-        const stats = [new CourseManagementOverviewStatisticsDto()];
-        returnedFromService = [...stats];
-        courseManagementService
-            .getStatsForManagementOverview(true)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(stats));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/stats-for-management-overview?onlyActive=true` });
-        req.flush(returnedFromService);
     });
 
     it('should find all categories of course', () => {
@@ -729,18 +698,6 @@ describe('CourseManagementService - authentication state changes', () => {
     it('should ignore in-flight getAllCoursesWithQuizExercises responses after logout', () => {
         const subscription = scoped.getAllCoursesWithQuizExercises().subscribe();
         const inFlight = scopedHttpMock.expectOne(`api/course/courses/courses-with-quiz`);
-
-        authState.next(undefined);
-
-        inFlight.flush([{ id: 1 } as Course]);
-
-        expect(scoped['coursesForNotifications'].getValue()).toBeUndefined();
-        subscription.unsubscribe();
-    });
-
-    it('should ignore in-flight getWithUserStats responses after logout', () => {
-        const subscription = scoped.getWithUserStats().subscribe();
-        const inFlight = scopedHttpMock.expectOne((req) => req.url === `api/course/courses/with-user-stats`);
 
         authState.next(undefined);
 

@@ -600,54 +600,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     String getExerciseTitle(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Fetches the exercises for a course
-     *
-     * @param courseId the course to get the exercises for
-     * @return a set of exercises with categories
-     */
-    @Query("""
-            SELECT DISTINCT e
-            FROM Exercise e
-                LEFT JOIN FETCH e.categories
-            WHERE e.course.id = :courseId
-            """)
-    Set<Exercise> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId);
-
-    /**
-     * Fetches the exercises for a course with an assessment due date (or due date if without assessment due date) in the future
-     *
-     * @param courseId the course to get the exercises for
-     * @param now      the current date time
-     * @return a set of exercises
-     */
-    @Query("""
-            SELECT DISTINCT e
-            FROM Exercise e
-            WHERE e.course.id = :courseId
-                AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate > :now)
-                AND (e.assessmentDueDate IS NOT NULL OR e.dueDate IS NULL OR e.dueDate > :now)
-            """)
-    Set<Exercise> getActiveExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
-
-    /**
-     * Fetches the exercises for a course with a passed assessment due date (or due date if without assessment due date)
-     *
-     * @param courseId the course to get the exercises for
-     * @param now      the current date time
-     * @return a list of exercises
-     */
-    @Query("""
-            SELECT DISTINCT e
-            FROM Exercise e
-            WHERE e.course.id = :courseId
-                AND (
-                    e.assessmentDueDate IS NOT NULL AND e.assessmentDueDate < :now
-                    OR e.assessmentDueDate IS NULL AND e.dueDate IS NOT NULL AND e.dueDate < :now
-                )
-            """)
-    List<Exercise> getPastExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
-
-    /**
      * Fetches the number of student participations in the given exercise.
      * The {@code courseId} must be passed explicitly because for exam exercises {@code exercise.course} is {@code null}.
      *
