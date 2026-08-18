@@ -23,6 +23,8 @@ export class TextEditorCompletionItem {
      * @param insertText The text to insert into the editor when the completion item is selected.
      * @param kind The kind of the completion item, which determines the icon shown in the completion list.
      * @param range The range in the editor where the completion item's text should be inserted.
+     * @param filterText An optional text the editor should use instead of the label when filtering suggestions against the user's input.
+     * @param sortText An optional text the editor should use instead of the label when ordering suggestions.
      */
     constructor(
         private readonly label: string,
@@ -30,6 +32,8 @@ export class TextEditorCompletionItem {
         private readonly insertText: string,
         private readonly kind: TextEditorCompletionItemKind,
         private readonly range: TextEditorRange,
+        private readonly filterText?: string,
+        private readonly sortText?: string,
     ) {}
 
     getLabel(): string {
@@ -50,5 +54,13 @@ export class TextEditorCompletionItem {
 
     getRange(): TextEditorRange {
         return this.range;
+    }
+
+    getFilterText(): string | undefined {
+        return this.filterText;
+    }
+
+    getSortText(): string | undefined {
+        return this.sortText;
     }
 }
