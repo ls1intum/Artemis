@@ -41,6 +41,13 @@ artemis:
       allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'    # example for a TUM identifier, e.g. ab12cde
     login:
       account-name: TUM                   # optional: customization for the welcome page "please sign in with your <account-name> account"
+  programming:
+    # Optional Maven Central mirror for the test repositories of Java and Kotlin exercises. Maven Central rate-limits
+    # requests (HTTP 429), which makes exercise builds fail. When this is set, Artemis declares the mirror as the first
+    # repository (dependencies and plugins) in every newly created Java/Kotlin test repository, so builds resolve through
+    # the mirror instead of Maven Central. Leave it unset to keep resolving from Maven Central directly.
+    # TUM-operated instances can use the mirror the Artemis team provides:
+    # maven-central-mirror-url: https://reposilite.aet.cit.tum.de/releases
   version-control:
     url: https://artemis.tum.de
     user: <username>                # e.g. ga12abc

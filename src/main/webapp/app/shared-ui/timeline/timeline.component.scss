@@ -110,6 +110,10 @@
                 .timeline-datepicker-info-icon {
                     width: 1rem;
                     color: var(--bs-danger);
+
+                    &.warning {
+                        color: var(--warning);
+                    }
                 }
             }
 

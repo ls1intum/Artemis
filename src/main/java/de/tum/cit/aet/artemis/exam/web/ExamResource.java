@@ -597,8 +597,7 @@ public class ExamResource {
 
     /**
      * Checks that the visible/start/end-dates are present and in the correct order.
-     * For real exams: visibleDate < startDate < endDate
-     * For test exams: visibleDate <= startDate < endDate
+     * visibleDate < startDate < endDate
      *
      * @param exam the exam to be checked
      */
@@ -607,15 +606,8 @@ public class ExamResource {
             throw new BadRequestAlertException("An exam has to have times when it becomes visible, starts, and ends as well as a working time.", ENTITY_NAME, "examTimes");
         }
 
-        if (exam.isTestExam()) {
-            if (!(exam.getVisibleDate().isBefore(exam.getStartDate()) || exam.getVisibleDate().isEqual(exam.getStartDate())) || !exam.getStartDate().isBefore(exam.getEndDate())) {
-                throw new BadRequestAlertException("For test exams, the visible date has to be before or equal to the start date and the start date has to be before the end date",
-                        ENTITY_NAME, "examTimes");
-            }
-        }
-        else if (!exam.getVisibleDate().isBefore(exam.getStartDate()) || !exam.getStartDate().isBefore(exam.getEndDate())) {
-            throw new BadRequestAlertException("For real exams, the visible date has to be before the start date and the start date has to be before the end date", ENTITY_NAME,
-                    "examTimes");
+        if (!exam.getVisibleDate().isBefore(exam.getStartDate()) || !exam.getStartDate().isBefore(exam.getEndDate())) {
+            throw new BadRequestAlertException("The visible date has to be before the start date and the start date has to be before the end date", ENTITY_NAME, "examTimes");
         }
 
         if (exam.getExampleSolutionPublicationDate() != null && exam.getExampleSolutionPublicationDate().isBefore(exam.getEndDate())) {
