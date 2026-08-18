@@ -1,14 +1,13 @@
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, Signal, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DatePickerModule } from 'primeng/datepicker';
-// TooltipModule remains for the still-PrimeNG `pTooltip` on the per-item invalid-date info icon; the variant-group
-// lock overlay below uses the tum-ui kit tooltip.
+// Still needed for the `pTooltip` on the invalid-date info icon; the lock overlay uses the kit tooltip.
 import { TooltipModule } from 'primeng/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,11 +19,8 @@ export interface TimelineItem {
     warningStringKey?: Signal<string | undefined>;
     otherRequiredItem?: TimelineItem;
     /**
-     * Overrides which earlier items this item's date is checked against for ordering. By default (when undefined) an
-     * item must not precede any earlier item in the {@link ExerciseTimelineComponent.timelineItems} array. Pass an
-     * explicit list to restrict the check to only those items instead — e.g. an exercise-variant-group's example
-     * solution publication date only needs to be `>= releaseDate` (see `ExerciseVariantGroup#areDatesValid`), not
-     * `>= dueDate` as a single exercise's date would.
+     * Restricts the ordering check to these items. The default (no item may precede any earlier one) is too strict for
+     * e.g. a group's example solution publication date, which only needs `>= releaseDate`.
      */
     orderCheckAgainst?: TimelineItem[];
 }
@@ -62,17 +58,13 @@ export class TimelineComponent {
     private readonly dateTimeFormat = 'DD.MM.YYYY HH:mm';
     protected readonly Date = Date;
     protected readonly faLock = faLock;
-    /** Label keys of items whose currently-typed text is non-empty but not a valid date. Drives the
-     *  invalid (red border + tooltip) state so a malformed entry is flagged instead of silently dropped. */
+    /** Label keys of items whose typed text is non-empty but not a valid date. Drives the invalid state. */
     private invalidInputKeys = signal<Set<string>>(new Set());
 
     timelineItems = input.required<TimelineItem[]>();
     validationMode = input<TimelineValidationMode>(TimelineValidationMode.SEQUENTIALLY_ALLOW_EQUAL);
     readonly = input<boolean>(false);
-    /**
-     * When true the dates are governed by the exercise's variant group: every datepicker is disabled and a click
-     * anywhere on the timeline emits {@link lockedClick} so the host can open the group-edit dialog.
-     */
+    /** Dates governed by the variant group: datepickers are disabled and clicks emit {@link lockedClick}. */
     lockedToGroup = input<boolean>(false);
     /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
     lockedClick = output<void>();
