@@ -20,5 +20,5 @@ import de.tum.cit.aet.artemis.programming.service.hades.ScriptType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildTriggerRequestDTO(@NotNull Long exerciseId, @NotNull Long participationId, @NotNull @Valid RepositoryDTO exerciseRepository, @Valid RepositoryDTO testRepository,
         List<@Valid RepositoryDTO> auxiliaryRepositories, @NotBlank String buildScript, ScriptType scriptType, @NotBlank String programmingLanguage,
-        Map<String, String> additionalProperties) {
+        Map<String, String> additionalProperties, String dockerImage) {
 }
