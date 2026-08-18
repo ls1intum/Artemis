@@ -41,6 +41,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FileService } from 'app/foundation/service/file.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     providers: [FileUploadAssessmentService],
@@ -463,7 +464,7 @@ export class FileUploadAssessmentComponent implements OnInit {
             return;
         }
         // Commit a new submission reference so the change propagates under zoneless OnPush.
-        this.submission.update((submission) => ({ ...submission!, results: [this.result()!, ...(submission!.results?.slice(1) ?? [])] }));
+        this.submission.update((submission) => cloneWith(submission!, { results: [this.result()!, ...(submission!.results?.slice(1) ?? [])] }));
     }
 
     getComplaint(): void {

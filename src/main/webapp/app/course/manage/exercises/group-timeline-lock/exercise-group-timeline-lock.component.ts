@@ -5,6 +5,7 @@ import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/cours
 import { ExerciseVariantGroupDTO, ExerciseVariantGroupService, isPersistableGroup, toUpdateGroupPayload } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Renders a grouped exercise's timeline pickers as read-only "locked-to-group" fields; clicking one opens
@@ -83,7 +84,8 @@ function referenceToGroup(reference: ExerciseVariantGroupReference | undefined):
  * timeline applied, including unset dates, since a grouped exercise is fully governed by its group.
  */
 function withGroupTimeline(exercise: Exercise, dto: ExerciseVariantGroupDTO): Exercise {
-    const updated = Object.assign(Object.create(Object.getPrototypeOf(exercise)), exercise) as Exercise;
+    // deepClone keeps the prototype, so the fresh reference still satisfies the host's signal comparison
+    const updated = deepClone(exercise);
     updated.releaseDate = dto.releaseDate;
     updated.startDate = dto.startDate;
     updated.dueDate = dto.dueDate;
