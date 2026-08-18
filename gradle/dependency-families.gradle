@@ -29,23 +29,98 @@ def watchedFamilies = [
     'org.apache.sshd',
 ]
 
-/** Compares Maven-style versions numerically segment by segment, tolerating suffixes like `.Final` or `-r`. */
+/**
+ * Splits a version into its leading numeric segments and the qualifier that follows, e.g.
+ * `4.2.17.Final` -> [[4, 2, 17], 'Final'] and `7.7.1.202607240634-r` -> [[7, 7, 1, 202607240634], 'r'].
+ *
+ * Segments are parsed as BigInteger rather than int: JGit versions carry a 12-digit timestamp segment, which
+ * overflows int and would otherwise be misread as part of the qualifier.
+ */
+static List parseVersion(String version) {
+    def parts = version.split(/[.\-_]/)
+    def numeric = []
+    int i = 0
+    while (i < parts.length && parts[i] ==~ /\d+/) {
+        numeric << new BigInteger(parts[i])
+        i++
+    }
+    def qualifier = i < parts.length ? parts[i..<parts.length].join('.') : ''
+    return [numeric, qualifier]
+}
+
+/**
+ * Maven-compatible version ordering.
+ *
+ * Numeric segments compare numerically with a missing segment treated as 0, so `1.85` == `1.85.0` < `1.85.2`. When
+ * the numeric parts are equal, a version WITHOUT a qualifier outranks one with a qualifier, because a qualifier marks
+ * a pre-release: `2.19.0` > `2.19.0-M1`. Comparing missing segments as empty strings (the previous implementation)
+ * inverted exactly that case, which would have let Rule B reject a valid upgrade to a final release and miss a real
+ * downgrade to a milestone or snapshot.
+ *
+ * Two qualifiers compare case-insensitively and lexically. That is not Maven's full known-qualifier ranking
+ * (alpha < beta < milestone < rc < release), which is deliberate: no watched family uses two different qualifiers on
+ * the same numeric version, and a lexical tie-break keeps this readable. Revisit if one starts to.
+ */
 static int compareVersions(String a, String b) {
-    def pa = a.split(/[.\-]/)
-    def pb = b.split(/[.\-]/)
-    for (int i = 0; i < Math.max(pa.length, pb.length); i++) {
-        def x = i < pa.length ? pa[i] : ''
-        def y = i < pb.length ? pb[i] : ''
-        if (x.isInteger() && y.isInteger()) {
-            int c = (x as int) <=> (y as int)
-            if (c != 0) {
-                return c
-            }
-        } else if (x != y) {
-            return x <=> y
+    def (List numericA, String qualifierA) = parseVersion(a)
+    def (List numericB, String qualifierB) = parseVersion(b)
+    int segments = Math.max(numericA.size(), numericB.size())
+    for (int i = 0; i < segments; i++) {
+        BigInteger x = i < numericA.size() ? numericA[i] : BigInteger.ZERO
+        BigInteger y = i < numericB.size() ? numericB[i] : BigInteger.ZERO
+        int c = x <=> y
+        if (c != 0) {
+            return c
         }
     }
-    return 0
+    if (qualifierA == qualifierB) {
+        return 0
+    }
+    // A final release outranks any pre-release of the same numeric version.
+    if (qualifierA.isEmpty()) {
+        return 1
+    }
+    if (qualifierB.isEmpty()) {
+        return -1
+    }
+    return qualifierA.compareToIgnoreCase(qualifierB)
+}
+
+/**
+ * Self-check for {@link #compareVersions}. The comparator is the only place this task can be silently wrong - a bad
+ * ordering either fails a clean build or waves through the very mismatch the task exists to catch - and there is no
+ * Groovy test harness in this repository, so it verifies itself before being trusted.
+ */
+static void verifyVersionComparator() {
+    def expectations = [
+        // [lower, higher]
+        ['1.85', '1.85.2'],
+        ['5.3.6', '5.4.3'],
+        ['5.6.1', '5.6.3'],
+        ['2.19.0-M1', '2.19.0'],
+        ['2.19.0-SNAPSHOT', '2.19.0'],
+        ['4.2.16.Final', '4.2.17.Final'],
+        ['0.31.8.RELEASE', '0.31.9.RELEASE'],
+        ['7.7.0.202606012155-r', '7.7.1.202607240634-r'],
+        // The timestamp segment exceeds int range; it must still compare numerically.
+        ['7.7.1.202606012155-r', '7.7.1.202607240634-r'],
+    ]
+    expectations.each { pair ->
+        if (compareVersions(pair[0], pair[1]) >= 0) {
+            throw new GradleException("Version comparator is broken: expected ${pair[0]} < ${pair[1]}.")
+        }
+        if (compareVersions(pair[1], pair[0]) <= 0) {
+            throw new GradleException("Version comparator is broken: expected ${pair[1]} > ${pair[0]}.")
+        }
+    }
+    ['1.85', '2.19.0-M1', '7.7.1.202607240634-r'].each { version ->
+        if (compareVersions(version, version) != 0) {
+            throw new GradleException("Version comparator is broken: ${version} should equal itself.")
+        }
+    }
+    if (compareVersions('1.85', '1.85.0') != 0) {
+        throw new GradleException('Version comparator is broken: 1.85 should equal 1.85.0.')
+    }
 }
 
 tasks.register('verifyDependencyFamilies') {
@@ -56,6 +131,7 @@ tasks.register('verifyDependencyFamilies') {
     def families = watchedFamilies
 
     doLast {
+        verifyVersionComparator()
         def problems = []
         def selectedByGroup = [:].withDefault { [:] }
         def requestedFor = [:].withDefault { [] as Set }
