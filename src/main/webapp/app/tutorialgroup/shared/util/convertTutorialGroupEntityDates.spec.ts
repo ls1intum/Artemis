@@ -151,6 +151,16 @@ describe('convertTutorialGroupEntityDates', () => {
                 nextSession: {
                     start: NEXT_START,
                     end: NEXT_END,
+                    tutorialGroupFreePeriod: {
+                        start: START,
+                        end: END,
+                        reason: 'Original reason',
+                    },
+                },
+                channel: {
+                    creator: {
+                        name: 'Original creator',
+                    },
                 },
             },
         ];
@@ -161,7 +171,12 @@ describe('convertTutorialGroupEntityDates', () => {
         expect(dayjs.isDayjs(result[0].tutorialGroupSchedule?.validToInclusive)).toBe(true);
         expect(dayjs.isDayjs(result[0].nextSession?.start)).toBe(true);
         expect(dayjs.isDayjs(result[0].nextSession?.end)).toBe(true);
+        expect(dayjs.isDayjs(result[0].nextSession?.tutorialGroupFreePeriod?.start)).toBe(true);
+        result[0].nextSession!.tutorialGroupFreePeriod!.reason = 'Changed reason';
+        result[0].channel!.creator!.name = 'Changed creator';
         expect(tutorialGroupSummaries[0].tutorialGroupSchedule?.validFromInclusive).toBe(VALID_FROM);
         expect(tutorialGroupSummaries[0].nextSession?.start).toBe(NEXT_START);
+        expect(tutorialGroupSummaries[0].nextSession?.tutorialGroupFreePeriod?.reason).toBe('Original reason');
+        expect(tutorialGroupSummaries[0].channel?.creator?.name).toBe('Original creator');
     });
 });
