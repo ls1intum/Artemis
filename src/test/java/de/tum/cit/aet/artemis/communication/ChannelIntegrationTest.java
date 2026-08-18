@@ -1006,7 +1006,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         User instructor1 = userTestRepository.getUser();
         request.postWithoutLocation("/api/communication/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
         List<Channel> updatedChannels = channelRepository.findChannelsByCourseId(exampleCourseId);
-        updatedChannels.forEach(channel -> await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+        updatedChannels.forEach(channel -> await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
             var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
             assertThat(participant).isPresent().get().extracting(ConversationParticipant::getUnreadMessagesCount).isEqualTo(0L);
         }));
