@@ -100,6 +100,8 @@ describe('ExamExerciseRowButtonsComponent', () => {
         quizExerciseExportSpy = vi.spyOn(quizExerciseService, 'exportQuiz');
     });
 
+    afterEach(() => vi.restoreAllMocks());
+
     describe('isExamOver', () => {
         it('should return true if over', () => {
             fixture.componentRef.setInput('latestIndividualEndDate', dayjs().subtract(1, 'hours'));

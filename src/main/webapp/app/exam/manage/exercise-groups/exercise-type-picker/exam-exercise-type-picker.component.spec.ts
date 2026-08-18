@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExamExerciseTypePickerComponent } from 'app/exam/manage/exercise-groups/exercise-type-picker/exam-exercise-type-picker.component';
@@ -39,6 +39,8 @@ describe('ExamExerciseTypePickerComponent', () => {
         fixture.componentRef.setInput('groupId', 3);
         fixture.detectChanges();
     });
+
+    afterEach(() => vi.restoreAllMocks());
 
     it('shows a card for every exercise type by default', () => {
         expect(component['typeCards']().map((card) => card.type)).toEqual([

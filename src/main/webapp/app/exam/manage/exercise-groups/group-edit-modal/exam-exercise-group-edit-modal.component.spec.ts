@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExamExerciseGroupEditModalComponent } from 'app/exam/manage/exercise-groups/group-edit-modal/exam-exercise-group-edit-modal.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -29,6 +29,8 @@ describe('ExamExerciseGroupEditModalComponent', () => {
         fixture = TestBed.createComponent(ExamExerciseGroupEditModalComponent);
         component = fixture.componentInstance;
     });
+
+    afterEach(() => vi.restoreAllMocks());
 
     it('initializes the drafts from the input group when opened', () => {
         fixture.componentRef.setInput('group', buildGroup({ isMandatory: false }));

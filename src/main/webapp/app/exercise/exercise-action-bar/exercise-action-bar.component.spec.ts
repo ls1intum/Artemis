@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
@@ -27,6 +27,8 @@ describe('ExerciseActionBarComponent', () => {
         component = fixture.componentInstance;
         fixture.componentRef.setInput('items', []);
     });
+
+    afterEach(() => vi.restoreAllMocks());
 
     describe('hiddenIds / hasOverflow', () => {
         it('shows nothing hidden before the row width is measured', () => {

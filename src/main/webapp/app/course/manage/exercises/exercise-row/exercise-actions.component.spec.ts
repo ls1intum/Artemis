@@ -5,7 +5,7 @@ import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
@@ -97,6 +97,8 @@ describe('ExerciseActionsComponent', () => {
         fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('course', course);
     });
+
+    afterEach(() => vi.restoreAllMocks());
 
     describe('mainActions', () => {
         it('includes teams only for team exercises', () => {
