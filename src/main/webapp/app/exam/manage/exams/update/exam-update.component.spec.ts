@@ -3,7 +3,6 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import dayjs from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
 import { Component } from '@angular/core';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, UrlSegment, provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -39,6 +38,8 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { By } from '@angular/platform-browser';
 import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     template: '',
@@ -184,6 +185,20 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidConfiguration).toBe(false);
         });
 
+        it('should reject equal visible and start dates through the timeline', async () => {
+            const startDate = dayjs().add(1, 'hour').startOf('minute');
+            examWithoutExercises.visibleDate = startDate;
+            examWithoutExercises.startDate = startDate;
+            examWithoutExercises.endDate = startDate.add(1, 'hour');
+            examWithoutExercises.workingTime = 3600;
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.timelineStatus().valid).toBe(false);
+            expect(component.isValidConfiguration).toBe(false);
+        });
+
         it('should invalidate the configuration when an exam text exceeds the maximum length', () => {
             examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
             examWithoutExercises.startDate = dayjs().add(2, 'hours');
@@ -244,6 +259,7 @@ describe('ExamUpdateComponent', () => {
             const newExamWithoutExercises = new Exam();
             newExamWithoutExercises.id = 2;
             component.exam = newExamWithoutExercises;
+            component.timelineStatus.set({ valid: true, empty: false });
 
             const now = dayjs();
             newExamWithoutExercises.visibleDate = now.add(2, 'hours');
@@ -264,6 +280,7 @@ describe('ExamUpdateComponent', () => {
             const newExam = new Exam();
             newExam.id = 3;
             component.exam = newExam;
+            component.timelineStatus.set({ valid: true, empty: false });
 
             const now = dayjs();
             newExam.visibleDate = now.add(2, 'hours');
@@ -363,6 +380,23 @@ describe('ExamUpdateComponent', () => {
             expect(component.workingTimeInMinutes).toBe(60);
         });
 
+        it('should recalculate the working time when the exam timeline dates change', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const timeline = fixture.debugElement.query(By.directive(ExamTimelineComponent)).componentInstance as ExamTimelineComponent;
+            const startDate = dayjs().startOf('minute');
+            const endDate = startDate.add(2, 'hours');
+
+            timeline.startDate.set(startDate);
+            timeline.endDate.set(endDate);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.exam.startDate?.isSame(startDate)).toBe(true);
+            expect(component.exam.endDate?.isSame(endDate)).toBe(true);
+            expect(component.exam.workingTime).toBe(7200);
+        });
+
         it('validates the working time for test exams correctly', () => {
             examWithoutExercises.testExam = true;
             examWithoutExercises.workingTime = undefined;
@@ -405,119 +439,6 @@ describe('ExamUpdateComponent', () => {
 
             examWithoutExercises.endDate = dayjs().add(1, 'hours');
             expect(component.validateWorkingTime).toBe(true);
-        });
-
-        it('validates the visible from for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
-            examWithoutExercises.visibleDate = undefined;
-            fixture.changeDetectorRef.detectChanges();
-
-            expect(component.isVisibleDateSet).toBe(false);
-
-            examWithoutExercises.visibleDate = dayjs().add(2, 'hours');
-            expect(component.isVisibleDateSet).toBe(true);
-        });
-
-        it('validates the start of working time for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
-            examWithoutExercises.startDate = undefined;
-            examWithoutExercises.visibleDate = undefined;
-            fixture.changeDetectorRef.detectChanges();
-
-            expect(component.isStartDateSet).toBe(false);
-
-            examWithoutExercises.startDate = dayjs().add(2, 'hours');
-            expect(component.isStartDateSet).toBe(true);
-
-            examWithoutExercises.visibleDate = dayjs().add(3, 'hours');
-            expect(component.isValidStartDate).toBe(false);
-
-            examWithoutExercises.visibleDate = dayjs().subtract(3, 'hours');
-            expect(component.isValidStartDate).toBe(true);
-        });
-
-        it('validates the end of working time for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
-            examWithoutExercises.startDate = undefined;
-            examWithoutExercises.endDate = undefined;
-            fixture.changeDetectorRef.detectChanges();
-
-            expect(component.isEndDateSet).toBe(false);
-
-            examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            expect(component.isEndDateSet).toBe(true);
-
-            examWithoutExercises.startDate = dayjs().add(3, 'hours');
-            expect(component.isValidEndDate).toBe(false);
-
-            examWithoutExercises.startDate = dayjs().subtract(3, 'hours');
-            expect(component.isValidEndDate).toBe(true);
-        });
-
-        it('validates the visible from value for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
-            examWithoutExercises.visibleDate = dayjs('this is not a date');
-            fixture.changeDetectorRef.detectChanges();
-
-            expect(component.isValidVisibleDateValue).toBe(false);
-
-            examWithoutExercises.visibleDate = dayjs().add(2, 'hours');
-            expect(component.isValidVisibleDateValue).toBe(true);
-        });
-
-        it('validates the start of working time value for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
-            examWithoutExercises.startDate = dayjs('this is not a date');
-            fixture.changeDetectorRef.detectChanges();
-
-            expect(component.isValidStartDateValue).toBe(false);
-
-            examWithoutExercises.startDate = dayjs().add(2, 'hours');
-            expect(component.isValidStartDateValue).toBe(true);
-        });
-
-        it('validates the end of working time value for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
-            examWithoutExercises.endDate = dayjs('this is not a date');
-            fixture.changeDetectorRef.detectChanges();
-
-            expect(component.isValidEndDateValue).toBe(false);
-
-            examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            expect(component.isValidEndDateValue).toBe(true);
-        });
-
-        it('exam visibility check returns false if the dates are not set', () => {
-            examWithoutExercises.testExam = false;
-            examWithoutExercises.visibleDate = dayjs('this is not a date');
-            fixture.changeDetectorRef.detectChanges();
-            const result = component.checkExamVisibilityTime;
-            expect(result).toBe(false);
-
-            examWithoutExercises.visibleDate = dayjs();
-            examWithoutExercises.startDate = dayjs('this is not a date');
-            const result2 = component.checkExamVisibilityTime;
-            expect(result2).toBe(false);
-        });
-
-        it('exam visibility check returns true if the difference between dates are more than 4 hours', () => {
-            examWithoutExercises.testExam = false;
-            examWithoutExercises.visibleDate = dayjs();
-            examWithoutExercises.startDate = dayjs().add(240, 'minute');
-            fixture.changeDetectorRef.detectChanges();
-            const result = component.checkExamVisibilityTime;
-            expect(result).toBe(false);
-
-            examWithoutExercises.startDate = dayjs().add(241, 'minute');
-            fixture.changeDetectorRef.detectChanges();
-            const result2 = component.checkExamVisibilityTime;
-            expect(result2).toBe(true);
         });
 
         it('should correctly catch HTTPError when updating the examWithoutExercises', async () => {
@@ -766,6 +687,7 @@ describe('ExamUpdateComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
             const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+            const timeline = fixture.debugElement.query(By.directive(ExamTimelineComponent)).componentInstance as ExamTimelineComponent;
             const invalidSpy = vi.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
             fixture.changeDetectorRef.detectChanges();
 
@@ -784,7 +706,7 @@ describe('ExamUpdateComponent', () => {
             expect(button.disabled()).toBe(false);
 
             // Step 2: Test case where the configuration is invalid
-            examWithoutExercises.startDate = now.add(5, 'hours');
+            timeline.startDate.set(now.add(5, 'hours'));
             await refreshBinding();
 
             expect(component.isValidConfiguration).toBe(false);
@@ -792,8 +714,8 @@ describe('ExamUpdateComponent', () => {
             expect(button.disabled()).toBe(true);
 
             // Step 3: Test case where the configuration is valid again, but the form is invalid
-            examWithoutExercises.startDate = now.add(2, 'hours');
-            examWithoutExercises.endDate = now.add(3, 'hours');
+            timeline.startDate.set(now.add(2, 'hours'));
+            timeline.endDate.set(now.add(3, 'hours'));
             invalidSpy.mockReturnValue(true);
             await refreshBinding();
 
@@ -1119,6 +1041,9 @@ describe('ExamUpdateComponent', () => {
             expectedExam.course = course;
             // Only import one of two exercises
             component.examExerciseImportComponent().selectedExercises = new Map([[exerciseGroup1, new Set([textExercise])]]);
+            // prepareExamForImport now returns a copy detached from the fixture, so mirror what save() does: it replaces
+            // the groups with the selected ones from mapSelectedExercisesToExerciseGroups.
+            expectedExam.exerciseGroups = [exerciseGroup1];
             const alertSpy = vi.spyOn(alertService, 'error');
             const navigateSpy = vi.spyOn(router, 'navigate');
             const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(of(new HttpResponse({ status: 200, body: { exam: examForImport } })));
@@ -1157,7 +1082,7 @@ describe('ExamUpdateComponent', () => {
             const modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
             modelingExercise2.id = 2;
             exerciseGroup2.exercises = [modelingExercise2];
-            const examWithError = cloneDeep(examForImport);
+            const examWithError = deepClone(examForImport);
             examWithError.exerciseGroups = [exerciseGroup2];
 
             component.exam = examWithError;

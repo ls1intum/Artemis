@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { Audit } from './audit.model';
-import { AuditsService } from './audits.service';
+import { AuditsQuery, AuditsService } from './audits.service';
 import { AuditLogType } from './audit-log-type.model';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -241,17 +241,19 @@ export class AuditsComponent implements OnInit {
     }
 
     private loadData(): void {
-        this.auditsService
-            .query({
-                page: this.page() - 1,
-                size: this.itemsPerPage,
-                sort: this.sort(),
-                // Both dates or neither: the filtered endpoint is only matched when both parameters are present, and
-                // sending a blank one would reach it with a value that cannot be parsed as a date.
-                ...(this.hasDateRange() ? { fromDate: this.fromDate(), toDate: this.toDate() } : {}),
-                logType: this.logType(),
-            })
-            .subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
+        const query: AuditsQuery = {
+            page: this.page() - 1,
+            size: this.itemsPerPage,
+            sort: this.sort(),
+            logType: this.logType(),
+        };
+        // Both dates or neither: the filtered endpoint is only matched when both parameters are present, and
+        // sending a blank one would reach it with a value that cannot be parsed as a date.
+        if (this.hasDateRange()) {
+            query.fromDate = this.fromDate();
+            query.toDate = this.toDate();
+        }
+        this.auditsService.query(query).subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
     }
 
     private sort(): string[] {

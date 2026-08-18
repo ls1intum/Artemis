@@ -34,6 +34,8 @@ import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/id
 import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { captureException } from '@sentry/angular';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -653,7 +655,9 @@ export class CodeButtonComponent implements OnInit {
             // Theia requires the Build Config of the programming exercise to be set
             this.programmingExerciseService.getTheiaConfig(exercise.id!).subscribe((theiaConfig) => {
                 // Merge the theiaConfig (containing the theiaImage) into the buildConfig
-                this.exercise()!.buildConfig = { ...exercise.buildConfig!, ...theiaConfig };
+                // The exercise may arrive without a build config; the previous spread tolerated that, so fall back to a
+                // fresh one rather than cloning undefined.
+                this.exercise()!.buildConfig = cloneWith(exercise.buildConfig ?? new ProgrammingExerciseBuildConfig(), theiaConfig);
 
                 // Set variables now, sanitize later on
                 this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';

@@ -22,6 +22,24 @@
             <version>1.15.0</version>
         </dependency>
     </dependencies>
+    <!--%maven-central-mirror-start%-->
+    <repositories>
+        <repository>
+            <id>artemis-maven-central-mirror</id>
+            <name>Maven Central mirror configured by Artemis</name>
+            <url>${mavenCentralMirrorUrl}</url>
+        </repository>
+    </repositories>
+    <!-- Plugins are resolved through the plugin repositories, so the mirror has to be declared for those as well -
+         otherwise plugin resolution falls back to Maven Central and still runs into its rate limits. -->
+    <pluginRepositories>
+        <pluginRepository>
+            <id>artemis-maven-central-mirror</id>
+            <name>Maven Central mirror configured by Artemis</name>
+            <url>${mavenCentralMirrorUrl}</url>
+        </pluginRepository>
+    </pluginRepositories>
+    <!--%maven-central-mirror-stop%-->
     <build>
         <sourceDirectory>${project.basedir}${studentWorkingDirectory}</sourceDirectory>
         <!--%non-sequential-start%-->

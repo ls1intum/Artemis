@@ -6,8 +6,8 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
-import { cloneDeep } from 'lodash-es';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ShortAnswerQuestionUtil', () => {
     let service: ShortAnswerQuestionUtil;
@@ -107,7 +107,7 @@ describe('ShortAnswerQuestionUtil', () => {
         let mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings!);
         expect(mappedSolutionsHaveSpots).toBe(true);
 
-        const wrongMapping = cloneDeep(shortAnswerQuestion.correctMappings);
+        const wrongMapping = deepClone(shortAnswerQuestion.correctMappings);
         // @ts-ignore
         wrongMapping.forEach((m) => (m.spot = undefined));
         mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(wrongMapping!);
@@ -122,7 +122,7 @@ describe('ShortAnswerQuestionUtil', () => {
         let hasDuplicatedMappings = service.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings!);
         expect(hasDuplicatedMappings).toBe(false);
 
-        const duplicatedMapping = cloneDeep(shortAnswerQuestion.correctMappings!);
+        const duplicatedMapping = deepClone(shortAnswerQuestion.correctMappings!);
         duplicatedMapping.push(duplicatedMapping[0]);
         hasDuplicatedMappings = service.hasMappingDuplicateValues(duplicatedMapping);
         expect(hasDuplicatedMappings).toBe(true);
