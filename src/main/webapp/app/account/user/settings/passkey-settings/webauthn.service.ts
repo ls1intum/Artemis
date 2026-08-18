@@ -16,6 +16,7 @@ import { UserAbortedPasskeyCreationError } from 'app/account/user/settings/passk
 import { InvalidStateError } from 'app/account/user/settings/passkey-settings/entities/errors/invalid-state.error';
 import { AccountService } from 'app/core/auth/account.service';
 import { PasskeyAbortError } from 'app/account/user/settings/passkey-settings/entities/errors/passkey-abort.error';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Should be aligned and a bit lower than HazelcastPublicKeyCredentialRequestOptionsRepository#AUTH_OPTIONS_TIME_TO_LIVE_SECONDS
@@ -161,11 +162,11 @@ export class WebauthnService {
                 },
             });
 
-            this.accountService.userIdentity.set({
-                ...this.accountService.userIdentity(),
-                askToSetupPasskey: false,
-                internal: this.accountService.userIdentity()?.internal ?? false,
-            });
+            // Guarding on the current identity is a behaviour fix: the previous `{ ...userIdentity(), … }` spread
+            // produced a bogus User carrying only these two fields when no one was signed in.
+            this.accountService.userIdentity.update((currentUserIdentity) =>
+                currentUserIdentity ? cloneWith(currentUserIdentity, { askToSetupPasskey: false, internal: currentUserIdentity.internal ?? false }) : currentUserIdentity,
+            );
         } catch (error) {
             const domError = error as DOMException;
             // A standard DOMException's name uniquely determines its (deprecated) legacy `code`, so matching on
@@ -361,7 +362,9 @@ export class WebauthnService {
         const credentialRequestOptions: CredentialRequestOptions = {
             publicKey: assertionOptions,
             signal,
-            ...(isConditional && { mediation: 'conditional' }),
+            // An explicitly undefined dictionary member is treated as absent by WebIDL, so this is equivalent to
+            // the conditional spread it replaces.
+            mediation: isConditional ? 'conditional' : undefined,
         };
 
         const credentialPromise = navigator.credentials.get(credentialRequestOptions);

@@ -18,6 +18,7 @@ import { getLatestResultOfStudentParticipation } from 'app/exercise/participatio
 import { MissingResultInformation, isAIResultAndIsBeingProcessed, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ResultComponent } from '../result.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged-in user.
@@ -163,7 +164,7 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
                 // If the result is a preliminary feedback(being generated), show it
                 filter((result: Result) => this.showUngradedResults() || result.rated === true || isAthenaAIResult(result)),
-                map((result): Result => ({ ...result, completionDate: convertDateFromServer(result.completionDate) }) satisfies Result),
+                map((result): Result => cloneWith(result, { completionDate: convertDateFromServer(result.completionDate) }) satisfies Result),
                 tap((result) => {
                     const showUngradedResults = this.showUngradedResults();
                     if ((isAthenaAIResult(result) && isAIResultAndIsBeingProcessed(result)) || result.rated) {

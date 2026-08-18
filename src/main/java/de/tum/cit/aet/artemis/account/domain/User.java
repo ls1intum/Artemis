@@ -207,7 +207,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnoreProperties(value = "user", allowSetters = true)
     private Set<Organization> organizations = new HashSet<>();
 
-    // No @Cache: mutated on every tutorial-group enrolment change; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "student", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "student", allowSetters = true)
     public Set<TutorialGroupRegistration> tutorialGroupRegistrations = new HashSet<>();
@@ -224,7 +223,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<LearningPath> learningPaths = new HashSet<>();
 
-    // No @Cache: mutated on every exam registration; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<ExamUser> examUsers = new HashSet<>();
