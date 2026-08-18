@@ -14,7 +14,7 @@
                     <button
                         type="button"
                         class="stepwizard-circle"
-                        [attr.aria-label]="task.taskName"
+                        [attr.aria-label]="task.taskName + ': ' + ('artemisApp.programmingExercise.problemStatement.taskStatus.' + task.status | artemisTranslate)"
                         [disabled]="!interactive() || !task.testIds.length"
                         [class.stepwizard-step--success]="task.status === 'success'"
                         [class.stepwizard-step--failed]="task.status === 'fail'"

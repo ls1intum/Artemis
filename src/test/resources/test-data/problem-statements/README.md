@@ -67,7 +67,7 @@ constant and stays compared exactly.
 
 Regenerate deliberately with:
 
-```
+```shell
 ./gradlew test --tests ProblemStatementRenderingParityTest -Dartemis.regenerateProblemStatementFixtures=true -x webapp
 ```
 

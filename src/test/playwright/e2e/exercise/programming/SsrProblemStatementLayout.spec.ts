@@ -14,9 +14,11 @@ const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
  * and is never visible. It only shows for exam exercises, which this migration deliberately excludes. The remaining
  * editor host is the LocalVC repository view, which needs a prepared participation repository.
  */
-test.describe('SSR problem statement layout', { tag: '@fast' }, () => {
-    // The feature toggle is global server state, so these tests must not run concurrently: a parallel worker flipping
-    // it would decide which renderer another worker's page loads.
+// `@sequential`, not `@fast`: the feature toggle below is global server state, and `fast-tests` is fully parallel
+// across files. Serial mode alone only orders the tests inside this describe; a concurrent programming suite in
+// another worker would still load whichever renderer this file happens to have switched on. The `sequential-tests`
+// project runs in its own single-worker invocation after the parallel ones (see `run-tests.sh`).
+test.describe('SSR problem statement layout', { tag: '@sequential' }, () => {
     test.describe.configure({ mode: 'serial' });
 
     let programmingExercise: any;

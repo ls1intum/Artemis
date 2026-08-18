@@ -220,13 +220,15 @@ public class ProgrammingExerciseTaskService {
     }
 
     private Optional<ProgrammingExerciseTestCase> findTestCaseFromProblemStatement(String testName, Set<ProgrammingExerciseTestCase> testCases) {
-        if (testName.startsWith(TESTID_START)) {
-            Long id = extractTestId(testName);
+        // Resolution goes through the shared grammar, which matches a wrapper anywhere in the reference rather than
+        // only at its start. A reference such as `testName<testid>5</testid>` is authored in practice; gating on the
+        // prefix made this method fall through to the name lookup for it, so the task silently lost that test case
+        // while the problem-statement renderer resolved the very same reference by id.
+        Long id = TestReferenceParser.extractTestId(testName);
+        if (id != null) {
             return testCases.stream().filter(tc -> tc.getId().equals(id)).findFirst();
         }
-        else {
-            return testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst();
-        }
+        return testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst();
     }
 
     /**

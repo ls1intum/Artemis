@@ -315,7 +315,9 @@
 
         const headerRow = el('div', { cls: 'artemis-feedback-item__header', parent: itemDiv });
 
-        const iconClass = kind === 'passed' ? 'fa artemis-icon-success' : 'fa artemis-icon-fail';
+        // Three groups reach this: passed, failed and not-executed. Mapping everything that is not `passed` to the
+        // fail icon would show unexecuted tests as failed ones, which is the opposite of what the group heading says.
+        const iconClass = kind === 'passed' ? 'fa artemis-icon-success' : kind === 'failed' ? 'fa artemis-icon-fail' : 'fa artemis-icon-no-result';
         const nameWrap = el('div', { cls: 'artemis-feedback-item__name' });
         el('i', { cls: iconClass, attrs: { 'aria-hidden': 'true' }, parent: nameWrap });
         el('strong', { cls: 'artemis-feedback-item__name-text', text: item.name || '', parent: nameWrap });

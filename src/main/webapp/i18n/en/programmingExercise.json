@@ -327,6 +327,7 @@
                 },
                 "diffLineStatTooltip": "Lines added and removed by the AI refinement.",
                 "renderFailed": "The problem statement could not be loaded.",
+                "renderLoading": "Loading the problem statement.",
                 "renderRejected": "The problem statement could not be rendered because the exercise data is too large or inconsistent.",
                 "renderRateLimited": "Too many rendering requests. Please wait a moment and reload.",
                 "renderStale": "Showing the last loaded version; the update could not be fetched.",

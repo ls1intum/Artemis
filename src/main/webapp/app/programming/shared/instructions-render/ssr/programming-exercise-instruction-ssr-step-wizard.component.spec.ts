@@ -36,6 +36,21 @@ describe('ProgrammingExerciseInstructionSsrStepWizardComponent', () => {
         expect(fixture.nativeElement.querySelectorAll('.stepwizard-step--not-executed')).toHaveLength(1);
     });
 
+    // Colour and icon shape carry the status, and neither reaches a screen reader. The key set is the one the
+    // shadow-content path uses (ProgrammingExerciseInstructionSsrContentComponent.taskAriaLabel), so a task is
+    // announced the same way whichever of the two activation paths the user reaches it through.
+    it('names each circle with its task and status', () => {
+        fixture.componentRef.setInput('tasks', tasks);
+        fixture.detectChanges();
+
+        const labels = [...fixture.nativeElement.querySelectorAll('.stepwizard-circle')].map((circle: HTMLElement) => circle.getAttribute('aria-label'));
+        expect(labels).toEqual([
+            'A: artemisApp.programmingExercise.problemStatement.taskStatus.success',
+            'B: artemisApp.programmingExercise.problemStatement.taskStatus.fail',
+            'C: artemisApp.programmingExercise.problemStatement.taskStatus.not-executed',
+        ]);
+    });
+
     it('renders duplicate task names as separate steps', () => {
         const duplicates: SsrTask[] = [
             { index: 5, taskName: 'Same', testIds: [1], status: 'success', authoredCount: 1, notExecutedCount: 0 },

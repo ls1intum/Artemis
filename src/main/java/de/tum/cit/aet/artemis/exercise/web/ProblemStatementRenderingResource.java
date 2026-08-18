@@ -43,11 +43,12 @@ public class ProblemStatementRenderingResource {
 
     private final ProblemStatementRenderingService renderingService;
 
-    @Value("${artemis.problem-statement-rendering.max-test-results:1000}")
-    private int maxTestResults;
+    private final int maxTestResults;
 
-    public ProblemStatementRenderingResource(ProblemStatementRenderingService renderingService) {
+    public ProblemStatementRenderingResource(ProblemStatementRenderingService renderingService,
+            @Value("${artemis.problem-statement-rendering.max-test-results:1000}") int maxTestResults) {
         this.renderingService = renderingService;
+        this.maxTestResults = maxTestResults;
     }
 
     /**

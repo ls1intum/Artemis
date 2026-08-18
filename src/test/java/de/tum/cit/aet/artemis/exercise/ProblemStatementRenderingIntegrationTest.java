@@ -496,13 +496,17 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldColorPlantUmlGreyForNullPassed() throws Exception {
-        String markdown = "@startuml\nclass A #testsColor(<testid>1</testid>)\n@enduml";
+        // The layout pragma matches the neighbouring colour tests: it pins PlantUML to its built-in engine so the
+        // assertion below depends on the resolved colour alone and not on a Graphviz installation.
+        String markdown = "@startuml\n!pragma layout smetana\nclass A #testsColor(<testid>1</testid>)\n@enduml";
         var feedback = new TestFeedbackInputDTO(1L, "testA", null, null, null);
         var body = new ProblemStatementRenderRequestDTO(markdown, List.of(feedback), null, "en", false, false, true, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.html()).contains("<svg");
+        // Asserting only that an <svg> exists would pass for green as well, which is the very thing a null verdict
+        // must not produce. PlantUML resolves grey to #808080 and green to #008000.
+        assertThat(result.html()).contains("<svg").contains("fill=\"#808080\"").doesNotContain("fill=\"#008000\"");
     }
 
     @Test

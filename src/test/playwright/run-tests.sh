@@ -80,12 +80,21 @@ if [ ${#TEST_PATHS[@]} -gt 0 ]; then
     # Run parallel tests (fast and slow projects)
     echo "--- Running parallel tests ---"
     run_playwright parallel --project=fast-tests --project=slow-tests "${TEST_PATHS[@]}"
+
+    # Then the tests that mutate global server state, alone.
+    echo "--- Running sequential tests ---"
+    run_playwright sequential --project=sequential-tests --workers 1 "${TEST_PATHS[@]}"
 else
     echo "Running all tests"
 
     # Run parallel tests (fast and slow projects)
     echo "--- Running parallel tests ---"
     run_playwright parallel e2e --project=fast-tests --project=slow-tests
+
+    # A test in this project flips a global feature toggle, which would decide which renderer a concurrent worker's
+    # page loads. It therefore runs in its own invocation, single-worker, once nothing else is in flight.
+    echo "--- Running sequential tests ---"
+    run_playwright sequential e2e --project=sequential-tests --workers 1
 fi
 
 # Run the @multi-node project only when the surrounding stack opts in via env var. The multi-node

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Set;
@@ -10,11 +11,13 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -56,6 +59,33 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
                 testCase1.getId(), testCase1.getId(), testCase1.getId());
         programmingExerciseTaskService.replaceTestNamesWithIds(exercise);
         assertThat(exercise.getProblemStatement()).isEqualTo(problemStatement);
+    }
+
+    @Test
+    void shouldResolveTestCaseWhenTheIdWrapperIsNotAtTheStartOfTheReference() {
+        // `testName<testid>1</testid>` is authored in practice, and the shared grammar in TestReferenceParser matches
+        // the wrapper anywhere in the reference. Gating on the prefix made task extraction fall through to the name
+        // lookup for such a reference, so the task silently lost the test case while the problem-statement renderer
+        // resolved the very same reference by id.
+        ProgrammingExerciseTestCase testCase = mock(ProgrammingExerciseTestCase.class);
+        when(testCase.getId()).thenReturn(1L);
+
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(1L);
+        exercise.setProblemStatement("[task][Sorting](testBubbleSort()<testid>1</testid>)");
+
+        // No tasks stored yet, so every extracted task is a new one and reaches saveAll below.
+        doReturn(Set.<ProgrammingExerciseTask>of()).when(programmingExerciseTaskRepository).findByExerciseIdWithTestCases(1L);
+        doReturn(Set.of(testCase)).when(programmingExerciseTestCaseRepository).findByExerciseId(1L);
+
+        programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
+
+        var saved = ArgumentCaptor.forClass(Set.class);
+        verify(programmingExerciseTaskRepository).saveAll(saved.capture());
+        assertThat((Set<ProgrammingExerciseTask>) saved.getValue()).singleElement().satisfies(task -> {
+            assertThat(task.getTaskName()).isEqualTo("Sorting");
+            assertThat(task.getTestCases()).containsExactly(testCase);
+        });
     }
 
     @Test

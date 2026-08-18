@@ -1,6 +1,8 @@
 <jhi-programming-exercise-instruction-ssr-step-wizard [tasks]="tasks()" [interactive]="canOpenFeedback()" (taskSelected)="openTaskFeedback($event)" />
 @if (isLoading()) {
-    <div class="ssr-status" aria-busy="true">
+    <!-- role="status" plus a name, not aria-busy alone: aria-busy marks the region as changing but announces
+         nothing and gives the spinner no text alternative, so a screen reader user gets no signal at all. -->
+    <div class="ssr-status" role="status" aria-busy="true" [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.renderLoading' | artemisTranslate">
         <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
     </div>
 }

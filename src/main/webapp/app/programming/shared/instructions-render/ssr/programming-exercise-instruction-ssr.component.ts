@@ -132,6 +132,9 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     readonly canOpenFeedback = computed(() => !!this.latestResult() && !!this.participation() && this.rendersCurrentContext());
 
     private resultSubscription?: Subscription;
+
+    /** The inputs the current websocket subscription was acquired with, so it can be released against them. */
+    private subscribedTo?: { participationId: number; exercise: ProgrammingExercise };
     private contentHash?: string;
 
     constructor() {
@@ -214,21 +217,44 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.resultSubscription?.unsubscribe();
+        this.releaseResultSubscription();
+    }
+
+    /**
+     * Releases both halves of the subscription: this component's own stream, and the shared registration in
+     * `ParticipationWebsocketService`, which is what actually closes the websocket topic once the last consumer is
+     * gone (see `UpdatingResultComponent.ngOnDestroy` for the same pairing). Releasing only the RxJS subscription
+     * would leave the participation registered for the rest of the session.
+     */
+    private releaseResultSubscription(): void {
+        if (this.resultSubscription) {
+            const subscribed = this.subscribedTo;
+            if (subscribed) {
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(subscribed.participationId, subscribed.exercise);
+            }
+            this.resultSubscription.unsubscribe();
+        }
+        this.resultSubscription = undefined;
+        this.subscribedTo = undefined;
     }
 
     private setupResultSubscription(): void {
         const mode = this.liveUpdates();
         const participationId = this.participation()?.id;
-        this.resultSubscription?.unsubscribe();
-        this.resultSubscription = undefined;
+        // Released against the inputs the subscription was *acquired* with, not the current ones: by the time this
+        // effect re-runs, the bound exercise and participation have already moved on.
+        this.releaseResultSubscription();
         // 'personal' and 'shared' both subscribe; only their websocket topic differs, which the service resolves from
         // the `personal` flag below.
         if (mode === 'none' || participationId === undefined) {
             return;
         }
+        const exercise = this.exercise();
+        if (exercise) {
+            this.subscribedTo = { participationId, exercise };
+        }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(participationId, mode === 'personal', this.exercise()?.id)
+            .subscribeForLatestResultOfParticipation(participationId, mode === 'personal', exercise?.id)
             // The websocket emits undefined before the first push; pushed results go through hydration like any other
             // source, because they may arrive without feedback details.
             .pipe(filter((result): result is Result => !!result))

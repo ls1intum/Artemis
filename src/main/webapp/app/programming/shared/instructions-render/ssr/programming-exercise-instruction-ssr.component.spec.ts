@@ -76,7 +76,10 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
                 },
                 {
                     provide: ParticipationWebsocketService,
-                    useValue: { subscribeForLatestResultOfParticipation: () => resultSubject.asObservable() },
+                    useValue: {
+                        subscribeForLatestResultOfParticipation: () => resultSubject.asObservable(),
+                        unsubscribeForLatestResultOfParticipation: vi.fn(),
+                    },
                 },
             ],
         }).compileComponents();
@@ -244,6 +247,27 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
 
         // 'shared' is the exercise-wide staff topic, not the participation owner's own topic: personal must be false.
         expect(spy).toHaveBeenCalledExactlyOnceWith(7, false, exercise.id);
+    });
+
+    // Unsubscribing the RxJS stream alone leaves the participation registered in the service, which is what keeps the
+    // websocket topic open. The release must name the inputs the subscription was acquired with, not the current ones.
+    it('releases the shared websocket registration for the participation it subscribed to', () => {
+        const wsService = TestBed.inject(ParticipationWebsocketService);
+        const released = vi.spyOn(wsService, 'unsubscribeForLatestResultOfParticipation');
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('liveUpdates', 'personal');
+        fixture.detectChanges();
+        flushRender();
+        expect(released).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('participation', { id: 8 });
+        fixture.detectChanges();
+
+        expect(released).toHaveBeenCalledExactlyOnceWith(7, exercise);
+
+        fixture.destroy();
+        expect(released).toHaveBeenLastCalledWith(8, exercise);
     });
 
     it('resubscribes with the new mode when liveUpdates changes', () => {

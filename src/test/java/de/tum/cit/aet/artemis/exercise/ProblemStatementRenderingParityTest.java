@@ -98,8 +98,9 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
 
         String html = render(markdown, feedbacks);
 
-        assertThat(html).as("all tasks in %s must resolve to success", corpusFile).contains("data-test-status=\"success\"");
-        assertThat(html).as("no task in %s may be unresolved", corpusFile).doesNotContain("data-test-status=\"not-executed\"");
+        // Every task, not merely one of them: a document holding both a success and a fail would satisfy a plain
+        // `contains`, and the `doesNotContain` next to it only ruled out one of the three non-success statuses.
+        assertThat(taskStatuses(html)).as("all tasks in %s must resolve to success", corpusFile).isNotEmpty().containsOnly("success");
 
         // Emit the server fixture for the client-side diff. A normal run compares against the committed fixture and
         // never rewrites it, so a rendering regression cannot silently overwrite its own baseline. Regeneration is

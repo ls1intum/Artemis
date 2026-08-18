@@ -632,6 +632,10 @@ describe('problem statement rendering parity', () => {
         const legacy = problemStatementRoot(htmlForMarkdown('$a^2 + b^2$'));
         const rendered = problemStatementRoot(afterClientRendering(placeholder));
 
+        // Without these two, the comparison passes when *neither* side renders math: two empty node lists have the
+        // same length, and `undefined` equals `undefined`. The neighbouring highlighting tests guard the same way.
+        expect(legacy.querySelectorAll('.katex').length).toBeGreaterThan(0);
+        expect(legacy.querySelector('.katex-html')?.textContent).toBeTruthy();
         expect(rendered.querySelectorAll('.katex')).toHaveLength(legacy.querySelectorAll('.katex').length);
         expect(rendered.querySelector('.katex-html')?.textContent).toBe(legacy.querySelector('.katex-html')?.textContent);
     });
