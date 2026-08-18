@@ -19,8 +19,8 @@ export class CourseForDashboardDTO {
     irisEnabledInCourse?: boolean;
 
     /**
-     * Points the student earns from each exercise variant group, keyed by group id — already capped at the group's
-     * maxPoints and adjusted for plagiarism verdicts on the server. Omitted when the course has no capped variant groups.
+     * Points the student earns per variant group, keyed by group id, already capped and plagiarism-adjusted by the
+     * server. Absent or empty only when no group contributes.
      */
     achievedPointsPerVariantGroup?: { [groupId: number]: number };
 }

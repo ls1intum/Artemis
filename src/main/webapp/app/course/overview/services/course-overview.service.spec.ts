@@ -411,7 +411,7 @@ describe('CourseOverviewService', () => {
 
     describe('buildGroupedExerciseData', () => {
         it('uses a type-prefixed tracking key for a group card that collides with an ungrouped exercise id, while keeping the raw group id for routing', () => {
-            // Group id 5 deliberately collides with the ungrouped exercise's id 5 (independent DB sequences).
+            // The group id deliberately collides with the ungrouped exercise's id.
             const collidingId = 5;
             const ungrouped: Exercise = { id: collidingId, title: 'Ungrouped Exercise', dueDate: dayjs().add(1, 'day') } as Exercise;
             const variantA: Exercise = {
@@ -435,16 +435,15 @@ describe('CourseOverviewService', () => {
             expect(groupCard).toBeDefined();
             expect(exerciseCard).toBeDefined();
 
-            // Group card: raw id (and routerLink) preserved for routing, but a distinct type-prefixed tracking key.
+            // Group card: raw id kept for routing, tracking key type-prefixed.
             expect(groupCard!.id).toBe(collidingId);
             expect(groupCard!.routerLink).toBe(`/courses/${course.id}/exercises/group/${collidingId}`);
             expect(groupCard!.trackId).toBe(`group-${collidingId}`);
 
-            // Ungrouped exercise falls back to its raw id for tracking (no trackId set).
+            // Ungrouped exercise falls back to its raw id.
             expect(exerciseCard!.id).toBe(collidingId);
             expect(exerciseCard!.trackId).toBeUndefined();
 
-            // The effective tracking identities never collide even though the raw ids do.
             const groupTrack = groupCard!.trackId ?? groupCard!.id;
             const exerciseTrack = exerciseCard!.trackId ?? exerciseCard!.id;
             expect(groupTrack).not.toBe(exerciseTrack);

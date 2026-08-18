@@ -61,12 +61,7 @@ export interface SidebarCardElement {
      * Defines the item's id that will be used to search for selected
      */
     id: string | number;
-    /**
-     * Stable identity used as the `@for` tracking key when a card is rendered alongside cards of a different kind that
-     * may share the same numeric {@link id} (e.g. exercise cards vs. variant-group cards, whose ids come from
-     * independent DB sequences). Unlike {@link id}, this is never used for routing, so it can be type-prefixed to stay
-     * unique. Defaults to {@link id} when unset.
-     */
+    /** `@for` tracking key, type-prefixed so exercises and variant groups can share a numeric {@link id}. */
     trackId?: string | number;
     /**
      * The subroute under which the component should be rendered that is opened once this sidebar card element is clicked
@@ -179,18 +174,10 @@ export interface SidebarCardElement {
 
     attendanceChipColor?: string;
 
-    /**
-     * Optional nested cards. When set, this card acts as a header for a group of exercises (e.g. a
-     * course-level exercise group) and the nested cards are rendered indented underneath it. Existing
-     * sidebars do not set this, so their rendering is unaffected.
-     */
+    /** Optional nested cards; when set this card becomes their group header and they render indented below it. */
     groupedItems?: SidebarCardElement[];
 
-    /**
-     * How the group header is rendered when {@link groupedItems} is set: 'card' (default) shows the
-     * header as a normal sidebar card/tile; 'label' shows just the title (with icon and subtitle) as a
-     * plain, non-clickable heading.
-     */
+    /** Group header rendering: 'card' (default) as a normal tile, 'label' as a plain non-clickable heading. */
     groupHeaderStyle?: 'card' | 'label';
 
     /**
@@ -210,11 +197,7 @@ export interface SidebarCardElement {
      */
     groupClickable?: 'heading' | 'group';
 
-    /**
-     * When true, the group renders as one connected stack of tiles (header tile + flush exercise tiles)
-     * with only the outer corners rounded, no padding and no indent. Pair with {@link groupHeaderStyle}
-     * 'card'. Only meaningful with {@link groupedItems}.
-     */
+    /** Renders the group as one connected stack of flush tiles. Pair with {@link groupHeaderStyle} 'card'. */
     groupConnected?: boolean;
 
     /** Optional icon shown before {@link subtitleLeft} (and the group hint), e.g. a warning triangle. */

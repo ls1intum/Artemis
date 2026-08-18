@@ -134,9 +134,8 @@ export class CourseScoresComponent implements OnInit {
     readonly averageNumberOfPresentationPoints = signal(0);
 
     /**
-     * Whether a variant group's cap actually reduces the points that can be earned, which is what the uncapped-points and
-     * excess-points columns exist to explain. A group whose cap is at or above its variants' combined maxPoints can never
-     * deduct anything, so those columns would only show a column of zeros next to a duplicate of the overall points.
+     * Whether any variant-group cap actually deducts points; the uncapped and excess columns would otherwise show
+     * only zeros beside a duplicate of the overall points.
      */
     readonly variantCapReducesPoints = computed<boolean>(() => this.maxNumberOfExcessVariantPoints() > 0);
 
@@ -517,9 +516,8 @@ export class CourseScoresComponent implements OnInit {
     }
 
     /**
-     * Computes the student's per-exercise-type point sums and overall points from the already determined per-exercise
-     * points, capping the combined points of each exercise variant group at the group's configured maxPoints
-     * (mirrors the server-side cap in CourseScoreCalculationService).
+     * Computes the per-type and overall point sums, capping each variant group at its maxPoints (mirrors the
+     * server's CourseScoreCalculationService).
      * @param student the student whose point sums should be (re)computed
      * @param includedExercises the exercises that are included in the course score
      */
@@ -548,9 +546,7 @@ export class CourseScoresComponent implements OnInit {
     }
 
     /**
-     * Whether the given exercise is a variant of an exercise variant group with a configured points cap. Only such
-     * exercises go through the capped variant-group computation ({@link variantGroupCappedPoints}); all others are
-     * summed up individually.
+     * Whether the exercise belongs to a variant group with a points cap; only those take the capped path.
      * @param exercise the exercise to check
      */
     private isExerciseVariant(exercise: Exercise): boolean {
@@ -558,8 +554,8 @@ export class CourseScoresComponent implements OnInit {
     }
 
     /**
-     * Sums the contributions of exercise variant groups, capping each group's combined contribution at its configured
-     * maxPoints. Contributions of exercises that are not variants of a capped group are ignored here (summed separately).
+     * Sums the variant groups' contributions, capping each at its maxPoints. Non-variant contributions are summed
+     * separately and ignored here.
      * @param contributions the per-exercise contributions, each carrying the exercise and the value it contributes
      * @returns the summed, per-group capped contribution of the variant groups
      */

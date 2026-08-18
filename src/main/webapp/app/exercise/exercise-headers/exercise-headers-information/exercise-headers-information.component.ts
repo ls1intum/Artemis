@@ -107,9 +107,8 @@ export class ExerciseHeadersInformationComponent {
     readonly submissionPolicy = input<SubmissionPolicy>();
     readonly isPractice = input<boolean>(false);
     /**
-     * Whether the result-history trigger reacts to hover/click. Set to false where the header is rendered as a
-     * read-only preview (e.g. the variant cards on the exercise-group detail page), so the tooltip and the results
-     * popover stay inert without an ancestor having to override the styling from outside.
+     * Whether the result-history trigger reacts to hover and click. False where the header is a read-only preview (e.g.
+     * the variant cards), keeping the tooltip and results popover inert without an outside style override.
      */
     readonly interactive = input<boolean>(true);
     readonly athenaEnabled = input<boolean>(false);

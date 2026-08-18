@@ -8,9 +8,9 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
- * Opens the {@link ExerciseGroupEditModalComponent} for a grouped exercise: the edit form renders its timeline pickers as
- * read-only "locked-to-group" fields, and clicking one calls {@link openModal}. Saving persists the group's timeline via
- * {@link ExerciseVariantGroupService} and re-emits the exercise with the shared dates applied, so the form refreshes without a reload.
+ * Renders a grouped exercise's timeline pickers as read-only "locked-to-group" fields; clicking one opens
+ * {@link ExerciseGroupEditModalComponent}. Saving persists the group timeline and re-emits the exercise with the
+ * shared dates applied.
  */
 @Component({
     selector: 'jhi-exercise-group-timeline-lock',
