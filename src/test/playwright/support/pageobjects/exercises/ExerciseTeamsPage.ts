@@ -251,18 +251,16 @@ export class ExerciseTeamsPage {
      */
     private async searchStudent(inputLocator: ReturnType<Page['locator']>, username: string) {
         const listbox = this.page.getByRole('listbox');
-        // Ensure the input is mounted before we start typing — under parallel CI load the dialog
-        // body can render late and pressSequentially against an absent element silently no-ops.
-        await inputLocator.waitFor({ state: 'visible', timeout: 30_000 });
-        // A deadline for the search as a whole, not only for its individual actions: four attempts of bounded steps
-        // still add up to minutes, and the caller adds several students in sequence inside one test budget. Attempts
-        // stop once the deadline passes, so the helper reports its own error while the test can still act on it.
+        // A deadline for the search as a whole, not only for its individual actions, and it starts here rather than
+        // after the first wait: four attempts of bounded steps still add up to minutes, an attempt starting just
+        // before the deadline would run past it, and a 30 s wait left outside made the advertised 90 s budget 120 s.
+        // The caller adds several students in sequence inside one test budget, which is what all of that has to fit.
         const startedAt = Date.now();
         const deadline = startedAt + 90_000;
-        // Every step is capped by what is left of the deadline, not only by its own maximum. Bounding the steps alone
-        // still let an attempt start just before the deadline and run for another minute past it, and the caller adds
-        // several students in sequence inside one test budget.
         const remaining = (maximum: number) => Math.max(1, Math.min(maximum, deadline - Date.now()));
+        // Ensure the input is mounted before we start typing — under parallel CI load the dialog
+        // body can render late and pressSequentially against an absent element silently no-ops.
+        await inputLocator.waitFor({ state: 'visible', timeout: remaining(30_000) });
         for (let attempt = 0; attempt < 4 && Date.now() < deadline; attempt++) {
             if (attempt > 0) {
                 await this.page.waitForTimeout(Math.min(500, remaining(500)));
