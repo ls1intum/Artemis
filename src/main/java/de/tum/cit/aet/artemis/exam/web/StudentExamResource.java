@@ -76,6 +76,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamLiveEventService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 
@@ -122,6 +123,8 @@ public class StudentExamResource {
 
     private final StudentExamLiveEventService studentExamLiveEventService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     @Value("${info.studentExamStoreSessionData:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
@@ -134,7 +137,8 @@ public class StudentExamResource {
             StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService, ExamRepository examRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
-            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService) {
+            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService,
+            StudentParticipationRepository studentParticipationRepository) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -151,6 +155,7 @@ public class StudentExamResource {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.examLiveEventRepository = examLiveEventRepository;
         this.studentExamLiveEventService = studentExamLiveEventService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -752,9 +757,13 @@ public class StudentExamResource {
         if (studentExam.getExam().isTestOrPractice(ZonedDateTime.now()) && !studentExam.isTestRun()) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
             if (setupTestExamNeeded) {
-
-                // Set up new participations for the Exercises
-                studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
+                // For test exam with simulation it can happen that the student has not started their
+                // prepared (simulation) attempt and therefore the participations are already prepared
+                var existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam);
+                if (existingParticipations.isEmpty()) {
+                    // Set up new participations for the Exercises
+                    studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
+                }
             }
         }
 

@@ -624,6 +624,71 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         deleteExamWithInstructor(testExam1);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetStudentExamForConduction_preparedSimulationExam_noDuplicateParticipations() throws Exception {
+        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
+        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
+        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        // Start date in the past, but working time long enough so we are still in simulation phase for generation
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation.setWorkingTime(3600);
+        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
+        testExamWithSimulation.setExamMaxPoints(19);
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        // Register student to exam
+        var examUser = new ExamUser();
+        examUser.setUser(student1);
+        examUser.setExam(testExamWithSimulation);
+        examUserRepository.save(examUser);
+
+        // Generate student exams
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/generate-missing-student-exams", null, HttpStatus.OK,
+                null);
+
+        // Prepare the simulation exam (this creates participations)
+        int generated = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
+        assertThat(generated).isEqualTo(testExamWithSimulation.getExerciseGroups().size());
+
+        // Fast-forward time to cross into practice phase (now >= simulationEndDate)
+        testExamWithSimulation.setWorkingTime(60); // 1 minute working time -> simulation ended 9 mins ago
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        var studentExam = studentExamRepository.findByExamIdAndUserId(testExamWithSimulation.getId(), student1.getId()).orElseThrow();
+
+        // Switch to student user
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        final HttpHeaders headers = getHttpHeadersForExamSession();
+
+        // Cross into practice: conduction is called
+        var response = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class, headers);
+
+        // Assert that the student exam is started and we don't have duplicate participations (1 per exercise)
+        assertThat(response.isStarted()).isTrue();
+        for (var exercise : response.getExercises()) {
+            assertThat(exercise.getStudentParticipations()).as(exercise.getClass().getName() + " should have 1 participation").hasSize(1);
+            var participation = exercise.getStudentParticipations().iterator().next();
+            if (!(exercise instanceof de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise)) {
+                assertThat(participation.getSubmissions()).as(exercise.getClass().getName() + " should have 1 submission").hasSize(1);
+                var submission = participation.getSubmissions().iterator().next();
+                assertThat(participation.getParticipant()).isEqualTo(student1);
+                assertThat(submission.isSubmitted()).isFalse();
+                assertThat(submission.getResults()).as(exercise.getClass().getName() + " should have no results").isNullOrEmpty();
+            }
+            assertThat(exercise.getGradingCriteria()).isNullOrEmpty();
+            assertThat(exercise.getGradingInstructions()).isNullOrEmpty();
+        }
+
+        // Validate in DB
+        var studentExamWithParticipations = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+        assertThat(studentExamWithParticipations.getStudentParticipations()).hasSize(testExamWithSimulation.getExerciseGroups().size());
+
+        deleteExamWithInstructor(testExamWithSimulation);
+    }
+
     private void assertParticipationAndSubmissions(StudentExam response, User user) {
         for (var exercise : response.getExercises()) {
             assertThat(exercise.getStudentParticipations()).as(exercise.getClass().getName() + " should have 1 participation").hasSize(1);
