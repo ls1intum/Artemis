@@ -57,9 +57,15 @@ static List parseVersion(String version) {
  * inverted exactly that case, which would have let Rule B reject a valid upgrade to a final release and miss a real
  * downgrade to a milestone or snapshot.
  *
- * Two qualifiers compare case-insensitively and lexically. That is not Maven's full known-qualifier ranking
- * (alpha < beta < milestone < rc < release), which is deliberate: no watched family uses two different qualifiers on
- * the same numeric version, and a lexical tie-break keeps this readable. Revisit if one starts to.
+ * Qualifiers follow Maven's aliasing and level ordering: `final`, `ga` and `release` mean the same thing as no
+ * qualifier at all, so `4.2.17.Final` == `4.2.17`; a service pack outranks the release it patches, so
+ * `1.0-sp1` > `1.0`; and anything else is a pre-release that ranks below the release. Within a level, two qualifiers
+ * compare case-insensitively and lexically.
+ *
+ * That lexical tie-break is not Maven's full `alpha < beta < milestone < rc` ranking. It is a documented limit rather
+ * than an oversight: no watched family carries two different pre-release qualifiers on the same numeric version, so
+ * the tie-break is unreachable today. The aliasing above is implemented because it is not a ranking nicety - reading
+ * `4.2.17.Final` as older than `4.2.17` would make Rule B reject a correct tree.
  */
 static int compareVersions(String a, String b) {
     def (List numericA, String qualifierA) = parseVersion(a)
@@ -73,17 +79,34 @@ static int compareVersions(String a, String b) {
             return c
         }
     }
-    if (qualifierA == qualifierB) {
+    int levelA = qualifierLevel(qualifierA)
+    int levelB = qualifierLevel(qualifierB)
+    if (levelA != levelB) {
+        return levelA <=> levelB
+    }
+    // At the release level every spelling means the same release, so `4.2.17` == `4.2.17.Final` == `4.2.17.ga`.
+    // Only within the pre-release and service-pack levels does the text distinguish anything.
+    if (levelA == 0) {
         return 0
     }
-    // A final release outranks any pre-release of the same numeric version.
-    if (qualifierA.isEmpty()) {
+    return qualifierA.compareToIgnoreCase(qualifierB)
+}
+
+/**
+ * Maven's qualifier levels: pre-release (-1) < release (0) < service pack (1).
+ *
+ * `final`, `ga` and `release` are Maven aliases for "no qualifier", so they sit at the release level and compare equal
+ * to an unqualified version. A service pack patches the release it names and therefore outranks it.
+ */
+static int qualifierLevel(String qualifier) {
+    def normalised = qualifier.toLowerCase()
+    if (normalised.isEmpty() || normalised in ['final', 'ga', 'release']) {
+        return 0
+    }
+    if (normalised ==~ /sp\d*/) {
         return 1
     }
-    if (qualifierB.isEmpty()) {
-        return -1
-    }
-    return qualifierA.compareToIgnoreCase(qualifierB)
+    return -1
 }
 
 /**
@@ -113,13 +136,22 @@ static void verifyVersionComparator() {
             throw new GradleException("Version comparator is broken: expected ${pair[1]} > ${pair[0]}.")
         }
     }
+    // Aliases and levels: these must compare EQUAL, which a plain pre-release/release split gets wrong.
+    [['4.2.17', '4.2.17.Final'], ['4.2.17', '4.2.17.ga'], ['4.2.17', '4.2.17.RELEASE'], ['1.85', '1.85.0']].each { pair ->
+        if (compareVersions(pair[0], pair[1]) != 0) {
+            throw new GradleException("Version comparator is broken: expected ${pair[0]} == ${pair[1]}.")
+        }
+    }
+    // A service pack outranks the release it patches, and a release outranks a pre-release even when aliased.
+    [['1.0', '1.0-sp1'], ['1.0-rc1', '1.0-sp1'], ['1.0-rc1', '1.0.Final']].each { pair ->
+        if (compareVersions(pair[0], pair[1]) >= 0) {
+            throw new GradleException("Version comparator is broken: expected ${pair[0]} < ${pair[1]}.")
+        }
+    }
     ['1.85', '2.19.0-M1', '7.7.1.202607240634-r'].each { version ->
         if (compareVersions(version, version) != 0) {
             throw new GradleException("Version comparator is broken: ${version} should equal itself.")
         }
-    }
-    if (compareVersions('1.85', '1.85.0') != 0) {
-        throw new GradleException('Version comparator is broken: 1.85 should equal 1.85.0.')
     }
 }
 
