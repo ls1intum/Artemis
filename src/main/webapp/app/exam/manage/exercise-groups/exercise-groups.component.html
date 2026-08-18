@@ -1,4 +1,4 @@
-<div *titleBarTitle class="d-flex align-items-center">
+<div *titleBarTitle class="flex items-center">
     <h5 class="mb-0" id="exercise-groups-title">
         <span><span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span> ({{ exerciseGroupCount() }})</span>
     </h5>
@@ -21,15 +21,15 @@
     }
 </ng-template>
 
-<div class="d-flex flex-column gap-3">
+<div class="flex flex-col gap-3">
     @for (exerciseGroup of exerciseGroups(); track exerciseGroup.id; let i = $index) {
         <div id="{{ 'group-' + exerciseGroup.id }}">
             <tum-ui-panel [toggleable]="true" [toggleAriaLabel]="exerciseGroup.title">
-                <div tumUiPanelHeader class="d-flex align-items-center gap-2 w-100">
-                    <div class="d-flex flex-column">
+                <div tumUiPanelHeader class="flex items-center gap-2 w-full">
+                    <div class="flex flex-col">
                         <button
                             type="button"
-                            class="group-move border-0 p-0 bg-transparent lh-1"
+                            class="group-move border-0 p-0 bg-transparent leading-none"
                             [disabled]="i === 0 || orderSavePending()"
                             [attr.aria-label]="'artemisApp.examManagement.exerciseGroup.moveUp' | artemisTranslate"
                             (click)="moveUp(i)"
@@ -38,7 +38,7 @@
                         </button>
                         <button
                             type="button"
-                            class="group-move border-0 p-0 bg-transparent lh-1"
+                            class="group-move border-0 p-0 bg-transparent leading-none"
                             [disabled]="i >= exerciseGroupCount() - 1 || orderSavePending()"
                             [attr.aria-label]="'artemisApp.examManagement.exerciseGroup.moveDown' | artemisTranslate"
                             (click)="moveDown(i)"
@@ -47,13 +47,11 @@
                         </button>
                     </div>
                     <fa-icon [icon]="faLayerGroup" [fixedWidth]="true" />
-                    <span class="fw-semibold group-title">{{ exerciseGroup.title }} ({{ exerciseGroup.exercises?.length ?? 0 }})</span>
-                    <span class="rounded px-2 py-1 small opt-badge">
-                        {{
-                            (exerciseGroup.isMandatory ? 'artemisApp.examManagement.exerciseGroup.mandatory' : 'artemisApp.examManagement.exerciseGroup.optional')
-                                | artemisTranslate
-                        }}
-                    </span>
+                    <span class="font-semibold group-title">{{ exerciseGroup.title }} ({{ exerciseGroup.exercises?.length ?? 0 }})</span>
+                    <span
+                        class="rounded px-2 py-1 text-sm opt-badge"
+                        [jhiTranslate]="exerciseGroup.isMandatory ? 'artemisApp.examManagement.exerciseGroup.mandatory' : 'artemisApp.examManagement.exerciseGroup.optional'"
+                    ></span>
                 </div>
 
                 @if (courseId() !== undefined && course(); as courseValue) {
@@ -77,8 +75,8 @@
                     }
                 }
 
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
-                    <div class="d-flex align-items-center flex-wrap gap-2">
+                <div class="flex items-center justify-between flex-wrap gap-2 mt-3">
+                    <div class="flex items-center flex-wrap gap-2">
                         @if (course()?.isAtLeastEditor) {
                             <tum-ui-button size="small" [attr.data-testid]="'add-exercise-button'" (clicked)="openTypePicker(exerciseGroup.id!, 'create')">
                                 <fa-icon [icon]="faPlus" />
@@ -86,7 +84,7 @@
                             </tum-ui-button>
                         }
                     </div>
-                    <div class="d-flex align-items-center flex-wrap gap-2">
+                    <div class="flex items-center flex-wrap gap-2">
                         @if (course()?.isAtLeastEditor) {
                             <tum-ui-button severity="warn" variant="outlined" size="small" class="edit-group" (clicked)="openGroupEditModal(exerciseGroup.id!)">
                                 <fa-icon [icon]="faPen" />
@@ -104,9 +102,9 @@
             </tum-ui-panel>
         </div>
     } @empty {
-        <div class="text-center py-5 text-body-secondary">
+        <div class="text-center py-5 text-muted-color">
             <fa-icon [icon]="faLayerGroup" size="2x" class="mb-3" aria-hidden="true" />
-            <p class="mb-2">{{ 'artemisApp.examManagement.exerciseGroup.noExerciseGroups' | artemisTranslate }}</p>
+            <p class="mb-2" jhiTranslate="artemisApp.examManagement.exerciseGroup.noExerciseGroups"></p>
             @if (course()?.isAtLeastEditor) {
                 <tum-ui-button size="small" id="create-first-group" (clicked)="openCreateGroupModal()">
                     <fa-icon [icon]="faPlus" />

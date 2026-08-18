@@ -55,6 +55,7 @@ td.col-actions {
     background-color: var(--body-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--p-border-radius);
+
     // Elevation comes from Tailwind's `shadow-lg` in the template: a shadow needs a colour, and there is no semantic
     // shadow token to build one from here.
 }
