@@ -91,6 +91,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
@@ -1485,26 +1486,29 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExamsForOverview() throws Exception {
-        // Exam1 is REAL, but student1 is not registered, so it is not visible unless they are registered.
-        // We'll register student1 for exam1.
-        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 1, 1);
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Exam exam = examUtilService.addExam(course);
+
+        // Exam is REAL, but student1 is not registered, so it is not visible unless they are registered.
+        // We'll register student1 for exam.
+        examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 1, 1);
 
         // Add a TEST exam. Test exams are visible to all students in the course.
-        Exam testExam = examUtilService.addExam(course1);
+        Exam testExam = examUtilService.addExam(course);
         testExam.setExamMode(ExamMode.TEST);
         examRepository.save(testExam);
 
         // Add a TEST_WITH_SIMULATION exam. Test exams are visible to all students in the course.
-        Exam simulationExam = examUtilService.addExam(course1);
+        Exam simulationExam = examUtilService.addExam(course);
         simulationExam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
         examRepository.save(simulationExam);
 
-        var exams = request.getSet("/api/exam/courses/" + course1.getId() + "/exams-for-overview", HttpStatus.OK, de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO.class);
+        var exams = request.getSet("/api/exam/courses/" + course.getId() + "/exams-for-overview", HttpStatus.OK, ExamForOverviewDTO.class);
 
         assertThat(exams).hasSize(3);
 
-        ExamForOverviewDTO returnedExam1 = exams.stream().filter(e -> e.id() == exam1.getId()).findFirst().orElseThrow();
-        assertThat(returnedExam1.examMode()).isEqualTo(ExamMode.REAL);
+        ExamForOverviewDTO returnedExam = exams.stream().filter(e -> e.id() == exam.getId()).findFirst().orElseThrow();
+        assertThat(returnedExam.examMode()).isEqualTo(ExamMode.REAL);
 
         ExamForOverviewDTO returnedTestExam = exams.stream().filter(e -> e.id() == testExam.getId()).findFirst().orElseThrow();
         assertThat(returnedTestExam.examMode()).isEqualTo(ExamMode.TEST);
@@ -3576,4 +3580,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(sameStudentExamDifferentIpAndFingerprint).hasSize(2);
     }
     // </editor-fold>
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamSidebarDataForRealExams() throws Exception {
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Exam exam = examUtilService.addExam(course);
+        Exam testExam = examUtilService.addTestExam(course);
+        StudentExam studentExam1 = examUtilService.addStudentExamWithUser(exam, student1);
+        examUtilService.addStudentExamWithUser(testExam, student1);
+        Set<ExamSidebarDataDTO> examSidebarData = request.getSet("/api/exam/courses/" + course.getId() + "/real-exams-sidebar-data", HttpStatus.OK, ExamSidebarDataDTO.class);
+        assertThat(examSidebarData).hasSize(1);
+        ExamSidebarDataDTO element = examSidebarData.iterator().next();
+        assertThat(element.id()).isEqualTo(exam.getId());
+        assertThat(element.title()).isEqualTo(exam.getTitle());
+        assertThat(element.workingTime()).isEqualTo(studentExam1.getWorkingTime());
+        assertThat(element.startDate().withZoneSameInstant(ZoneId.systemDefault())).isCloseTo(exam.getStartDate(), within(1, ChronoUnit.SECONDS));
+    }
 }
