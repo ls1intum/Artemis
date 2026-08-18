@@ -26,6 +26,7 @@ import {
     CourseExamArchiveOverwriteDialogComponent,
     CourseExamArchiveWarningDialogComponent,
 } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-dialog.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS' | 'COMPLETED_WITH_ERRORS';
@@ -300,12 +301,10 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
                 closable: false,
                 closeOnEscape: true,
                 dismissableMask: false,
-                data: {
-                    archiveMode: this.archiveMode(),
-                    courseTitle: this.currentCourse()?.title,
-                    examTitle: this.currentExam()?.title,
-                    ...data,
-                } satisfies CourseExamArchiveDialogData,
+                data: cloneWith(
+                    { archiveMode: this.archiveMode(), courseTitle: this.currentCourse()?.title, examTitle: this.currentExam()?.title },
+                    data,
+                ) satisfies CourseExamArchiveDialogData,
             }) ?? undefined;
         return this.dialogRef;
     }

@@ -49,6 +49,18 @@ interface PostGroup {
     posts: Post[];
 }
 
+/**
+ * Returns a new {@link Post} reference differing only in `isConsecutive`, so grouping can flag a post without touching
+ * the cached one. Built with {@link Post.withSameValues} rather than a copy: this runs for every post in the channel on
+ * every regroup (new message, reaction, edit, load-more), and the author, reactions and answers must keep their identity
+ * so the rendered children are not re-created.
+ */
+function withConsecutiveFlag(post: Post, isConsecutive: boolean): Post {
+    const flagged = Post.withSameValues(post);
+    flagged.isConsecutive = isConsecutive;
+    return flagged;
+}
+
 @Component({
     selector: 'jhi-conversation-messages',
     templateUrl: './conversation-messages.component.html',
@@ -373,7 +385,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         sortedPosts.forEach((post) => {
             if (!currentGroup) {
                 // Start new group if none exists.
-                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+                currentGroup = { author: post.author, posts: [withConsecutiveFlag(post, false)] };
                 return;
             }
 
@@ -387,10 +399,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             }
 
             if (this.isAuthorEqual(currentGroup, { author: post.author, posts: [] }) && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push({ ...post, isConsecutive: true });
+                currentGroup.posts.push(withConsecutiveFlag(post, true));
             } else {
                 computedGroups.push(currentGroup);
-                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+                currentGroup = { author: post.author, posts: [withConsecutiveFlag(post, false)] };
             }
         });
         if (currentGroup) {
