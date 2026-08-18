@@ -99,7 +99,9 @@ static int compareVersions(String a, String b) {
  * to an unqualified version. A service pack patches the release it names and therefore outranks it.
  */
 static int qualifierLevel(String qualifier) {
-    def normalised = qualifier.toLowerCase()
+    // Locale.ROOT, not the default locale: in a Turkish locale `toLowerCase()` maps I to a dotless i, so "FINAL"
+    // would not match 'final' and a release-aliased version would be misread as a pre-release.
+    def normalised = qualifier.toLowerCase(Locale.ROOT)
     if (normalised.isEmpty() || normalised in ['final', 'ga', 'release']) {
         return 0
     }
