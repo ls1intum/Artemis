@@ -61,7 +61,7 @@
                 [additionalChecks]="action.delete!.additionalChecks"
                 (delete)="onDelete(action, $event)"
                 [dialogError]="action.delete!.dialogError"
-                [class.text-left]="inMenu"
+                [class.text-start]="inMenu"
                 [class.w-full]="inMenu"
             >
                 <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
@@ -74,7 +74,7 @@
                 [attr.data-testid]="'exercise-action-' + action.id"
                 [severity]="action.severity"
                 size="small"
-                [class.text-left]="inMenu"
+                [class.text-start]="inMenu"
                 [class.w-full]="inMenu"
                 (click)="runAction(action)"
             >
@@ -89,7 +89,7 @@
                 [severity]="action.severity"
                 size="small"
                 [class.disabled]="action.disabled"
-                [class.text-left]="inMenu"
+                [class.text-start]="inMenu"
                 [class.w-full]="inMenu"
                 [attr.aria-disabled]="action.disabled || undefined"
                 [attr.tabindex]="action.disabled ? -1 : undefined"
