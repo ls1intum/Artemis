@@ -88,6 +88,7 @@ export class CourseOverviewPage {
             }
         } finally {
             this.page.off('response', recordQuizLoad);
+            await this.stopRecordingClickTime();
         }
         throw new Error(`Could not start a practice attempt for quiz ${exerciseId}: no attempt loaded a question after clicking start practice.`);
     }
@@ -112,10 +113,34 @@ export class CourseOverviewPage {
      */
     private async recordNextClickTime(selector: string) {
         await this.page.evaluate((clickSelector) => {
-            const store = window as unknown as { __artemisClickedAt?: number };
+            const store = window as unknown as { __artemisClickedAt?: number; __artemisClickListener?: (event: Event) => void };
             store.__artemisClickedAt = undefined;
-            document.querySelector(clickSelector)?.addEventListener('click', () => (store.__artemisClickedAt = Date.now()), { once: true, capture: true });
+            if (store.__artemisClickListener) {
+                document.removeEventListener('click', store.__artemisClickListener, true);
+            }
+            // Listening on the document rather than on the element resolved right now: the header re-render that this
+            // helper exists to survive also replaces the button, and a listener left on the detached node would miss
+            // the click that landed on its replacement, so a successful attempt would look like a swallowed one.
+            store.__artemisClickListener = (event: Event) => {
+                if ((event.target as Element | null)?.closest(clickSelector)) {
+                    store.__artemisClickedAt = Date.now();
+                }
+            };
+            document.addEventListener('click', store.__artemisClickListener, true);
         }, selector);
+    }
+
+    /** Removes the click listener again, so it cannot outlive the helper and record a later, unrelated click. */
+    private async stopRecordingClickTime() {
+        await this.page
+            .evaluate(() => {
+                const store = window as unknown as { __artemisClickListener?: (event: Event) => void };
+                if (store.__artemisClickListener) {
+                    document.removeEventListener('click', store.__artemisClickListener, true);
+                    store.__artemisClickListener = undefined;
+                }
+            })
+            .catch(() => undefined);
     }
 
     /** The recorded click time, or infinity when no click reached the element, so nothing counts as caused by it. */

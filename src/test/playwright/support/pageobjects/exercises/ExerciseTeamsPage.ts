@@ -264,6 +264,11 @@ export class ExerciseTeamsPage {
         for (let attempt = 0; attempt < 4 && Date.now() < deadline; attempt++) {
             if (attempt > 0) {
                 await this.page.waitForTimeout(Math.min(500, remaining(500)));
+                // The delay can be what exhausts the budget, and `remaining` clamps to 1 ms rather than to zero, so
+                // without this the next attempt would still start its actions past the deadline.
+                if (Date.now() >= deadline) {
+                    break;
+                }
             }
 
             try {
