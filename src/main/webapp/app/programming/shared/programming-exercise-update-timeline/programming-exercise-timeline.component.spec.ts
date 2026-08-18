@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ProgrammingExerciseUpdateTimelineComponent } from './programming-exercise-update-timeline.component';
+import { ProgrammingExerciseTimelineComponent } from './programming-exercise-timeline.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { BehaviorSubject } from 'rxjs';
@@ -22,8 +22,8 @@ import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 describe('ProgrammingExerciseUpdateTimelineComponent', () => {
-    let fixture: ComponentFixture<ProgrammingExerciseUpdateTimelineComponent>;
-    let component: ProgrammingExerciseUpdateTimelineComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseTimelineComponent>;
+    let component: ProgrammingExerciseTimelineComponent;
     let activatedRouteUrlSubject: BehaviorSubject<UrlSegment[]>;
     let httpTestingController: HttpTestingController;
     let profileService: ProfileService;
@@ -37,7 +37,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     beforeEach(() => {
         activatedRouteUrlSubject = new BehaviorSubject<UrlSegment[]>([{ path: 'programming-exercises' }] as UrlSegment[]);
         TestBed.configureTestingModule({
-            imports: [ProgrammingExerciseUpdateTimelineComponent],
+            imports: [ProgrammingExerciseTimelineComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -68,7 +68,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     });
 
     function createTestComponent() {
-        fixture = TestBed.createComponent(ProgrammingExerciseUpdateTimelineComponent);
+        fixture = TestBed.createComponent(ProgrammingExerciseTimelineComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('isExamMode', false);
@@ -592,7 +592,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     it('should initialize as valid and not empty if no timeline is rendered', () => {
         exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         exercise.exampleSolutionPublicationDate = undefined;
-        fixture = TestBed.createComponent(ProgrammingExerciseUpdateTimelineComponent);
+        fixture = TestBed.createComponent(ProgrammingExerciseTimelineComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('isExamMode', false);

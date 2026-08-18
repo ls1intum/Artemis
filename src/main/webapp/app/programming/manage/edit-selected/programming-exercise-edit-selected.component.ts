@@ -8,7 +8,7 @@ import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
-import { ProgrammingExerciseUpdateTimelineComponent } from '../../shared/programming-exercise-update-timeline/programming-exercise-update-timeline.component';
+import { ProgrammingExerciseTimelineComponent } from '../../shared/programming-exercise-update-timeline/programming-exercise-timeline.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
@@ -17,7 +17,7 @@ import { TumUiDialogComponent } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
     templateUrl: './programming-exercise-edit-selected.component.html',
-    imports: [TranslateDirective, ArtemisTranslatePipe, FormsModule, ProgrammingExerciseUpdateTimelineComponent, ButtonComponent, FaIconComponent, TumUiDialogComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, FormsModule, ProgrammingExerciseTimelineComponent, ButtonComponent, FaIconComponent, TumUiDialogComponent],
     providers: [BuildPhasesTemplateService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

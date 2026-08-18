@@ -25,11 +25,11 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
 
 @Component({
     selector: 'jhi-programming-exercise-update-timeline',
-    templateUrl: './programming-exercise-update-timeline.component.html',
-    styleUrls: ['./programming-exercise-update-timeline.component.scss'],
+    templateUrl: './programming-exercise-timeline.component.html',
+    styleUrls: ['./programming-exercise-timeline.component.scss'],
     imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, TimelineComponent, ExerciseFeedbackSuggestionOptionsComponent, ExerciseGroupDateNoticeComponent],
 })
-export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
+export class ProgrammingExerciseTimelineComponent implements OnInit {
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
     private programmingExerciseService = inject(ProgrammingExerciseService);

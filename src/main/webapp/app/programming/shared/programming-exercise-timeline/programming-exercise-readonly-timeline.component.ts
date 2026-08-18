@@ -5,10 +5,10 @@ import { TimelineComponent, TimelineItem } from 'app/shared-ui/timeline/timeline
 @Component({
     selector: 'jhi-programming-exercise-timeline',
     imports: [TimelineComponent],
-    templateUrl: './programming-exercise-timeline.component.html',
-    styleUrl: './programming-exercise-timeline.component.scss',
+    templateUrl: './programming-exercise-readonly-timeline.component.html',
+    styleUrl: './programming-exercise-readonly-timeline.component.scss',
 })
-export class ProgrammingExerciseTimelineComponent {
+export class ProgrammingExerciseReadonlyTimelineComponent {
     releaseDate = model<Dayjs | undefined>();
     startDate = model<Dayjs | undefined>();
     dueDate = model<Dayjs | undefined>();

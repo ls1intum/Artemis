@@ -12,7 +12,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { Subject, Subscription } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
-import { ProgrammingExerciseUpdateTimelineComponent } from '../../../../shared/programming-exercise-update-timeline/programming-exercise-update-timeline.component';
+import { ProgrammingExerciseTimelineComponent } from '../../../../shared/programming-exercise-update-timeline/programming-exercise-timeline.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -33,7 +33,7 @@ import { Message } from 'primeng/message';
         FaIconComponent,
         NgbTooltip,
         SubmissionPolicyUpdateComponent,
-        ProgrammingExerciseUpdateTimelineComponent,
+        ProgrammingExerciseTimelineComponent,
         GradingInstructionsDetailsComponent,
         PresentationScoreComponent,
         KeyValuePipe,
@@ -58,7 +58,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     editGroupDates = output<void>();
 
     submissionPolicyUpdateComponent = viewChild(SubmissionPolicyUpdateComponent);
-    lifecycleComponent = viewChild(ProgrammingExerciseUpdateTimelineComponent);
+    lifecycleComponent = viewChild(ProgrammingExerciseTimelineComponent);
     maxScoreField = viewChild<NgModel>('maxScore');
     bonusPointsField = viewChild<NgModel>('bonusPoints');
     maxPenaltyField = viewChild<NgModel>('maxPenalty');

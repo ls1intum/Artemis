@@ -19,7 +19,7 @@ import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ProgrammingExerciseTimelineComponent } from '../../programming/shared/programming-exercise-timeline/programming-exercise-timeline.component';
+import { ProgrammingExerciseReadonlyTimelineComponent } from '../../programming/shared/programming-exercise-timeline/programming-exercise-readonly-timeline.component';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -66,7 +66,7 @@ export enum DetailType {
         ExerciseDetailDirective,
         NoDataComponent,
         ArtemisTranslatePipe,
-        ProgrammingExerciseTimelineComponent,
+        ProgrammingExerciseReadonlyTimelineComponent,
     ],
 })
 export class DetailOverviewListComponent {
