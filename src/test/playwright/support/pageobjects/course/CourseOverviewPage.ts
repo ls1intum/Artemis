@@ -1,5 +1,5 @@
 import { BASE_API } from '../../constants';
-import { Locator, Page, Response, expect } from '@playwright/test';
+import { ElementHandle, Locator, Page, Response, expect } from '@playwright/test';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Overview page (/courses/*).
@@ -69,21 +69,21 @@ export class CourseOverviewPage {
         this.page.on('response', recordQuizLoad);
         try {
             for (let attempt = 0; attempt < 3; attempt++) {
+                // The question of a previous attempt, if one is on screen. It has to be gone before a visible question
+                // counts as this attempt's: the response is reported when its headers arrive, before Angular has
+                // applied the body, so the submitted attempt's question would otherwise pass as the new one and the
+                // caller's next answer click would land on the controls of the attempt that is already over.
+                const previousQuestion = await question.elementHandle({ timeout: 1_000 }).catch(() => null);
                 await this.recordNextClickTime(`#quiz-start-practice-${exerciseId}`);
                 // The click is part of what is retried: the same re-render that swallows a click also detaches the
                 // button, and letting that error escape would end the helper instead of trying again.
                 await button.click({ timeout: 10_000 }).catch(() => undefined);
                 const clickedAt = await this.readRecordedClickTime();
                 const loadedByThisClick = await this.waitUntil(() => loadStartTimes.some((startTime) => startTime >= clickedAt), 15_000);
-                if (
-                    loadedByThisClick &&
-                    (await question.waitFor({ state: 'visible', timeout: 15_000 }).then(
-                        () => true,
-                        () => false,
-                    ))
-                ) {
+                if (loadedByThisClick && (await this.hasFreshQuestion(previousQuestion, question))) {
                     return;
                 }
+                await previousQuestion?.dispose().catch(() => undefined);
                 await button.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => undefined);
             }
         } finally {
@@ -91,6 +91,27 @@ export class CourseOverviewPage {
             await this.stopRecordingClickTime();
         }
         throw new Error(`Could not start a practice attempt for quiz ${exerciseId}: no attempt loaded a question after clicking start practice.`);
+    }
+
+    /**
+     * Whether a question belonging to the new attempt is on screen: the previous attempt's question, if there was one,
+     * has to be gone first, and a question has to be visible afterwards.
+     */
+    private async hasFreshQuestion(previousQuestion: ElementHandle<SVGElement | HTMLElement> | null, question: Locator): Promise<boolean> {
+        if (previousQuestion) {
+            const replaced = await previousQuestion.waitForElementState('hidden', { timeout: 15_000 }).then(
+                () => true,
+                () => false,
+            );
+            await previousQuestion.dispose().catch(() => undefined);
+            if (!replaced) {
+                return false;
+            }
+        }
+        return await question.waitFor({ state: 'visible', timeout: 15_000 }).then(
+            () => true,
+            () => false,
+        );
     }
 
     /** Polls a condition until it holds or the timeout passes, reporting which happened rather than throwing. */
