@@ -12,6 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -372,6 +378,66 @@ class BuildAgentAddressRegistryServiceTest {
         assertThat(service.isRegisteredAddressOfAgent("agent-1", "203.0.113.9")).as("the observed address stays registered; the allowlist is applied to the request address")
                 .isTrue();
         assertThat(registeredAddresses.get("agent-1").withinAllowlist()).as("the allowlist verdict is still recorded for the admin UI").isFalse();
+    }
+
+    /**
+     * The distinction the three-way outcome exists for. A provider that cannot report client addresses is a working
+     * deployment whose agents must stay unconstrained; a node that cannot reach the cluster at all has established
+     * nothing and must not hand out that exemption. Denying costs nothing here, because the token and job-scope checks
+     * that follow read the processing list from the same middleware and would fail too.
+     */
+    @Test
+    void shouldRefuseAMissWhenNothingCouldBeObserved() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        when(distributedDataAccessService.isConnectedToCluster()).thenReturn(false);
+
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).as("an address already in the snapshot is unaffected by an outage").isTrue();
+        assertThat(service.isRegisteredAddressOfAgent("agent-2", "10.0.0.9")).as("an agent that cannot be looked up must not be exempted").isFalse();
+    }
+
+    /**
+     * The race the coordinated refresh exists for. An agent that has just published itself is briefly absent from the
+     * snapshot, and absence is what grants the not-observable exemption, so a request arriving in that window must not
+     * be exempted just because another request happens to be doing the reconcile that would have registered the agent.
+     * <p>
+     * Under a compare-and-set debounce the loser did not wait: it decided on the snapshot the winner was replacing and
+     * was admitted from an address the agent was never observed at. Both requests here present the wrong address, so
+     * both must be refused, and the assertion fails against that earlier implementation.
+     */
+    @Test
+    void shouldNotExemptAConcurrentRequestWhileAnotherIsRefreshing() throws Exception {
+        CountDownLatch providerEntered = new CountDownLatch(1);
+        CountDownLatch releaseProvider = new CountDownLatch(1);
+        AtomicInteger providerCalls = new AtomicInteger();
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenAnswer(_ -> {
+            if (providerCalls.incrementAndGet() == 1) {
+                providerEntered.countDown();
+                assertThat(releaseProvider.await(10, TimeUnit.SECONDS)).as("the test must release the provider").isTrue();
+            }
+            return Optional.of(Map.of("agent-1", Set.of("10.0.0.5")));
+        });
+        BuildAgentAddressRegistryService service = createService(List.of());
+
+        // Neither request comes from an address agent-1 was observed at, and the snapshot starts empty, so under the
+        // previous implementation whichever request did not win the debounce would have taken the exemption.
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<Boolean> first = executor.submit(() -> service.isRegisteredAddressOfAgent("agent-1", "10.0.0.99"));
+            assertThat(providerEntered.await(10, TimeUnit.SECONDS)).as("the first request must reach the provider").isTrue();
+            Future<Boolean> second = executor.submit(() -> service.isRegisteredAddressOfAgent("agent-1", "10.0.0.99"));
+            // Give the second request time to get as far as it is going to get while the first still holds the refresh.
+            Thread.sleep(200);
+            releaseProvider.countDown();
+
+            assertThat(first.get(20, TimeUnit.SECONDS)).as("the refreshing request must be refused, the address is not registered").isFalse();
+            assertThat(second.get(20, TimeUnit.SECONDS)).as("the waiting request must be refused too, not exempted on the pre-refresh snapshot").isFalse();
+        }
+        finally {
+            executor.shutdownNow();
+        }
     }
 
     /**

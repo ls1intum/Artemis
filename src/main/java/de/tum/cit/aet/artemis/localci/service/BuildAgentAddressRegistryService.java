@@ -8,7 +8,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.annotation.PostConstruct;
 
@@ -72,6 +73,13 @@ public class BuildAgentAddressRegistryService {
      */
     private static final long MIN_REFRESH_ON_MISS_INTERVAL_MS = 2_000;
 
+    /**
+     * How long a request waits for a reconcile that another request is already performing. Generous relative to the
+     * providers' own timeouts, so that reaching it means the middleware is not answering at all rather than merely
+     * being busy - which is why the caller then refuses instead of falling back to the not-observable exemption.
+     */
+    private static final long REFRESH_ON_MISS_WAIT_MS = 5_000;
+
     private final DistributedDataAccessService distributedDataAccessService;
 
     private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
@@ -93,13 +101,22 @@ public class BuildAgentAddressRegistryService {
     private volatile boolean addressObservationAvailable = false;
 
     /**
-     * When a lookup miss last triggered an out-of-band refresh, used to debounce them.
+     * Serialises the refreshes triggered by a lookup miss, so that a request which does not perform the refresh waits
+     * for the one in flight instead of deciding on the snapshot that refresh is about to replace.
      * <p>
-     * Atomic rather than volatile because the check and the update have to be one step: many clone requests arrive
-     * concurrently during an exam peak, and a read-then-write would let all of them pass the interval check and each
-     * start its own refresh against the middleware.
+     * A lock rather than an atomic timestamp because the requests that do not refresh still need the result. Debouncing
+     * with a compare-and-set let the losers proceed immediately on the stale snapshot, and a stale snapshot with no
+     * entry for an agent is indistinguishable from an agent whose origin cannot be observed - so a request could be
+     * granted the not-observable exemption during the very refresh that was about to register the agent's real address.
+     * Fair, so a burst of misses is served in arrival order rather than one thread starving behind the others.
      */
-    private final AtomicLong lastRefreshOnMissAt = new AtomicLong(0);
+    private final ReentrantLock refreshOnMissLock = new ReentrantLock(true);
+
+    /**
+     * When a reconcile triggered by a lookup miss last <em>completed</em>, used to debounce them. Measured from
+     * completion rather than from the start, so a request that waited for a refresh does not immediately start another.
+     */
+    private volatile long lastRefreshOnMissCompletedAt = 0;
 
     public BuildAgentAddressRegistryService(DistributedDataAccessService distributedDataAccessService, BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
         this.distributedDataAccessService = distributedDataAccessService;
@@ -130,8 +147,40 @@ public class BuildAgentAddressRegistryService {
      */
     @Scheduled(initialDelay = 10_000, fixedDelay = REFRESH_INTERVAL_MS)
     public void refreshRegisteredAddresses() {
+        reconcileObservedAddresses();
+    }
+
+    /**
+     * What one reconcile round established. Three states rather than a boolean, because the two ways of ending without
+     * a fresh snapshot mean opposite things for authorization: a provider that cannot report client addresses is a
+     * supported deployment whose agents must stay unconstrained, whereas a round that simply failed establishes nothing
+     * and must not be used to exempt anybody.
+     */
+    private enum ObservationOutcome {
+
+        /** A provider answer was obtained and reconciled into the snapshot. */
+        OBSERVED,
+
+        /** The provider cannot report client addresses at all, so no agent's origin can be constrained on this node. */
+        UNOBSERVABLE,
+
+        /** This node is not in the cluster, or the round threw. Nothing was established either way. */
+        FAILED
+    }
+
+    /**
+     * Reconciles once and reports whether it managed to observe anything.
+     * <p>
+     * The distinction is load bearing for {@link #isRegisteredAddressOfAgent}: an agent with no entry may only be
+     * granted the not-observable exemption on the strength of a reconcile that actually completed against a provider
+     * answer. A round that returned early - this node not in the cluster, or the middleware unable to report client
+     * addresses - proves nothing about the agent and must not be mistaken for one that found it absent.
+     *
+     * @return what this round established
+     */
+    private ObservationOutcome reconcileObservedAddresses() {
         if (!distributedDataAccessService.isConnectedToCluster()) {
-            return;
+            return ObservationOutcome.FAILED;
         }
 
         try {
@@ -141,7 +190,7 @@ public class BuildAgentAddressRegistryService {
             Optional<Map<String, Set<String>>> observedAddresses = distributedDataAccessService.getConnectedClientAddresses();
             if (observedAddresses.isEmpty()) {
                 log.debug("The middleware cannot report connected client addresses right now, keeping the previously registered ones");
-                return;
+                return ObservationOutcome.UNOBSERVABLE;
             }
             Map<String, Set<String>> observed = observedAddresses.get();
             addressObservationAvailable = true;
@@ -203,11 +252,13 @@ public class BuildAgentAddressRegistryService {
             }
 
             refreshLocalSnapshot();
+            return ObservationOutcome.OBSERVED;
         }
         catch (Exception e) {
             // Never let a reconciliation failure propagate into the scheduler: the previous snapshot stays in place
             // and the next run retries. Failing here must not stop builds.
             log.error("Could not refresh the registered build agent addresses", e);
+            return ObservationOutcome.FAILED;
         }
     }
 
@@ -266,17 +317,27 @@ public class BuildAgentAddressRegistryService {
         // An agent that reconnects re-registers itself and starts pulling jobs immediately, while its observed address
         // is only picked up by the next scheduled reconcile. Without this, every agent restart would fail builds for up
         // to the refresh interval, and fail them in a way that looks like a configuration problem. Refreshing on a miss
-        // closes that window; the debounce keeps a wrong address from turning into a reconcile per request.
-        long now = System.currentTimeMillis();
-        long previousRefresh = lastRefreshOnMissAt.get();
-        // Only the request that wins the compareAndSet refreshes; the others fall straight through to the decision
-        // below, which is what they would have reached anyway had the refresh found nothing for them.
-        if (now - previousRefresh > MIN_REFRESH_ON_MISS_INTERVAL_MS && lastRefreshOnMissAt.compareAndSet(previousRefresh, now)) {
-            log.debug("No registered address matches {} for build agent {}, refreshing the registry once before deciding", ipAddress, agentName);
-            refreshRegisteredAddresses();
-            if (matchesRegisteredAddress(agentName, ipAddress)) {
-                return true;
-            }
+        // closes that window; the coordination inside bounds how much work a wrong address can cause.
+        log.debug("No registered address matches {} for build agent {}, reconciling the registry before deciding", ipAddress, agentName);
+        ObservationOutcome outcome = refreshedOnMiss();
+        if (outcome == ObservationOutcome.FAILED) {
+            // Nothing was established, so there is nothing to grant an exemption on the strength of. Denying costs
+            // nothing extra here: reaching this means the middleware is not answering, and the token and job-scope
+            // checks that follow read the processing list from that same middleware, so the request was going to fail
+            // anyway. This is deliberately not the same as UNOBSERVABLE below, which is a working deployment.
+            log.warn("Could not reconcile the build agent addresses while deciding whether {} may act as build agent {}, so the request is refused", ipAddress, agentName);
+            return false;
+        }
+        if (outcome == ObservationOutcome.UNOBSERVABLE) {
+            // The provider cannot report client addresses on this node - a Redis deployment without CLIENT LIST access,
+            // or a Hazelcast client - so no agent's origin is observable and the binding cannot apply to anyone. Denying
+            // here would refuse every build on such a deployment, which is why the provider distinguishes "cannot
+            // answer" from "nobody is connected" in the first place.
+            log.debug("Client addresses cannot be observed on this node, so the origin of build agent {} cannot be constrained", agentName);
+            return true;
+        }
+        if (matchesRegisteredAddress(agentName, ipAddress)) {
+            return true;
         }
 
         // The decision is per agent, not global: an agent with no entry at all is one whose origin this node cannot
@@ -284,11 +345,56 @@ public class BuildAgentAddressRegistryService {
         // in a single JVM never opens a client connection to the middleware, so there is nothing to observe for it, and
         // the same is true of a provider that cannot report client addresses. Refusing those would break every
         // single-node installation. An agent that *is* observed is held to the addresses it was observed at.
+        //
+        // Reached only after a reconcile completed, which is what makes "no entry" mean "not observable" rather than
+        // "not looked at yet". An agent that has just published itself and is about to be registered would otherwise be
+        // granted this exemption for as long as the snapshot lagged.
         if (!hasRegisteredAddresses(agentName)) {
             log.debug("Build agent {} has no observed cluster connection, so its origin cannot be constrained", agentName);
             return true;
         }
         return false;
+    }
+
+    /**
+     * Brings the snapshot up to date for a decision that missed, coordinating with any refresh already in flight.
+     * <p>
+     * Every caller either performs the reconcile or waits for the one in progress, and only then decides. Letting the
+     * waiters proceed immediately - which a compare-and-set debounce does - means deciding on the snapshot that the
+     * in-flight reconcile is about to replace, and since a missing entry is what grants the not-observable exemption,
+     * a caller could be exempted during the very refresh that was about to register the agent's address. Two concurrent
+     * requests with a leaked credential were enough: one refreshes, the other is admitted.
+     * <p>
+     * The debounce is kept for the work it bounds, but measured from the completion of the last reconcile, so a waiter
+     * that has just been handed a fresh snapshot does not start another round on top of it.
+     *
+     * @return what backs the decision now: this call's own reconcile, or the one it waited for
+     */
+    private ObservationOutcome refreshedOnMiss() {
+        try {
+            if (!refreshOnMissLock.tryLock(REFRESH_ON_MISS_WAIT_MS, TimeUnit.MILLISECONDS)) {
+                return ObservationOutcome.FAILED;
+            }
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return ObservationOutcome.FAILED;
+        }
+        try {
+            if (System.currentTimeMillis() - lastRefreshOnMissCompletedAt <= MIN_REFRESH_ON_MISS_INTERVAL_MS) {
+                // A reconcile completed while this request was waiting for the lock, or moments before it arrived. The
+                // snapshot is already as fresh as one more round would make it.
+                return ObservationOutcome.OBSERVED;
+            }
+            ObservationOutcome outcome = reconcileObservedAddresses();
+            if (outcome == ObservationOutcome.OBSERVED) {
+                lastRefreshOnMissCompletedAt = System.currentTimeMillis();
+            }
+            return outcome;
+        }
+        finally {
+            refreshOnMissLock.unlock();
+        }
     }
 
     /**
