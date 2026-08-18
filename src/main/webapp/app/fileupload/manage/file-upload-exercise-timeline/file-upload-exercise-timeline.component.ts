@@ -1,10 +1,10 @@
 import { Component, input, model, output } from '@angular/core';
-import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { Dayjs } from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-file-upload-exercise-timeline',
-    imports: [ExerciseTimelineComponent],
+    imports: [TimelineComponent],
     templateUrl: './file-upload-exercise-timeline.component.html',
 })
 export class FileUploadExerciseTimelineComponent {
@@ -12,12 +12,12 @@ export class FileUploadExerciseTimelineComponent {
     startDate = model<Dayjs | undefined>();
     dueDate = model<Dayjs | undefined>();
     assessmentDueDate = model<Dayjs | undefined>();
-    /** When true the dates are governed by the exercise's variant group (see {@link ExerciseTimelineComponent}). */
+    /** When true the dates are governed by the exercise's variant group (see {@link TimelineComponent}). */
     lockedToGroup = input<boolean>(false);
     /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
     lockedClick = output<void>();
     timelineItems = this.buildTimelineItems();
-    timelineStatus = output<ExerciseTimelineStatus>();
+    timelineStatus = output<TimelineStatus>();
 
     private buildTimelineItems(): TimelineItem[] {
         const dueDateItem: TimelineItem = {
