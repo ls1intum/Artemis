@@ -244,7 +244,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue?: ProjectType;
 
-    // Left undefined until categories load; code distinguishes undefined ("not yet loaded") from an empty array.
     // Initialised here rather than left undefined, because getProgrammingExerciseCreationConfig() must hand the child
     // components a stable array identity. See the comment on that getter.
     exerciseCategories: ExerciseCategory[] = [];
