@@ -623,6 +623,10 @@ export default tseslint.config(
             'localRules/no-raw-tailwind-color-palette': 'error',
             'localRules/no-primeng-component-classes': 'error',
             'localRules/require-chart-accessible-name': 'error',
+            // A property binding is re-evaluated on every change-detection pass, so `.bind()` there hands the
+            // consumer a new function identity every pass. Applies to all templates for the same reason as the two
+            // rules above: change detection works the same way everywhere.
+            'localRules/no-bind-in-template-binding': 'error',
         },
     },
     {
