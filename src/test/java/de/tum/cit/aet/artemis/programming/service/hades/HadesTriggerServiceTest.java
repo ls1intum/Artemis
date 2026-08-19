@@ -315,6 +315,41 @@ class HadesTriggerServiceTest {
             assertThat(captor.getValue().exerciseRepository().cloneLocation()).isEqualTo("custom-assignment");
             assertThat(captor.getValue().testRepository().cloneLocation()).isEqualTo("custom-tests");
         }
+
+        @Test
+        void triggerBuild_withCustomDockerImageInWindfile_passesItThrough() throws ContinuousIntegrationException {
+            buildConfig.setBuildPlanConfiguration("{\"dockerImage\":\"ghcr.io/example/custom-image:1.0\"}");
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().dockerImage()).isEqualTo("ghcr.io/example/custom-image:1.0");
+        }
+
+        @Test
+        void triggerBuild_withoutCustomDockerImage_leavesImageNullForDefaultResolution() throws ContinuousIntegrationException {
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().dockerImage()).isNull();
+        }
+
+        @Test
+        void triggerBuild_withBlankDockerImageInWindfile_leavesImageNull() throws ContinuousIntegrationException {
+            buildConfig.setBuildPlanConfiguration("{\"dockerImage\":\"   \"}");
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().dockerImage()).isNull();
+        }
     }
 
     @Nested

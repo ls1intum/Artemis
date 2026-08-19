@@ -16,4 +16,8 @@ artemis:
         # hades-artemis-adapter (https://github.com/ls1intum/hades-artemis-adapter): receives parsed results from
         # junit-result-parser, combines them with build logs, and forwards to Artemis' new-result endpoint.
         endpoint: http://host.docker.internal:8083/adapter/test-results
+        # Per-job callback the Hades log manager POSTs the aggregated build logs to (replaces the removed global
+        # ARTEMIS_ADAPTER_URL in Hades; requires Hades with https://github.com/ls1intum/hades/pull/452). Point at the
+        # hades-artemis-adapter log route. Leave empty to disable log forwarding (no callback_url is sent).
+        logs-endpoint: http://host.docker.internal:8083/adapter/logs
       auth-key: # Set this in production environment

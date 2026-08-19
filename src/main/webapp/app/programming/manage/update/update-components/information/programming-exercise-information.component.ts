@@ -33,6 +33,7 @@ import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { Message } from 'primeng/message';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 
@@ -296,19 +297,19 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     onAssigmentRepositoryCheckoutPathChange(event: string) {
         this.programmingExercise().buildConfig!.assignmentCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig! };
+        this.programmingExercise().buildConfig = deepClone(this.programmingExercise().buildConfig!);
     }
 
     onTestRepositoryCheckoutPathChange(event: string) {
         this.programmingExercise().buildConfig!.testCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig! };
+        this.programmingExercise().buildConfig = deepClone(this.programmingExercise().buildConfig!);
     }
 
     onSolutionRepositoryCheckoutPathChange(event: string) {
         this.programmingExercise().buildConfig!.solutionCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig! };
+        this.programmingExercise().buildConfig = deepClone(this.programmingExercise().buildConfig!);
     }
 
     private registerInputFieldsWhenChildComponentsAreReady() {

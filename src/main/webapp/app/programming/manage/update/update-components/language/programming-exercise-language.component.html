@@ -229,7 +229,10 @@
             </label>
         </div>
     }
-    @if (isEditFieldDisplayedRecord().customizeBuildScript && programmingExerciseCreationConfig().customBuildPlansSupported === PROFILE_LOCALCI) {
+    @if (
+        isEditFieldDisplayedRecord().customizeBuildScript &&
+        (programmingExerciseCreationConfig().customBuildPlansSupported === PROFILE_LOCALCI || programmingExerciseCreationConfig().customBuildPlansSupported === PROFILE_HADES)
+    ) {
         <jhi-programming-exercise-custom-build-plan
             [programmingExercise]="programmingExercise()"
             [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig()"

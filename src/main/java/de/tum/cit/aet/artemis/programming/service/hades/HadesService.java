@@ -19,6 +19,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
@@ -83,6 +84,9 @@ public class HadesService implements StatelessCIService {
 
     @Value("${artemis.continuous-integration.hades.adapter.endpoint}")
     private String adapterEndPoint;
+
+    @Value("${artemis.continuous-integration.hades.adapter.logs-endpoint:}")
+    private String logsCallbackUrl;
 
     private static final String ingestDir = "/shared/build/test-results/test";
 
@@ -194,7 +198,9 @@ public class HadesService implements StatelessCIService {
 
         // Create Execute Step
         Optional<ProjectType> projectType = Optional.ofNullable(buildTriggerRequestDTO.additionalProperties().get("projectType")).map(ProjectType::tryFromString);
-        var image = programmingLanguageConfiguration.getImage(ProgrammingLanguage.valueOf(buildTriggerRequestDTO.programmingLanguage()), projectType);
+        // Honor the exercise's custom Docker image (windfile) when configured; otherwise fall back to the language default.
+        var image = StringUtils.hasText(buildTriggerRequestDTO.dockerImage()) ? buildTriggerRequestDTO.dockerImage()
+                : programmingLanguageConfiguration.getImage(ProgrammingLanguage.valueOf(buildTriggerRequestDTO.programmingLanguage()), projectType);
         var script = buildTriggerRequestDTO.buildScript();
         var executeMetadata = new HashMap<String, String>();
         steps.add(new HadesBuildStepDTO(2, "Execute", image, volumeMounts, workingDir, executeMetadata, script, true));
@@ -216,7 +222,7 @@ public class HadesService implements StatelessCIService {
 
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();
-        return new HadesBuildJobDTO(buildTriggerRequestDTO.participationId().toString(), metadata, timestamp, 1, steps);
+        return new HadesBuildJobDTO(buildTriggerRequestDTO.participationId().toString(), metadata, timestamp, 1, steps, logsCallbackUrl);
     }
 
     private HttpHeaders createAuthHeaders() {

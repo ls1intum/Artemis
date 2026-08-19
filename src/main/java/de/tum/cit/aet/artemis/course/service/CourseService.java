@@ -173,6 +173,26 @@ public class CourseService {
     }
 
     /**
+     * Get one course with only its exercises (filtered for the given user), without lectures, exams, competency counts,
+     * tutorial group counts or FAQ counts.
+     * <p>
+     * This backs the exercises tab of the course overview, which is the only consumer of the exercise data. Everything the
+     * other tabs need is either loaded by those tabs themselves or comes from the lightweight available-tabs endpoint, so
+     * entering a course on any other tab must not pay for this.
+     *
+     * @param courseId the course to fetch
+     * @param user     the user entity
+     * @return the course including only its exercises (filtered for the given user)
+     */
+    public Course findOneWithExercisesForUser(Long courseId, User user) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        course.setExercises(exerciseRepository.findByCourseIdWithCategories(courseId));
+        course.setExercises(exerciseService.filterExercisesForCourse(course, user, true));
+        exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
+        return course;
+    }
+
+    /**
      * Get one course with exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      *
      * @param courseId the course to fetch

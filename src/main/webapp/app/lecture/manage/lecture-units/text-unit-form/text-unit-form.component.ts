@@ -15,6 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface TextUnitFormData {
     name?: string;
@@ -142,7 +143,7 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     }
 
     submitForm() {
-        const textUnitFormData: TextUnitFormData = { ...this.form.value };
+        const textUnitFormData: TextUnitFormData = deepClone(this.form.value);
         textUnitFormData.content = this.content;
         this.localStorageService.remove(this.router.url);
         this.formSubmitted.emit(textUnitFormData);
