@@ -808,9 +808,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.loadAll();
         fixture.detectChanges();
 
-        // The mocked component exposes signal inputs as plain values, not callables.
-        const renderer = fixture.debugElement.query(By.directive(ProblemStatementRendererComponent)).componentInstance as unknown as { liveUpdates: string };
-        expect(renderer.liveUpdates).toBe('shared');
+        // ng-mocks models a signal input as the signal itself, so the bound value is read by calling it.
+        const renderer = fixture.debugElement.query(By.directive(ProblemStatementRendererComponent)).componentInstance as unknown as { liveUpdates: () => string };
+        expect(renderer.liveUpdates()).toBe('shared');
     });
 
     it('should return submission language', () => {
