@@ -61,6 +61,51 @@ class FeatureUsageDigestServiceTest {
         assertThat(programming.unusedFeatures()).isEqualTo(1);
     }
 
+    /**
+     * The digest counts features, not endpoints.
+     * <p>
+     * The admin page collapses endpoints that share a {@code @FeatureUsage} label into one row; the overview it is built
+     * from counts inventory rows. Counting rows here made the email contradict the page it summarises, in the same way
+     * the page itself used to ("895 unused" over 131 features). Three endpoints behind one label are one feature.
+     */
+    @Test
+    void shouldCountLabelledEndpointsAsOneFeature() {
+        givenOverview(labelledEntry("programming", "configuration/sca", 60, 1, false), labelledEntry("programming", "configuration/sca", 40, 0, false),
+                labelledEntry("programming", "configuration/sca", 0, 0, false), entry("programming", 0, 0, false));
+
+        FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
+
+        // One labelled feature plus one unlabelled endpoint, not four rows
+        assertThat(digest.trackedFeatures()).isEqualTo(2);
+        assertThat(digest.usedFeatures()).isEqualTo(1);
+        assertThat(digest.unusedFeatures()).isEqualTo(1);
+        FeatureUsageModuleSummaryDTO programming = moduleOf(digest, "programming");
+        assertThat(programming.trackedFeatures()).isEqualTo(2);
+        assertThat(programming.usedFeatures()).isEqualTo(1);
+        assertThat(programming.unusedFeatures()).isEqualTo(1);
+        // The calls of every endpoint behind the label still count once each
+        assertThat(programming.callCount()).isEqualTo(100);
+        assertThat(programming.errorCount()).isEqualTo(1);
+    }
+
+    /**
+     * A label is retired only once every endpoint behind it is gone, which is the rule the page applies. While one
+     * endpoint remains, the feature still exists and must keep counting as offered.
+     */
+    @Test
+    void shouldTreatALabelAsRetiredOnlyWhenEveryEndpointBehindItIsGone() {
+        givenOverview(labelledEntry("programming", "configuration/sca", 5, 0, false), labelledEntry("programming", "configuration/sca", 0, 0, true),
+                labelledEntry("lti", "configuration/lti", 0, 0, true), labelledEntry("lti", "configuration/lti", 0, 0, true));
+
+        FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
+
+        // sca survives because one endpoint remains; lti is gone entirely
+        assertThat(digest.trackedFeatures()).isEqualTo(1);
+        assertThat(digest.usedFeatures()).isEqualTo(1);
+        assertThat(digest.unusedFeatures()).isZero();
+        assertThat(digest.retiredFeatures()).isEqualTo(1);
+    }
+
     @Test
     void shouldOrderActiveModulesByCalls() {
         givenOverview(entry("quiz", 7, 0, false), entry("programming", 100, 0, false), entry("exam", 40, 0, false));
@@ -159,6 +204,11 @@ class FeatureUsageDigestServiceTest {
         long total = features.stream().mapToLong(FeatureUsageEntryDTO::callCount).sum();
         when(queryService.getOverview(anyInt(), any()))
                 .thenReturn(new FeatureUsageOverviewDTO(7, FROM, null, features.size(), unused, retired, total, Instant.now(), Instant.now(), features, List.of()));
+    }
+
+    private static FeatureUsageEntryDTO labelledEntry(String module, String featureLabel, long callCount, long errorCount, boolean retired) {
+        return new FeatureUsageEntryDTO(0, FeatureKind.REST, module, "GET api/" + module + "/" + featureLabel + "-" + callCount + "-" + retired, featureLabel, callCount,
+                errorCount, 0, 0, 0, null, Instant.now(), retired);
     }
 
     private static FeatureUsageEntryDTO entry(String module, long callCount, long errorCount, boolean retired) {
