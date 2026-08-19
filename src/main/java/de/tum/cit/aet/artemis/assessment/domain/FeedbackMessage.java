@@ -39,9 +39,11 @@ public class FeedbackMessage extends DomainObject {
     private String text;
 
     /**
-     * Creation timestamp, used as a safety window by the garbage collection: a message row is committed
-     * before the feedback rows that reference it (there is no surrounding transaction), so the cleanup
-     * only deletes unreferenced messages older than a grace period.
+     * Garbage-collection grace timestamp: set on creation and refreshed whenever an existing row is reused
+     * ({@code FeedbackMessageService#getOrCreate}). A message row is committed before the feedback rows
+     * that reference it (there is no surrounding transaction), so the cleanup only deletes unreferenced
+     * messages whose timestamp is older than a grace period — the refresh-on-reuse extends that protection
+     * to old rows that are being re-referenced right now.
      */
     @Column(name = "created_date", nullable = false)
     private ZonedDateTime createdDate = ZonedDateTime.now();

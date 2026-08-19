@@ -158,16 +158,22 @@ public final class Constants {
      * {@code -(resultId * FACTOR + seq)}. Shared between the Java encoder/decoder
      * (ProgrammingFeedbackSynthesizerService) and the JPQL feedback-analysis query that builds the same
      * ids in the database, so the two sides cannot drift.
+     * <p>
+     * The factor bounds two things: the number of feedback items one result can encode (see
+     * {@link #SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET}) and the largest result id that still yields a
+     * JavaScript-safe id for the client ({@code Number.MAX_SAFE_INTEGER / FACTOR} — with 10^6 that is
+     * result ids up to ~9 * 10^9, far beyond the id sequence for decades).
      */
-    public static final long SYNTHETIC_FEEDBACK_ID_FACTOR = 100_000L;
+    public static final long SYNTHETIC_FEEDBACK_ID_FACTOR = 1_000_000L;
 
     /**
      * Offset added to the {@code seq} part of synthetic SCA feedback ids. Test-case and SCA rows of the
      * same result allocate their sequence numbers independently (two tables, two counters), so without the
-     * offset a test view and an SCA view could carry the same synthetic id. The sequence is a SMALLINT
-     * (max 32767), so offset + seq always stays below {@link #SYNTHETIC_FEEDBACK_ID_FACTOR}.
+     * offset a test view and an SCA view could carry the same synthetic id. Each row type can therefore
+     * encode up to {@code OFFSET - 1} items per result (production peaks at ~4200 SCA rows); the sequence
+     * columns themselves are INT and do not add a lower ceiling.
      */
-    public static final long SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET = 50_000L;
+    public static final long SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET = 500_000L;
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 

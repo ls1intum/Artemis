@@ -53,9 +53,9 @@
             <column name="text" type="${messageTextType}">
                 <constraints nullable="false"/>
             </column>
-            <!-- creation timestamp used as a safety window by the garbage collection: a message row is
+            <!-- garbage-collection grace timestamp (set on creation, refreshed on reuse): a message row is
                  committed before the feedback rows that reference it (no surrounding transaction), so the
-                 cleanup only deletes unreferenced messages older than a grace period -->
+                 cleanup only deletes unreferenced messages whose timestamp is older than a grace period -->
             <column name="created_date" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
@@ -67,7 +67,7 @@
             <column name="result_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="seq" type="SMALLINT">
+            <column name="seq" type="INT">
                 <constraints nullable="false"/>
             </column>
             <column name="test_case_id" type="BIGINT">
@@ -86,7 +86,7 @@
             <column name="result_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="seq" type="SMALLINT">
+            <column name="seq" type="INT">
                 <constraints nullable="false"/>
             </column>
             <!-- StaticCodeAnalysisTool enum name, copied verbatim from the previous feedback.reference -->

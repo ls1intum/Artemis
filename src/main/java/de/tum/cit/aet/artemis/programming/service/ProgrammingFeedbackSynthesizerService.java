@@ -55,8 +55,8 @@ public class ProgrammingFeedbackSynthesizerService {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingFeedbackSynthesizerService.class);
 
     /**
-     * Factor encoding {@code (resultId, seq)} into one synthetic id; supports up to 100&nbsp;000 feedback
-     * items per result (the sequence is a SMALLINT, so the real bound is far lower). SCA views additionally
+     * Factor encoding {@code (resultId, seq)} into one synthetic id; see
+     * {@link Constants#SYNTHETIC_FEEDBACK_ID_FACTOR} for the encoding bounds. SCA views additionally
      * offset the seq part by {@link Constants#SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET} so that a test view and an
      * SCA view with the same sequence number never share an id.
      */

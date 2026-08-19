@@ -31,9 +31,10 @@ public interface FeedbackMessageCleanupRepository extends ArtemisJpaRepository<F
 
     /**
      * Deletes {@link FeedbackMessage} rows that are no longer referenced by any test-case or SCA feedback
-     * and were created before the given cutoff. The cutoff is the race-safety window: build-result
-     * processing commits the message row before the feedback rows that reference it (there is no
-     * surrounding transaction), so a freshly created message may look unreferenced for a moment.
+     * and whose grace timestamp (set on creation, refreshed on every reuse) is older than the given cutoff.
+     * The cutoff is the race-safety window: build-result processing commits the message row before the
+     * feedback rows that reference it (there is no surrounding transaction), so a freshly created or
+     * freshly reused message may look unreferenced for a moment.
      *
      * @param createdBefore only messages created before this timestamp are deleted
      * @return the number of deleted entities
