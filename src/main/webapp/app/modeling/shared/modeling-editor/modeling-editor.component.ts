@@ -26,7 +26,6 @@ import { ModelingExplanationEditorComponent } from '../modeling-explanation-edit
 import { captureException } from '@sentry/angular';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
-import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -59,7 +58,6 @@ type ApollonEditorE2eHostElement = HTMLElement & { __apollonEditor?: ApollonEdit
         ModelingExplanationEditorComponent,
         MarkdownDirective,
         ModelingEditorHelpComponent,
-        ResizableDirective,
         ApollonRailDisclosureComponent,
     ],
 })

@@ -135,6 +135,7 @@
             "dates": "Termine",
             "dateNotSet": "Kein Datum gesetzt",
             "timelineDateOrderTooltip": "Dieses Datum muss nach oder zeitgleich mit allen vorhergehenden Daten liegen.",
+            "timelineDateStrictOrderTooltip": "Dieses Datum muss nach allen vorhergehenden Daten liegen.",
             "timelineDateRequiredTooltip": "Dieses Datum ist erforderlich.",
             "timelineDateInvalidTooltip": "Das eingegebene Datum ist ungültig. Bitte das Format TT.MM.JJJJ HH:mm verwenden.",
             "timelineOtherRequiredDateTooltip": "{{ otherInputName }} muss gesetzt sein, bevor dieses Datum gesetzt werden kann.",
@@ -400,7 +401,10 @@
             "isUsedForTutorial": "Tutor:in muss überprüfen",
             "action": "Aktion",
             "exerciseAssessmentDashboard": "Bewertungs-Dashboard",
-            "exampleSolutionPublicationDateLockedToGroup": "Die Veröffentlichung wird von der Variantengruppe der Aufgabe gesteuert."
+            "exampleSolutionPublicationDateLockedToGroup": "Die Veröffentlichung wird von der Variantengruppe der Aufgabe gesteuert.",
+            "applyInstruction": "Diese Bewertungsanweisung anwenden",
+            "applyInstructionHint": "Hake eine Bewertungsanweisung an, um sie zum Feedback hinzuzufügen, oder ziehe sie per Drag & Drop auf ein Feedback-Element",
+            "instructionAppliedToReferencedElement": "Bereits auf ein Feedback-Element angewendet. Entferne sie dort, um den Haken zu lösen."
         }
     }
 }

@@ -133,6 +133,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
 
+    /** Complete assessment used by the structured-grading score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return this.feedback;
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
     onAssessmentNoteChange(assessmentNote: AssessmentNote): void {
         const result = this.result();
         if (result) {

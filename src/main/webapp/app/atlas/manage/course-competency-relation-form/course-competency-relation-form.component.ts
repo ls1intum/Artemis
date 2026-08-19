@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 interface SuggestedRelationDTO {
     tail_id: string;
@@ -276,7 +277,7 @@ export class CourseCompetencyRelationFormComponent {
             this.relations.update((relations) =>
                 relations.map((relation) => {
                     if (relation.id === this.selectedRelationId()) {
-                        return { ...relation, relationType: newRelationType };
+                        return cloneWith(relation, { relationType: newRelationType });
                     }
                     return relation;
                 }),

@@ -1,6 +1,6 @@
 import { Component, input, model, output } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
-import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 
 @Component({
     selector: 'jhi-exercise-update-timeline',
@@ -18,5 +18,5 @@ export class ExerciseUpdateTimelineStubComponent {
     readonly assessmentDueDate = model<Dayjs | undefined>();
     readonly exampleSolutionPublicationDate = model<Dayjs | undefined>();
 
-    readonly timelineStatus = output<ExerciseTimelineStatus>();
+    readonly timelineStatus = output<TimelineStatus>();
 }

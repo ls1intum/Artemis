@@ -7,6 +7,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 })
 export class UnreferencedFeedbackDetailStubComponent {
     public readonly feedback = model.required<Feedback>();
+    readonly resultId = input.required<number>();
     readonly isSuggestion = input<boolean>();
     public readonly readOnly = input.required<boolean>();
     readonly highlightDifferences = input<boolean>(false);

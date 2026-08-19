@@ -276,7 +276,11 @@ describe('Example Modeling Submission Component', () => {
 
         expect(comp.assessmentsAreValid()).toBe(true);
         expect(assessExampleSubmissionSpy).toHaveBeenCalledOnce();
-        expect(assessExampleSubmissionSpy).toHaveBeenCalledWith(expect.objectContaining({ submission: expect.objectContaining({ latestResult: expect.any(Result) }) }), exerciseId);
+        const [sentExampleSubmission, sentExerciseId] = assessExampleSubmissionSpy.mock.calls[0];
+        expect(sentExerciseId).toBe(exerciseId);
+        expect(sentExampleSubmission.submission!.id).toBe(exampleSubmission.submission!.id);
+        expect(sentExampleSubmission.submission!.latestResult).toBeDefined();
+        expect(exampleSubmission.submission!.latestResult).toBeUndefined();
     });
 
     it('should check invalid assessment', () => {

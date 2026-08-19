@@ -142,6 +142,7 @@
             "dates": "Dates",
             "dateNotSet": "No date set",
             "timelineDateOrderTooltip": "This date must be after or equal to all preceding dates.",
+            "timelineDateStrictOrderTooltip": "This date must be after all preceding dates.",
             "timelineDateRequiredTooltip": "This date is required.",
             "timelineDateInvalidTooltip": "The entered date is not valid. Please use the format DD.MM.YYYY HH:mm.",
             "timelineOtherRequiredDateTooltip": "'{{ otherInputName }}' must be set before this date can be set.",
@@ -400,7 +401,10 @@
             "isUsedForTutorial": "Tutor needs to review",
             "action": "Action",
             "exerciseAssessmentDashboard": "Assessment Dashboard",
-            "exampleSolutionPublicationDateLockedToGroup": "Publication is governed by the exercise's variant group."
+            "exampleSolutionPublicationDateLockedToGroup": "Publication is governed by the exercise's variant group.",
+            "applyInstruction": "Apply this assessment instruction",
+            "applyInstructionHint": "Tick an assessment instruction to add it to the feedback, or drag & drop it onto a feedback element",
+            "instructionAppliedToReferencedElement": "Already applied to a feedback element. Remove it there to untick it."
         }
     }
 }

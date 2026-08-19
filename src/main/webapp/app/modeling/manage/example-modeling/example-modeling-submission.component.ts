@@ -140,6 +140,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     assessments = computed(() => [...this.referencedFeedback(), ...this.unreferencedFeedback()]);
 
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
     /**
      * Score and validity of the assessment currently on screen.
      *

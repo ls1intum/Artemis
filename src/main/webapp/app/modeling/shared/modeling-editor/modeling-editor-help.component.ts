@@ -6,6 +6,7 @@ import { OsDetectorService } from 'app/core/navbar/global-search/services/os-det
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type ShortcutGroup = 'editing' | 'selection' | 'view';
 
@@ -67,10 +68,7 @@ export class ModelingEditorHelpComponent {
 
     protected readonly walkthroughs = computed(() => {
         const theme = this.themeService.currentTheme() === Theme.DARK ? 'dark' : 'light';
-        return WALKTHROUGHS.map((walkthrough) => ({
-            ...walkthrough,
-            image: `/content/images/modeling-help/${walkthrough.imageName}-${theme}.png`,
-        }));
+        return WALKTHROUGHS.map((walkthrough) => cloneWith(walkthrough, { image: `/content/images/modeling-help/${walkthrough.imageName}-${theme}.png` }));
     });
     protected readonly additionalTopics = ['select', 'duplicate', 'deleteElement', 'undo'] as const;
     protected readonly shortcuts = APOLLON_SHORTCUTS;

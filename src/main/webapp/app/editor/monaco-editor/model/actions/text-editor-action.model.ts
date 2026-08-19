@@ -98,19 +98,23 @@ export abstract class TextEditorAction implements Disposable {
      * @param mapToCompletionItemFn Function that maps an item to a Monaco completion suggestion.
      * @param triggerCharacter The character that triggers the completion provider.
      * @param listIncomplete Whether the list of suggestions is incomplete. If true, Monaco will keep searching for more suggestions.
+     * @param options Optional completer behavior: require a word boundary before the trigger character and/or override the scan length used to locate it.
      */
     registerCompletionProviderForCurrentModel<ItemType>(
         editor: TextEditor,
         searchFn: (searchTerm?: string) => Promise<ItemType[]>,
-        mapToCompletionItemFn: (item: ItemType, range: TextEditorRange) => TextEditorCompletionItem,
+        mapToCompletionItemFn: (item: ItemType, range: TextEditorRange, searchTerm: string, index: number) => TextEditorCompletionItem,
         triggerCharacter?: string,
         listIncomplete?: boolean,
+        options?: { requireWordBoundaryBeforeTrigger?: boolean; scanLengthLimit?: number },
     ): Disposable {
         return editor.addCompleter({
             triggerCharacter,
             incomplete: listIncomplete ?? false,
             searchItems: searchFn,
             mapCompletionItem: mapToCompletionItemFn,
+            requireWordBoundaryBeforeTrigger: options?.requireWordBoundaryBeforeTrigger,
+            scanLengthLimit: options?.scanLengthLimit,
         });
     }
 

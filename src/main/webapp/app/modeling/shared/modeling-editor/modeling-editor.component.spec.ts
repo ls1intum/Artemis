@@ -106,7 +106,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
-import { cloneDeep } from 'lodash-es';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -136,7 +136,7 @@ describe('ModelingEditorComponent', () => {
 
     const course = { id: 123 } as Course;
     const diagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
-    const classDiagram = cloneDeep(testClassDiagram) as unknown as UMLModel;
+    const classDiagram = deepClone(testClassDiagram) as unknown as UMLModel;
     const route = { params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -184,7 +184,7 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('should isolate the input model from Apollon normalization and assessment removal', async () => {
-        const inputModel = cloneDeep(classDiagram);
+        const inputModel = deepClone(classDiagram);
         const assessment = {
             modelElementId: 'element-1',
             elementType: 'Class',
@@ -256,7 +256,7 @@ describe('ModelingEditorComponent', () => {
         await component.ngAfterViewInit();
 
         const editor = component['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
-        const changedModel = cloneDeep(editor.model);
+        const changedModel = deepClone(editor.model);
         changedModel.nodes = [];
         changedModel.edges = [];
         fixture.componentRef.setInput('umlModel', changedModel);

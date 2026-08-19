@@ -29,6 +29,7 @@ import {
     isStudentParticipation,
 } from 'app/exercise/result/result.utils';
 import { CsvDownloadService } from 'app/foundation/util/CsvDownloadService';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -260,7 +261,7 @@ export class ResultService implements IResultService {
     }
 
     public convertResultDatesFromClient(result: Result): Result {
-        return Object.assign({}, result, {
+        return cloneWith(result, {
             completionDate: convertDateFromClient(result.completionDate),
             submission: undefined,
         });

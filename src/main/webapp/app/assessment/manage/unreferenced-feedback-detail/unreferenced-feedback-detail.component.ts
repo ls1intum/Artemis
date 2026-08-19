@@ -40,6 +40,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     structuredGradingCriterionService = inject(StructuredGradingCriterionService);
 
     public readonly feedback = model.required<Feedback>();
+    readonly resultId = input.required<number>();
     readonly isSuggestion = input<boolean>();
     public readonly readOnly = input.required<boolean>();
     readonly highlightDifferences = input<boolean>(false);

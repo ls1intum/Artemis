@@ -3,7 +3,7 @@ import { NgStyle } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Dayjs } from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 
 /**
  * Grading timeline shared by the update forms of the manually assessed exercise types (modeling, text, file upload).
@@ -17,13 +17,13 @@ import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 
     selector: 'jhi-exercise-update-timeline',
     templateUrl: './exercise-update-timeline.component.html',
     styleUrl: './exercise-update-timeline.component.scss',
-    imports: [FormsModule, NgStyle, TranslateDirective, ExerciseTimelineComponent],
+    imports: [FormsModule, NgStyle, TranslateDirective, TimelineComponent],
 })
 export class ExerciseUpdateTimelineComponent implements OnInit {
     readonly hasExampleSolution = input(false);
     /** The server resets the publication date on import, so the opt-in is inert there (as for programming exercises). */
     readonly isImport = input(false);
-    /** Dates are governed by the exercise's variant group; see {@link ExerciseTimelineComponent}. */
+    /** Dates are governed by the exercise's variant group; see {@link TimelineComponent}. */
     readonly lockedToGroup = input(false);
     readonly lockedClick = output<void>();
 
@@ -33,7 +33,7 @@ export class ExerciseUpdateTimelineComponent implements OnInit {
     readonly assessmentDueDate = model<Dayjs | undefined>();
     readonly exampleSolutionPublicationDate = model<Dayjs | undefined>();
 
-    readonly timelineStatus = output<ExerciseTimelineStatus>();
+    readonly timelineStatus = output<TimelineStatus>();
 
     readonly canConfigureExampleSolutionPublication = computed(() => this.hasExampleSolution() && !this.isImport() && !this.lockedToGroup());
     readonly isExampleSolutionPublicationDateVisible = signal(false);

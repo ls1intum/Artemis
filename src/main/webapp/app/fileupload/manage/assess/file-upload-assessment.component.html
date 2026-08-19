@@ -59,6 +59,10 @@
                     (feedbacksChange)="validateAssessment($event)"
                     [readOnly]="readOnly"
                     [highlightDifferences]="highlightDifferences"
+                    [resultId]="result()!.id!"
+                    [gradingCriteria]="exercise()?.gradingCriteria ?? []"
+                    [allFeedbacks]="assessments"
+                    [maxPoints]="getTotalMaxPoints(exercise())"
                 />
             }
         </div>

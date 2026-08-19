@@ -103,10 +103,10 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
-import { cloneDeep } from 'lodash-es';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 function createV4ModelWithNodes(): UMLModel {
-    const v3Model = cloneDeep(testClassDiagram as any);
+    const v3Model = deepClone(testClassDiagram as any);
     const nodes: any[] = [];
     const edges: any[] = [];
 
@@ -153,7 +153,7 @@ describe('ModelingAssessmentComponent', () => {
     const CONNECTED_CLASS_ID = '2f67120e-b491-4222-beb1-79e87c2cf54d';
     const RELATIONSHIP_ID = '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd';
 
-    const makeMockModel = () => cloneDeep(testClassDiagram as unknown as UMLModel);
+    const makeMockModel = () => deepClone(testClassDiagram as unknown as UMLModel);
 
     const mockFeedbackWithReference: Feedback = {
         text: 'FeedbackWithReference',

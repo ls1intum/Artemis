@@ -233,6 +233,10 @@
                                 [readOnly]="readOnly()"
                                 [addReferenceIdForExampleSubmission]="true"
                                 (feedbacksChange)="onUnReferencedFeedbackChanged($event)"
+                                [resultId]="result()?.id!"
+                                [gradingCriteria]="exercise()?.gradingCriteria ?? []"
+                                [allFeedbacks]="assessments()"
+                                [maxPoints]="getTotalMaxPoints(exercise())"
                             />
                         </div>
                     </div>

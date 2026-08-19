@@ -52,6 +52,7 @@ import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assess
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
 import { ApollonModelData, countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /** Reuses Apollon's own "this element is marked" accent, so the preview reads as part of the diagram. */
 const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
@@ -576,7 +577,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             if (submissionPatch.participation?.exercise) {
                 submissionPatch.participation.exercise.studentParticipations = [];
             }
-            this.submissionPatchObservable.next(Object.assign({}, submissionPatch));
+            this.submissionPatchObservable.next(deepClone(submissionPatch));
         }
     }
 
@@ -617,7 +618,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    submit(): void {
+    submitExercise(): void {
         if (this.isSaving()) {
             return;
         }

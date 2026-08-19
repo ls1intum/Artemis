@@ -19,10 +19,5 @@
     @if (exampleSolutionPublicationHintKey(); as hintKey) {
         <div class="example-solution-publication-hint" data-testid="example-solution-publication-hint" [jhiTranslate]="hintKey"></div>
     }
-    <jhi-exercise-timeline
-        [timelineItems]="timelineItems()"
-        [lockedToGroup]="lockedToGroup()"
-        (lockedClick)="lockedClick.emit()"
-        (timelineStatusChange)="timelineStatus.emit($event)"
-    />
+    <jhi-timeline [timelineItems]="timelineItems()" [lockedToGroup]="lockedToGroup()" (lockedClick)="lockedClick.emit()" (timelineStatusChange)="timelineStatus.emit($event)" />
 </div>

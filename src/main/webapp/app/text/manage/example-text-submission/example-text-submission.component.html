@@ -164,6 +164,10 @@
             [readOnly]="readOnly()"
             [addReferenceIdForExampleSubmission]="true"
             (feedbacksChange)="validateFeedback()"
+            [resultId]="result()!.id!"
+            [gradingCriteria]="exercise?.gradingCriteria ?? []"
+            [allFeedbacks]="allAssessmentFeedbacks()"
+            [maxPoints]="getTotalMaxPoints(exercise)"
         />
     }
 }

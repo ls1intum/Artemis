@@ -13,10 +13,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
-import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 import { normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
 import { TranslateService } from '@ngx-translate/core';
 import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
@@ -34,6 +32,7 @@ import { isOccupied } from 'app/modeling/manage/assess/modeling-assessment-proje
 import { ModelingAssessmentPanelDirective } from 'app/modeling/manage/assess/modeling-assessment-panel.directive';
 import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
 import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -48,7 +47,7 @@ type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor 
     selector: 'jhi-modeling-assessment',
     templateUrl: './modeling-assessment.component.html',
     styleUrls: ['./modeling-assessment.component.scss'],
-    imports: [ArtemisTranslatePipe, FaIconComponent, ModelingExplanationEditorComponent, ResizableDirective, ApollonRailDisclosureComponent],
+    imports: [ModelingExplanationEditorComponent, ApollonRailDisclosureComponent],
 })
 export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -585,10 +584,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             const hasRemovedAssessment = Object.keys(currentModel.assessments ?? {}).some((id) => !incomingIds.has(id));
             if (hasRemovedAssessment) {
                 // Apollon can upsert assessments individually but removal requires replacing the complete model.
-                editor.model = {
-                    ...currentModel,
+                editor.model = cloneWith(currentModel, {
                     assessments: Object.fromEntries(assessments.map((assessment) => [assessment.modelElementId, assessment])),
-                };
+                });
                 return;
             }
 

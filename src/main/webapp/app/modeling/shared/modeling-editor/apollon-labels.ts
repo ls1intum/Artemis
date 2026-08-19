@@ -35,7 +35,7 @@ export function createApollonLabels(translator: ApollonLabelTranslator): Partial
     const labels: Partial<ApollonLabels> = {};
     for (const [key, value] of Object.entries(translationTree)) {
         if (key in DEFAULT_LABELS && typeof value === 'string' && typeof DEFAULT_LABELS[key as keyof ApollonLabels] === 'string') {
-            Object.assign(labels, { [key]: value });
+            (labels as Record<string, unknown>)[key] = value;
         }
     }
 

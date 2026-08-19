@@ -1,5 +1,5 @@
 import { Component, input, model, output } from '@angular/core';
-import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseUpdateTimelineComponent } from 'app/exercise/exercise-timeline/exercise-update-timeline/exercise-update-timeline.component';
 import { Dayjs } from 'dayjs/esm';
 
@@ -24,5 +24,5 @@ export class ModelingExerciseTimelineComponent {
     readonly assessmentDueDate = model<Dayjs | undefined>();
     readonly exampleSolutionPublicationDate = model<Dayjs | undefined>();
 
-    readonly timelineStatus = output<ExerciseTimelineStatus>();
+    readonly timelineStatus = output<TimelineStatus>();
 }
