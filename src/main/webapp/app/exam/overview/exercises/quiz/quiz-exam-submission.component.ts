@@ -256,6 +256,11 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.examParticipationService.notifySubmissionSyncStateChanged();
     }
 
+    // Bound once and handed to the question components by reference; see the identical callback in
+    // QuizParticipationComponent. `onSelectionChanged.bind(this)` in the template minted a new function on every
+    // change-detection pass, changing every question component's input on every pass.
+    readonly selectionChangedCallback = () => this.onSelectionChanged();
+
     /**
      * return true if the user changed any answer in the quiz
      */

@@ -508,8 +508,8 @@ importers:
         specifier: 17.3.0
         version: 17.3.0
       ng-mocks:
-        specifier: 14.15.3
-        version: 14.15.3(07c60d662419b4715cf4332873f6ea3e)
+        specifier: 14.17.1
+        version: 14.17.1(07c60d662419b4715cf4332873f6ea3e)
       ng-packagr:
         specifier: 'catalog:'
         version: 22.1.1(@angular/compiler-cli@22.1.2(@angular/compiler@22.1.2)(supports-color@10.2.2)(typescript@6.0.3))(tailwindcss@4.3.3)(tslib@2.8.1)(typescript@6.0.3)
@@ -6673,8 +6673,8 @@ packages:
     resolution: {integrity: sha512-WmmLty1YWwJl9yZi77v2dVIV6X2kuYV8YYBI/G3LWGKdGHmHUvL1z7FW0iDvEvGAwNEoc5x1tOOOyDnf5jJw/w==}
     engines: {node: '>= 10'}
 
-  ng-mocks@14.15.3:
-    resolution: {integrity: sha512-J0UafeI2K5kc5oDhIinGu+VqT990b0sP2dlKV3JxXYTlaQxQ7Mm0LLrxGz10hsGGJVtn9JEKkhjnpb6oijLT3w==}
+  ng-mocks@14.17.1:
+    resolution: {integrity: sha512-YxHOVaXoCTBlR89vXs/niq8v7ncyIgAP5MUuFG6F80LHvC7wRw+chto2hiboKboJJ6V9uynIhZzLsSIVyti9gA==}
     peerDependencies:
       '@angular/common': ^22.0.0
       '@angular/core': ^22.0.0
@@ -14358,7 +14358,7 @@ snapshots:
 
   neotraverse@1.0.1: {}
 
-  ng-mocks@14.15.3(07c60d662419b4715cf4332873f6ea3e):
+  ng-mocks@14.17.1(07c60d662419b4715cf4332873f6ea3e):
     dependencies:
       '@angular/common': 22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)
       '@angular/core': 22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)(zone.js@0.16.2)
