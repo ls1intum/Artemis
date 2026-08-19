@@ -183,6 +183,10 @@ export class ProgrammingExerciseOverviewPage {
             await this.page.locator('.popover-body').waitFor({ state: 'visible' });
             await expect(button).toBeEnabled({ timeout: 15000 });
         }
+        // The copy button is enabled before the URL next to it has switched, so copying right away can put the previous
+        // plain HTTPS URL on the clipboard and the caller clones without the token it asked for. Wait for the displayed
+        // URL to be the tokenized one first; it is the same source the button copies from.
+        await this.getCloneUrl(GitCloneMethod.httpsWithToken);
         await button.click();
         return await this.page.evaluate(async () => {
             return await navigator.clipboard.readText();
