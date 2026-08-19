@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { MockModule, MockProvider } from 'ng-mocks';
+import { MockModule } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { Feedback, FeedbackType, NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
@@ -20,7 +20,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [CodeEditorTutorAssessmentInlineFeedbackComponent, MockModule(NgbTooltipModule)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, StructuredGradingCriterionService],
         });
         fixture = TestBed.createComponent(CodeEditorTutorAssessmentInlineFeedbackComponent);
         comp = fixture.componentInstance;
@@ -73,6 +73,31 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
         expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
         expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.currentFeedback());
+    });
+
+    it('should delete feedback after confirming on the trash icon while editing', () => {
+        fixture.componentRef.setInput('feedback', { type: FeedbackType.MANUAL, credits: 1 } as Feedback);
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+
+        const onDeleteFeedbackSpy = vi.fn();
+        comp.onDeleteFeedback.subscribe(onDeleteFeedbackSpy);
+
+        const confirmIcon = fixture.debugElement.query(By.css('jhi-confirm-icon'));
+        expect(confirmIcon).not.toBeNull();
+
+        confirmIcon.triggerEventHandler('confirmEvent', true);
+
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.currentFeedback());
+    });
+
+    it('should show delete control in view mode without opening the editor', () => {
+        fixture.componentRef.setInput('feedback', { type: FeedbackType.MANUAL, credits: 1, detailText: 'comment' } as Feedback);
+        fixture.detectChanges();
+
+        expect(comp.viewOnly()).toBe(true);
+        expect(fixture.debugElement.query(By.css('jhi-confirm-icon'))).not.toBeNull();
     });
 
     it('should update feedback with SGI and emit to parent', () => {
@@ -171,7 +196,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
     });
 
-    it('should use the correct translation key for graded feedback', () => {
+    it('should use the feedback label for graded feedback', () => {
         fixture.componentRef.setInput('feedback', {
             type: FeedbackType.MANUAL,
             text: 'feedback',
@@ -179,9 +204,23 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         fixture.detectChanges();
 
         const labelElement = fixture.debugElement.query(By.css('.inline-feedback__label')).nativeElement;
-        expect(labelElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.tutorCommentLabel');
+        expect(labelElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.feedback');
         const paragraphElement = fixture.debugElement.query(By.css('.inline-feedback__text')).nativeElement;
         expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
+    });
+
+    it('should show the criterion title for instruction-linked feedback', () => {
+        const instruction = { id: 7, credits: 1, gradingScale: 'good', instructionDescription: 'desc', feedback: 'inst', usageCount: 0 };
+        fixture.componentRef.setInput('gradingCriteria', [{ id: 1, title: 'Player', structuredGradingInstructions: [instruction] }]);
+        fixture.componentRef.setInput('feedback', {
+            type: FeedbackType.MANUAL,
+            detailText: 'Ok',
+            gradingInstruction: instruction,
+        } as Feedback);
+        fixture.detectChanges();
+
+        expect(comp.displayTitle()).toBe('Player');
+        expect(fixture.debugElement.query(By.css('.inline-feedback__title'))?.nativeElement.textContent).toBe('Player');
     });
 
     it('should step the points in half-point increments while editing', () => {

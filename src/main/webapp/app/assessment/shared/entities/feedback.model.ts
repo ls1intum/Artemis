@@ -151,6 +151,47 @@ export class Feedback implements BaseEntity {
         return FeedbackSuggestionType.SUGGESTED;
     }
 
+    private static readonly FEEDBACK_SUGGESTION_PREFIXES = [
+        FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+        FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+        NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+        FEEDBACK_SUGGESTION_IDENTIFIER,
+    ] as const;
+
+    public static stripFeedbackSuggestionPrefix(text: string): string {
+        for (const prefix of Feedback.FEEDBACK_SUGGESTION_PREFIXES) {
+            if (text.startsWith(prefix)) {
+                return text.slice(prefix.length);
+            }
+        }
+        return text;
+    }
+
+    public static getFeedbackSuggestionPrefix(text: string): string | undefined {
+        for (const prefix of Feedback.FEEDBACK_SUGGESTION_PREFIXES) {
+            if (text.startsWith(prefix)) {
+                return prefix;
+            }
+        }
+        return undefined;
+    }
+
+    /** Tutor-facing title stored in {@link text}, without suggestion prefixes. */
+    public static getDisplayTitle(feedback: Feedback): string | undefined {
+        if (!feedback.text) {
+            return undefined;
+        }
+        const prefix = Feedback.getFeedbackSuggestionPrefix(feedback.text);
+        if (prefix) {
+            const title = feedback.text.slice(prefix.length);
+            return title || undefined;
+        }
+        if (!feedback.gradingInstruction) {
+            return feedback.text;
+        }
+        return undefined;
+    }
+
     public static hasDetailText(that: Feedback): boolean {
         return that.detailText != undefined && that.detailText.length > 0;
     }

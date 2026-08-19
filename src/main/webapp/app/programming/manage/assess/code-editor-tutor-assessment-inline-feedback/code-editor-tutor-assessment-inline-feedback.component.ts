@@ -1,22 +1,19 @@
-import { Component, ElementRef, inject, input, linkedSignal, output, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, linkedSignal, output, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
-import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faBan, faExclamationTriangle, faMinus, faPencilAlt, faPlus, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { Subject } from 'rxjs';
+import { faBan, faExclamationTriangle, faMinus, faPencilAlt, faPlus, faSave, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { FormsModule } from '@angular/forms';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FeedbackContentPipe } from 'app/foundation/pipes/feedback-content.pipe';
-import { QuotePipe } from 'app/foundation/pipes/quote.pipe';
 import {
     TumUiButtonDirective,
     TumUiCardComponent,
@@ -40,11 +37,9 @@ import { FeedbackTone } from 'app/assessment/manage/unreferenced-feedback-detail
         FaIconComponent,
         GradingInstructionLinkIconComponent,
         FormsModule,
-        DeleteButtonDirective,
+        ConfirmIconComponent,
         AssessmentCorrectionRoundBadgeComponent,
         ArtemisTranslatePipe,
-        FeedbackContentPipe,
-        QuotePipe,
         TumUiCardComponent,
         TumUiButtonDirective,
         TumUiTagComponent,
@@ -59,11 +54,11 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly faBan = faBan;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faTrashAlt = faTrashAlt;
+    protected readonly faTimes = faTimes;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faMinus = faMinus;
     protected readonly faPlus = faPlus;
     protected readonly Feedback = Feedback;
-    protected readonly ButtonSize = ButtonSize;
     protected readonly MANUAL = FeedbackType.MANUAL;
     protected readonly CREDITS_STEP = CREDITS_STEP;
 
@@ -92,6 +87,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     readonly readOnly = input.required<boolean>();
     readonly highlightDifferences = input<boolean>();
     readonly course = input<Course>();
+    readonly gradingCriteria = input<GradingCriterion[]>([]);
     readonly textareaRef = viewChild<ElementRef>('detailText');
 
     readonly onUpdateFeedback = output<Feedback>();
@@ -110,8 +106,17 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     readonly oldFeedback = linkedSignal<Feedback>(() => deepClone(this.feedback() ?? new Feedback()));
 
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
+    readonly displayTitle = computed(() => {
+        const feedback = this.currentFeedback();
+        const criterionTitle = this.structuredGradingCriterionService.findCriterionTitle(this.gradingCriteria(), feedback.gradingInstruction?.id);
+        if (criterionTitle) {
+            return criterionTitle;
+        }
+        if (feedback.text && Feedback.getFeedbackSuggestionPrefix(feedback.text)) {
+            return Feedback.getDisplayTitle(feedback);
+        }
+        return undefined;
+    });
 
     /**
      * Updates the current feedback and sets props and emits the feedback to parent component
@@ -184,7 +189,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     deleteFeedback() {
         this.onDeleteFeedback.emit(this.currentFeedback());
-        this.dialogErrorSource.next('');
     }
 
     /**

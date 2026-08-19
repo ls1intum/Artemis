@@ -132,6 +132,21 @@
     color: var(--secondary);
 }
 
+.feedback-card__title {
+    margin: 0;
+    min-width: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--body-color);
+    white-space: pre-wrap;
+}
+
+.feedback-card__header-input {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
 /* The instructor-authored grading scale of the linked instruction: muted guidance text. */
 .feedback-card__scale {
     margin: 0;

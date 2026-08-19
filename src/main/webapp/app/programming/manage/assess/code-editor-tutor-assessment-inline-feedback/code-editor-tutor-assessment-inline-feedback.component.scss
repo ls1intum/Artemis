@@ -71,6 +71,16 @@
         flex-wrap: wrap;
     }
 
+    &__delete {
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+
+        ::ng-deep fa-icon:not(.text-danger) {
+            color: var(--danger);
+        }
+    }
+
     /* Half-point stepper: two flush addon buttons around the native number field. */
     &__stepper {
         width: auto;
@@ -118,6 +128,15 @@
         flex-direction: column;
         min-width: 0;
         gap: 0.25rem;
+    }
+
+    &__title {
+        margin: 0;
+        min-width: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--body-color);
+        white-space: pre-wrap;
     }
 
     &__label {

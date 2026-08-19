@@ -104,6 +104,22 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
      */
     readonly pointsDisabled = computed(() => !!this.feedback().gradingInstruction || this.readOnly());
 
+    /** Optional header for manual feedback; AI suggestion title from {@link Feedback.text}. Hidden when linked to an instruction. */
+    readonly showHeaderSection = computed(() => {
+        const feedback = this.feedback();
+        if (feedback.gradingInstruction) {
+            return false;
+        }
+        if (this.headerReadOnly()) {
+            return !!Feedback.getDisplayTitle(feedback);
+        }
+        return true;
+    });
+
+    readonly headerReadOnly = computed(() => this.readOnly() || this.isSuggestion());
+
+    readonly displayTitle = computed(() => Feedback.getDisplayTitle(this.feedback()));
+
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -163,5 +179,16 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
         this.feedback.set(feedback);
         this.onFeedbackChange.emit(feedback);
+    }
+
+    updateHeaderTitle(title: string): void {
+        const feedback = this.feedback();
+        const prefix = feedback.text ? Feedback.getFeedbackSuggestionPrefix(feedback.text) : undefined;
+        if (prefix) {
+            feedback.text = prefix + title;
+        } else {
+            feedback.text = title || undefined;
+        }
+        this.emitChanges();
     }
 }

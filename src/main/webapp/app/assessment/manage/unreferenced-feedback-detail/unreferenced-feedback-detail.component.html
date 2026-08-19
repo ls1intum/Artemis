@@ -82,6 +82,29 @@
             </div>
         </div>
 
+        @if (showHeaderSection()) {
+            <div class="feedback-card__section">
+                <span class="feedback-card__label" jhiTranslate="artemisApp.assessment.detail.feedbackHeader"></span>
+                @if (headerReadOnly()) {
+                    @if (displayTitle(); as title) {
+                        <p class="feedback-card__title">{{ title }}</p>
+                    }
+                } @else {
+                    <input
+                        id="feedback-header"
+                        tumUiInput
+                        class="feedback-card__header-input"
+                        type="text"
+                        [ngModel]="displayTitle() ?? ''"
+                        (ngModelChange)="updateHeaderTitle($event)"
+                        [readOnly]="readOnly()"
+                        [disabled]="readOnly()"
+                        [placeholder]="'artemisApp.assessment.feedbackHeaderPlaceholder' | artemisTranslate"
+                    />
+                }
+            </div>
+        }
+
         <!-- Tutor-facing guidance of the linked instruction: says when this score applies. -->
         @if (feedback().gradingInstruction?.instructionDescription; as instructionDescription) {
             <div class="feedback-card__section">

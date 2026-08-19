@@ -8,6 +8,7 @@
             "feedback": "Feedback",
             "feedbackHint": "This feedback is associated with an assessment instruction. You can provide additional feedback for this submission element. The student will see the combined feedback during the review.",
             "feedbackCommentPlaceholder": "You can enter feedback here...",
+            "feedbackHeaderPlaceholder": "Optional title...",
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
             "suggestion": {
                 "default": "Suggestion",
@@ -77,6 +78,7 @@
                 "pointsShort": "{{points}} pts",
                 "pointsOfShort": "{{points}} / {{maxPoints}} pts",
                 "criteria": "Criteria",
+                "feedbackHeader": "Title",
                 "decreasePoints": "Decrease points",
                 "increasePoints": "Increase points",
                 "feedbackUsage": {

@@ -98,4 +98,38 @@ describe('Unreferenced Feedback Detail Component', () => {
             credits: 1.5,
         } as Feedback);
     });
+
+    it('should preserve suggestion prefix when updating AI title', () => {
+        fixture.componentRef.setInput('feedback', {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: 'FeedbackSuggestion:Model quality',
+            detailText: 'Improve the diagram',
+            credits: 1,
+        } as Feedback);
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+        comp.updateHeaderTitle('Updated title');
+        expect(emitSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                text: 'FeedbackSuggestion:Updated title',
+                detailText: 'Improve the diagram',
+            }),
+        );
+    });
+
+    it('should store manual header in feedback text', () => {
+        fixture.componentRef.setInput('feedback', {
+            id: 1,
+            detailText: 'Body',
+            credits: 1,
+        } as Feedback);
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+        comp.updateHeaderTitle('Player');
+        expect(emitSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                text: 'Player',
+                detailText: 'Body',
+            }),
+        );
+    });
 });

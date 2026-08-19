@@ -47,6 +47,21 @@ describe('Structured Grading Criteria Service', () => {
             const totalScore = service.computeTotalScore(returnedFromService);
             expect(totalScore).toBe(5.0);
         });
+
+        it('should resolve the criterion title for a grading instruction', () => {
+            const title = service.findCriterionTitle(
+                [
+                    {
+                        id: 1,
+                        title: 'Player',
+                        structuredGradingInstructions: [{ id: 7, credits: 1, gradingScale: 'good', instructionDescription: 'desc', feedback: 'inst', usageCount: 0 }],
+                    },
+                ],
+                7,
+            );
+            expect(title).toBe('Player');
+        });
+
         it('should calculate the total score too', () => {
             // define Grading Criteria and Feedback here
             const limitedSGI = new GradingInstruction();

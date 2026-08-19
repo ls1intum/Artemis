@@ -8,6 +8,7 @@
             "feedback": "Feedback",
             "feedbackHint": "Dieses Feedback ist mit einer Bewertungsanweisung verbunden. Du kannst zusätzliches Feedback für dieses Abgabeelement geben. Der/Die Studierende sieht das kombinierte Feedback während der Überprüfung.",
             "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
+            "feedbackHeaderPlaceholder": "Optionaler Titel...",
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "suggestion": {
                 "default": "Vorschlag",
@@ -77,6 +78,7 @@
                 "pointsShort": "{{points}} Pkt.",
                 "pointsOfShort": "{{points}} / {{maxPoints}} Pkt.",
                 "criteria": "Kriterien",
+                "feedbackHeader": "Titel",
                 "decreasePoints": "Punkte verringern",
                 "increasePoints": "Punkte erhöhen",
                 "feedbackUsage": {

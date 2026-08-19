@@ -69,35 +69,28 @@
                     @if (feedback.gradingInstruction) {
                         <jhi-grading-instruction-link-icon [feedback]="feedback" />
                     }
-                    @if (feedback.type === MANUAL) {
-                        <button
-                            jhiDeleteButton
-                            tumUiButton
-                            severity="secondary"
-                            variant="outlined"
-                            size="small"
-                            [buttonSize]="ButtonSize.SMALL"
-                            [translateValues]="{ text: feedback | feedbackContent | quoted: ' ' }"
-                            deleteQuestion="artemisApp.feedback.delete.question"
-                            (delete)="deleteFeedback()"
-                            [dialogError]="dialogError$"
-                            [renderButtonStyle]="false"
-                            [renderButtonText]="false"
-                        >
-                            <fa-icon class="text-state-danger" [icon]="faTrashAlt" />
-                        </button>
-                    }
+                }
+                @if (!readOnly() && feedback.type === MANUAL) {
+                    <div class="inline-feedback__delete" (click)="$event.stopPropagation()">
+                        <jhi-confirm-icon
+                            [initialIcon]="faTrashAlt"
+                            [confirmIcon]="faTimes"
+                            [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
+                            [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | artemisTranslate"
+                            (confirmEvent)="deleteFeedback()"
+                        />
+                    </div>
                 }
             </div>
         </div>
 
+        @if (displayTitle(); as title) {
+            <p class="inline-feedback__title">{{ title }}</p>
+        }
+
         @if (viewOnly()) {
             <div class="inline-feedback__section">
-                @if (Feedback.isNonGradedFeedbackSuggestion(feedback)) {
-                    <span class="inline-feedback__label" jhiTranslate="artemisApp.assessment.detail.feedback"></span>
-                } @else {
-                    <span class="inline-feedback__label" jhiTranslate="artemisApp.assessment.detail.tutorCommentLabel"></span>
-                }
+                <span class="inline-feedback__label" jhiTranslate="artemisApp.assessment.detail.feedback"></span>
                 <p class="inline-feedback__text" [innerHTML]="buildFeedbackTextForCodeEditor(feedback)"></p>
             </div>
         } @else {

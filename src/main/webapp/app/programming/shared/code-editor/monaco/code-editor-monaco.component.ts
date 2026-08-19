@@ -47,6 +47,7 @@ import {
 } from 'app/exercise/review/review-comment-utils';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { parseJson } from 'app/foundation/util/json.util';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -91,6 +92,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly commitState = input.required<CommitState>();
     readonly editorState = input.required<EditorState>();
     readonly course = input<Course>();
+    readonly gradingCriteria = input<GradingCriterion[]>([]);
     readonly feedbacks = input<Feedback[]>([]);
     readonly feedbackSuggestions = input<Feedback[]>([]);
     readonly readOnlyManualFeedback = input<boolean>(false);
