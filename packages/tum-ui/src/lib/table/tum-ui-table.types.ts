@@ -5,6 +5,8 @@ export interface ColumnDef<T> {
     field?: (keyof T & string) | (string & {});
     header?: string;
     headerKey?: string;
+    /** Translation key for a hint explaining a column whose heading alone is ambiguous, shown behind a help icon. */
+    headerTooltip?: string;
     width?: string;
     sort?: boolean;
     hideBelow?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';

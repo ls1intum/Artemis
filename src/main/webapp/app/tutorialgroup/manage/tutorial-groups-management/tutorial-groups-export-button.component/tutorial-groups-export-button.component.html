@@ -1,4 +1,8 @@
-<button id="exportDialogButton" (click)="openExportDialog($event)" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.buttonHeader'" ngbDropdownItem></button>
+<button tumUiButton size="small" severity="secondary" variant="outlined" type="button" id="exportDialogButton" (click)="openExportDialog($event)">
+    <fa-icon [icon]="faFileExport" />
+    <!-- sr-only below md keeps the label in the accessibility tree so the icon-only button stays named -->
+    <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.tutorialGroupExportDialog.buttonHeader"></span>
+</button>
 
 <p-dialog
     [header]="'artemisApp.tutorialGroupExportDialog.header' | artemisTranslate"
@@ -33,21 +37,17 @@
             </div>
         }
     </form>
+    <!-- `tumUiButton` projects its content, so the label goes on a child element: jhiTranslate writes the host's
+         innerHTML and would otherwise overwrite the projection Angular manages. -->
     <ng-template #footer>
-        <button type="button" class="btn btn-secondary" (click)="closeDialog()" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.cancel'"></button>
-        <button
-            type="button"
-            class="btn btn-primary"
-            (click)="exportJSON()"
-            [disabled]="selectedFields().length === 0"
-            [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.exportJSON'"
-        ></button>
-        <button
-            type="button"
-            class="btn btn-primary"
-            (click)="exportCSV()"
-            [disabled]="selectedFields().length === 0"
-            [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.exportCSV'"
-        ></button>
+        <button tumUiButton size="small" severity="secondary" type="button" (click)="closeDialog()">
+            <span jhiTranslate="artemisApp.tutorialGroupExportDialog.cancel"></span>
+        </button>
+        <button tumUiButton size="small" type="button" (click)="exportJSON()" [disabled]="selectedFields().length === 0">
+            <span jhiTranslate="artemisApp.tutorialGroupExportDialog.exportJSON"></span>
+        </button>
+        <button tumUiButton size="small" type="button" (click)="exportCSV()" [disabled]="selectedFields().length === 0">
+            <span jhiTranslate="artemisApp.tutorialGroupExportDialog.exportCSV"></span>
+        </button>
     </ng-template>
 </p-dialog>

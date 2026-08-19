@@ -82,6 +82,14 @@ describe('TumUiProgressBarComponent', () => {
         fixture.detectChanges();
         expect(label().textContent?.trim()).toBe('');
     });
+
+    it('reflects the size into a data attribute so the stylesheet can pick the slim rail', () => {
+        expect(host.getAttribute('data-size')).toBe('default');
+
+        fixture.componentRef.setInput('size', 'small');
+        fixture.detectChanges();
+        expect(host.getAttribute('data-size')).toBe('small');
+    });
 });
 
 @Component({
