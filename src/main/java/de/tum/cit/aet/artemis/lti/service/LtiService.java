@@ -47,8 +47,6 @@ public class LtiService {
     @Value("${artemis.lti.trustExternalLTISystems:false}")
     private boolean trustExternalLTISystems;
 
-    public static final String LTI_GROUP_NAME = "lti";
-
     protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
 
     private static final Logger log = LoggerFactory.getLogger(LtiService.class);

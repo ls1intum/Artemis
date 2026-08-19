@@ -6,7 +6,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { faCog, faExclamationTriangle, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { faClock, faUser } from '@fortawesome/free-regular-svg-icons';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
-import { cloneDeep, isEqual } from 'lodash-es';
+import { isEqual } from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -40,6 +40,7 @@ import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 interface SaveSettingsOptions {
     keepPersistedRateLimit?: boolean;
@@ -299,7 +300,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         if (!settings) {
             return undefined;
         }
-        return Object.assign({}, settings, {
+        return cloneWith(settings, {
             customInstructions: this.normalizeEmpty(settings.customInstructions),
         });
     }
@@ -339,7 +340,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                     this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
                     this.effectiveRateLimit.set(response.effectiveRateLimit);
                     this.applicationDefaults.set(response.applicationRateLimitDefaults);
-                    this.originalSettings.set(cloneDeep(this.settings()));
+                    this.originalSettings.set(deepClone(this.settings()));
                 },
                 error: (error) => {
                     this.isLoading.set(false);
@@ -359,7 +360,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         }
 
         // Normalize empty strings to undefined before saving
-        const settingsToSave: IrisCourseSettingsDTO = Object.assign({}, currentSettings, {
+        const settingsToSave: IrisCourseSettingsDTO = cloneWith(currentSettings, {
             customInstructions: this.normalizeEmpty(currentSettings.customInstructions),
         });
 
@@ -394,7 +395,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                         this.originalRateLimitTimeframeHours.set(this.rateLimitTimeframeHours());
                         this.effectiveRateLimit.set(response.body.effectiveRateLimit);
                         this.applicationDefaults.set(response.body.applicationRateLimitDefaults);
-                        this.originalSettings.set(cloneDeep(this.settings()));
+                        this.originalSettings.set(deepClone(this.settings()));
                     }
                     this.alertService.success('artemisApp.iris.settings.success');
                 },
@@ -416,7 +417,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     setEnabled(enabled: boolean): void {
         const currentSettings = this.settings();
         if (currentSettings && currentSettings.enabled !== enabled) {
-            this.settings.set(Object.assign({}, currentSettings, { enabled }));
+            this.settings.set(cloneWith(currentSettings, { enabled }));
             // Auto-save enabled/disabled changes immediately
             this.saveEnabledOnly(enabled);
         }
@@ -444,7 +445,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
 
         // Persist the current edits together with the new enabled state, normalizing
         // empty custom instructions the same way saveSettings() does.
-        const settingsToSave: IrisCourseSettingsDTO = Object.assign({}, currentSettings, {
+        const settingsToSave: IrisCourseSettingsDTO = cloneWith(currentSettings, {
             enabled,
             customInstructions: this.normalizeEmpty(currentSettings.customInstructions),
         });
@@ -470,8 +471,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                 next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
                     if (response.body) {
                         // Update original settings to reflect the new enabled state
-                        this.originalSettings.set(cloneDeep(response.body.settings));
-                        this.settings.set(cloneDeep(response.body.settings));
+                        this.originalSettings.set(deepClone(response.body.settings));
+                        this.settings.set(deepClone(response.body.settings));
                         // Reset rate limit tracking
                         this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
                         this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
@@ -488,7 +489,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                     // Revert on error
                     const currentSettings = this.settings();
                     if (currentSettings) {
-                        this.settings.set(Object.assign({}, currentSettings, { enabled: !enabled }));
+                        this.settings.set(cloneWith(currentSettings, { enabled: !enabled }));
                     }
                 },
             });
@@ -524,7 +525,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         if (sameSupportLevel && sameCustomInstructions) {
             return;
         }
-        this.settings.set(Object.assign({}, currentSettings, { supportLevel: defaults.supportLevel, customInstructions: defaults.customInstructions }));
+        this.settings.set(cloneWith(currentSettings, { supportLevel: defaults.supportLevel, customInstructions: defaults.customInstructions }));
         this.saveSettings({ keepPersistedRateLimit: this.isAdmin() && !this.isFormValid() });
     }
 
@@ -534,7 +535,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     updateCustomInstructions(value: string): void {
         const currentSettings = this.settings();
         if (currentSettings) {
-            this.settings.set(Object.assign({}, currentSettings, { customInstructions: value }));
+            this.settings.set(cloneWith(currentSettings, { customInstructions: value }));
         }
     }
 
@@ -545,7 +546,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         const level = SLIDER_VALUE_TO_SUPPORT_LEVEL[value] ?? 'moderate';
         const currentSettings = this.settings();
         if (currentSettings) {
-            this.settings.set(Object.assign({}, currentSettings, { supportLevel: level }));
+            this.settings.set(cloneWith(currentSettings, { supportLevel: level }));
         }
         this.playHandlePop();
     }
@@ -566,7 +567,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     updateVariant(value: IrisPipelineVariant): void {
         const currentSettings = this.settings();
         if (currentSettings) {
-            this.settings.set(Object.assign({}, currentSettings, { variant: value }));
+            this.settings.set(cloneWith(currentSettings, { variant: value }));
         }
     }
 

@@ -5,9 +5,10 @@ import { faCircleInfo, faCircleXmark, faTriangleExclamation } from '@fortawesome
 import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
-import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Declarative group-edit dialog. The edited group comes in via {@link group} and is shown while {@link visible} is
@@ -25,7 +26,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         TumUiMessageComponent,
         TumUiTooltipDirective,
         FaIconComponent,
-        ExerciseTimelineComponent,
+        TimelineComponent,
         ArtemisTranslatePipe,
         TranslateDirective,
     ],
@@ -81,7 +82,7 @@ export class ExerciseGroupEditModalComponent {
         const title = this.draftTitle().trim();
         return title.length > 0 && title.length <= MAX_TITLE_LENGTH;
     });
-    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: true });
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: true });
     readonly isSaveDisabled = computed(() => !this.isTitleValid() || !this.timelineStatus().valid);
 
     constructor() {
@@ -100,8 +101,7 @@ export class ExerciseGroupEditModalComponent {
     }
 
     onSave(): void {
-        const updated: CourseExerciseGroup = {
-            ...this.group(),
+        const updated: CourseExerciseGroup = cloneWith(this.group(), {
             title: this.draftTitle().trim(),
             maxPoints: this.draftMaxPoints(),
             releaseDate: this.draftReleaseDate(),
@@ -109,7 +109,7 @@ export class ExerciseGroupEditModalComponent {
             dueDate: this.draftDueDate(),
             assessmentDueDate: this.draftAssessmentDueDate(),
             exampleSolutionPublicationDate: this.draftExampleSolutionPublicationDate(),
-        };
+        });
         // Nothing edited: close without a `saved` event, so the openers skip the persistence call.
         if (!this.isUnchanged(updated)) {
             this.saved.emit(updated);

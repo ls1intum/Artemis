@@ -273,6 +273,11 @@ public class MessageSpecs {
                 }
 
                 orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
+                // Break ties on the id, so paging is stable. Two messages posted in the same millisecond have no
+                // defined order otherwise, and a page boundary falling between them lets the database return one of
+                // them on two consecutive pages (the client then renders it twice) or on neither (it disappears).
+                // Same reasoning as the answer ordering in PostResponseDTO.
+                orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(root.get(Post_.ID)) : criteriaBuilder.desc(root.get(Post_.ID)));
                 query.orderBy(orderList);
             }
 
