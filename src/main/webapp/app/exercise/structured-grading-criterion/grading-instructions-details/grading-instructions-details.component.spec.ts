@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApplicationRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,8 +25,7 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subject, of, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { TumUiConfirmationService } from '@tumaet/ui-angular';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumUiConfirmationService, TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 describe('GradingInstructionsDetailsComponent', () => {
     let component: GradingInstructionsDetailsComponent;
@@ -130,21 +130,36 @@ describe('GradingInstructionsDetailsComponent', () => {
         });
 
         it('should expose the disabled reason without shifting the layout or showing a pointer cursor', () => {
-            exercise.problemStatement = ' ';
-            fixture.detectChanges();
+            vi.useFakeTimers();
+            try {
+                exercise.problemStatement = ' ';
+                fixture.detectChanges();
 
-            const button = fixture.nativeElement.querySelector('[data-testid="generate-assessment-criteria"] button') as HTMLButtonElement;
-            const tooltipElement = fixture.debugElement.query(By.directive(NgbTooltip));
-            const tooltip = tooltipElement.injector.get(NgbTooltip);
-            const buttonHost = tooltipElement.nativeElement as HTMLElement;
+                const buttonHost = fixture.nativeElement.querySelector('[data-testid="generate-assessment-criteria"]') as HTMLElement;
+                const button = fixture.nativeElement.querySelector('[data-testid="generate-assessment-criteria"] button') as HTMLButtonElement;
+                const tooltipTrigger = fixture.debugElement.query(By.directive(TumUiTooltipDirective)).nativeElement as HTMLElement;
 
-            expect(button.disabled).toBe(true);
-            expect(tooltip.ngbTooltip).toBe('artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement');
-            expect(buttonHost.getAttribute('tabindex')).toBe('0');
-            expect(getComputedStyle(button).cursor).toBe('default');
-            expect(buttonHost.classList).toContain('cursor-default');
-            expect(buttonHost.classList).not.toContain('pointer-events-none');
-            expect(fixture.nativeElement.querySelector('#assessment-criteria-generation-disabled-reason')).toBeNull();
+                expect(button.disabled).toBe(true);
+                expect(tooltipTrigger.getAttribute('tabindex')).toBe('0');
+                expect(getComputedStyle(buttonHost).cursor).toBe('default');
+                expect(fixture.nativeElement.querySelector('#assessment-criteria-generation-disabled-reason')).toBeNull();
+
+                tooltipTrigger.dispatchEvent(new Event('focusin', { bubbles: true }));
+                vi.advanceTimersByTime(151);
+                TestBed.inject(ApplicationRef).tick();
+
+                const tooltipId = tooltipTrigger.getAttribute('aria-describedby');
+                expect(tooltipId).toBeTruthy();
+                const tooltip = document.getElementById(tooltipId!);
+                expect(tooltip?.getAttribute('role')).toBe('tooltip');
+                expect(tooltip?.textContent).toContain('artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement');
+
+                tooltipTrigger.dispatchEvent(new Event('focusout', { bubbles: true }));
+                vi.advanceTimersByTime(101);
+            } finally {
+                vi.runOnlyPendingTimers();
+                vi.useRealTimers();
+            }
         });
 
         it('should render the edit controls and generation button in the same header', () => {
@@ -161,14 +176,11 @@ describe('GradingInstructionsDetailsComponent', () => {
             exercise.gradingCriteria = [gradingCriterion];
             fixture.detectChanges();
 
-            const buttonElement = fixture.debugElement.query(By.css('#add-instruction-button'));
-            const button = buttonElement.nativeElement as HTMLButtonElement;
-            const tooltip = buttonElement.injector.get(NgbTooltip);
+            const buttonHost = fixture.nativeElement.querySelector('#add-instruction-button') as HTMLElement;
+            const button = buttonHost.querySelector('button') as HTMLButtonElement;
 
             expect(button.tagName).toBe('BUTTON');
-            expect(button.classList).toContain('btn');
             expect(button.getAttribute('aria-label')).toBe('artemisApp.exercise.addAssessmentInstruction');
-            expect(tooltip.ngbTooltip).toBe('artemisApp.exercise.addAssessmentInstruction');
             expect(button.textContent?.trim()).toBe('');
         });
 

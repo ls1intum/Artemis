@@ -44,7 +44,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { defer, finalize } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
-import { TumUiButtonComponent, TumUiConfirmDialogComponent, TumUiConfirmationService } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { AccountService } from 'app/core/auth/account.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -74,6 +74,7 @@ interface AssessmentCriteriaGenerationState {
         ArtemisTranslatePipe,
         TumUiButtonComponent,
         TumUiConfirmDialogComponent,
+        TumUiTooltipDirective,
     ],
     providers: [TumUiConfirmationService],
 })

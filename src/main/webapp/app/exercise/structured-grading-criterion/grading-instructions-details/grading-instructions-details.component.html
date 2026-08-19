@@ -28,14 +28,16 @@
             @if (canShowGenerationButton()) {
                 <div class="min-w-fit flex-1">
                     <div class="assessment-criteria-generation__controls">
-                        <span class="assessment-criteria-generation__tooltip-trigger">
+                        <span
+                            class="assessment-criteria-generation__tooltip-trigger"
+                            [attr.tabindex]="generationUnavailableReason ? 0 : null"
+                            [tumUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
+                        >
                             <tum-ui-button
                                 type="button"
                                 severity="secondary"
                                 data-testid="generate-assessment-criteria"
-                                [class.cursor-default]="isGenerationDisabled()"
-                                [attr.tabindex]="generationUnavailableReason ? 0 : null"
-                                [ngbTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : undefined"
+                                [style.cursor]="isGenerationDisabled() ? 'default' : undefined"
                                 [disabled]="isGenerationDisabled()"
                                 [loading]="isGenerating()"
                                 [icon]="facArtemisIntelligence"
@@ -181,17 +183,20 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <button
+                            <tum-ui-button
                                 type="button"
-                                class="btn re-evaluate-button mb-3"
+                                class="mb-3"
                                 id="add-instruction-button"
-                                (click)="addNewInstruction(criterion)"
+                                severity="secondary"
+                                variant="text"
+                                size="small"
+                                [rounded]="true"
+                                [icon]="faPlus"
                                 [disabled]="!editable()"
-                                [attr.aria-label]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
-                                [ngbTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
-                            >
-                                <fa-icon [icon]="faPlus" />
-                            </button>
+                                [ariaLabel]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                [tumUiTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                (clicked)="addNewInstruction(criterion)"
+                            />
                         </div>
                     }
                     <div class="row mt-4">
@@ -233,14 +238,16 @@
     <div class="edit-sqi">
         @if (canShowGenerationButton()) {
             <div class="assessment-criteria-generation__controls">
-                <span class="assessment-criteria-generation__tooltip-trigger">
+                <span
+                    class="assessment-criteria-generation__tooltip-trigger"
+                    [attr.tabindex]="generationUnavailableReason ? 0 : null"
+                    [tumUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
+                >
                     <tum-ui-button
                         type="button"
                         severity="secondary"
                         data-testid="generate-assessment-criteria"
-                        [class.cursor-default]="isGenerationDisabled()"
-                        [attr.tabindex]="generationUnavailableReason ? 0 : null"
-                        [ngbTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : undefined"
+                        [style.cursor]="isGenerationDisabled() ? 'default' : undefined"
                         [disabled]="isGenerationDisabled()"
                         [loading]="isGenerating()"
                         [icon]="facArtemisIntelligence"
@@ -333,17 +340,19 @@
                                                 <span class="re-evaluate-button" id="delete-button" (click)="deleteInstruction(instruction, criteria)">
                                                     <fa-icon [icon]="faTrash" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}" />
                                                 </span>
-                                                <button
+                                                <tum-ui-button
                                                     type="button"
-                                                    class="btn re-evaluate-button"
                                                     id="add-button"
-                                                    (click)="addInstruction(criteria)"
+                                                    severity="secondary"
+                                                    variant="text"
+                                                    size="small"
+                                                    [rounded]="true"
+                                                    [icon]="faPlus"
                                                     [disabled]="!editable()"
-                                                    [attr.aria-label]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
-                                                    [ngbTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
-                                                >
-                                                    <fa-icon [icon]="faPlus" size="2x" />
-                                                </button>
+                                                    [ariaLabel]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                                    [tumUiTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                                    (clicked)="addInstruction(criteria)"
+                                                />
                                             </div>
                                         </div>
                                     </div>
