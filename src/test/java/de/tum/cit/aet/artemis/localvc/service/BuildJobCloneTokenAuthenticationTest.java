@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -22,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -30,6 +33,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkConfiguration;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.localci.service.BuildAgentAddressRegistryService;
 import de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -68,6 +73,8 @@ class BuildJobCloneTokenAuthenticationTest {
 
     private DistributedMap<String, BuildAgentInformation> buildAgentInformationMap;
 
+    private RateLimitService rateLimitService;
+
     private String assignmentRepositoryUri;
 
     private String unrelatedRepositoryUri;
@@ -85,7 +92,9 @@ class BuildJobCloneTokenAuthenticationTest {
         when(buildAgentInformationMap.get(AGENT_NAME))
                 .thenReturn(new BuildAgentInformation(new BuildAgentDTO(AGENT_NAME, "address", "display"), 1, 0, List.of(), null, null, null, 0));
 
-        localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, null, null,
+        // Permissive by default: a void mock does nothing, so every other test in this class runs as if under the limit.
+        rateLimitService = mock(RateLimitService.class);
+        localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, rateLimitService, null,
                 Optional.of(distributedDataAccessService), Optional.of(buildAgentAddressRegistryService), Optional.of(new BuildJobCloneTokenService()), policyAllowingEverything());
         ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create(BASE_URI));
 
@@ -189,6 +198,35 @@ class BuildJobCloneTokenAuthenticationTest {
         when(distributedDataAccessService.getProcessingJobsForAgentByName(AGENT_NAME)).thenReturn(List.of(buildJob(CLONE_TOKEN, assignmentRepositoryUri)));
 
         assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isTrue();
+    }
+
+    /**
+     * Everything ahead of the processing map read is O(1); the read itself pulls and deserializes every entry. A caller
+     * inside the build agent networks who knows an agent name passes the cheap gates with any password, so the read has
+     * to be bounded per source rather than merely reached less often. Asserting the return value alone would not show
+     * that: it is already false for a wrong token. The point is that the expensive call is never made.
+     */
+    @Test
+    void shouldNotReadTheProcessingJobsOnceTheSourceIsOverTheLimit() {
+        when(distributedDataAccessService.getProcessingJobsForAgentByName(AGENT_NAME)).thenReturn(List.of(buildJob(CLONE_TOKEN, assignmentRepositoryUri)));
+        doThrow(new RateLimitExceededException(60)).when(rateLimitService).enforcePerMinute(any(), eq(RateLimitType.BUILD_AGENT_CLONE_TOKEN));
+
+        assertThat(authenticate(request(AGENT_NAME, "arbitrary-password", "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
+        // Even the correct token gets no fast path while over the limit; it falls through to user authentication.
+        assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
+
+        verify(distributedDataAccessService, never()).getProcessingJobsForAgentByName(any());
+    }
+
+    /**
+     * The limit must be consumed per source address, and only past the cheap gates, so ordinary non-agent traffic
+     * cannot exhaust the agents' budget.
+     */
+    @Test
+    void shouldNotConsumeTheLimitForAUsernameThatIsNotABuildAgent() {
+        assertThat(authenticate(request("not-an-agent", "whatever", "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
+
+        verify(rateLimitService, never()).enforcePerMinute(any(), any());
     }
 
     @Test

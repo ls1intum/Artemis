@@ -550,6 +550,25 @@ public class LocalVCServletService {
                 return false;
             }
 
+            // Last gate before the first expensive read, and the only one that bounds repetition. Everything above is
+            // O(1) local or single-key work; getProcessingJobsForAgentByName below reads the whole distributed
+            // processing job map and deserializes every entry to filter it. A caller inside the build agent networks
+            // who knows a registered agent name passes both cheap gates with any password at all, so without this the
+            // scan is reachable in a loop by a caller that ordinary authentication would already be throttling. The
+            // limit is per source address and deliberately far above real agent traffic; see BUILD_AGENT_CLONE_TOKEN.
+            //
+            // Over the limit falls through rather than rejecting, matching the contract documented above: this method
+            // never rejects a request, it only declines to treat it as a build agent clone. The request then meets the
+            // ordinary authentication rate limiter and user authentication, which is what should be answering a caller
+            // behaving like this anyway.
+            try {
+                rateLimitService.enforcePerMinute(new IPAddressString(peerIpAddress).getAddress(), RateLimitType.BUILD_AGENT_CLONE_TOKEN);
+            }
+            catch (RateLimitExceededException exception) {
+                log.warn("Rate limiting the build agent clone token check for agent {} from {}; falling through to user authentication", agentName, peerIpAddress);
+                return false;
+            }
+
             var processingJobs = distributedDataAccessService.get().getProcessingJobsForAgentByName(agentName);
             if (processingJobs.isEmpty()) {
                 // A registered agent running nothing, so no token can match
