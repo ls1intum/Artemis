@@ -186,7 +186,9 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
             searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, channel));
             assertAnswerPostExistsInWeaviate(weaviateService, answerPost.getId());
 
+            // Persist the update, since the dispatcher re-derives the entity from the database at dispatch time
             answerPost.setContent("Updated reply content");
+            answerPostRepository.save(answerPost);
             searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, channel));
 
             await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
