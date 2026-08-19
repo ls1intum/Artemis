@@ -40,7 +40,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisActivityItem, IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -750,20 +750,47 @@ describe('IrisBaseChatbotComponent', () => {
             // Collapsed by default: the tool history no longer stays open after the run finishes.
             expect(trail.open).toBe(false);
             // The summary is translated: MockTranslateService echoes the key, so assert the key is rendered with the count/duration params.
-            expect(instantSpy).toHaveBeenCalledWith('artemisApp.iris.activities.trailSummary', { count: 2, duration: '4.0' });
-            expect(trail.querySelector('summary')?.textContent?.trim()).toBe('artemisApp.iris.activities.trailSummary');
+            expect(instantSpy).toHaveBeenCalledWith('artemisApp.iris.activities.trailSummaryPlural', { count: 2, duration: '4.0' });
+            expect(trail.querySelector('summary')?.textContent?.trim()).toBe('artemisApp.iris.activities.trailSummaryPlural');
         });
 
-        it('should omit the duration from the summary when the tools ran for under 0.01s', () => {
+        /** Renders a message whose only activity ran for the given number of milliseconds and returns the trail summary spy. */
+        const renderSingleActivityOfDuration = (durationMillis: number) => {
             const instantSpy = vi.spyOn(component['translateService'], 'instant');
             const message = deepClone(mockServerMessage);
-            message.activities = [{ ...persistedActivities[0], durationMillis: 4 }];
+            message.activities = [cloneWith(persistedActivities[0], { durationMillis })];
             chatService.messages.next([message]);
             fixture.detectChanges();
+            return instantSpy;
+        };
+
+        it.each([
+            // Below the rounding boundary the duration formats as "0.0s", which is noise, so it is left out entirely.
+            { durationMillis: 4, expectedDuration: undefined },
+            // 10ms used to clear the old threshold but still rounds to "0.0s".
+            { durationMillis: 10, expectedDuration: undefined },
+            // 49ms is the largest duration that still rounds to "0.0s".
+            { durationMillis: 49, expectedDuration: undefined },
+            // 50ms is the first duration that rounds up to a visible "0.1s".
+            { durationMillis: 50, expectedDuration: '0.1' },
+        ])('should show the duration for $durationMillis ms only once it rounds above 0.0s', ({ durationMillis, expectedDuration }) => {
+            const instantSpy = renderSingleActivityOfDuration(durationMillis);
+
+            const expectedKey =
+                expectedDuration === undefined ? 'artemisApp.iris.activities.trailSummaryWithoutDurationSingular' : 'artemisApp.iris.activities.trailSummarySingular';
+            const expectedParams = expectedDuration === undefined ? { count: 1 } : { count: 1, duration: expectedDuration };
 
             const trail = fixture.nativeElement.querySelector('details.activity-trail') as HTMLDetailsElement;
-            expect(instantSpy).toHaveBeenCalledWith('artemisApp.iris.activities.trailSummaryWithoutDuration', { count: 1 });
-            expect(trail.querySelector('summary')?.textContent?.trim()).toBe('artemisApp.iris.activities.trailSummaryWithoutDuration');
+            expect(instantSpy).toHaveBeenCalledWith(expectedKey, expectedParams);
+            expect(trail.querySelector('summary')?.textContent?.trim()).toBe(expectedKey);
+        });
+
+        it('should use the singular summary key for a one-activity trail', () => {
+            const instantSpy = renderSingleActivityOfDuration(3100);
+
+            const trail = fixture.nativeElement.querySelector('details.activity-trail') as HTMLDetailsElement;
+            expect(instantSpy).toHaveBeenCalledWith('artemisApp.iris.activities.trailSummarySingular', { count: 1, duration: '3.1' });
+            expect(trail.querySelector('summary')?.textContent?.trim()).toBe('artemisApp.iris.activities.trailSummarySingular');
         });
 
         it('should expand the persisted trail to a read-only activity feed', () => {

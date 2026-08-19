@@ -117,8 +117,10 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
 const LIVE_DRAFT_ANIMATION_TICK_MS = 50;
 const LIVE_DRAFT_CATCH_UP_MS = 400;
 
-// Shortest activity trail duration (in s) still worth showing; below this the time is left out.
-const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.01;
+// Number of decimals the activity trail duration is rendered with.
+const ACTIVITY_DURATION_DECIMALS = 1;
+// Shortest activity trail duration (in s) still worth showing: anything below this rounds away to "0.0s" at one decimal.
+const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.5 * 10 ** -ACTIVITY_DURATION_DECIMALS;
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -497,15 +499,17 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected activityTrailSummary(activities: IrisActivityItem[]): string {
         const totalDurationMillis = activities.reduce((sum, activity) => sum + (activity.durationMillis ?? 0), 0);
         const totalDurationSeconds = totalDurationMillis / 1000;
+        // A single activity reads as "1 tool used", more than one as "n tools used", so the plural form picks the key.
+        const pluralSuffix = activities.length === 1 ? 'Singular' : 'Plural';
         // Durations that round away to "0.0s" add noise rather than information, so the time is omitted entirely.
         if (totalDurationSeconds < MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS) {
-            return this.translateService.instant('artemisApp.iris.activities.trailSummaryWithoutDuration', {
+            return this.translateService.instant(`artemisApp.iris.activities.trailSummaryWithoutDuration${pluralSuffix}`, {
                 count: activities.length,
             });
         }
-        return this.translateService.instant('artemisApp.iris.activities.trailSummary', {
+        return this.translateService.instant(`artemisApp.iris.activities.trailSummary${pluralSuffix}`, {
             count: activities.length,
-            duration: totalDurationSeconds.toFixed(1),
+            duration: totalDurationSeconds.toFixed(ACTIVITY_DURATION_DECIMALS),
         });
     }
 

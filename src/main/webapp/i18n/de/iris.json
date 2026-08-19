@@ -257,8 +257,10 @@
             "activities": {
                 "liveLabel": "Aktuelle Iris-Aktivität",
                 "trailLabel": "Iris-Aktivitätsverlauf",
-                "trailSummary": "Gedankengang: {{ count }} Tools verwendet · {{ duration }}s",
-                "trailSummaryWithoutDuration": "Gedankengang: {{ count }} Tools verwendet",
+                "trailSummarySingular": "Gedankengang: {{ count }} Tool verwendet · {{ duration }}s",
+                "trailSummaryPlural": "Gedankengang: {{ count }} Tools verwendet · {{ duration }}s",
+                "trailSummaryWithoutDurationSingular": "Gedankengang: {{ count }} Tool verwendet",
+                "trailSummaryWithoutDurationPlural": "Gedankengang: {{ count }} Tools verwendet",
                 "states": {
                     "running": "Läuft",
                     "finished": "Fertig",
