@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
@@ -274,6 +275,21 @@ public class UserService {
         if (!Objects.equals(oldLogin, newLogin)) {
             scienceEventApi.ifPresent(api -> api.renameIdentity(oldLogin, newLogin));
         }
+    }
+
+    /**
+     * Updates a user and renames matching science event identities in the same transaction if the login changed.
+     *
+     * @param user           the user that should get updated
+     * @param updatedUserDTO the DTO containing the to be updated values
+     * @return updated user
+     */
+    @Transactional
+    public User updateUserAndRenameScienceEventIdentity(User user, ManagedUserVM updatedUserDTO) {
+        final String oldLogin = user.getLogin();
+        User updatedUser = userCreationService.updateUser(user, updatedUserDTO);
+        renameScienceEventIdentityIfLoginChanged(oldLogin, updatedUser.getLogin());
+        return updatedUser;
     }
 
     /**
