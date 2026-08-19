@@ -11,7 +11,7 @@ export class NavigationBar {
     }
 
     /**
-     * Opens the consolidated courses page via the former course-management route and waits until it is loaded.
+     * Opens the consolidated courses page and waits until it is loaded.
      *
      * Under heavy multi-node load the lazy route occasionally fails to resolve, so the dashboard request never fires;
      * a single unbounded waitForResponse would then hang until the whole test times out (observed failure mode: only
@@ -24,7 +24,7 @@ export class NavigationBar {
                 () => true,
                 () => false,
             );
-            await this.page.goto('/course-management');
+            await this.page.goto('/courses');
             if (await overviewLoaded) {
                 await this.page.waitForURL('**/courses');
                 return;

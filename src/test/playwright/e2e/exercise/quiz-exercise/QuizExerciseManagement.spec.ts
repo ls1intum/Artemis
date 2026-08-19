@@ -19,7 +19,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
         test.beforeEach('Create quiz exercise', async ({ login, courseManagement, courseManagementExercises, quizExerciseCreation }) => {
             createdQuizId = undefined;
             quizTitle = 'Quiz Exercise ' + generateUUID();
-            await login(admin, '/course-management/');
+            await login(admin, '/courses');
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createQuizExercise();
             await quizExerciseCreation.setTitle(quizTitle);
