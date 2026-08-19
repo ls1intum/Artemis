@@ -5,10 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -65,27 +67,29 @@ public class WeaviateOutboxDispatcher {
     private static final Logger log = LoggerFactory.getLogger(WeaviateOutboxDispatcher.class);
 
     /**
-     * Maximum number of rows read per batch. A drain keeps reading batches until one comes back smaller than
-     * this, so a burst larger than one batch still drains fully within a single drain call.
-     */
-    private static final int BATCH_SIZE = 100;
-
-    /**
-     * Interval of the safety-net / cross-node tick. On this (scheduling) node the after-commit nudge already
-     * makes local enqueues fresh; this tick primarily drains enqueues made on other nodes and covers any
-     * missed nudge.
-     */
-    private static final long DRAIN_INTERVAL_MS = 5000;
-
-    private static final long BASE_BACKOFF_SECONDS = 10;
-
-    private static final long MAX_BACKOFF_SECONDS = 300;
-
-    /**
      * A row's first few failures log at warn; further retries log at debug so a sustained Weaviate outage with a
      * backlog does not emit one warning per row per retry.
      */
     private static final int MAX_WARN_ATTEMPTS = 3;
+
+    /**
+     * Maximum number of rows read per batch. A drain keeps reading batches until one comes back smaller than
+     * this, so a burst larger than one batch still drains fully within a single drain call.
+     * Overridable via {@code artemis.weaviate.outbox.batch-size} (default 100).
+     */
+    private final int batchSize;
+
+    /**
+     * Base of the exponential retry backoff, overridable via {@code artemis.weaviate.outbox.base-backoff-seconds}
+     * (default 10).
+     */
+    private final long baseBackoffSeconds;
+
+    /**
+     * Cap of the exponential retry backoff, overridable via {@code artemis.weaviate.outbox.max-backoff-seconds}
+     * (default 300).
+     */
+    private final long maxBackoffSeconds;
 
     private final WeaviateOutboxRepository outboxRepository;
 
@@ -101,17 +105,27 @@ public class WeaviateOutboxDispatcher {
     private final ReentrantLock drainLock = new ReentrantLock();
 
     public WeaviateOutboxDispatcher(WeaviateOutboxRepository outboxRepository, SearchableEntitySyncStateRepository syncStateRepository,
-            SearchableEntityWeaviateService searchableEntityWeaviateService, PlatformTransactionManager transactionManager) {
+            SearchableEntityWeaviateService searchableEntityWeaviateService, PlatformTransactionManager transactionManager,
+            @Value("${artemis.weaviate.outbox.batch-size:100}") int batchSize, @Value("${artemis.weaviate.outbox.base-backoff-seconds:10}") long baseBackoffSeconds,
+            @Value("${artemis.weaviate.outbox.max-backoff-seconds:300}") long maxBackoffSeconds) {
         this.outboxRepository = outboxRepository;
         this.syncStateRepository = syncStateRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.batchSize = batchSize;
+        this.baseBackoffSeconds = baseBackoffSeconds;
+        this.maxBackoffSeconds = maxBackoffSeconds;
     }
 
     /**
-     * Periodic safety-net drain. Also the path by which enqueues made on non-scheduling nodes reach Weaviate.
+     * Periodic safety-net drain, and the path by which enqueues made on non-scheduling nodes reach Weaviate. On the
+     * scheduling node the after-commit nudge already makes local enqueues fresh, so this tick primarily drains
+     * enqueues made on other nodes and covers any missed nudge.
+     * <p>
+     * The cadence defaults to 5 seconds and is overridable via {@code artemis.weaviate.outbox.drain-interval-seconds}.
+     * Query-count profiling tests raise it so this background query cannot land inside their measurement window.
      */
-    @Scheduled(fixedDelay = DRAIN_INTERVAL_MS)
+    @Scheduled(fixedDelayString = "${artemis.weaviate.outbox.drain-interval-seconds:5}", timeUnit = TimeUnit.SECONDS)
     public void scheduledDrain() {
         drain();
     }
@@ -145,7 +159,7 @@ public class WeaviateOutboxDispatcher {
             do {
                 processed = drainBatch();
             }
-            while (processed == BATCH_SIZE);
+            while (processed == batchSize);
         }
         catch (Exception e) {
             // The database was unavailable while reading or recording. Give up for now; the next tick retries.
@@ -159,11 +173,11 @@ public class WeaviateOutboxDispatcher {
     /**
      * Reads one batch of due rows (no transaction, no lock) and processes each.
      *
-     * @return the number of rows read (equal to {@link #BATCH_SIZE} while more may remain)
+     * @return the number of rows read (equal to {@link #batchSize} while more may remain)
      */
     private int drainBatch() {
         ZonedDateTime now = ZonedDateTime.now();
-        List<WeaviateOutboxEntry> batch = outboxRepository.findDueForDispatch(now, BATCH_SIZE);
+        List<WeaviateOutboxEntry> batch = outboxRepository.findDueForDispatch(now, batchSize);
         for (WeaviateOutboxEntry entry : batch) {
             processEntry(entry, now);
         }
@@ -267,13 +281,13 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
-     * Exponential backoff capped at {@link #MAX_BACKOFF_SECONDS}: 10s, 20s, 40s, ... then a steady 5 minutes.
-     * The row is never dropped, so once Weaviate recovers the entry is applied on the next eligible attempt;
-     * a later reconcile pass is the ultimate backstop for a genuinely poison row.
+     * Exponential backoff capped at {@code maxBackoffSeconds}: with the defaults, 10s, 20s, 40s, ... then a steady
+     * 5 minutes. The row is never dropped, so once Weaviate recovers the entry is applied on the next eligible
+     * attempt; a later reconcile pass is the ultimate backstop for a genuinely poison row.
      */
-    private static long backoffSeconds(int attempts) {
+    private long backoffSeconds(int attempts) {
         int shift = Math.min(attempts - 1, 30);
-        long backoff = BASE_BACKOFF_SECONDS << shift;
-        return Math.min(backoff, MAX_BACKOFF_SECONDS);
+        long backoff = baseBackoffSeconds << shift;
+        return Math.min(backoff, maxBackoffSeconds);
     }
 }

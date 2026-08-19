@@ -62,7 +62,8 @@ class WeaviateOutboxDispatcherTest {
 
     @BeforeEach
     void setUp() {
-        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, transactionManager);
+        // Construct with the production default tuning values (batch size, base and max backoff seconds).
+        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, transactionManager, 100, 10, 300);
     }
 
     @Test
