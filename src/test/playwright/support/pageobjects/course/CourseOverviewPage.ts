@@ -1,5 +1,5 @@
 import { BASE_API } from '../../constants';
-import { Locator, Page, expect } from '@playwright/test';
+import { ElementHandle, Locator, Page, Response, expect } from '@playwright/test';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Overview page (/courses/*).
@@ -45,20 +45,128 @@ export class CourseOverviewPage {
         await button.waitFor({ state: 'visible', timeout: 30_000 });
 
         // Starting a practice attempt loads the quiz for the student, both for the first attempt and for a restart in
-        // the same session. Waiting for that request is what proves the click started an attempt: the exercise page
-        // re-renders its header while the details settle, and a click lost to that re-render leaves the caller waiting
-        // for a question that was never requested. Retry until an attempt is actually under way.
-        for (let attempt = 0; attempt < 3; attempt++) {
-            const quizLoaded = this.page
-                .waitForResponse((response) => response.url().includes(`/quiz-exercises/${exerciseId}/for-student`) && response.ok(), { timeout: 15_000 })
-                .catch(() => undefined);
-            await button.click({ timeout: 10_000 });
-            if (await quizLoaded) {
+        // the same session, and then renders its first question. A load alone does not prove the attempt started: the
+        // exercise page loads the same quiz on its own, so a click the header's re-render swallowed would pass too,
+        // and the caller is then left waiting for a question that no attempt is behind. What separates them is a load
+        // whose request *started* after the click, and the boundary has to come from the click event itself - a
+        // timestamp taken before it also covers the click's own actionability wait, which is long enough for the
+        // page's automatic load to begin inside it.
+        const question = this.page.locator('#question0');
+        // Every quiz load is recorded with the time its request started, and the decision is taken once the click time
+        // is known. Deciding inside the response predicate instead would race the click time being read back and
+        // discard the very load the click caused.
+        const loadStartTimes: number[] = [];
+        const recordQuizLoad = (response: Response) => {
+            if (!response.url().includes(`/quiz-exercises/${exerciseId}/for-student`) || !response.ok()) {
                 return;
             }
-            await button.waitFor({ state: 'visible', timeout: 10_000 });
+            try {
+                loadStartTimes.push(response.request().timing().startTime);
+            } catch {
+                // No timing for this response, so it cannot be attributed to the click; ignore it.
+            }
+        };
+        this.page.on('response', recordQuizLoad);
+        try {
+            for (let attempt = 0; attempt < 3; attempt++) {
+                // The question of a previous attempt, if one is on screen. It has to be gone before a visible question
+                // counts as this attempt's: the response is reported when its headers arrive, before Angular has
+                // applied the body, so the submitted attempt's question would otherwise pass as the new one and the
+                // caller's next answer click would land on the controls of the attempt that is already over.
+                const previousQuestion = await question.elementHandle({ timeout: 1_000 }).catch(() => null);
+                await this.recordNextClickTime(`#quiz-start-practice-${exerciseId}`);
+                // The click is part of what is retried: the same re-render that swallows a click also detaches the
+                // button, and letting that error escape would end the helper instead of trying again.
+                await button.click({ timeout: 10_000 }).catch(() => undefined);
+                const clickedAt = await this.readRecordedClickTime();
+                const loadedByThisClick = await this.waitUntil(() => loadStartTimes.some((startTime) => startTime >= clickedAt), 15_000);
+                if (loadedByThisClick && (await this.hasFreshQuestion(previousQuestion, question))) {
+                    return;
+                }
+                await previousQuestion?.dispose().catch(() => undefined);
+                await button.waitFor({ state: 'visible', timeout: 10_000 }).catch(() => undefined);
+            }
+        } finally {
+            this.page.off('response', recordQuizLoad);
+            await this.stopRecordingClickTime();
         }
-        throw new Error(`Could not start a practice attempt for quiz ${exerciseId}: the quiz was never loaded for the student after clicking start practice.`);
+        throw new Error(`Could not start a practice attempt for quiz ${exerciseId}: no attempt loaded a question after clicking start practice.`);
+    }
+
+    /**
+     * Whether a question belonging to the new attempt is on screen: the previous attempt's question, if there was one,
+     * has to be gone first, and a question has to be visible afterwards.
+     */
+    private async hasFreshQuestion(previousQuestion: ElementHandle<SVGElement | HTMLElement> | null, question: Locator): Promise<boolean> {
+        if (previousQuestion) {
+            const replaced = await previousQuestion.waitForElementState('hidden', { timeout: 15_000 }).then(
+                () => true,
+                () => false,
+            );
+            await previousQuestion.dispose().catch(() => undefined);
+            if (!replaced) {
+                return false;
+            }
+        }
+        return await question.waitFor({ state: 'visible', timeout: 15_000 }).then(
+            () => true,
+            () => false,
+        );
+    }
+
+    /** Polls a condition until it holds or the timeout passes, reporting which happened rather than throwing. */
+    private async waitUntil(condition: () => boolean, timeout: number): Promise<boolean> {
+        const deadline = Date.now() + timeout;
+        while (Date.now() < deadline) {
+            if (condition()) {
+                return true;
+            }
+            await this.page.waitForTimeout(200);
+        }
+        return condition();
+    }
+
+    /**
+     * Arms a one-shot listener that stores the page's own clock reading of the next click on `selector`.
+     * <p>
+     * The page clock is what request timings are measured against, and the click event is the only point that is
+     * neither before the click's actionability wait nor after the request it triggers.
+     */
+    private async recordNextClickTime(selector: string) {
+        await this.page.evaluate((clickSelector) => {
+            const store = window as unknown as { __artemisClickedAt?: number; __artemisClickListener?: (event: Event) => void };
+            store.__artemisClickedAt = undefined;
+            if (store.__artemisClickListener) {
+                document.removeEventListener('click', store.__artemisClickListener, true);
+            }
+            // Listening on the document rather than on the element resolved right now: the header re-render that this
+            // helper exists to survive also replaces the button, and a listener left on the detached node would miss
+            // the click that landed on its replacement, so a successful attempt would look like a swallowed one.
+            store.__artemisClickListener = (event: Event) => {
+                if ((event.target as Element | null)?.closest(clickSelector)) {
+                    store.__artemisClickedAt = Date.now();
+                }
+            };
+            document.addEventListener('click', store.__artemisClickListener, true);
+        }, selector);
+    }
+
+    /** Removes the click listener again, so it cannot outlive the helper and record a later, unrelated click. */
+    private async stopRecordingClickTime() {
+        await this.page
+            .evaluate(() => {
+                const store = window as unknown as { __artemisClickListener?: (event: Event) => void };
+                if (store.__artemisClickListener) {
+                    document.removeEventListener('click', store.__artemisClickListener, true);
+                    store.__artemisClickListener = undefined;
+                }
+            })
+            .catch(() => undefined);
+    }
+
+    /** The recorded click time, or infinity when no click reached the element, so nothing counts as caused by it. */
+    private async readRecordedClickTime(): Promise<number> {
+        return await this.page.evaluate(() => (window as unknown as { __artemisClickedAt?: number }).__artemisClickedAt ?? Number.POSITIVE_INFINITY);
     }
 
     /**

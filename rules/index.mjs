@@ -11,6 +11,7 @@ import noNavigationInEffect from './no-navigation-in-effect.mjs';
 import noAsUnknownCast from './no-as-unknown-cast.mjs';
 import noAsAnyCast from './no-as-any-cast.mjs';
 import preferDeepClone from './prefer-deep-clone.mjs';
+import noBindInTemplateBinding from './no-bind-in-template-binding.mjs';
 
 export default {
     rules: {
@@ -27,5 +28,6 @@ export default {
         'no-as-unknown-cast': noAsUnknownCast,
         'no-as-any-cast': noAsAnyCast,
         'prefer-deep-clone': preferDeepClone,
+        'no-bind-in-template-binding': noBindInTemplateBinding,
     },
 };
