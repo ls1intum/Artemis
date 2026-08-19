@@ -131,13 +131,42 @@ export class ProgrammingExerciseOverviewPage {
         }
     }
 
-    async getCloneUrl() {
-        return (await this.page.locator('.clone-url').innerText()).trim();
+    /**
+     * Reads the clone URL from the code popover, waiting until it belongs to the selected clone method.
+     * <p>
+     * The popover keeps showing the previously selected URL until the switch has propagated through its async
+     * re-render, so a URL read too early is the wrong one. An ssh test then cloned the https URL, which carries no
+     * credentials, and the server rejected it as invalid credentials - a failure that reads like a broken token but
+     * is only a stale read.
+     *
+     * @param cloneMethod the clone method whose URL is expected to be on screen.
+     */
+    async getCloneUrl(cloneMethod: GitCloneMethod = GitCloneMethod.https) {
+        const cloneUrl = this.page.locator('.clone-url');
+        await expect.poll(async () => this.cloneUrlBelongsTo(cloneMethod, (await cloneUrl.innerText()).trim()), { timeout: 15000 }).toBeTruthy();
+        return (await cloneUrl.innerText()).trim();
+    }
+
+    /**
+     * Whether the displayed clone URL is the one of the given method. The two HTTPS variants share a scheme and differ
+     * only in their credentials, so the token has to be part of the check: waiting for the scheme alone accepts the
+     * tokenized URL left over from a previous selection and clones with the wrong credential mode.
+     */
+    private cloneUrlBelongsTo(cloneMethod: GitCloneMethod, url: string): boolean {
+        if (cloneMethod === GitCloneMethod.ssh) {
+            return url.startsWith('ssh://');
+        }
+        if (!url.startsWith('http')) {
+            return false;
+        }
+        // `//login:token@host` - the plain HTTPS URL carries at most the login, never a password.
+        const carriesToken = /\/\/[^/@]+:[^/@]+@/.test(url);
+        return cloneMethod === GitCloneMethod.httpsWithToken ? carriesToken : !carriesToken;
     }
 
     async copyCloneUrl(cloneMethod: GitCloneMethod = GitCloneMethod.https, codeButton?: Locator) {
         if (cloneMethod !== GitCloneMethod.httpsWithToken) {
-            return await this.getCloneUrl();
+            return await this.getCloneUrl(cloneMethod);
         }
         const codeButtonLocator = codeButton ?? this.getCodeButton();
         await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
@@ -154,6 +183,10 @@ export class ProgrammingExerciseOverviewPage {
             await this.page.locator('.popover-body').waitFor({ state: 'visible' });
             await expect(button).toBeEnabled({ timeout: 15000 });
         }
+        // The copy button is enabled before the URL next to it has switched, so copying right away can put the previous
+        // plain HTTPS URL on the clipboard and the caller clones without the token it asked for. Wait for the displayed
+        // URL to be the tokenized one first; it is the same source the button copies from.
+        await this.getCloneUrl(GitCloneMethod.httpsWithToken);
         await button.click();
         return await this.page.evaluate(async () => {
             return await navigator.clipboard.readText();

@@ -98,12 +98,16 @@ if [ -n "$TEST_FILTER" ]; then
 # AUTO-GENERATED - DO NOT COMMIT
 services:
     artemis-playwright:
+        # Both installs are required: specs load src/main/webapp models, which resolve their own dependencies from the
+        # repository root upwards, so a Playwright-only install leaves them unresolvable and collection finds no tests.
         command: >
             sh -c '
-            cd /app/artemis/src/test/playwright &&
+            cd /app/artemis &&
             chmod 777 /root &&
-            rm -f test-reports/results*.xml &&
             corepack enable &&
+            pnpm install --frozen-lockfile &&
+            cd /app/artemis/src/test/playwright &&
+            rm -f test-reports/results*.xml &&
             pnpm install --frozen-lockfile &&
             pnpm run playwright:setup &&
             PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml pnpm exec playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
