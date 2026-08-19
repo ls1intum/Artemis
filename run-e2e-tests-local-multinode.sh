@@ -81,7 +81,7 @@ while [[ $# -gt 0 ]]; do
             TEST_FILTER="$2"
             shift 2
             ;;
-        --help) head -40 "$0" | tail -36; exit 0 ;;
+        --help) head -38 "$0" | tail -34; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
