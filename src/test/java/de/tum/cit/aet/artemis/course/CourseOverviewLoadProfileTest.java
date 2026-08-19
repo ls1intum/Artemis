@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -82,13 +81,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
  * statement counts, measured with a warm cache — the unread-notification count behind for-overview is {@code @Cacheable},
  * so a cold first request issues one more query than reported); timings come from Testcontainers on a developer machine
  * and are only meaningful relative to each other, not as production latencies.
- * <p>
- * The query counts read the global Hibernate {@link Statistics}, so any background thread issuing a query during a
- * measurement inflates the count. The Weaviate outbox dispatcher's periodic drain would do exactly that, so this
- * context raises its interval far beyond a test's lifetime; the dispatcher's after-commit nudge still drives any real
- * draining (this test enqueues nothing anyway).
  */
-@TestPropertySource(properties = "artemis.weaviate.outbox.drain-interval-seconds=3600")
 class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final Logger log = LoggerFactory.getLogger(CourseOverviewLoadProfileTest.class);
@@ -527,9 +520,13 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
     void shouldNotHydrateTheExerciseEntityGraph() throws Exception {
         statistics.clear();
 
-        request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+        // Count the request's queries with the thread-scoped HibernateQueryInterceptor (via assertThatDb), not the
+        // global Hibernate statistics: the Weaviate outbox dispatcher's periodic drain runs on a scheduler thread and
+        // its query would otherwise inflate the global count and flake this assertion. The entity-load checks below stay
+        // on the global statistics — they track specific entity types the drain never touches, so they are unaffected.
+        assertThatDb(() -> request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class))
+                .as("the projection-backed exercise overview query budget").hasBeenCalledAtMostTimes(MAX_EXERCISE_OVERVIEW_QUERIES);
 
-        assertThat(statistics.getPrepareStatementCount()).as("the projection-backed exercise overview query budget").isLessThanOrEqualTo(MAX_EXERCISE_OVERVIEW_QUERIES);
         assertEntityWasNotLoaded(Exercise.class);
         assertEntityWasNotLoaded(TextExercise.class);
         assertEntityWasNotLoaded(ProgrammingExercise.class);
