@@ -88,6 +88,44 @@ class FeatureUsageFlushServiceTest {
         verify(repository, times(2)).addUsage(anyLong(), any(), any(), anyLong(), anyLong(), anyLong(), anyInt());
     }
 
+    /**
+     * A failed write must be retried rather than dropped. drain() advances each bucket's watermark as it hands the delta
+     * out, so without giving a failed delta back its counts sit behind the watermark and are never reported again - the
+     * calls in that bucket are lost silently, which is the worst way for a metrics pipeline to fail.
+     */
+    @Test
+    void shouldRetryABucketWhoseWriteFailed() {
+        // the update finds no row, the insert then fails for a reason that is not the insert race
+        when(repository.addUsage(anyLong(), any(), any(), anyLong(), anyLong(), anyLong(), anyInt())).thenReturn(0);
+        when(repository.save(any())).thenThrow(new RuntimeException("connection reset"));
+        collector.recordUsage(FEATURE_ID, Role.STUDENT, false, 5);
+
+        service.flush();
+
+        // the next flush succeeds and must still carry the counts of the failed one
+        when(repository.addUsage(anyLong(), any(), any(), anyLong(), anyLong(), anyLong(), anyInt())).thenReturn(1);
+        service.flush();
+
+        // Twice: the failed attempt and the retry. The retry is what matters - it must still carry the lost count.
+        ArgumentCaptor<Long> callCount = ArgumentCaptor.forClass(Long.class);
+        verify(repository, times(2)).addUsage(anyLong(), any(), any(), callCount.capture(), anyLong(), anyLong(), anyInt());
+        assertThat(callCount.getAllValues()).containsExactly(1L, 1L);
+    }
+
+    /**
+     * The retry must not double-report once the write has succeeded: reclaiming happens only on failure.
+     */
+    @Test
+    void shouldNotRetryABucketWhoseWriteSucceeded() {
+        when(repository.addUsage(anyLong(), any(), any(), anyLong(), anyLong(), anyLong(), anyInt())).thenReturn(1);
+        collector.recordUsage(FEATURE_ID, Role.STUDENT, false, 5);
+
+        service.flush();
+        service.flush();
+
+        verify(repository, times(1)).addUsage(anyLong(), any(), any(), anyLong(), anyLong(), anyLong(), anyInt());
+    }
+
     @Test
     void shouldNotReportTheSameCountsTwiceAcrossFlushes() {
         when(repository.addUsage(anyLong(), any(), any(), anyLong(), anyLong(), anyLong(), anyInt())).thenReturn(1);

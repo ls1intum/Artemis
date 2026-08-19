@@ -180,6 +180,35 @@ public class FeatureUsageCollector {
     }
 
     /**
+     * Returns a delta to the collector after its write failed, so the next flush reports it again instead of dropping
+     * it.
+     * <p>
+     * {@link #drain} advances each bucket's watermark as it hands the delta out, which is what makes a drain report only
+     * what is new. Without this, a write that failed - a transient database error, a lost connection - left its counts
+     * behind the watermark and they were never reported again: the calls in that bucket were lost rather than retried.
+     * <p>
+     * Only the additive counters are wound back. {@code durationMaxMs} is a maximum rather than a sum, so re-reporting
+     * it is harmless.
+     * <p>
+     * This makes a failed flush at-least-once rather than at-most-once. A write that reached the database but reported
+     * failure afterwards would be counted twice on the retry. That is the deliberate trade: for usage statistics, an
+     * occasional double count on a transient error is worth less harm than silently losing a bucket, and losing one is
+     * invisible while over-counting at least stays consistent with the monotonic counters.
+     *
+     * @param delta the delta whose write failed
+     */
+    public synchronized void reclaim(FeatureUsageDelta delta) {
+        UsageAccumulator accumulator = buckets.get(new UsageKey(delta.featureId(), delta.usageDay(), delta.callerRole()));
+        if (accumulator == null) {
+            // The bucket is gone, which means its day is over and it had nothing new; there is nothing to retry into.
+            return;
+        }
+        accumulator.flushedCallCount -= delta.callCount();
+        accumulator.flushedErrorCount -= delta.errorCount();
+        accumulator.flushedDurationSumMs -= delta.durationSumMs();
+    }
+
+    /**
      * The identity of one bucket.
      *
      * @param featureId  the feature being measured

@@ -64,8 +64,9 @@ public class FeatureUsageFlushService {
             writeDeltas(collector.drain(LocalDate.now(ZoneOffset.UTC)));
         }
         catch (Exception e) {
-            // the counters are cumulative and the watermarks only advance for deltas that were handed out, so a failed
-            // run loses at most what it had already drained, and the next run continues from there
+            // The counters are cumulative and every delta whose write failed is handed back to the collector, so a
+            // failed run reports its buckets again on the next one rather than losing them. A throw from drain itself
+            // leaves the watermarks untouched, so nothing is lost there either.
             log.error("Failed to flush feature usage counters", e);
         }
     }
@@ -87,8 +88,18 @@ public class FeatureUsageFlushService {
             if (write(delta)) {
                 written++;
             }
+            else {
+                // drain() already advanced this bucket's watermark, so without giving the delta back these calls would
+                // never be reported again - a failed write would lose the bucket rather than retry it.
+                collector.reclaim(delta);
+            }
         }
-        log.debug("Flushed feature usage for {} of {} buckets", written, deltas.size());
+        if (written < deltas.size()) {
+            log.warn("Flushed feature usage for {} of {} buckets; the rest were returned to the collector and are retried on the next flush", written, deltas.size());
+        }
+        else {
+            log.debug("Flushed feature usage for {} of {} buckets", written, deltas.size());
+        }
     }
 
     private boolean write(FeatureUsageDelta delta) {
