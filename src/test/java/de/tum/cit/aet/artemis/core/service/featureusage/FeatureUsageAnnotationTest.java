@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -41,6 +43,9 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
 
     private static final Path CATALOGUE_DOCUMENT = Path.of("documentation", "docs", "developer", "feature-usage-catalogue.mdx");
 
+    /** The path prefixes WebConfigurer registers the feature usage interceptor for. Keep in step with that method. */
+    private static final Set<String> INTERCEPTED_PREFIXES = Set.of("/api/", "/.well-known/");
+
     /** Set to true to rewrite the document after a deliberate taxonomy change. */
     private static final String UPDATE_FLAG = "updateFeatureUsageCatalogue";
 
@@ -60,6 +65,26 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
 
         // the admin page splits the label on the slash to build the tree, so exactly one level of nesting is expected
         assertThat(malformed).as("@FeatureUsage values must be \"area/feature\" in kebab-case").isEmpty();
+    }
+
+    /**
+     * An annotated controller whose paths the interceptor never sees is worse than an unannotated one: it enters the
+     * inventory and then reports zero usage forever, which reads as a dead feature rather than a gap in measurement.
+     * <p>
+     * That is what happened to the app-site-association resources, which map to {@code .well-known/} deliberately,
+     * outside the api prefix, while the interceptor was registered for {@code /api/**} alone. This pins every annotated
+     * controller's mapping against the prefixes WebConfigurer actually registers, so the next controller mapped outside
+     * them fails here rather than quietly reporting nothing.
+     */
+    @Test
+    void everyAnnotatedControllerShouldBeMappedWhereTheInterceptorObserves() {
+        Set<String> unobserved = controllers().stream().filter(controller -> labelOf(controller) != null)
+                .filter(controller -> mappingsOf(controller).stream().anyMatch(mapping -> INTERCEPTED_PREFIXES.stream().noneMatch(mapping::startsWith))).map(JavaClass::getName)
+                .collect(Collectors.toCollection(TreeSet::new));
+
+        assertThat(unobserved).as("These controllers carry @FeatureUsage but are mapped outside the paths the feature usage interceptor is registered "
+                + "for in WebConfigurer.addInterceptors, so their usage can never be recorded and they would be reported as permanently unused. "
+                + "Either map them under an intercepted prefix or add their prefix there (currently %s).".formatted(INTERCEPTED_PREFIXES)).isEmpty();
     }
 
     @Test
@@ -162,6 +187,17 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
         String remainder = controller.getPackageName().substring("de.tum.cit.aet.artemis.".length());
         int separator = remainder.indexOf('.');
         return separator < 0 ? remainder : remainder.substring(0, separator);
+    }
+
+    /**
+     * The class-level request mappings of a controller, normalised to a leading slash the way Spring resolves them, so
+     * a mapping declared without one compares alike to one declared with it.
+     */
+    private static Set<String> mappingsOf(JavaClass controller) {
+        return controller.tryGetAnnotationOfType(RequestMapping.class)
+                .<Set<String>>map(
+                        mapping -> Arrays.stream(mapping.value()).map(value -> value.startsWith("/") ? value : "/" + value).collect(Collectors.toCollection(TreeSet<String>::new)))
+                .orElseGet(Set::of);
     }
 
     private static String labelOf(JavaClass controller) {

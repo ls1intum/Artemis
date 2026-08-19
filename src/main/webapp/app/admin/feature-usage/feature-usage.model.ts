@@ -135,4 +135,4 @@ export const FEATURE_USAGE_WINDOWS_IN_DAYS = [7, 30, 90, 180] as const;
  * Caller roles offered as a filter, highest first. These are global authorities, so a user who instructs any course counts
  * as an instructor everywhere.
  */
-export const FEATURE_USAGE_CALLER_ROLES = ['ADMIN', 'INSTRUCTOR', 'EDITOR', 'TEACHING_ASSISTANT', 'STUDENT', 'ANONYMOUS'] as const;
+export const FEATURE_USAGE_CALLER_ROLES = ['SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EDITOR', 'TEACHING_ASSISTANT', 'STUDENT', 'ANONYMOUS'] as const;

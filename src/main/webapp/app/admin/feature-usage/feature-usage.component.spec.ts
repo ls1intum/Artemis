@@ -448,6 +448,19 @@ describe('FeatureUsageComponent', () => {
         });
     });
 
+    it('should offer every caller role the server records, including SUPER_ADMIN', () => {
+        component.ngOnInit();
+
+        const roles = component.callerRoleOptions().map((option) => option.value);
+
+        // SecurityUtils records SUPER_ADMIN as its own bucket and the role distribution exposes it, so omitting it here
+        // made that traffic unfilterable even though it can be a substantial share of the report
+        expect(roles).toContain('SUPER_ADMIN');
+        // Highest first, matching the server's precedence order
+        expect(roles.indexOf('SUPER_ADMIN')).toBeLessThan(roles.indexOf('ADMIN'));
+        expect(roles).toEqual(expect.arrayContaining(['SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EDITOR', 'TEACHING_ASSISTANT', 'STUDENT', 'ANONYMOUS']));
+    });
+
     it('should report an error when the overview cannot be loaded', () => {
         vi.spyOn(featureUsageService, 'getOverview').mockReturnValue(throwError(() => new Error('server down')));
         const errorSpy = vi.spyOn(alertService, 'error');
