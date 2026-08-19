@@ -62,6 +62,10 @@
 }
 
 .assessment-criteria-generation {
+    &__tooltip-trigger {
+        display: inline-flex;
+    }
+
     &__controls {
         display: flex;
         flex-direction: column;

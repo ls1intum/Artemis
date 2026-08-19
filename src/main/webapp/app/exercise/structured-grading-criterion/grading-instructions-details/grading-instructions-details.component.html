@@ -28,17 +28,14 @@
             @if (canShowGenerationButton()) {
                 <div class="min-w-fit flex-1">
                     <div class="assessment-criteria-generation__controls">
-                        <span
-                            class="inline-flex"
-                            [class.cursor-default]="isGenerationDisabled()"
-                            [attr.tabindex]="generationUnavailableReason ? 0 : null"
-                            [ngbTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : undefined"
-                        >
+                        <span class="assessment-criteria-generation__tooltip-trigger">
                             <tum-ui-button
                                 type="button"
                                 severity="secondary"
                                 data-testid="generate-assessment-criteria"
-                                [class.pointer-events-none]="isGenerationDisabled()"
+                                [class.cursor-default]="isGenerationDisabled()"
+                                [attr.tabindex]="generationUnavailableReason ? 0 : null"
+                                [ngbTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : undefined"
                                 [disabled]="isGenerationDisabled()"
                                 [loading]="isGenerating()"
                                 [icon]="facArtemisIntelligence"
@@ -236,17 +233,14 @@
     <div class="edit-sqi">
         @if (canShowGenerationButton()) {
             <div class="assessment-criteria-generation__controls">
-                <span
-                    class="inline-flex"
-                    [class.cursor-default]="isGenerationDisabled()"
-                    [attr.tabindex]="generationUnavailableReason ? 0 : null"
-                    [ngbTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : undefined"
-                >
+                <span class="assessment-criteria-generation__tooltip-trigger">
                     <tum-ui-button
                         type="button"
                         severity="secondary"
                         data-testid="generate-assessment-criteria"
-                        [class.pointer-events-none]="isGenerationDisabled()"
+                        [class.cursor-default]="isGenerationDisabled()"
+                        [attr.tabindex]="generationUnavailableReason ? 0 : null"
+                        [ngbTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : undefined"
                         [disabled]="isGenerationDisabled()"
                         [loading]="isGenerating()"
                         [icon]="facArtemisIntelligence"

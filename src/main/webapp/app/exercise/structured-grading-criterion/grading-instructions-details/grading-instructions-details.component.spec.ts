@@ -136,12 +136,14 @@ describe('GradingInstructionsDetailsComponent', () => {
             const button = fixture.nativeElement.querySelector('[data-testid="generate-assessment-criteria"] button') as HTMLButtonElement;
             const tooltipElement = fixture.debugElement.query(By.directive(NgbTooltip));
             const tooltip = tooltipElement.injector.get(NgbTooltip);
+            const buttonHost = tooltipElement.nativeElement as HTMLElement;
 
             expect(button.disabled).toBe(true);
             expect(tooltip.ngbTooltip).toBe('artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement');
-            expect(tooltipElement.nativeElement.getAttribute('tabindex')).toBe('0');
-            expect(tooltipElement.nativeElement.classList).toContain('cursor-default');
-            expect(tooltipElement.nativeElement.querySelector('tum-ui-button').classList).toContain('pointer-events-none');
+            expect(buttonHost.getAttribute('tabindex')).toBe('0');
+            expect(getComputedStyle(button).cursor).toBe('default');
+            expect(buttonHost.classList).toContain('cursor-default');
+            expect(buttonHost.classList).not.toContain('pointer-events-none');
             expect(fixture.nativeElement.querySelector('#assessment-criteria-generation-disabled-reason')).toBeNull();
         });
 
