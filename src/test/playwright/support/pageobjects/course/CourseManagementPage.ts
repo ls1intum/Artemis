@@ -52,24 +52,50 @@ export class CourseManagementPage {
         await this.openCourse(courseID);
 
         const expectedUrl = new RegExp(`/course-management/${courseID}/${section}(?:/|$)`);
+        const sectionUrl = `/course-management/${courseID}/${section}`;
         const sectionLinkSelector = `a[href="/course-management/${courseID}/${section}"]`;
-        await this.page.locator(sectionLinkSelector).first().waitFor({ state: 'attached', timeout: 30_000 });
-        if (!(await this.page.locator(sectionLinkSelector).first().isVisible())) {
-            // Less frequently used management sections move into the responsive "More" menu.
-            await this.page.locator('.three-dots').click();
-        }
-        const sectionLink = this.page.locator(`${sectionLinkSelector}:visible`).first();
-        await sectionLink.waitFor({ state: 'visible', timeout: 30_000 });
-        await sectionLink.click();
-
-        const settled = await this.page
-            .waitForURL(expectedUrl, { timeout: 15_000 })
+        const sectionLinkAttached = await this.page
+            .locator(sectionLinkSelector)
+            .first()
+            .waitFor({ state: 'attached', timeout: 5_000 })
             .then(() => true)
             .catch(() => false);
-        if (!settled) {
-            await this.page.goto(`/course-management/${courseID}/${section}`);
-            await this.page.waitForURL(expectedUrl, { timeout: 30_000 });
+
+        if (sectionLinkAttached) {
+            if (!(await this.page.locator(sectionLinkSelector).first().isVisible())) {
+                // Less frequently used management sections move into the responsive "More" menu.
+                const moreMenu = this.page.locator('.three-dots:visible').first();
+                const moreMenuVisible = await moreMenu
+                    .waitFor({ state: 'visible', timeout: 5_000 })
+                    .then(() => true)
+                    .catch(() => false);
+                if (moreMenuVisible) {
+                    await moreMenu.click();
+                }
+            }
+
+            const sectionLink = this.page.locator(`${sectionLinkSelector}:visible`).first();
+            const sectionLinkVisible = await sectionLink
+                .waitFor({ state: 'visible', timeout: 5_000 })
+                .then(() => true)
+                .catch(() => false);
+            if (sectionLinkVisible) {
+                await sectionLink.click();
+                const settled = await this.page
+                    .waitForURL(expectedUrl, { timeout: 15_000 })
+                    .then(() => true)
+                    .catch(() => false);
+                if (settled) {
+                    return;
+                }
+            }
         }
+
+        // The management overview redirects instructors to onboarding while course setup is incomplete. Section
+        // routes remain accessible, so fall back directly instead of waiting for navigation elements that onboarding
+        // intentionally does not render. This also recovers from a responsive menu or router click that did not settle.
+        await this.page.goto(sectionUrl);
+        await this.page.waitForURL(expectedUrl, { timeout: 30_000 });
     }
 
     /**
