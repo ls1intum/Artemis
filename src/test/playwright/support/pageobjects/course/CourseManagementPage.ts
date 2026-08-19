@@ -87,7 +87,7 @@ export class CourseManagementPage {
     async openStudentOverviewOfCourse(courseID: number) {
         await this.openCourse(courseID);
         await this.page.locator('#number-of-students').click();
-        await this.page.waitForURL(`**/course-management/${courseID}/groups/students`);
+        await this.page.waitForURL(`**/course-management/${courseID}/members/students`);
     }
 
     /**
