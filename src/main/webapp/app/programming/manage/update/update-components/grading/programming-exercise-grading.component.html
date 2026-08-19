@@ -117,7 +117,7 @@
             @let programmingExerciseValue = programmingExercise();
             @let exampleSolutionPublicationDateSet =
                 !!programmingExerciseValue.exampleSolutionPublicationDate || !!programmingExerciseValue.exerciseGroup?.exam?.exampleSolutionPublicationDate;
-            <jhi-programming-exercise-update-timeline
+            <jhi-programming-exercise-timeline
                 id="timeline"
                 [isExamMode]="programmingExerciseCreationConfig().isExamMode"
                 [complaintsInCourseEnabled]="programmingExerciseValue.course?.complaintsEnabled ?? false"

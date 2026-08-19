@@ -39,7 +39,7 @@
                     <div class="form-group-narrow mt-2">
                         @let exampleSolutionPublicationDateSet =
                             !!newProgrammingExercise.exampleSolutionPublicationDate || !!newProgrammingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate;
-                        <jhi-programming-exercise-update-timeline
+                        <jhi-programming-exercise-timeline
                             id="timeline"
                             [isExamMode]="false"
                             [exampleSolutionPublicationDateSet]="exampleSolutionPublicationDateSet"

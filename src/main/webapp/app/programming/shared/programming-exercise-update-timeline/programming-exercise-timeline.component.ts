@@ -24,7 +24,7 @@ import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 @Component({
-    selector: 'jhi-programming-exercise-update-timeline',
+    selector: 'jhi-programming-exercise-timeline',
     templateUrl: './programming-exercise-timeline.component.html',
     styleUrls: ['./programming-exercise-timeline.component.scss'],
     imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, TimelineComponent, ExerciseFeedbackSuggestionOptionsComponent, ExerciseGroupDateNoticeComponent],

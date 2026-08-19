@@ -176,10 +176,12 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
 
         const buildAndTestItem = component.timelineItems().find((item) => item.labelStringKey === 'artemisApp.exercise.dateForRunningTestsAfterDueDate');
         const groupManagedItems = component.timelineItems().filter((item) => item.labelStringKey !== 'artemisApp.exercise.dateForRunningTestsAfterDueDate');
-        const controls = fixture.debugElement.query(By.css('.section'));
+        const controls = fixture.debugElement.query(By.css('.assessment-layout'));
         const notice = controls.query(By.directive(ExerciseGroupDateNoticeComponent));
+        const assessmentSection = controls.query(By.css('.assessment-section'));
 
         expect(controls.nativeElement.firstElementChild).toBe(notice.nativeElement);
+        expect(controls.nativeElement.lastElementChild).toBe(assessmentSection.nativeElement);
         expect(buildAndTestItem?.disabled).toBeFalsy();
         expect(groupManagedItems.length).toBeGreaterThan(0);
         expect(groupManagedItems.every((item) => item.disabled)).toBe(true);
