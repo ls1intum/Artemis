@@ -537,10 +537,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
         newResult.setFeedbacks(automaticFeedbacks);
 
-        // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = newResult.getAssessor();
-        newResult = resultRepository.save(newResult);
-        newResult.setAssessor(assessor);
+        // Deliberately keep (and return) the original object instead of the merge result: the merge would
+        // replace the assessor and the eagerly fetched test-case/message associations of the typed copies
+        // with uninitialized proxies, which would break the synthesized serialization of the locked result.
+        resultRepository.save(newResult);
         log.debug("Assessment locked with result id: {} for assessor: {}", newResult.getId(), newResult.getAssessor().getName());
 
         // Make sure that submission is set back after saving

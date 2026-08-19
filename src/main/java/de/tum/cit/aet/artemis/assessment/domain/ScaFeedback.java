@@ -57,7 +57,12 @@ public class ScaFeedback {
 
     public static final int MAX_TOOL_CATEGORY_LENGTH = 50;
 
-    @Column(name = "category")
+    /**
+     * Matches the capacity of {@code static_code_analysis_category.name}, which this column stores.
+     */
+    public static final int MAX_CATEGORY_LENGTH = 255;
+
+    @Column(name = "category", length = MAX_CATEGORY_LENGTH)
     private String category;
 
     @Column(name = "rule", length = MAX_RULE_LENGTH)

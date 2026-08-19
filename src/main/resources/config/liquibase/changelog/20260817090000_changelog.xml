@@ -93,7 +93,8 @@
             <column name="tool" type="VARCHAR(20)">
                 <constraints nullable="false"/>
             </column>
-            <column name="category" type="VARCHAR(100)"/>
+            <!-- matches the capacity of static_code_analysis_category.name, which this column stores -->
+            <column name="category" type="VARCHAR(255)"/>
             <!-- the category as reported by the tool (e.g. BAD_PRACTICE), distinct from the Artemis grading
                  category above; the legacy JSON exposed the tool category to the client -->
             <column name="tool_category" type="VARCHAR(50)"/>
@@ -231,7 +232,7 @@
             SELECT j.result_id,
                    ROW_NUMBER() OVER (PARTITION BY j.result_id ORDER BY j.id),
                    j.reference,
-                   NULLIF(SUBSTRING(j.text, 23), ''),
+                   LEFT(NULLIF(SUBSTRING(j.text, 23), ''), 255),
                    LEFT(JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.category')), 50),
                    LEFT(JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.rule')), 255),
                    LEFT(JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.filePath')), 512),
@@ -268,7 +269,7 @@
             SELECT f.result_id,
                    ROW_NUMBER() OVER (PARTITION BY f.result_id ORDER BY f.id),
                    f.reference,
-                   NULLIF(SUBSTRING(f.text FROM 23), ''),
+                   LEFT(NULLIF(SUBSTRING(f.text FROM 23), ''), 255),
                    LEFT(tmp_sca_json_field(f.detail_text, 'category'), 50),
                    LEFT(tmp_sca_json_field(f.detail_text, 'rule'), 255),
                    LEFT(tmp_sca_json_field(f.detail_text, 'filePath'), 512),
