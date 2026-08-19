@@ -182,6 +182,39 @@ class AdminFeatureUsageResourceTest extends AbstractSpringIntegrationIndependent
         assertThat(trackedFeatureRepository.findById(usedFeature.getId()).orElseThrow().getLastRegisteredAt()).isEqualTo(later);
     }
 
+    /**
+     * The retirement reference is the newest REST registration, and it has to stay that way.
+     * <p>
+     * Git and background features are registered the first time they are used, not at startup, so their
+     * {@code lastRegisteredAt} is a first-use time that can be arbitrarily later than the REST inventory refresh.
+     * Taking the maximum across every kind let one such feature become the reference and push it past every REST
+     * endpoint registered at startup, marking all of them retired and emptying the unused list this page exists to
+     * produce. Asserting on the retired flags alone would not catch a regression here, because the flags are only wrong
+     * relative to that reference, so this also pins the reported timestamp.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldNotLetALateFirstUsedGitFeatureRetireEveryRestEndpoint() throws Exception {
+        Instant restRegisteredAt = trackedFeatureRepository.findById(usedFeature.getId()).orElseThrow().getLastRegisteredAt();
+        // A git feature used for the first time long after startup, which is ordinary rather than exceptional
+        TrackedFeature lateGitFeature = trackedFeatureRepository
+                .save(new TrackedFeature(FeatureKind.GIT, "programming", "git clone late-in-test", null, restRegisteredAt.plus(30, ChronoUnit.DAYS)));
+        try {
+            var overview = getOverview(7);
+
+            assertThat(entryFor(overview, usedFeature).retired()).isFalse();
+            assertThat(entryFor(overview, unusedFeature).retired()).isFalse();
+            // The one genuinely stale endpoint is still recognised, so the scoping did not simply disable retirement
+            assertThat(entryFor(overview, retiredFeature).retired()).isTrue();
+            assertThat(overview.unusedFeatures()).isPositive();
+            // The reported refresh time is the REST registration, not the git feature's first use
+            assertThat(overview.inventoryRefreshedAt()).isBefore(lateGitFeature.getLastRegisteredAt());
+        }
+        finally {
+            trackedFeatureRepository.delete(lateGitFeature);
+        }
+    }
+
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldCarryTheFeatureLabelAndModule() throws Exception {

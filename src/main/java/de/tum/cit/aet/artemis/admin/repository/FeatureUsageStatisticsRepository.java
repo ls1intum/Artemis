@@ -97,12 +97,20 @@ public interface FeatureUsageStatisticsRepository extends ArtemisJpaRepository<T
     /**
      * The most recent time any node reported its endpoints, i.e. the point the inventory was last confirmed against
      * running code.
+     * <p>
+     * Restricted to REST features on purpose, because they are the only kind re-registered from the mapping table on
+     * every startup, which is what makes this timestamp mean "the inventory was confirmed". Git and background features
+     * are registered the first time they are used, so their {@code lastRegisteredAt} is a first-use time. Including them
+     * would let one such feature, first used later than the registration tolerance after startup, become the newest
+     * timestamp and push the retirement reference past every REST endpoint registered at startup - marking all of them
+     * retired and emptying the unused list the page is for.
      *
-     * @return the newest registration timestamp, or empty if the inventory has never been written
+     * @return the newest REST registration timestamp, or empty if no REST feature has been registered yet
      */
     @Query("""
             SELECT MAX(feature.lastRegisteredAt)
             FROM TrackedFeature feature
+            WHERE feature.featureKind = de.tum.cit.aet.artemis.core.domain.FeatureKind.REST
             """)
     Optional<Instant> findInventoryRefreshedAt();
 
