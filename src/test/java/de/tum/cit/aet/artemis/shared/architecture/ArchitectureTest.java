@@ -738,7 +738,21 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     private static ArchCondition<JavaMethod> callAWaitMethod() {
-        var isWaiting = callMethod(Mockito.class, "timeout").or(callMethod(Mockito.class, "after")).or(callMethod(Awaitility.class, "await"));
+        var isDirectlyWaiting = callMethod(Mockito.class, "timeout").or(callMethod(Mockito.class, "after")).or(callMethod(Awaitility.class, "await"));
+        var isWaiting = new DescribedPredicate<JavaCall<?>>("is waiting") {
+
+            @Override
+            public boolean test(JavaCall<?> call) {
+                if (isDirectlyWaiting.test(call)) {
+                    return true;
+                }
+                var target = call.getTarget().resolveMember();
+                if (target.isPresent() && target.get() instanceof JavaMethod targetMethod) {
+                    return targetMethod.getMethodCallsFromSelf().stream().anyMatch(isDirectlyWaiting);
+                }
+                return false;
+            }
+        };
 
         return new ArchCondition<>("call a wait method") {
 

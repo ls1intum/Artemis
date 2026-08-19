@@ -345,8 +345,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         const feedbackButton = debugElement.query(By.css('jhi-request-feedback-button'));
         expect(feedbackButton).not.toBeNull();
-        expect(feedbackButton.componentInstance.isSubmitted).toBe(true);
-        expect(feedbackButton.componentInstance.participationId).toBe(gradedParticipation.id);
+        expect(feedbackButton.componentInstance.isSubmitted()).toBe(true);
+        expect(feedbackButton.componentInstance.participationId()).toBe(gradedParticipation.id);
     });
 
     it('should show correct buttons in exam mode', async () => {
