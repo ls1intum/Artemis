@@ -720,7 +720,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     it('generate exercise detail link', () => {
         comp.exercise.set(modelingExercise);
         comp.courseId.set(4);
-        const exerciseDetailsLink = comp.getExerciseDetailsLink();
+        const exerciseDetailsLink = comp.exerciseDetailsLink();
         expect(exerciseDetailsLink).toEqual(['/course-management', 4, ExerciseType.MODELING + '-exercises', modelingExercise.id]);
     });
 

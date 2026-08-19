@@ -11,6 +11,10 @@ import { NgStyle } from '@angular/common';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
 
+/** Stable style objects for the checkbox label, so the NgStyle binding keeps the same reference between passes. */
+const DISABLED_LABEL_STYLE: Record<string, string> = { color: 'grey' };
+const NO_LABEL_STYLE: Record<string, string> = {};
+
 @Component({
     selector: 'jhi-exercise-feedback-suggestion-options',
     templateUrl: './exercise-feedback-suggestion-options.component.html',
@@ -59,11 +63,11 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit {
         return this.hasDueDatePassed();
     }
 
+    // Returned by reference rather than rebuilt. `[ngStyle]="getCheckboxLabelStyle()"` runs on every change-detection
+    // pass, and a fresh object each pass makes NgStyle re-apply the style every time. Kept as plain constants instead
+    // of a computed() because inputControlsDisabled() is an ordinary method, so a computed could not track it.
     getCheckboxLabelStyle(): Record<string, string> {
-        if (this.inputControlsDisabled()) {
-            return { color: 'grey' };
-        }
-        return {};
+        return this.inputControlsDisabled() ? DISABLED_LABEL_STYLE : NO_LABEL_STYLE;
     }
 
     toggleFeedbackSuggestions(event: Event): void {
