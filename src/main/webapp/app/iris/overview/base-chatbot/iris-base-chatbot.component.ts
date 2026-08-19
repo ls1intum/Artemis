@@ -117,6 +117,9 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
 const LIVE_DRAFT_ANIMATION_TICK_MS = 50;
 const LIVE_DRAFT_CATCH_UP_MS = 400;
 
+// Shortest activity trail duration (in s) still worth showing; below this the time is left out.
+const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.01;
+
 @Component({
     selector: 'jhi-iris-base-chatbot',
     templateUrl: './iris-base-chatbot.component.html',
@@ -493,9 +496,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     protected activityTrailSummary(activities: IrisActivityItem[]): string {
         const totalDurationMillis = activities.reduce((sum, activity) => sum + (activity.durationMillis ?? 0), 0);
+        const totalDurationSeconds = totalDurationMillis / 1000;
+        // Durations that round away to "0.0s" add noise rather than information, so the time is omitted entirely.
+        if (totalDurationSeconds < MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS) {
+            return this.translateService.instant('artemisApp.iris.activities.trailSummaryWithoutDuration', {
+                count: activities.length,
+            });
+        }
         return this.translateService.instant('artemisApp.iris.activities.trailSummary', {
             count: activities.length,
-            duration: (totalDurationMillis / 1000).toFixed(1),
+            duration: totalDurationSeconds.toFixed(1),
         });
     }
 

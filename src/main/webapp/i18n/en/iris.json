@@ -257,7 +257,8 @@
             "activities": {
                 "liveLabel": "Current Iris activity",
                 "trailLabel": "Iris activity trail",
-                "trailSummary": "Thought process: {{ count }} · {{ duration }}s",
+                "trailSummary": "Thought process: {{ count }} tools used · {{ duration }}s",
+                "trailSummaryWithoutDuration": "Thought process: {{ count }} tools used",
                 "states": {
                     "running": "In progress",
                     "finished": "Done",

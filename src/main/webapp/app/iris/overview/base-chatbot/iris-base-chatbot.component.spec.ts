@@ -754,6 +754,18 @@ describe('IrisBaseChatbotComponent', () => {
             expect(trail.querySelector('summary')?.textContent?.trim()).toBe('artemisApp.iris.activities.trailSummary');
         });
 
+        it('should omit the duration from the summary when the tools ran for under 0.01s', () => {
+            const instantSpy = vi.spyOn(component['translateService'], 'instant');
+            const message = deepClone(mockServerMessage);
+            message.activities = [{ ...persistedActivities[0], durationMillis: 4 }];
+            chatService.messages.next([message]);
+            fixture.detectChanges();
+
+            const trail = fixture.nativeElement.querySelector('details.activity-trail') as HTMLDetailsElement;
+            expect(instantSpy).toHaveBeenCalledWith('artemisApp.iris.activities.trailSummaryWithoutDuration', { count: 1 });
+            expect(trail.querySelector('summary')?.textContent?.trim()).toBe('artemisApp.iris.activities.trailSummaryWithoutDuration');
+        });
+
         it('should expand the persisted trail to a read-only activity feed', () => {
             chatService.messages.next([messageWithPersistedActivities()]);
             fixture.detectChanges();

@@ -257,7 +257,8 @@
             "activities": {
                 "liveLabel": "Aktuelle Iris-Aktivität",
                 "trailLabel": "Iris-Aktivitätsverlauf",
-                "trailSummary": "Gedankengang: {{ count }} · {{ duration }}s",
+                "trailSummary": "Gedankengang: {{ count }} Tools verwendet · {{ duration }}s",
+                "trailSummaryWithoutDuration": "Gedankengang: {{ count }} Tools verwendet",
                 "states": {
                     "running": "Läuft",
                     "finished": "Fertig",
