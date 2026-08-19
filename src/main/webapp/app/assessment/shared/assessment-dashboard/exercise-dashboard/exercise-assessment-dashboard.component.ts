@@ -969,9 +969,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Generates a link to the respective exercise details page
+     * Link to the respective exercise details page. Computed rather than a method, because
+     * `[routerLink]="exerciseDetailsLink()"` is evaluated on every change-detection pass and a fresh array each pass
+     * makes RouterLink re-process the link every time.
      */
-    getExerciseDetailsLink() {
-        return ['/course-management', this.courseId(), this.exercise().type! + '-exercises', this.exercise().id!];
-    }
+    readonly exerciseDetailsLink = computed(() => ['/course-management', this.courseId(), this.exercise().type! + '-exercises', this.exercise().id!]);
 }
