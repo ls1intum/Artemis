@@ -380,6 +380,32 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         expect(open.mock.calls[0][1]?.inputValues?.feedbackFilter).toEqual([1]);
     });
 
+    it('opens the feedback dialog for the result the retained markup was rendered from when a refresh fails', () => {
+        const open = vi.spyOn(dialogService, 'open').mockReturnValue({} as never);
+        const renderedResult = { id: 3, feedbacks: passingFeedback() } as Result;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('result', renderedResult);
+        fixture.componentRef.setInput('liveUpdates', 'personal');
+        fixture.detectChanges();
+        // Two not-executed tests, so the metadata of this render is distinguishable from the one that never arrives.
+        flushRender(renderResponse('not-executed', '', '2'));
+
+        // A newer result hydrates, but its render fails, so the markup and the tasks on screen stay the previous ones.
+        resultSubject.next({ id: 9, feedbacks: [{ testCase: { id: 1, testName: 'testA' }, positive: false }] } as Result);
+        fixture.detectChanges();
+        failRenderWithNetworkError();
+        expect(comp.refreshFailed()).toBe(true);
+
+        comp.onTaskActivated(0);
+
+        // Pairing result 9 with these task ids and counts would report the older render's numbers against the newer
+        // result, for as long as renders keep failing.
+        expect(open).toHaveBeenCalledOnce();
+        expect(open.mock.calls[0][1]?.inputValues?.result).toBe(renderedResult);
+        expect(open.mock.calls[0][1]?.inputValues?.numberOfNotExecutedTests).toBe(2);
+    });
+
     it('does not open the feedback dialog without a result', () => {
         const open = vi.spyOn(dialogService, 'open');
         fixture.componentRef.setInput('exercise', exercise);

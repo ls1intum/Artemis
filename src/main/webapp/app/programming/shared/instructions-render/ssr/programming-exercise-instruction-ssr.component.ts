@@ -50,6 +50,13 @@ export type SsrLiveUpdates = 'none' | 'personal' | 'shared';
 interface RenderedContext {
     exerciseId?: number;
     participationId?: number;
+    /**
+     * The result the markup was rendered from. Carried here rather than read from `latestResult()` at click time
+     * because a failed refresh deliberately retains the previous markup: the newer result would then be paired with
+     * task metadata (`testIds`, `notExecutedCount`) belonging to the render before it, for as long as renders keep
+     * failing.
+     */
+    result?: Result;
 }
 
 /** Internal pairing of a render request with the context it was issued for; only the request goes on the wire. */
@@ -125,11 +132,16 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     private readonly renderedContext = signal<RenderedContext | undefined>(undefined);
 
     /**
-     * Tasks are only interactive when a feedback dialog can actually be opened *for the bound inputs*. After a switch
-     * to another exercise or participation the retained DOM still shows the previous statement, whose tasks must not
-     * pair the previous result with the new participation.
+     * Tasks are only interactive when a feedback dialog can actually be opened *for the markup on screen*. After a
+     * switch to another exercise or participation the retained DOM still shows the previous statement, whose tasks
+     * must not pair the previous result with the new participation. The applied result is read from the render
+     * context rather than from `latestResult()`, so a retained statement stays paired with the result it was
+     * rendered from.
      */
-    readonly canOpenFeedback = computed(() => !!this.latestResult() && !!this.participation() && this.rendersCurrentContext());
+    readonly canOpenFeedback = computed(() => !!this.appliedResult() && !!this.participation() && this.rendersCurrentContext());
+
+    /** The result the markup currently on screen was rendered from; `undefined` while nothing is rendered. */
+    private readonly appliedResult = computed(() => this.renderedContext()?.result);
 
     private resultSubscription?: Subscription;
 
@@ -332,7 +344,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         const allTestsPassed = result?.successful === true && !result?.feedbacks?.length;
         this.renderRequests.next({
             request: { markdown, testResults: this.renderService.mapFeedbacksToTestInputs(result), allTestsPassed, locale, darkMode },
-            context: { exerciseId: exercise.id, participationId: this.participation()?.id },
+            context: { exerciseId: exercise.id, participationId: this.participation()?.id, result },
         });
     }
 
@@ -443,7 +455,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
      * with the newly bound participation.
      */
     openTaskFeedback(task: SsrTask): void {
-        const result = this.latestResult();
+        const result = this.appliedResult();
         const participation = this.participation();
         const exercise = this.exercise();
         if (!result || !participation || !exercise || !task.testIds.length || !this.rendersCurrentContext()) {
