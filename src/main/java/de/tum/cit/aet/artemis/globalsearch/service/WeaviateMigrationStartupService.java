@@ -9,6 +9,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -38,31 +39,41 @@ public class WeaviateMigrationStartupService {
 
     private static final Logger log = LoggerFactory.getLogger(WeaviateMigrationStartupService.class);
 
-    /**
-     * Delay before the first migration attempt, so it does not compete with application startup. The migration runs on a background thread, so this only affects when the one-off
-     * background work begins, not whether it blocks anything.
-     */
-    private static final long INITIAL_DELAY_SECONDS = 30;
-
-    /**
-     * Bounded in-process retry. An attempt can fail if the embedding backend is cold or temporarily unavailable when it runs; retrying in-process (rather than only on the next
-     * scheduling-node restart) lets the migration self-heal once the backend recovers. Re-running is safe because the migration is idempotent: target UUIDs are deterministic and
-     * the schema version is bumped only on full success, so a retry either re-applies the same writes or is a no-op once complete.
-     */
-    private static final int MAX_MIGRATION_ATTEMPTS = 5;
-
-    private static final long RETRY_DELAY_SECONDS = 120;
-
     private final WeaviateMigrationService migrationService;
 
     private final WeaviateService weaviateService;
 
     private final TaskScheduler taskScheduler;
 
-    public WeaviateMigrationStartupService(WeaviateMigrationService migrationService, WeaviateService weaviateService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+    /**
+     * Delay before the first migration attempt, so it does not compete with application startup. The migration runs on a background thread, so this only affects when the one-off
+     * background work begins, not whether it blocks anything. Overridable via {@code artemis.weaviate.outbox.migration-initial-delay-seconds} (default 30).
+     */
+    private final long initialDelaySeconds;
+
+    /**
+     * Bounded in-process retry. An attempt can fail if the embedding backend is cold or temporarily unavailable when it runs; retrying in-process (rather than only on the next
+     * scheduling-node restart) lets the migration self-heal once the backend recovers. Re-running is safe because the migration is idempotent: target UUIDs are deterministic and
+     * the schema version is bumped only on full success, so a retry either re-applies the same writes or is a no-op once complete. Overridable via
+     * {@code artemis.weaviate.outbox.migration-max-attempts} (default 5).
+     */
+    private final int maxMigrationAttempts;
+
+    /**
+     * Delay between failed migration attempts, overridable via {@code artemis.weaviate.outbox.migration-retry-delay-seconds} (default 120).
+     */
+    private final long retryDelaySeconds;
+
+    public WeaviateMigrationStartupService(WeaviateMigrationService migrationService, WeaviateService weaviateService, @Qualifier("taskScheduler") TaskScheduler taskScheduler,
+            @Value("${artemis.weaviate.outbox.migration-initial-delay-seconds:30}") long initialDelaySeconds,
+            @Value("${artemis.weaviate.outbox.migration-max-attempts:5}") int maxMigrationAttempts,
+            @Value("${artemis.weaviate.outbox.migration-retry-delay-seconds:120}") long retryDelaySeconds) {
         this.migrationService = migrationService;
         this.weaviateService = weaviateService;
         this.taskScheduler = taskScheduler;
+        this.initialDelaySeconds = initialDelaySeconds;
+        this.maxMigrationAttempts = maxMigrationAttempts;
+        this.retryDelaySeconds = retryDelaySeconds;
     }
 
     /**
@@ -77,7 +88,7 @@ public class WeaviateMigrationStartupService {
      */
     @PostConstruct
     public void scheduleMigrationOnStartup() {
-        scheduleMigrationAttempt(1, INITIAL_DELAY_SECONDS);
+        scheduleMigrationAttempt(1, initialDelaySeconds);
     }
 
     private void scheduleMigrationAttempt(int attempt, long delaySeconds) {
@@ -97,14 +108,14 @@ public class WeaviateMigrationStartupService {
             weaviateService.ensureAllCollectionsExist();
         }
         catch (Exception exception) {
-            if (attempt < MAX_MIGRATION_ATTEMPTS) {
-                log.warn("Weaviate migration attempt {}/{} failed; retrying in {}s. Search may return incomplete results until it succeeds.", attempt, MAX_MIGRATION_ATTEMPTS,
-                        RETRY_DELAY_SECONDS, exception);
-                scheduleMigrationAttempt(attempt + 1, RETRY_DELAY_SECONDS);
+            if (attempt < maxMigrationAttempts) {
+                log.warn("Weaviate migration attempt {}/{} failed; retrying in {}s. Search may return incomplete results until it succeeds.", attempt, maxMigrationAttempts,
+                        retryDelaySeconds, exception);
+                scheduleMigrationAttempt(attempt + 1, retryDelaySeconds);
             }
             else {
                 log.error("Weaviate migration failed after {} attempts; it will retry on the next scheduling-node restart. Search may return incomplete results until then.",
-                        MAX_MIGRATION_ATTEMPTS, exception);
+                        maxMigrationAttempts, exception);
             }
         }
     }
