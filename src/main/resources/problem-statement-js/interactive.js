@@ -1,7 +1,8 @@
 /**
  * Interactive feedback modal for the server-rendered problem statement.
  *
- * Attached to each .artemis-task[data-feedback] inside every .artemis-problem-statement
+ * Attached to each .artemis-task[data-feedback] inside every .artemis-problem-statement. The task attribute lists
+ * the test ids it can show; the entries themselves are carried once by the container.
  * container on the page. Click (or Enter/Space) on a task opens a modal showing the
  * associated test feedback; the modal is appended to document.body so it is not clipped
  * by host-page overflow / transform stacking contexts, and carries a dark class when its
@@ -40,23 +41,57 @@
     let currentOpener = null;
     let previouslyFocused = null;
 
+    /** Parsed once per container, since every task in it reads the same payload. */
+    const feedbackByContainer = new WeakMap();
+
+    /**
+     * The feedback entries of the statement the given task belongs to, keyed by test id.
+     *
+     * @param {Element} task the task element
+     * @returns {Object} the entries, or an empty object when the container carries none
+     */
+    function documentFeedback(task) {
+        const container = task.closest('.artemis-problem-statement');
+        if (!container) {
+            return {};
+        }
+        if (feedbackByContainer.has(container)) {
+            return feedbackByContainer.get(container);
+        }
+        let parsed = {};
+        const raw = container.getAttribute('data-feedback');
+        if (raw) {
+            try {
+                const candidate = JSON.parse(raw);
+                if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+                    parsed = candidate;
+                }
+            } catch (e) {
+                parsed = {};
+            }
+        }
+        feedbackByContainer.set(container, parsed);
+        return parsed;
+    }
+
     function init() {
         const tasks = document.querySelectorAll('.artemis-task[data-feedback]');
         for (const task of tasks) {
             if (task.hasAttribute(INIT_ATTR)) {
                 continue;
             }
+            // The task names the test ids it can show; the entries themselves live once on the container, because a
+            // statement may repeat the same marker thousands of times and every entry may carry a long message.
             const raw = task.getAttribute('data-feedback');
-            if (!raw || raw === '[]') {
+            if (!raw) {
                 continue;
             }
-            let feedback;
-            try {
-                feedback = JSON.parse(raw);
-            } catch (e) {
-                continue;
-            }
-            if (!Array.isArray(feedback) || feedback.length === 0) {
+            const byTestId = documentFeedback(task);
+            const feedback = raw
+                .split(',')
+                .map((id) => byTestId[id.trim()])
+                .filter((entry) => entry !== undefined);
+            if (feedback.length === 0) {
                 continue;
             }
             feedbackByTask.set(task, feedback);

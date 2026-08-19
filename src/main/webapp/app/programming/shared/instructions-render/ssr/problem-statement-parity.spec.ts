@@ -158,15 +158,24 @@ function taskToken(index: number, name: string, references: string[]): string {
  * misresolved reference therefore still fails the gate.
  */
 function renderedTaskReferences(element: Element): string[] {
-    const feedback = element.getAttribute('data-feedback');
-    if (!feedback) {
+    const feedbackIds = element.getAttribute('data-feedback');
+    if (!feedbackIds) {
         return [];
     }
-    const entries: unknown = JSON.parse(feedback);
-    if (!Array.isArray(entries)) {
+    // The task names the ids it can show; the entries live once on the container, so the names are resolved from there.
+    const raw = element.closest('.artemis-problem-statement')?.getAttribute('data-feedback');
+    if (!raw) {
         return [];
     }
-    return entries.map((entry: unknown) => (typeof entry === 'object' && entry !== null && 'name' in entry ? String((entry as { name: unknown }).name) : ''));
+    const entries: unknown = JSON.parse(raw);
+    if (typeof entries !== 'object' || entries === null || Array.isArray(entries)) {
+        return [];
+    }
+    const byTestId = entries as Record<string, unknown>;
+    return feedbackIds.split(',').map((id) => {
+        const entry = byTestId[id.trim()];
+        return typeof entry === 'object' && entry !== null && 'name' in entry ? String((entry as { name: unknown }).name) : '';
+    });
 }
 
 /**
@@ -686,7 +695,18 @@ describe('problem statement rendering parity', () => {
 // -------------------------------------------------------------------------------------------------------------
 
 describe('problem statement parity canonicalizers', () => {
-    const server = (body: string) => `<!DOCTYPE html><html><body class="artemis-ssr-body"><div class="artemis-problem-statement">${body}</div></body></html>`;
+    /**
+     * The server's document shell. `feedback` is the document-level payload the renderer puts on the container: task
+     * elements name the test ids they can show and resolve the entries from here, so a fixture asserting on a task's
+     * references has to carry it.
+     */
+    const server = (body: string, feedback?: string) =>
+        `<!DOCTYPE html><html><body class="artemis-ssr-body"><div class="artemis-problem-statement"${
+            feedback ? ` data-feedback="${feedback.replace(/"/g, '&quot;')}"` : ''
+        }>${body}</div></body></html>`;
+
+    /** The document-level payload for a single test, as the renderer emits it. */
+    const documentFeedback = (testId: number, name: string, passed = true) => JSON.stringify({ [testId]: { name, passed } });
 
     describe('container', () => {
         it('hides the server document shell and its statement wrapper', () => {
@@ -702,11 +722,14 @@ describe('problem statement parity canonicalizers', () => {
         const legacyTask = '<ul><li>Outer<ul><li>Prefix text [task][Validate](testValidate()) suffix text.</li></ul></li></ul>';
         const serverTask =
             '<ul><li>Outer<ul><li>Prefix text <span class="artemis-task artemis-task-success" data-task-name="Validate" data-test-ids="2"' +
-            ' data-test-status="success" data-feedback="[{&quot;name&quot;:&quot;testValidate()&quot;,&quot;passed&quot;:true}]">' +
+            ' data-test-status="success" data-feedback="2">' +
             '<i class="fa fa-check-circle"></i> Validate <span class="artemis-task-stats">1 of 1 tests passed</span></span>\n  <br>\n  suffix text.</li></ul></li></ul>';
+        /** The task above resolves its single reference through this, exactly as a rendered document does. */
+        const serverTaskFeedback = documentFeedback(2, 'testValidate()');
+        const serverDocument = (body = serverTask) => server(body, serverTaskFeedback);
 
         it('hides the literal marker against the rendered task subtree, inside a nested list', () => {
-            expect(canonicalTokens(server(serverTask))).toEqual(canonicalTokens(legacyTask));
+            expect(canonicalTokens(serverDocument())).toEqual(canonicalTokens(legacyTask));
         });
 
         it('keeps the text around a task, so it cannot swallow the containing paragraph or list item', () => {
@@ -720,7 +743,7 @@ describe('problem statement parity canonicalizers', () => {
         });
 
         it('fails when the prose around a task differs', () => {
-            expect(canonicalTokens(server(serverTask))).not.toEqual(canonicalTokens(legacyTask.replace('suffix text', 'other text')));
+            expect(canonicalTokens(serverDocument())).not.toEqual(canonicalTokens(legacyTask.replace('suffix text', 'other text')));
         });
 
         it('fails when a task moves to a different position in the document', () => {
@@ -735,7 +758,7 @@ describe('problem statement parity canonicalizers', () => {
         });
 
         it('removes only the renderer-owned line break, not an authored one', () => {
-            const withAuthoredBreak = server(serverTask.replace('<br>\n  suffix', '<br><br>\n  suffix'));
+            const withAuthoredBreak = serverDocument(serverTask.replace('<br>\n  suffix', '<br><br>\n  suffix'));
 
             expect(canonicalTokens(withAuthoredBreak)).toEqual(canonicalTokens(legacyTask.replace(' suffix', '<br> suffix')));
         });

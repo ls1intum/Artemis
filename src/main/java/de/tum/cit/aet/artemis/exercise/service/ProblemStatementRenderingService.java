@@ -20,6 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -95,7 +96,7 @@ public class ProblemStatementRenderingService {
      * sanitization/escaping. The value itself does not need to follow strict semver; any distinct string is
      * enough to invalidate the cache.
      */
-    private static final String RENDERER_VERSION = "1.2.0";
+    private static final String RENDERER_VERSION = "1.3.0";
 
     /**
      * KaTeX is served from the client's own copy, the one declared in {@code package.json} and copied out of
@@ -240,7 +241,8 @@ public class ProblemStatementRenderingService {
         processed = MathFormulaExtractor.extract(processed, mathFormulas);
 
         // 4. Expand tasks.
-        processed = extractTasks(processed, testResults, locale, allPassed);
+        Set<Long> feedbackTestIds = new LinkedHashSet<>();
+        processed = extractTasks(processed, testResults, locale, allPassed, feedbackTestIds);
 
         // 5. Strip leftover <testid>N</testid> wrappers in prose/PlantUML placeholders. Code blocks are
         // still masked, so their contents stay untouched and display as written.
@@ -273,7 +275,8 @@ public class ProblemStatementRenderingService {
 
         String containerClass = darkMode ? "artemis-problem-statement artemis-problem-statement--dark" : "artemis-problem-statement";
         String resultAttr = buildResultAttribute(resultSummary);
-        html = "<div class=\"" + containerClass + "\"" + resultAttr + ">" + html + "</div>";
+        String feedbackAttr = buildDocumentFeedbackAttribute(feedbackTestIds, testResults);
+        html = "<div class=\"" + containerClass + "\"" + resultAttr + feedbackAttr + ">" + html + "</div>";
 
         if (includeCss) {
             StringBuilder css = new StringBuilder();
@@ -369,7 +372,7 @@ public class ProblemStatementRenderingService {
         return sb.toString();
     }
 
-    private String extractTasks(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale, boolean allPassed) {
+    private String extractTasks(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale, boolean allPassed, Set<Long> feedbackTestIds) {
         Matcher matcher = TASK_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
         // Loop-invariant: the lookup only depends on the request's test results.
@@ -418,6 +421,9 @@ public class ProblemStatementRenderingService {
             // (but present) result map. This gates data-feedback only: the stats line below is driven by whether the
             // task's outcome is known at all, not by whether any of *this* task's tests are among the results.
             boolean hasFeedback = testResults != null && testIds.stream().anyMatch(testResults::containsKey);
+            if (hasFeedback) {
+                testIds.stream().filter(testResults::containsKey).forEach(feedbackTestIds::add);
+            }
             String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, authoredCount, notExecutedCount, testResults, hasFeedback, allPassed, locale);
 
             matcher.appendReplacement(sb, Matcher.quoteReplacement(taskHtml));
@@ -436,7 +442,12 @@ public class ProblemStatementRenderingService {
                 .append("\" data-not-executed-count=\"").append(notExecutedCount).append("\"");
 
         if (hasFeedback) {
-            html.append(" data-feedback=\"").append(buildFeedbackJson(testIds, testResults)).append("\"");
+            // The ids this task can show feedback for, not the feedback itself. The payload is emitted once per
+            // document (see buildDocumentFeedbackAttribute): a statement may repeat the same task marker thousands of
+            // times within the request limit, and carrying a copy of every message on every marker turned a 100 KB
+            // request into tens of megabytes of response.
+            String feedbackIds = new LinkedHashSet<>(testIds).stream().filter(testResults::containsKey).map(String::valueOf).collect(Collectors.joining(","));
+            html.append(" data-feedback=\"").append(feedbackIds).append("\"");
         }
 
         html.append(">");
@@ -465,33 +476,46 @@ public class ProblemStatementRenderingService {
         return html.toString();
     }
 
-    private String buildFeedbackJson(List<Long> testIds, Map<Long, TestFeedbackInputDTO> testResults) {
-        List<Map<String, Object>> feedbackList = new ArrayList<>();
-        // One entry per test, not per occurrence. A task may name the same test any number of times, and the feedback
-        // dialog shows one row per test either way, so a repeated id added nothing but bytes: with the 5000-character
-        // message the DTO permits, `[task][T](T,T,T,...)` turned a 16 KB request into a 39 MB response. Deduplicated
-        // through a LinkedHashSet so the surviving entries keep the order they were authored in.
-        for (Long testId : new LinkedHashSet<>(testIds)) {
+    /**
+     * The feedback payload of the whole document, keyed by test id, as a {@code data-feedback} attribute for the
+     * container element. Emitted once rather than per task: the entry for a given test is identical wherever it
+     * appears, and each one may carry a 5000-character message, so repeating it per task marker let a request within
+     * the size limits expand into tens of megabytes. Task elements name the ids they can show and look them up here.
+     *
+     * @param feedbackTestIds the ids at least one task can show feedback for, in the order they were first authored
+     * @param testResults     the request's test results
+     * @return the attribute including its leading space, or an empty string when no task can show feedback
+     */
+    private String buildDocumentFeedbackAttribute(Set<Long> feedbackTestIds, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
+        if (testResults == null || feedbackTestIds.isEmpty()) {
+            return "";
+        }
+        Map<String, Map<String, Object>> byTestId = new LinkedHashMap<>();
+        for (Long testId : feedbackTestIds) {
             TestFeedbackInputDTO detail = testResults.get(testId);
-            if (detail != null) {
-                Map<String, Object> entry = new LinkedHashMap<>();
-                entry.put("name", detail.testName());
-                entry.put("passed", detail.passed());
-                if (detail.credits() != null) {
-                    entry.put("credits", detail.credits());
-                }
-                if (detail.message() != null && !detail.message().isBlank()) {
-                    entry.put("message", detail.message());
-                }
-                feedbackList.add(entry);
+            if (detail == null) {
+                continue;
             }
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("name", detail.testName());
+            entry.put("passed", detail.passed());
+            if (detail.credits() != null) {
+                entry.put("credits", detail.credits());
+            }
+            if (detail.message() != null && !detail.message().isBlank()) {
+                entry.put("message", detail.message());
+            }
+            byTestId.put(String.valueOf(testId), entry);
+        }
+        if (byTestId.isEmpty()) {
+            return "";
         }
         try {
-            return HtmlEscaper.escapeAttribute(objectMapper.writeValueAsString(feedbackList));
+            return " data-feedback=\"" + HtmlEscaper.escapeAttribute(objectMapper.writeValueAsString(byTestId)) + "\"";
         }
         catch (JsonProcessingException e) {
             log.error("Failed to serialize feedback JSON", e);
-            return "[]";
+            return "";
         }
     }
 
@@ -752,7 +776,7 @@ public class ProblemStatementRenderingService {
 
     private static Safelist buildSafelist() {
         Safelist safelist = Safelist.relaxed();
-        safelist.addAttributes("div", "class", "data-diagram-id", "data-result");
+        safelist.addAttributes("div", "class", "data-diagram-id", "data-result", "data-feedback");
         safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index", "data-formula", "data-display-mode",
                 "data-authored-count", "data-not-executed-count", "data-alert-type");
         safelist.addAttributes("code", "class");

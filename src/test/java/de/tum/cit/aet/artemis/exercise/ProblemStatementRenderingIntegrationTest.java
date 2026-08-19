@@ -73,7 +73,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("<h1>Hello</h1>");
         assertThat(result.html()).contains("<strong>bold</strong>");
         assertThat(result.html()).contains("artemis-problem-statement");
-        assertThat(result.rendererVersion()).isEqualTo("1.2.0");
+        assertThat(result.rendererVersion()).isEqualTo("1.3.0");
         assertThat(result.contentHash()).isNotBlank();
         assertThat(result.interactiveScript()).isNotNull();
     }
@@ -155,6 +155,36 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         // thousands of times the size of the request.
         assertThat(StringUtils.countOccurrencesOf(result.html(), "Array index out of bounds")).isEqualTo(1);
         assertThat(result.html()).contains("data-feedback");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldEmitOneFeedbackEntryPerTestWhenManySeparateTasksNameIt() throws Exception {
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testSort", false, "Array index out of bounds", 0.0));
+        // Separate markers rather than one marker repeating a reference: deduplicating within a task would leave this
+        // shape untouched, and it fits thousands of markers into the permitted request size.
+        String markdown = "[task][T](<testid>1</testid>)\n".repeat(1000);
+        var body = new ProblemStatementRenderRequestDTO(markdown, testResults, null, "en", false, true, null, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(StringUtils.countOccurrencesOf(result.html(), "Array index out of bounds")).isEqualTo(1);
+        // Every task still offers the feedback; it names the test rather than carrying a copy of it.
+        assertThat(StringUtils.countOccurrencesOf(result.html(), "data-feedback=\"1\"")).isEqualTo(1000);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCarryTheFeedbackPayloadOnTheContainer() throws Exception {
+        var testResults = List.of(new TestFeedbackInputDTO(7L, "testEdge", false, "boom", 0.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][Edge](<testid>7</testid>)", testResults, null, "en", false, true, null, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // The container holds the entries keyed by test id; the task names the id it can show.
+        assertThat(result.html()).contains("<div class=\"artemis-problem-statement\" data-feedback=\"{&quot;7&quot;:{&quot;name&quot;:&quot;testEdge&quot;");
+        assertThat(result.html()).contains("data-test-ids=\"7\"");
+        assertThat(result.html()).contains("data-feedback=\"7\"");
     }
 
     @Test
@@ -1260,7 +1290,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result1 = request.postWithResponseBody(POST_URL, body1, RenderedProblemStatementDTO.class, HttpStatus.OK);
         RenderedProblemStatementDTO result2 = request.postWithResponseBody(POST_URL, body2, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result1.rendererVersion()).isEqualTo("1.2.0");
+        assertThat(result1.rendererVersion()).isEqualTo("1.3.0");
         assertThat(result2.rendererVersion()).isEqualTo(result1.rendererVersion());
     }
 
@@ -1273,7 +1303,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         // f0d658433ea3ce51e37b7e76c21dc7739d18dd56c168ecb1cc35dcd40cc00634 is the content hash this exact request
         // produced under renderer version "1.0.0" (captured before the bump to "1.1.0" that added this test, and
-        // still distinct under "1.2.0", which deduplicated the feedback entries). The
+        // still distinct under "1.3.0", which moved the feedback payload onto the container). The
         // renderer version is folded into the content hash precisely so that a stale client-cached rendering does
         // not survive a semantic change to the renderer; this pins that a version bump actually changes the hash
         // for byte-for-byte identical input, rather than only changing the reported version string. If this
