@@ -28,27 +28,29 @@
             @if (canShowGenerationButton()) {
                 <div class="min-w-fit flex-1">
                     <div class="assessment-criteria-generation__controls">
-                        <tum-ui-button
-                            type="button"
-                            severity="secondary"
-                            data-testid="generate-assessment-criteria"
-                            [disabled]="isGenerationDisabled()"
-                            [loading]="isGenerating()"
-                            [icon]="facArtemisIntelligence"
-                            [ariaDescribedBy]="generationUnavailableReason ? 'assessment-criteria-generation-disabled-reason' : undefined"
-                            (clicked)="generateAssessmentCriteria()"
+                        <span
+                            class="inline-flex"
+                            [class.cursor-default]="isGenerationDisabled()"
+                            [attr.tabindex]="generationUnavailableReason ? 0 : null"
+                            [ngbTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : undefined"
                         >
-                            @if (isGenerating()) {
-                                <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
-                            } @else {
-                                <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
-                            }
-                        </tum-ui-button>
-                        @if (generationUnavailableReason) {
-                            <small id="assessment-criteria-generation-disabled-reason" class="assessment-criteria-generation__disabled-reason">
-                                {{ generationUnavailableReason | artemisTranslate }}
-                            </small>
-                        }
+                            <tum-ui-button
+                                type="button"
+                                severity="secondary"
+                                data-testid="generate-assessment-criteria"
+                                [class.pointer-events-none]="isGenerationDisabled()"
+                                [disabled]="isGenerationDisabled()"
+                                [loading]="isGenerating()"
+                                [icon]="facArtemisIntelligence"
+                                (clicked)="generateAssessmentCriteria()"
+                            >
+                                @if (isGenerating()) {
+                                    <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
+                                } @else {
+                                    <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
+                                }
+                            </tum-ui-button>
+                        </span>
                     </div>
                 </div>
             }
@@ -182,8 +184,16 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <button type="button" class="re-evaluate-button mb-3" id="add-instruction-button" (click)="addNewInstruction(criterion)" [disabled]="!editable()">
-                                <fa-icon [icon]="faPlus" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}" />
+                            <button
+                                type="button"
+                                class="btn re-evaluate-button mb-3"
+                                id="add-instruction-button"
+                                (click)="addNewInstruction(criterion)"
+                                [disabled]="!editable()"
+                                [attr.aria-label]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                [ngbTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faPlus" />
                             </button>
                         </div>
                     }
@@ -226,27 +236,29 @@
     <div class="edit-sqi">
         @if (canShowGenerationButton()) {
             <div class="assessment-criteria-generation__controls">
-                <tum-ui-button
-                    type="button"
-                    severity="secondary"
-                    data-testid="generate-assessment-criteria"
-                    [disabled]="isGenerationDisabled()"
-                    [loading]="isGenerating()"
-                    [icon]="facArtemisIntelligence"
-                    [ariaDescribedBy]="generationUnavailableReason ? 'assessment-criteria-generation-disabled-reason' : undefined"
-                    (clicked)="generateAssessmentCriteria()"
+                <span
+                    class="inline-flex"
+                    [class.cursor-default]="isGenerationDisabled()"
+                    [attr.tabindex]="generationUnavailableReason ? 0 : null"
+                    [ngbTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : undefined"
                 >
-                    @if (isGenerating()) {
-                        <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
-                    } @else {
-                        <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
-                    }
-                </tum-ui-button>
-                @if (generationUnavailableReason) {
-                    <small id="assessment-criteria-generation-disabled-reason" class="assessment-criteria-generation__disabled-reason">
-                        {{ generationUnavailableReason | artemisTranslate }}
-                    </small>
-                }
+                    <tum-ui-button
+                        type="button"
+                        severity="secondary"
+                        data-testid="generate-assessment-criteria"
+                        [class.pointer-events-none]="isGenerationDisabled()"
+                        [disabled]="isGenerationDisabled()"
+                        [loading]="isGenerating()"
+                        [icon]="facArtemisIntelligence"
+                        (clicked)="generateAssessmentCriteria()"
+                    >
+                        @if (isGenerating()) {
+                            <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
+                        } @else {
+                            <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
+                        }
+                    </tum-ui-button>
+                </span>
             </div>
         }
         <div class="grading-instructions-update-border">
@@ -327,8 +339,16 @@
                                                 <span class="re-evaluate-button" id="delete-button" (click)="deleteInstruction(instruction, criteria)">
                                                     <fa-icon [icon]="faTrash" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}" />
                                                 </span>
-                                                <button type="button" class="re-evaluate-button" id="add-button" (click)="addInstruction(criteria)" [disabled]="!editable()">
-                                                    <fa-icon [icon]="faPlus" size="2x" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}" />
+                                                <button
+                                                    type="button"
+                                                    class="btn re-evaluate-button"
+                                                    id="add-button"
+                                                    (click)="addInstruction(criteria)"
+                                                    [disabled]="!editable()"
+                                                    [attr.aria-label]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                                    [ngbTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                                >
+                                                    <fa-icon [icon]="faPlus" size="2x" />
                                                 </button>
                                             </div>
                                         </div>

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
@@ -24,6 +25,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { Subject, of, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { TumUiConfirmationService } from '@tumaet/ui-angular';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('GradingInstructionsDetailsComponent', () => {
     let component: GradingInstructionsDetailsComponent;
@@ -127,16 +129,20 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(component.generationDisabledReason()).toBeUndefined();
         });
 
-        it('should render an accessible explanation when generation is disabled', () => {
+        it('should expose the disabled reason without shifting the layout or showing a pointer cursor', () => {
             exercise.problemStatement = ' ';
             fixture.detectChanges();
 
             const button = fixture.nativeElement.querySelector('[data-testid="generate-assessment-criteria"] button') as HTMLButtonElement;
-            const reason = fixture.nativeElement.querySelector('#assessment-criteria-generation-disabled-reason') as HTMLElement;
+            const tooltipElement = fixture.debugElement.query(By.directive(NgbTooltip));
+            const tooltip = tooltipElement.injector.get(NgbTooltip);
 
             expect(button.disabled).toBe(true);
-            expect(button.getAttribute('aria-describedby')).toBe(reason.id);
-            expect(reason.textContent).toContain('artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement');
+            expect(tooltip.ngbTooltip).toBe('artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement');
+            expect(tooltipElement.nativeElement.getAttribute('tabindex')).toBe('0');
+            expect(tooltipElement.nativeElement.classList).toContain('cursor-default');
+            expect(tooltipElement.nativeElement.querySelector('tum-ui-button').classList).toContain('pointer-events-none');
+            expect(fixture.nativeElement.querySelector('#assessment-criteria-generation-disabled-reason')).toBeNull();
         });
 
         it('should render the edit controls and generation button in the same header', () => {
@@ -147,6 +153,21 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(header).not.toBeNull();
             expect(header.querySelector('#edit-mode')).not.toBeNull();
             expect(header.querySelector('[data-testid="generate-assessment-criteria"]')).not.toBeNull();
+        });
+
+        it('should render the add-instruction action as a labelled icon button', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            fixture.detectChanges();
+
+            const buttonElement = fixture.debugElement.query(By.css('#add-instruction-button'));
+            const button = buttonElement.nativeElement as HTMLButtonElement;
+            const tooltip = buttonElement.injector.get(NgbTooltip);
+
+            expect(button.tagName).toBe('BUTTON');
+            expect(button.classList).toContain('btn');
+            expect(button.getAttribute('aria-label')).toBe('artemisApp.exercise.addAssessmentInstruction');
+            expect(tooltip.ngbTooltip).toBe('artemisApp.exercise.addAssessmentInstruction');
+            expect(button.textContent?.trim()).toBe('');
         });
 
         it('should not persist the display-only grading instruction placeholder while generating', () => {

@@ -11,10 +11,14 @@
     .re-evaluate-button {
         display: inline-block;
         padding: 4px;
-        cursor: pointer;
+        cursor: default;
 
-        &:hover {
-            color: blue;
+        &:not(:disabled) {
+            cursor: pointer;
+
+            &:hover {
+                color: blue;
+            }
         }
     }
 
@@ -65,10 +69,5 @@
         width: 100%;
         margin-bottom: 0.25rem;
         gap: 0.25rem;
-    }
-
-    &__disabled-reason {
-        max-width: 32rem;
-        text-align: end;
     }
 }
