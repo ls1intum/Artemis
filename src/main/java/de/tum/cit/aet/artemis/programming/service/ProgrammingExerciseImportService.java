@@ -212,8 +212,15 @@ public class ProgrammingExerciseImportService {
             // We have removed the automatic build trigger from test to base for new programming exercises.
             // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
             // The importBuildPlans method includes this process.
-            // Note: LocalCI/Hades have no per-exercise build plan to clone; their builds are triggered on-demand from the participation.
             importBuildPlans(sourceExercise, newExercise);
+        }
+        else if (profileService.isLocalCIActive()) {
+            // LocalCI has no per-exercise build plan to clone, but the imported template and solution still need an
+            // initial build so the new exercise has up-to-date results. (Hades triggers builds on-demand from
+            // participation pushes, so it is intentionally excluded here.)
+            ContinuousIntegrationTriggerService triggerService = continuousIntegrationTriggerService.orElseThrow();
+            triggerService.triggerBuild(newExercise.getTemplateParticipation());
+            triggerService.triggerBuild(newExercise.getSolutionParticipation());
         }
 
         programmingExerciseCreationScheduleService.scheduleOperations(newExercise.getId());
