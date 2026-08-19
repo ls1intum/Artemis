@@ -73,7 +73,7 @@
     }
     @if (coursesLoaded() && !regularCourses().length && !recentlyAccessedCourses().length) {
         @if (!testCourses().length) {
-            <div class="my-12">
+            <div>
                 <h4 class="text-center text-muted-color" jhiTranslate="artemisApp.studentDashboard.noCourses"></h4>
             </div>
         }
@@ -82,7 +82,7 @@
     }
 </div>
 @if (testCourses().length) {
-    <div class="mt-12">
+    <div class="mt-4">
         <h3 class="mb-4 font-medium">{{ 'artemisApp.studentDashboard.testCourses' | artemisTranslate }} ({{ testCourses().length }})</h3>
         <ng-container *ngTemplateOutlet="courseCardTemplate; context: { $implicit: testCourses() }" />
     </div>
