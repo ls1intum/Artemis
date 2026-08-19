@@ -27,6 +27,9 @@ import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entitie
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { parseJson } from 'app/foundation/util/json.util';
 import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
@@ -50,10 +53,12 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
         UnreferencedFeedbackComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
+        AssessmentNotPossibleYetComponent,
     ],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
     private alertService = inject(AlertService);
+    private datePipe = inject(ArtemisDatePipe);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private modelingSubmissionService = inject(ModelingSubmissionService);
@@ -99,6 +104,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly correctionRound = signal(0);
     readonly resultId = signal<number>(0);
     readonly loadingInitialSubmission = signal(true);
+    // Set when the server refuses to open the assessment because the exam is not over yet: the submission exists, so the
+    // page explains the wait instead of showing its "submission not found" state.
+    readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
     highlightDifferences = false;
     resizeOptions = { verticalResize: true };
     isApollonModelLoaded = false;
@@ -117,6 +125,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private get feedback(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
+
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return this.feedback;
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
 
     /**
      * Retrieve unreferenced entries from the feedback suggestions loaded from Athena.
@@ -145,6 +160,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.correctionRound.set(Number(queryParams.get('correction-round')));
         });
         this.route.paramMap.subscribe((params) => {
+            // this component is reused for param-only navigations (e.g. to the next submission), so a blocked state from
+            // the previous submission has to be cleared before loading the next one
+            this.assessmentNotPossibleYet.set(undefined);
             this.courseId = Number(params.get('courseId'));
             this.exerciseId = Number(params.get('exerciseId'));
             if (params.has('examId')) {
@@ -403,18 +421,29 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.submission.set(undefined);
 
         this.isLoading.set(false);
+        const assessmentNotPossibleYet = getAssessmentNotPossibleYetState(error);
         if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
             this.navigateBack();
+        } else if (assessmentNotPossibleYet) {
+            // The submission exists, the exam simply is not over yet. Keeping the explanation on the page (instead of in
+            // a toast that fades) replaces the "submission not found" state, which would contradict it.
+            this.resetAssessmentState();
+            this.assessmentNotPossibleYet.set(assessmentNotPossibleYet);
+            this.alertService.closeAll();
         } else {
             this.onError();
         }
     }
 
-    onError(): void {
+    private resetAssessmentState(): void {
         this.submission.set(undefined);
         this.modelingExercise.set(undefined);
         this.result.set(undefined);
         this.model.set(undefined);
+    }
+
+    onError(): void {
+        this.resetAssessmentState();
         this.alertService.closeAll();
         this.alertService.error('artemisApp.modelingAssessmentEditor.messages.loadSubmissionFailed');
     }
@@ -432,7 +461,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.alertService.closeAll();
                 this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
             },
-            error: () => {
+            error: (error: HttpErrorResponse) => {
+                if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                    return;
+                }
                 this.alertService.closeAll();
                 this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
             },
@@ -478,6 +510,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.highlightMissingFeedback.set(false);
             },
             error: (error: HttpErrorResponse) => {
+                if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                    return;
+                }
                 let errorMessage = 'artemisApp.modelingAssessmentEditor.messages.submitFailed';
                 if (error.error && error.error.entityName && error.error.message) {
                     errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
@@ -531,7 +566,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     onCancelAssessment() {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.modelingAssessmentService.cancelAssessment(this.submission()!.id!).subscribe(() => {
+            this.modelingAssessmentService.cancelAssessment(this.submission()!.id!, this.result()?.id).subscribe(() => {
                 this.navigateBack();
             });
         }
@@ -561,7 +596,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.isLoading.set(false);
 
                 const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, undefined, submission.id!, this.examId, this.exerciseGroupId);
-                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
+                // Merge rather than replace: a supplied queryParams object drops every other parameter, testRun among them.
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() }, queryParamsHandling: 'merge' });
             },
             error: (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy.set(false);

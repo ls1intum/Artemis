@@ -44,6 +44,7 @@ import jakarta.persistence.OrderColumn;
 
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.util.SystemReader;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -98,6 +99,7 @@ import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfigurati
 import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
 import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 import de.tum.cit.aet.artemis.core.service.TitleCacheEvictionService;
+import de.tum.cit.aet.artemis.core.util.junit_extensions.JGitSystemReaderInitializer;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -159,6 +161,16 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
         stringUtils.check(allClasses);
         randomStringUtils.check(allClasses);
+    }
+
+    @Test
+    void testNoJGitSystemReaderConfigurationOutsideInitializer() {
+        ArchRule setInstanceUsage = noClasses().that().doNotHaveFullyQualifiedName(JGitSystemReaderInitializer.class.getName()).should()
+                .callMethod(SystemReader.class, "setInstance", SystemReader.class)
+                .because("SystemReader#setInstance resets JGit's static platform detection caches (isWindows, isMacOS, isLinux) before re-deriving them, so calling it while "
+                        + "other threads run git operations makes those fail with a NullPointerException. Installing it from a @BeforeAll means one call per test class, and test "
+                        + "classes run in parallel. Use JGitSystemReaderInitializer#configureOnce instead, which GlobalCleanupListener invokes before the test plan starts.");
+        setInstanceUsage.check(allClasses);
     }
 
     @Test
@@ -726,7 +738,21 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     private static ArchCondition<JavaMethod> callAWaitMethod() {
-        var isWaiting = callMethod(Mockito.class, "timeout").or(callMethod(Mockito.class, "after")).or(callMethod(Awaitility.class, "await"));
+        var isDirectlyWaiting = callMethod(Mockito.class, "timeout").or(callMethod(Mockito.class, "after")).or(callMethod(Awaitility.class, "await"));
+        var isWaiting = new DescribedPredicate<JavaCall<?>>("is waiting") {
+
+            @Override
+            public boolean test(JavaCall<?> call) {
+                if (isDirectlyWaiting.test(call)) {
+                    return true;
+                }
+                var target = call.getTarget().resolveMember();
+                if (target.isPresent() && target.get() instanceof JavaMethod targetMethod) {
+                    return targetMethod.getMethodCallsFromSelf().stream().anyMatch(isDirectlyWaiting);
+                }
+                return false;
+            }
+        };
 
         return new ArchCondition<>("call a wait method") {
 

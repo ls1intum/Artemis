@@ -2,7 +2,7 @@ import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, ou
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { Observable, Subscription, firstValueFrom, of } from 'rxjs';
+import { EMPTY, Observable, Subscription, firstValueFrom, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
@@ -26,18 +26,17 @@ import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { switchMap, tap } from 'rxjs/operators';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
-import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
-import { faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { cloneDeep } from 'lodash-es';
+import { faCircleInfo, faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercise/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
@@ -48,6 +47,9 @@ import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layo
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -65,6 +67,7 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
         FeedbackSuggestionsBannerComponent,
+        ArtemisDatePipe,
     ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
@@ -83,6 +86,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
+    private datePipe = inject(ArtemisDatePipe);
 
     readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
@@ -114,6 +118,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     readonly loadingParticipation = signal(false);
     readonly participationCouldNotBeFetched = signal(false);
+    // Set instead of participationCouldNotBeFetched when the exam is simply not over yet: the assessment editor is
+    // unusable for a reason the tutor can act on, so we say when they can come back instead of "participation not found".
+    // Kept as key + raw ISO date (not a translated string, and not a pre-formatted date) so that both the sentence and
+    // the date follow language changes; the template formats the date with the artemisDate pipe.
+    readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
     // Written only synchronously / never reassigned — may stay plain.
     showEditorInstructions = true;
     readonly hasAssessmentDueDatePassed = signal(false);
@@ -138,6 +147,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly feedbackSuggestions = signal<Feedback[]>([]);
     totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read
 
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
     isFirstAssessment = false;
     readonly lockLimitReached = signal(false);
 
@@ -154,6 +170,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // Icons
     faTimesCircle = faTimesCircle;
     faExternalLink = faExternalLink;
+    faCircleInfo = faCircleInfo;
 
     /**
      * Get all feedback suggestions without a reference. They will be shown in cards below the build output.
@@ -185,6 +202,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation.set(true);
             this.participationCouldNotBeFetched.set(false);
+            // Angular reuses this component for param-only navigations (e.g. to the next submission), so both fatal
+            // error states have to be cleared here — otherwise the panel of the previous submission hides the new one.
+            this.assessmentNotPossibleYet.set(undefined);
 
             this.courseId = Number(params['courseId']);
             this.exerciseId = Number(params['exerciseId']);
@@ -204,10 +224,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         next: async (submission?: ProgrammingSubmission) => {
                             await this.onSubmissionReceived(submissionId, submission);
                         },
-                        error: (error: HttpErrorResponse) => {
-                            this.handleErrorResponse(error);
-                        },
                         complete: () => this.loadingParticipation.set(false),
+                    }),
+                    catchError((error: HttpErrorResponse) => {
+                        this.handleErrorResponse(error);
+                        // Stop the chain: without a participation the steps below cannot run anyway, and letting the
+                        // error reach the subscriber would additionally report it as an uncaught exception — the very
+                        // Sentry noise the explicit handling avoids.
+                        return EMPTY;
                     }),
                     // The following is needed for highlighting changed code lines
                     switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise().id!, false, true)),
@@ -320,6 +344,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private handleErrorResponse(error: HttpErrorResponse): void {
         this.loadingInitialSubmission.set(false);
+        const assessmentNotPossibleYet = getAssessmentNotPossibleYetState(error);
+        if (assessmentNotPossibleYet) {
+            // the panel below the header explains this permanently, so an additional toast would only repeat it
+            this.assessmentNotPossibleYet.set(assessmentNotPossibleYet);
+            this.alertService.closeAll();
+            return;
+        }
         this.participationCouldNotBeFetched.set(true);
         if (error?.error?.errorKey === 'lockedSubmissionsLimitReached') {
             this.lockLimitReached.set(true);
@@ -444,7 +475,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.avoidCircularStructure();
         this.manualResultService.saveAssessment(this.participation().id!, this.manualResult()!, submit).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, translationKey),
-            error: (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
+            error: (error: HttpErrorResponse) => {
+                if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                    this.onError(`error.${error?.error?.errorKey}`);
+                }
+                this.saveBusy.set(false);
+                this.submitBusy.set(false);
+            },
         });
     }
 
@@ -455,7 +492,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.cancelBusy.set(true);
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel && this.exercise() && this.submission()) {
-            this.manualResultService.cancelAssessment(this.submission()!.id!).subscribe(() => this.navigateBack());
+            this.manualResultService.cancelAssessment(this.submission()!.id!, this.manualResult()?.id).subscribe(() => this.navigateBack());
         }
         this.cancelBusy.set(false);
         this.hasPendingChanges = false;
@@ -501,7 +538,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     // the lock limit is reached
                     this.onError('artemisApp.submission.lockedSubmissionsLimitReached');
-                } else {
+                } else if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
                     this.onError(error?.message);
                 }
             },
@@ -741,7 +778,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         manualResult.score = (totalScore / this.exercise().maxPoints!) * 100;
         // This is done to update the result string in result.component.ts (the clone also gives the signal a new reference)
-        this.manualResult.set(cloneDeep(manualResult));
+        this.manualResult.set(deepClone(manualResult));
     }
 
     private avoidCircularStructure() {
@@ -759,32 +796,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
-        const maxPoints = getTotalMaxPoints(this.exercise());
-        let totalScore = 0.0;
-        let scoreAutomaticTests = 0.0;
-        const encounteredInstructions = new Map<number, number>(); // instructionId -> noOfEncounters
-
-        feedbacks.forEach((feedback) => {
-            // Check for feedback from automatic tests and store them separately
-            if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)) {
-                scoreAutomaticTests += feedback.credits!;
-            } else {
-                if (feedback.gradingInstruction) {
-                    totalScore = this.structuredGradingCriterionService.calculateScoreForGradingInstructions(feedback, totalScore, encounteredInstructions);
-                } else {
-                    totalScore += feedback.credits!;
-                }
-            }
-        });
-
-        // Cap automatic test feedback to maxScore + bonus points of exercise
-        if (scoreAutomaticTests > maxPoints) {
-            scoreAutomaticTests = maxPoints;
-        }
-        totalScore += scoreAutomaticTests;
-        totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
-
-        return totalScore;
+        // Shared with the score summary of the feedback list, so both can never disagree.
+        return this.structuredGradingCriterionService.computeAssessmentScore(feedbacks, getTotalMaxPoints(this.exercise()), true).total;
     }
 }
 

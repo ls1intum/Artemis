@@ -15,6 +15,7 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -43,6 +44,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-text-editor',
@@ -65,7 +67,7 @@ import { TranslateService } from '@ngx-translate/core';
         MarkdownDirective,
     ],
 })
-export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {
     private route = inject(ActivatedRoute);
     private textSubmissionService = inject(TextSubmissionService);
     private textService = inject(TextEditorService);
@@ -106,7 +108,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate = false;
     readonly examMode = signal(false);
-    readonly isGeneratingFeedback = signal(false);
 
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate = false;
@@ -207,7 +208,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     lastResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                     lastResult?.successful !== undefined;
                 if (isNewAthenaResult) {
-                    this.isGeneratingFeedback.set(false);
                     if (lastResult?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
@@ -426,7 +426,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         return true;
     }
 
-    submit() {
+    submitExercise() {
         if (this.isSaving()) {
             return;
         }
@@ -493,7 +493,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     private submissionForAnswer(answer: string): TextSubmission {
-        return { ...this.submission(), text: answer, language: this.textService.predictLanguage(answer) };
+        // The submission signal starts out unset (`undefined!`), which the previous spread tolerated by yielding a
+        // bare object; fall back to a fresh submission so the behaviour is unchanged.
+        return cloneWith(this.submission() ?? new TextSubmission(), { text: answer, language: this.textService.predictLanguage(answer) });
     }
 
     onReceiveSubmissionFromTeam(submission: TextSubmission) {

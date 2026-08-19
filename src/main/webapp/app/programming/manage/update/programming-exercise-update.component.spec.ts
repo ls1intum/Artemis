@@ -173,10 +173,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('initializeEditMode', () => {
+        function recreateComponent() {
+            fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+        }
+
         it('should set isSimpleMode to true if localStorage has value "true"', () => {
             localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);
-
-            fixture.detectChanges();
+            recreateComponent();
 
             expect(comp.isSimpleMode()).toBeTruthy();
             expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(true);
@@ -184,8 +188,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should set isSimpleMode to false if localStorage has value "false"', () => {
             localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, false);
-
-            fixture.detectChanges();
+            recreateComponent();
 
             expect(comp.isSimpleMode()).toBe(false);
             expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(false);
@@ -193,8 +196,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should set isSimpleMode to true if not present in local storage', () => {
             localStorageService.remove(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-
-            fixture.detectChanges();
+            recreateComponent();
 
             expect(comp.isSimpleMode()).toBe(true);
         });
@@ -202,8 +204,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     it('switchEditMode should toggle isSimpleMode and update local storage', () => {
         localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);
+        fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
         fixture.detectChanges();
-        expect(comp.isSimpleMode()).toBeTruthy(); // ensure the assumed initial state isSimpleMode = true holds
+        expect(comp.isSimpleMode()).toBeTruthy();
 
         comp.switchEditMode();
 
@@ -1607,6 +1611,38 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(problemStepInputs).not.toBeNull();
     });
 
+    // The getter runs on every change-detection pass, so every value it hands out has to keep its identity between
+    // passes. A fallback such as `?? []` allocates a new array each time, which re-seeds the category selector's local
+    // working copy, re-dirties this component and loops. A production build has no dev-mode guard to break that loop,
+    // so the creation page stopped responding altogether until this was fixed.
+    it('hands out the same identities on repeated calls, so change detection cannot loop', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+
+        const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+
+        const first = comp.getProgrammingExerciseCreationConfig();
+        // Read out before the second call: the config object is cached, so comparing its fields afterwards would
+        // compare each field with itself and pass even if the second call had replaced them.
+        const firstExerciseCategories = first.exerciseCategories;
+        const firstModePickerOptions = first.modePickerOptions;
+        const firstRerenderSubject = first.rerenderSubject;
+        const second = comp.getProgrammingExerciseCreationConfig();
+
+        // the config object itself is cached deliberately
+        expect(second).toBe(first);
+        // and so are the values a child could track by identity, even on a creation page with no categories yet
+        expect(second.exerciseCategories).toBe(firstExerciseCategories);
+        expect(second.exerciseCategories).toBeDefined();
+        expect(second.modePickerOptions).toBe(firstModePickerOptions);
+        expect(second.rerenderSubject).toBe(firstRerenderSubject);
+    });
+
     it('stores with dependencies when changed', () => {
         const route = TestBed.inject(ActivatedRoute);
         route.params = of({ courseId });
@@ -1635,7 +1671,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         fixture.detectChanges();
 
         const categories = [new ExerciseCategory(undefined, undefined)];
-        expect(comp.exerciseCategories).toBeUndefined();
+        // Starts as an empty array rather than undefined, on purpose: the creation config getter must hand out a stable
+        // array identity on every change-detection pass, which an undefined field cannot do.
+        expect(comp.exerciseCategories).toEqual([]);
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
     });

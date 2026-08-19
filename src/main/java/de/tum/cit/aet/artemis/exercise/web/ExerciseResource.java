@@ -35,11 +35,13 @@ import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
@@ -50,8 +52,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -128,6 +132,29 @@ public class ExerciseResource {
     }
 
     /**
+     * GET /courses/{courseId}/exercise-titles : the id, title and type of the course exercises visible to the user.
+     * <p>
+     * For callers that only have to name exercises rather than show them, such as the Iris chat context picker, which
+     * previously loaded the full course exercise payload — participations, submissions, results and scores included —
+     * to fill a dropdown with these three fields.
+     * <p>
+     * Visibility matches the course overview's release and online-course LTI-launch rules. The repository evaluates the
+     * rules while projecting the three returned scalars, so neither course nor exercise entities are hydrated.
+     *
+     * @param courseId the id of the course
+     * @return the exercises of the course the user may see, as id, title and type
+     */
+    @GetMapping("courses/{courseId}/exercise-titles")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<ExerciseTitleDTO>> getExerciseTitlesForCourse(@PathVariable long courseId) {
+        log.debug("REST request to get the exercise titles of course {}", courseId);
+        boolean seesUnreleased = authCheckService.isAtLeastTeachingAssistantInCourse(courseId);
+        String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
+        Set<ExerciseTitleDTO> titles = exerciseRepository.findTitlesVisibleToUser(courseId, ZonedDateTime.now(), seesUnreleased, userLogin);
+        return ResponseEntity.ok(titles);
+    }
+
+    /**
      * GET /exercises/:exerciseId : get the "exerciseId" exercise.
      *
      * @param exerciseId the exerciseId of the exercise to retrieve
@@ -141,7 +168,7 @@ public class ExerciseResource {
 
         log.debug("REST request to get Exercise : {}", exerciseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
 
         // Exam exercise
@@ -205,7 +232,7 @@ public class ExerciseResource {
 
         log.debug("REST request to get exercise with example solution: {}", exerciseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.isExamExercise()) {
@@ -238,7 +265,7 @@ public class ExerciseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         if (exercise instanceof ProgrammingExercise) {
@@ -249,6 +276,16 @@ public class ExerciseResource {
                         "programmingExerciseWithOnlyAutomaticAssessment");
             }
             exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
+        }
+
+        if (exercise.isExamExercise()) {
+            // let the client explain why assessment is not possible yet and from when on it is, instead of running into a 403
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            var examAssessmentDates = ExerciseDateService.computeExamAssessmentDates(exercise, api.getLatestIndividualExamEndDate(exercise.getExam()));
+            if (examAssessmentDates != null) {
+                exercise.setLatestExamEndDate(examAssessmentDates.latestExamEndDate());
+                exercise.setAssessmentPossibleFrom(examAssessmentDates.assessmentPossibleFrom());
+            }
         }
 
         Set<ExampleSubmission> exampleSubmissions = exerciseService.findExampleSubmissionsForExercise(exercise);
@@ -343,7 +380,7 @@ public class ExerciseResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<ExerciseDetailsDTO> getExerciseDetails(@PathVariable Long exerciseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
 
         final boolean isAtLeastTAForExercise = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);

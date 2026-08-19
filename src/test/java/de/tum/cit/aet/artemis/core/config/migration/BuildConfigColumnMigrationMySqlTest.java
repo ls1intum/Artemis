@@ -24,7 +24,7 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
 
 /**
- * Verifies the MySQL data migration in {@code 20260730111430_changelog.xml}: rows whose build_plan_configuration or
+ * Verifies the MySQL data migration in {@code 20260819120000_changelog.xml}: rows whose build_plan_configuration or
  * docker_flags exceed the MEDIUMTEXT byte limit are reset to NULL (the default-configuration state, valid for both
  * JSON fields) before the columns are narrowed from LONGTEXT to MEDIUMTEXT, while values within the limit are kept.
  * <p>
@@ -35,7 +35,7 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 @EnabledIf("isDockerAvailable")
 class BuildConfigColumnMigrationMySqlTest {
 
-    private static final String CHANGELOG = "config/liquibase/changelog/20260730111430_changelog.xml";
+    private static final String CHANGELOG = "config/liquibase/changelog/20260819120000_changelog.xml";
 
     private static final String TABLE = "programming_exercise_build_config";
 

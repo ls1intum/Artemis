@@ -16,6 +16,7 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { NgStyle } from '@angular/common';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -23,7 +24,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil],
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './drag-and-drop-question-statistic.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, ChartModule, FaIconComponent, ImageComponent, NgStyle, DragItemComponent, QuizStatisticsFooterComponent],
+    imports: [TranslateDirective, ChartModule, FaIconComponent, ImageComponent, NgStyle, DragItemComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
@@ -80,7 +81,7 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
         this.question.dropLocations!.forEach((dropLocation) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             const dropLocationCounter = (this.questionStatistic as DragAndDropQuestionStatistic).dropLocationCounters?.find(
-                (dlCounter) => dropLocation.id === dlCounter.dropLocation!.id,
+                (dlCounter) => dropLocation.id === dlCounter.dropLocationId,
             )!;
             this.addData(dropLocationCounter.ratedCounter!, dropLocationCounter.unRatedCounter!);
         });

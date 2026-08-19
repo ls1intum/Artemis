@@ -115,3 +115,15 @@ Main page styles
         min-width: 385px;
     }
 }
+
+tum-ui-button {
+    display: block;
+    width: 100%;
+
+    ::ng-deep button {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}

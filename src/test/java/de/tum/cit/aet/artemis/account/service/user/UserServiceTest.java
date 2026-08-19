@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
@@ -32,6 +33,9 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private UserCreationService userCreationService;
 
     @BeforeEach
     void initTestCase() {
@@ -56,7 +60,7 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         userService.applicationReady();
 
         // Verify: Check that the user was created with SUPER_ADMIN authority
-        Optional<User> createdAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(testAdminUsername);
+        Optional<User> createdAdmin = userRepository.findOneWithAuthoritiesByLogin(testAdminUsername);
         assertThat(createdAdmin).isPresent();
 
         User admin = createdAdmin.get();
@@ -115,7 +119,7 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         userService.applicationReady();
 
         // Verify: Check that the user was updated with SUPER_ADMIN authority
-        Optional<User> updatedAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(testAdminUsername);
+        Optional<User> updatedAdmin = userRepository.findOneWithAuthoritiesByLogin(testAdminUsername);
         assertThat(updatedAdmin).isPresent();
 
         User admin = updatedAdmin.get();
@@ -150,6 +154,71 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         // isTestUser = false -> the flag is cleared
         userService.importUsers(List.of(new StudentDTO(login, null, null, null, null, false)));
         assertThat(userRepository.findOneByLogin(login).orElseThrow().isTestUser()).as("flag is cleared when explicitly false").isFalse();
+    }
+
+    @Test
+    void testCreateUser_withManagedUserVM_respectsIsInternalFlag() {
+        String login = TEST_PREFIX + "external_user";
+        ManagedUserVM externalUserDTO = new ManagedUserVM();
+        externalUserDTO.setLogin(login);
+        externalUserDTO.setFirstName("External");
+        externalUserDTO.setLastName("User");
+        externalUserDTO.setEmail("external_test@example.com");
+        externalUserDTO.setInternal(false);
+
+        userCreationService.createUser(externalUserDTO);
+
+        // Reload the user from the repository to verify database persistence
+        Optional<User> reloadedUser = userRepository.findOneByLogin(login);
+        assertThat(reloadedUser).isPresent();
+        assertThat(reloadedUser.get().isInternal()).as("persisted user should be external").isFalse();
+
+        // Cleanup via reloaded entity
+        reloadedUser.ifPresent(userRepository::delete);
+    }
+
+    @Test
+    void testUpdateUser_externalToInternal_generatesPasswordIfNull() {
+        String login = TEST_PREFIX + "ext_to_int";
+        ManagedUserVM externalUserDTO = new ManagedUserVM();
+        externalUserDTO.setLogin(login);
+        externalUserDTO.setFirstName("External");
+        externalUserDTO.setLastName("User");
+        externalUserDTO.setEmail("ext_to_int@example.com");
+        externalUserDTO.setInternal(false);
+
+        User user = userCreationService.createUser(externalUserDTO);
+        assertThat(user.isInternal()).isFalse();
+
+        // Set external to internal and provide no password
+        ManagedUserVM updateDTO = new ManagedUserVM(user);
+        updateDTO.setInternal(true);
+        updateDTO.setPassword(null);
+
+        userCreationService.updateUser(user, updateDTO);
+
+        User reloadedUser = userRepository.findOneByLogin(login).orElseThrow();
+        assertThat(reloadedUser.isInternal()).isTrue();
+        assertThat(reloadedUser.getPassword()).isNotNull().isNotEmpty();
+
+        userRepository.delete(reloadedUser);
+    }
+
+    @Test
+    void testUpdateUser_internalToExternal_reverseTransition() {
+        String login = TEST_PREFIX + "int_to_ext";
+        User user = userCreationService.createUser(login, "password123", "Internal", "User", "int_to_ext@example.com", null, null, "en", true);
+        assertThat(user.isInternal()).isTrue();
+
+        ManagedUserVM updateDTO = new ManagedUserVM(user);
+        updateDTO.setInternal(false);
+
+        userCreationService.updateUser(user, updateDTO);
+
+        User reloadedUser = userRepository.findOneByLogin(login).orElseThrow();
+        assertThat(reloadedUser.isInternal()).isFalse();
+
+        userRepository.delete(reloadedUser);
     }
 
     @Test

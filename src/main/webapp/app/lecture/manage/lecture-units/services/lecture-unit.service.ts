@@ -12,6 +12,7 @@ import { AttachmentService } from 'app/lecture/manage/services/attachment.servic
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 
@@ -72,7 +73,7 @@ export class LectureUnitService {
                 return lectureUnit;
             }
         }
-        return Object.assign({}, lectureUnit, {
+        return cloneWith(lectureUnit, {
             releaseDate: convertDateFromClient(lectureUnit.releaseDate),
         });
     }
@@ -88,6 +89,8 @@ export class LectureUnitService {
 
     convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
         if (res.body) {
+            // Convert the unit's own release date for every type so the raw ISO string from the server never reaches the date picker (e.g. when editing an attachment/video unit).
+            res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
             if (res.body.type === LectureUnitType.ATTACHMENT_VIDEO) {
                 if ((res.body as AttachmentVideoUnit).attachment) {
                     (res.body as AttachmentVideoUnit).attachment = this.attachmentService.convertAttachmentFromServer((res.body as AttachmentVideoUnit).attachment);
@@ -97,14 +100,14 @@ export class LectureUnitService {
                     (res.body as ExerciseUnit).exercise = ExerciseService.convertExerciseDatesFromServer((res.body as ExerciseUnit).exercise);
                     ExerciseService.parseExerciseCategories((res.body as ExerciseUnit).exercise);
                 }
-            } else {
-                res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
             }
         }
         return res;
     }
 
     convertLectureUnitDateFromServer<T extends LectureUnit>(lectureUnit: T): T {
+        // Convert the unit's own release date for every type so the raw ISO string from the server never reaches the date picker (e.g. when editing an attachment/video unit).
+        lectureUnit.releaseDate = convertDateFromServer(lectureUnit.releaseDate);
         if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             if ((lectureUnit as AttachmentVideoUnit).attachment) {
                 (lectureUnit as AttachmentVideoUnit).attachment = this.attachmentService.convertAttachmentFromServer((lectureUnit as AttachmentVideoUnit).attachment);
@@ -114,8 +117,6 @@ export class LectureUnitService {
                 (lectureUnit as ExerciseUnit).exercise = ExerciseService.convertExerciseDatesFromServer((lectureUnit as ExerciseUnit).exercise);
                 ExerciseService.parseExerciseCategories((lectureUnit as ExerciseUnit).exercise);
             }
-        } else {
-            lectureUnit.releaseDate = convertDateFromServer(lectureUnit.releaseDate);
         }
         return lectureUnit;
     }

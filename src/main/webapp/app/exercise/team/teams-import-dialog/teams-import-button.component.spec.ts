@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -11,7 +10,7 @@ import { TeamsImportButtonComponent } from 'app/exercise/team/teams-import-dialo
 import { TeamsImportDialogComponent } from 'app/exercise/team/teams-import-dialog/teams-import-dialog.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { mockExercise, mockSourceTeams, mockTeams } from 'test/helpers/mocks/service/mock-team.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -27,14 +26,7 @@ describe('TeamsImportButtonComponent', () => {
         dialogServiceOpenSpy = vi.fn().mockReturnValue({ onClose: of(mockSourceTeams) });
 
         await TestBed.configureTestingModule({
-            imports: [
-                MockModule(NgbModule),
-                MockDirective(FeatureToggleDirective),
-                TeamsImportButtonComponent,
-                ButtonComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(TranslateDirective),
-            ],
+            imports: [MockDirective(FeatureToggleDirective), TeamsImportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(TeamService),
                 { provide: DialogService, useValue: { open: dialogServiceOpenSpy } },

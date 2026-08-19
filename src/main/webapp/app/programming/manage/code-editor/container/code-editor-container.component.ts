@@ -35,6 +35,7 @@ import { CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/sh
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { Subscription } from 'rxjs';
 import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -388,7 +389,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         if (syncService?.isInitialized() && syncService.isFileOpen(fileName) && syncService.isFileAwaitingInitialSync(fileName)) {
             return;
         }
-        this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
+        this.unsavedFiles = cloneWith(this.unsavedFiles, { [fileName]: text });
         this.onFileChanged.emit();
     }
 

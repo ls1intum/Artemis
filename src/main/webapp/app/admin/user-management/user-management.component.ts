@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subject, Subscription, combineLatest } from 'rxjs';
@@ -13,18 +14,21 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
 import { faEye, faFileImport, faFilter, faPencil, faPlus, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
+import {
+    TumUiButtonComponent,
+    TumUiButtonDirective,
+    TumUiCheckboxComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiMessageComponent,
+    TumUiPaginatorComponent,
+    TumUiRadioButtonComponent,
+    TumUiTableDirective,
+    TumUiTableSortEvent,
+    TumUiTableSortableColumnComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
-import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
-import { TumUiRadioButtonComponent } from 'app/shared-ui/tum-ui/radio-button/tum-ui-radio-button.component';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
@@ -41,6 +45,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MODULE_FEATURE_LDAP, addPublicFilePrefix } from 'app/app.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -150,6 +155,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     private readonly accountService = inject(AccountService);
     private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly credentialRevocationConfirmationService = inject(CredentialRevocationConfirmationService);
     private readonly router = inject(Router);
     private readonly eventManager = inject(EventManager);
     private readonly localStorageService = inject(LocalStorageService);
@@ -330,7 +336,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     toggleAuthorityFilter(filter: Set<AuthorityFilter>, value: AuthorityFilter) {
         this.updateNoAuthority(false);
-        this.toggleFilter<AuthorityFilter>(filter, value, this.authorityKey);
+        // updateNoAuthority replaces the filter object with a detached copy, so `filter` is no longer the Set the
+        // signal holds. Re-read it instead of mutating the caller's now-orphaned reference.
+        this.toggleFilter<AuthorityFilter>(this.filters().authorityFilter, value, this.authorityKey);
     }
 
     /**
@@ -408,7 +416,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     updateNoAuthority(value: boolean) {
         this.localStorageService.store<boolean>(UserStorageKey.NO_AUTHORITY, value);
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.noAuthority = value;
         this.filters.set(filters);
     }
@@ -417,7 +425,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Deselect all roles
      */
     deselectAllRoles() {
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.authorityFilter = new Set();
         this.filters.set(filters);
         this.localStorageService.remove(UserStorageKey.AUTHORITY);
@@ -428,7 +436,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select empty roles
      */
     selectEmptyRoles() {
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.authorityFilter = new Set();
         this.filters.set(filters);
         this.updateNoAuthority(true);
@@ -438,7 +446,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select all roles
      */
     selectAllRoles() {
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.authorityFilter = new Set(this.authorityFilters);
         this.filters.set(filters);
         this.updateNoAuthority(false);
@@ -464,7 +472,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param user whose activation status should be changed
      * @param isActivated true if user should be activated, otherwise false
      */
-    setActive(user: User, isActivated: boolean) {
+    async setActive(user: User, isActivated: boolean): Promise<void> {
+        // Deactivating revokes every credential of the account, so it is confirmed like any other deletion. Activating
+        // deletes nothing and is not interrupted.
+        if (!isActivated) {
+            const confirmed = await this.credentialRevocationConfirmationService.confirm({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            if (!confirmed) {
+                return;
+            }
+        }
         const action = isActivated ? this.adminUserService.activate : this.adminUserService.deactivate;
         action.call(this.adminUserService, user.id!).subscribe({
             next: () => {

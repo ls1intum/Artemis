@@ -26,7 +26,10 @@ import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
+import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
@@ -45,12 +48,19 @@ public class UserCreationService {
 
     private final OrganizationRepository organizationRepository;
 
+    private final AccountCredentialRevocationService accountCredentialRevocationService;
+
+    private final AccountSecurityNotificationService accountSecurityNotificationService;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
-            OrganizationRepository organizationRepository) {
+            OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService,
+            AccountSecurityNotificationService accountSecurityNotificationService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
         this.organizationRepository = organizationRepository;
+        this.accountCredentialRevocationService = accountCredentialRevocationService;
+        this.accountSecurityNotificationService = accountSecurityNotificationService;
     }
 
     /**
@@ -58,7 +68,6 @@ public class UserCreationService {
      *
      * @param login              user login string
      * @param password           user password, if set to null, the password will be set randomly
-     * @param groups             The groups the user should belong to
      * @param firstName          first name of user
      * @param lastName           last name of the user
      * @param email              email of the user
@@ -68,8 +77,8 @@ public class UserCreationService {
      * @param isInternal         true if the actual password gets saved in the database
      * @return newly created user
      */
-    public User createUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email,
-            @Nullable String registrationNumber, String imageUrl, String langKey, boolean isInternal) {
+    public User createUser(String login, @Nullable String password, String firstName, String lastName, String email, @Nullable String registrationNumber, String imageUrl,
+            String langKey, boolean isInternal) {
         User newUser = new User();
 
         if (isInternal) {
@@ -85,8 +94,6 @@ public class UserCreationService {
         newUser.setLogin(login);
         newUser.setFirstName(firstName);
         newUser.setLastName(lastName);
-        // needs to be mutable --> new HashSet<>(Set.of())
-        newUser.setGroups(groups != null ? new HashSet<>(groups) : new HashSet<>());
         newUser.setEmail(email);
         // an empty string is considered as null to satisfy the unique constraint on registration number
         if (StringUtils.hasText(registrationNumber)) {
@@ -139,9 +146,10 @@ public class UserCreationService {
 
         setUserAuthorities(userDTO, user);
 
-        String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
-        String passwordHash = passwordService.hashPassword(password);
-        user.setPassword(passwordHash);
+        if (userDTO.isInternal()) {
+            String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
+            user.setPassword(passwordService.hashPassword(password));
+        }
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
         try {
@@ -151,17 +159,14 @@ public class UserCreationService {
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
-        user.setGroups(userDTO.getGroups());
         user.setActivated(true);
-        user.setInternal(true);
+        user.setInternal(userDTO.isInternal());
         user.setTestUser(userDTO.isTestUser());
         // an empty string is considered as null to satisfy the unique constraint on registration number
         if (StringUtils.hasText(userDTO.getVisibleRegistrationNumber())) {
             user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         }
         saveUser(user);
-
-        addUserToGroupsInternal(user, userDTO.getGroups());
 
         log.debug("Created Information for User: {}", user);
         return user;
@@ -234,19 +239,53 @@ public class UserCreationService {
         if (updatedUserDTO.getImageUrl() != null) {
             user.setImageUrl(updatedUserDTO.getImageUrl());
         }
+        // Captured before the flag is overwritten: the admin edit form reaches the same transition as deactivateUser, and
+        // it has to revoke the same credentials, otherwise an account the admin sees as deactivated keeps working over git.
+        boolean isBeingDeactivated = Boolean.TRUE.equals(user.getActivated()) && !updatedUserDTO.isActivated();
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
         user.setLangKey(updatedUserDTO.getLangKey());
-        user.setGroups(updatedUserDTO.getGroups());
-        if (user.isInternal() && updatedUserDTO.getPassword() != null) {
-            user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
+
+        // if user was external and becomes internal - it's important to make sure that user still has a password
+        boolean wasInternal = user.isInternal();
+        user.setInternal(updatedUserDTO.isInternal());
+        boolean revokeCredentialsAfterPasswordChange = user.isInternal() && updatedUserDTO.getPassword() != null && updatedUserDTO.isRevokeCredentials();
+
+        if (user.isInternal()) {
+            if (updatedUserDTO.getPassword() != null) {
+                user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
+            }
+            else if (!wasInternal || user.getPassword() == null) {
+                // If user becomes internal user and got no password, generate the random password
+                String newPassword = RandomUtil.generatePassword();
+                user.setPassword(passwordService.hashPassword(newPassword));
+            }
         }
         user.setOrganizations(updatedUserDTO.getOrganizations());
         setUserAuthorities(updatedUserDTO, user);
 
         log.debug("Changed Information for User: {}", user);
 
-        return saveUser(user);
+        User savedUser = saveUser(user);
+        boolean passwordChangedByAdministrator = user.isInternal() && updatedUserDTO.getPassword() != null;
+        boolean credentialsRevoked = isBeingDeactivated || revokeCredentialsAfterPasswordChange;
+        if (credentialsRevoked) {
+            String reason = isBeingDeactivated ? "user deactivated by an administrator" : "password changed by an administrator";
+            accountCredentialRevocationService.revokeAllCredentials(savedUser, reason);
+        }
+        if (passwordChangedByAdministrator) {
+            // The affected user is told, not the administrator who did it: their credentials just stopped working, and only
+            // this email lets them tell an administrator's action apart from an intruder's. The acting administrator is
+            // recorded in the audit event instead. Deactivation alone is not announced here - the user cannot sign in to act
+            // on it, and #13404 already blocks authentication for inactive accounts.
+            //
+            // Reported from what was actually revoked, not from the checkbox: deactivating and changing the password in one
+            // update revokes everything through `isBeingDeactivated`, so keying the message off the checkbox alone told the
+            // user their keys and tokens had been kept while they had in fact just been deleted.
+            CredentialRevocationChoiceDTO revoked = credentialsRevoked ? new CredentialRevocationChoiceDTO(true, true, true) : CredentialRevocationChoiceDTO.none();
+            accountSecurityNotificationService.passwordChanged(savedUser, revoked, AccountSecurityNotificationService.PasswordChangeActor.ADMINISTRATOR);
+        }
+        return savedUser;
     }
 
     /**
@@ -269,6 +308,9 @@ public class UserCreationService {
     public void deactivateUser(User user) {
         user.setActivated(false);
         saveUser(user);
+        // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
+        // SSH key without consulting account state, so deactivation only takes effect once those credentials are gone.
+        accountCredentialRevocationService.revokeAllCredentials(user, "user deactivated");
         log.info("Deactivated user: {}", user);
     }
 
@@ -298,27 +340,4 @@ public class UserCreationService {
         return newPassword;
     }
 
-    /**
-     * Adds a user to the specified set of groups.
-     *
-     * @param user   the user who should be added to the given groups
-     * @param groups the groups in which the user should be added
-     */
-    private void addUserToGroupsInternal(User user, @Nullable Set<String> groups) {
-        if (groups == null) {
-            return;
-        }
-        boolean userChanged = false;
-        for (String group : groups) {
-            if (!user.getGroups().contains(group)) {
-                userChanged = true;
-                user.getGroups().add(group);
-            }
-        }
-
-        if (userChanged) {
-            // we only save if this is needed
-            saveUser(user);
-        }
-    }
 }

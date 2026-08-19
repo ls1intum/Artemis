@@ -18,6 +18,10 @@ on:
         description: 'Whether Java sources changed — gates the Java-specific analyses.'
         required: true
         type: boolean
+      has_tum_ui:
+        description: 'Whether TUM UI or its application integration changed.'
+        required: true
+        type: boolean
 
 permissions: {}  # default-deny; each job grants only what it needs
 
@@ -52,6 +56,12 @@ jobs:
       - name: Java Documentation
         run: ./gradlew checkstyleMain -x webapp
         if: ${{ !cancelled() }}
+      # Tightly-coupled dependency families (HttpComponents, Bouncy Castle, JGit, SSHD) must not resolve to mixed or
+      # downgraded versions: that is a runtime LinkageError rather than a build failure, so nothing else catches it.
+      # Run explicitly because this task hangs off `check`, which no CI job invokes.
+      - name: Dependency Families
+        run: ./gradlew verifyDependencyFamilies -x webapp
+        if: ${{ !cancelled() }}
       - name: Java Architecture Tests
         run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
         if: ${{ !cancelled() }}
@@ -84,11 +94,16 @@ jobs:
           cache: 'pnpm'
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
+      - name: Dependency Version Consistency
+        run: pnpm run sync-versions:check
       - name: TypeScript Formatting
         run: pnpm run prettier:check
       - name: TypeScript Code Style
         run: pnpm run lint
         if: ${{ !cancelled() }}
+      - name: TUM UI Styles
+        run: pnpm run tum-ui:stylelint
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
       - name: Install Playwright Dependencies
         run: pnpm install --frozen-lockfile
         working-directory: src/test/playwright
@@ -121,6 +136,33 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Compile TypeScript Files With Typechecking
         run: pnpm run compile
+      - name: Compile Artemis With TUM UI Source
+        run: pnpm run tum-ui:source:check:prepared
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Test TUM UI in Isolation
+        run: pnpm run tum-ui:test:coverage
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Prepare TUM UI Storybook
+        run: pnpm --dir packages/tum-ui run storybook:prepare
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Type Check TUM UI Stories
+        run: pnpm --dir packages/tum-ui run storybook:typecheck:prepared
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Install TUM UI Storybook Browser
+        run: pnpm --dir packages/tum-ui exec playwright install --with-deps --only-shell chromium
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Test TUM UI Stories
+        run: pnpm --dir packages/tum-ui run storybook:test:prepared
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Build TUM UI Storybook
+        run: pnpm --dir packages/tum-ui run storybook:build:prepared
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Test TUM UI AutoDocs
+        run: pnpm --dir packages/tum-ui run storybook:docs:test:built
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Validate TUM UI Package Artifact
+        run: pnpm run tum-ui:pack:check
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
 
   code-quality:
     name: Server Code Quality

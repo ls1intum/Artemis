@@ -3,9 +3,14 @@ import dayjs from 'dayjs/esm';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
+export interface CourseRoleEntry {
+    courseId: number;
+    roles: string[];
+}
+
 export class User extends Account {
     public id?: number;
-    public groups?: string[];
+    public courseRoles?: CourseRoleEntry[];
     public organizations?: Organization[];
     public createdBy?: string;
     public createdDate?: Date;
@@ -13,6 +18,7 @@ export class User extends Account {
     public lastModifiedDate?: Date;
     public visibleRegistrationNumber?: string;
     public password?: string;
+    public revokeCredentials?: boolean;
     public vcsAccessToken?: string;
     public vcsAccessTokenExpiryDate?: string;
     public selectedLLMUsage?: LLMSelectionDecision;
@@ -45,7 +51,6 @@ export class User extends Account {
         activated?: boolean,
         langKey?: string,
         authorities?: string[],
-        groups?: string[],
         createdBy?: string,
         createdDate?: Date,
         lastModifiedBy?: string,
@@ -63,7 +68,6 @@ export class User extends Account {
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id;
-        this.groups = groups;
         this.createdBy = createdBy;
         this.createdDate = createdDate;
         this.lastModifiedBy = lastModifiedBy;

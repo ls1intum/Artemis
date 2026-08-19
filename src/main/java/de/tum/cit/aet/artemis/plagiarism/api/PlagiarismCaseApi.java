@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.api;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -8,6 +9,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismCaseScoreDTO;
 import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismMapping;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -45,6 +47,10 @@ public class PlagiarismCaseApi extends AbstractPlagiarismApi {
         return plagiarismCaseRepository.findByStudentIdAndExerciseIds(userId, exerciseIds);
     }
 
+    public List<PlagiarismCaseScoreDTO> findScoreInformationByStudentIdAndExerciseIds(long userId, Set<Long> exerciseIds) {
+        return plagiarismCaseRepository.findScoreInformationByStudentIdAndExerciseIds(userId, exerciseIds);
+    }
+
     public Optional<PlagiarismCase> findByStudentIdAndExerciseIdWithPostAndAnswerPost(Long userId, Long exerciseId) {
         return plagiarismCaseRepository.findByStudentIdAndExerciseIdWithPostAndAnswerPost(userId, exerciseId);
     }
@@ -56,5 +62,25 @@ public class PlagiarismCaseApi extends AbstractPlagiarismApi {
 
     public List<PlagiarismCase> findByExamIdAndStudentId(Long examId, Long studentId) {
         return plagiarismCaseRepository.findByExamIdAndStudentId(examId, studentId);
+    }
+
+    /**
+     * Deletes all plagiarism cases of course exercises whose course ended before the given date (data-privacy cleanup).
+     *
+     * @param endDateBefore only cases of courses that ended strictly before this are deleted
+     * @return the number of deleted plagiarism cases
+     */
+    public int deletePlagiarismCasesOfCoursesEndedBefore(ZonedDateTime endDateBefore) {
+        return plagiarismCaseService.deletePlagiarismCasesOfCoursesEndedBefore(endDateBefore);
+    }
+
+    /**
+     * Counts the plagiarism cases of course exercises whose course ended before the given date.
+     *
+     * @param endDateBefore only cases of courses that ended strictly before this are counted
+     * @return the number of matching plagiarism cases
+     */
+    public int countPlagiarismCasesOfCoursesEndedBefore(ZonedDateTime endDateBefore) {
+        return plagiarismCaseService.countPlagiarismCasesOfCoursesEndedBefore(endDateBefore);
     }
 }

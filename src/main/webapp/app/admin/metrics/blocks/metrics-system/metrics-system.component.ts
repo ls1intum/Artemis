@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { ProcessMetrics } from 'app/admin/metrics/metrics.model';
-import { TumUiProgressBarComponent } from 'app/shared-ui/tum-ui/progress-bar/tum-ui-progress-bar.component';
+import { TumUiProgressBarComponent } from '@tumaet/ui-angular';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { toPercentage } from 'app/admin/metrics/filterNaN-util';
 

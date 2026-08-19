@@ -114,7 +114,7 @@ describe('CourseManagementContainerComponent', () => {
     let route: ActivatedRoute;
 
     let findSpy: ReturnType<typeof vi.spyOn>;
-    let findOneForDashboardSpy: ReturnType<typeof vi.spyOn>;
+    let findCourseSpy: ReturnType<typeof vi.spyOn>;
     let getCourseSummarySpy: ReturnType<typeof vi.spyOn>;
     let deleteSpy: ReturnType<typeof vi.spyOn>;
     let courseSidebarService: CourseSidebarService;
@@ -186,7 +186,7 @@ describe('CourseManagementContainerComponent', () => {
         );
         metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
 
-        findOneForDashboardSpy = vi.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
+        findCourseSpy = vi.spyOn(courseService, 'find').mockReturnValue(
             of(
                 new HttpResponse({
                     body: course1,
@@ -293,7 +293,7 @@ describe('CourseManagementContainerComponent', () => {
             expect(component.course()).toEqual(course1);
         });
 
-        expect(findOneForDashboardSpy).toHaveBeenCalledWith(1);
+        expect(findCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should create sidebar items based on course properties', () => {
@@ -374,15 +374,26 @@ describe('CourseManagementContainerComponent', () => {
 
         component.handleToggleSidebar();
         expect(mockConversationsComponent.toggleSidebar).toHaveBeenCalled();
-        expect(component.isSidebarCollapsed()).toBe(false);
     });
 
     it('should not toggle sidebar for non-CourseConversationsComponent', () => {
         component.activatedComponentReference.set(undefined);
-        component.handleToggleSidebar();
 
-        // No error should occur, and isCollapsed remains unchanged
-        expect(component.isSidebarCollapsed()).toBe(false);
+        expect(() => component.handleToggleSidebar()).not.toThrow();
+    });
+
+    it('should set the page title on the conversations sidebar when activated', () => {
+        route.snapshot.firstChild!.data = { pageTitle: 'overview.communication' };
+        const mockConversationsComponent = {
+            isCollapsed: signal(false),
+            setPageTitle: vi.fn(),
+        } as unknown as CourseConversationsComponent;
+        // we have to set this to trick the component into believing it is a CourseConversationsComponent
+        Object.setPrototypeOf(mockConversationsComponent, CourseConversationsComponent.prototype);
+
+        component.onSubRouteActivate(mockConversationsComponent);
+
+        expect(mockConversationsComponent.setPageTitle).toHaveBeenCalledWith('overview.communication');
     });
 
     it('should fetch course deletion summary correctly', () => {

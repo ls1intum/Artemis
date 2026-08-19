@@ -11,7 +11,9 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -20,12 +22,15 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -63,6 +68,7 @@ import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+@Execution(ExecutionMode.SAME_THREAD)
 class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "messageintegration";
@@ -111,7 +117,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // initialize test setup and get all existing posts
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
-        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(courseUtilService.createCourse(), TEST_PREFIX);
+        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(courseUtilService.createEnrolledCourse(TEST_PREFIX), TEST_PREFIX);
 
         existingCourseWideMessages = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide())
                 .toList();
@@ -217,7 +223,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateConversationPostInCourseWideChannel_onlyFewDatabaseCalls() throws Exception {
-        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        Course course = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         userUtilService.addStudents(TEST_PREFIX + "createMessageDbTest", 1, 5);
 
         // given
@@ -228,10 +234,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // TODO: Hibernate 7 increased query count from 7 to 8 — investigate in a follow-up
         // 4 calls are for user authentication checks, 3 calls to update database
         // + 1 additional query from Hibernate 7 entity/collection loading changes
+        // + 1 bulk UPDATE incrementing the recipients' unread counters. This one is deliberately synchronous: the read
+        // side resets the counter to zero and nothing orders the two, so incrementing from the async notification
+        // path let a late increment overwrite a recipient's read. Most other write work here stays async.
         // further database calls are made in async code
         // Note: post via the channel's own course — the path courseId must match the conversation's course (see ensureConversationBelongsToCourseElseThrow)
         assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED))
-                .hasBeenCalledTimes(8);
+                .hasBeenCalledTimes(9);
     }
 
     @ParameterizedTest
@@ -335,6 +344,42 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         else {
             assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize), requestingUser.getId())).hasSize(NUMBER_OF_POSTS);
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFindMessagesPagesDoNotOverlapForEqualCreationDates() {
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "stable-paging");
+        var author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        // Six messages sharing one creation date. Ordering them by date alone leaves their relative order undefined,
+        // so a page boundary between them lets the database return the same message on two consecutive pages, and the
+        // client renders it twice.
+        // Fixed rather than relative to now, because only the messages sharing one date matters here and a wall-clock
+        // value would make the fixture differ between runs.
+        ZonedDateTime sameCreationDate = ZonedDateTime.of(2024, 1, 15, 12, 0, 0, 0, ZoneOffset.UTC);
+        List<Long> savedMessageIds = new ArrayList<>();
+        for (int index = 0; index < 6; index++) {
+            Post message = new Post();
+            message.setAuthor(author);
+            message.setConversation(channel);
+            message.setContent("stable paging " + index);
+            message.setCreationDate(sameCreationDate);
+            savedMessageIds.add(conversationMessageRepository.save(message).getId());
+        }
+
+        var requestingUser = userTestRepository.getUser();
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(course.getId(), null, new long[] { channel.getId() }, null, null, false, false, false,
+                PostSortCriterion.CREATION_DATE, SortingOrder.DESCENDING);
+
+        List<Long> pagedMessageIds = new ArrayList<>();
+        for (int page = 0; page < 3; page++) {
+            conversationMessageRepository.findMessages(postContextFilter, PageRequest.of(page, 2), requestingUser.getId()).forEach(message -> pagedMessageIds.add(message.getId()));
+        }
+
+        // Newest first, and among equal dates the higher id first. Paging through the conversation therefore visits
+        // every message exactly once, which is what the client needs to chain-load earlier pages without rendering a
+        // message twice or dropping one.
+        assertThat(pagedMessageIds).containsExactlyElementsOf(savedMessageIds.reversed()).doesNotHaveDuplicates();
     }
 
     @Test
@@ -709,6 +754,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         PostResponseDTO createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, PostResponseDTO.class,
                 HttpStatus.CREATED);
 
+        // Wait for the post-creation @Async increment to settle: the count must reach 1 before student2 reads the
+        // conversation. Both the increment (ConversationMessagingService#notifyAboutMessageCreation) and the read reset
+        // (ConversationParticipantRepository#updateLastReadAsync) run asynchronously, so without this gate the increment
+        // can land after the reset and leave the count permanently at 1.
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            SecurityUtils.setAuthorizationObject();
+            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isEqualTo(1);
+        });
+
         userUtilService.changeUser(TEST_PREFIX + "student2");
         // we read the messages by "getting" them from the server as student
         var params = new LinkedMultiValueMap<String, String>();
@@ -723,6 +777,22 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isZero();
             assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student1)).isZero();
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUnreadCountIsAlreadyIncrementedWhenMessageCreationReturns() throws Exception {
+        var student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+
+        Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
+        CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()));
+        PostResponseDTO createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class,
+                HttpStatus.CREATED);
+
+        // No await: the increment has to be done by the time the request returns. While it ran on the @Async
+        // notification path it could still be pending here, and a recipient reading the conversation in that window
+        // had their reset overwritten by the late increment, leaving an unread message they had already seen.
+        assertThat(getUnreadMessagesCount(createdPost.conversation().id(), student2)).isEqualTo(1);
     }
 
     @Test
@@ -1137,7 +1207,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * still query unread-message counts without re-resolving the conversation entity.
      */
     private long getUnreadMessagesCount(Long conversationId, User user) {
-        return oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(conversationId).orElseThrow().getConversationParticipants().stream()
+        return oneToOneChatRepository.findByIdWithConversationParticipantsAndUsers(conversationId).orElseThrow().getConversationParticipants().stream()
                 .filter(conversationParticipant -> Objects.equals(conversationParticipant.getUser().getId(), user.getId())).findFirst().orElseThrow().getUnreadMessagesCount();
     }
 
@@ -1162,7 +1232,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         participant2.setUnreadMessagesCount(0L);
         participant2.setLastRead(ZonedDateTime.now().minusYears(2));
         conversationParticipantRepository.save(participant2);
-        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
+        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUsers(chat.getId()).orElseThrow();
         Post post = new Post();
         post.setAuthor(student1);
         post.setDisplayPriority(DisplayPriority.NONE);
@@ -1301,8 +1371,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
-        Course otherCourse = courseUtilService.createCourse();
-        courseUtilService.enableMessagingForCourse(otherCourse);
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-create");
 
         CreatePostDTO postDTOToSave = new CreatePostDTO("cross-course injection", "", false, new CreatePostConversationDTO(channelInOtherCourse.getId()));
@@ -1324,8 +1393,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
-        Course otherCourse = courseUtilService.createCourse();
-        courseUtilService.enableMessagingForCourse(otherCourse);
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-update");
         Post post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
 
@@ -1338,8 +1406,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
-        Course otherCourse = courseUtilService.createCourse();
-        courseUtilService.enableMessagingForCourse(otherCourse);
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-delete");
         Post post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
 
@@ -1350,8 +1417,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testChangeDisplayPriority_conversationInDifferentCourse_isBadRequest() throws Exception {
-        Course otherCourse = courseUtilService.createCourse();
-        courseUtilService.enableMessagingForCourse(otherCourse);
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-pin");
         Post post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
 

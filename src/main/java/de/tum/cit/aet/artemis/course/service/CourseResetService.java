@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.course.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -13,16 +14,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.communication.service.ConversationDataCleanupService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamDeletionApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
@@ -53,11 +53,15 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
  * </tr>
  * <tr>
  * <td>Communication</td>
- * <td>Channel/conversation structure (but not messages)</td>
+ * <td>Channel/conversation structure (but not messages or per-user membership)</td>
  * </tr>
  * <tr>
  * <td>Staff</td>
  * <td>Instructor assignments only</td>
+ * </tr>
+ * <tr>
+ * <td>Plagiarism</td>
+ * <td>Plagiarism cases (retained under their own retention period; removed separately by the age-based cleanup)</td>
  * </tr>
  * </table>
  * <p>
@@ -69,11 +73,11 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
  * </tr>
  * <tr>
  * <td>Exercise Data</td>
- * <td>Participations, submissions, results, feedbacks, build results, plagiarism cases</td>
+ * <td>Participations, submissions, results, feedbacks, plagiarism results</td>
  * </tr>
  * <tr>
  * <td>Exam Data</td>
- * <td>Student exams, exam participations, exam submissions, exam grades</td>
+ * <td>Student exams, exam participations, exam submissions, exam grades, exam users (seating, identity checks, signature/photo files)</td>
  * </tr>
  * <tr>
  * <td>Learning Analytics</td>
@@ -81,7 +85,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
  * </tr>
  * <tr>
  * <td>Communication</td>
- * <td>Posts, answer posts, reactions, notifications, notification settings</td>
+ * <td>Posts, answer posts, reactions, conversation participants (channel membership), notifications, notification settings</td>
  * </tr>
  * <tr>
  * <td>AI Features</td>
@@ -134,12 +138,6 @@ public class CourseResetService {
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
-    private final CourseRepository courseRepository;
-
-    private final UserRepository userRepository;
-
-    private final UserService userService;
-
     private final CourseOperationProgressService progressService;
 
     private final CourseAdminService courseAdminService;
@@ -148,14 +146,16 @@ public class CourseResetService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     public CourseResetService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, Optional<ExamDeletionApi> examDeletionApi,
             Optional<ExamRepositoryApi> examRepositoryApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LearnerProfileApi> learnerProfileApi,
             Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi, ConversationDataCleanupService conversationDataCleanupService,
             CourseNotificationRepository courseNotificationRepository, UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository,
-            LLMTokenUsageRequestRepository llmTokenUsageRequestRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository,
-            UserRepository userRepository, UserService userService, CourseOperationProgressService progressService, CourseAdminService courseAdminService,
-            ParticipationRepository participationRepository, SubmissionRepository submissionRepository) {
+            LLMTokenUsageRequestRepository llmTokenUsageRequestRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository,
+            CourseOperationProgressService progressService, CourseAdminService courseAdminService, ParticipationRepository participationRepository,
+            SubmissionRepository submissionRepository, UserCourseRoleRepository userCourseRoleRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.examDeletionApi = examDeletionApi;
@@ -170,13 +170,11 @@ public class CourseResetService {
         this.userCourseNotificationSettingSpecificationRepository = userCourseNotificationSettingSpecificationRepository;
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
-        this.courseRepository = courseRepository;
-        this.userRepository = userRepository;
-        this.userService = userService;
         this.progressService = progressService;
         this.courseAdminService = courseAdminService;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
     }
 
     /**
@@ -204,15 +202,19 @@ public class CourseResetService {
         double totalWeight = CourseOperationWeights.calculateResetTotalWeight(summary, actualExamWeight);
         double completedWeight = 0;
 
+        // Per-exercise/exam failures are collected rather than aborting the whole batch at the first bad item; if any
+        // occurred, the reset is reported as incomplete at the end so the caller retries it (the reset is idempotent).
+        List<Long> failedItems = new ArrayList<>();
+
         try {
             progressService.startOperation(courseId, CourseOperationType.RESET, "Resetting exercises", TOTAL_RESET_STEPS);
 
             // Step 1: Reset exercises (with per-exercise progress updates)
-            completedWeight = resetExercisesWithWeightedProgress(courseId, stepsCompleted, startedAt, completedWeight, totalWeight);
+            completedWeight = resetExercisesWithWeightedProgress(courseId, stepsCompleted, startedAt, completedWeight, totalWeight, failedItems);
             stepsCompleted++;
 
             // Step 2: Reset exams (with per-exam progress updates)
-            completedWeight = resetExamsWithWeightedProgress(courseId, examInfoList, stepsCompleted, startedAt, completedWeight, totalWeight);
+            completedWeight = resetExamsWithWeightedProgress(courseId, examInfoList, stepsCompleted, startedAt, completedWeight, totalWeight, failedItems);
             stepsCompleted++;
 
             // Step 3: Delete competency progress
@@ -285,6 +287,12 @@ public class CourseResetService {
             completedWeight += unenrollWeight;
             stepsCompleted++;
 
+            // If any individual exercise/exam could not be reset, report the reset as incomplete so it is retried
+            // (the retry is a no-op for the items that already succeeded) rather than silently marking it done.
+            if (!failedItems.isEmpty()) {
+                throw new IllegalStateException("Reset of course " + courseId + " is incomplete; failed to reset exercise/exam id(s): " + failedItems);
+            }
+
             progressService.completeOperation(courseId, CourseOperationType.RESET, TOTAL_RESET_STEPS, 0, startedAt);
             log.info("Successfully reset all student data for course {}", courseId);
         }
@@ -314,7 +322,8 @@ public class CourseResetService {
      * @param totalWeight     the total weight for the entire reset
      * @return the updated completed weight after resetting all exercises
      */
-    private double resetExercisesWithWeightedProgress(long courseId, int stepsCompleted, ZonedDateTime startedAt, double completedWeight, double totalWeight) {
+    private double resetExercisesWithWeightedProgress(long courseId, int stepsCompleted, ZonedDateTime startedAt, double completedWeight, double totalWeight,
+            List<Long> failedItems) {
         Set<ExerciseDeletionInfoDTO> exercises = exerciseRepository.findDeletionInfoByCourseId(courseId);
         int totalExercises = exercises.size();
         int processed = 0;
@@ -336,7 +345,13 @@ public class CourseResetService {
             progressService.updateProgress(courseId, CourseOperationType.RESET, "Resetting exercise: " + exercise.title(), stepsCompleted, TOTAL_RESET_STEPS, processed,
                     totalExercises, 0, startedAt, calculateProgressPercent(completedWeight, totalWeight));
 
-            exerciseDeletionService.reset(exercise.id());
+            try {
+                exerciseDeletionService.reset(exercise.id());
+            }
+            catch (Exception e) {
+                log.error("Failed to reset exercise {} of course {}; continuing with the remaining exercises", exercise.id(), courseId, e);
+                failedItems.add(exercise.id());
+            }
             completedWeight += exerciseWeight;
             processed++;
 
@@ -360,7 +375,7 @@ public class CourseResetService {
      * @return the updated completed weight after resetting all exams
      */
     private double resetExamsWithWeightedProgress(long courseId, List<ExamDeletionInfoDTO> examInfoList, int stepsCompleted, ZonedDateTime startedAt, double completedWeight,
-            double totalWeight) {
+            double totalWeight, List<Long> failedItems) {
         if (examDeletionApi.isEmpty()) {
             return completedWeight;
         }
@@ -375,7 +390,13 @@ public class CourseResetService {
             progressService.updateProgress(courseId, CourseOperationType.RESET, "Resetting exam", stepsCompleted, TOTAL_RESET_STEPS, processed, totalExams, 0, startedAt,
                     calculateProgressPercent(completedWeight, totalWeight));
 
-            examDeletionApi.get().reset(examInfo.examId());
+            try {
+                examDeletionApi.get().reset(examInfo.examId());
+            }
+            catch (Exception e) {
+                log.error("Failed to reset exam {} of course {}; continuing with the remaining exams", examInfo.examId(), courseId, e);
+                failedItems.add(examInfo.examId());
+            }
             completedWeight += examWeight;
             processed++;
 
@@ -471,32 +492,12 @@ public class CourseResetService {
     }
 
     /**
-     * Unenrolls all students, tutors, and editors from the course by removing them from their groups.
+     * Unenrolls all students, tutors, and editors from the course.
      * Only instructors are preserved.
-     * <p>
-     * This method uses bulk database operations to efficiently remove group associations
-     * in a single query per group, rather than loading and saving each user individually.
-     * The user cache is properly evicted for all affected users.
      *
      * @param courseId the ID of the course whose students, tutors, and editors should be unenrolled
      */
     private void unenrollStudentsTutorsAndEditors(long courseId) {
-        // Remove students using bulk operation
-        String studentGroupName = courseRepository.getStudentGroupNameById(courseId);
-        if (studentGroupName != null) {
-            userService.removeGroupFromAllUsers(studentGroupName);
-        }
-
-        // Remove tutors (teaching assistants) using bulk operation
-        String tutorGroupName = courseRepository.getTeachingAssistantGroupNameById(courseId);
-        if (tutorGroupName != null) {
-            userService.removeGroupFromAllUsers(tutorGroupName);
-        }
-
-        // Remove editors using bulk operation
-        String editorGroupName = courseRepository.getEditorGroupNameById(courseId);
-        if (editorGroupName != null) {
-            userService.removeGroupFromAllUsers(editorGroupName);
-        }
+        userCourseRoleRepository.deleteByCourse_IdAndRoleIn(courseId, List.of(CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR));
     }
 }

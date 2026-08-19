@@ -135,6 +135,7 @@
             "dates": "Termine",
             "dateNotSet": "Kein Datum gesetzt",
             "timelineDateOrderTooltip": "Dieses Datum muss nach oder zeitgleich mit allen vorhergehenden Daten liegen.",
+            "timelineDateStrictOrderTooltip": "Dieses Datum muss nach allen vorhergehenden Daten liegen.",
             "timelineDateRequiredTooltip": "Dieses Datum ist erforderlich.",
             "timelineDateInvalidTooltip": "Das eingegebene Datum ist ungültig. Bitte das Format TT.MM.JJJJ HH:mm verwenden.",
             "timelineOtherRequiredDateTooltip": "{{ otherInputName }} muss gesetzt sein, bevor dieses Datum gesetzt werden kann.",
@@ -340,7 +341,8 @@
                         "JAVA_BLACKBOX": "Der Paketname muss ein gültiger Java-Bezeicher sein. Zusätzlich sind Trennpunkte im Paketnamen für den DejaGnu Aufgabentyp nicht erlaubt.",
                         "GO": "Der Package-Name muss ein gültiger Go-Identifier sein, z.B. \"exercise\".",
                         "DART": "Der Package-Name muss ein kleingeschriebener Dart-Identifier sein, z.B. \"exercise01\"."
-                    }
+                    },
+                    "maxlength": "Der Package-Name darf nicht mehr als {{ max }} Zeichen enthalten."
                 },
                 "points": {
                     "undefined": "Du musst die Punkte angeben.",
@@ -396,7 +398,10 @@
             },
             "isUsedForTutorial": "Tutor:in muss überprüfen",
             "action": "Aktion",
-            "exerciseAssessmentDashboard": "Bewertungs-Dashboard"
+            "exerciseAssessmentDashboard": "Bewertungs-Dashboard",
+            "applyInstruction": "Diese Bewertungsanweisung anwenden",
+            "applyInstructionHint": "Hake eine Bewertungsanweisung an, um sie zum Feedback hinzuzufügen, oder ziehe sie per Drag & Drop auf ein Feedback-Element",
+            "instructionAppliedToReferencedElement": "Bereits auf ein Feedback-Element angewendet. Entferne sie dort, um den Haken zu lösen."
         }
     }
 }

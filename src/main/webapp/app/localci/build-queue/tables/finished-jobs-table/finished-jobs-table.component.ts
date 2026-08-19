@@ -9,12 +9,7 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
-import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
-import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
-import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-
+import { TumUiButtonComponent, TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-finished-jobs-table',
     templateUrl: './finished-jobs-table.component.html',

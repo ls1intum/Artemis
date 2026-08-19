@@ -1,0 +1,101 @@
+:host {
+    position: relative;
+    display: inline-flex;
+
+    // Same as tum-ui-checkbox: the token fallback keeps the height from falling back to auto, where a flex row's
+    // default `stretch` would grow the control to the height of a label that wraps onto several lines.
+    width: calc(var(--tumaet-ui-spacing, 0.25rem) * 5);
+    height: calc(var(--tumaet-ui-spacing, 0.25rem) * 5);
+
+    // Neither grow nor shrink, so a tight row cannot squeeze the circle into an oval either.
+    flex: 0 0 auto;
+    vertical-align: bottom;
+    user-select: none;
+}
+
+.tum-ui-radio-button-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    opacity: 0;
+    cursor: pointer;
+    appearance: none;
+    border-radius: 50%;
+
+    &:disabled {
+        cursor: default;
+    }
+}
+
+.tum-ui-radio-button-box {
+    // width/height are 100% of the host and a border is added on top, so this must measure the border inside
+    // those 100%. The kit ships no global reset, and relying on the host application's would leave the box
+    // two pixels taller than it is wide wherever there is none.
+    box-sizing: border-box;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 50%;
+    box-shadow:
+        0 0 transparent,
+        0 0 transparent,
+        0 1px 2px 0 color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
+    transition:
+        background-color 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s,
+        outline-color 0.2s;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background-color: transparent;
+        pointer-events: none;
+        transition: background-color 0.15s ease;
+    }
+}
+
+.tum-ui-radio-button-icon {
+    // Same fallback as the host, and for a sharper reason: this element has no content, so an invalid calc leaves both
+    // dimensions at auto, which is zero. The ring would render while the dot inside it disappeared, and a selected
+    // radio would read as unselected.
+    width: calc(var(--tumaet-ui-spacing, 0.25rem) * 3);
+    height: calc(var(--tumaet-ui-spacing, 0.25rem) * 3);
+    border-radius: 50%;
+    visibility: hidden;
+}
+
+:host:has(.tum-ui-radio-button-input:checked) .tum-ui-radio-button-icon {
+    visibility: visible;
+}
+
+:host:has(.tum-ui-radio-button-input:hover:not(:disabled)) .tum-ui-radio-button-box::after {
+    background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
+}
+
+:host:has(.tum-ui-radio-button-input:focus-visible) .tum-ui-radio-button-box {
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: 2px;
+}
+
+@media (forced-colors: active) {
+    .tum-ui-radio-button-input {
+        appearance: auto;
+        opacity: 1;
+    }
+
+    .tum-ui-radio-button-box {
+        display: none;
+    }
+}

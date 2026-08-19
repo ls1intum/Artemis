@@ -86,6 +86,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private static final String TEST_PREFIX = "modelingexerciseintegration";
 
+    /** Tutor/instructor not enrolled in the test course; exercises the wrong-course branches. */
+    private static final String OTHER_PREFIX = "modelingexerciseother";
+
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
@@ -149,12 +152,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        classExercise = (ModelingExercise) course.getExercises().iterator().next();
+        userUtilService.addUsers(OTHER_PREFIX, 0, 1, 0, 1); // outsider tutor, instructor — never enrolled in course
 
-        // Add users that are not in course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor2");
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
+        classExercise = (ModelingExercise) course.getExercises().iterator().next();
 
         competency = competencyUtilService.createCompetency(course);
     }
@@ -175,7 +176,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void testGetModelingExercise_tutorNotInCourse() throws Exception {
         request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN, ModelingExercise.class);
     }
@@ -203,7 +204,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void testGetModelingExerciseForCourse_tutorNotInCourse() throws Exception {
         request.get("/api/modeling/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/modeling-exercises", HttpStatus.FORBIDDEN, List.class);
     }
@@ -236,7 +237,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateModelingExercise_instructorNotInCourse() throws Exception {
         ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         request.post("/api/modeling/modeling-exercises", modelingExercise, HttpStatus.FORBIDDEN);
@@ -281,7 +282,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExerciseForExam_asInstructor() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, true);
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExerciseTestRepository.save(modelingExercise);
 
@@ -325,7 +326,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var currentCriteriaSize = modelingExercise.getGradingCriteria().size();
         var newCriteria = new GradingCriterion();
         newCriteria.setTitle("new");
-        modelingExercise.addGradingCriteria(newCriteria);
+        newCriteria.setExercise(modelingExercise);
+        modelingExercise.getGradingCriteria().add(newCriteria);
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria()).hasSize(currentCriteriaSize + 1);
@@ -379,7 +381,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExerciseTestRepository.save(modelingExercise);
 
@@ -420,7 +422,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExercise_instructorNotInCourse() throws Exception {
         request.put("/api/modeling/modeling-exercises", classExercise, HttpStatus.FORBIDDEN);
     }
@@ -449,7 +451,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteModelingExerciseWithChannel() throws Exception {
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         ModelingExercise modelingExercise = modelingExerciseTestRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         Channel exerciseChannel = conversationUtilService.addChannelToExercise(modelingExercise);
 
@@ -486,7 +488,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteModelingExercise_notInstructorInCourse() throws Exception {
         request.delete("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN);
     }
@@ -498,8 +500,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         // import form (problem statement, example solution) and keep the dates the client cleared, rather than falling
         // back to the source exercise's values.
         var now = ZonedDateTime.now();
-        Course source = courseUtilService.addEmptyCourse();
-        Course target = courseUtilService.addEmptyCourse();
+        Course source = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course target = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         ModelingExercise sourceExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(10), now.minusDays(8), now.minusDays(6), DiagramType.ClassDiagram, source);
         sourceExercise.setProblemStatement("SOURCE PROBLEM STATEMENT");
         sourceExercise.setMaxPoints(42.0);
@@ -531,8 +533,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromCourseToCourse() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
         ModelingExercise modelingExerciseToImport = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1),
                 DiagramType.ClassDiagram, course1);
@@ -597,7 +599,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private ModelingExercise createSourceExerciseWithGradingCriteria() {
         var now = ZonedDateTime.now();
-        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Course sourceCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         ModelingExercise source = modelingExerciseTestRepository
                 .save(ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, sourceCourse));
         exerciseUtilService.addGradingInstructionsToExercise(source);
@@ -609,7 +611,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
      * what the client posts from the (pre-filled) import form.
      */
     private ModelingExercise importBodyFor(ModelingExercise source) {
-        Course targetCourse = courseUtilService.addEmptyCourse();
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(targetCourse);
         ModelingExercise body = ModelingExerciseFactory.generateModelingExercise(source.getReleaseDate(), source.getDueDate(), source.getAssessmentDueDate(),
                 source.getDiagramType(), targetCourse);
@@ -621,8 +623,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseWithCompetencyLinkOfTheTargetCourse() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
         // The competency belongs to the TARGET course, so the link really is created for the imported exercise (a link to a
         // competency of another course is skipped, which is why importModelingExerciseFromCourseToCourse cannot reach this
@@ -653,8 +655,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseWithExampleSubmissionFromCourseToCourse() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
                 course1);
@@ -685,8 +687,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromCourseToExam() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
-        ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        ExerciseGroup exerciseGroup1 = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
                 course1);
         modelingExercise.setReleaseDate(null);
@@ -707,7 +709,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "TA")
     void importModelingExerciseFromCourseToExam_forbidden() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
                 course1);
@@ -722,9 +724,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromExamToCourse() throws Exception {
-        ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup1 = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
-        Course course1 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         modelingExerciseTestRepository.save(modelingExercise);
         modelingExercise.setCourse(course1);
         modelingExercise.setExerciseGroup(null);
@@ -738,7 +740,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void importModelingExerciseFromExamToCourse_forbidden() throws Exception {
         ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
-        Course course1 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         modelingExerciseTestRepository.save(modelingExercise);
         modelingExercise.setCourse(course1);
         modelingExercise.setExerciseGroup(null);
@@ -750,8 +752,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromExamToExam() throws Exception {
-        ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        ExerciseGroup exerciseGroup2 = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup1 = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
+        ExerciseGroup exerciseGroup2 = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
         modelingExerciseTestRepository.save(modelingExercise);
         modelingExercise.setExerciseGroup(exerciseGroup2);
@@ -764,7 +766,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromCourseToCourse_badRequest() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
                 course1);
         modelingExerciseTestRepository.save(modelingExercise);
@@ -778,8 +780,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
                 course1);
 
@@ -801,7 +803,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExerciseForExam() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
 
         String title = "New Exam Modeling Exercise";
@@ -825,7 +827,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
 
         request.postWithResponseBody("/api/modeling/modeling-exercises", invalidDates.applyTo(modelingExercise), ModelingExercise.class, HttpStatus.BAD_REQUEST);
@@ -834,7 +836,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExercise.setCourse(exerciseGroup.getExam().getCourse());
         request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
@@ -876,7 +878,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
         final var result = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class, pageableSearchUtilService.searchMapping(search));
@@ -898,7 +900,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     private void testSearchTermMatchesTitle(String exerciseTitle) throws Exception {
-        final Course course = courseUtilService.addEmptyCourse();
+        final Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         final var now = ZonedDateTime.now();
         ModelingExercise exercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
         exercise.setTitle(exerciseTitle);
@@ -914,8 +916,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final String titleExtension = "testInstructorGetsResultsFromOwningCoursesNotEmpty";
-        modelingExerciseUtilService.addCourseWithOneModelingExercise("ClassDiagram" + titleExtension);
-        modelingExerciseUtilService.addCourseWithOneModelingExercise("Activity Diagram" + titleExtension);
+        modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram" + titleExtension, TEST_PREFIX);
+        modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("Activity Diagram" + titleExtension, TEST_PREFIX);
         final var searchClassDiagram = pageableSearchUtilService.configureSearch("ClassDiagram" + titleExtension);
         final var resultClassDiagram = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class,
                 pageableSearchUtilService.searchMapping(searchClassDiagram));
@@ -933,7 +935,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         String searchTerm = "ClassDiagram testAdminGetsResultsFromAllCourses";
         final var search = pageableSearchUtilService.configureSearch(searchTerm);
         final var oldResult = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class, pageableSearchUtilService.searchMapping(search));
-        courseUtilService.addCourseInOtherInstructionGroupAndExercise(searchTerm);
+        courseUtilService.addCourseWithExercise(searchTerm);
         final var result = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(oldResult.getResultsOnPage().size() + 1);
     }
@@ -951,8 +953,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     private void testCourseAndExamFilters(String title) throws Exception {
-        modelingExerciseUtilService.addCourseWithOneModelingExercise(title);
-        examUtilService.addCourseExamExerciseGroupWithOneModelingExercise(title + "-Morpork");
+        modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise(title, TEST_PREFIX);
+        examUtilService.addEnrolledCourseExamExerciseGroupWithOneModelingExercise(title + "-Morpork", TEST_PREFIX);
         exerciseIntegrationTestService.testCourseAndExamFilters("/api/modeling/modeling-exercises", title);
     }
 
@@ -960,8 +962,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImport_team_modeChange() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         ModelingExercise sourceExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
                 course1);
         sourceExercise.setMode(ExerciseMode.INDIVIDUAL);
@@ -996,8 +998,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImport_individual_modeChange() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         ModelingExercise sourceExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
                 course1);
         sourceExercise.setMode(ExerciseMode.TEAM);
@@ -1078,12 +1080,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateModelingExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         classExercise = (ModelingExercise) course.getExercises().iterator().next();
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
         request.put("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate", UpdateModelingExerciseDTO.of(classExercise), HttpStatus.FORBIDDEN);
     }
 
@@ -1107,7 +1107,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
         final var baseTime = ZonedDateTime.now();
-        final Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        final Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         ModelingExercise modelingExercise = modelingExerciseTestRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         modelingExercise.setId(null);
         modelingExercise.setAssessmentDueDate(null);
@@ -1130,7 +1130,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_setValidExampleSolutionPublicationDate() throws Exception {
         final var baseTime = ZonedDateTime.now();
-        final Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        final Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         ModelingExercise modelingExercise = modelingExerciseTestRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         modelingExercise.setId(null);
         modelingExercise.setAssessmentDueDate(null);
@@ -1191,7 +1191,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateModelingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         ModelingExercise modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
 
         var config = new PlagiarismDetectionConfig();
@@ -1312,8 +1312,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportModelingExercise_setGradingInstructionForCopiedFeedback() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
                 course1);

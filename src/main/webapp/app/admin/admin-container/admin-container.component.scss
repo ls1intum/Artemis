@@ -1,0 +1,7 @@
+@import 'src/main/webapp/content/scss/artemis-mixins';
+
+.admin-layout {
+    @include shell-content-height;
+
+    padding-top: var(--spacing-divider);
+}

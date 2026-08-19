@@ -86,6 +86,7 @@ import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.detail.StudentExamForDetailDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -585,7 +586,7 @@ public class ExamService {
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
         var gradingType = gradingScale.map(GradingScale::getGradeType).orElse(null);
         var achievedPointsPerExercise = calculatePointsStudentAchievedInExercises(studentExamGrades, exam.getCourse(), plagiarismMapping);
-        return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, studentExam, studentResult, achievedPointsPerExercise);
+        return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, StudentExamForDetailDTO.of(studentExam), studentResult, achievedPointsPerExercise);
     }
 
     @Nullable
@@ -659,7 +660,7 @@ public class ExamService {
     private Map<Long, BonusSourceResultDTO> calculateExamScoresAsBonusSource(Long examId, Collection<Long> studentIds) {
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
             Long studentId = studentIds.iterator().next();
-            User targetUser = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(studentId);
+            User targetUser = userRepository.findByIdWithAuthoritiesElseThrow(studentId);
             StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(targetUser.getId(), examId, IS_TEST_RUN)
                     .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + studentId));
 
@@ -751,8 +752,8 @@ public class ExamService {
             if (exercise instanceof QuizExercise) {
                 // reload and replace the quiz exercise
                 var quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
-                // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
-                if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
+                // filter quiz solutions unless they may be revealed: see StudentExam#shouldRevealQuizSolutions
+                if (!studentExam.shouldRevealQuizSolutions()) {
                     quizExercise.filterForStudentsDuringQuiz();
                 }
                 studentExam.getExercises().set(i, quizExercise);
@@ -1399,8 +1400,7 @@ public class ExamService {
         final long numberOfComplaintResponses = complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExerciseIds(userRepository.getUserWithGroupsAndAuthorities().getId(),
-                exerciseIds);
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExerciseIds(userRepository.getUserWithAuthorities().getId(), exerciseIds);
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseIds(exerciseIds);
@@ -1477,10 +1477,10 @@ public class ExamService {
         }
         else {
             if (withExercises) {
-                examPage = examRepository.queryNonEmptyBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
+                examPage = examRepository.queryNonEmptyBySearchTermInCoursesWhereInstructor(searchTerm, user.getId(), pageable);
             }
             else {
-                examPage = examRepository.queryBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
+                examPage = examRepository.queryBySearchTermInCoursesWhereInstructor(searchTerm, user.getId(), pageable);
             }
         }
         return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
@@ -1513,7 +1513,7 @@ public class ExamService {
         var now = ZonedDateTime.now();
         var fromDate = now.minusDays(EXAM_ACTIVE_DAYS);
         var toDate = now.plusDays(EXAM_ACTIVE_DAYS);
-        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getGroups(), pageable, fromDate, now, toDate);
+        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getId(), pageable, fromDate, now, toDate);
     }
 
     /**

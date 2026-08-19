@@ -27,6 +27,7 @@ import { IrisChatContextService } from 'app/iris/overview/services/iris-chat-con
 import { parseJson } from 'app/foundation/util/json.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 export type { SessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -143,6 +144,13 @@ export class IrisChatService implements OnDestroy {
     hasJustAcceptedLLMUsage = false;
 
     /**
+     * The AI-experience decision as last confirmed by the server, captured before an optimistic update so a failed
+     * update can be rolled back. Set while a consent request is in flight and cleared once it settles, so a rapid
+     * second choice does not overwrite it with the first choice's unpersisted value.
+     */
+    private lastConfirmedDecision?: { decision?: LLMSelectionDecision; timestamp?: dayjs.Dayjs };
+
+    /**
      * This property should only be used internally in {@link getCourseId()} and {@link setCourseId()}.
      *
      * @deprecated do not use this property directly, use {@link getCourseId()} instead.
@@ -215,6 +223,9 @@ export class IrisChatService implements OnDestroy {
         // Plain fields.
         this.latestStartedSession = undefined;
         this.hasJustAcceptedLLMUsage = false;
+        // The snapshot belongs to the user whose consent request was just cancelled above. Keeping it would
+        // make the next user's rollback restore the previous user's decision into their identity cache.
+        this.lastConfirmedDecision = undefined;
         this.rateLimitInfo = undefined;
     }
 
@@ -281,10 +292,7 @@ export class IrisChatService implements OnDestroy {
             this.hasJustAcceptedLLMUsage
         ) {
             this.sessionLoadingSubscription?.unsubscribe();
-            this.sessionLoadingSubscription = this.getCurrentSessionOrCreate().subscribe({
-                ...this.handleNewSession(),
-                complete: () => this.loadChatSessions(),
-            });
+            this.sessionLoadingSubscription = this.getCurrentSessionOrCreate().subscribe(cloneWith(this.handleNewSession(), { complete: () => this.loadChatSessions() }));
         }
     }
 
@@ -301,6 +309,9 @@ export class IrisChatService implements OnDestroy {
      */
     public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}, context?: IrisMessageContextDTO[]): Observable<undefined> {
         if (!this.sessionId) {
+            // Surface this instead of failing silently: onSend() clears the textarea regardless of the
+            // outcome, so a swallowed error drops the user's message without telling them anything.
+            this.error.next(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
             return throwError(() => new Error('Not initialized'));
         }
 
@@ -325,7 +336,7 @@ export class IrisChatService implements OnDestroy {
                         .getValue()
                         .map((session) =>
                             session.id === requestSessionId
-                                ? { ...session, mode: pendingContext.mode, entityId: pendingContext.entityId, entityName: pendingContext.entityName ?? session.entityName }
+                                ? cloneWith(session, { mode: pendingContext.mode, entityId: pendingContext.entityId, entityName: pendingContext.entityName ?? session.entityName })
                                 : session,
                         );
                     this.chatSessions.next(updatedSessions);
@@ -448,16 +459,34 @@ export class IrisChatService implements OnDestroy {
     }
 
     public updateLLMUsageConsent(accepted: LLMSelectionDecision): void {
+        // Publish the decision to the cached user identity right away, before the request resolves: the chatbot
+        // gates the "Choose Your AI Experience" modal on `userIdentity().selectedLLMUsage`, so a chat that is
+        // (re-)opened while the request is still in flight would otherwise read the stale value and ask the user
+        // to choose again. Reverted in the error handlers below if persisting the decision fails.
+        //
+        // The snapshot is only taken when nothing is in flight. A second choice made while the first request is
+        // still running would otherwise capture that first, unpersisted decision as its "previous" value and
+        // roll back to something the server may never have stored.
+        const identity = this.accountService.userIdentity();
+        this.lastConfirmedDecision ??= { decision: identity?.selectedLLMUsage, timestamp: identity?.selectedLLMUsageTimestamp };
+        const snapshot = this.lastConfirmedDecision;
+        const revertDecision = () => {
+            this.lastConfirmedDecision = undefined;
+            this.accountService.restoreUserLLMSelectionDecision(snapshot.decision, snapshot.timestamp);
+        };
+        this.accountService.setUserLLMSelectionDecision(accepted);
+
         if (accepted === LLMSelectionDecision.NO_AI) {
             this.hasJustAcceptedLLMUsage = false;
             this.acceptSubscription?.unsubscribe();
             this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
                 next: () => {
-                    this.accountService.setUserLLMSelectionDecision(accepted);
+                    this.lastConfirmedDecision = undefined;
                     this.llmOptedOutSubject.next();
                     this.close();
                 },
                 error: () => {
+                    revertDecision();
                     this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
                     this.close();
                 },
@@ -467,11 +496,18 @@ export class IrisChatService implements OnDestroy {
         this.acceptSubscription?.unsubscribe();
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
             next: () => {
+                this.lastConfirmedDecision = undefined;
                 this.hasJustAcceptedLLMUsage = true;
-                this.accountService.setUserLLMSelectionDecision(accepted);
-                this.closeAndStart();
+                // Only start the session that could not be created before the user opted in (the server rejects
+                // session creation without consent). If one is already established — the chat was reopened right
+                // after the choice and start() succeeded on its own — leave it alone: closing it here would drop
+                // the websocket subscription and discard the response to a message the user already sent.
+                if (!this.sessionId) {
+                    this.closeAndStart();
+                }
             },
             error: () => {
+                revertDecision();
                 this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
             },
         });
@@ -600,11 +636,11 @@ export class IrisChatService implements OnDestroy {
         }
         if (payload.sessionTitle && this.sessionId) {
             if (this.latestStartedSession?.id === this.sessionId) {
-                this.latestStartedSession = { ...this.latestStartedSession, title: payload.sessionTitle };
+                this.latestStartedSession = cloneWith(this.latestStartedSession, { title: payload.sessionTitle });
             }
 
             // Update the observable list immutably so OnPush change detection picks up the new title immediately.
-            const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? { ...session, title: payload.sessionTitle } : session));
+            const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? cloneWith(session, { title: payload.sessionTitle }) : session));
             this.chatSessions.next(updatedSessions);
         }
         if (payload.citationInfo?.length) {
@@ -772,7 +808,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     private mapMessageDTO(dto: IrisMessageResponseDTO): IrisMessage {
-        return Object.assign({}, dto, {
+        return cloneWith(dto, {
             sentAt: dto.sentAt ? dayjs(dto.sentAt) : undefined,
         }) as IrisMessage;
     }
@@ -913,10 +949,7 @@ export class IrisChatService implements OnDestroy {
         if (!isFreshCourseSession && courseId) {
             this.close();
             this.sessionLoadingSubscription?.unsubscribe();
-            this.sessionLoadingSubscription = this.createCourseSession().subscribe({
-                ...this.handleNewSession(),
-                complete: () => this.loadChatSessions(),
-            });
+            this.sessionLoadingSubscription = this.createCourseSession().subscribe(cloneWith(this.handleNewSession(), { complete: () => this.loadChatSessions() }));
         }
     }
 

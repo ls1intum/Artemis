@@ -3,6 +3,68 @@
 # and into this file. Settings here govern the install behaviour in this
 # project root.
 
+packages:
+  - 'packages/*'
+
+catalog:
+  '@analogjs/vite-plugin-angular': 2.7.0
+  '@analogjs/vitest-angular': 2.7.0
+  '@arethetypeswrong/cli': 0.18.5
+  '@angular-devkit/architect': 0.2201.4
+  '@angular-devkit/core': 22.1.4
+  '@angular/build': 22.1.4
+  '@angular/cdk': 22.1.2
+  '@angular/cli': 22.1.4
+  '@angular/common': 22.1.2
+  '@angular/compiler': 22.1.2
+  '@angular/compiler-cli': 22.1.2
+  '@angular/core': 22.1.2
+  '@angular/forms': 22.1.2
+  '@angular/localize': 22.1.2
+  '@angular/platform-browser': 22.1.2
+  '@fortawesome/angular-fontawesome': 5.1.0
+  '@fortawesome/fontawesome-svg-core': 7.3.1
+  '@fortawesome/free-solid-svg-icons': 7.3.1
+  '@compodoc/compodoc': 2.0.0
+  '@playwright/test': 1.62.1
+  '@storybook/addon-a11y': 10.5.8
+  '@storybook/addon-docs': 10.5.8
+  '@storybook/addon-themes': 10.5.8
+  '@storybook/addon-vitest': 10.5.8
+  '@storybook/angular-vite': 10.5.8
+  '@tailwindcss/postcss': 4.3.3
+  '@types/node': 24.13.3
+  '@types/react': 19.2.18
+  '@vitest/browser': 4.1.10
+  '@vitest/browser-playwright': 4.1.10
+  '@vitest/coverage-istanbul': 4.1.10
+  '@vitest/coverage-v8': 4.1.10
+  chokidar: 5.0.0
+  concurrently: 10.0.4
+  cross-env: 10.1.0
+  dayjs: 1.11.21
+  eslint: 10.8.1
+  eslint-plugin-storybook: 10.5.8
+  jsdom: 30.0.1
+  lodash-es: 4.18.1
+  ng-packagr: 22.1.1
+  postcss: 8.5.26
+  publint: 0.3.23
+  playwright: 1.62.1
+  react: 19.2.8
+  rxjs: 7.8.2
+  sass: 1.102.0
+  semver: 7.8.5
+  storybook: 10.5.8
+  stylelint: 17.14.1
+  tailwindcss: 4.3.3
+  tslib: 2.8.1
+  typescript: 6.0.3
+  vite: 8.1.5
+  vitest: 4.1.10
+  yaml: 2.9.0
+  zone.js: 0.16.2
+
 # No hoist shim: rely on pnpm's default isolated layout. Every package the
 # project imports is declared as a direct dependency in package.json; patches
 # go through pnpm.patchedDependencies (which works on the .pnpm symlink store
@@ -18,31 +80,6 @@ preferFrozenLockfile: true
 
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
-
-# pnpm 11 enforces a default `minimumReleaseAge` (24h): a frozen install rejects
-# any lockfile entry published within the last day as a supply-chain safeguard.
-# When a freshly-published (<24h) version is pinned deliberately, list it here so the
-# frozen install passes, then remove the entry once the version has aged past the cutoff
-# (by then the gate passes on its own). Entries for versions that have already aged out
-# have been removed — keep this list minimal.
-minimumReleaseAgeExclude:
-  # katex 0.18.1 was published 2026-07-19 (<24h before this bump), so the frozen
-  # supply-chain gate rejects it until it ages past the 24h cutoff (~2026-07-20T08:40).
-  # Remove this entry once 0.18.1 is older than the cutoff (the gate then passes on its own).
-  - katex
-  - '@analogjs/vite-plugin-angular@2.6.4'
-  - '@analogjs/vitest-angular@2.6.4'
-  - '@angular-devkit/architect@0.2200.8'
-  - '@angular-devkit/build-angular@22.0.8'
-  - '@angular-devkit/build-webpack@0.2200.8'
-  - '@angular-devkit/core@22.0.8'
-  - '@angular-devkit/schematics@22.0.8'
-  - '@angular/build@22.0.8'
-  - '@angular/cli@22.0.8'
-  - '@ngtools/webpack@22.0.8'
-  - '@schematics/angular@22.0.8'
-  - lint-staged@17.2.0
-  - sass@1.101.7
 
 # Tell pnpm that Angular 22 is an acceptable peer for packages whose published
 # peerDependencies range still lists only older majors ("18.x || 19.x || 20.x || 21.x").
@@ -68,6 +105,17 @@ peerDependencyRules:
 # the legacy `pnpm.overrides` block in package.json. We pin a handful of
 # transitive packages to CVE-patched versions and force the current Angular major
 # across the ng-mocks subtree (its peer range trails the Angular release train).
+#
+# Do NOT add a `vite` override here, and do not reintroduce one when
+# `supporting_scripts/check_client_override_version_updates.sh` reports a newer release.
+# `@angular/build` depends on one exact vite version and configures the dev server's
+# dependency pre-bundling in a format only that version understands (22.1 moved the plugin
+# that runs the Angular linker to `optimizeDeps.rolldownOptions`, which Vite 7 silently
+# ignores). An override that resolves to anything else leaves pre-bundled Angular libraries
+# unlinked, and `pnpm start` serves a blank page with "The injectable '_PlatformLocation'
+# needs to be compiled using the JIT compiler" — while the production build stays green,
+# because it never uses Vite. Without an override, @angular/build's own exact pin governs
+# and the mismatch cannot happen. `pnpm run check:vite-override` fails the build if it does.
 overrides:
   'ng-mocks>@angular/common': '^22.0.0'
   'ng-mocks>@angular/core': '^22.0.0'
@@ -79,66 +127,71 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires ^22.0.0). Without this pin it resolves to an older 21.x
   # straggler that violates that peer range; force it to match the @angular/core version.
-  '@angular/localize': '22.0.6'
+  '@angular/localize': '22.1.2'
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
-  '@babel/runtime': '7.29.2'
-  '@babel/plugin-transform-modules-systemjs': '7.29.4'
+  '@babel/runtime': '7.29.7'
+  '@babel/plugin-transform-modules-systemjs': '7.29.7'
   '@primeuix/styled': '0.7.4'
   '@primeuix/utils': '0.7.2'
   '@sinonjs/fake-timers': '15.4.0'
   ajv: '8.20.0'
-  brace-expansion: '5.0.8'
+  brace-expansion: '5.0.9'
   braces: '3.0.3'
   cookie: '1.1.1'
   debug: '4.4.3'
   diff: '9.0.0'
-  dompurify: '3.4.12'
-  esbuild: '0.28.1'
+  dompurify: '3.4.13'
+  esbuild: '0.28.2'
   express: '5.2.1'
   # Kept on the 3.x line (ajv/fast-json-stringify require ^3).
-  fast-uri: '3.1.4'
-  globals: '17.6.0'
-  # Only reached dev-side via @modelcontextprotocol/sdk -> @angular/cli (never run by Artemis).
-  hono: '4.12.31'
-  '@hono/node-server': '2.0.11'
+  fast-uri: '3.1.5'
+  globals: '17.11.0'
   http-proxy-middleware: '3.0.7'
   immutable: '5.1.9'
-  ip-address: '10.2.0'
+  ip-address: '10.5.0'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
-  js-yaml: '4.3.0'
-  jsdom: '29.1.1'
-  katex: '0.18.1'
-  minimatch: '10.2.5'
-  piscina: '5.2.0'
-  postcss: '8.5.23'
+  js-yaml: '4.3.1'
+  jsdom: '30.0.1'
+  katex: '0.18.4'
+  minimatch: '10.2.6'
+  # Reached dev-side via postcss, whose range allows the patched 3.3.18
+  # (GHSA: custom generators can loop indefinitely when size is zero).
+  nanoid: '3.3.18'
+  piscina: '5.3.0'
+  postcss: '8.5.26'
   punycode: '2.3.1'
   # @tumaet/apollon's react/react-dom peer requires react 19. Artemis embeds
   # Apollon but has no direct React code, so force the whole React subtree to 19
   # (matches the version used in the documentation/ project).
-  react: '19.2.7'
-  react-dom: '19.2.7'
-  semver: '7.8.0'
-  serialize-javascript: '7.0.5'
+  react: '19.2.8'
+  react-dom: '19.2.8'
+  semver: '7.8.5'
+  serialize-javascript: '7.1.0'
   shell-quote: '1.10.0'
-  tar: '7.5.21'
-  tmp: '0.2.5'
-  tough-cookie: '6.0.1'
-  undici: '7.28.0'
-  uuid: '14.0.0'
-  vite: '7.3.5'
-  webpack: '5.106.2'
+  tar: '7.5.22'
+  tmp: '0.2.7'
+  tough-cookie: '6.0.2'
+  undici: '7.29.0'
+  uuid: '14.0.1'
+  # Vite 8 leaves decorators in external spec helpers untransformed. Keep the Vitest toolchain on
+  # Vite 7 until @analogjs/vite-plugin-angular handles those helpers; Angular and Storybook use Vite 8.
+  'vitest>vite': '7.3.6'
+  '@vitest/mocker>vite': '7.3.6'
+  '@analogjs/vite-plugin-angular>vite': '7.3.6'
+  'vite-tsconfig-paths>vite': '7.3.6'
+  webpack: '5.109.2'
   webpack-dev-middleware: '7.4.5'
   # Kept on the 5.x line (Angular build tooling requires ^5; 6.x is an API break).
   webpack-dev-server: '5.2.6'
   word-wrap: '1.2.5'
-  ws: '8.21.0'
+  ws: '8.21.3'
   yargs-parser: '22.0.0'
 
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-  'eslint@10.7.0': 'patches/eslint+10.7.0.patch'
+  'eslint@10.8.1': 'patches/eslint+10.8.1.patch'
   y-monaco@0.1.6: patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
@@ -164,7 +217,7 @@ allowBuilds:
 # requires @sentry/node >= 10; lighthouse (latest 13.4.0) still pins @sentry/node@^9,
 # so there is no in-range upgrade. Revisit when lighthouse moves to @sentry/node 10.
 # (The server-side Java equivalent, GHSA-rcgg-9c38-7xpx, is already handled via
-# opentelemetry_version=1.62.0 in gradle.properties.)
+# opentelemetry_version=1.65.0 in gradle.properties.)
 auditConfig:
   ignoreGhsas:
     - 'GHSA-8988-4f7v-96qf'

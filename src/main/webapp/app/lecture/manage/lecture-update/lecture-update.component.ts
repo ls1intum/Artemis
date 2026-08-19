@@ -12,7 +12,6 @@ import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.ac
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal, onError } from 'app/foundation/util/global.utils';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { LectureTitleChannelNameComponent } from '../lecture-title-channel-name/lecture-title-channel-name.component';
@@ -32,7 +31,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
-import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export enum LectureCreationMode {
     SINGLE = 'single',
@@ -106,7 +106,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     fileInputTouched = false;
     isNewlyCreatedExercise = false;
     readonly isChangeMadeToTitleOrPeriodSection = signal(false);
-    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: true });
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: true });
     shouldDisplayDismissWarning = true;
     areSectionsValid = computed(() => this.computeAreSectionsValid());
     createLectureOptions = computed(() => this.computeCreateLectureOptions());
@@ -141,6 +141,11 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
             }
         });
 
+        // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as an effect(): it writes the
+        // isTutorialLecture toggle into the (non-signal) lecture entity in place, a side effect that a computed()
+        // cannot perform, so the value is present on the object that save() later sends, and refreshes the derived
+        // "changes made" flag. (The other effects above track model signals and scroll the DOM, so they are genuine
+        // side effects too.)
         effect(() => {
             this.lecture().isTutorialLecture = this.isTutorialLecture();
             this.updateIsChangesMadeToTitleOrPeriodSection();
@@ -169,7 +174,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         this.courseId.set(Number(paramMap.get('courseId')));
 
         this.isEditMode.set(!this.router.url.endsWith('/new'));
-        this.lectureOnInit = cloneDeep(this.lecture());
+        this.lectureOnInit = deepClone(this.lecture());
 
         const existingLectures = (this.router.currentNavigation()?.extras.state?.['existingLectures'] ?? []) as Lecture[];
         this.existingLectures.set(existingLectures);
@@ -307,7 +312,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
             // after create we stay on the edit page, as now lecture units are available (we need the lecture id to save them)
             this.isNewlyCreatedExercise = true;
             this.isEditMode.set(true);
-            this.lectureOnInit = cloneDeep(lecture);
+            this.lectureOnInit = deepClone(lecture);
             this.lecture.set(lecture);
             this.updateIsChangesMadeToTitleOrPeriodSection();
 

@@ -11,6 +11,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -23,7 +25,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * A SubmittedAnswer.
  */
-// No @Cache here on purpose: parent of MC/DnD/SA submitted answers, inserted on every live save/submit. See #12574 / #12584.
 @Entity
 @Table(name = "submitted_answer")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -57,6 +58,15 @@ public abstract class SubmittedAnswer extends DomainObject {
     @JsonIgnore
     private QuizSubmission submission;
 
+    // The student's submitted selection, stored as JSON instead of separate relational child tables/join tables (see SubmittedAnswerSelection). All three submitted-answer types
+    // (drag-and-drop, multiple-choice, short-answer) use it.
+    // @JsonIgnore because this is an internal storage representation: subclasses expose the selection through their existing getters (e.g. getMappings()),
+    // preserving the REST/websocket wire format.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "selection")
+    @JsonIgnore
+    private SubmittedAnswerSelection selection;
+
     public Double getScoreInPoints() {
         return scoreInPoints;
     }
@@ -79,6 +89,14 @@ public abstract class SubmittedAnswer extends DomainObject {
 
     public void setSubmission(QuizSubmission quizSubmission) {
         this.submission = quizSubmission;
+    }
+
+    protected SubmittedAnswerSelection getSelection() {
+        return selection;
+    }
+
+    protected void setSelection(SubmittedAnswerSelection selection) {
+        this.selection = selection;
     }
 
     /**

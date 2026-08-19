@@ -5,6 +5,7 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { convertToHtmlLinebreaks, escapeString } from 'app/foundation/util/text.utils';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { GradingInstructionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -190,17 +191,32 @@ export class Feedback implements BaseEntity {
      * Example output in this case: 13
      */
     public static getReferenceLine(feedback: Feedback): number | undefined {
+        return Feedback.getReferenceLineRange(feedback)?.start;
+    }
+
+    /**
+     * Get the referenced line range for referenced programming feedbacks, or undefined.
+     * Typical reference format for programming feedback: `file:src/com/example/package/MyClass.java_line:13-15`.
+     * Example output in this case: `{ start: 13, end: 15 }`
+     */
+    public static getReferenceLineRange(feedback: Feedback): { start: number; end: number } | undefined {
         if (!feedback.reference?.startsWith(this.PROGRAMMING_REFERENCE_PREFIX)) {
             // Find "file:" prefix
             // No programming feedback
             return undefined;
         }
         const indexOfLine = feedback.reference.lastIndexOf(this.PROGRAMMING_REFERENCE_LINE_SEPERATOR); // Split before "_line:"
-        const line = parseInt(feedback.reference.substring(indexOfLine + this.PROGRAMMING_REFERENCE_LINE_SEPERATOR.length));
-        if (isNaN(line)) {
+        const filePath = feedback.reference.substring(this.PROGRAMMING_REFERENCE_PREFIX.length, indexOfLine);
+        if (indexOfLine <= this.PROGRAMMING_REFERENCE_PREFIX.length || !filePath.trim()) {
             return undefined;
         }
-        return line;
+        const lineRange = feedback.reference.substring(indexOfLine + this.PROGRAMMING_REFERENCE_LINE_SEPERATOR.length).match(/^(\d+)(?:-(\d+))?$/);
+        const start = Number(lineRange?.[1]);
+        const end = Number(lineRange?.[2] ?? lineRange?.[1]);
+        if (!lineRange || start <= 0 || end <= 0 || end < start) {
+            return undefined;
+        }
+        return { start, end };
     }
 
     /**
@@ -270,7 +286,7 @@ export class Feedback implements BaseEntity {
     }
 
     public static fromServerResponse(response: Feedback): Feedback {
-        return Object.assign(new Feedback(), response);
+        return hydrate(new Feedback(), response);
     }
 
     public static updateFeedbackTypeOnChange(feedback: Feedback) {

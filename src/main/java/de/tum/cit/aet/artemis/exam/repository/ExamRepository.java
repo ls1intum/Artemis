@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -70,12 +71,38 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     /**
      * Find all exams for a given course that are already visible to the user (either registered, at least tutor or the exam is a test exam)
      *
-     * @param courseId   the course for which the exams should be retrieved
-     * @param userId     the id of the user requesting the exams
-     * @param groupNames the groups of the user requesting the exams
-     * @param now        the current date, typically ZonedDateTime.now()
+     * @param courseId the course for which the exams should be retrieved
+     * @param userId   the id of the user requesting the exams
+     * @param now      the current date, typically ZonedDateTime.now()
      * @return a set of all visible exams for the user in the provided courses
      */
+    /**
+     * Loads the exams of a course visible to the user, projected to what the course overview sidebar renders.
+     * <p>
+     * Deliberately a projection rather than the entity: everything an exam contains — exercise groups, exercises,
+     * registered users, grading — belongs to the exam itself and is loaded when a student opens it, not when the
+     * sidebar lists it. Mirrors the visibility predicate of {@link #findByCourseIdForUser}.
+     *
+     * @param courseId the course whose exams should be loaded
+     * @param userId   the id of the user requesting them
+     * @param now      the current date, typically ZonedDateTime.now()
+     * @return the exams visible to the user, projected for the sidebar
+     */
+    @Query("""
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO(
+                e.id, e.title, e.moduleNumber, e.visibleDate, e.startDate, e.endDate, e.workingTime, e.examMaxPoints, e.testExam
+            )
+            FROM Exam e
+            WHERE e.course.id = :courseId
+                AND e.visibleDate <= :now
+                AND (
+                    e.testExam = TRUE
+                    OR EXISTS (SELECT 1 FROM ExamUser eu WHERE eu.exam = e AND eu.user.id = :userId)
+                    OR EXISTS (SELECT 1 FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
+                )
+            """)
+    Set<ExamForOverviewDTO> findAllForOverviewByCourseIdForUser(@Param("courseId") long courseId, @Param("userId") long userId, @Param("now") ZonedDateTime now);
+
     @Query("""
             SELECT DISTINCT e
             FROM Exam e
@@ -85,18 +112,17 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 AND e.visibleDate <= :now
                 AND (
                     eu.user.id = :userId
-                    OR c.teachingAssistantGroupName IN :groupNames
-                    OR c.editorGroupName IN :groupNames
-                    OR c.instructorGroupName IN :groupNames
+                    OR EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = c.id AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
                     OR e.testExam = TRUE
                 )
             """)
-    Set<Exam> findByCourseIdForUser(@Param("courseId") Long courseId, @Param("userId") long userId, @Param("groupNames") Set<String> groupNames, @Param("now") ZonedDateTime now);
+    Set<Exam> findByCourseIdForUser(@Param("courseId") Long courseId, @Param("userId") long userId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT exam
             FROM Exam exam
-            WHERE exam.course.testCourse = FALSE
+                JOIN FETCH exam.course course
+            WHERE course.testCourse = FALSE
                 AND exam.endDate >= :date
             ORDER BY exam.startDate ASC
             """)
@@ -111,7 +137,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * <li><b>Instructors</b> may see exams whose {@code visibleDate} is between
      * {@code fromDate} (typically now - 7 days) and {@code toDate} (typically now + 7 days).</li>
      * <li><b>Editors</b> and <b>teaching assistants</b> may only see exams whose {@code visibleDate}
-     * lies between {@code now} (0 days offset) and {@code toDate} (typically now + 7 days).</li>
+     * lies between {@code fromDate} and {@code nowDate} (typically the current timestamp).</li>
      * </ul>
      *
      * <p>
@@ -119,10 +145,10 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * temporal arithmetic is performed in Java, and the query uses only portable JPQL.
      * </p>
      *
-     * @param groups   all authorization groups the user belongs to
+     * @param userId   id of the user
      * @param pageable paging specification
      * @param fromDate lower bound for instructors (usually {@code now.minusDays(7)})
-     * @param nowDate  lower bound for editors and tutors (usually the current timestamp)
+     * @param nowDate  upper bound for editors and tutors (usually the current timestamp)
      * @param toDate   upper bound for all roles (usually {@code now.plusDays(7)})
      * @return a paginated list of exams visible to the user according to their role
      */
@@ -132,14 +158,14 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             )
             FROM Exam e
             WHERE :fromDate <= e.visibleDate
-                AND
-                    ((e.course.instructorGroupName IN :groups
+                AND (
+                    (EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
                      AND e.visibleDate <= :toDate)
                 OR
-                    ((e.course.editorGroupName IN :groups OR e.course.teachingAssistantGroupName IN :groups)
+                    (EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = e.course.id AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT))
                      AND e.visibleDate <= :nowDate))
             """)
-    Page<ActiveExamDTO> findAllActiveExamsInCoursesWhereAtLeastTutor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
+    Page<ActiveExamDTO> findAllActiveExamsInCoursesWhereAtLeastTutor(@Param("userId") long userId, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
             @Param("nowDate") ZonedDateTime nowDate, @Param("toDate") ZonedDateTime toDate);
 
     /**
@@ -247,10 +273,10 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             FROM Exam e
                 LEFT JOIN FETCH e.exerciseGroups eg
                 LEFT JOIN FETCH eg.exercises ex
-            WHERE e.course.instructorGroupName IN :userGroups
-                AND TYPE(ex) = QuizExercise
+            WHERE TYPE(ex) = QuizExercise
+                AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
             """)
-    List<Exam> getExamsWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userGroups") List<String> userGroups);
+    List<Exam> getExamsWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userId") long userId);
 
     @Query("""
             SELECT DISTINCT e
@@ -265,34 +291,34 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * Query which fetches all the exams for which the user is instructor in the course and matching the search criteria.
      *
      * @param searchTerm search term
-     * @param groups     user groups
+     * @param userId     id of the user
      * @param pageable   Pageable
      * @return Page with search results
      */
     @Query("""
             SELECT e
             FROM Exam e
-            WHERE e.course.instructorGroupName IN :groups
+            WHERE EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
                 AND (
                     CONCAT(e.id, '') = :searchTerm
                     OR e.title LIKE %:searchTerm%
                     OR e.course.title LIKE %:searchTerm%
                 )
             """)
-    Page<Exam> queryBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+    Page<Exam> queryBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("userId") long userId, Pageable pageable);
 
     /**
      * Query which fetches all the exams with at least one exercise group for which the user is instructor in the course and matching the search criteria.
      *
      * @param searchTerm search term
-     * @param groups     user groups
+     * @param userId     id of the user
      * @param pageable   Pageable
      * @return Page with search results
      */
     @Query("""
             SELECT e
             FROM Exam e
-            WHERE e.course.instructorGroupName IN :groups
+            WHERE EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
                 AND e.exerciseGroups IS NOT EMPTY
                 AND (
                     CONCAT(e.id, '') = :searchTerm
@@ -300,7 +326,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                     OR e.course.title LIKE %:searchTerm%
                 )
             """)
-    Page<Exam> queryNonEmptyBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+    Page<Exam> queryNonEmptyBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("userId") long userId, Pageable pageable);
 
     /**
      * Query which fetches all the exams for an admin and matching the search criteria.
