@@ -16,6 +16,14 @@
             "resources": {
                 "files": ["/content/**", "/*.(eot|svg|cur|jpg|png|webp|gif|otf|ttf|woff|woff2|ani)", "/*.js"]
             }
+        },
+        {
+            "name": "embedpdf",
+            "installMode": "lazy",
+            "updateMode": "prefetch",
+            "resources": {
+                "files": ["/assets/embedpdf/**"]
+            }
         }
     ],
     "navigationUrls": ["!/**/*.*", "!/api/**", "!/login/**", "!/management/**", "!/public/**", "!/saml2/**", "!/v2/**", "!/websocket/**"]

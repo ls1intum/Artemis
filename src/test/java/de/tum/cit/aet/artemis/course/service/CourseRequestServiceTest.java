@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRequestRepository;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 @ExtendWith(MockitoExtension.class)
@@ -72,7 +73,7 @@ class CourseRequestServiceTest {
     private ArgumentCaptor<CourseRequest> courseRequestCaptor;
 
     @Captor
-    private ArgumentCaptor<User> userCaptor;
+    private ArgumentCaptor<MailRecipientDTO> mailRecipientCaptor;
 
     @BeforeEach
     void setUp() {
@@ -96,29 +97,20 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
-        doAnswer(invocation -> {
-            Course course = invocation.getArgument(0);
-            course.setStudentGroupName(course.getDefaultStudentGroupName());
-            course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
-            course.setEditorGroupName(course.getDefaultEditorGroupName());
-            course.setInstructorGroupName(course.getDefaultInstructorGroupName());
-            return null;
-        }).when(courseAccessService).setDefaultGroupsIfNotSet(any(Course.class));
         when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setId(22L);
             return course;
         });
-        when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(7L)).thenReturn(requester);
+        when(userRepository.findByIdWithAuthoritiesElseThrow(7L)).thenReturn(requester);
         when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(resourceLoaderService.getResource(any())).thenReturn(new ByteArrayResource("code of conduct".getBytes(StandardCharsets.UTF_8)));
 
         CourseRequestDTO result = courseRequestService.acceptRequest(1L);
 
-        verify(courseAccessService).setDefaultGroupsIfNotSet(courseCaptor.capture());
-        verify(channelService).createDefaultChannels(courseCaptor.getValue());
-        verify(courseAccessService).addUserToGroup(eq(requester), eq(courseCaptor.getValue().getInstructorGroupName()), eq(courseCaptor.getValue()));
-        verify(mailSendingService).buildAndSendAsync(eq(requester), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
+        verify(channelService).createDefaultChannels(courseCaptor.capture());
+        verify(courseAccessService).addUserToCourse(eq(requester), eq(courseCaptor.getValue()), eq(CourseRole.INSTRUCTOR));
+        verify(mailSendingService).buildAndSendAsync(eq(MailRecipientDTO.from(requester)), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
         verify(courseRequestRepository).save(courseRequestCaptor.capture());
 
         assertThat(result.status()).isEqualTo(CourseRequestStatus.ACCEPTED);
@@ -140,20 +132,12 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
-        doAnswer(invocation -> {
-            Course course = invocation.getArgument(0);
-            course.setStudentGroupName(course.getDefaultStudentGroupName());
-            course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
-            course.setEditorGroupName(course.getDefaultEditorGroupName());
-            course.setInstructorGroupName(course.getDefaultInstructorGroupName());
-            return null;
-        }).when(courseAccessService).setDefaultGroupsIfNotSet(any(Course.class));
         when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setId(22L);
             return course;
         });
-        when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(7L)).thenReturn(requester);
+        when(userRepository.findByIdWithAuthoritiesElseThrow(7L)).thenReturn(requester);
         when(resourceLoaderService.getResource(any())).thenReturn(new ByteArrayResource("code of conduct".getBytes(StandardCharsets.UTF_8)));
 
         // Simulate merge() behavior: return a new entity where the requester association is null
@@ -172,9 +156,10 @@ class CourseRequestServiceTest {
 
         courseRequestService.acceptRequest(1L);
 
-        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
-        assertThat(userCaptor.getValue()).isSameAs(requester);
-        assertThat(userCaptor.getValue().getEmail()).isEqualTo("instructor@uni.test");
+        verify(mailSendingService).buildAndSendAsync(mailRecipientCaptor.capture(), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
+        // The recipient DTO must be built from the original eagerly-loaded requester (not the merged proxy whose requester is null);
+        // asserting full equality verifies every field is extracted, not just the email.
+        assertThat(mailRecipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(requester));
     }
 
     /**
@@ -202,9 +187,8 @@ class CourseRequestServiceTest {
 
         courseRequestService.rejectRequest(1L, "Not enough justification");
 
-        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), anyString(), eq("mail/courseRequestRejectedEmail"), anyMap());
-        assertThat(userCaptor.getValue()).isSameAs(requester);
-        assertThat(userCaptor.getValue().getEmail()).isEqualTo("instructor@uni.test");
+        verify(mailSendingService).buildAndSendAsync(mailRecipientCaptor.capture(), anyString(), eq("mail/courseRequestRejectedEmail"), anyMap());
+        assertThat(mailRecipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(requester));
     }
 
     /**
@@ -216,7 +200,7 @@ class CourseRequestServiceTest {
     @Test
     void createCourseRequestShouldSendReceivedEmailWithCorrectRequester() {
         User requester = createRequester();
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(requester);
+        when(userRepository.getUserWithAuthorities()).thenReturn(requester);
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
 
@@ -250,12 +234,12 @@ class CourseRequestServiceTest {
         courseRequestService.createCourseRequest(createDTO);
 
         // Verify received email was sent with the original requester, not from the saved entity
-        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), eq("email.courseRequest.received.title"), eq("mail/courseRequestReceivedEmail"), anyMap());
-        assertThat(userCaptor.getValue()).isSameAs(requester);
-        assertThat(userCaptor.getValue().getEmail()).isEqualTo("instructor@uni.test");
+        verify(mailSendingService).buildAndSendAsync(mailRecipientCaptor.capture(), eq("email.courseRequest.received.title"), eq("mail/courseRequestReceivedEmail"), anyMap());
+        assertThat(mailRecipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(requester));
 
         // Verify contact notification was also sent
-        verify(mailSendingService).buildAndSendAsync(any(User.class), eq("email.courseRequest.contact.title"), any(List.class), eq("mail/courseRequestContactEmail"), anyMap());
+        verify(mailSendingService).buildAndSendAsync(any(MailRecipientDTO.class), eq("email.courseRequest.contact.title"), any(List.class), eq("mail/courseRequestContactEmail"),
+                anyMap());
     }
 
     private User createRequester() {

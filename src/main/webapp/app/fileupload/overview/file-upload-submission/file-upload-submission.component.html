@@ -1,24 +1,3 @@
-@if (displayHeader() && examMode() && fileUploadExercise() && participation()) {
-    <jhi-header-participation-page class="d-block mb-4" [exercise]="$any(fileUploadExercise())" [participation]="$any(participation())">
-        <span pagetitle>
-            {{ 'artemisApp.fileUploadSubmission.fileUpload' | artemisTranslate }}:
-            <span class="font-weight-normal">{{ examMode() ? fileUploadExercise()?.exerciseGroup?.title : fileUploadExercise()?.title }}</span>
-        </span>
-        <ng-container submitbutton>
-            @if (isOwnerOfParticipation()) {
-                <jhi-button
-                    id="submit"
-                    [disabled]="(!isActive() && !isLate()) || !submission() || !submissionFile() || !!result()"
-                    [title]="!isLate() ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
-                    (onClick)="submitExercise()"
-                    [btnType]="!isLate() ? ButtonType.PRIMARY : ButtonType.WARNING"
-                    [tooltip]="submitButtonTooltip()"
-                    [isLoading]="isSaving()"
-                />
-            }
-        </ng-container>
-    </jhi-header-participation-page>
-}
 @if (fileUploadExercise()) {
     <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement()" [showRightPanel]="showProblemStatement() && examMode()">
         <!--region Left Panel-->
@@ -101,13 +80,23 @@
                     </div>
                     <div class="row">
                         @if (isOwnerOfParticipation() && result() && participation()) {
-                            <jhi-rating class="mt-2 alert alert-info" [result]="$any(result())" [participation]="$any(participation())" />
+                            <jhi-rating
+                                class="mt-2 alert alert-info"
+                                [result]="$any(result())"
+                                [participation]="$any(participation())"
+                                [isOwnerOfParticipation]="isOwnerOfParticipation()"
+                            />
                         }
                     </div>
                 </div>
             }
             @if (fileUploadExercise() && result() && participation() && isAfterAssessmentDueDate() && !examMode()) {
-                <jhi-complaint-student-view [result]="$any(resultWithComplaint() ?? result())" [participation]="$any(participation())" [exercise]="$any(fileUploadExercise())" />
+                <jhi-complaint-student-view
+                    [result]="$any(resultWithComplaint() ?? result())"
+                    [participation]="$any(participation())"
+                    [exercise]="$any(fileUploadExercise())"
+                    [isCurrentUserSubmissionAuthor]="isOwnerOfParticipation()"
+                />
             }
         </div>
         <!--endregion-->
@@ -116,7 +105,7 @@
         <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
         <p right-body class="mb-3 markdown-preview">
             @if (fileUploadExercise()?.problemStatement; as problemStatement) {
-                <span [innerHTML]="problemStatement | htmlForMarkdown"></span>
+                <span [jhiMarkdown]="problemStatement"></span>
             }
         </p>
         <!--endregion-->

@@ -77,7 +77,10 @@ COMPOSE_FILE="docker/playwright-E2E-tests-multi-node-fast.yml"
 
 # Per-node port allocation. Indexes match node1/node2/node3 below.
 HTTP_PORTS=(8080 8081 8082)
+# HZ_PORTS/SSH_PORTS document the per-node port scheme for reference; not referenced directly (SC2034).
+# shellcheck disable=SC2034
 HZ_PORTS=(5701 5702)            # node-3 has no Hazelcast bind port (client)
+# shellcheck disable=SC2034
 SSH_PORTS=(7921 7922)            # node-3 has no Git SSH
 
 # All host ports the script claims; freed during preflight + --stop.
@@ -92,7 +95,16 @@ kill_tree() {
     kill "$pid" 2>/dev/null || true
 }
 
-# Free a port if a leftover process holds it. Mirrors run-e2e-tests-local-fast.sh:92-117.
+# How long to wait for a killed process to release its listening socket before giving up.
+# Validated rather than trusted: a non-numeric value would otherwise blow up the integer comparison below with a
+# bash arithmetic error, in a pre-flight step whose whole job is to get out of the developer's way.
+PORT_RELEASE_TIMEOUT="${PORT_RELEASE_TIMEOUT:-30}"
+if ! [[ "$PORT_RELEASE_TIMEOUT" =~ ^[0-9]+$ ]]; then
+    echo "Ignoring PORT_RELEASE_TIMEOUT='${PORT_RELEASE_TIMEOUT}': expected a non-negative integer number of seconds. Using 30."
+    PORT_RELEASE_TIMEOUT=30
+fi
+
+# Free a port if a leftover process holds it. Mirrors run-e2e-tests-local-fast.sh.
 check_port_available() {
     local port=$1
     local service_name=$2
@@ -106,14 +118,31 @@ check_port_available() {
             echo "  Killing PID $pid..."
             kill_tree "$pid"
         done
-        sleep 2
-        listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+        # Poll for the port to be released instead of sleeping a fixed 2s and checking once. A JVM
+        # shutting down can hold its listening socket noticeably longer than that, and the single
+        # check then aborts the whole run over a port that frees a moment later.
+        #
+        # Shaped so the check always happens at least once and always happens *after* the last sleep: a
+        # pre-kill `lsof` result must never be what decides the error, otherwise PORT_RELEASE_TIMEOUT=0
+        # skips the loop entirely and a port released during the final second is still reported as busy.
+        local waited=0
+        while true; do
+            listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+            if [ -z "$listeners" ]; then
+                break
+            fi
+            if [ "$waited" -ge "$PORT_RELEASE_TIMEOUT" ]; then
+                break
+            fi
+            sleep 1
+            waited=$((waited + 1))
+        done
         if [ -n "$listeners" ]; then
-            echo -e "${RED}ERROR: Port ${port} is still in use after killing processes.${NC}"
+            echo -e "${RED}ERROR: Port ${port} is still in use ${PORT_RELEASE_TIMEOUT}s after killing processes.${NC}"
             echo "$listeners"
             exit 1
         fi
-        echo -e "${GREEN}Port ${port} is now free.${NC}"
+        echo -e "${GREEN}Port ${port} is now free (released after ${waited}s).${NC}"
     fi
 }
 
@@ -180,10 +209,36 @@ fi
 
 mkdir -p "$LOCAL_DIR"
 
-# Pre-clear ports we will claim. --skip-up still benefits from this (orphan from a prior crash).
-for port in "${ALL_PORTS[@]}"; do
-    check_port_available "$port" "Artemis host JVM"
-done
+# Pre-clear ports we will claim, so a leftover process from an earlier crash cannot block the launch.
+#
+# With --skip-up the running nodes are exactly what we intend to reuse, so killing whatever holds their
+# ports would defeat the flag: the pre-clear tore the stack down, and Step 4 then "reused" the PID it had
+# just killed and aborted the whole run when that process finished dying. Under --skip-up a node port is
+# therefore only cleared when its node does not answer /management/health/readiness, i.e. when it is a crashed
+# leftover rather than the stack we were asked to keep.
+node_port_is_healthy() {
+    # Bounded on purpose: a wedged JVM can accept the connection and never answer, and an unbounded curl here would
+    # hang the pre-flight instead of deciding that this stack cannot be reused.
+    curl -sf --connect-timeout 2 --max-time 5 "http://localhost:$1/management/health/readiness" >/dev/null 2>&1
+}
+
+# All or nothing: the running nodes own their Hazelcast and management ports as well, so a healthy stack
+# has to be kept whole. If any node is missing, everything is cleared and all three are relaunched.
+REUSE_RUNNING_NODES=false
+if [ "$SKIP_UP" = true ]; then
+    REUSE_RUNNING_NODES=true
+    for port in "${HTTP_PORTS[@]}"; do
+        node_port_is_healthy "$port" || REUSE_RUNNING_NODES=false
+    done
+fi
+
+if [ "$REUSE_RUNNING_NODES" = true ]; then
+    echo -e "${GREEN}All three nodes answer /management/health/readiness — keeping the running stack (--skip-up).${NC}"
+else
+    for port in "${ALL_PORTS[@]}"; do
+        check_port_available "$port" "Artemis host JVM"
+    done
+fi
 echo -e "${GREEN}Prerequisites OK${NC}"
 
 # =============================================================================
@@ -193,8 +248,9 @@ echo -e "${GREEN}Prerequisites OK${NC}"
 # directories:
 #   pnpm run webapp:prod      -> build/resources/main/static/   (Angular bundle)
 #   ./gradlew compileJava     -> build/classes/                  (.class files)
-# Then re-enter Gradle for the assembly step with `-x webapp` so Gradle just runs
-# processResources + bootWar against the Angular bundle already on disk.
+# The bundle is then moved to build/webapp-dist and Gradle is re-entered for the assembly step, where
+# the copy-only `webapp` task puts it back inside the tracked task graph (see the comment at that
+# step for why handing it over through build/resources/main/static directly does not work).
 #
 # SBOM generation (server cyclonedxBom + client cdxgen + filter-shipped) is opt-in
 # via `-Psbom`. The E2E path does not need an SBOM in the WAR, so we omit it here.
@@ -229,9 +285,32 @@ if [ "$SKIP_BUILD" = false ]; then
         exit 1
     fi
     echo -e "${GREEN}  ✓ client + server built; assembling WAR...${NC}"
+    # Hand the bundle to Gradle via build/webapp-dist instead of leaving it at the Angular config's
+    # default build/resources/main/static. That directory is processResources' declared output, and
+    # Gradle deletes every declared task-output directory it does not already recognize from a previous
+    # build in this workspace *before* any task runs. In a fresh worktree (or any workspace where no
+    # build has run processResources yet) that wiped the bundle we had just built, and bootWar then
+    # produced a WAR with no client — the sanity check below caught it, costing a full rebuild cycle.
+    # build/webapp-dist is not declared as any task's output, so it survives the cleanup, and the
+    # `webapp` task (gradle/profile_prod.gradle registers a copy-only variant when that directory
+    # exists) materialises it into place as part of the tracked task graph. This mirrors what CI's
+    # build-war job does; note the deliberate absence of `-x webapp` below, which is what lets that
+    # copy run. See .github/workflows/ci-build.yml and gradle/profile_prod.gradle for the rationale.
+    rm -rf build/webapp-dist
+    mv build/resources/main/static build/webapp-dist
+    # The handoff directory must not outlive this build, on ANY exit path. gradle/profile_prod.gradle
+    # picks the copy-only `webapp` task at CONFIGURATION time based on build/webapp-dist existing, so a
+    # leftover copy would (a) make any later `-Pprod` build silently package this stale bundle instead of
+    # rebuilding the client, and (b) break `./gradlew -Pprod -Pwar clean bootWar` — which
+    # run-e2e-tests-local-multinode.sh and the documented production build both use — because `clean`
+    # deletes the task's declared input. A trap rather than a trailing `rm` because `set -e` would skip
+    # the latter whenever the assembly below fails, which is exactly when the stale copy is left behind.
+    trap 'rm -rf build/webapp-dist' EXIT
     # bootWar without `-Psbom` skips the SBOM dependency chain entirely; the
     # cyclonedxBom and generateClientSbom tasks are not wired into copySbomsToResources.
-    ./gradlew -Pprod -Pwar bootWar -x test -x webapp
+    ./gradlew -Pprod -Pwar bootWar -x test
+    rm -rf build/webapp-dist
+    trap - EXIT
 else
     echo ""
     echo -e "${YELLOW}Step 1: Skipping WAR build (--skip-build)${NC}"
@@ -338,14 +417,28 @@ mkdir -p \
 # =============================================================================
 # Step 4: Launch 3 Artemis JVMs
 # =============================================================================
+# Admin credentials of the stack, used by the cluster preflight login below and by Playwright. They mirror
+# docker/artemis/config/prod-multinode-fast.env, which cannot use the published `artemis_admin` password because the prod
+# profile refuses to start on it.
+export ADMIN_USERNAME="artemis_admin"
+export ADMIN_PASSWORD="local-e2e-admin-not-a-deployment-credential"
+
+# A JWT signing key committed to the repository would be one anyone can use to forge a token, so it is generated per run.
+# Exported here rather than inside launch_node, which runs in a subshell per node: all three nodes have to sign with the
+# same key, or a token minted on one node is rejected by the next.
+export ARTEMIS_E2E_JWT_SECRET="${ARTEMIS_E2E_JWT_SECRET:-$(openssl rand -base64 64 | tr -d '\n')}"
+
 launch_node() {
     local n=$1
     local http_port=${HTTP_PORTS[$((n - 1))]}
     local log_file="$LOCAL_DIR/server-${n}.log"
     local pid_file="$LOCAL_DIR/server-${n}.pid"
 
-    if [ "$SKIP_UP" = true ] && [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
-        echo "node-${n} already running (PID $(cat "$pid_file")), reusing."
+    # Reuse a node only when it actually serves requests. A live PID is not enough: a JVM that is shutting
+    # down still passes `kill -0` for several seconds, and reusing it means waiting on a health endpoint
+    # that will never come up again. Anything else gets relaunched, after clearing the port it may hold.
+    if [ "$REUSE_RUNNING_NODES" = true ] && node_port_is_healthy "$http_port"; then
+        echo "node-${n} already serving on :${http_port}, reusing."
         return
     fi
 
@@ -374,11 +467,16 @@ launch_node() {
         export ARTEMIS_BUILDLOGSPATH="$ARTEMIS_DATA_DIR/build-logs"
         export ARTEMIS_VERSIONCONTROL_LOCALVCSREPOPATH="$ARTEMIS_DATA_DIR/local-vcs-repos"
 
+        # Run the JVM in UTC to match production servers (which run UTC) and the app's own
+        # hibernate.jdbc.time_zone=UTC. On a developer machine in a non-UTC zone (e.g. CEST) the
+        # default JVM zone otherwise shifts ZonedDateTime values by the offset on DB round-trips,
+        # pushing date-gated logic — such as a programming exercise's "Run Tests after Due Date"
+        # date — hours into the future and breaking date-sensitive E2E tests only locally.
         if [ "$DEBUG" = true ]; then
-            exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 \
+            exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 -Duser.timezone=UTC \
                  -jar "$WAR_FILE" 2>&1 | tee "$log_file"
         else
-            exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 \
+            exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 -Duser.timezone=UTC \
                  -jar "$WAR_FILE" > "$log_file" 2>&1
         fi
     ) &
@@ -392,7 +490,7 @@ launch_node() {
 # against the same database (PSQLException: duplicate key value violates unique constraint
 # "artemis_version_pkey"). The Docker multi-node compose avoids this with
 # `depends_on: artemis-app-node-1: condition: service_healthy`. We mirror that here by
-# launching each node only after the previous one is reachable on /management/health.
+# launching each node only after the previous one is reachable on /management/health/readiness.
 # =============================================================================
 wait_for_node() {
     local n=$1
@@ -401,9 +499,14 @@ wait_for_node() {
     local log_file="$LOCAL_DIR/server-${n}.log"
     local pid; pid=$(cat "$pid_file")
 
-    echo "Waiting for node-${n} on http://localhost:${port}/management/health ..."
+    # Readiness rather than the aggregate health: the aggregate turns DOWN (and the endpoint answers 503, which
+    # `curl -sf` treats as a failure) whenever an external integration cannot be reached from a developer machine —
+    # the push-notification relay is enough on its own. The node then serves requests perfectly well while the gate
+    # waits out its full budget and aborts the run. Readiness covers what this wait is actually about: the node
+    # accepting traffic.
+    echo "Waiting for node-${n} on http://localhost:${port}/management/health/readiness ..."
     local TIMEOUT=420 ELAPSED=0
-    until curl -sf "http://localhost:${port}/management/health" >/dev/null 2>&1; do
+    until curl -sf "http://localhost:${port}/management/health/readiness" >/dev/null 2>&1; do
         if ! kill -0 "$pid" 2>/dev/null; then
             echo -e "${RED}ERROR: node-${n} (PID $pid) died. Last 20 lines of $log_file:${NC}"
             tail -20 "$log_file"
@@ -468,7 +571,7 @@ trap 'rm -f "$COOKIE"' EXIT
 # Login via node-1 directly (HTTP, no nginx required for this preflight check).
 curl -s -c "$COOKIE" -X POST 'http://localhost:8080/api/core/public/authenticate' \
     -H 'Content-Type: application/json' \
-    -d '{"username":"artemis_admin","password":"artemis_admin","rememberMe":true}' \
+    -d "{\"username\":\"$ADMIN_USERNAME\",\"password\":\"$ADMIN_PASSWORD\",\"rememberMe\":true}" \
     -o /dev/null
 
 while true; do
@@ -506,19 +609,17 @@ fi
 echo ""
 echo -e "${BLUE}Step 6: Running Playwright tests...${NC}"
 
-# IPv4 explicit. macOS resolves `localhost` to `::1` first, but Docker publishes 443 only on
-# IPv4 (no `::` binding). Under parallel test load this manifested as ECONNREFUSED on ::1:443
-# and ECONNRESET cascades — the slow runner does not hit this because Playwright lives inside
-# a container on the docker bridge and reaches nginx via `https://artemis-nginx`.
-export BASE_URL="https://127.0.0.1"
+# WebAuthn/passkey requires a domain-name origin: the nodes derive their Relying Party ID from
+# SERVER_URL (https://localhost, see docker/artemis/config/prod-multinode-fast.env), so the browser
+# origin must also be https://localhost. An IP literal like 127.0.0.1 is rejected as an RP ID and
+# breaks every passkey test (passkey data is replicated over Hazelcast, so this is real multi-node
+# coverage we want). We still avoid the historical ::1-under-load ECONNREFUSED cascade — macOS
+# resolves `localhost` to `::1` first but Docker publishes 443 on IPv4 — by mapping localhost ->
+# 127.0.0.1 inside the browser (PW_BROWSER_HOST_RESOLVER_RULES). Connections stay on the IPv4 port
+# Docker publishes while the origin/RP ID remains a valid domain.
+export BASE_URL="https://localhost"
+export PW_BROWSER_HOST_RESOLVER_RULES="MAP localhost 127.0.0.1"
 export NODE_TLS_REJECT_UNAUTHORIZED=0  # nginx self-signed cert
-export ADMIN_USERNAME="artemis_admin"
-export ADMIN_PASSWORD="artemis_admin"
-export ALLOW_GROUP_CUSTOMIZATION="true"
-export STUDENT_GROUP_NAME="students"
-export TUTOR_GROUP_NAME="tutors"
-export EDITOR_GROUP_NAME="editors"
-export INSTRUCTOR_GROUP_NAME="instructors"
 export EXERCISE_REPO_DIRECTORY="test-exercise-repos"
 export TEST_WORKERS="${TEST_WORKERS:-${FAST_SLOW_WORKERS:-4}}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"

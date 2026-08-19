@@ -1,5 +1,8 @@
 <div class="frame">
     <div class="header">
+        @if (isSidebarCollapsed()) {
+            <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+        }
         <h1 id="page-title">{{ tutorialGroup().title }}</h1>
         <div class="spacer"></div>
         @if (currentTutorialLectureId) {
@@ -121,16 +124,7 @@
             @if (attendancePercentage) {
                 <div class="attendance-card-content">
                     <span class="doughnut-chart-text">{{ attendancePercentage }}</span>
-                    <ngx-charts-pie-chart
-                        [view]="[122, 122]"
-                        [results]="pieChartData()"
-                        [scheme]="pieChartColors()"
-                        [doughnut]="true"
-                        [labels]="false"
-                        [legend]="false"
-                        [arcWidth]="0.3"
-                        aria-hidden="true"
-                    />
+                    <p-chart type="doughnut" [data]="chartData()" [options]="chartOptions()" [responsive]="false" width="122px" height="122px" aria-hidden="true" />
                 </div>
             } @else {
                 <div class="disclaimer" data-testid="no-attendance-data-available-disclaimer">
@@ -312,5 +306,5 @@
         </table>
     }
 </div>
-<p-confirmDialog />
+<p-confirmdialog />
 <jhi-tutorial-session-create-or-edit-modal (onUpdate)="updateTutorialGroupSession($event)" (onCreate)="createTutorialGroupSession($event)" #sessionModal />

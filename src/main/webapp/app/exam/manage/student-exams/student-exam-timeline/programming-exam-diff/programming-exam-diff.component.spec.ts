@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
@@ -60,8 +59,6 @@ vi.mock('app/programming/shared/utils/diff.utils', async () => {
 });
 
 describe('ProgrammingExerciseExamDiffComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ProgrammingExerciseExamDiffComponent;
     let fixture: ComponentFixture<ProgrammingExerciseExamDiffComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
@@ -417,7 +414,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
 
         expect(emitSpy).toHaveBeenCalled();
         expect(component.diffReady()).toBe(true);
-        expect(component.isLoadingDiffReport).toBe(false);
+        expect(component.isLoadingDiffReport()).toBe(false);
     });
 
     it('should return correct addedLineCount from computed property', () => {

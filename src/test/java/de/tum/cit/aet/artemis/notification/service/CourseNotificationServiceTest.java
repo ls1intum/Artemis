@@ -32,11 +32,11 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatus;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationPageableDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationWithStatusDTO;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
@@ -90,8 +90,8 @@ class CourseNotificationServiceTest {
 
         courseNotificationService.sendCourseNotification(notification, allRecipients);
 
-        verify(webappService).sendCourseNotification(any(CourseNotificationDTO.class), eq(webappRecipients));
-        verify(pushService).sendCourseNotification(any(CourseNotificationDTO.class), eq(pushRecipients));
+        verify(webappService).sendCourseNotification(any(CourseNotificationDTO.class), eq(webappRecipients.stream().map(CourseNotificationRecipientDTO::from).toList()));
+        verify(pushService).sendCourseNotification(any(CourseNotificationDTO.class), eq(pushRecipients.stream().map(CourseNotificationRecipientDTO::from).toList()));
         verify(emailService, never()).sendCourseNotification(any(CourseNotificationDTO.class), anyList());
 
         ArgumentCaptor<HashSet<User>> notifiedUsersCaptor = ArgumentCaptor.forClass(HashSet.class);
@@ -127,14 +127,12 @@ class CourseNotificationServiceTest {
         CourseNotification entity = createTestCourseNotificationEntity(1L);
         CourseNotificationParameter param1 = new CourseNotificationParameter(entity, "key1", "value1");
         CourseNotificationParameter param2 = new CourseNotificationParameter(entity, "key2", "value2");
-        entity.setParameters(Set.of(param1, param2));
-        UserCourseNotificationStatus status = new UserCourseNotificationStatus();
-        status.setCourseNotification(entity);
-        status.setStatus(UserCourseNotificationStatusType.SEEN);
 
-        PageImpl<CourseNotificationWithStatusDTO> page = new PageImpl<>(List.of(new CourseNotificationWithStatusDTO(entity, status)));
+        PageImpl<CourseNotificationWithStatusDTO> page = new PageImpl<>(List.of(new CourseNotificationWithStatusDTO(entity.getId(), entity.getCourse().getId(), entity.getType(),
+                entity.getCreationDate(), UserCourseNotificationStatusType.SEEN)));
 
         when(courseNotificationRepository.findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(userId, courseId, pageable)).thenReturn(page);
+        when(courseNotificationParameterRepository.findByCourseNotificationIdEquals(entity.getId())).thenReturn(Set.of(param1, param2));
         when(courseNotificationRegistryService.getNotificationClass(any())).thenReturn((Class) TestNotification.class);
 
         CourseNotificationPageableDTO<CourseNotificationDTO> result = courseNotificationService.getCourseNotifications(pageable, courseId, userId);

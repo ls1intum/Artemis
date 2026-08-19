@@ -1,8 +1,8 @@
 <div class="frame">
-    <div class="header">
-        <h3>{{ monthDescription() }}</h3>
-        <div class="spacer"></div>
-        <p-multiSelect
+    <!-- The month and the calendar controls live in the shell title bar, so this page has no header of its own. -->
+    <h5 *titleBarTitle class="mb-0">{{ monthDescription() }}</h5>
+    <div *titleBarActions class="calendar-bar-controls d-flex align-items-center gap-2">
+        <p-multiselect
             [options]="filterOptions()"
             [ngModel]="selectedFilterOptions()"
             (ngModelChange)="onSelectedFilterOptionsChange($event)"
@@ -10,8 +10,25 @@
             [placeholder]="filterComponentPlaceholder()"
             [showHeader]="false"
         >
-            <ng-template pTemplate="selectedItems">
+            <!-- The colour is what identifies a category in the grid, so the options carry it too — on a narrow bar the
+                 chips are gone and the dropdown is all the user has. -->
+            <ng-template #item let-option>
+                <span class="filter-option">
+                    <span class="legend-circle" [class]="option.colorClassName"></span>
+                    <span>{{ option.name }}</span>
+                </span>
+            </ng-template>
+
+            <ng-template #selecteditems>
                 @if (selectedFilterOptions().length) {
+                    <!--
+                        The funnel names the control at any width. Once the bar is too narrow for the chips, the count
+                        beside it stands in for them, so the size of the selection stays visible.
+                    -->
+                    <span class="filter-indicator">
+                        <fa-icon [icon]="faFilter" />
+                        <span class="filter-count">{{ selectedFilterOptions().length }}</span>
+                    </span>
                     <div class="chips-section">
                         @for (optionWithMetadata of selectedFilterOptions(); track optionWithMetadata.option) {
                             <div class="chip" [attr.data-testid]="'chip-' + optionWithMetadata.option">
@@ -25,7 +42,7 @@
                     </div>
                 }
             </ng-template>
-        </p-multiSelect>
+        </p-multiselect>
         <p-selectbutton
             [options]="presentationOptions()"
             [ngModel]="presentation()"
@@ -40,14 +57,10 @@
         @let subscriptionToken = calendarSubscriptionToken();
         @if (currentCourseId && subscriptionToken) {
             <div>
-                <button
-                    data-testid="subscribe-button"
-                    pButton
-                    size="small"
-                    outlined
-                    (click)="subscriptionPopover.open($event)"
-                    jhiTranslate="artemisApp.calendar.subscribeButtonLabel"
-                ></button>
+                <button data-testid="subscribe-button" pButton size="small" outlined (click)="subscriptionPopover.open($event)">
+                    <fa-icon [icon]="faArrowUpFromBracket" />
+                    <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></span>
+                </button>
                 <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" #subscriptionPopover />
             </div>
         }

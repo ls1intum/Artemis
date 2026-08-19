@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -18,8 +17,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('QuizTrainingSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: QuizTrainingSettingsComponent;
     let fixture: ComponentFixture<QuizTrainingSettingsComponent>;
     let alertService: AlertService;
@@ -56,12 +53,12 @@ describe('QuizTrainingSettingsComponent', () => {
         await firstValueFrom(mockService.getSettings());
 
         expect(mockService.getSettings).toHaveBeenCalled();
-        expect(component.isVisibleInLeaderboard).toBe(true);
+        expect(component.isVisibleInLeaderboard()).toBe(true);
     });
 
     it('should update leaderboard settings when toggled', async () => {
         mockService.updateSettings.mockReturnValue(of({}));
-        component.isVisibleInLeaderboard = true;
+        component.isVisibleInLeaderboard.set(true);
 
         vi.spyOn(alertService, 'success');
 
@@ -95,7 +92,7 @@ describe('QuizTrainingSettingsComponent', () => {
 
         const toggleElement = fixture.debugElement.query(By.css('#leaderboardVisibilityToggle'));
         expect(toggleElement).toBeTruthy();
-        expect(component.isVisibleInLeaderboard).toBe(true);
+        expect(component.isVisibleInLeaderboard()).toBe(true);
     });
 
     it('should display info message when no settings are available', async () => {
@@ -107,7 +104,7 @@ describe('QuizTrainingSettingsComponent', () => {
 
         const infoMessage = fixture.debugElement.query(By.css('.alert-info'));
         expect(infoMessage).toBeTruthy();
-        expect(component.isVisibleInLeaderboard).toBeUndefined();
+        expect(component.isVisibleInLeaderboard()).toBeUndefined();
     });
 
     it('should call toggleLeaderboardVisibility when toggle is changed', async () => {
@@ -140,6 +137,6 @@ describe('QuizTrainingSettingsComponent', () => {
         toggleElement.nativeElement.checked = false;
         toggleElement.nativeElement.dispatchEvent(new Event('change'));
 
-        expect(component.isVisibleInLeaderboard).toBe(false);
+        expect(component.isVisibleInLeaderboard()).toBe(false);
     });
 });

@@ -47,10 +47,10 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
         return getValueElseThrow(findWithCompetenciesCategoriesAndGradingCriteriaById(exerciseId), exerciseId);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency" })
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "exerciseVariantGroup" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "plagiarismDetectionConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "plagiarismDetectionConfig", "exerciseVariantGroup" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(long exerciseId);
 
     @Query("""
@@ -78,6 +78,8 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
                 LEFT JOIN FETCH result.assessor
                 LEFT JOIN FETCH textExercise.teamAssignmentConfig
                 LEFT JOIN FETCH textExercise.gradingCriteria
+                LEFT JOIN FETCH textExercise.competencyLinks competencyLink
+                LEFT JOIN FETCH competencyLink.competency
             WHERE textExercise.id = :exerciseId
             """)
     Optional<TextExercise> findWithExampleSubmissionsAndResultsAndGradingCriteriaById(@Param("exerciseId") long exerciseId);

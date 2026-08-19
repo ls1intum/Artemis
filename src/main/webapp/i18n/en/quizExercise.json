@@ -19,7 +19,13 @@
                 "modalTitle": "Generate Quiz with AI",
                 "configuration": {
                     "title": "Configuration",
+                    "mode": "Generation mode",
+                    "modeFreeTopicLabel": "Free topic",
+                    "modeCompetencyGraphLabel": "From competencies",
                     "topic": "Topic",
+                    "competencies": "Competencies",
+                    "competenciesPlaceholder": "Select competencies to assess...",
+                    "competenciesTooltip": "The quiz is generated using your selected competencies, their relationships, and linked lecture or exercise content. Link materials to competencies to include them.",
                     "optionalPrompt": "Optional prompt",
                     "optionalPromptTooltip": "Add optional instructions, constraints, or expectations to steer the generated questions.",
                     "language": "Language",
@@ -53,8 +59,9 @@
                     }
                 },
                 "errors": {
-                    "invalidConfiguration": "Please provide a topic and select at least one question type.",
+                    "invalidConfiguration": "Please provide a topic (or select competencies) and at least one question type.",
                     "generationFailed": "Failed to generate quiz questions. Please try again.",
+                    "competencyLoadFailed": "Failed to load course competencies. Please try again.",
                     "refinementFailed": "Failed to refine quiz questions. Please try again.",
                     "partialRefinementFailed": "{{ count }} question(s) could not be refined and were skipped."
                 },
@@ -63,7 +70,8 @@
                     "globalPlaceholder": "Describe how to refine all multiple-choice questions in this quiz...",
                     "globalRefineFabLabel": "Refine all questions with AI",
                     "changesLabel": "Changes made",
-                    "dismissChanges": "Dismiss changes",
+                    "dismissChanges": "Close",
+                    "restoreChanges": "Restore previous version",
                     "defaultReasoning": "The question was refined based on your instructions.",
                     "errors": {
                         "failed": "Failed to refine the question. Please try again."
@@ -98,6 +106,7 @@
             "endNow": {
                 "question": "Are you sure you want to end the quiz <strong>{{ title }}</strong> now? This action can NOT be undone! <br> This prevents any further submissions and starts to publish the results."
             },
+            "actionDisabledInGroup": "This quiz is part of an exercise group. Its dates are shared across all variants and cannot be changed individually.",
             "edit": {
                 "title": "Edit Quiz Exercise for {{ param }}",
                 "addQuestion": "Add Question",
@@ -114,10 +123,12 @@
             "deleteQuestion": "Delete question",
             "refineQuestion": "Refine question",
             "editNotPossibleDuringQuiz": "Editing is not possible during the quiz.",
+            "editNotPossibleStudentsStarted": "Editing is not possible because students have already participated in this quiz.",
             "saveError": "An error occurred while saving. Please review your input data and try again later.",
             "export": {
                 "title": "All quiz questions for course {{ param }}",
                 "export": "Export",
+                "loading": "Loading quiz questions…",
                 "questionTitle": "Short question Title",
                 "quizExerciseTitle": "Quiz Exercise Title"
             },
@@ -138,11 +149,11 @@
             "options": "Options",
             "explanation": "Explanation",
             "randomizeQuestionOrder": "Present Questions in Random Order",
-            "includedInOverallScoreCourseLabelShort": "Course Score Calculation",
+            "includedInOverallScoreCourseLabelShort": "Include in Course Score Calculation",
             "includedInOverallScoreExamLabelShort": "Exam Score Calculation",
-            "includedInScoreYes": "Include this exercise",
-            "includedInScoreBonus": "Include as bonus points",
-            "includedInScoreNo": "Do not include",
+            "includedInScoreYes": "Yes",
+            "includedInScoreBonus": "Bonus",
+            "includedInScoreNo": "No",
             "allowedNumberOfAttempts": "Allowed Number Of Attempts",
             "isVisibleBeforeStart": "Is Visible Before Start",
             "isOpenForPractice": "Is Open For Practice",
@@ -150,8 +161,11 @@
             "openForPractice": "Release For Practice",
             "startQuiz": "Start Quiz",
             "startBatch": "Start Batch",
+            "endQuiz": "End",
+            "batches": "Batches ({{ count }})",
             "showNow": "Set Visible",
             "duration": "Duration",
+            "hours": "hours",
             "minutes": "minutes",
             "seconds": "seconds",
             "minutesShort": "min",

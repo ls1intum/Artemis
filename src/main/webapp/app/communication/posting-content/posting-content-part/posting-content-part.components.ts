@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import {
     faAt,
@@ -17,30 +17,33 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
-import { MatDialog } from '@angular/material/dialog';
+import { DialogService } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HtmlForPostingMarkdownPipe } from 'app/foundation/pipes/html-for-posting-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { FileService } from 'app/foundation/service/file.service';
 
 @Component({
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['../../metis.component.scss'],
-    imports: [RouterLink, FaIconComponent, HtmlForPostingMarkdownPipe, TranslateDirective],
+    imports: [RouterLink, FaIconComponent, MarkdownDirective, TranslateDirective],
+    providers: [DialogService],
 })
 export class PostingContentPartComponent implements OnInit {
     private fileService = inject(FileService);
-    private dialog = inject(MatDialog);
+    private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
 
     postingContentPart = input<PostingContentPart>();
     userReferenceClicked = output<string>();
     channelReferenceClicked = output<number>();
 
-    imageNotFound = false;
+    readonly imageNotFound = signal(false);
     hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
@@ -85,8 +88,8 @@ export class PostingContentPartComponent implements OnInit {
     protected readonly faQuestion = faQuestion;
 
     protected readonly ReferenceType = ReferenceType;
-    processedContentBeforeReference: string;
-    processedContentAfterReference: string;
+    readonly processedContentBeforeReference = signal<string>(undefined!);
+    readonly processedContentAfterReference = signal<string>(undefined!);
 
     private initialized = false;
 
@@ -116,7 +119,7 @@ export class PostingContentPartComponent implements OnInit {
     }
 
     toggleImageNotFound(): void {
-        this.imageNotFound = true;
+        this.imageNotFound.set(true);
     }
 
     /**
@@ -124,11 +127,11 @@ export class PostingContentPartComponent implements OnInit {
      */
     processContent() {
         if (this.postingContentPart()?.contentBeforeReference) {
-            this.processedContentBeforeReference = this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || '');
+            this.processedContentBeforeReference.set(this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || ''));
         }
 
         if (this.postingContentPart()?.contentAfterReference) {
-            this.processedContentAfterReference = this.normalizeSpacing(this.postingContentPart()?.contentAfterReference || '');
+            this.processedContentAfterReference.set(this.normalizeSpacing(this.postingContentPart()?.contentAfterReference || ''));
         }
     }
 
@@ -140,11 +143,20 @@ export class PostingContentPartComponent implements OnInit {
      * Opens a dialog to display the image in full size
      *
      * @param slideToReference {string} the reference to the slide
+     * @param imageAlt {string} optional description of the image used as its alt text (falls back to a localized label)
      */
-    enlargeImage(slideToReference: string) {
-        this.dialog.open(EnlargeSlideImageComponent, {
-            data: { slideToReference },
-            maxWidth: '95vw',
+    enlargeImage(slideToReference: string, imageAlt?: string) {
+        this.dialogService.open(EnlargeSlideImageComponent, {
+            // A translated header gives the dialog an accessible name and renders PrimeNG's themed close button, so the preview can always be dismissed.
+            header: this.translateService.instant('artemisApp.metis.imagePreviewTitle'),
+            // Prefer the image's own description (markdown alt text) so assistive technologies can announce the preview; fall back to a generic localized label.
+            data: { slideToReference, imageAlt: imageAlt || this.translateService.instant('artemisApp.metis.imagePreviewAlt') },
+            modal: true,
+            // Without closable the DynamicDialog header renders no close button (PrimeNG defaults it to undefined), which left the preview stuck open.
+            closable: true,
+            dismissableMask: true,
+            closeOnEscape: true,
+            style: { 'max-width': '95vw' },
         });
     }
 

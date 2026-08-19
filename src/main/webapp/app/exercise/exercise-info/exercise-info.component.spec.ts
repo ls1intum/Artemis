@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { describe, expect, it } from 'vitest';
 import { MockProvider } from 'ng-mocks';
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
@@ -9,8 +8,6 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 
 describe('Exercise Info Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseInfoComponent>;
     let comp: ExerciseInfoComponent;
 
@@ -35,13 +32,13 @@ describe('Exercise Info Component', () => {
         [{ dueDate: dateOne } as Exercise, undefined, dateOne],
         [{ dueDate: dateOne } as Exercise, {}, dateOne],
         [{ dueDate: dateOne } as Exercise, { individualDueDate: dateTwo }, dateTwo],
-    ])('should determine due date', (exercise: Exercise, studentParticipation: StudentParticipation | undefined, expectedDueDate: dayjs.Dayjs) => {
+    ])('should determine due date', (exercise: Partial<Exercise>, studentParticipation: Partial<StudentParticipation> | undefined, expectedDueDate: dayjs.Dayjs | undefined) => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('studentParticipation', studentParticipation);
 
         comp.ngOnInit();
 
-        expect(comp.dueDate).toEqual(expectedDueDate);
+        expect(comp.dueDate()).toEqual(expectedDueDate);
     });
 
     it.each([
@@ -62,8 +59,8 @@ describe('Exercise Info Component', () => {
 
             comp.ngOnInit();
 
-            expect(comp.individualComplaintDueDate).toEqual(expectedComplaintDate);
-            expect(comp.canComplainLaterOn).toBe(canComplainLaterOn);
+            expect(comp.individualComplaintDueDate()).toEqual(expectedComplaintDate);
+            expect(comp.canComplainLaterOn()).toBe(canComplainLaterOn);
         },
     );
 });

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -35,8 +34,6 @@ const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampl
 
 examples.forEach((activeConversation) => {
     describe('ConversationDetailDialogComponent with ' + activeConversation.type, () => {
-        setupTestBed({ zoneless: true });
-
         let component: ConversationDetailDialogComponent;
         let fixture: ComponentFixture<ConversationDetailDialogComponent>;
         const course = { id: 1 } as Course;
@@ -80,7 +77,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should not show the settings tab for one-to-one chats', () => {
-            if (component.isOneToOneChat) {
+            if (component.isOneToOneChat()) {
                 expect(fixture.nativeElement.querySelector('.settings-tab')).toBeFalsy();
             } else {
                 expect(fixture.nativeElement.querySelector('.settings-tab')).toBeTruthy();
@@ -96,10 +93,10 @@ examples.forEach((activeConversation) => {
 
             const membersComponent = membersComponentDebug.componentInstance;
             expect(membersComponent).toBeTruthy();
-            expect(component.changesWerePerformed).toBe(false);
+            expect(component.changesWerePerformed()).toBe(false);
 
             membersComponent.changesPerformed.emit();
-            expect(component.changesWerePerformed).toBe(true);
+            expect(component.changesWerePerformed()).toBe(true);
         });
 
         it('should react correctly to events from info tab', () => {
@@ -111,14 +108,14 @@ examples.forEach((activeConversation) => {
 
             const infoComponent = infoComponentDebug.componentInstance;
             expect(infoComponent).toBeTruthy();
-            expect(component.changesWerePerformed).toBe(false);
+            expect(component.changesWerePerformed()).toBe(false);
 
             infoComponent.changesPerformed.emit();
-            expect(component.changesWerePerformed).toBe(true);
+            expect(component.changesWerePerformed()).toBe(true);
         });
 
         it('should react correctly to events from settings tab', () => {
-            if (!component.isOneToOneChat) {
+            if (!component.isOneToOneChat()) {
                 component.selectedTab = ConversationDetailTabs.SETTINGS;
                 fixture.changeDetectorRef.detectChanges();
 
@@ -148,31 +145,31 @@ examples.forEach((activeConversation) => {
             const dialogRef = TestBed.inject(DynamicDialogRef);
             const closeSpy = vi.spyOn(dialogRef, 'close');
 
-            expect(component.changesWerePerformed).toBe(false);
+            expect(component.changesWerePerformed()).toBe(false);
 
             component.onPrivacyChange();
-            expect(component.changesWerePerformed).toBe(true);
+            expect(component.changesWerePerformed()).toBe(true);
             expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
             closeSpy.mockClear();
-            component.changesWerePerformed = false;
+            component.changesWerePerformed.set(false);
 
             component.onArchivalChange();
-            expect(component.changesWerePerformed).toBe(true);
+            expect(component.changesWerePerformed()).toBe(true);
             expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
             closeSpy.mockClear();
-            component.changesWerePerformed = false;
+            component.changesWerePerformed.set(false);
 
             component.onChannelDeleted();
-            expect(component.changesWerePerformed).toBe(true);
+            expect(component.changesWerePerformed()).toBe(true);
             expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
             closeSpy.mockClear();
-            component.changesWerePerformed = false;
+            component.changesWerePerformed.set(false);
 
             component.onConversationLeave();
-            expect(component.changesWerePerformed).toBe(true);
+            expect(component.changesWerePerformed()).toBe(true);
             expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
         });
 

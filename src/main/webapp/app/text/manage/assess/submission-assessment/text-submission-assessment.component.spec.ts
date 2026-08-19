@@ -9,7 +9,6 @@
  * - Integration with Athena for feedback suggestions
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -31,6 +30,8 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { Location } from '@angular/common';
+import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
@@ -63,9 +64,9 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 
 describe('TextSubmissionAssessmentComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: TextSubmissionAssessmentComponent;
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
     let textAssessmentService: TextAssessmentService;
@@ -158,7 +159,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2, exerciseGroupId: 3 })),
             queryParamMap: of(convertToParamMap({ testRun: 'false', correctionRound: 2 })),
             data: of({
-                studentParticipation: participation,
+                textAssessmentData: { participation },
             }),
         } as unknown as ActivatedRoute;
 
@@ -216,13 +217,13 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should create and set parameters correctly', async () => {
         expect(component).not.toBeNull();
         await component.ngOnInit();
-        expect(component.isTestRun).toBe(false);
+        expect(component.isTestRun()).toBe(false);
         expect(component.exerciseId).toBe(1);
         expect(component.examId).toBe(2);
     });
 
     it('should show jhi-text-assessment-area', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -235,8 +236,52 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(sharedLayout).not.toBeNull();
     });
 
+    it('should keep the query parameters when rewriting the new-assessment url', () => {
+        // The correction round lives only in the URL. Rebuilding it without the query parameters turned a second-round
+        // assessment into a first-round one on the next reload, which is the core of issue #13396.
+        const router = TestBed.inject(Router);
+        const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree').mockReturnValue({ toString: () => '/rewritten' } as any);
+        const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
+        component['activatedRoute'] = { routeConfig: { path: NEW_ASSESSMENT_PATH } } as any;
+        component['route'] = { snapshot: { queryParams: { 'correction-round': '1', testRun: 'false' } } } as any;
+
+        component['updateUrlIfNeeded']();
+
+        expect(createUrlTreeSpy).toHaveBeenCalledExactlyOnceWith(expect.anything(), { queryParams: { 'correction-round': '1', testRun: 'false' } });
+        expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
+    });
+
+    describe('when assessment is not possible yet', () => {
+        // The resolver swallows the load error so that the page renders, so it has to hand over the reason: without it
+        // the page cannot tell "nothing to assess" apart from "the exam is still running" and claims the former.
+        const assessmentNotPossibleYet = { translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' };
+
+        it('should explain the wait instead of claiming that the submission was not found', async () => {
+            component['setPropertiesFromServerResponse']({ assessmentNotPossibleYet });
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.assessmentNotPossibleYet()).toEqual(assessmentNotPossibleYet);
+            expect(fixture.debugElement.query(By.css('#assessment-not-possible-yet'))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.textAssessment.notFound"]'))).toBeNull();
+            expect(fixture.nativeElement.textContent).not.toContain('No Submission for specified ID');
+        });
+
+        it('should clear the explanation once a submission is loaded', async () => {
+            component['setPropertiesFromServerResponse']({ assessmentNotPossibleYet });
+            expect(component.assessmentNotPossibleYet()).toBeDefined();
+
+            component['setPropertiesFromServerResponse']({ participation });
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.assessmentNotPossibleYet()).toBeUndefined();
+            expect(fixture.debugElement.query(By.css('#assessment-not-possible-yet'))).toBeNull();
+        });
+    });
+
     it('should update score', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -246,11 +291,11 @@ describe('TextSubmissionAssessmentComponent', () => {
         // Call validateFeedback which updates the total score
         component.validateFeedback();
 
-        expect(component.totalScore).toBe(42);
+        expect(component.totalScore()).toBe(42);
     });
 
     it('should save the assessment with correct parameters', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         const handleFeedbackStub = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
 
         fixture.detectChanges();
@@ -282,7 +327,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const errorStub = vi.spyOn(alertService, 'error');
 
-        component.assessmentsAreValid = false;
+        component.assessmentsAreValid.set(false);
         component.submit();
 
         expect(errorStub).toHaveBeenCalledOnce();
@@ -303,7 +348,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         const errorStub = vi.spyOn(alertService, 'error');
 
         // add an unreferenced feedback to make the assessment invalid
-        component.unreferencedFeedback = [new Feedback()];
+        component.unreferencedFeedback.set([new Feedback()]);
 
         component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
 
@@ -319,7 +364,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         unreferencedFeedback.detailText = 'gj';
         unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
         unreferencedFeedback.id = 1;
-        component.unreferencedFeedback = [unreferencedFeedback];
+        component.unreferencedFeedback.set([unreferencedFeedback]);
 
         const updateAssessmentAfterComplaintStub = vi.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint');
         const serverResponse = serverReturnsError ? throwError(() => new HttpErrorResponse({ status: 400 })) : of(new HttpResponse({ body: new Result() }));
@@ -341,7 +386,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should submit the assessment with correct parameters', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -368,14 +413,14 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should not submit if result was not saved', () => {
         const submitSpy = vi.spyOn(textAssessmentService, 'submit');
-        component.result!.id = undefined;
+        component.result()!.id = undefined;
         component.submit();
         expect(submitSpy).not.toHaveBeenCalled();
     });
 
     it('should handle error if saving fails', async () => {
-        component['setPropertiesFromServerResponse'](participation);
-        component.assessmentsAreValid = true;
+        component['setPropertiesFromServerResponse']({ participation });
+        component.assessmentsAreValid.set(true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -385,7 +430,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.save();
 
         expect(errorStub).toHaveBeenCalledOnce();
-        expect(component.saveBusy).toBe(false);
+        expect(component.saveBusy()).toBe(false);
     });
 
     it('should invoke import example submission', () => {
@@ -402,7 +447,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should cancel assessment', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -415,11 +460,11 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(windowConfirmStub).toHaveBeenCalledOnce();
         expect(navigateBackSpy).toHaveBeenCalledOnce();
         expect(cancelAssessmentStub).toHaveBeenCalledOnce();
-        expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id);
+        expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id, component.result()?.id);
     });
 
     it('should go to next submission', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         const routerSpy = vi.spyOn(router, 'navigate');
 
         await component.ngOnInit();
@@ -439,7 +484,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             'new',
             'assessment',
         ];
-        const queryParams = { queryParams: { 'correction-round': 0 } };
+        const queryParams = { queryParams: { 'correction-round': 0 }, queryParamsHandling: 'merge' };
 
         component.nextSubmission();
         expect(routerSpy).toHaveBeenCalledOnce();
@@ -454,7 +499,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should not allow tutors to override after the assessment due date', () => {
         component.exercise!.isAtLeastInstructor = false;
         component.exercise!.assessmentDueDate = dayjs().subtract(1, 'day');
-        component.complaint = undefined;
+        component.complaint.set(undefined);
         expect(component.canOverride).toBe(false);
     });
 
@@ -490,7 +535,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         } as Feedback);
         // END: Adding a new block (with feedback) that overlaps with an existing block
 
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -515,7 +560,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should load feedback suggestions', async () => {
         // preparation already added an assessment, but we need to remove it to test the loading
         component.textBlockRefs = [];
-        component.unreferencedFeedback = [];
+        component.unreferencedFeedback.set([]);
         const feedbackSuggestionTextBlockRef = createTextBlockRefWithFeedbackFromTo(0, 10);
         feedbackSuggestionTextBlockRef.feedback!.text = "I'm a feedback suggestion";
         const athenaServiceFeedbackSuggestionsStub = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([feedbackSuggestionTextBlockRef]));
@@ -655,7 +700,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     ])('should never create overlapping blocks even with overlapping feedback suggestions', ({ input, output }: { input: number[][]; output: number[][] }) => {
         // preparation already added an assessment, but we need to remove it to test the loading
         component.textBlockRefs = [];
-        component.unreferencedFeedback = [];
+        component.unreferencedFeedback.set([]);
 
         // Set up initial state with an existing text block that doesn't overlap
         const feedbackSuggestions = input.map(([start, end]) => createTextBlockRefWithFeedbackFromTo(start, end));
@@ -690,19 +735,19 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should validate assessments on component init', async () => {
-        component.assessmentsAreValid = false;
+        component.assessmentsAreValid.set(false);
         await component.ngOnInit();
-        expect(component.assessmentsAreValid).toBe(true);
+        expect(component.assessmentsAreValid()).toBe(true);
     });
 
     it('should allow overriding directly after submitting', async () => {
-        component.isAssessor = true;
+        component.isAssessor.set(true);
         component.submit();
         expect(component.canOverride).toBe(true);
     });
 
     it('should not invalidate assessment after saving', async () => {
         component.save();
-        expect(component.assessmentsAreValid).toBe(true);
+        expect(component.assessmentsAreValid()).toBe(true);
     });
 });

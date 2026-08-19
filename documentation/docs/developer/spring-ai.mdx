@@ -82,13 +82,16 @@ spring:
     model:
       chat: openai
     openai:
-      base-url: http://localhost:1234
+      # The official OpenAI SDK appends /chat/completions itself, so the base URL must include the /v1 prefix
+      base-url: http://localhost:1234/v1
       api-key: dummy-key # not required for local LLM service
+      # Required for local / OpenAI-compatible servers: they use Authorization: Bearer auth. The shipped
+      # default in application-artemis.yml is true (Azure/Foundry), which sends an Azure api-key header
+      # instead and makes auth-enforcing endpoints return 401. Leave false here.
+      microsoft-foundry: false
       chat:
-        completions-path: /v1/chat/completions
-        options:
-          model: openai/gpt-oss-20b    # or whatever name your local server expects
-          temperature: 0.7
+        model: openai/gpt-oss-20b    # or whatever name your local server expects
+        temperature: 0.7
 ```
 
 <Callout variant={CalloutVariant.warning}>

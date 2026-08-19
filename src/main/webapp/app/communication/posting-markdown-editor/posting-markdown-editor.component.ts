@@ -1,8 +1,6 @@
 import {
-    AfterContentChecked,
     AfterViewInit,
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     OnInit,
     ViewContainerRef,
@@ -12,12 +10,14 @@ import {
     inject,
     input,
     output,
+    signal,
     viewChild,
 } from '@angular/core';
 import monaco from 'monaco-editor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/communication/service/metis.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
@@ -36,6 +36,8 @@ import { UrlAction } from 'app/editor/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/editor/monaco-editor/model/actions/attachment.action';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { EmojiAction } from 'app/editor/monaco-editor/model/actions/emoji.action';
+import { EmojiCompletionAction } from 'app/editor/monaco-editor/model/actions/communication/emoji-completion.action';
+import { EmojiSearch } from '@ctrl/ngx-emoji-mart';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { BulletedListAction } from 'app/editor/monaco-editor/model/actions/bulleted-list.action';
 import { OrderedListAction } from 'app/editor/monaco-editor/model/actions/ordered-list.action';
@@ -61,13 +63,14 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [MarkdownEditorMonacoComponent, PostingContentComponent, NgStyle],
 })
-export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
-    private cdref = inject(ChangeDetectorRef);
+export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterViewInit {
     private metisService = inject(MetisService);
     private fileService = inject(FileService);
     private courseManagementService = inject(CourseManagementService);
     private lectureService = inject(LectureService);
+    private exerciseService = inject(ExerciseService);
     private channelService = inject(ChannelService);
+    private emojiSearch = inject(EmojiSearch);
     viewContainerRef = inject(ViewContainerRef);
     private positionBuilder = inject(OverlayPositionBuilder);
 
@@ -92,9 +95,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      */
     readonly activeConversation = input<ConversationDTO>();
     readonly valueChange = output();
-    lectureAttachmentReferenceAction: LectureAttachmentReferenceAction;
-    defaultActions: TextEditorAction[];
-    content?: string;
+    readonly lectureAttachmentReferenceAction = signal<LectureAttachmentReferenceAction>(undefined!);
+    readonly defaultActions = signal<TextEditorAction[]>(undefined!);
+    readonly content = signal<string | undefined>(undefined);
     previewMode = false;
     fallbackConversationId = computed<number | undefined>(() => this.activeConversation()?.id);
 
@@ -109,12 +112,13 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             ? [new UserMentionAction(this.courseManagementService, this.metisService), new ChannelReferenceAction(this.metisService, this.channelService)]
             : [];
 
-        this.defaultActions = [
+        this.defaultActions.set([
             new BoldAction(),
             new ItalicAction(),
             new UnderlineAction(),
             new StrikethroughAction(),
             new EmojiAction(this.viewContainerRef, this.overlay, this.positionBuilder),
+            new EmojiCompletionAction(this.emojiSearch),
             new BulletedListAction(),
             new OrderedListAction(),
             new QuoteAction(),
@@ -123,11 +127,11 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new UrlAction(),
             new AttachmentAction(),
             ...messagingOnlyActions,
-            new ExerciseReferenceAction(this.metisService),
+            new ExerciseReferenceAction(this.metisService, this.exerciseService),
             new FaqReferenceAction(this.metisService),
-        ];
+        ]);
 
-        this.lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(this.metisService, this.lectureService, this.fileService);
+        this.lectureAttachmentReferenceAction.set(new LectureAttachmentReferenceAction(this.metisService, this.lectureService, this.fileService));
     }
 
     ngAfterViewInit(): void {
@@ -163,18 +167,16 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         const lineContent = model.getLineContent(lineNumber).trimStart();
 
         if (lineContent.startsWith('- ')) {
-            this.markdownEditor().handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof BulletedListAction)!);
+            this.markdownEditor().handleActionClick(
+                new MouseEvent('click'),
+                this.defaultActions().find((action) => action instanceof BulletedListAction)!,
+            );
         } else if (/^\d+\. /.test(lineContent)) {
-            this.markdownEditor().handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof OrderedListAction)!);
+            this.markdownEditor().handleActionClick(
+                new MouseEvent('click'),
+                this.defaultActions().find((action) => action instanceof OrderedListAction)!,
+            );
         }
-    }
-
-    /**
-     * this lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when dismissing all changes in the markdown editor
-     * on dismissing the edit-create-modal -> we do not want to store changes in the create-edit-modal that are not saved
-     */
-    ngAfterContentChecked() {
-        this.cdref.detectChanges();
     }
 
     /**
@@ -194,15 +196,15 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * i.e. sets the value programmatically
      * @param value
      */
-    writeValue(value: any): void {
-        this.content = value ?? '';
+    writeValue(value: string | undefined): void {
+        this.content.set(value ?? '');
     }
 
     /**
      * upon UI element value changes, this method is triggered (required)
      * @param fn
      */
-    registerOnChange(fn: any): void {
+    registerOnChange(fn: (value: string) => void): void {
         this.onChange = fn;
     }
 
@@ -216,8 +218,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * @param newValue
      */
     updateField(newValue: string) {
-        this.content = newValue;
-        this.onChange(this.content);
+        this.content.set(newValue);
+        this.onChange(newValue);
         this.valueChanged();
     }
 

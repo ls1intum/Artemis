@@ -43,7 +43,7 @@ export type ScoresPerExerciseType = Map<ExerciseType, CourseScores>;
 
 export interface ValidationReason {
     translateKey: string;
-    translateValues: any;
+    translateValues: { [key: string]: unknown };
 }
 
 export interface PlagiarismDetectionConfig {
@@ -71,6 +71,21 @@ export enum IncludedInOverallScore {
     INCLUDED_COMPLETELY = 'INCLUDED_COMPLETELY',
     INCLUDED_AS_BONUS = 'INCLUDED_AS_BONUS',
     NOT_INCLUDED = 'NOT_INCLUDED',
+}
+
+/**
+ * The variant group this exercise belongs to, as embedded in the serialized exercise (the server entity minus its
+ * back-reference list), so the student dashboard can rebuild groups without a separate request.
+ */
+export interface ExerciseVariantGroupReference {
+    id?: number;
+    title?: string;
+    maxPoints?: number;
+    releaseDate?: dayjs.Dayjs;
+    startDate?: dayjs.Dayjs;
+    dueDate?: dayjs.Dayjs;
+    assessmentDueDate?: dayjs.Dayjs;
+    exampleSolutionPublicationDate?: dayjs.Dayjs;
 }
 
 export abstract class Exercise implements BaseEntity {
@@ -105,6 +120,7 @@ export abstract class Exercise implements BaseEntity {
     public posts?: Post[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
+    public exerciseVariantGroup?: ExerciseVariantGroupReference;
     public competencyLinks?: CompetencyExerciseLink[];
 
     public plagiarismDetectionConfig?: PlagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG; // default value
@@ -125,6 +141,9 @@ export abstract class Exercise implements BaseEntity {
     public numberOfRatings?: number;
     public channelName?: string;
     public completed?: boolean;
+    // only sent for exam exercises on the assessment dashboard, see ExerciseResource.getExerciseForAssessmentDashboard
+    public latestExamEndDate?: dayjs.Dayjs;
+    public assessmentPossibleFrom?: dayjs.Dayjs;
 
     // helper attributes
     public secondCorrectionEnabled = false;
@@ -180,7 +199,7 @@ export abstract class Exercise implements BaseEntity {
  */
 export function getIcon(exerciseType?: ExerciseType): IconProp {
     if (!exerciseType) {
-        return faQuestion as IconProp;
+        return faQuestion;
     }
 
     const icons: Record<string, IconProp> = {
@@ -191,7 +210,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.FILE_UPLOAD]: faFileUpload,
     };
 
-    return icons[exerciseType] ?? (faQuestion as IconProp);
+    return icons[exerciseType] ?? faQuestion;
 }
 
 export function getIconTooltip(exerciseType?: ExerciseType): string {

@@ -1,11 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/course/shared/entities/course.model';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { TranslateModule } from '@ngx-translate/core';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -19,7 +17,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
-import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -31,8 +28,6 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('StudentExamDetailTableRowComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let studentExamDetailTableRowComponentFixture: ComponentFixture<StudentExamDetailTableRowComponent>;
     let studentExamDetailTableRowComponent: StudentExamDetailTableRowComponent;
     let course: Course;
@@ -55,18 +50,8 @@ describe('StudentExamDetailTableRowComponent', () => {
         exercise.studentParticipations = [studentParticipation];
 
         return TestBed.configureTestingModule({
-            imports: [
-                NgbModule,
-                NgxDatatableModule,
-                ReactiveFormsModule,
-                TranslateModule.forRoot(),
-                FaIconComponent,
-                StudentExamDetailTableRowComponent,
-                MockComponent(DataTableComponent),
-                MockTranslateValuesDirective,
-                MockPipe(ArtemisTranslatePipe),
-            ],
-            providers: [provideRouter([]), MockProvider(AlertService), MockDirective(TranslateDirective)],
+            imports: [NgbTooltip, ReactiveFormsModule, FaIconComponent, StudentExamDetailTableRowComponent, MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
+            providers: [provideRouter([]), MockProvider(AlertService), MockDirective(TranslateDirective), provideTranslateService()],
         })
             .compileComponents()
             .then(() => {

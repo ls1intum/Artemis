@@ -53,6 +53,11 @@ test.describe('Static code analysis tests', { tag: '@slow' }, () => {
         // (the intermediate result-history dropdown "Feedback" button was removed in PR #12518
         // in favor of one-click feedback access).
         await resultScore.click();
+        // The modal (FeedbackComponent) rendered its full result view: loading finished, container + feedback list
+        // shown (we expect at least the two SCA issues below). This guards the dialog inputValues -> setInput path.
+        await programmingExerciseScaFeedback.shouldRenderFeedbackDetails(2);
+        // Programming-specific header: "submitted … linked to commit <hash>" (exercises the exerciseType/commit path).
+        await programmingExerciseScaFeedback.shouldShowCommitHash();
         await programmingExerciseScaFeedback.shouldShowPointChart();
         await programmingExerciseScaFeedback.shouldShowCodeIssue("unused variable 'unused_x'", '0.2');
         await programmingExerciseScaFeedback.shouldShowCodeIssue("unused variable 'unused_y'", '0.2');

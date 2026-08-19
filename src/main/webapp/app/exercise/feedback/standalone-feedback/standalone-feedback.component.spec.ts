@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -17,8 +16,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('StandaloneFeedbackComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: StandaloneFeedbackComponent;
     let fixture: ComponentFixture<StandaloneFeedbackComponent>;
 
@@ -69,16 +66,16 @@ describe('StandaloneFeedbackComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.exercise).toBe(exercise);
-        expect(component.result).toBe(result);
-        expect(component.latestDueDate).toBe(latestDueDate);
+        expect(component.exercise()).toBe(exercise);
+        expect(component.result()).toBe(result);
+        expect(component.latestDueDate()).toBe(latestDueDate);
     });
 
     it('should set showMissingAutomaticFeedbackInformation and messageKey correctly', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.showMissingAutomaticFeedbackInformation).toBe(false);
-        expect(component.messageKey).toBeUndefined();
+        expect(component.showMissingAutomaticFeedbackInformation()).toBe(false);
+        expect(component.messageKey()).toBeUndefined();
     });
 });

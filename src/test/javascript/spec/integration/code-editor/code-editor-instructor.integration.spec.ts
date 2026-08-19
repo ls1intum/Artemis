@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type MockInstance } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Mock y-monaco so MonacoBinding does not require a real Monaco editor instance. Without this,
 // Vite tries to transform the real y-monaco.js, whose `monaco-editor/esm/...` deep import is not
@@ -14,7 +13,7 @@ vi.mock('y-monaco', () => {
 });
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute, Params, Router } from '@angular/router';
@@ -88,8 +87,6 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CodeEditorInstructorIntegration', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let domainService: DomainService;
@@ -118,7 +115,6 @@ describe('CodeEditorInstructorIntegration', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                TranslateModule.forRoot(),
                 MockModule(NgbTooltipModule),
                 FaIconComponent,
                 CodeEditorInstructorAndEditorContainerComponent,
@@ -172,6 +168,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 }),
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTranslateService(),
             ],
         }).compileComponents();
         containerFixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
@@ -235,7 +232,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(comp.codeEditorContainer()).toBeUndefined(); // Have to use this as it's a component
         expect(findWithParticipationsStub).toHaveBeenCalledOnce();
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
-        expect(comp.loadingState).toBe(comp.LOADING_STATE.INITIALIZING);
+        expect(comp.loadingState()).toBe(comp.LOADING_STATE.INITIALIZING);
     };
 
     it('should load the exercise and select the template participation if no participation id is provided', () => {
@@ -274,7 +271,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(comp.exercise).toEqual(exercise);
         expect(comp.selectedRepository).toBe(RepositoryType.TEMPLATE);
         expect(comp.selectedParticipation).toEqual(comp.selectedParticipation);
-        expect(comp.loadingState).toBe(comp.LOADING_STATE.CLEAR);
+        expect(comp.loadingState()).toBe(comp.LOADING_STATE.CLEAR);
         expect(comp.domainChangeSubscription).toBeDefined(); // External complex object
 
         containerFixture.detectChanges();
@@ -314,7 +311,7 @@ describe('CodeEditorInstructorIntegration', () => {
         findWithParticipationsSubject.error('fatal error');
 
         expect(setDomainSpy).not.toHaveBeenCalled();
-        expect(comp.loadingState).toBe(comp.LOADING_STATE.FETCHING_FAILED);
+        expect(comp.loadingState()).toBe(comp.LOADING_STATE.FETCHING_FAILED);
         expect(comp.selectedRepository).toBeUndefined();
 
         containerFixture.changeDetectorRef.detectChanges();

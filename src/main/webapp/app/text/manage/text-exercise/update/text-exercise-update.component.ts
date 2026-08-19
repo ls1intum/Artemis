@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -15,7 +15,6 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { FormsModule, NgForm, NgModel } from '@angular/forms';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/foundation/util/global.utils';
@@ -28,10 +27,11 @@ import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
@@ -44,10 +44,14 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
+    styleUrl: './text-exercise-update.component.scss',
     imports: [
         FormsModule,
         TranslateDirective,
@@ -55,12 +59,13 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
         FormStatusBarComponent,
         ExerciseTitleChannelNameComponent,
         HelpIconComponent,
-        CategorySelectorComponent,
+        CategorySelectorPrimengComponent,
         DifficultyPickerComponent,
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
         FormDateTimePickerComponent,
+        ExerciseGroupTimelineLockComponent,
         IncludedInOverallScorePickerComponent,
         ExerciseUpdatePlagiarismComponent,
         PresentationScoreComponent,
@@ -68,6 +73,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
         FormFooterComponent,
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
+        TextExerciseTimelineComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -91,31 +97,37 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     bonusPoints = viewChild<NgModel>('bonusPoints');
     points = viewChild<NgModel>('points');
     solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
-    releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
-    startDateField = viewChild<FormDateTimePickerComponent>('startDate');
-    dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
-    assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
     exerciseUpdatePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
     exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     teamConfigFormGroupComponent = viewChild.required<TeamConfigFormGroupComponent>('teamConfigFormGroup');
 
     examCourseId?: number;
-    isExamMode: boolean;
-    isImport = false;
+    readonly isExamMode = signal<boolean>(undefined!);
+    readonly isImport = signal(false);
     AssessmentType = AssessmentType;
-    isPlagiarismEnabled = false;
+    readonly isPlagiarismEnabled = signal(false);
 
-    textExercise: TextExercise;
-    backupExercise: TextExercise;
-    isSaving: boolean;
-    exerciseCategories: ExerciseCategory[];
-    existingCategories: ExerciseCategory[];
+    // textExercise is deeply template-bound through [(ngModel)] and populated asynchronously from the route
+    // resolver, so it is backed by a signal to schedule change detection under zoneless. The getter/setter facade
+    // keeps the existing synchronous reads/writes ([(ngModel)] bindings, this.textExercise = ... assignments) unchanged.
+    private readonly _textExercise = signal<TextExercise>(undefined!);
+    get textExercise(): TextExercise {
+        return this._textExercise();
+    }
+    set textExercise(value: TextExercise) {
+        this._textExercise.set(value);
+    }
+    backupExercise!: TextExercise; // set in ngOnInit() from the route-resolved exercise before save() reads it
+    readonly isSaving = signal(false);
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
+    readonly exerciseCategories = signal<ExerciseCategory[]>([]);
+    readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;
 
     domainActionsProblemStatement = [new FormulaAction()];
     domainActionsExampleSolution = [new FormulaAction()];
 
-    formSectionStatus: FormSectionStatus[];
+    readonly formSectionStatus = signal<FormSectionStatus[]>(undefined!);
 
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
@@ -125,10 +137,16 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         effect(() => {
             this.updateFormSectionsOnIsValidChange();
         });
+        effect(() => {
+            this.timelineStatus();
+            if (this._textExercise()) {
+                this.validateDate();
+            }
+        });
     }
 
     get editType(): EditType {
-        if (this.isImport) {
+        if (this.isImport()) {
             return EditType.IMPORT;
         }
 
@@ -165,20 +183,20 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
 
-            this.backupExercise = cloneDeep(this.textExercise);
+            this.backupExercise = deepClone(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
         });
 
         this.activatedRoute.url
             .pipe(
-                tap(
-                    (segments) =>
-                        (this.isImport = segments.some((segment) => segment.path === 'import', (this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups')))),
-                ),
+                tap((segments) => {
+                    this.isExamMode.set(segments.some((segment) => segment.path === 'exercise-groups'));
+                    this.isImport.set(segments.some((segment) => segment.path === 'import'));
+                }),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
-                    if (!this.isExamMode) {
-                        this.exerciseCategories = this.textExercise.categories || [];
+                    if (!this.isExamMode()) {
+                        this.exerciseCategories.set(this.textExercise.categories || []);
                         if (this.examCourseId) {
                             this.loadCourseExerciseCategories(this.examCourseId);
                         }
@@ -192,10 +210,10 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                             this.textExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
                         }
                     }
-                    if (this.isImport) {
+                    if (this.isImport()) {
                         const courseId = params['courseId'];
 
-                        if (this.isExamMode) {
+                        if (this.isExamMode()) {
                             // The target exerciseId where we want to import into
                             const exerciseGroupId = params['exerciseGroupId'];
                             const examId = params['examId'];
@@ -217,9 +235,9 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
             )
             .subscribe();
 
-        this.isPlagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
+        this.isPlagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
 
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.notificationText = undefined;
     }
 
@@ -232,7 +250,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     calculateFormSectionStatus() {
         const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
         if (this.textExercise && titleChannelNameComponent) {
-            this.formSectionStatus = [
+            this.formSectionStatus.set([
                 {
                     title: 'artemisApp.exercise.sections.general',
                     valid: titleChannelNameComponent.isValid(),
@@ -241,33 +259,19 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.textExercise.problemStatement },
                 {
                     title: 'artemisApp.exercise.sections.solution',
-                    valid: Boolean(this.isExamMode || (!this.textExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField()?.dateInput.valid)),
-                    empty: !this.textExercise.exampleSolution || (!this.isExamMode && !this.textExercise.exampleSolutionPublicationDate),
+                    valid: Boolean(this.isExamMode() || (!this.textExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField()?.dateInput.valid)),
+                    empty: !this.textExercise.exampleSolution || (!this.isExamMode() && !this.textExercise.exampleSolutionPublicationDate),
                 },
                 {
                     title: 'artemisApp.exercise.sections.grading',
                     valid: Boolean(
                         this.points()?.valid &&
                         this.bonusPoints()?.valid &&
-                        (this.isExamMode ||
-                            (this.exerciseUpdatePlagiarismComponent()?.isFormValid() &&
-                                !this.textExercise.startDateError &&
-                                !this.textExercise.dueDateError &&
-                                !this.textExercise.assessmentDueDateError &&
-                                this.releaseDateField()?.dateInput.valid &&
-                                this.startDateField()?.dateInput.valid &&
-                                this.dueDateField()?.dateInput.valid &&
-                                this.assessmentDateField()?.dateInput.valid)),
+                        (this.isExamMode() || (this.exerciseUpdatePlagiarismComponent()?.isFormValid() && this.timelineStatus().valid)),
                     ),
-                    empty:
-                        !this.isExamMode &&
-                        // if a dayjs object contains an empty date, it is considered "invalid"
-                        (!this.textExercise.startDate?.isValid() ||
-                            !this.textExercise.dueDate?.isValid() ||
-                            !this.textExercise.assessmentDueDate?.isValid() ||
-                            !this.textExercise.releaseDate?.isValid()),
+                    empty: !this.isExamMode() && this.timelineStatus().empty,
                 },
-            ];
+            ]);
         }
     }
 
@@ -292,32 +296,32 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.textExercise.categories = categories;
-        this.exerciseCategories = categories;
+        this.exerciseCategories.set(categories);
     }
 
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType, this.alertService)
-            .save(this.textExercise, this.isExamMode, this.notificationText)
+            .save(this.textExercise, this.isExamMode(), this.notificationText)
             .subscribe({
                 next: (exercise: TextExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
                 complete: () => {
-                    this.isSaving = false;
+                    this.isSaving.set(false);
                 },
             });
     }
 
     private loadCourseExerciseCategories(courseId: number) {
         loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
-            this.existingCategories = existingCategories;
+            this.existingCategories.set(existingCategories);
         });
     }
 
     private onSaveSuccess(exercise: TextExercise) {
         this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
         this.calendarService.reloadEvents();
@@ -329,6 +333,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         } else {
             onError(this.alertService, errorRes);
         }
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 }

@@ -3,13 +3,12 @@
  * Tests the main user management list view with filtering, sorting, and CRUD operations.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subscription, of } from 'rxjs';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PaginatorState } from 'primeng/paginator';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 
@@ -38,8 +37,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('UserManagementComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: UserManagementComponent;
     let fixture: ComponentFixture<UserManagementComponent>;
     let userService: AdminUserService;
@@ -74,6 +71,7 @@ describe('UserManagementComponent', () => {
         await TestBed.configureTestingModule({
             imports: [UserManagementComponent],
             providers: [
+                { provide: CredentialRevocationConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
                 { provide: ActivatedRoute, useValue: mockRoute },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
@@ -103,9 +101,9 @@ describe('UserManagementComponent', () => {
         httpMock.verify();
     });
 
-    describe('onPageChange (PrimeNG paginator)', () => {
-        it('converts the 0-indexed paginator event to the 1-indexed page', () => {
-            component.onPageChange({ page: 2 } as PaginatorState);
+    describe('onPageChange (tum-ui paginator)', () => {
+        it('converts the 0-indexed paginator page to the 1-indexed page', () => {
+            component.onPageChange(2);
             expect(component.page()).toBe(3);
         });
     });
@@ -157,7 +155,7 @@ describe('UserManagementComponent', () => {
             await vi.advanceTimersByTimeAsync(1000);
 
             const activateSpy = vi.spyOn(userService, 'activate').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
-            component.setActive(testUser, true);
+            await component.setActive(testUser, true);
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(userService.activate).toHaveBeenCalledWith(testUser.id);
@@ -171,6 +169,35 @@ describe('UserManagementComponent', () => {
     });
 
     describe('setInactive', () => {
+        it('should not deactivate a user when the credential-revocation confirmation is dismissed', async () => {
+            // Deactivating revokes every credential of the account, so a dismissal has to leave the account alone entirely.
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            vi.spyOn(confirmation, 'confirm').mockResolvedValue(false);
+            const deactivateSpy = vi.spyOn(userService, 'deactivate');
+            const user = { id: 7, activated: true } as User;
+
+            await component.setActive(user, false);
+
+            expect(deactivateSpy).not.toHaveBeenCalled();
+            expect(user.activated).toBe(true);
+        });
+
+        it('should not ask for confirmation when activating a user', async () => {
+            // Activating deletes nothing.
+            const confirmation = TestBed.inject(CredentialRevocationConfirmationService);
+            const confirmSpy = vi.spyOn(confirmation, 'confirm');
+            vi.spyOn(userService, 'activate').mockReturnValue(of(new HttpResponse<User>({ body: { id: 7, activated: true } as User })));
+            // setActive reloads the list once the request answers, and the reload reads the search form. This component
+            // was never initialised here, so without stubbing the reload it throws after the test body has finished -
+            // which surfaces as an unhandled error rather than a failing assertion, and fails the whole vitest run.
+            const loadAllSpy = vi.spyOn(component, 'loadAll').mockImplementation(() => undefined);
+
+            await component.setActive({ id: 7, activated: false } as User, true);
+
+            expect(confirmSpy).not.toHaveBeenCalled();
+            expect(loadAllSpy).toHaveBeenCalledOnce();
+        });
+
         it('should deactivate user and reload list', async () => {
             vi.useFakeTimers();
 
@@ -191,7 +218,7 @@ describe('UserManagementComponent', () => {
             await vi.advanceTimersByTimeAsync(1000);
 
             const deactivateSpy = vi.spyOn(userService, 'deactivate').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
-            component.setActive(testUser, false);
+            await component.setActive(testUser, false);
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(userService.deactivate).toHaveBeenCalledWith(testUser.id);

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, effect, inject, input } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -8,6 +8,7 @@ import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
@@ -37,7 +38,6 @@ type ResultOverviewSection = 'grading-table' | 'grading-key' | 'bonus-grading-ke
 export class ExamResultOverviewComponent implements OnInit {
     private serverDateService = inject(ArtemisServerDateService);
     exerciseService = inject(ExerciseService);
-    private changeDetector = inject(ChangeDetectorRef);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly BonusStrategy = BonusStrategy;
@@ -48,24 +48,47 @@ export class ExamResultOverviewComponent implements OnInit {
     readonly exerciseInfos = input<Record<number, ExerciseInfo>>(undefined!);
     readonly isTestRun = input(false);
 
-    gradingScaleExists = false;
-    isBonus = false;
-    hasPassed = false;
-    grade?: string;
+    // Derived from the (async) studentExamWithGrade input — computed so the grading-key card renders under zoneless
+    // once the grade DTO arrives (previously set only in ngOnInit via setExamGrade + a manual detectChanges).
+    readonly gradingScaleExists = computed(() => !!this.areResultsPublished() && this.studentExamWithGrade()?.studentResult?.overallGrade != undefined);
+    readonly grade = computed(() => this.studentExamWithGrade()?.studentResult?.overallGrade);
+    readonly isBonus = computed(() => this.studentExamWithGrade()?.gradeType === GradeType.BONUS);
+    // Gated on gradingScaleExists to preserve the previous behavior: without a grading scale
+    // (overallGrade undefined) the achieved-percentage badge must not switch to the passed color.
+    readonly hasPassed = computed(() => this.gradingScaleExists() && !!this.studentExamWithGrade()?.studentResult?.hasPassed);
+
+    /**
+     * Color for the overall achieved percentage. With a grading scale the pass/fail outcome is authoritative,
+     * so passed stays green and not-passed stays red. Without a grading scale there is no pass/fail concept,
+     * so fall back to the same score thresholds as the per-exercise rows (avoids e.g. a red 100%).
+     */
+    readonly overallScoreTextColorClass = computed(() => {
+        if (this.gradingScaleExists()) {
+            return this.hasPassed() ? 'text-state-success' : 'text-state-danger';
+        }
+        const percentage = this.overallAchievedPercentageRoundedByCourseSettings();
+        if (percentage >= MIN_SCORE_GREEN) {
+            return 'text-state-success';
+        }
+        if (percentage >= MIN_SCORE_ORANGE) {
+            return 'result-orange';
+        }
+        return 'text-state-danger';
+    });
 
     // Icons
     faClipboard = faClipboard;
     faAward = faAward;
     faChevronRight = faChevronRight;
 
-    showIncludedInScoreColumn = false;
+    readonly showIncludedInScoreColumn = signal(false);
     /**
      * the max. achievable (normal) points. It is possible to exceed this value if there are bonus points.
      */
-    maxPoints = 0;
-    overallAchievedPoints = 0;
-    overallAchievedPercentageRoundedByCourseSettings = 0;
-    isBonusGradingKeyDisplayed = false;
+    readonly maxPoints = signal(0);
+    readonly overallAchievedPoints = signal(0);
+    readonly overallAchievedPercentageRoundedByCourseSettings = signal(0);
+    readonly isBonusGradingKeyDisplayed = signal(false);
 
     /**
      * The points summary table will only be shown if:
@@ -74,7 +97,7 @@ export class ExamResultOverviewComponent implements OnInit {
      * - at least one exercise has a result
      * - it is a test run (results are published immediately)
      */
-    showResultOverview = false;
+    readonly showResultOverview = signal(false);
 
     isCollapsed: Record<ResultOverviewSection, boolean> = {
         'grading-table': false,
@@ -93,10 +116,6 @@ export class ExamResultOverviewComponent implements OnInit {
     }
 
     ngOnInit() {
-        if (this.areResultsPublished()) {
-            this.setExamGrade();
-        }
-
         this.updateLocalVariables();
     }
 
@@ -105,13 +124,21 @@ export class ExamResultOverviewComponent implements OnInit {
     }
 
     private updateLocalVariables() {
-        this.showResultOverview = !!(this.areResultsPublished() && this.hasAtLeastOneResult());
-        this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
-        this.maxPoints = this.studentExamWithGrade()?.maxPoints ?? 0;
-        this.isBonusGradingKeyDisplayed = this.studentExamWithGrade().studentResult.gradeWithBonus?.bonusGrade != undefined;
+        this.showResultOverview.set(!!(this.areResultsPublished() && this.hasAtLeastOneResult()));
+        this.showIncludedInScoreColumn.set(this.containsExerciseThatIsNotIncludedCompletely());
+        this.maxPoints.set(this.studentExamWithGrade()?.maxPoints ?? 0);
+        this.isBonusGradingKeyDisplayed.set(this.studentExamWithGrade().studentResult.gradeWithBonus?.bonusGrade != undefined);
 
-        this.overallAchievedPoints = this.getOverallAchievedPoints();
-        this.overallAchievedPercentageRoundedByCourseSettings = this.getOverallAchievedPercentageRoundedByCourseSettings();
+        this.overallAchievedPoints.set(this.getOverallAchievedPoints());
+        this.overallAchievedPercentageRoundedByCourseSettings.set(this.getOverallAchievedPercentageRoundedByCourseSettings());
+    }
+
+    /**
+     * Points the student achieved in the given exercise, or 0 if none were recorded.
+     * `achievedPointsPerExercise` is keyed by exercise id and may not contain every exercise.
+     */
+    achievedPointsForExercise(exerciseId: number): number {
+        return this.studentExamWithGrade()?.achievedPointsPerExercise?.[exerciseId] ?? 0;
     }
 
     /**
@@ -176,25 +203,11 @@ export class ExamResultOverviewComponent implements OnInit {
     }
 
     /**
-     * Sets the student's exam grade if a grading scale exists for the exam
-     */
-    setExamGrade() {
-        const studentExamWithGrade = this.studentExamWithGrade();
-        if (studentExamWithGrade?.studentResult?.overallGrade != undefined) {
-            this.gradingScaleExists = true;
-            this.grade = studentExamWithGrade.studentResult.overallGrade;
-            this.isBonus = studentExamWithGrade.gradeType === GradeType.BONUS;
-            this.hasPassed = !!studentExamWithGrade.studentResult.hasPassed;
-            this.changeDetector.detectChanges();
-        }
-    }
-
-    /**
      * Returns the sum of max. achievable normal and bonus points. It is not possible to exceed this value.
      */
     getMaxNormalAndBonusPointsSum(): number {
         const maxAchievableBonusPoints = this.studentExamWithGrade()?.maxBonusPoints ?? 0;
-        return this.maxPoints + maxAchievableBonusPoints;
+        return this.maxPoints() + maxAchievableBonusPoints;
     }
 
     scrollToExercise(exerciseId?: number) {
@@ -226,7 +239,7 @@ export class ExamResultOverviewComponent implements OnInit {
     private hasAtLeastOneResult(): boolean {
         const exercises = this.studentExamWithGrade()?.studentExam?.exercises;
         if (exercises?.length && exercises.length > 0) {
-            return exercises!.some((exercise) => getAllResultsOfAllSubmissions(exercise.studentParticipations?.[0]?.submissions).length! > 0);
+            return exercises.some((exercise) => getAllResultsOfAllSubmissions(exercise.studentParticipations?.[0]?.submissions).length > 0);
         }
         return false;
     }

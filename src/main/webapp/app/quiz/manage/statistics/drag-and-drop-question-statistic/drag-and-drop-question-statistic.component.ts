@@ -10,24 +10,21 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { BarChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { NgStyle } from '@angular/common';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
     templateUrl: './drag-and-drop-question-statistic.component.html',
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil],
-    styleUrls: [
-        '../../../../exercise/chart/vertical-bar-chart.scss',
-        '../quiz-point-statistic/quiz-point-statistic.component.scss',
-        './drag-and-drop-question-statistic.component.scss',
-    ],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './drag-and-drop-question-statistic.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, BarChartModule, FaIconComponent, ImageComponent, NgStyle, DragItemComponent, QuizStatisticsFooterComponent],
+    imports: [TranslateDirective, ChartModule, FaIconComponent, ImageComponent, NgStyle, DragItemComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
@@ -84,7 +81,7 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
         this.question.dropLocations!.forEach((dropLocation) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             const dropLocationCounter = (this.questionStatistic as DragAndDropQuestionStatistic).dropLocationCounters?.find(
-                (dlCounter) => dropLocation.id === dlCounter.dropLocation!.id,
+                (dlCounter) => dropLocation.id === dlCounter.dropLocationId,
             )!;
             this.addData(dropLocationCounter.ratedCounter!, dropLocationCounter.unRatedCounter!);
         });

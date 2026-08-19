@@ -17,6 +17,8 @@ import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-asses
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
+import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -25,11 +27,21 @@ export interface DropInfo {
     feedbackHint: string;
 }
 
+/**
+ * Shape of the {@link Assessment.dropInfo} payload emitted by Apollon. Apollon stores the
+ * {@link GradingInstruction} flat on dropInfo (its `id` present at the top level), but a nested
+ * `instruction` shape is also supported for backwards compatibility.
+ */
+type AssessmentDropInfo = GradingInstruction & { instruction?: GradingInstruction };
+
+/** Apollon host element augmented with the editor instance exposed for E2E test access. */
+type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
+
 @Component({
     selector: 'jhi-modeling-assessment',
     templateUrl: './modeling-assessment.component.html',
     styleUrls: ['./modeling-assessment.component.scss'],
-    imports: [ScoreDisplayComponent, FaIconComponent, ModelingExplanationEditorComponent],
+    imports: [ScoreDisplayComponent, FaIconComponent, ModelingExplanationEditorComponent, ResizableDirective],
 })
 export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -74,7 +86,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 return;
             }
 
-            this.runHighlightUpdate();
+            void this.runHighlightUpdate();
         });
         effect(() => {
             const incoming = this.resultFeedbacks();
@@ -85,7 +97,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
             this.referencedFeedbacks = incoming.filter((feedbackElement) => feedbackElement.reference != undefined);
             this.updateElementFeedbackMapping(this.referencedFeedbacks);
-            this.updateApollonAssessments(this.referencedFeedbacks);
+            void this.updateApollonAssessments(this.referencedFeedbacks);
         });
 
         effect(() => {
@@ -114,22 +126,17 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             );
         }
         this.initializeApollonEditor();
-        const highlightedElements = this.highlightedElements();
-        if (highlightedElements) {
-            await this.updateHighlightedElements(highlightedElements);
-        }
         const elementCounts = this.elementCounts();
         if (elementCounts) {
             await this.updateElementCounts(elementCounts);
         }
         // Ensure assessments are added after editor initialization
         await this.updateApollonAssessments(this.referencedFeedbacks);
-        await this.applyStateConfiguration();
-        this.setupInteract();
+        // Applies highlight overlays last (also clears any stale ones).
+        this.applyStateConfiguration();
     }
 
     ngOnDestroy() {
-        super.ngOnDestroy();
         if (this.apollonEditor) {
             if (this.modelChangeSubscription !== undefined) {
                 this.apollonEditor.unsubscribe(this.modelChangeSubscription);
@@ -138,7 +145,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 this.apollonEditor.unsubscribe(this.assessmentSelectionSubscription);
             }
             this.apollonEditor.destroy();
-            (this.elementRef.nativeElement as any).__apollonEditor = undefined;
+            (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = undefined;
         }
     }
 
@@ -148,7 +155,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      */
     private async runHighlightUpdate() {
         await this.updateApollonAssessments(this.referencedFeedbacks);
-        await this.applyStateConfiguration();
+        this.applyStateConfiguration();
     }
 
     /**
@@ -169,7 +176,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         // Expose the ApollonEditor instance on the host DOM element for E2E test access.
         // Mirrors the pattern in ModelingEditorComponent so Playwright can interact with the
         // assessment editor without dblclick races on multi-node setups.
-        (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
+        (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = this.apollonEditor;
 
         this.modelChangeSubscription = this.apollonEditor.subscribeToModelChange((state) => {
             if (!this.readOnly()) {
@@ -184,11 +191,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
     }
 
-    private async applyStateConfiguration() {
-        const highlightedElements = this.highlightedElements();
-        if (highlightedElements) {
-            await this.updateHighlightedElements(highlightedElements);
-        }
+    private applyStateConfiguration() {
+        // Always forward: passing undefined/empty clears stale overlays when highlighting is turned off.
+        this.updateHighlightedElements(this.highlightedElements());
     }
 
     /**
@@ -200,7 +205,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         for (const assessment of assessments) {
             // Apollon stores the GradingInstruction flat on dropInfo (not nested under dropInfo.instruction)
             // Support both: dropInfo.instruction (expected shape) and dropInfo directly (actual Apollon shape)
-            const dropInfo = assessment.dropInfo as any;
+            const dropInfo = assessment.dropInfo as AssessmentDropInfo | undefined;
             const instruction = dropInfo?.instruction ?? (dropInfo?.id ? dropInfo : undefined);
             let feedback = this.elementFeedback.get(assessment.modelElementId);
             if (feedback) {
@@ -271,7 +276,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         if (feedbacks !== undefined) {
             this.referencedFeedbacks = filterInvalidFeedback(feedbacks, this.umlModel());
             this.updateElementFeedbackMapping(this.referencedFeedbacks);
-            this.updateApollonAssessments(this.referencedFeedbacks);
+            void this.updateApollonAssessments(this.referencedFeedbacks);
         }
     }
 
@@ -294,33 +299,12 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     /**
-     * Sets the corresponding highlight color in the apollon model of all elements contained in the given element map.
-     *
-     * @param newElements a map of elementIds -> highlight color
+     * Applies the host-driven highlight overlay (element id -> CSS colour) to the editor. Highlights
+     * are an ephemeral view overlay, not persisted in the model; an empty map or `undefined` clears them.
      */
-    private async updateHighlightedElements(newElements: Map<string, string>) {
-        if (!newElements) {
-            newElements = new Map<string, string>();
-        }
-
-        if (this.apollonEditor != undefined) {
-            const model: UMLModel = this.apollonEditor.model;
-            for (const node of model.nodes) {
-                const highlight = newElements.get(node.id);
-                (node as any).highlight = highlight;
-                if (node.data) {
-                    (node.data as Record<string, unknown>).highlight = highlight;
-                }
-            }
-            for (const edge of model.edges) {
-                const highlight = newElements.get(edge.id);
-                (edge as any).highlight = highlight;
-                if (edge.data) {
-                    (edge.data as Record<string, unknown>).highlight = highlight;
-                }
-            }
-            this.apollonEditor.model = model;
-        }
+    private updateHighlightedElements(newElements: Map<string, string> | undefined): void {
+        // `?? null`: Apollon treats `undefined` as "no change", whereas `null`/empty clears overlays.
+        this.apollonEditor?.setElementHighlights(newElements ?? null);
     }
 
     /**
@@ -374,7 +358,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 dropInfo: this.calculateDropInfo(feedback),
             };
             if (!umlModel.assessments) {
-                umlModel.assessments = {} as any;
+                umlModel.assessments = {};
             }
             umlModel.assessments[feedback.referenceId!] = newAssessment;
             if (this.apollonEditor) {
@@ -392,12 +376,12 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         // Reassigning the model forces internal store sync and visual refresh without waiting for user interaction.
         if (this.apollonEditor) {
             const currentModel = this.apollonEditor.model;
-            this.apollonEditor.model = { ...currentModel };
+            this.apollonEditor.model = deepClone(currentModel);
         }
         this.isUpdatingFromServer = false;
     }
 
-    private calculateLabel(feedback: any) {
+    private calculateLabel(feedback: Feedback) {
         const firstCorrectionRoundText = this.artemisTranslatePipe.transform('artemisApp.assessment.diffView.correctionRoundDiffFirst');
         const secondCorrectionRoundText = this.artemisTranslatePipe.transform('artemisApp.assessment.diffView.correctionRoundDiffSecond');
         if (this.highlightDifferences()) {
@@ -406,7 +390,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         return undefined;
     }
 
-    private calculateLabelColor(feedback: any) {
+    private calculateLabelColor(feedback: Feedback) {
         if (this.highlightDifferences()) {
             return feedback.copiedFeedbackId ? this.firstCorrectionRoundColor : this.secondCorrectionRoundColor;
         }

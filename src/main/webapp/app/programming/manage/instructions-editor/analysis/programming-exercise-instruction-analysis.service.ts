@@ -3,6 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { uniq } from 'lodash-es';
 import { RegExpLineNumberMatchArray, matchRegexWithLineNumbers } from 'app/foundation/util/string-pure.utils';
 import { AnalysisItem, ProblemStatementAnalysis, ProblemStatementIssue } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 const TEST_CASE_REGEX = /\[[^[\]]+]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/;
 const INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
@@ -92,18 +93,19 @@ export class ProgrammingExerciseInstructionAnalysisService {
         const reducer = (acc: ProblemStatementAnalysis, [lineNumber, values, issueType]: AnalysisItem): ProblemStatementAnalysis => {
             const lineNumberValues = acc.get(lineNumber);
             const issueValues = lineNumberValues?.[issueType] ?? [];
-            acc.set(lineNumber, { lineNumber, ...lineNumberValues, [issueType]: [...issueValues, ...values] });
+            // hydrate layers the three sources in the same order the spread did: base, existing values, then this issue type.
+            acc.set(lineNumber, hydrate({ lineNumber }, lineNumberValues ?? {}, { [issueType]: [...issueValues, ...values] }));
             return acc;
         };
 
         return analysis
             .flat()
-            .map(([lineNumber, values, issueType]: AnalysisItem) => [
+            .map(([lineNumber, values, issueType]: AnalysisItem): AnalysisItem => [
                 lineNumber,
                 values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
                 issueType,
             ])
-            .reduce(reducer, new Map());
+            .reduce<ProblemStatementAnalysis>(reducer, new Map());
     };
 
     /**
@@ -133,14 +135,14 @@ export class ProgrammingExerciseInstructionAnalysisService {
 
         return tasks
             .filter(([, task]) => !!task)
-            .map(([lineNumber, task]) => {
+            .map(([lineNumber, task]): [number, string | undefined] => {
                 const extractedValue = task.match(regex);
                 return extractedValue && extractedValue.length > 1 ? [lineNumber, extractedValue[1]] : [lineNumber, undefined];
             })
-            .filter(([, testCases]) => !!testCases)
+            .filter((entry): entry is [number, string] => !!entry[1])
             .map(([lineNumber, match]: [number, string]) => {
-                const cleanedMatches = cleanMatches(match!.split(/,(?![^(]*?\))/).map((m: string) => m.trim()));
+                const cleanedMatches = cleanMatches(match.split(/,(?![^(]*?\))/).map((m: string) => m.trim()));
                 return [lineNumber, cleanedMatches];
-            }) as [number, string[]][];
+            });
     }
 }

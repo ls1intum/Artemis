@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -14,36 +15,35 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 @JsonInclude()
 public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String dockerImage) {
 
-    private static final ObjectMapper mapper = JsonObjectMapper.get().copy().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+    /**
+     * Parsing bounds for the user-provided build plan configuration JSON. A build plan configuration is a small list of
+     * phases, so these limits stay well above any real configuration while rejecting abnormally large, wide or deeply
+     * nested input during parsing. This keeps the parsing effort bounded and avoids blocking a request thread on an
+     * oversized payload.
+     */
+    public static final StreamReadConstraints BUILD_PLAN_CONFIGURATION_CONSTRAINTS = StreamReadConstraints.builder().maxNestingDepth(32).maxDocumentLength(1024L * 1024)
+            .maxTokenCount(10_000).build();
+
+    private static final ObjectMapper mapper = createMapper();
+
+    private static ObjectMapper createMapper() {
+        ObjectMapper configuredMapper = JsonObjectMapper.get().copy().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+        configuredMapper.getFactory().setStreamReadConstraints(BUILD_PLAN_CONFIGURATION_CONSTRAINTS);
+        return configuredMapper;
+    }
 
     /**
      * Deserializes a JSON string representation to a {@link BuildPlanPhasesDTO} object
      *
      * @param buildPlanConfiguration the JSON String representation
      * @return the new {@link BuildPlanPhasesDTO} object
-     * @throws JsonProcessingException if the JSON is invalid or has unknown keys
+     * @throws JsonProcessingException if the JSON is invalid
      */
     public static BuildPlanPhasesDTO fromBuildPlanConfiguration(String buildPlanConfiguration) throws JsonProcessingException {
+        if (buildPlanConfiguration == null || buildPlanConfiguration.isBlank()) {
+            return new BuildPlanPhasesDTO(null, null);
+        }
         return mapper.readValue(buildPlanConfiguration, BuildPlanPhasesDTO.class);
-    }
-
-    /**
-     * Checks whether a JSON string is a {@link BuildPlanPhasesDTO}
-     *
-     * @param buildPlanConfiguration the JSON string to check
-     * @return true if valid else false
-     */
-    public static boolean isInPhasesFormatOrNull(String buildPlanConfiguration) {
-        if (buildPlanConfiguration == null) {
-            return true;
-        }
-        try {
-            fromBuildPlanConfiguration(buildPlanConfiguration);
-        }
-        catch (JsonProcessingException e) {
-            return false;
-        }
-        return true;
     }
 
     /**

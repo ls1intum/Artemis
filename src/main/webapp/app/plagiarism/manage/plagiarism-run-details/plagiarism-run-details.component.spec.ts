@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA } from '@angular/core';
 import { Range } from 'app/foundation/util/utils';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,8 +12,6 @@ import { DatePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('Plagiarism Run Details', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: PlagiarismRunDetailsComponent;
     let fixture: ComponentFixture<PlagiarismRunDetailsComponent>;
 
@@ -51,30 +48,30 @@ describe('Plagiarism Run Details', () => {
         vi.spyOn(comp, 'updateChartDataSet');
         vi.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
 
-        comp.ngOnChanges({
-            plagiarismResult: { currentValue: plagiarismResult } as SimpleChange,
-        });
+        // The constructor effect rebuilds the chart whenever plagiarismResult() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismResult', plagiarismResult);
+        fixture.detectChanges();
 
         expect(comp.updateChartDataSet).toHaveBeenCalledOnce();
         for (let i = 0; i < 10; i++) {
-            expect(comp.ngxData[i].value).toBe(plagiarismResult.similarityDistribution[i]);
+            expect(comp.chartEntries()[i].value).toBe(plagiarismResult.similarityDistribution[i]);
         }
     });
 
     it('updates the chart data correctly', () => {
-        expect(comp.ngxData).toHaveLength(0);
+        expect(comp.chartEntries()).toHaveLength(0);
 
         comp.updateChartDataSet([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
-        expect(comp.ngxData).toHaveLength(10);
+        expect(comp.chartEntries()).toHaveLength(10);
     });
 
     it('sets BucketDTOs', () => {
         const filterComparisonsMock = vi.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
 
-        comp.ngOnChanges({
-            plagiarismResult: { currentValue: plagiarismResult } as SimpleChange,
-        });
+        // The constructor effect rebuilds the buckets whenever plagiarismResult() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismResult', plagiarismResult);
+        fixture.detectChanges();
 
         expect(filterComparisonsMock).toHaveBeenCalledTimes(10);
         expect(comp.bucketDTOs).toHaveLength(10);
@@ -84,7 +81,8 @@ describe('Plagiarism Run Details', () => {
         const similaritySelectedStub = vi.spyOn(comp.similaritySelected, 'emit').mockImplementation(() => {});
         const maximumBorder = minimumBorder + 10;
 
-        const event = { name: '[' + minimumBorder + '%-' + maximumBorder + '%)' };
+        comp.updateChartDataSet(plagiarismResult.similarityDistribution);
+        const event = { element: { datasetIndex: 0, index: minimumBorder / 10 } };
 
         comp.onSelect(event);
 
@@ -93,8 +91,17 @@ describe('Plagiarism Run Details', () => {
         vi.restoreAllMocks();
     });
 
+    it('does not emit a range if the click did not hit a bar', () => {
+        const similaritySelectedStub = vi.spyOn(comp.similaritySelected, 'emit').mockImplementation(() => {});
+
+        comp.updateChartDataSet(plagiarismResult.similarityDistribution);
+        comp.onSelect({});
+
+        expect(similaritySelectedStub).not.toHaveBeenCalled();
+    });
+
     it.each([1, 2, 3])('return correct bucketDTO', (label: number) => {
-        comp.ngxChartLabels = ['1', '2', '3'];
+        comp.chartLabels = ['1', '2', '3'];
         comp.bucketDTOs = [
             { confirmed: 1, denied: 1, open: 1 },
             { confirmed: 2, denied: 2, open: 2 },
@@ -137,5 +144,57 @@ describe('Plagiarism Run Details', () => {
 
         const startedAtInfo: HTMLElement = fixture.nativeElement.querySelector('.plagiarism-run-details-stats-item:nth-child(5) .plagiarism-run-details-info');
         expect(startedAtInfo.textContent?.trim()).toBe('');
+    });
+
+    it('does not rebuild the chart while no plagiarism result is set', () => {
+        const updateSpy = vi.spyOn(comp, 'updateChartDataSet');
+
+        // The effect runs on change detection but must skip its work while plagiarismResult() is undefined.
+        fixture.detectChanges();
+
+        expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('falls back to empty arrays when the result has neither comparisons nor a similarity distribution', () => {
+        const filterComparisonsMock = vi.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
+
+        fixture.componentRef.setInput('plagiarismResult', { duration: 0 } as any);
+        fixture.detectChanges();
+
+        expect(filterComparisonsMock).toHaveBeenCalledTimes(10);
+        expect(comp.bucketDTOs).toHaveLength(10);
+        expect(comp.chartEntries()).toHaveLength(0);
+    });
+
+    it('builds the tooltip title and label lines via the chart options callbacks', () => {
+        vi.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
+        fixture.componentRef.setInput('plagiarismResult', plagiarismResult);
+        fixture.detectChanges();
+
+        const callbacks = (comp.chartOptions() as any).plugins.tooltip.callbacks;
+
+        // title(): empty string when nothing is hovered, otherwise a (translated) string.
+        expect(callbacks.title([])).toBe('');
+        expect(typeof callbacks.title([{ parsed: { y: 5 } }])).toBe('string');
+
+        // label(): a known bucket label with data present produces the five detail lines.
+        const knownLabelLines = callbacks.label({ label: '[0%-10%)', parsed: { y: 24 } });
+        expect(knownLabelLines).toHaveLength(5);
+
+        // label(): an unknown label / missing value hits the bucketDTO?.x ?? 0 and item.label ?? '' fallbacks.
+        const fallbackLines = callbacks.label({ label: undefined, parsed: {} });
+        expect(fallbackLines).toHaveLength(5);
+    });
+
+    it('reports a zero portion in the tooltip label when no plagiarisms were detected', () => {
+        vi.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
+        // An all-zero distribution keeps totalDetectedPlagiarisms at 0, exercising the "> 0 ? … : 0" branch.
+        fixture.componentRef.setInput('plagiarismResult', { duration: 0, similarityDistribution: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] } as any);
+        fixture.detectChanges();
+
+        const callbacks = (comp.chartOptions() as any).plugins.tooltip.callbacks;
+        const lines = callbacks.label({ label: '[0%-10%)', parsed: { y: 0 } });
+
+        expect(lines).toHaveLength(5);
     });
 });

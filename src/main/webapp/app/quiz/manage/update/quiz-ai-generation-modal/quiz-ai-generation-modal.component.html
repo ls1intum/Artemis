@@ -3,29 +3,94 @@
     [modal]="true"
     [draggable]="false"
     [resizable]="false"
+    [showHeader]="false"
+    [closable]="false"
     [style]="{ width: '90vw', 'max-width': '84rem' }"
+    [contentStyle]="{ padding: '1.25rem' }"
     styleClass="quiz-ai-generation-modal"
     [breakpoints]="{ '1200px': '96vw' }"
     appendTo="body"
 >
-    <ng-template pTemplate="header">
-        <h5 class="mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.modalTitle"></h5>
-    </ng-template>
-
     <div class="quiz-ai-generation-layout">
         <section class="quiz-ai-generation-configuration">
             <h6 class="section-title" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.title"></h6>
 
-            <div class="field-group">
-                <label class="field-label" for="quiz-ai-topic" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.topic"></label>
-                <input id="quiz-ai-topic" pInputText class="w-100" [ngModel]="topic()" (ngModelChange)="topic.set($event)" />
-            </div>
+            <!-- Mode toggle — competency mode only shown when the course has competencies -->
+            @if (isLoadingCompetencies() || hasCompetencies()) {
+                <div class="field-group">
+                    <span class="field-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.mode"></span>
+                    <div class="selection-list">
+                        <button
+                            pButton
+                            type="button"
+                            severity="secondary"
+                            class="selection-button"
+                            [ngClass]="{ 'selection-button-active': !isCompetencyMode() }"
+                            (click)="selectMode('free-topic')"
+                        >
+                            <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.modeFreeTopicLabel"></span>
+                        </button>
+                        <button
+                            pButton
+                            type="button"
+                            severity="secondary"
+                            class="selection-button"
+                            [ngClass]="{ 'selection-button-active': isCompetencyMode() }"
+                            [disabled]="isLoadingCompetencies()"
+                            (click)="selectMode('competency-graph')"
+                        >
+                            <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.modeCompetencyGraphLabel"></span>
+                        </button>
+                    </div>
+                </div>
+            }
+
+            <!-- Free-topic mode: topic input -->
+            @if (!isCompetencyMode()) {
+                <div class="field-group">
+                    <label class="field-label" for="quiz-ai-topic" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.topic"></label>
+                    <input id="quiz-ai-topic" pInputText class="w-100" [ngModel]="topic()" (ngModelChange)="topic.set($event)" />
+                </div>
+            }
+
+            <!-- Competency-graph mode: multi-select -->
+            @if (isCompetencyMode()) {
+                <div class="field-group">
+                    <div class="field-label label-with-help">
+                        <label for="quiz-ai-competencies" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.competencies"></label>
+                        <span
+                            class="label-with-help-icon"
+                            [pTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.competenciesTooltip' | artemisTranslate"
+                            tooltipPosition="right"
+                            appendTo="body"
+                            tooltipStyleClass="quiz-ai-generation-tooltip"
+                            tabindex="0"
+                        >
+                            <fa-stack class="icon-full-size">
+                                <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
+                            </fa-stack>
+                        </span>
+                    </div>
+                    <p-multiselect
+                        inputId="quiz-ai-competencies"
+                        [options]="courseCompetencies()"
+                        [ngModel]="selectedCompetencies()"
+                        (ngModelChange)="selectedCompetencies.set($event)"
+                        optionLabel="title"
+                        [placeholder]="'artemisApp.quizExercise.aiGeneration.configuration.competenciesPlaceholder' | artemisTranslate"
+                        [loading]="isLoadingCompetencies()"
+                        [showToggleAll]="false"
+                        styleClass="w-100"
+                        appendTo="body"
+                    />
+                </div>
+            }
 
             <div class="field-group">
                 <div class="field-label label-with-help">
-                    <label class="mb-0" for="quiz-ai-optional-prompt" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.optionalPrompt"></label>
+                    <label for="quiz-ai-optional-prompt" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.optionalPrompt"></label>
                     <span
-                        class="text-secondary d-inline-flex align-items-center"
+                        class="label-with-help-icon"
                         [pTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.optionalPromptTooltip' | artemisTranslate"
                         tooltipPosition="right"
                         appendTo="body"
@@ -115,9 +180,18 @@
         <section class="quiz-ai-generation-preview">
             <div class="preview-header">
                 <h6 class="section-title mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.title"></h6>
-                @if (hasGeneratedQuestions()) {
-                    <span class="preview-count" [jhiTranslate]="getResultCountTextKey()" [translateValues]="getResultCountTranslateValues()"></span>
-                }
+                <button
+                    pButton
+                    type="button"
+                    severity="secondary"
+                    [text]="true"
+                    [rounded]="true"
+                    icon="pi pi-times"
+                    [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                    [pTooltip]="'entity.action.close' | artemisTranslate"
+                    tooltipPosition="top"
+                    (click)="close()"
+                ></button>
             </div>
 
             @if (!hasGeneratedQuestions()) {
@@ -131,16 +205,10 @@
                         <jhi-quiz-ai-generated-question-card [question]="question" [questionIndex]="questionIndex" />
                     }
                 </div>
+                <button pButton type="button" severity="success" class="add-to-quiz-fab" (click)="addGeneratedQuestionsToQuiz()">
+                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.addToEditor"></span>
+                </button>
             }
         </section>
     </div>
-
-    <ng-template pTemplate="footer">
-        <button pButton type="button" severity="secondary" outlined (click)="close()">
-            <span jhiTranslate="entity.action.close"></span>
-        </button>
-        <button pButton type="button" severity="success" [disabled]="!hasGeneratedQuestions()" (click)="addGeneratedQuestionsToQuiz()">
-            <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.addToEditor"></span>
-        </button>
-    </ng-template>
 </p-dialog>

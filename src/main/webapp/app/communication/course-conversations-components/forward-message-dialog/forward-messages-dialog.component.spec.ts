@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -22,8 +21,6 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 describe('ForwardMessageDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ForwardMessageDialogComponent;
     let fixture: ComponentFixture<ForwardMessageDialogComponent>;
     let searchInput: any;
@@ -96,7 +93,7 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should initialize combined options with channels and users', () => {
-        expect(component.combinedOptions).toEqual([
+        expect(component.combinedOptions()).toEqual([
             { id: 1, name: 'General', type: 'channel', img: '' },
             { id: 2, name: 'Announcements', type: 'channel', img: '' },
             { id: 3, name: 'Group 1', type: 'groupChat', img: '' },
@@ -109,12 +106,12 @@ describe('ForwardMessageDialogComponent', () => {
         searchInput.dispatchEvent(new Event('input'));
         fixture.detectChanges();
 
-        expect(component.filteredOptions).toHaveLength(1);
-        expect(component.filteredOptions[0].name).toBe('General');
+        expect(component.filteredOptions()).toHaveLength(1);
+        expect(component.filteredOptions()[0].name).toBe('General');
     });
 
     it('should select a channel and add it to selectedChannels', () => {
-        const option = component.combinedOptions.find((opt) => opt.type === 'channel' && opt.name === 'General');
+        const option = component.combinedOptions().find((opt) => opt.type === 'channel' && opt.name === 'General');
         component.selectOption(option!);
         fixture.detectChanges();
 
@@ -123,7 +120,7 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should select a user and add it to selectedUsers', () => {
-        const option = component.combinedOptions.find((opt) => opt.type === 'user' && opt.name === 'User1');
+        const option = component.combinedOptions().find((opt) => opt.type === 'user' && opt.name === 'User1');
         component.selectOption(option!);
         fixture.detectChanges();
 
@@ -195,11 +192,11 @@ describe('ForwardMessageDialogComponent', () => {
 
         inputElement.dispatchEvent(new Event('focus'));
         fixture.detectChanges();
-        expect(component.showDropdown).toBe(true);
+        expect(component.showDropdown()).toBe(true);
 
         document.body.click();
         fixture.detectChanges();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should clear filteredOptions when no matching results are found', async () => {
@@ -210,7 +207,7 @@ describe('ForwardMessageDialogComponent', () => {
         await component.filterOptions();
         fixture.detectChanges();
 
-        expect(component.filteredOptions).toHaveLength(0);
+        expect(component.filteredOptions()).toHaveLength(0);
     });
 
     it('should detect if content overflows and set isContentLong correctly', () => {
@@ -224,7 +221,7 @@ describe('ForwardMessageDialogComponent', () => {
 
         component.checkIfContentOverflows();
 
-        expect(component.isContentLong).toBe(true);
+        expect(component.isContentLong()).toBe(true);
     });
 
     it('should disable Send button if no content and no selections are made', () => {
@@ -257,13 +254,13 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should not add duplicate channels or users to selected lists', () => {
-        const channelOption = component.combinedOptions.find((opt) => opt.type === 'channel' && opt.name === 'General');
+        const channelOption = component.combinedOptions().find((opt) => opt.type === 'channel' && opt.name === 'General');
         component.selectOption(channelOption!);
         component.selectOption(channelOption!);
 
         expect(component.selectedChannels).toHaveLength(1);
 
-        const userOption = component.combinedOptions.find((opt) => opt.type === 'user' && opt.name === 'User1');
+        const userOption = component.combinedOptions().find((opt) => opt.type === 'user' && opt.name === 'User1');
         component.selectOption(userOption!);
         component.selectOption(userOption!);
 
@@ -271,13 +268,13 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should toggle showFullForwardedMessage and reflect changes', () => {
-        expect(component.showFullForwardedMessage).toBe(false);
+        expect(component.showFullForwardedMessage()).toBe(false);
 
         component.toggleShowFullForwardedMessage();
-        expect(component.showFullForwardedMessage).toBe(true);
+        expect(component.showFullForwardedMessage()).toBe(true);
 
         component.toggleShowFullForwardedMessage();
-        expect(component.showFullForwardedMessage).toBe(false);
+        expect(component.showFullForwardedMessage()).toBe(false);
     });
 
     it('should update newPost.content with the provided value', () => {
@@ -293,7 +290,7 @@ describe('ForwardMessageDialogComponent', () => {
 
         expect(component.filteredChannels).toHaveLength(1);
         expect(component.filteredChannels[0].name).toBe('General');
-        expect(component.filteredUsers).toHaveLength(0);
+        expect(component.filteredUsers()).toHaveLength(0);
     });
 
     it('should disable send button if message is too long', () => {

@@ -1,13 +1,15 @@
-import { Component, DestroyRef, OnInit, effect, inject, input } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { PaginatorState } from 'primeng/paginator';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { SortService } from 'app/foundation/service/sort.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Subject, debounceTime, switchMap, tap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 /**
  * An abstract component intended for cases where a resource needs to be imported from one course into another.
@@ -31,9 +33,9 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected dialogRef = inject(DynamicDialogRef, { optional: true });
     protected dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
-    loading = false;
-    content: SearchResult<T>;
-    total = 0;
+    readonly loading = signal(false);
+    readonly content = signal<SearchResult<T>>({ resultsOnPage: [], numberOfPages: 0 });
+    readonly total = signal(0);
     state: SearchTermPageableSearch = {
         page: 1,
         pageSize: 10,
@@ -43,8 +45,8 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     };
 
     // These two attributes should be set when using the common template (import.component.html)
-    entityName: string;
-    columns: Column<T>[];
+    entityName!: string; // set by concrete subclasses before the shared template reads it
+    columns!: Column<T>[]; // set by concrete subclasses before the shared template reads it
 
     // Keep the inherited `[disabledIds]` binding while preserving the mutable compatibility field used by legacy subclasses.
     // eslint-disable-next-line @angular-eslint/no-input-rename
@@ -118,14 +120,21 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     }
 
     ngOnInit(): void {
-        this.content = { resultsOnPage: [], numberOfPages: 0 };
+        this.content.set({ resultsOnPage: [], numberOfPages: 0 });
 
         this.performSearch(this.sort, 0);
         this.performSearch(this.search, 300);
+
+        // Trigger an initial load so the table is populated as soon as the dialog opens. The jhiSort
+        // directive used to emit its initial predicate/ascending on init (which triggered `sort.next()`),
+        // but after its migration to signal `model()` inputs it no longer emits on parent-set, which left
+        // the table empty by default. Kick off the first search explicitly via the immediate (0 ms) `sort`
+        // subject so opening any import dialog shows the available entities right away.
+        this.sort.next();
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.content.resultsOnPage, this.sortedColumn, this.listSorting);
+        this.sortService.sortByProperty(this.content().resultsOnPage, this.sortedColumn, this.listSorting);
     }
 
     /**
@@ -169,6 +178,14 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     }
 
     /**
+     * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the 1-indexed page
+     * used throughout this component before delegating to {@link onPageChange}.
+     */
+    onPaginatorPageChange(event: PaginatorState): void {
+        this.onPageChange((event.page ?? 0) + 1);
+    }
+
+    /**
      * Method to perform the search based on a search subject
      *
      * @param searchSubject The search subject which we use to search.
@@ -178,14 +195,14 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
         searchSubject
             .pipe(
                 debounceTime(debounce),
-                tap(() => (this.loading = true)),
+                tap(() => this.loading.set(true)),
                 switchMap(() => this.pagingService!.search(this.state, this.createOptions())),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((resp: SearchResult<T>) => {
-                this.content = resp;
-                this.loading = false;
-                this.total = resp.numberOfPages * this.state.pageSize;
+                this.content.set(resp);
+                this.loading.set(false);
+                this.total.set(resp.numberOfPages * this.state.pageSize);
                 this.onSearchResult();
             });
     }
@@ -204,7 +221,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected onSearchResult(): void {}
 
     protected setSearchParam(patch: Partial<SearchTermPageableSearch>) {
-        Object.assign(this.state, patch);
+        hydrate(this.state, patch);
         this.sort.next();
     }
 }

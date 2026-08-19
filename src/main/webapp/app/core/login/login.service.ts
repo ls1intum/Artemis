@@ -23,12 +23,13 @@ export class LoginService {
         return new Promise<void>((resolve, reject) => {
             this.authServerProvider.login(credentials).subscribe({
                 next: () => {
-                    this.accountService.identity(true).then(() => {
+                    void this.accountService.identity(true).then(() => {
                         resolve();
                     });
                 },
                 error: (err) => {
                     this.logout(false);
+                    this.logoutWasForceful = false;
                     reject(err);
                 },
             });
@@ -43,15 +44,32 @@ export class LoginService {
         return new Promise<void>((resolve, reject) => {
             this.authServerProvider.loginSAML2(rememberMe).subscribe({
                 next: () => {
-                    this.accountService.identity(true).then(() => {
+                    void this.accountService.identity(true).then(() => {
                         resolve();
                     });
                 },
                 error: (err) => {
                     this.logout(false);
+                    this.logoutWasForceful = false;
                     reject(err);
                 },
             });
+        });
+    }
+
+    /**
+     * Login the user with OIDC.
+     * @param rememberMe whether or not to remember the user
+     */
+    loginOIDC(rememberMe: boolean): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            try {
+                this.authServerProvider.loginOIDC(rememberMe);
+                resolve();
+            } catch (err) {
+                this.logoutWasForceful = false;
+                reject(err);
+            }
         });
     }
 
@@ -80,7 +98,7 @@ export class LoginService {
     private onLogout(): void {
         this.accountService.authenticate(undefined);
         this.alertService.closeAll();
-        this.router.navigateByUrl('/sign-in');
+        void this.router.navigateByUrl('/sign-in');
         this.authServerProvider.clearCaches().subscribe();
     }
 

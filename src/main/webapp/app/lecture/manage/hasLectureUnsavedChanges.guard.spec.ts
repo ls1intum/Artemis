@@ -1,8 +1,8 @@
 import { ActivatedRouteSnapshot, GuardResult, MaybeAsync, Router, RouterStateSnapshot } from '@angular/router';
 import { LectureUnsavedChangesComponent, hasLectureUnsavedChangesGuard } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Observable, Subject, firstValueFrom, of } from 'rxjs';
@@ -10,8 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('hasLectureUnsavedChanges', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LectureUnsavedChangesComponent;
     let currentRoute: ActivatedRouteSnapshot;
     let currentState: RouterStateSnapshot;
@@ -43,7 +41,7 @@ describe('hasLectureUnsavedChanges', () => {
             shouldDisplayDismissWarning: true,
             isChangeMadeToTitleSection: vi.fn().mockReturnValue(true),
             isChangeMadeToPeriodSection: vi.fn().mockReturnValue(true),
-            isChangeMadeToTitleOrPeriodSection: true,
+            isChangeMadeToTitleOrPeriodSection: signal(true),
         };
 
         currentRoute = {} as ActivatedRouteSnapshot;
@@ -57,7 +55,7 @@ describe('hasLectureUnsavedChanges', () => {
 
     it('should return true if warning is not bypassed by shouldDisplayDismissWarning variable but no changes were made', async () => {
         component.shouldDisplayDismissWarning = true;
-        component.isChangeMadeToTitleOrPeriodSection = false;
+        component.isChangeMadeToTitleOrPeriodSection = signal(false);
 
         const result = await firstValueFrom(getGuardResultAsObservable(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState)));
         expect(result).toBe(true);
@@ -65,7 +63,7 @@ describe('hasLectureUnsavedChanges', () => {
 
     it('should return true if dismiss warning shall not be displayed', async () => {
         component.shouldDisplayDismissWarning = false;
-        component.isChangeMadeToTitleOrPeriodSection = true;
+        component.isChangeMadeToTitleOrPeriodSection = signal(true);
 
         const result = await firstValueFrom(getGuardResultAsObservable(hasLectureUnsavedChangesGuard(component, currentRoute, currentState, nextState)));
         expect(result).toBe(true);

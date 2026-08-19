@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewContainerRef, effect, inject, input, output, untracked, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewContainerRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -16,12 +16,22 @@ interface PostGroup {
     posts: AnswerPost[];
 }
 
+/**
+ * Returns a new {@link AnswerPost} reference differing only in `isConsecutive`. See the equivalent helper in
+ * conversation-messages.component.ts: grouping must not deep-copy the answers it renders.
+ */
+function withConsecutiveFlag(answerPost: AnswerPost, isConsecutive: boolean): AnswerPost {
+    const flagged = AnswerPost.withSameValues(answerPost);
+    flagged.isConsecutive = isConsecutive;
+    return flagged;
+}
+
 @Component({
     selector: 'jhi-posting-footer',
     templateUrl: './posting-footer.component.html',
     imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisTranslatePipe, NgClass],
 })
-export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentChecked {
+export class PostingFooterComponent implements OnInit, OnDestroy {
     constructor() {
         effect(() => {
             // Track sortedAnswerPosts signal input (replaces ngOnChanges)
@@ -52,18 +62,17 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     readonly containerRef = viewChild.required('createEditAnswerPostContainer', { read: ViewContainerRef });
     readonly createAnswerPostModalComponent = viewChild.required<AnswerPostCreateEditModalComponent>('createAnswerPostModal');
 
-    createdAnswerPost: AnswerPost;
+    readonly createdAnswerPost = signal<AnswerPost>(undefined!);
     isAtLeastTutorInCourse = false;
     courseId!: number;
-    groupedAnswerPosts: PostGroup[] = [];
+    readonly groupedAnswerPosts = signal<PostGroup[]>([]);
 
     private metisService = inject(MetisService);
-    private changeDetector = inject(ChangeDetectorRef);
 
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-        this.createdAnswerPost = this.createEmptyAnswerPost();
+        this.createdAnswerPost.set(this.createEmptyAnswerPost());
         this.groupAnswerPosts();
     }
 
@@ -72,14 +81,6 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
         if (modal && typeof modal.createEditAnswerPostContainerRef === 'function') {
             modal.createEditAnswerPostContainerRef()?.clear();
         }
-    }
-
-    /**
-     * this lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when dismissing all changes in the tag-selector
-     * on dismissing the edit-create-modal -> we do not want to store changes in the create-edit-modal that are not saved
-     */
-    ngAfterContentChecked() {
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -96,7 +97,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
 
     groupAnswerPosts(): void {
         if (!this.sortedAnswerPosts() || this.sortedAnswerPosts().length === 0) {
-            this.groupedAnswerPosts = [];
+            this.groupedAnswerPosts.set([]);
             return;
         }
 
@@ -109,7 +110,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
         const groups: PostGroup[] = [];
         let currentGroup: PostGroup = {
             author: sortedPosts[0].author,
-            posts: [{ ...sortedPosts[0], isConsecutive: false }],
+            posts: [withConsecutiveFlag(sortedPosts[0], false)],
         };
 
         for (let i = 1; i < sortedPosts.length; i++) {
@@ -122,19 +123,18 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
             }
 
             if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
+                currentGroup.posts.push(withConsecutiveFlag(currentPost, true)); // consecutive post
             } else {
                 groups.push(currentGroup);
                 currentGroup = {
                     author: currentPost.author,
-                    posts: [{ ...currentPost, isConsecutive: false }],
+                    posts: [withConsecutiveFlag(currentPost, false)],
                 };
             }
         }
 
         groups.push(currentGroup);
-        this.groupedAnswerPosts = groups;
-        this.changeDetector.detectChanges();
+        this.groupedAnswerPosts.set(groups);
     }
 
     trackGroupByFn(_: number, group: PostGroup): number {

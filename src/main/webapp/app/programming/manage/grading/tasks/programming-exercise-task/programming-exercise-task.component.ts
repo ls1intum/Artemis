@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
@@ -8,12 +8,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TestCasePassedBuildsChartComponent } from 'app/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Tooltip } from 'primeng/tooltip';
 
 @Component({
     selector: 'jhi-programming-exercise-task',
     templateUrl: './programming-exercise-task.component.html',
     styleUrls: ['../programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.scss'],
-    imports: [FaIconComponent, FormsModule, TestCasePassedBuildsChartComponent, ArtemisTranslatePipe],
+    imports: [FaIconComponent, FormsModule, TestCasePassedBuildsChartComponent, ArtemisTranslatePipe, Tooltip],
 })
 export class ProgrammingExerciseTaskComponent implements OnInit {
     private programmingExerciseTaskService = inject(ProgrammingExerciseTaskService);
@@ -30,21 +31,21 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     faAngleRight = faAngleRight;
 
     readonly NOT_ASSIGNED_TO_TASK_NAME = 'Not assigned to task';
-    open: boolean;
-    onlyViewTestCases: boolean;
-    testCaseVisibilityList: { value: Visibility; name: string }[] = [];
+    readonly open = signal(false);
+    readonly onlyViewTestCases = signal(false);
+    readonly testCaseVisibilityList = signal<{ value: Visibility; name: string }[]>([]);
 
     get numParticipations(): number {
         return this.programmingExerciseTaskService?.gradingStatistics?.numParticipations ?? 0;
     }
 
     ngOnInit(): void {
-        this.openSubject().subscribe((open) => (this.open = open));
+        this.openSubject().subscribe((open) => this.open.set(open));
 
         // If this is the only task have it open by default and hide the task
         if (this.programmingExerciseTaskService.currentTasks.length == 1) {
-            this.onlyViewTestCases = true;
-            this.open = true;
+            this.onlyViewTestCases.set(true);
+            this.open.set(true);
         }
 
         this.updateTestCaseVisibilityList();
@@ -86,17 +87,19 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     }
 
     private updateTestCaseVisibilityList() {
-        this.testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => {
-            let displayName = name;
+        this.testCaseVisibilityList.set(
+            Object.entries(Visibility).map(([name, value]) => {
+                let displayName = name;
 
-            if (this.isExamExercise() && value === Visibility.AfterDueDate) {
-                displayName = 'AfterReleaseDateOfResults';
-            }
+                if (this.isExamExercise() && value === Visibility.AfterDueDate) {
+                    displayName = 'AfterReleaseDateOfResults';
+                }
 
-            return {
-                value,
-                name: displayName,
-            };
-        });
+                return {
+                    value,
+                    name: displayName,
+                };
+            }),
+        );
     }
 }

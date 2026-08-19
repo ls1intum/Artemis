@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
 import { By } from '@angular/platform-browser';
@@ -33,8 +32,6 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('CourseConversationComponent with communication disabled', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseConversationsComponent;
     let fixture: ComponentFixture<CourseConversationsComponent>;
     let metisConversationService: MetisConversationService;
@@ -66,6 +63,9 @@ describe('CourseConversationComponent with communication disabled', () => {
                     provide: Router,
                     useValue: {
                         url: '/course-management/1/conversations',
+                        // Read by CourseTabRefreshService, which listens for the tab being selected again
+                        events: EMPTY,
+                        currentNavigation: () => null,
                     },
                 },
                 { provide: MetisService, useClass: MockMetisService },

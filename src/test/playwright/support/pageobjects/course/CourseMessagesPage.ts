@@ -5,7 +5,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { UserCredentials } from '../../users';
 import { CommunicationAPIRequests } from '../../requests/CommunicationAPIRequests';
-import { setMonacoEditorContent, setMonacoEditorContentByLocator } from '../../utils';
+import { readResponseJson, setMonacoEditorContent, setMonacoEditorContentByLocator } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.
@@ -153,7 +153,7 @@ export class CourseMessagesPage {
         );
         await this.page.locator('.p-dialog-content #submitButton').click();
         const response = await responsePromise;
-        const channel: ChannelDTO = await response.json();
+        const channel: ChannelDTO = await readResponseJson(response);
         await this.page.waitForURL(`**/communication?conversationId=${channel.id}`);
         expect(channel.isAnnouncementChannel).toBe(isAnnouncementChannel);
         expect(channel.isPublic).toBe(isPublic);
@@ -289,6 +289,65 @@ export class CourseMessagesPage {
     }
 
     /**
+     * Returns the Monaco editor of the main (non-thread) message input.
+     */
+    getMessageEditor() {
+        return this.page.locator('jhi-posting-markdown-editor .monaco-editor').first();
+    }
+
+    /**
+     * Focuses the main message editor and types the given text via real keystrokes rather than
+     * Monaco's `setValue` API (used by {@link writeMessage}). Behavior that only reacts to actual
+     * typing, such as the emoji shortcode suggest widget, requires this instead of `fill`/`setValue`.
+     * @param text - The text to type into the editor.
+     */
+    async typeInMessageEditor(text: string) {
+        const editor = this.getMessageEditor();
+        await editor.waitFor({ state: 'visible', timeout: 10000 });
+        await editor.click();
+        await this.page.keyboard.type(text);
+    }
+
+    /**
+     * Returns the locator for Monaco's suggest widget (the autocomplete popup shown while typing),
+     * scoped to its `visible` state class so a hidden (but still DOM-attached) widget from a
+     * previous session does not cause a strict-mode match with the currently open one.
+     */
+    getSuggestWidget() {
+        return this.page.locator('.suggest-widget.visible');
+    }
+
+    /**
+     * Returns the locator for the rendered text content of the main message editor.
+     */
+    getMessageEditorText() {
+        return this.getMessageEditor().locator('.view-lines');
+    }
+
+    /**
+     * Waits until the send button becomes enabled. The editor propagates content to the send form
+     * with a debounce, so the button's enabled state only mirrors form validity a moment after typing.
+     */
+    async waitUntilSendEnabled() {
+        await expect(this.page.locator('#save')).toBeEnabled({ timeout: 10000 });
+    }
+
+    /**
+     * Sends the message currently in the main message editor by pressing Enter (rather than
+     * clicking the send button), and waits for the message to be persisted.
+     * @returns The created message.
+     */
+    async sendMessageWithEnterKey(): Promise<Post> {
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/messages') && resp.request().method() === 'POST',
+        );
+        await this.page.keyboard.press('Enter');
+        const response = await responsePromise;
+        expect(response.status()).toBe(201);
+        return readResponseJson(response);
+    }
+
+    /**
      * Checks for the presence of a message by its ID and content.
      * @param messageId - The ID of the message to check.
      * @param message - The content of the message to verify.
@@ -405,7 +464,7 @@ export class CourseMessagesPage {
         await saveButton.click({ timeout: 10000 });
         const response = await responsePromise;
         expect(response.status()).toBe(201);
-        return response.json();
+        return readResponseJson(response);
     }
 
     /**
@@ -426,7 +485,7 @@ export class CourseMessagesPage {
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/group-chats') && !resp.url().includes('/register') && resp.request().method() === 'POST');
         await this.page.locator('#submitButton').click();
         const response = await responsePromise;
-        const groupChat: GroupChat = await response.json();
+        const groupChat: GroupChat = await readResponseJson(response);
         // Wait for Angular to navigate to the new conversation. Under heavy parallel multi-node
         // load the SPA's internal navigation to the new conversation URL occasionally races a
         // late page reload and the query-param update gets dropped — fall back to navigating
@@ -494,56 +553,34 @@ export class CourseMessagesPage {
 
     /**
      * Navigates to a conversation and waits for it to become active.
-     * Angular's setActiveConversation() looks up the conversationId in a cached list.
-     * If the cache isn't ready when the route first processes, the conversation won't activate.
-     * We handle this by navigating to the full URL, waiting for the conversations API to respond
-     * (which populates the cache), then reloading if the conversation didn't activate.
+     * <p>
+     * A single navigation, deliberately. This used to retry twice, because `setActiveConversation` dropped the
+     * conversation the url asked for whenever the route emitted its query parameters before the request that loads the
+     * conversations had returned, which left the page empty. The service now remembers that request and applies it when
+     * the list arrives, so one navigation is enough and a retry would only hide the day that stops being true.
+     *
+     * @param courseID - The ID of the course the conversation belongs to.
+     * @param conversationID - The ID of the conversation to open.
      */
     async openConversation(courseID: number, conversationID: number) {
-        const fullUrl = `/courses/${courseID}/communication?conversationId=${conversationID}`;
-        const membersButton = this.page.locator('.members');
+        await this.page.goto(`/courses/${courseID}/communication?conversationId=${conversationID}`);
+        await this.page.locator('.members').waitFor({ state: 'visible' });
+    }
 
-        // Attempt 1: Navigate directly to the conversation URL
-        // Set up the response waiter BEFORE navigation so we don't miss the response
-        const conversationsApiPromise = this.page.waitForResponse(
-            (resp) =>
-                resp.url().includes('/api/communication/courses/') &&
-                resp.url().match(/\/conversations(\?|$)/) !== null &&
-                resp.request().method() === 'GET' &&
-                resp.status() === 200,
-        );
-        await this.page.goto(fullUrl);
-        // Wait for the conversations list API to complete (cache population)
-        await conversationsApiPromise.catch(() => {});
-
-        // Check if the conversation became active
-        try {
-            await membersButton.waitFor({ state: 'visible', timeout: 10000 });
-            return;
-        } catch {
-            // Conversation didn't activate — cache may not have been ready in time
-        }
-
-        // Attempt 2: Reload the page so Angular re-processes the route with a populated cache
-        await this.page.reload({ waitUntil: 'domcontentloaded' });
-        try {
-            await membersButton.waitFor({ state: 'visible', timeout: 10000 });
-            return;
-        } catch {
-            // Still not active
-        }
-
-        // Attempt 3: Full fresh navigation with wait for API
-        const apiPromise2 = this.page.waitForResponse(
-            (resp) =>
-                resp.url().includes('/api/communication/courses/') &&
-                resp.url().match(/\/conversations(\?|$)/) !== null &&
-                resp.request().method() === 'GET' &&
-                resp.status() === 200,
-        );
-        await this.page.goto(fullUrl);
-        await apiPromise2.catch(() => {});
-        await membersButton.waitFor({ state: 'visible', timeout: 10000 });
+    /**
+     * Opens a conversation and waits until a specific post has rendered in the message list.
+     * <p>
+     * Activation and rendering are two different things: {@link openConversation} returns once the conversation is
+     * active, which is before the message list has necessarily painted the post. Waiting for the post itself is what
+     * callers actually need, and it is a wait rather than a retry, so a post that never arrives still fails here.
+     *
+     * @param courseID - The ID of the course the conversation belongs to.
+     * @param conversationID - The ID of the conversation to open.
+     * @param postID - The ID of the post that must be visible before returning.
+     */
+    async openConversationAndWaitForPost(courseID: number, conversationID: number, postID: number) {
+        await this.openConversation(courseID, conversationID);
+        await this.getSinglePost(postID).waitFor({ state: 'visible' });
     }
 
     async listMembersButton(courseID: number, conversationID: number) {
@@ -724,7 +761,7 @@ export class CourseMessagesPage {
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages') && resp.request().method() === 'POST');
         await threadSidebar.locator('jhi-message-reply-inline-input #save').click();
         const response = await responsePromise;
-        return response.json();
+        return readResponseJson(response);
     }
 
     /**
@@ -770,6 +807,122 @@ export class CourseMessagesPage {
         await postLocator.locator('.dropdown-menu.show .forward').click();
         // Wait for the forward dialog to appear
         await this.page.locator('jhi-forward-message-dialog').waitFor({ state: 'visible', timeout: 10000 });
+    }
+
+    /**
+     * Completes an already-open forward dialog: selects the destination conversation by name and sends.
+     * @param destinationName - The name of the destination channel/conversation to forward to.
+     * @param extraContent - Optional additional message content to include with the forward.
+     */
+    private async completeForwardDialog(destinationName: string, extraContent?: string) {
+        const dialog = this.page.locator('jhi-forward-message-dialog');
+        const input = dialog.locator('input.tag-input');
+        // the dialog selects on (mousedown) so the option is chosen before the input blur closes the dropdown
+        const option = dialog.locator('.autocomplete-dropdown .list-group-item-action', { hasText: destinationName }).first();
+        // The autocomplete dropdown re-renders as the debounced search resolves, so the matched option can detach between
+        // becoming visible and the mousedown — an unbounded dispatchEvent then hangs until the test timeout. Re-type and
+        // re-select as a unit with a bounded mousedown so a detach retries quickly instead of hanging.
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await input.fill('');
+            await input.fill(destinationName);
+            try {
+                await option.waitFor({ state: 'visible', timeout: 5000 });
+                await option.dispatchEvent('mousedown', { timeout: 5000 });
+                break;
+            } catch (error) {
+                if (attempt === 2) {
+                    throw error;
+                }
+            }
+        }
+        if (extraContent) {
+            await setMonacoEditorContent(this.page, 'jhi-forward-message-dialog jhi-markdown-editor-monaco', extraContent);
+        }
+        // forwarding first creates the container post, then the forwarded-message link(s)
+        const forwardResponse = this.page.waitForResponse((resp) => resp.url().includes('/forwarded-messages') && resp.request().method() === 'POST');
+        await dialog.locator('.modal-footer button.btn-primary').click();
+        await forwardResponse;
+        await dialog.waitFor({ state: 'hidden', timeout: 10000 });
+    }
+
+    /**
+     * Forwards a message to a destination channel and waits until the forward is persisted.
+     * @param messageId - The ID of the message to forward.
+     * @param destinationName - The name of the destination channel.
+     * @param extraContent - Optional additional message content.
+     */
+    async forwardMessageToChannel(messageId: number, destinationName: string, extraContent?: string) {
+        await this.forwardMessage(messageId);
+        await this.completeForwardDialog(destinationName, extraContent);
+    }
+
+    /**
+     * Forwards a thread reply (answer post) to a destination channel.
+     * @param parentMessageId - The ID of the message whose thread contains the reply.
+     * @param replyId - The ID of the reply to forward.
+     * @param destinationName - The name of the destination channel.
+     * @param extraContent - Optional additional message content.
+     */
+    async forwardReplyToChannel(parentMessageId: number, replyId: number, destinationName: string, extraContent?: string) {
+        await this.openThreadForMessage(parentMessageId);
+        const replyLocator = this.page.locator(`.expanded-thread #item-${replyId}`);
+        await replyLocator.scrollIntoViewIfNeeded();
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await replyLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+        // jhi-answer-post renders its context dropdown as a sibling of the #item-<id> div (not inside it),
+        // so scope the click to the surrounding jhi-answer-post host instead of the #item-<id> element
+        await this.page.locator(`jhi-answer-post:has(#item-${replyId})`).locator('.dropdown-menu.show .forward').click();
+        await this.completeForwardDialog(destinationName, extraContent);
+    }
+
+    /**
+     * Asserts that a forwarded-message preview containing the given source content is visible in the open conversation.
+     * @param expectedSourceContent - The content of the original (forwarded) posting.
+     */
+    async checkForwardedPreview(expectedSourceContent: string) {
+        const forwarded = this.page.locator('.forwarded-message-container', { hasText: expectedSourceContent });
+        await expect(forwarded.first()).toBeVisible({ timeout: 10000 });
+    }
+
+    /**
+     * Opens a conversation and waits until a forwarded-message preview containing the given source content has rendered,
+     * reloading between attempts.
+     *
+     * The forwarded preview is only populated after the conversation's forwarded-messages fetch AND the (access-checked)
+     * source-post / source-answer fetch both succeed. Under heavy multi-node load the just-created forward can briefly be
+     * invisible to the node that serves the destination conversation, so {@link openConversation} (which only waits for the
+     * conversation to *activate*) returns before the forwarded-messages fetch sees it — and the source fetch then never
+     * fires. A reload re-issues those fetches against the shared database, which by then has the persisted forward. This is
+     * the same load-induced rendering-race mitigation {@link openConversationAndWaitForPost} uses for plain posts. A visible
+     * preview proves the whole chain — including the access-checked source fetch — succeeded for an accessible source.
+     *
+     * @param courseID - The ID of the course the conversation belongs to.
+     * @param conversationID - The ID of the destination conversation to open.
+     * @param expectedSourceContent - The content of the original (forwarded) posting that must appear in the preview.
+     */
+    async openConversationAndWaitForForwardedPreview(courseID: number, conversationID: number, expectedSourceContent: string) {
+        const forwarded = this.page.locator('.forwarded-message-container', { hasText: expectedSourceContent });
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt === 0) {
+                await this.openConversation(courseID, conversationID);
+            } else {
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+            }
+            try {
+                await expect(forwarded.first()).toBeVisible({ timeout: 12000 });
+                return;
+            } catch {
+                // Forwarded message not yet propagated/rendered — fall through to a reload, which re-fetches it.
+            }
+        }
+        throw new Error(`Forwarded preview containing "${expectedSourceContent}" did not render in conversation ${conversationID} after opening and reloading`);
     }
 
     /**
@@ -880,5 +1033,45 @@ export class CourseMessagesPage {
             // Wait for the acceptance to be processed
             await this.page.waitForLoadState('domcontentloaded');
         }
+    }
+
+    /**
+     * Returns the scrollable message-list container that hosts the infinite-scroll directive.
+     */
+    getScrollableMessagesContainer() {
+        return this.page.locator('#scrollableDiv');
+    }
+
+    /**
+     * Scrolls the message list to the very top. In a conversation this brings the top sentinel of the
+     * infinite-scroll directive into view, which triggers loading of the next (older) page of messages.
+     */
+    async scrollMessagesToTop() {
+        const container = this.getScrollableMessagesContainer();
+        await container.waitFor({ state: 'visible', timeout: 30000 });
+        await container.evaluate((element) => element.scrollTo({ top: 0 }));
+    }
+
+    /**
+     * Returns the number of currently rendered posts in the message list.
+     */
+    async getRenderedPostCount(): Promise<number> {
+        return this.page.locator('.post-item').count();
+    }
+
+    /**
+     * Runs a course-wide search for the given term via the global search bar.
+     * @param term - The search term.
+     */
+    async searchCourseWide(term: string) {
+        await this.page.locator('input[name="searchText"]').fill(term);
+        await this.page.locator('#search-submit').click();
+    }
+
+    /**
+     * Returns the number of currently rendered course-wide search result posts.
+     */
+    async getRenderedSearchResultCount(): Promise<number> {
+        return this.page.locator('#scrollableDiv [id^="item-"]').count();
     }
 }

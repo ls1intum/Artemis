@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { DatePickerModule } from 'primeng/datepicker';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faCalendarAlt, faCircleXmark, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { parseJson } from 'app/foundation/util/json.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export class CourseCompetencyImportSettings {
     importRelations = false;
@@ -18,14 +20,12 @@ export class CourseCompetencyImportSettings {
 
 @Component({
     selector: 'jhi-import-course-competencies-settings',
-    imports: [NgbTooltipModule, FormsModule, CommonModule, FontAwesomeModule, OwlDateTimeModule, OwlNativeDateTimeModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [NgbTooltipModule, FormsModule, CommonModule, FontAwesomeModule, DatePickerModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './import-course-competencies-settings.component.html',
     styleUrl: './import-course-competencies-settings.component.scss',
 })
 export class ImportCourseCompetenciesSettingsComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
-    protected readonly faCalendarAlt = faCalendarAlt;
-    protected readonly faCircleXmark = faCircleXmark;
 
     readonly importSettings = model.required<CourseCompetencyImportSettings>();
     readonly importRelations = computed(() => this.importSettings().importRelations);
@@ -35,25 +35,18 @@ export class ImportCourseCompetenciesSettingsComponent {
     readonly isReleaseDate = computed(() => this.importSettings().isReleaseDate);
 
     protected toggleImportSetting(setting: keyof CourseCompetencyImportSettings): void {
-        this.importSettings.update((settings) => ({
-            ...settings,
-            [setting]: !settings[setting],
-        }));
+        this.importSettings.update((settings) => cloneWith(settings, { [setting]: !settings[setting] }));
     }
 
-    public setReferenceDate(dateEvent?: HTMLInputElement): void {
-        this.importSettings.update((settings) => ({
-            ...settings,
-            referenceDate: dateEvent ? new Date(dateEvent.value) : undefined,
-            isReleaseDate: dateEvent ? (settings.referenceDate ? settings.isReleaseDate : true) : undefined,
-        }));
+    public setReferenceDate(date?: Date | string | null): void {
+        const referenceDate = date instanceof Date ? date : undefined;
+        this.importSettings.update((settings) =>
+            cloneWith(settings, { referenceDate, isReleaseDate: referenceDate ? (settings.referenceDate ? settings.isReleaseDate : true) : undefined }),
+        );
     }
 
     protected setReferenceDateType(event: Event): void {
         const target = event.target as HTMLInputElement;
-        this.importSettings.update((settings) => ({
-            ...settings,
-            isReleaseDate: JSON.parse(target.value),
-        }));
+        this.importSettings.update((settings) => cloneWith(settings, { isReleaseDate: parseJson<boolean>(target.value) }));
     }
 }

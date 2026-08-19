@@ -15,14 +15,14 @@ import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { computed } from '@angular/core';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { facSaveSuccess, facSaveWarning } from 'app/foundation/icons/icons';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ExamExerciseOverviewPageComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamExerciseOverviewPageComponent>;
     let comp: ExamExerciseOverviewPageComponent;
     let studentExam: StudentExam;
@@ -88,5 +88,27 @@ describe('ExamExerciseOverviewPageComponent', () => {
         const resultComponent = fixture.debugElement.query(By.css(`#jhi-updating-result-0`));
 
         expect(resultComponent).not.toBeNull();
+    });
+
+    it('should re-evaluate the exercise status icon when a submission editor reports an isSynced change', () => {
+        // Regression guard, mirroring exam-navigation-sidebar.component.spec.ts: `isSynced` is mutated in
+        // place on a plain submission object, so under zoneless change detection this binding only
+        // re-evaluates if it reads the service-wide signal the submission editors bump. A cached
+        // `computed` stands in for the template binding and would keep the stale icon without that read.
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const submission = { id: 9, submitted: true, isSynced: true } as Submission;
+        const exercise = { id: 4, type: ExerciseType.TEXT, studentParticipations: [{ submissions: [submission] } as StudentParticipation] } as Exercise;
+        const item = { exercise, icon: facSaveSuccess } as any;
+
+        const status = TestBed.runInInjectionContext(() => computed(() => comp.setExerciseIconStatus(item)));
+        expect(status()).toBe('synced saved');
+        expect(item.icon).toEqual(facSaveSuccess);
+
+        // Exactly what the text/quiz/modeling editors do when the student edits their answer.
+        submission.isSynced = false;
+        examParticipationService.notifySubmissionSyncStateChanged();
+
+        expect(status()).toBe('notSynced');
+        expect(item.icon).toEqual(facSaveWarning);
     });
 });

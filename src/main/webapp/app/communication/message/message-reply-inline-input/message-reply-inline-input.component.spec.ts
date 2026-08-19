@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -25,8 +24,6 @@ import { MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('MessageReplyInlineInputComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: MessageReplyInlineInputComponent;
     let fixture: ComponentFixture<MessageReplyInlineInputComponent>;
     let metisService: MetisService;
@@ -87,7 +84,7 @@ describe('MessageReplyInlineInputComponent', () => {
         component.confirm();
         expect(metisServiceCreateStub).toHaveBeenCalledWith(expect.objectContaining({ content: newContent }));
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith({ ...component.posting()!, content: newContent });
     });
 
@@ -106,7 +103,7 @@ describe('MessageReplyInlineInputComponent', () => {
         component.confirm();
 
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).not.toHaveBeenCalled();
     });
 
@@ -124,7 +121,7 @@ describe('MessageReplyInlineInputComponent', () => {
 
         expect(metisServiceUpdateStub).toHaveBeenCalledWith(expect.objectContaining({ content: editedContent }));
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should stop loading when metis service throws error during message replying', () => {
@@ -143,7 +140,7 @@ describe('MessageReplyInlineInputComponent', () => {
         component.confirm();
 
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onEditSpy).not.toHaveBeenCalled();
     });
 

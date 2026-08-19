@@ -1,15 +1,18 @@
 <div>
     <h5 *adminTitleBarTitle id="health-page-heading" class="mb-0" jhiTranslate="health.title"></h5>
     <div *adminTitleBarActions>
-        <button class="btn btn-primary btn-sm" (click)="refresh()"><fa-icon [icon]="faSync" /> <span jhiTranslate="health.refresh.button"></span></button>
+        <tum-ui-button size="small" severity="secondary" variant="outlined" [icon]="faSync" [loading]="isRefreshing()" (clicked)="refresh()" data-testid="refresh-button">
+            <span jhiTranslate="health.refresh.button"></span>
+        </tum-ui-button>
     </div>
-    <div class="table-responsive">
-        <table id="healthCheck" class="table table-striped" aria-describedby="health-page-heading">
+    <div class="overflow-x-auto">
+        <table tumUiTable [striped]="true" id="healthCheck" aria-describedby="health-page-heading">
             <thead>
                 <tr>
-                    <th scope="col" jhiTranslate="health.table.service"></th>
-                    <th scope="col" class="text-center" jhiTranslate="health.table.status"></th>
-                    <th scope="col" class="text-center" jhiTranslate="health.details.details"></th>
+                    <!-- w-full on the first column collapses the other two to their content width. -->
+                    <th scope="col" class="w-full" jhiTranslate="health.table.service"></th>
+                    <th scope="col" jhiTranslate="health.table.status"></th>
+                    <th scope="col" jhiTranslate="health.details.details"></th>
                 </tr>
             </thead>
             @if (health()) {
@@ -18,32 +21,51 @@
                         <tr [id]="componentHealth.key">
                             <td>
                                 {{ 'health.indicator.' + componentHealth.key | artemisTranslate }}
-                                @if (componentHealth.value?.details?.url) {
-                                    <a class="badge bg-info" [href]="componentHealth.value!.details!.url">
-                                        {{ componentHealth.value!.details!.url }}
+                                @if (componentHealth.value?.details?.url; as url) {
+                                    <a
+                                        [href]="url"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="ms-1 inline-flex items-center gap-1 align-baseline text-primary hover:underline"
+                                        data-testid="url-tag"
+                                    >
+                                        <fa-icon [icon]="faUpRightFromSquare" class="text-xs" />
+                                        <span class="break-all">{{ url }}</span>
                                     </a>
                                 }
                             </td>
-                            <td class="status text-center">
-                                <span class="badge" [ngClass]="getBadgeClass(componentHealth.value!.status)" jhiTranslate="{{ 'health.status.' + componentHealth.value!.status }}">
-                                    {{ componentHealth.value!.status }}
-                                </span>
+                            <td data-testid="status-cell">
+                                <tum-ui-tag
+                                    [severity]="getBadgeSeverity(componentHealth.value!.status)"
+                                    [value]="'health.status.' + componentHealth.value!.status | artemisTranslate"
+                                    data-testid="status-tag"
+                                />
                             </td>
-                            <td class="text-center">
+                            <td>
                                 @if (componentHealth.value!.details) {
-                                    <a class="hand" (click)="showHealth({ key: componentHealth.key, value: componentHealth.value! })">
+                                    <tum-ui-button
+                                        size="small"
+                                        severity="info"
+                                        [tumUiTooltip]="'health.details.details' | artemisTranslate"
+                                        [ariaLabel]="'health.details.details' | artemisTranslate"
+                                        (clicked)="showHealth({ key: componentHealth.key, value: componentHealth.value! })"
+                                        data-testid="details-link"
+                                    >
                                         <fa-icon [icon]="faEye" />
-                                    </a>
+                                    </tum-ui-button>
                                 }
                             </td>
                         </tr>
                     }
                     <tr id="websocketConnection">
-                        <td>Websocket Connection (Client -> Server)</td>
-                        <td class="status text-center">
-                            <jhi-connection-status />
+                        <td>Websocket Connection (Client -&gt; Server)</td>
+                        <td data-testid="status-cell">
+                            <tum-ui-tag [severity]="websocketConnected() ? 'success' : 'danger'" data-testid="status-tag">
+                                <fa-icon [fixedWidth]="true" [icon]="websocketConnected() ? faTowerBroadcast : faExclamation" />
+                                <span>{{ (websocketConnected() ? 'connectionStatus.connected' : 'connectionStatus.disconnected') | artemisTranslate }}</span>
+                            </tum-ui-tag>
                         </td>
-                        <td class="text-center">-</td>
+                        <td>-</td>
                     </tr>
                 </tbody>
             }

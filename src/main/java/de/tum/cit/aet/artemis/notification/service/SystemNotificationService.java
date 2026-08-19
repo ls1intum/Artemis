@@ -17,11 +17,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.repository.MaintenanceEmailRecipientRepository;
 import de.tum.cit.aet.artemis.notification.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
@@ -62,6 +63,15 @@ public class SystemNotificationService {
         return systemNotificationRepository.findAllActiveAndFutureSystemNotifications(ZonedDateTime.now());
     }
 
+    /**
+     * Finds all active and future system notifications and maps them to DTOs.
+     *
+     * @return the list of notification DTOs
+     */
+    public List<SystemNotificationDTO> findAllActiveAndFutureSystemNotificationDTOs() {
+        return findAllActiveAndFutureSystemNotifications().stream().map(SystemNotificationDTO::from).toList();
+    }
+
     static final String SYSTEM_NOTIFICATION_TOPIC = "/topic/notification/system-notification";
 
     // Legacy STOMP destination kept in parallel during the migration to /topic/notification/...
@@ -76,7 +86,7 @@ public class SystemNotificationService {
      */
     @SuppressWarnings("deprecation")
     public void distributeActiveAndFutureNotificationsToClients() {
-        List<SystemNotification> notifications = findAllActiveAndFutureSystemNotifications();
+        List<SystemNotificationDTO> notifications = findAllActiveAndFutureSystemNotificationDTOs();
         websocketMessagingService.sendMessage(SYSTEM_NOTIFICATION_TOPIC, notifications);
         // Mirror to the legacy destination so older subscribers continue to receive updates during the migration window.
         websocketMessagingService.sendMessage(LEGACY_SYSTEM_NOTIFICATION_TOPIC, notifications);
@@ -129,12 +139,7 @@ public class SystemNotificationService {
             try {
                 String langKey = (recipient.langKey() != null && !recipient.langKey().isBlank()) ? recipient.langKey().strip() : "en";
 
-                var user = new User();
-                user.setId(recipient.id());
-                user.setEmail(recipient.email());
-                user.setLangKey(langKey);
-                user.setFirstName(recipient.firstName());
-                user.setLastName(recipient.lastName());
+                var mailRecipient = new MailRecipientDTO(recipient.email(), langKey, null, recipient.firstName(), recipient.lastName(), null, null);
 
                 String[] formattedDates = formattedDatesByLocale.computeIfAbsent(langKey, lk -> {
                     Locale locale = Locale.forLanguageTag(lk);
@@ -154,7 +159,7 @@ public class SystemNotificationService {
                 mutableVars.put("formattedStart", formattedDates[0]);
                 mutableVars.put("formattedEnd", formattedDates[1]);
 
-                mailSendingService.buildAndSendAsync(user, "email.notification.maintenance.title", "mail/notification/maintenanceEmail", Map.copyOf(mutableVars));
+                mailSendingService.buildAndSendAsync(mailRecipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail", Map.copyOf(mutableVars));
             }
             catch (Exception e) {
                 log.error("Failed to queue maintenance email for user {}: {}", recipient.id(), e.getMessage());

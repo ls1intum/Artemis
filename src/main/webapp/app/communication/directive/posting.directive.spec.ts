@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { DisplayPriority } from 'app/communication/metis.util';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
+import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { MetisService } from 'app/communication/service/metis.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -20,6 +20,7 @@ import { MockProvider } from 'ng-mocks';
 import { User } from 'app/account/user/user.model';
 import * as courseModel from 'app/course/shared/entities/course.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
+import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
 class MockOneToOneChatService {
     createWithId = vi.fn().mockReturnValue(of({ body: { id: 1 } }));
@@ -51,7 +52,7 @@ class MockReactionsBar {
     template: `<div jhiPosting></div>`,
 })
 class TestPostingComponent extends PostingDirective<MockPosting> {
-    reactionsBar: MockReactionsBar = new MockReactionsBar();
+    reactionsBar = new MockReactionsBar() as unknown as PostingReactionsBarComponent<MockPosting>;
 
     get reactionsBarInstance() {
         return this.reactionsBar;
@@ -63,8 +64,6 @@ class TestPostingComponent extends PostingDirective<MockPosting> {
 }
 
 describe('PostingDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TestPostingComponent;
     let fixture: ComponentFixture<TestPostingComponent>;
     let mockReactionsBar: MockReactionsBar;
@@ -90,7 +89,7 @@ describe('PostingDirective', () => {
         fixture = TestBed.createComponent(TestPostingComponent);
         component = fixture.componentInstance;
         mockReactionsBar = new MockReactionsBar();
-        component.reactionsBar = mockReactionsBar;
+        component.reactionsBar = mockReactionsBar as unknown as PostingReactionsBarComponent<MockPosting>;
         const user = new User();
         user.id = 123;
         component.posting.set(new MockPosting(123, 'Test content', user));
@@ -127,24 +126,24 @@ describe('PostingDirective', () => {
     });
 
     it('should call editPosting on reactionsBar and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.editPosting();
         expect(mockReactionsBar.editPosting).toHaveBeenCalled();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should call togglePin on reactionsBar and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.togglePin();
         expect(mockReactionsBar.togglePin).toHaveBeenCalled();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should call deletePosting on reactionsBar and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.deletePost();
         expect(mockReactionsBar.deletePosting).toHaveBeenCalled();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should return display priority from reactionsBar', () => {
@@ -154,7 +153,7 @@ describe('PostingDirective', () => {
     });
 
     it('should call selectReaction on reactionsBar and hide reaction selector', () => {
-        const event = { reaction: 'like' };
+        const event = { reaction: 'like' } as unknown as EmojiEvent;
         component.showReactionSelector = true;
         component.selectReaction(event);
         expect(mockReactionsBar.selectReaction).toHaveBeenCalledWith(event);
@@ -169,7 +168,7 @@ describe('PostingDirective', () => {
         const preventDefaultSpy = vi.spyOn(mouseEvent, 'preventDefault');
         component.addReaction(mouseEvent);
         expect(preventDefaultSpy).toHaveBeenCalled();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
         expect(component.clickPosition).toEqual({ x: 100, y: 200 });
         expect(component.showReactionSelector).toBe(true);
     });
@@ -287,7 +286,7 @@ describe('PostingDirective', () => {
 
     it('should set delete timer to initial value when delete is true', () => {
         component.onDeleteEvent(true);
-        expect(component.deleteTimerInSeconds).toBe(component.timeToDeleteInSeconds);
+        expect(component.deleteTimerInSeconds()).toBe(component.timeToDeleteInSeconds);
     });
 
     it('should call metisService.deletePost for regular post', () => {
@@ -303,7 +302,7 @@ describe('PostingDirective', () => {
     });
 
     it('should call metisService.deleteAnswerPost for answer post', () => {
-        const deleteAnswerPostSpy = vi.spyOn(mockMetisService, 'deleteAnswerPost');
+        const deleteAnswerPostSpy = vi.spyOn(mockMetisService, 'deleteAnswerPost').mockReturnValue(of(undefined));
         vi.useFakeTimers();
 
         component.isAnswerPost = true;
@@ -320,10 +319,10 @@ describe('PostingDirective', () => {
         component.onDeleteEvent(true);
 
         vi.advanceTimersByTime(1000);
-        expect(component.deleteTimerInSeconds).toBe(5);
+        expect(component.deleteTimerInSeconds()).toBe(5);
 
         vi.advanceTimersByTime(1000);
-        expect(component.deleteTimerInSeconds).toBe(4);
+        expect(component.deleteTimerInSeconds()).toBe(4);
     });
 
     it('should stop timer at 0 when decrementing', () => {
@@ -333,7 +332,7 @@ describe('PostingDirective', () => {
 
         vi.advanceTimersByTime(7000);
 
-        expect(component.deleteTimerInSeconds).toBe(0);
+        expect(component.deleteTimerInSeconds()).toBe(0);
     });
 
     it('should do nothing if delete event is false', () => {

@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings, ExportModalComponent } from 'app/shared-ui/export/modal/export-modal.component';
@@ -8,7 +7,6 @@ import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExportModalComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ExportModalComponent;
     let fixture: ComponentFixture<ExportModalComponent>;
     let dialogRef: DynamicDialogRef;
@@ -41,29 +39,29 @@ describe('ExportModalComponent', () => {
     it('should init with default options', () => {
         vi.spyOn(translateService, 'getCurrentLang').mockReturnValue('en');
         component.ngOnInit();
-        expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.COMMA);
-        expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
-        expect(component.options.quoteStrings).toBe(true);
-        expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
+        expect(component.options().fieldSeparator).toBe(CsvFieldSeparator.COMMA);
+        expect(component.options().quoteCharacter).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
+        expect(component.options().quoteStrings).toBe(true);
+        expect(component.options().decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
     });
 
     it('should init with german default options', () => {
         vi.spyOn(translateService, 'getCurrentLang').mockReturnValue('de');
         component.ngOnInit();
-        expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SEMICOLON);
-        expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
-        expect(component.options.quoteStrings).toBe(true);
-        expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.COMMA);
+        expect(component.options().fieldSeparator).toBe(CsvFieldSeparator.SEMICOLON);
+        expect(component.options().quoteCharacter).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
+        expect(component.options().quoteStrings).toBe(true);
+        expect(component.options().decimalSeparator).toBe(CsvDecimalSeparator.COMMA);
     });
 
     it('should set csv options', () => {
         component.setCsvFieldSeparator(CsvFieldSeparator.SPACE);
         component.setCsvQuoteString(CsvQuoteStrings.NONE);
         component.setCsvDecimalSeparator(CsvDecimalSeparator.PERIOD);
-        expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SPACE);
-        expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.NONE);
-        expect(component.options.quoteStrings).toBe(false);
-        expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
+        expect(component.options().fieldSeparator).toBe(CsvFieldSeparator.SPACE);
+        expect(component.options().quoteCharacter).toBe(CsvQuoteStrings.NONE);
+        expect(component.options().quoteStrings).toBe(false);
+        expect(component.options().decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
     });
 
     it('should dismiss modal if close or cancel button are clicked', () => {
@@ -95,7 +93,7 @@ describe('ExportModalComponent', () => {
             quoteCharacter: CsvQuoteStrings.QUOTES_SINGLE,
             decimalSeparator: CsvDecimalSeparator.COMMA,
         };
-        component.options = testOptions;
+        component.options.set(testOptions);
         component.activeTab = 2;
         const closeSpy = vi.spyOn(dialogRef, 'close');
         component.onFinish();

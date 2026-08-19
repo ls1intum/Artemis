@@ -29,7 +29,7 @@ export class ExamEditWorkingTimeDialogComponent implements OnInit {
 
     exam = signal<Exam | undefined>(undefined);
 
-    isLoading = false;
+    readonly isLoading = signal(false);
 
     workingTimeSeconds = 0;
 
@@ -57,15 +57,15 @@ export class ExamEditWorkingTimeDialogComponent implements OnInit {
         if (!this.isWorkingTimeChangeValid) return;
         const currentExam = this.exam();
         if (!currentExam) return;
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.examManagementService.updateWorkingTime(currentExam.course!.id!, currentExam.id!, this.workingTimeSeconds).subscribe({
             next: (res: HttpResponse<Exam>) => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.dialogRef.close(res.body ?? undefined);
             },
             error: () => {
                 // If an error happens, the alert service takes care of displaying an error message
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }

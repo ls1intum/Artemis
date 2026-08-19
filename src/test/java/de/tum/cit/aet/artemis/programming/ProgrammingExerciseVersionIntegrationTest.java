@@ -24,6 +24,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -82,7 +83,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         // Arrange: Create a new programming exercise
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
@@ -176,7 +177,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     void testImportExercise_createsExerciseVersion() throws Exception {
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
 
         // Create request parameters
         var params = new LinkedMultiValueMap<String, String>();
@@ -270,6 +271,41 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         assertThat(newVersion.getId()).isNotEqualTo(originalVersion.getId());
         assertThat(newVersion.getExerciseSnapshot()).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class)
                 .isNotEqualTo(originalVersion.getExerciseSnapshot());
+    }
+
+    /**
+     * Regression test for issue #13046: a metadata-only update (e.g. editing just the categories) must never delete the problem statement. The problem statement is owned by the
+     * collaborative (Yjs) editor and its dedicated PATCH endpoint, so a blank or absent value in the metadata update reflects an editor whose initial sync has not finished yet and
+     * must be treated as "unchanged" rather than wiping the persisted statement. During the race the client sends the field present-but-empty ("problemStatement": ""); the cases
+     * below therefore cover the empty string (the real payload), a whitespace-only value, and a completely absent attribute.
+     *
+     * @param problemStatementValue the value sent for {@code problemStatement} in the request body, or {@code null} to omit the attribute entirely
+     */
+    @ParameterizedTest(name = "problemStatement=[{0}]")
+    @CsvSource(value = { "''", "'   '", "MISSING" }, nullValues = "MISSING")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_blankOrMissingProblemStatement_keepsExistingProblemStatement(String problemStatementValue) throws Exception {
+        // Arrange: persist a known, non-empty problem statement via the dedicated endpoint, as the collaborative editor would.
+        final String existingStatement = "This problem statement must survive a metadata-only update";
+        final var problemStatementEndpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
+        request.patchWithResponseBody(problemStatementEndpoint, existingStatement, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
+
+        // Act: perform a metadata update (title, points, ...) whose problem statement arrives blank or absent because the editor has not populated it yet (the #13046 race).
+        // The body is built as a JSON tree so the problem statement can be sent exactly as the client sends it: present-but-empty (""), whitespace-only, or a missing attribute.
+        // Serializing the DTO directly could not express the empty string because @JsonInclude(NON_EMPTY) would drop it.
+        ExerciseVersionUtilService.updateExercise(programmingExercise);
+        ObjectNode body = (ObjectNode) request.getObjectMapper().valueToTree(de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise));
+        if (problemStatementValue == null) {
+            body.remove("problemStatement");
+        }
+        else {
+            body.put("problemStatement", problemStatementValue);
+        }
+        request.put("/api/programming/programming-exercises", body, HttpStatus.OK);
+
+        // Assert: the metadata update must not have wiped the persisted problem statement.
+        ProgrammingExercise reloaded = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(reloaded.getProblemStatement()).as("a metadata-only update must not delete the problem statement (#13046)").isEqualTo(existingStatement);
     }
 
     @Test
@@ -478,7 +514,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     void testGetExerciseVersions_forbidden_forInstructorNotInExercise() throws Exception {
         // `beforeEach` requires instructor access to run;
         // Switch to instructor user and attempt to get snapshot
-        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor", TEST_PREFIX + "bad_instructor");
+        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor");
         userUtilService.changeUser(TEST_PREFIX + "bad_instructor");
         request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.FORBIDDEN, ArrayList.class);
     }
@@ -562,7 +598,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         Long versionId = version.getId();
 
         // Switch to instructor user and attempt to get snapshot
-        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor", TEST_PREFIX + "bad_instructor");
+        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor");
         userUtilService.changeUser(TEST_PREFIX + "bad_instructor");
         request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
     }
@@ -578,7 +614,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
                 ExerciseSnapshotDTO.class);
         assertThat(tutorSnapshot).isNotNull();
 
-        userUtilService.addTeachingAssistant(TEST_PREFIX + "isolated-tutor-group", TEST_PREFIX + "external_tutor");
+        userUtilService.addTeachingAssistant(TEST_PREFIX + "external_tutor");
         userUtilService.changeUser(TEST_PREFIX + "external_tutor");
         request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
     }

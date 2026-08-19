@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -20,8 +19,6 @@ question.id = 1;
 question.text = 'Sample question text';
 
 describe('ShortAnswerQuestionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ShortAnswerQuestionComponent>;
     let component: ShortAnswerQuestionComponent;
 
@@ -68,11 +65,11 @@ describe('ShortAnswerQuestionComponent', () => {
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.detectChanges();
 
-        expect(component.textParts).toStrictEqual([[`<p>${text}</p>`]]);
+        expect(component.textParts()).toStrictEqual([[`<p>${text}</p>`]]);
         expect(component.shortAnswerQuestion()).toStrictEqual(alternativeQuestion);
-        expect(extractSafeHtmlText(component.renderedQuestion.text)).toBe(`<p>${text}</p>`);
-        expect(extractSafeHtmlText(component.renderedQuestion.hint)).toBe(`<p>${hint}</p>`);
-        expect(extractSafeHtmlText(component.renderedQuestion.explanation)).toBe(`<p>${explanation}</p>`);
+        expect(extractSafeHtmlText(component.renderedQuestion().text)).toBe(`<p>${text}</p>`);
+        expect(extractSafeHtmlText(component.renderedQuestion().hint)).toBe(`<p>${hint}</p>`);
+        expect(extractSafeHtmlText(component.renderedQuestion().explanation)).toBe(`<p>${explanation}</p>`);
         expect(hideSampleSolutionSpy).toHaveBeenCalled();
         expect(component.showingSampleSolution()).toBeFalsy();
     });

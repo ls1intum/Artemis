@@ -96,8 +96,8 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      * @param commitId of the commit to get the files for
      */
     getParticipationRepositoryFilesWithContentAtCommit(participationId: number, commitId: string): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrlParticipations}${participationId}/files-content?commitId=${commitId}`).pipe(
-            map((res: HttpResponse<any>) => {
+        return this.http.get<Record<string, string>>(`${this.resourceUrlParticipations}${participationId}/files-content?commitId=${commitId}`).pipe(
+            map((res: Record<string, string>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
                 return res && new Map(Object.entries(res));
@@ -127,13 +127,32 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         if (participationId) {
             params['participationId'] = participationId;
         }
-        return this.http.get(`${this.resourceUrl}${exerciseId}/files-content-commit-details?commitId=${commitId}`, { params: params }).pipe(
-            map((res: HttpResponse<any>) => {
+        return this.http.get<Record<string, string>>(`${this.resourceUrl}${exerciseId}/files-content-commit-details?commitId=${commitId}`, { params: params }).pipe(
+            map((res: Record<string, string>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
                 return res && new Map(Object.entries(res));
             }),
         );
+    }
+
+    /**
+     * Get selected repository files for a participation at a specific commit.
+     * @param exerciseId of the exercise to get the files for
+     * @param participationId of the participation to get the files for
+     * @param commitId of the commit to get the files for
+     * @param filePaths repository-relative paths to retrieve
+     */
+    getSelectedParticipationRepositoryFilesAtCommit(
+        exerciseId: number,
+        participationId: number,
+        commitId: string,
+        filePaths: string[],
+    ): Observable<Map<string, string> | undefined> {
+        const params = { commitId, participationId };
+        return this.http
+            .post<Record<string, string>>(`${this.resourceUrl}${exerciseId}/files-content-commit-details/selected`, filePaths, { params })
+            .pipe(map((res: Record<string, string>) => res && new Map(Object.entries(res))));
     }
 
     /**

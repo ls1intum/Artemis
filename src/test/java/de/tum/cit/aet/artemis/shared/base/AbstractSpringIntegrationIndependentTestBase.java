@@ -19,6 +19,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -108,6 +109,9 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
+            // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
+            when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+            when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         }
         // Mock passkey authentication to always return true for super admin operations in tests
         // Use doReturn instead of when().thenReturn() because the method throws an exception

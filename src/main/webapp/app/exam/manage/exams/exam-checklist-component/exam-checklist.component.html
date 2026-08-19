@@ -1,9 +1,9 @@
 @if (exam()?.course?.isAtLeastInstructor) {
     <div>
         <h2>
-            <span jhiTranslate="artemisApp.examManagement.checklist.{{ isTestExam ? 'testExam.' : '' }}title"></span>
+            <span jhiTranslate="artemisApp.examManagement.checklist.{{ isTestExam() ? 'testExam.' : '' }}title"></span>
         </h2>
-        @if (!isTestExam) {
+        @if (!isTestExam()) {
             <p>
                 <span>
                     {{ 'artemisApp.examManagement.checklist.introduction' | artemisTranslate }}
@@ -12,14 +12,14 @@
                 </span>
             </p>
         }
-        @if (isTestExam) {
+        @if (isTestExam()) {
             <p>
                 <!-- documentation currently missing. -->
                 <span jhiTranslate="artemisApp.examManagement.checklist.testExam.introduction"></span>
             </p>
         }
         <br />
-        <h3 jhiTranslate="artemisApp.examStatus.preparation.{{ isTestExam ? 'testExam.' : '' }}examPreparation"></h3>
+        <h3 jhiTranslate="artemisApp.examStatus.preparation.{{ isTestExam() ? 'testExam.' : '' }}examPreparation"></h3>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -63,14 +63,14 @@
                                         <jhi-checklist-check
                                             [checkAttribute]="
                                                 exam().exerciseGroups &&
-                                                countMandatoryExercises <= (exam().numberOfExercisesInExam ?? 0) &&
+                                                countMandatoryExercises() <= (exam().numberOfExercisesInExam ?? 0) &&
                                                 (exam().numberOfExercisesInExam ?? 0) <= exam().exerciseGroups!.length
                                             "
                                             data-testid="check-number-of-exercise-groups"
                                         />
                                         <span
                                             jhiTranslate="{{
-                                                !hasOptionalExercises
+                                                !hasOptionalExercises()
                                                     ? 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsequal'
                                                     : 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsinbetween'
                                             }}"
@@ -79,19 +79,19 @@
                                 </li>
                                 <li class="list-group-item border-1">
                                     <span>
-                                        <jhi-checklist-check [checkAttribute]="allGroupsContainExercise" data-testid="check-each-exercise-group-has-exercises" />
+                                        <jhi-checklist-check [checkAttribute]="allGroupsContainExercise()" data-testid="check-each-exercise-group-has-exercises" />
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.eachexercisegroup"></span>
                                     </span>
                                 </li>
                                 <li class="list-group-item border-1">
                                     <span>
-                                        <jhi-checklist-check [checkAttribute]="pointsExercisesEqual" data-testid="check-points-in-exercise-groups-equal" />
+                                        <jhi-checklist-check [checkAttribute]="pointsExercisesEqual()" data-testid="check-points-in-exercise-groups-equal" />
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.pointsexercisegroupequal"></span>
                                     </span>
                                 </li>
                                 <li class="list-group-item border-1">
                                     <span>
-                                        <jhi-checklist-check [checkAttribute]="totalPoints" data-testid="check-total-points-possible" />
+                                        <jhi-checklist-check [checkAttribute]="totalPoints()" data-testid="check-total-points-possible" />
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.totalpointspossible"></span>
                                     </span>
                                 </li>
@@ -116,10 +116,10 @@
                             <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.testRun"></span>
                             <hr />
                             <ul class="list-unstyled">
-                                @if (examChecklist) {
+                                @if (examChecklist()) {
                                     <li class="list-group-item border-1">
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.testruns"></span>
-                                        {{ examChecklist.numberOfTestRuns }}
+                                        {{ examChecklist()!.numberOfTestRuns }}
                                     </li>
                                 }
                             </ul>
@@ -131,7 +131,7 @@
                             </a>
                         </td>
                     </tr>
-                    @if (!isTestExam) {
+                    @if (!isTestExam()) {
                         <tr>
                             <td>3</td>
                             <td>
@@ -174,7 +174,7 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            <jhi-checklist-check [checkAttribute]="allExamsGenerated" data-testid="check-all-exams-generated" />
+                                            <jhi-checklist-check [checkAttribute]="allExamsGenerated()" data-testid="check-all-exams-generated" />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.allexamsgenerated"></span>
                                         </span>
                                     </li>
@@ -196,10 +196,10 @@
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart"></span>
                                 <hr />
                                 <ul class="list-unstyled">
-                                    @if (examChecklist) {
+                                    @if (examChecklist()) {
                                         <li class="list-group-item border-1">
                                             <jhi-checklist-check
-                                                [checkAttribute]="!!examChecklist.allExamExercisesAllStudentsPrepared && this.allExamsGenerated"
+                                                [checkAttribute]="!!examChecklist()!.allExamExercisesAllStudentsPrepared && allExamsGenerated()"
                                                 data-testid="check-all-exercises-prepared"
                                             />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.allExercisesPrepared"></span>
@@ -216,13 +216,13 @@
                         </tr>
                     }
                     <tr>
-                        <td>{{ isTestExam ? 3 : 6 }}</td>
+                        <td>{{ isTestExam() ? 3 : 6 }}</td>
                         <td>
                             <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.examDetails"></span>
                         </td>
                         <td>
                             <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.examDetails"></span>
-                            @if (isTestExam) {
+                            @if (isTestExam()) {
                                 <hr />
                                 <span>{{ 'artemisApp.examManagement.checklist.testExam.detailsHintForTestExams' | artemisTranslate }} :</span>
                                 <!-- Additional hints for test exams, as several steps are automated compared to the normal exam and therefore do not need to be performed by the user -->
@@ -258,7 +258,7 @@
             </table>
         </div>
         <hr />
-        <h3 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam ? 'testExam.' : '' }}examConduction"></h3>
+        <h3 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam() ? 'testExam.' : '' }}examConduction"></h3>
         <b
             jhiTranslate="artemisApp.examManagement.checklist.conductionPlannedFromTo"
             [translateValues]="{
@@ -302,15 +302,18 @@
                             }
                             <!-- Display started exams-->
                             @if (
-                                examChecklist && examChecklist.numberOfGeneratedStudentExams !== null && examChecklist.numberOfGeneratedStudentExams !== 0 && numberOfStarted > 0
+                                examChecklist() &&
+                                examChecklist()!.numberOfGeneratedStudentExams !== null &&
+                                examChecklist()!.numberOfGeneratedStudentExams !== 0 &&
+                                numberOfStarted() > 0
                             ) {
                                 <div>
                                     <span>{{ 'artemisApp.examManagement.checklist.textitems.startedExam' | artemisTranslate }} :</span>
                                     <div class="pt-2">
                                         <jhi-progress-bar
-                                            [denominator]="examChecklist.numberOfGeneratedStudentExams!"
-                                            [numerator]="numberOfStarted"
-                                            [percentage]="(100 * numberOfStarted) / examChecklist.numberOfGeneratedStudentExams!"
+                                            [denominator]="examChecklist()!.numberOfGeneratedStudentExams!"
+                                            [numerator]="numberOfStarted()"
+                                            [percentage]="(100 * numberOfStarted()) / examChecklist()!.numberOfGeneratedStudentExams!"
                                         />
                                     </div>
                                     <hr />
@@ -318,21 +321,24 @@
                             }
                             <!-- Display submitted exams-->
                             @if (
-                                examChecklist && examChecklist.numberOfGeneratedStudentExams !== null && examChecklist.numberOfGeneratedStudentExams !== 0 && numberOfSubmitted > 0
+                                examChecklist() &&
+                                examChecklist()!.numberOfGeneratedStudentExams !== null &&
+                                examChecklist()!.numberOfGeneratedStudentExams !== 0 &&
+                                numberOfSubmitted() > 0
                             ) {
                                 <div>
                                     <span>{{ 'artemisApp.examManagement.checklist.textitems.submittedExam' | artemisTranslate }} :</span>
                                     <div class="pt-2">
                                         <jhi-progress-bar
-                                            [denominator]="numberOfStarted"
-                                            [numerator]="numberOfSubmitted!"
-                                            [percentage]="(100 * numberOfSubmitted!) / numberOfStarted"
+                                            [denominator]="numberOfStarted()"
+                                            [numerator]="numberOfSubmitted()"
+                                            [percentage]="(100 * numberOfSubmitted()) / numberOfStarted()"
                                         />
                                     </div>
                                     <br />
                                 </div>
                             }
-                            @if (examChecklist && numberOfSubmitted! === 0) {
+                            @if (examChecklist() && numberOfSubmitted() === 0) {
                                 <div>
                                     <span jhiTranslate="artemisApp.examManagement.checklist.textitems.noSubmissions"></span>
                                 </div>
@@ -375,7 +381,7 @@
             </table>
         </div>
         <hr />
-        @if (!isTestExam) {
+        @if (!isTestExam()) {
             <h3 jhiTranslate="artemisApp.examStatus.correction.examCorrection"></h3>
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -422,10 +428,10 @@
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.assessAllSubmissions"></span>
                                 <hr />
                                 <!-- Display assessment progress summed up over all exercises, by correction round -->
-                                @if (examChecklist && examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && numberOfSubmitted !== 0) {
+                                @if (examChecklist() && examChecklist()!.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && numberOfSubmitted() !== 0) {
                                     <div>
                                         @for (
-                                            finishedByCorrectionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound;
+                                            finishedByCorrectionRound of examChecklist()!.numberOfTotalExamAssessmentsFinishedByCorrectionRound;
                                             track finishedByCorrectionRound;
                                             let index = $index
                                         ) {
@@ -436,16 +442,16 @@
                                                 <span> {{ 'artemisApp.examManagement.checklist.textitems.correctionRound' | artemisTranslate }} {{ index + 1 }} : </span>
                                                 <div class="pt-2">
                                                     <jhi-progress-bar
-                                                        [denominator]="examChecklist.numberOfTotalParticipationsForAssessment"
+                                                        [denominator]="examChecklist()!.numberOfTotalParticipationsForAssessment"
                                                         [numerator]="finishedByCorrectionRound!"
-                                                        [percentage]="(finishedByCorrectionRound! / examChecklist.numberOfTotalParticipationsForAssessment) * 100"
+                                                        [percentage]="(finishedByCorrectionRound! / examChecklist()!.numberOfTotalParticipationsForAssessment) * 100"
                                                     />
                                                 </div>
                                             </div>
                                         }
                                     </div>
                                 }
-                                @if (examChecklist && numberOfSubmitted === 0) {
+                                @if (examChecklist() && numberOfSubmitted() === 0) {
                                     <div>
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.noSubmissions"></span>
                                     </div>
@@ -498,7 +504,7 @@
                                                                 </th>
                                                                 <th>
                                                                     <jhi-checklist-check
-                                                                        [checkAttribute]="!isExamOver || (isExamOver && !existsUnfinishedAssessments)"
+                                                                        [checkAttribute]="!isExamOver() || (isExamOver() && !existsUnfinishedAssessments())"
                                                                         data-testid="check-unfinished-assessments"
                                                                     />
                                                                 </th>
@@ -507,7 +513,7 @@
                                                                         [routerLink]="getExamRoutesByIdentifier()('assessment-dashboard')"
                                                                         class="btn btn-primary"
                                                                         id="tutor-exam-dashboard-button_table_assessment_check"
-                                                                        [disabled]="!isExamOver || isLoading || (isExamOver && !existsUnfinishedAssessments)"
+                                                                        [disabled]="!isExamOver() || isLoading || (isExamOver() && !existsUnfinishedAssessments())"
                                                                     >
                                                                         <fa-icon [icon]="faThList" />
                                                                         <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
@@ -519,11 +525,11 @@
                                                                     <span jhiTranslate="artemisApp.examManagement.checklist.textitems.checkUnassessedQuizzes"></span>
                                                                 </th>
                                                                 <th>
-                                                                    @if (isEvaluatingQuizExercises) {
+                                                                    @if (isEvaluatingQuizExercises()) {
                                                                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                                     } @else {
                                                                         <jhi-checklist-check
-                                                                            [checkAttribute]="!isExamOver || (isExamOver && !existsUnassessedQuizzes)"
+                                                                            [checkAttribute]="!isExamOver() || (isExamOver() && !existsUnassessedQuizzes())"
                                                                             data-testid="check-unassessed-quizzes"
                                                                         />
                                                                     }
@@ -534,10 +540,12 @@
                                                                         class="btn btn-primary mt-1"
                                                                         (click)="evaluateQuizExercises()"
                                                                         [disabled]="
-                                                                            !isExamOver || isLoading || (isExamOver && (!existsUnassessedQuizzes || isEvaluatingQuizExercises))
+                                                                            !isExamOver() ||
+                                                                            isLoading ||
+                                                                            (isExamOver() && (!existsUnassessedQuizzes() || isEvaluatingQuizExercises()))
                                                                         "
                                                                     >
-                                                                        @if (isEvaluatingQuizExercises) {
+                                                                        @if (isEvaluatingQuizExercises()) {
                                                                             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                                         }
                                                                         <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises"></span>
@@ -549,11 +557,11 @@
                                                                     <span jhiTranslate="artemisApp.examManagement.checklist.textitems.checkUnsubmittedExercises"></span>
                                                                 </th>
                                                                 <th>
-                                                                    @if (isAssessingUnsubmittedExams) {
+                                                                    @if (isAssessingUnsubmittedExams()) {
                                                                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                                     } @else {
                                                                         <jhi-checklist-check
-                                                                            [checkAttribute]="!isExamOver || (isExamOver && !existsUnsubmittedExercises)"
+                                                                            [checkAttribute]="!isExamOver() || (isExamOver() && !existsUnsubmittedExercises())"
                                                                             data-testid="check-unsubmitted-exercises"
                                                                         />
                                                                     }
@@ -564,10 +572,12 @@
                                                                         id="assessUnsubmittedExamModelingAndTextParticipationsButton"
                                                                         (click)="assessUnsubmittedExamModelingAndTextParticipations()"
                                                                         [disabled]="
-                                                                            !isExamOver || isLoading || (isExamOver && (!existsUnsubmittedExercises || isAssessingUnsubmittedExams))
+                                                                            !isExamOver() ||
+                                                                            isLoading ||
+                                                                            (isExamOver() && (!existsUnsubmittedExercises() || isAssessingUnsubmittedExams()))
                                                                         "
                                                                     >
-                                                                        @if (isAssessingUnsubmittedExams) {
+                                                                        @if (isAssessingUnsubmittedExams()) {
                                                                             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                                         }
                                                                         <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams"></span>
@@ -597,10 +607,10 @@
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.examReview"></span>
                                 <hr />
                                 <ul class="list-unstyled">
-                                    @if (disabledExercises.length > 0) {
+                                    @if (disabledExercises().length > 0) {
                                         <li class="list-group-item border-1">
                                             <span>
-                                                <jhi-checklist-check [checkAttribute]="disabledExercises.length === 0" />
+                                                <jhi-checklist-check [checkAttribute]="disabledExercises().length === 0" />
                                                 <span jhiTranslate="artemisApp.examManagement.checklist.textitems.noDeactivatedExerciseTypes.label"></span>
                                             </span>
                                             <jhi-help-icon text="artemisApp.examManagement.checklist.textitems.noDeactivatedExerciseTypes.tooltip" />
@@ -634,18 +644,18 @@
                             <td>
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.resolveComplaints"></span>
                                 <hr />
-                                @if (examChecklist && examChecklist.numberOfAllComplaintsDone !== null && examChecklist.numberOfAllComplaints !== 0) {
+                                @if (examChecklist() && examChecklist()!.numberOfAllComplaintsDone !== null && examChecklist()!.numberOfAllComplaints !== 0) {
                                     <div>
                                         <div class="pt-2">
                                             <jhi-progress-bar
-                                                [denominator]="examChecklist.numberOfAllComplaints!"
-                                                [numerator]="examChecklist.numberOfAllComplaintsDone!"
-                                                [percentage]="(examChecklist.numberOfAllComplaintsDone! / examChecklist.numberOfAllComplaints!) * 100"
+                                                [denominator]="examChecklist()!.numberOfAllComplaints!"
+                                                [numerator]="examChecklist()!.numberOfAllComplaintsDone!"
+                                                [percentage]="(examChecklist()!.numberOfAllComplaintsDone! / examChecklist()!.numberOfAllComplaints!) * 100"
                                             />
                                         </div>
                                     </div>
                                 }
-                                @if (examChecklist && examChecklist.numberOfAllComplaints === 0) {
+                                @if (examChecklist() && examChecklist()!.numberOfAllComplaints === 0) {
                                     <div>
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.noComplaints"></span>
                                     </div>

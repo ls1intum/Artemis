@@ -49,24 +49,22 @@
                             <div class="chart-text">
                                 <h4 class="mb-0">{{ totalRelativeScore() }}%</h4>
                             </div>
-                            <ngx-charts-pie-chart
+                            <!-- Decorative: the score it renders is shown as text on top of it, and its click target
+                                 duplicates the card's own link to the course, so hiding it from assistive
+                                 technology removes nothing and avoids announcing the score twice. -->
+                            <p-chart
+                                aria-hidden="true"
                                 id="score-chart"
                                 class="chart-level"
                                 style="position: absolute"
-                                [view]="[160, 160]"
-                                [results]="ngxDoughnutData()"
-                                [arcWidth]="0.3"
-                                [scheme]="ngxColor"
-                                [doughnut]="true"
-                                [animations]="false"
-                                (select)="onSelect()"
+                                type="doughnut"
+                                [data]="chartData()"
+                                [options]="chartOptions()"
+                                [responsive]="false"
+                                width="160px"
+                                height="160px"
                                 (click)="onSelect()"
-                            >
-                                <ng-template #tooltipTemplate let-model="model">
-                                    <span jhiTranslate="artemisApp.courseOverview.statistics.{{ model.name }}"></span>
-                                    <span>: {{ model.value }}</span>
-                                </ng-template>
-                            </ngx-charts-pie-chart>
+                            />
                         </div>
                     }
                 </div>

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,7 +12,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { DialogService } from 'primeng/dynamicdialog';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { Directive, NO_ERRORS_SCHEMA, input, output } from '@angular/core';
@@ -23,11 +22,11 @@ import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/c
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingType } from '../../../shared/entities/posting.model';
-import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -61,8 +60,6 @@ class InfiniteScrollStubDirective {
 }
 examples.forEach((activeConversation) => {
     describe('ConversationMessagesComponent with ' + (getAsChannelDTO(activeConversation)?.isAnnouncementChannel ? 'announcement ' : '') + activeConversation.type, () => {
-        setupTestBed({ zoneless: true });
-
         let component: ConversationMessagesComponent;
         let fixture: ComponentFixture<ConversationMessagesComponent>;
         let metisService: MetisService;
@@ -156,8 +153,8 @@ examples.forEach((activeConversation) => {
 
         it('should set initial values correctly', () => {
             fixture.componentRef.setInput('course', course);
-            component._activeConversation = activeConversation;
-            component.posts = [examplePost];
+            component._activeConversation.set(activeConversation);
+            component.posts.set([examplePost]);
         });
 
         it('should fetch posts on next page fetch', () => {
@@ -176,7 +173,7 @@ examples.forEach((activeConversation) => {
             component.saveScrollPosition(15);
             expect(scrollNextSpy).toHaveBeenCalledWith(15);
             // Manually trigger what the debounced subscription would do
-            const activeConversationId = component._activeConversation?.id;
+            const activeConversationId = component._activeConversation()?.id;
             expect(activeConversationId).toBeDefined();
             sessionStorageService.store<number>(component.sessionStorageKey + activeConversationId, 15);
             expect(storeSpy).toHaveBeenCalledWith(`${component.sessionStorageKey}${activeConversationId}`, 15);
@@ -205,7 +202,7 @@ examples.forEach((activeConversation) => {
 
         it('should find visible elements at the scroll position and save scroll position', () => {
             // Mock des Containers
-            component.content().nativeElement = {
+            component.content()!.nativeElement = {
                 getBoundingClientRect: vi.fn().mockReturnValue({ top: 0, bottom: 100 }),
                 scrollTop: 0,
                 scrollHeight: 200,
@@ -239,11 +236,11 @@ examples.forEach((activeConversation) => {
         });
 
         it('should scroll to the bottom when a new message is created', () => {
-            component.content().nativeElement.scrollTop = 100;
+            component.content()!.nativeElement.scrollTop = 100;
             fixture.detectChanges();
             component.handleNewMessageCreated();
             vi.advanceTimersByTime(300);
-            expect(component.content().nativeElement.scrollTop).toBe(component.content().nativeElement.scrollHeight);
+            expect(component.content()!.nativeElement.scrollTop).toBe(component.content()!.nativeElement.scrollHeight);
         });
 
         it('should create empty post with the correct conversation type', () => {
@@ -256,44 +253,44 @@ examples.forEach((activeConversation) => {
         });
 
         it('should set posts and group them correctly', () => {
-            component.allPosts = [
+            component.allPosts.set([
                 { id: 1, creationDate: dayjs().subtract(2, 'hours'), author: { id: 1 } } as Post,
                 { id: 4, creationDate: dayjs().subtract(3, 'minutes'), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().subtract(1, 'minutes'), author: { id: 1 } } as Post,
                 { id: 3, creationDate: dayjs(), author: { id: 2 } } as Post,
-            ];
+            ]);
             component.setPosts();
 
-            expect(component.posts).toHaveLength(4);
-            expect(component.groupedPosts).toHaveLength(3);
+            expect(component.posts()).toHaveLength(4);
+            expect(component.groupedPosts()).toHaveLength(3);
 
-            expect(component.groupedPosts[0].posts).toHaveLength(1);
-            expect(component.groupedPosts[0].posts[0].id).toBe(1);
-            expect(component.groupedPosts[0].posts[0].isConsecutive).toBe(false);
+            expect(component.groupedPosts()[0].posts).toHaveLength(1);
+            expect(component.groupedPosts()[0].posts[0].id).toBe(1);
+            expect(component.groupedPosts()[0].posts[0].isConsecutive).toBe(false);
 
-            expect(component.groupedPosts[1].posts).toHaveLength(2);
-            expect(component.groupedPosts[1].posts[0].id).toBe(4);
-            expect(component.groupedPosts[1].posts[0].isConsecutive).toBe(false);
-            expect(component.groupedPosts[1].posts[1].id).toBe(2);
-            expect(component.groupedPosts[1].posts[1].isConsecutive).toBe(true);
+            expect(component.groupedPosts()[1].posts).toHaveLength(2);
+            expect(component.groupedPosts()[1].posts[0].id).toBe(4);
+            expect(component.groupedPosts()[1].posts[0].isConsecutive).toBe(false);
+            expect(component.groupedPosts()[1].posts[1].id).toBe(2);
+            expect(component.groupedPosts()[1].posts[1].isConsecutive).toBe(true);
 
-            expect(component.groupedPosts[2].posts).toHaveLength(1);
-            expect(component.groupedPosts[2].posts[0].id).toBe(3);
-            expect(component.groupedPosts[2].posts[0].isConsecutive).toBe(false);
+            expect(component.groupedPosts()[2].posts).toHaveLength(1);
+            expect(component.groupedPosts()[2].posts[0].id).toBe(3);
+            expect(component.groupedPosts()[2].posts[0].isConsecutive).toBe(false);
         });
 
         it('should not group posts that are exactly 5 minutes apart', () => {
-            component.allPosts = [
+            component.allPosts.set([
                 { id: 1, creationDate: dayjs().subtract(10, 'minutes'), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: { id: 1 } } as Post,
                 { id: 3, creationDate: dayjs(), author: { id: 1 } } as Post,
-            ];
+            ]);
             component.setPosts();
 
-            expect(component.groupedPosts).toHaveLength(3);
-            expect(component.groupedPosts[0].posts).toHaveLength(1);
-            expect(component.groupedPosts[1].posts).toHaveLength(1);
-            expect(component.groupedPosts[2].posts).toHaveLength(1);
+            expect(component.groupedPosts()).toHaveLength(3);
+            expect(component.groupedPosts()[0].posts).toHaveLength(1);
+            expect(component.groupedPosts()[1].posts).toHaveLength(1);
+            expect(component.groupedPosts()[2].posts).toHaveLength(1);
         });
 
         it('should fetch forwarded messages correctly', () => {
@@ -317,8 +314,8 @@ examples.forEach((activeConversation) => {
             it('should display the "new announcement" button when the conversation is an announcement channel', () => {
                 const announcementButton = fixture.debugElement.query(By.css('.btn.btn-md.btn-primary'));
                 expect(announcementButton).toBeTruthy(); // Check if the button is present
-                expect(component.isHiddenInputFull).toBeFalsy();
-                expect(component.isHiddenInputWithCallToAction).toBeTruthy();
+                expect(component.isHiddenInputFull()).toBeFalsy();
+                expect(component.isHiddenInputWithCallToAction()).toBeTruthy();
 
                 const modal = fixture.debugElement.query(By.directive(PostCreateEditModalComponent));
                 expect(modal).toBeTruthy(); // Check if the modal is present
@@ -342,12 +339,12 @@ examples.forEach((activeConversation) => {
         it('should handle posts without forwarded messages gracefully', () => {
             vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [] })));
 
-            component.posts = [{ id: 1, hasForwardedMessages: false } as Post];
+            component.posts.set([{ id: 1, hasForwardedMessages: false } as Post]);
 
             vi.advanceTimersByTime(0);
 
-            expect(component.posts[0].forwardedPosts).toBeUndefined();
-            expect(component.posts[0].forwardedAnswerPosts).toBeUndefined();
+            expect(component.posts()[0].forwardedPosts).toBeUndefined();
+            expect(component.posts()[0].forwardedAnswerPosts).toBeUndefined();
         });
 
         it('should handle forwarded messages with missing source gracefully', () => {
@@ -361,13 +358,13 @@ examples.forEach((activeConversation) => {
 
             vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
 
-            component.allPosts = [{ id: 1, hasForwardedMessages: true } as Post];
+            component.allPosts.set([{ id: 1, hasForwardedMessages: true } as Post]);
             component.setPosts();
 
             vi.advanceTimersByTime(0);
 
-            expect(component.posts[0].forwardedPosts).toEqual([undefined]);
-            expect(component.posts[0].forwardedAnswerPosts).toEqual([undefined]);
+            expect(component.posts()[0].forwardedPosts).toEqual([undefined]);
+            expect(component.posts()[0].forwardedAnswerPosts).toEqual([undefined]);
         });
 
         it('should not fetch source posts or answers for empty forwarded messages', () => {
@@ -381,7 +378,7 @@ examples.forEach((activeConversation) => {
             const getSourcePostsSpy = vi.spyOn(metisService, 'getSourcePostsByIds');
             const getSourceAnswersSpy = vi.spyOn(metisService, 'getSourceAnswerPostsByIds');
 
-            component.allPosts = [{ id: 1, hasForwardedMessages: true } as Post];
+            component.allPosts.set([{ id: 1, hasForwardedMessages: true } as Post]);
             component.setPosts();
 
             vi.advanceTimersByTime(0);
@@ -396,7 +393,7 @@ examples.forEach((activeConversation) => {
                 { id: 102, sourceId: 11, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
             ];
 
-            const mockSourcePosts: Post[] = [{ id: 10, content: 'Forwarded Post Content', conversation: component._activeConversation as Conversation } as Post];
+            const mockSourcePosts: Post[] = [{ id: 10, content: 'Forwarded Post Content', conversation: component._activeConversation() as Conversation } as Post];
             const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
 
             vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
@@ -406,22 +403,22 @@ examples.forEach((activeConversation) => {
             const getSourcePostsSpy = vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(of(mockSourcePosts));
             const getSourceAnswersSpy = vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
 
-            component.allPosts = [
+            component.allPosts.set([
                 {
                     id: 1,
                     content: 'Some content...',
                     hasForwardedMessages: true,
                 } as Post,
-            ];
+            ]);
             component.setPosts();
 
             expect(getSourcePostsSpy).toHaveBeenCalled();
             expect(getSourceAnswersSpy).toHaveBeenCalled();
 
-            const forwardedPosts = component.posts[0].forwardedPosts;
-            const forwardedAnswerPosts = component.posts[0].forwardedAnswerPosts;
+            const forwardedPosts = component.posts()[0].forwardedPosts;
+            const forwardedAnswerPosts = component.posts()[0].forwardedAnswerPosts;
 
-            expect(component.posts).toHaveLength(1);
+            expect(component.posts()).toHaveLength(1);
             expect(forwardedPosts).toBeDefined();
             expect(forwardedAnswerPosts).toBeDefined();
 
@@ -450,29 +447,50 @@ examples.forEach((activeConversation) => {
             }
         });
 
+        it('should still render messages when a forwarded-source fetch fails', () => {
+            const mockForwardedMessages: ForwardedMessage[] = [
+                { id: 101, sourceId: 10, sourceType: 'POST' } as unknown as ForwardedMessage,
+                { id: 102, sourceId: 11, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
+            ];
+            const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
+
+            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            // the source post is inaccessible to the viewer -> the server replies 403; it must not break the rest of the rendering
+            vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
+
+            component.allPosts.set([{ id: 1, content: 'Some content...', hasForwardedMessages: true } as Post]);
+            component.setPosts();
+
+            // the message list still renders and the accessible answer source is attached; the inaccessible post source is dropped to undefined
+            expect(component.posts()).toHaveLength(1);
+            expect(component.posts()[0].forwardedPosts).toEqual([undefined]);
+            expect(component.posts()[0].forwardedAnswerPosts?.[0]?.id).toBe(11);
+        });
+
         it('should filter posts to show only pinned posts when showOnlyPinned is true', () => {
             const pinnedPost = { id: 1, displayPriority: 'PINNED' } as Post;
             const regularPost = { id: 2, displayPriority: 'NONE' } as Post;
-            component.pinnedPosts = [pinnedPost];
-            component.allPosts = [pinnedPost, regularPost];
+            component.pinnedPosts.set([pinnedPost]);
+            component.allPosts.set([pinnedPost, regularPost]);
 
             fixture.componentRef.setInput('showOnlyPinned', true);
             fixture.detectChanges();
             component.applyPinnedMessageFilter();
 
-            expect(component.posts).toEqual([pinnedPost]);
+            expect(component.posts()).toEqual([pinnedPost]);
         });
 
         it('should show all posts when showOnlyPinned is false', () => {
             const pinnedPost = { id: 1, displayPriority: 'PINNED', creationDate: dayjs().subtract(2, 'minutes') } as Post;
             const regularPost = { id: 2, displayPriority: 'NONE', creationDate: dayjs().subtract(1, 'minute') } as Post;
-            component.pinnedPosts = [pinnedPost];
-            component.allPosts = [pinnedPost, regularPost];
+            component.pinnedPosts.set([pinnedPost]);
+            component.allPosts.set([pinnedPost, regularPost]);
             fixture.componentRef.setInput('showOnlyPinned', false);
             fixture.detectChanges();
             component.applyPinnedMessageFilter();
 
-            expect(component.posts).toEqual([pinnedPost, regularPost]);
+            expect(component.posts()).toEqual([pinnedPost, regularPost]);
         });
 
         it('should call setPosts when showOnlyPinned input changes after initialization', () => {
@@ -496,7 +514,7 @@ examples.forEach((activeConversation) => {
             pinnedPostsSubject.next(pinnedPostsStub);
             vi.advanceTimersByTime(0);
 
-            expect(component.pinnedPosts).toEqual(pinnedPostsStub);
+            expect(component.pinnedPosts()).toEqual(pinnedPostsStub);
             expect(pinnedCountSpy).toHaveBeenCalledWith(pinnedPostsStub.length);
         });
 
@@ -505,72 +523,72 @@ examples.forEach((activeConversation) => {
             const pinnedCountSpy = vi.spyOn(component.pinnedCount, 'emit');
             vi.spyOn(metisService, 'fetchAllPinnedPosts').mockReturnValue(of(pinnedPostsStub));
 
-            component._activeConversation = { id: 123, type: ConversationType.CHANNEL };
+            component._activeConversation.set({ id: 123, type: ConversationType.CHANNEL });
             fixture.componentRef.setInput('course', { id: 1 } as Course);
 
             component['onActiveConversationChange']();
             vi.advanceTimersByTime(0);
 
-            expect(component.pinnedPosts).toEqual(pinnedPostsStub);
+            expect(component.pinnedPosts()).toEqual(pinnedPostsStub);
             expect(pinnedCountSpy).toHaveBeenCalledWith(pinnedPostsStub.length);
         });
 
         it('should group posts correctly with consecutive messages from same author', () => {
-            component.posts = [
+            component.posts.set([
                 { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 1 } } as Post,
                 { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 1 } } as Post,
-            ];
+            ]);
             (component as any).groupPosts();
 
-            expect(component.groupedPosts).toHaveLength(1);
-            expect(component.groupedPosts[0].posts).toHaveLength(3);
-            expect(component.groupedPosts[0].posts[0].isConsecutive).toBe(false);
-            expect(component.groupedPosts[0].posts[1].isConsecutive).toBe(true);
-            expect(component.groupedPosts[0].posts[2].isConsecutive).toBe(true);
+            expect(component.groupedPosts()).toHaveLength(1);
+            expect(component.groupedPosts()[0].posts).toHaveLength(3);
+            expect(component.groupedPosts()[0].posts[0].isConsecutive).toBe(false);
+            expect(component.groupedPosts()[0].posts[1].isConsecutive).toBe(true);
+            expect(component.groupedPosts()[0].posts[2].isConsecutive).toBe(true);
         });
 
         it('should group posts correctly with different authors', () => {
-            component.posts = [
+            component.posts.set([
                 { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 2 } } as Post,
                 { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 1 } } as Post,
-            ];
+            ]);
             (component as any).groupPosts();
 
-            expect(component.groupedPosts).toHaveLength(3);
-            expect(component.groupedPosts[0].posts).toHaveLength(1);
-            expect(component.groupedPosts[1].posts).toHaveLength(1);
-            expect(component.groupedPosts[2].posts).toHaveLength(1);
+            expect(component.groupedPosts()).toHaveLength(3);
+            expect(component.groupedPosts()[0].posts).toHaveLength(1);
+            expect(component.groupedPosts()[1].posts).toHaveLength(1);
+            expect(component.groupedPosts()[2].posts).toHaveLength(1);
         });
 
         it('should handle multiple message deletions correctly', () => {
             // Initial posts
 
-            component.posts = [
+            component.posts.set([
                 { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
                 { id: 2, creationDate: dayjs().add(1, 'minute'), author: { id: 1 } } as Post,
                 { id: 3, creationDate: dayjs().add(2, 'minutes'), author: { id: 2 } } as Post,
                 { id: 4, creationDate: dayjs().add(3, 'minutes'), author: { id: 2 } } as Post,
-            ];
+            ]);
             (component as any).groupPosts();
 
             // Delete posts 2 and 3
-            component.posts = [
+            component.posts.set([
                 { id: 1, creationDate: dayjs(), author: { id: 1 } } as Post,
                 {
                     id: 4,
                     creationDate: dayjs().add(3, 'minutes'),
                     author: { id: 2 },
                 } as Post,
-            ];
+            ]);
             (component as any).groupPosts();
 
-            expect(component.groupedPosts).toHaveLength(2);
-            expect(component.groupedPosts[0].posts).toHaveLength(1);
-            expect(component.groupedPosts[1].posts).toHaveLength(1);
-            expect(component.groupedPosts[0].author?.id).toBe(1);
-            expect(component.groupedPosts[1].author?.id).toBe(2);
+            expect(component.groupedPosts()).toHaveLength(2);
+            expect(component.groupedPosts()[0].posts).toHaveLength(1);
+            expect(component.groupedPosts()[1].posts).toHaveLength(1);
+            expect(component.groupedPosts()[0].author?.id).toBe(1);
+            expect(component.groupedPosts()[1].author?.id).toBe(2);
         });
 
         it('should return only unread posts by the current user and sort them descending by creationDate', () => {
@@ -578,19 +596,19 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = {
-                ...component._activeConversation,
+            component._activeConversation.set({
+                ...component._activeConversation(),
                 lastReadDate,
-            };
+            });
 
             component.currentUser = currentUser;
 
-            component.allPosts = [
+            component.allPosts.set([
                 { id: 1, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
                 { id: 2, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // read
                 { id: 3, creationDate: dayjs().subtract(20, 'minutes'), author: otherUser } as Post, // read
                 { id: 4, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post, // unread
-            ];
+            ]);
             const unreadPosts = (component as any).getUnreadPosts();
             expect(unreadPosts).toHaveLength(2);
             expect(unreadPosts.map((p: Post) => p.id)).toEqual([1, 4]);
@@ -600,25 +618,25 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = {
-                ...component._activeConversation,
+            component._activeConversation.set({
+                ...component._activeConversation(),
                 lastReadDate,
-            };
+            });
 
             component.currentUser = currentUser;
 
-            component.allPosts = [
+            component.allPosts.set([
                 { id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: otherUser } as Post, // read
                 { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread (first)
                 { id: 3, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // excluded (own post)
                 { id: 4, creationDate: dayjs(), author: otherUser } as Post, // unread
-            ];
+            ]);
 
             (component as any).computeLastReadState();
 
             expect(component.unreadPosts).toHaveLength(2);
-            expect(component.unreadPostsCount).toBe(2);
-            expect(component.firstUnreadPostId).toBe(2);
+            expect(component.unreadPostsCount()).toBe(2);
+            expect(component.firstUnreadPostId()).toBe(2);
         });
 
         it('should call setFirstUnreadPostId inside computeLastReadState', () => {
@@ -626,34 +644,34 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = { ...component._activeConversation, lastReadDate };
+            component._activeConversation.set({ ...component._activeConversation(), lastReadDate });
             component.currentUser = currentUser;
-            component.allPosts = [{ id: 5, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post];
+            component.allPosts.set([{ id: 5, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post]);
 
             const setFirstUnreadPostIdSpy = vi.spyOn(component as any, 'setFirstUnreadPostId');
 
             (component as any).computeLastReadState();
 
             expect(setFirstUnreadPostIdSpy).toHaveBeenCalledOnce();
-            expect(component.firstUnreadPostId).toBe(5);
+            expect(component.firstUnreadPostId()).toBe(5);
         });
 
         it('should clear firstUnreadPostId when there are no unread posts', () => {
-            component._activeConversation = { ...component._activeConversation, lastReadDate: dayjs() };
+            component._activeConversation.set({ ...component._activeConversation(), lastReadDate: dayjs() });
             component.currentUser = { id: 99, internal: false };
-            component.allPosts = [];
-            component.firstUnreadPostId = 42;
+            component.allPosts.set([]);
+            component.firstUnreadPostId.set(42);
 
             (component as any).computeLastReadState();
 
-            expect(component.firstUnreadPostId).toBeUndefined();
+            expect(component.firstUnreadPostId()).toBeUndefined();
         });
 
         it('should return true if at least one unread post is visible', () => {
-            const mockPostId = 1;
+            const mockPostId: number = 1;
             component.unreadPosts = [{ id: mockPostId } as any];
 
-            vi.spyOn(component as any, 'isPostVisible').mockImplementation((id: number) => id === mockPostId);
+            vi.spyOn(component as any, 'isPostVisible').mockImplementation((...args: unknown[]) => args[0] === mockPostId);
 
             const result = (component as any).isAnyUnreadPostVisible();
             expect(result).toBe(true);
@@ -743,7 +761,7 @@ examples.forEach((activeConversation) => {
                 postRect: { top: 400, bottom: 800 },
                 containerRect: { top: 0, bottom: 300 },
             };
-            component.firstUnreadPostId = mockPostId;
+            component.firstUnreadPostId.set(mockPostId);
             component.unreadPosts = [mockPost];
             (component as any).messages = vi.fn().mockReturnValue([
                 {
@@ -816,5 +834,85 @@ examples.forEach((activeConversation) => {
             const result = (component as any).isPostVisible(postId);
             expect(result).toBe(false);
         });
+    });
+});
+
+// Regression test for NG0951 ("Child query result is required but no value is available").
+// The whole component template is wrapped in `@if (course())`, so the `#container` template ref
+// does not exist until a course is set. `setPosts()` runs from the metis posts subscription, which
+// can fire before that. Reading a `viewChild.required` signal in that state throws.
+// NOTE: deliberately does NOT stub `content` and does NOT set the `course` input — the rest of this
+// spec file stubs `content` with a fake container, which is exactly why this bug went unnoticed.
+describe('ConversationMessagesComponent before the container is rendered', () => {
+    let component: ConversationMessagesComponent;
+    let fixture: ComponentFixture<ConversationMessagesComponent>;
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [
+                FormsModule,
+                ReactiveFormsModule,
+                FaIconComponent,
+                ConversationMessagesComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(ButtonComponent),
+                MockComponent(PostingThreadComponent),
+                MockComponent(MessageInlineInputComponent),
+                MockComponent(PostCreateEditModalComponent),
+                MockDirective(TranslateDirective),
+                InfiniteScrollStubDirective,
+            ],
+            providers: [
+                MockProvider(MetisConversationService),
+                MockProvider(MetisService),
+                MockProvider(DialogService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        });
+
+        TestBed.overrideComponent(ConversationMessagesComponent, {
+            remove: {
+                imports: [PostingThreadComponent, MessageInlineInputComponent, PostCreateEditModalComponent, InfiniteScrollDirective, ButtonComponent, TranslateDirective],
+            },
+            add: {
+                imports: [
+                    MockComponent(PostingThreadComponent),
+                    MockComponent(MessageInlineInputComponent),
+                    MockComponent(PostCreateEditModalComponent),
+                    InfiniteScrollStubDirective,
+                    MockComponent(ButtonComponent),
+                    MockDirective(TranslateDirective),
+                ],
+                schemas: [NO_ERRORS_SCHEMA],
+            },
+        });
+
+        const metisService = TestBed.inject(MetisService);
+        const metisConversationService = TestBed.inject(MetisConversationService);
+        // A non-emitting posts stream, so nothing calls setPosts() during construction and the test
+        // can exercise it explicitly.
+        Object.defineProperty(metisService, 'posts', { get: () => new Subject<Post[]>().asObservable() });
+        Object.defineProperty(metisService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(0).asObservable() });
+        Object.defineProperty(metisService, 'createEmptyPostForContext', { value: () => new Post() });
+        Object.defineProperty(metisService, 'getPinnedPosts', { value: () => of([]) });
+        Object.defineProperty(metisService, 'fetchAllPinnedPosts', { value: () => of([]) });
+        // An active conversation IS required (ngOnInit dereferences it); the point of this test is that
+        // the `course` input is still unset, so the template's `@if (course())` keeps `#container` out of the DOM.
+        Object.defineProperty(metisConversationService, 'activeConversation$', {
+            get: () => new BehaviorSubject(generateExampleChannelDTO({} as ChannelDTO)).asObservable(),
+        });
+
+        fixture = TestBed.createComponent(ConversationMessagesComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should not throw when posts are prepared before the container exists', () => {
+        expect(() => component.setPosts()).not.toThrow();
     });
 });

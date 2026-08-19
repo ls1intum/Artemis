@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { signal } from '@angular/core';
+import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
@@ -19,7 +20,6 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -36,14 +36,21 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { CourseOverviewComponent } from 'app/course/overview/course-overview/course-overview.component';
+import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
+import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
+import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
@@ -57,11 +64,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
-import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
-import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -115,9 +117,6 @@ const course2: Course = {
     numberOfPrerequisites: 1,
     numberOfTutorialGroups: 1,
 };
-const coursesDropdown: Course[] = [course1, course2];
-const courses: Course[] = [course2];
-
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
 })
@@ -135,28 +134,25 @@ class ControlsTestingComponent implements BarControlConfigurationProvider, After
 }
 
 describe('CourseOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseOverviewComponent;
     let fixture: ComponentFixture<CourseOverviewComponent>;
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
     let examParticipationService: ExamParticipationService;
     let teamService: TeamService;
-    let tutorialGroupApiService: TutorialGroupApiService;
+    let tutorialGroupApiService: TutorialGroupApi;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
-    let jhiWebsocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
     let router: MockRouter;
-    let jhiWebsocketServiceSubscribeSpy: ReturnType<typeof vi.spyOn>;
-    let findOneForDashboardStub: ReturnType<typeof vi.spyOn>;
+    let findCourseForOverviewStub: ReturnType<typeof vi.spyOn>;
     let route: ActivatedRoute;
     let findOneForRegistrationStub: ReturnType<typeof vi.spyOn>;
-    let findAllForDropdownSpy: ReturnType<typeof vi.spyOn>;
+    let getCourseAvailableTabsStub: ReturnType<typeof vi.spyOn>;
+    let availableTabsService: CourseAvailableTabsService;
+    let courseTabRefreshService: CourseTabRefreshService;
     let courseSidebarService: CourseSidebarService;
+    let courseSidebarItemService: CourseSidebarItemService;
     let profileService: ProfileService;
-    let courseNotificationSettingService: CourseNotificationSettingService;
-    let courseNotificationService: CourseNotificationService;
 
     let metisConversationService: MetisConversationService;
 
@@ -165,35 +161,31 @@ describe('CourseOverviewComponent', () => {
         courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     } as Course;
 
-    const mockCourseId = 123;
-
-    const mockNotificationSettingPresets: CourseNotificationSettingPreset[] = [
-        { typeId: 1, identifier: 'All Notifications', presetMap: { test: { PUSH: true, EMAIL: true, WEBAPP: true } } },
-        { typeId: 2, identifier: 'Important Only', presetMap: { test: { PUSH: true, EMAIL: false, WEBAPP: true } } },
-        { typeId: 3, identifier: 'Minimal', presetMap: { test: { PUSH: false, EMAIL: false, WEBAPP: true } } },
-    ];
-
-    const mockSettingInfo: CourseNotificationSettingInfo = {
-        selectedPreset: 1,
-        notificationTypeChannels: { test: { PUSH: true, EMAIL: true, WEBAPP: true } },
-    };
-
-    const mockNotificationInfo: CourseNotificationInfo = {
-        presets: mockNotificationSettingPresets,
-        notificationTypes: {},
-    };
+    /** Builds a full set of tab flags, overriding the ones a test cares about. */
+    const availableTabs = (overrides: Partial<CourseAvailableTabs> = {}): CourseAvailableTabs => ({
+        lectures: false,
+        exams: false,
+        competencies: false,
+        tutorialGroups: false,
+        iris: false,
+        faq: false,
+        learningPaths: false,
+        communication: false,
+        training: false,
+        ...overrides,
+    });
 
     beforeEach(async () => {
         route = {
             params: of({ courseId: course1.id }) as Params,
-            snapshot: { firstChild: { routeConfig: { path: `courses/${course1.id}/exercises` } } },
+            data: of({}),
+            snapshot: { firstChild: { routeConfig: { path: 'exercises' } } },
         } as ActivatedRoute;
         router = new MockRouter();
 
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([]),
-                MockModule(MatSidenavModule),
                 MockModule(NgbTooltipModule),
                 FaIconComponent,
                 CourseOverviewComponent,
@@ -220,11 +212,11 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(CalendarService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
-                MockProvider(TutorialGroupApiService),
+                MockProvider(TutorialGroupApi),
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
                 MockProvider(CourseAccessStorageService),
-                MockProvider(CourseNotificationSettingService),
+                MockProvider(CourseOverviewTabDataService),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -242,22 +234,19 @@ describe('CourseOverviewComponent', () => {
 
         component.isShownViaLti.set(false);
         courseSidebarService = TestBed.inject(CourseSidebarService);
+        courseSidebarItemService = TestBed.inject(CourseSidebarItemService);
         courseService = TestBed.inject(CourseManagementService);
         courseStorageService = TestBed.inject(CourseStorageService);
         examParticipationService = TestBed.inject(ExamParticipationService);
         teamService = TestBed.inject(TeamService);
         profileService = TestBed.inject(ProfileService);
-        tutorialGroupApiService = TestBed.inject(TutorialGroupApiService);
+        tutorialGroupApiService = TestBed.inject(TutorialGroupApi);
         tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
-        jhiWebsocketService = TestBed.inject(WebsocketService);
         courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
         metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
-        jhiWebsocketServiceSubscribeSpy = vi.spyOn(jhiWebsocketService, 'subscribe');
         vi.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
-        courseNotificationSettingService = TestBed.inject(CourseNotificationSettingService);
-        courseNotificationService = TestBed.inject(CourseNotificationService);
-        // default for findOneForDashboardStub is to return the course
-        findOneForDashboardStub = vi.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
+        // default for findCourseForOverviewStub is to return the course
+        findCourseForOverviewStub = vi.spyOn(courseService, 'findCourseForOverview').mockReturnValue(
             of(
                 new HttpResponse({
                     body: course1,
@@ -265,18 +254,18 @@ describe('CourseOverviewComponent', () => {
                 }),
             ),
         );
+        availableTabsService = TestBed.inject(CourseAvailableTabsService);
+        courseTabRefreshService = TestBed.inject(CourseTabRefreshService);
+        availableTabsService.clear();
+        getCourseAvailableTabsStub = vi.spyOn(courseService, 'getCourseAvailableTabs').mockReturnValue(of(availableTabs()));
         // default for findOneForRegistrationStub is to return the course as well
         findOneForRegistrationStub = vi.spyOn(courseService, 'findOneForRegistration').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
-        findAllForDropdownSpy = vi.spyOn(courseService, 'findAllForDropdown').mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
             activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
             activeProfiles: [PROFILE_PROD],
             testServer: false,
         } as unknown as ProfileInfo);
-        vi.spyOn(courseNotificationSettingService, 'getSettingInfo').mockReturnValue(of(mockSettingInfo));
-        vi.spyOn(courseNotificationService, 'getInfo').mockReturnValue(of(new HttpResponse({ body: mockNotificationInfo })));
-        vi.spyOn(courseNotificationSettingService, 'setSettingPreset').mockImplementation(() => {});
     });
 
     afterEach(() => {
@@ -288,46 +277,108 @@ describe('CourseOverviewComponent', () => {
 
     it('should call all methods on init', async () => {
         const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
-        const subscribeToTeamAssignmentUpdatesStub = vi.spyOn(component, 'subscribeToTeamAssignmentUpdates');
-        const subscribeForQuizChangesStub = vi.spyOn(component, 'subscribeForQuizChanges');
         const notifyAboutCourseAccessStub = vi.spyOn(courseAccessStorageService, 'onCourseAccessed');
         const getSidebarItems = vi.spyOn(component, 'getSidebarItems');
         const getCourseActionItems = vi.spyOn(component, 'getCourseActionItems');
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+        findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
         await component.ngOnInit();
 
         expect(getCourseStub).toHaveBeenCalled();
-        expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
-        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
-        expect(getSidebarItems).toHaveBeenCalledOnce();
+        // The sidebar is built twice on purpose: once up front with the always-available items, and again when the
+        // available tabs arrive and fill in the rest
+        expect(getSidebarItems).toHaveBeenCalled();
         expect(getCourseActionItems).toHaveBeenCalledOnce();
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
             course1.id,
             CourseAccessStorageService.STORAGE_KEY,
             CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
         );
-        expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
-            course1.id,
-            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
-            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
-        );
     });
 
-    it('should create sidebar item for student course analytics dashboard if the feature is active', () => {
-        component.lectureEnabled = true;
-        component.course.set({ id: 123, lectures: [], exams: [], studentCourseAnalyticsDashboardEnabled: true });
-        const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems.length).toBeGreaterThan(0);
-        expect(sidebarItems[0].title).toContain('Dashboard');
-        expect(sidebarItems[1].title).toContain('Exercises');
-        expect(sidebarItems[2].title).toContain('Lectures');
+    it('should adopt the tabs a guard fetched for this navigation, so the sidebar cannot disagree with it', () => {
+        // The container survives child-tab navigations, so without this the sidebar keeps whatever the course load
+        // found on entry while the guard decides each guarded navigation from a freshly fetched answer
+        component.courseId.set(1);
+        component.availableTabs.set(availableTabs({ lectures: true }));
+
+        // A guard runs for the next navigation and finds the lectures tab gone and the exams tab newly available
+        getCourseAvailableTabsStub.mockReturnValue(of(availableTabs({ lectures: false, exams: true })));
+        availableTabsService.loadIfNeeded(1).subscribe();
+        (component as any).handleNavigationEndActions();
+
+        expect(component.availableTabs()?.lectures).toBe(false);
+        expect(component.availableTabs()?.exams).toBe(true);
+    });
+
+    it('should not fetch tabs of its own, so a chain of navigations costs no extra request', () => {
+        component.courseId.set(1);
+        component.availableTabs.set(availableTabs({ lectures: true }));
+        getCourseAvailableTabsStub.mockClear();
+
+        // No guard ran for this navigation, so nothing has contradicted the current flags
+        availableTabsService.clear();
+        (component as any).handleNavigationEndActions();
+
+        expect(getCourseAvailableTabsStub).not.toHaveBeenCalled();
+        expect(component.availableTabs()?.lectures).toBe(true);
+    });
+
+    it('should reconcile the tabs when the user selected a tab and no guard answer survived the navigation', () => {
+        // A guard that denies a removed tab cancels its navigation and redirects, so the answer it fetched is filed
+        // under the cancelled navigation and the redirect cannot read it. Unguarded tabs fetch nothing at all. Without
+        // reconciling, the sidebar would keep offering a link that can never be opened.
+        component.courseId.set(1);
+        component.availableTabs.set(availableTabs({ lectures: true }));
+        availableTabsService.clear();
+        getCourseAvailableTabsStub.mockClear();
+        getCourseAvailableTabsStub.mockReturnValue(of(availableTabs({ lectures: false })));
+
+        courseTabRefreshService.notifyTabSelected('lectures');
+        (component as any).handleNavigationEndActions();
+
+        expect(getCourseAvailableTabsStub).toHaveBeenCalledOnce();
+        expect(component.availableTabs()?.lectures).toBe(false);
+    });
+
+    it('should reconcile only once per selection, so a chain of navigations still costs one request', () => {
+        component.courseId.set(1);
+        component.availableTabs.set(availableTabs({ lectures: true }));
+        availableTabsService.clear();
+        getCourseAvailableTabsStub.mockClear();
+        getCourseAvailableTabsStub.mockReturnValue(of(availableTabs({ lectures: false })));
+
+        courseTabRefreshService.notifyTabSelected('lectures');
+        // Selecting a tab is a chain: the tab, then whatever child it auto-selects
+        (component as any).handleNavigationEndActions();
+        availableTabsService.clear();
+        (component as any).handleNavigationEndActions();
+
+        expect(getCourseAvailableTabsStub).toHaveBeenCalledOnce();
+    });
+
+    it('should ignore a course load that lands after the user switched course', () => {
+        // The very first load is subscribed by the base class through firstValueFrom and is not held in
+        // loadCourseSubscription, so an in-place switch cannot cancel it. Without discarding it, the slower of the two
+        // overlapping loads wins and restores the course the user has already left.
+        const slowFirstCourse = new Subject<HttpResponse<Course>>();
+        findCourseForOverviewStub.mockReturnValue(slowFirstCourse);
+        component.courseId.set(1);
+        component.loadCourse().subscribe({ error: () => {} });
+
+        // The user switches to course 2 before course 1 answers
+        component.courseId.set(2);
+        component.course.set(course2);
+        slowFirstCourse.next(new HttpResponse({ body: course1 }));
+        slowFirstCourse.complete();
+
+        expect(component.course()?.id).toBe(2);
     });
 
     it('should create sidebar items with default items', () => {
         component.lectureEnabled = true;
-        component.course.set({ id: 123, lectures: [], exams: [] });
+        component.availableTabs.set(availableTabs({ lectures: true }));
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
         expect(sidebarItems[0].title).toContain('Exercises');
@@ -336,7 +387,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should create sidebar items for student if questions are available for practice', () => {
         component.lectureEnabled = true;
-        component.course.set({ id: 123, lectures: [], exams: [], trainingEnabled: true });
+        component.availableTabs.set(availableTabs({ lectures: true, training: true }));
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
         expect(sidebarItems[0].title).toContain('Exercises');
@@ -345,7 +396,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create competencies and learning path item if competencies or prerequisites are available and learning paths are enabled', () => {
-        component.course.set({ id: 123, numberOfPrerequisites: 3, learningPathsEnabled: true });
+        component.availableTabs.set(availableTabs({ competencies: true, learningPaths: true }));
         component.atlasEnabled = true;
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems[3].title).toContain('Competencies');
@@ -353,7 +404,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create faq item when accepted faqs exist', () => {
-        component.course.set({ id: 123, numberOfAcceptedFaqs: 3 });
+        component.availableTabs.set(availableTabs({ faq: true }));
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems[3].title).toContain('FAQs');
     });
@@ -361,7 +412,7 @@ describe('CourseOverviewComponent', () => {
     it('loads conversations when switching to message tab once', async () => {
         const metisConversationServiceStub = vi.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(EMPTY);
         const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+        findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
         await component.ngOnInit();
@@ -377,6 +428,18 @@ describe('CourseOverviewComponent', () => {
             fixture.changeDetectorRef.detectChanges();
         });
         expect(metisConversationServiceStub).toHaveBeenCalledOnce();
+    });
+
+    it('should pass the page title to the exercises component', () => {
+        const exercisesComponent = Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent;
+        exercisesComponent.setPageTitle = vi.fn();
+        Object.defineProperty(exercisesComponent, 'isCollapsed', { value: signal(true) });
+        component.pageTitle.set('overview.exercises');
+
+        (component as any).handleComponentActivation(exercisesComponent);
+
+        expect(exercisesComponent.setPageTitle).toHaveBeenCalledWith('overview.exercises');
+        expect(component.isSidebarCollapsed()).toBe(true);
     });
 
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
@@ -420,7 +483,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', async () => {
         // mock error response
-        findOneForDashboardStub.mockReturnValue(
+        findCourseForOverviewStub.mockReturnValue(
             throwError(
                 () =>
                     new HttpResponse({
@@ -450,19 +513,15 @@ describe('CourseOverviewComponent', () => {
 
     it('should call load Course methods on init', async () => {
         const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
-        const subscribeToTeamAssignmentUpdatesStub = vi.spyOn(component, 'subscribeToTeamAssignmentUpdates');
-        const subscribeForQuizChangesStub = vi.spyOn(component, 'subscribeForQuizChanges');
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+        findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
         await component.ngOnInit();
 
-        expect(getCourseStub).toHaveBeenCalledOnce();
-        expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
-        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
+        expect(getCourseStub).toHaveBeenCalled();
     });
 
     it('should show an alert when loading the course fails', async () => {
-        findOneForDashboardStub.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
+        findCourseForOverviewStub.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
         const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = vi.spyOn(alertService, 'addAlert');
 
@@ -506,49 +565,104 @@ describe('CourseOverviewComponent', () => {
         });
     });
 
-    it('should load the course, even when just calling loadCourse by itself (for refreshing)', () => {
-        // check that loadCourse already subscribes to the course itself
-
-        // create observable httpResponse with course1, where we detect whether it was called
-        const findOneForDashboardResponse = new Observable((subscriber) => {
-            subscriber.next(course1);
-            subscriber.complete();
-        });
-        const subscribeStub = vi.spyOn(findOneForDashboardResponse, 'subscribe');
-        findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
-
-        // check that calendar events are refreshed
-        const calendarService = TestBed.inject(CalendarService);
-        const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
-
-        component.loadCourse(true);
-
-        expect(subscribeStub).toHaveBeenCalledOnce();
-        expect(refreshSpy).toHaveBeenCalledOnce();
+    it('should fetch the course content exactly once when navigating into the course', async () => {
+        await component.ngOnInit();
+        expect(findCourseForOverviewStub).toHaveBeenCalledExactlyOnceWith(course1.id);
     });
 
-    it('should have visible exams', () => {
-        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
-        getCourseStub.mockReturnValue(course1);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+    it('should fetch the available tabs once per course visit and again for a different course', async () => {
+        // The tabs are shared with the CourseOverviewGuard and keyed by course id: entering a course costs one request,
+        // and switching to another course in place must not reuse the previous course's tabs.
+        const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
+        (route as any).params = paramsSubject.asObservable();
+        await component.ngOnInit();
+        expect(getCourseAvailableTabsStub).toHaveBeenCalledExactlyOnceWith(course1.id);
 
-        component.ngOnInit();
+        paramsSubject.next({ courseId: 999 });
 
-        const bool = component.hasVisibleExams();
-
-        expect(bool).toBe(true);
+        expect(getCourseAvailableTabsStub).toHaveBeenCalledTimes(2);
+        expect(getCourseAvailableTabsStub).toHaveBeenLastCalledWith(999);
     });
 
-    it('should not have visible exams', () => {
-        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
-        getCourseStub.mockReturnValue(course2);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
+    it('should reuse the tabs the guard already fetched for this course visit', async () => {
+        // The guard runs first on a deep link into a guarded tab; the container must not fetch them a second time.
+        availableTabsService.load(course1.id!).subscribe();
+        getCourseAvailableTabsStub.mockClear();
 
-        component.ngOnInit();
+        await component.ngOnInit();
 
-        const bool = component.hasVisibleExams();
+        expect(getCourseAvailableTabsStub).not.toHaveBeenCalled();
+    });
 
-        expect(bool).toBe(false);
+    it('should reload the course content when navigating to a different course in place', async () => {
+        const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
+        (route as any).params = paramsSubject.asObservable();
+        const clearTabDataSpy = vi.spyOn(TestBed.inject(CourseOverviewTabDataService), 'clear');
+        await component.ngOnInit();
+        expect(findCourseForOverviewStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+
+        const getSidebarItemsSpy = vi.spyOn(component, 'getSidebarItems');
+        paramsSubject.next({ courseId: 999 });
+
+        expect(component.courseId()).toBe(999);
+        expect(findCourseForOverviewStub).toHaveBeenCalledTimes(2);
+        expect(findCourseForOverviewStub).toHaveBeenLastCalledWith(999);
+        expect(getSidebarItemsSpy).toHaveBeenCalled();
+        expect(clearTabDataSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should clear the previous course tab flags immediately and keep only safe sidebar items when the new tab request fails', async () => {
+        const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
+        const newCourseTabs = new Subject<CourseAvailableTabs>();
+        (route as any).params = paramsSubject.asObservable();
+        getCourseAvailableTabsStub.mockImplementation((courseId: number) =>
+            courseId === course1.id ? of(availableTabs({ exams: true, lectures: true, faq: true })) : newCourseTabs.asObservable(),
+        );
+        component.lectureEnabled = true;
+        await component.ngOnInit();
+        expect(component.availableTabs()?.exams).toBe(true);
+        expect(component.sidebarItems().some((item) => item.title?.includes('Exams'))).toBe(true);
+
+        paramsSubject.next({ courseId: 999 });
+
+        expect(component.availableTabs()).toBeUndefined();
+        expect(component.sidebarItems().some((item) => item.title?.includes('Exercises'))).toBe(true);
+        expect(component.sidebarItems().some((item) => item.title?.includes('Exams'))).toBe(false);
+        expect(component.sidebarItems().some((item) => item.title?.includes('Lectures'))).toBe(false);
+        expect(component.sidebarItems().some((item) => item.title?.includes('FAQ'))).toBe(false);
+
+        newCourseTabs.error(new Error('network'));
+        expect(component.availableTabs()).toBeUndefined();
+        expect(component.sidebarItems().some((item) => item.title?.includes('Exams'))).toBe(false);
+    });
+
+    it('should show the exams item when the exams tab is available', () => {
+        component.availableTabs.set(availableTabs({ exams: true }));
+        expect(component.getSidebarItems()[0].title).toContain('Exams');
+    });
+
+    it('should not show the exams item when the exams tab is unavailable', () => {
+        component.availableTabs.set(availableTabs({ exams: false }));
+        expect(component.getSidebarItems().some((item) => item.title?.includes('Exams'))).toBe(false);
+    });
+
+    it('should include each server-enabled conditional sidebar item when its client module is enabled', () => {
+        component.tutorialGroupEnabled = true;
+        component.availableTabs.set(availableTabs({ communication: true, tutorialGroups: true, iris: true }));
+
+        const items = component.getSidebarItems();
+
+        expect(items).toContainEqual(courseSidebarItemService.getCommunicationsItem());
+        expect(items).toContainEqual(courseSidebarItemService.getTutorialGroupsItem());
+        expect(items).toContainEqual(courseSidebarItemService.getIrisItem());
+    });
+
+    it('should render only the always-available items before the tabs have arrived', () => {
+        component.availableTabs.set(undefined);
+        const titles = component.getSidebarItems().map((item) => item.title);
+        expect(titles.some((title) => title?.includes('Exercises'))).toBe(true);
+        expect(titles.some((title) => title?.includes('Lectures'))).toBe(false);
+        expect(titles.some((title) => title?.includes('FAQ'))).toBe(false);
     });
 
     it('should contain unenrollment as course action when allowed', () => {
@@ -576,67 +690,36 @@ describe('CourseOverviewComponent', () => {
             status: 200,
         });
 
-        vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse));
+        vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse.body!));
         vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 
         getCourseStub.mockReturnValue(course2);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
+        findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
         component.ngOnInit();
 
-        expect(component.hasCompetencies()).toBe(true);
-        expect(component.hasTutorialGroups()).toBe(true);
         expect(component.course()?.competencies).toHaveLength(1);
         expect(component.course()?.prerequisites).toHaveLength(1);
         expect(component.course()?.tutorialGroups).toHaveLength(1);
     });
 
-    it('should subscribeToTeamAssignmentUpdates', () => {
-        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
-        const teamAssignmentUpdatesStub = vi.spyOn(teamService, 'teamAssignmentUpdates', 'get');
-        getCourseStub.mockReturnValue(course2);
-        teamAssignmentUpdatesStub.mockReturnValue(
-            Promise.resolve(
-                of({
-                    exerciseId: 6,
-                    teamId: 1,
-                    studentParticipations: [],
-                }),
-            ),
-        );
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
+    it('should drop the per-visit tab and exercise state on destroy so re-entering the course refetches', () => {
+        const clearTabsSpy = vi.spyOn(availableTabsService, 'clear');
+        const clearExercisesSpy = vi.spyOn(TestBed.inject(CourseOverviewExercisesService), 'clear');
+        const clearTabDataSpy = vi.spyOn(TestBed.inject(CourseOverviewTabDataService), 'clear');
 
         component.ngOnInit();
-
-        component.subscribeToTeamAssignmentUpdates();
-    });
-
-    it('should subscribeForQuizChanges', () => {
-        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
-        getCourseStub.mockReturnValue(course2);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
-
-        component.ngOnInit();
-        component.subscribeForQuizChanges();
-
-        expect(jhiWebsocketServiceSubscribeSpy).toHaveBeenCalledWith('/topic/courses/' + course.id + '/quizExercises');
-    });
-
-    it('should do ngOnDestroy', () => {
-        component.ngOnInit();
-        component.subscribeForQuizChanges(); // to have quizExercisesSubscription set
-        // @ts-ignore
-        const quizUnsubscribeSpy = vi.spyOn(component.quizExercisesSubscription!, 'unsubscribe');
-
         component.ngOnDestroy();
 
-        expect(quizUnsubscribeSpy).toHaveBeenCalledOnce();
+        expect(clearTabsSpy).toHaveBeenCalled();
+        expect(clearExercisesSpy).toHaveBeenCalled();
+        expect(clearTabDataSpy).toHaveBeenCalled();
     });
 
     it('should render controls if child has configuration', () => {
         const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course2);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
+        findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
         const stubSubComponent = TestBed.createComponent(ControlsTestingComponent);
         component.onSubRouteActivate(stubSubComponent.componentInstance);
@@ -678,44 +761,20 @@ describe('CourseOverviewComponent', () => {
         expect(fixture.nativeElement.querySelector('.exam-is-active')).toBeNull();
     });
 
+    it('should hide the sidebar while an exam is started and show it otherwise', () => {
+        component.isExamStarted.set(true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar')?.hidden).toBe(true);
+
+        component.isExamStarted.set(false);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar')?.hidden).toBe(false);
+    });
+
     it('should examStarted value to true when exam is started', async () => {
         (examParticipationService as any).examIsStarted$ = of(true);
         await component.ngOnInit();
         expect(component.isExamStarted()).toBe(true);
-    });
-
-    it('should initialize courses attribute when page is loaded', async () => {
-        await component.ngOnInit();
-
-        expect(component.courses()).toEqual(courses);
-        expect(component.courses()?.length).toBe(1);
-    });
-
-    it('should not initialize courses attribute when page has error while loading', async () => {
-        // Use EMPTY instead of throwError to avoid RxJS reportUnhandledError — the subscribe() in
-        // updateRecentlyAccessedCourses() has no error handler, so thrown errors leak asynchronously.
-        // EMPTY completes without emitting, so courses() stays undefined, satisfying the test intent.
-        findAllForDropdownSpy.mockReturnValue(EMPTY);
-
-        await component.ngOnInit();
-        // When findAllForDropdown completes without value, courses should not be initialized
-        expect(component.courses()).toBeUndefined();
-    });
-
-    it('should not display current course in dropdown', async () => {
-        await component.ngOnInit();
-
-        expect(component.courses()).toEqual(courses);
-        expect(component.courses()?.pop()).toBe(course2);
-    });
-
-    it('should unsubscribe from dashboardSubscription on ngOnDestroy', () => {
-        component.updateRecentlyAccessedCourses();
-        fixture.changeDetectorRef.detectChanges();
-        component.ngOnDestroy();
-
-        expect(courseService.findAllForDropdown).toHaveBeenCalled();
-        expect(component.dashboardSubscription.closed).toBe(true);
     });
 
     it('should toggle isCollapsed when service emits corresponding event', () => {
@@ -730,151 +789,43 @@ describe('CourseOverviewComponent', () => {
         expect(component.isSidebarCollapsed()).toBe(true);
     });
 
-    it('should switch course and navigate to the correct URL', async () => {
-        const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
-        const navigateSpy = vi.spyOn(router, 'navigate');
-        vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/dashboard');
+    describe('sidebar toggle relocation', () => {
+        type CourseOverviewInternals = {
+            handleComponentActivation(componentRef: unknown): void;
+            showCourseTitleBar(): boolean;
+        };
+        const internals = (): CourseOverviewInternals => component as unknown as CourseOverviewInternals;
 
-        component.switchCourse(course2);
-        await Promise.resolve();
+        it('should push the page title into the activated list tab', () => {
+            const setPageTitle = vi.fn();
+            const fakeLectures: CourseLecturesComponent = Object.assign(Object.create(CourseLecturesComponent.prototype), { isCollapsed: signal(false), setPageTitle });
+            component.pageTitle.set('overview.lectures');
 
-        expect(navigateByUrlSpy).toHaveBeenCalledWith('/', { skipLocationChange: true });
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', course2.id, 'dashboard']);
-    });
-    describe('determineManageViewLink', () => {
-        beforeEach(() => {
-            component.courseId.set(123);
-            component.course.set({ isAtLeastTutor: true });
+            internals().handleComponentActivation(fakeLectures);
+
+            expect(setPageTitle).toHaveBeenCalledWith('overview.lectures');
         });
 
-        it('should set exams link when URL includes "exams"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exams/1/edit');
-            component.course.set({ isAtLeastTutor: true });
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exams']);
+        it('should show the title bar on every page without its own sidebar', () => {
+            // Calendar, statistics, competencies, learning path and quiz training project nothing and previously had
+            // no bar at all, which left the student overview inconsistent with course management and administration.
+            component.hasSidebar.set(false);
+
+            expect(internals().showCourseTitleBar()).toBe(true);
         });
 
-        it('should set exercises link when URL includes "exercises"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exercises']);
+        it('should leave the title bar to a sidebar page unless it projects content', () => {
+            const titleBarService = TestBed.inject(CourseTitleBarService);
+            // A sidebar page carries the page identity in its sidebar header, so a second bar would only repeat it.
+            component.hasSidebar.set(true);
+            expect(internals().showCourseTitleBar()).toBe(false);
+
+            // Projecting content still opens the bar — this is what keeps the communication search visible.
+            titleBarService.setActionsTemplate({} as TemplateRef<unknown>);
+            expect(internals().showCourseTitleBar()).toBe(true);
+
+            titleBarService.setActionsTemplate(undefined);
+            expect(internals().showCourseTitleBar()).toBe(false);
         });
-
-        it('should set lectures link when URL includes "lectures"', () => {
-            component.course.set({ isAtLeastEditor: true });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'lectures']);
-        });
-
-        it('should set communication link when URL includes "communication"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/communication?conversationId=123');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'communication']);
-        });
-
-        it('should set learning-paths-management link when URL includes "learning-path + instructor"', () => {
-            component.course.set({ isAtLeastInstructor: true });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/learning-path');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'learning-paths-management']);
-        });
-
-        it('should set competency-management link when URL includes "competencies + instructor"', () => {
-            component.course.set({ isAtLeastInstructor: true });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/competencies');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'competency-management']);
-        });
-
-        it('should set faqs link when URL includes "faq"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/faq');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'faqs']);
-        });
-
-        it('should set tutorial-groups-checklist link when URL includes "tutorial-groups + instructor"', () => {
-            component.course.set({ isAtLeastInstructor: true });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
-        });
-        it('should set tutorial-groups-checklist link when URL includes "tutorial-groups + tutorial groups config' + ' exists + not instructor"', () => {
-            component.course.set({ isAtLeastTutor: true, tutorialGroupsConfiguration: {} });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
-        });
-
-        it('should default to course management base link when URL does not match any condition', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/settings');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123']);
-        });
-
-        it('should set course statistics link when URL includes course statistics', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/statistics');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'course-statistics']);
-        });
-    });
-
-    it('should initialize course notification values when both settingInfo and info are available', async () => {
-        component.courseId.set(mockCourseId);
-        await component.ngOnInit();
-        fixture.detectChanges();
-
-        const selectableSettingPresets = (component as any).selectableSettingPresets;
-        const selectedSettingPreset = (component as any).selectedSettingPreset;
-
-        expect(selectableSettingPresets).toBeDefined();
-        expect(selectableSettingPresets).toEqual(mockNotificationSettingPresets);
-        expect(selectedSettingPreset).toBeDefined();
-        expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[0]);
-    });
-
-    it('should select a new notification preset when presetSelected is called', async () => {
-        const setSettingPresetSpy = vi.spyOn(courseNotificationSettingService, 'setSettingPreset');
-
-        await component.ngOnInit();
-        fixture.detectChanges();
-
-        component.presetSelected(2);
-
-        const selectedSettingPreset = (component as any).selectedSettingPreset;
-
-        expect(selectedSettingPreset).toBeDefined();
-        expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[1]);
-        expect(setSettingPresetSpy).toHaveBeenCalledWith(1, 2, mockNotificationSettingPresets[0]);
-    });
-
-    it('should set selectedSettingPreset to undefined when custom settings are selected', async () => {
-        await component.ngOnInit();
-        fixture.detectChanges();
-
-        component.presetSelected(0);
-
-        const selectedSettingPreset = (component as any).selectedSettingPreset;
-
-        expect(selectedSettingPreset).toBeUndefined();
-        expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(1, 0, mockNotificationSettingPresets[0]);
-    });
-
-    it('should update notification settings when both services return data', async () => {
-        component.courseId.set(mockCourseId);
-        const getSettingInfoSpy = vi.spyOn(courseNotificationSettingService, 'getSettingInfo').mockImplementation(() => {
-            return of(undefined);
-        });
-
-        await component.ngOnInit();
-        fixture.detectChanges();
-
-        getSettingInfoSpy.mockReturnValue(of(mockSettingInfo));
-
-        (component as any).settingInfo = mockSettingInfo;
-        (component as any).initializeCourseNotificationValues();
-
-        expect((component as any).selectableSettingPresets).toBeDefined();
-        expect((component as any).selectedSettingPreset).toBeDefined();
     });
 });

@@ -160,7 +160,7 @@ public class BuildAgentConfiguration {
             return (bytes / (1024 * 1024)) + " MB";
         }
         else {
-            return String.format("%.1f GB", bytes / (1024.0 * 1024.0 * 1024.0));
+            return "%.1f GB".formatted(bytes / (1024.0 * 1024.0 * 1024.0));
         }
     }
 

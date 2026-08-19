@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +22,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.dto.CourseRequestsAdminOverviewDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestRequesterDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRequestRepository;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 @Service
@@ -82,7 +83,7 @@ public class CourseRequestService {
      * @return the persisted request as DTO
      */
     public CourseRequestDTO createCourseRequest(CourseRequestCreateDTO createDTO) {
-        var requester = userRepository.getUserWithGroupsAndAuthorities();
+        var requester = userRepository.getUserWithAuthorities();
         validateShortNameUniqueness(createDTO.shortName(), createDTO.title(), createDTO.semester(), null);
 
         if (createDTO.title().length() > MAX_TITLE_LENGTH) {
@@ -308,7 +309,6 @@ public class CourseRequestService {
         course.setOnlineCourse(Boolean.FALSE);
         course.setEnrollmentEnabled(Boolean.FALSE);
         course.setLearningPathsEnabled(false);
-        course.setStudentCourseAnalyticsDashboardEnabled(false);
         course.setAccuracyOfScores(1);
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
 
@@ -326,8 +326,6 @@ public class CourseRequestService {
             log.warn("Could not load code of conduct template from path: {}", templatePath, e);
         }
 
-        courseAccessService.setDefaultGroupsIfNotSet(course);
-
         course.validateShortName();
         course.validateStartAndEndDate();
         course.validateEnrollmentStartAndEndDate();
@@ -341,8 +339,8 @@ public class CourseRequestService {
         channelService.createDefaultChannels(createdCourse);
 
         if (request.getRequester() != null) {
-            User requesterWithGroups = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(request.getRequester().getId());
-            courseAccessService.addUserToGroup(requesterWithGroups, createdCourse.getInstructorGroupName(), createdCourse);
+            User requester = userRepository.findByIdWithAuthoritiesElseThrow(request.getRequester().getId());
+            courseAccessService.addUserToCourse(requester, createdCourse, CourseRole.INSTRUCTOR);
         }
         return createdCourse;
     }
@@ -362,10 +360,7 @@ public class CourseRequestService {
         var emailData = new ContactEmailData(request.getTitle(), request.getShortName(), request.getSemester(), request.getStartDate(), request.getEndDate(),
                 request.isTestCourse(), request.getReason(), requesterName, requesterEmail);
 
-        User recipient = new User();
-        recipient.setEmail(contactEmail);
-        recipient.setLangKey(requesterLangKey);
-        recipient.setLogin("course-request-contact");
+        MailRecipientDTO recipient = new MailRecipientDTO(contactEmail, requesterLangKey, "course-request-contact", null, null, null, null);
         mailSendingService.buildAndSendAsync(recipient, "email.courseRequest.contact.title", List.of(request.getTitle()), "mail/courseRequestContactEmail",
                 Map.of("courseRequest", emailData));
     }
@@ -396,7 +391,7 @@ public class CourseRequestService {
         if (requester == null) {
             return;
         }
-        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.accepted.title", "mail/courseRequestAcceptedEmail",
+        mailSendingService.buildAndSendAsync(MailRecipientDTO.from(requester), "email.courseRequest.accepted.title", "mail/courseRequestAcceptedEmail",
                 Map.of("course", course, "courseRequest", toEmailData(request)));
     }
 
@@ -404,14 +399,16 @@ public class CourseRequestService {
         if (requester == null) {
             return;
         }
-        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail", Map.of("courseRequest", toEmailData(request)));
+        mailSendingService.buildAndSendAsync(MailRecipientDTO.from(requester), "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail",
+                Map.of("courseRequest", toEmailData(request)));
     }
 
     private void sendReceivedEmail(User requester, CourseRequest request) {
         if (requester == null) {
             return;
         }
-        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.received.title", "mail/courseRequestReceivedEmail", Map.of("courseRequest", toEmailData(request)));
+        mailSendingService.buildAndSendAsync(MailRecipientDTO.from(requester), "email.courseRequest.received.title", "mail/courseRequestReceivedEmail",
+                Map.of("courseRequest", toEmailData(request)));
     }
 
     private CourseRequestDTO toDto(CourseRequest courseRequest) {
@@ -454,10 +451,6 @@ public class CourseRequestService {
         if (requester == null) {
             return null;
         }
-        Set<String> groups = requester.getGroups();
-        if (groups == null || groups.isEmpty()) {
-            return 0;
-        }
-        return (int) courseRepository.countCoursesForInstructorWithGroups(groups);
+        return (int) courseRepository.countCoursesForInstructor(requester.getId());
     }
 }

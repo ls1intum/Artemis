@@ -1,5 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -12,10 +11,10 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
 
 describe('Lecture Service', () => {
-    setupTestBed({ zoneless: true });
-
     let httpMock: HttpTestingController;
     let service: LectureService;
     const resourceUrl = 'api/lecture/lectures';
@@ -164,6 +163,27 @@ describe('Lecture Service', () => {
             });
             req.flush(returnedFromService);
             expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should load the narrow lecture overview and register converted lecture titles', () => {
+            const startDate = '2026-08-01T10:00:00.000Z';
+            const endDate = '2026-08-01T12:00:00.000Z';
+            const serverLecture = { id: 7, title: 'Overview lecture', startDate, endDate, isTutorialLecture: false };
+            const titleSpy = vi.spyOn(TestBed.inject(EntityTitleService), 'setTitle');
+            let received: LectureForOverview[] | undefined;
+
+            service.findAllByCourseIdForOverview(42).subscribe((lectures) => (received = lectures));
+            const request = httpMock.expectOne({ method: 'GET', url: 'api/lecture/courses/42/lectures-for-overview' });
+            expect(request.request.params.keys()).toEqual([]);
+            request.flush([serverLecture]);
+
+            expect(received).toHaveLength(1);
+            expect(received?.[0]).toMatchObject({ id: 7, title: 'Overview lecture', isTutorialLecture: false });
+            expect(dayjs.isDayjs(received?.[0].startDate)).toBe(true);
+            expect(dayjs.isDayjs(received?.[0].endDate)).toBe(true);
+            expect(received?.[0].startDate?.toISOString()).toBe(startDate);
+            expect(received?.[0].endDate?.toISOString()).toBe(endDate);
+            expect(titleSpy).toHaveBeenCalledExactlyOnceWith(EntityType.LECTURE, [7], 'Overview lecture');
         });
 
         it('should get all tutorial lectures by courseId', async () => {

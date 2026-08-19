@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ApplicationRef } from '@angular/core';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -10,9 +10,9 @@ import { MatchPercentageInfoModalComponent } from 'app/quiz/manage/match-percent
 import { CdkDrag, CdkDragHandle, CdkDragPlaceholder, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
-import { cloneDeep } from 'lodash-es';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import * as markdownConversionUtil from 'app/foundation/util/markdown.conversion.util';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
@@ -24,6 +24,7 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -56,8 +57,6 @@ const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
 question.correctMappings = [mapping1, mapping2];
 
 describe('ShortAnswerQuestionEditComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ShortAnswerQuestionEditComponent>;
     let component: ShortAnswerQuestionEditComponent;
 
@@ -90,7 +89,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         // Use cloneDeep to avoid tests modifying the shared question object
-        component.shortAnswerQuestion = cloneDeep(question);
+        component.shortAnswerQuestion = deepClone(question);
         fixture.componentRef.setInput('questionIndex', 0);
         fixture.componentRef.setInput('reEvaluationInProgress', false);
         fixture.detectChanges();
@@ -120,10 +119,10 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['This', 'is', 'a', '[-spot 12]', 'regarding', 'this', 'question.'],
             ['Another', '[-spot 8]', 'is', 'in', 'the', 'line', 'above'],
         ];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
 
         // test a long method with multiple indentations and concatenated words
-        const newQuestion2 = cloneDeep(component.question() as ShortAnswerQuestion);
+        const newQuestion2 = deepClone(component.question() as ShortAnswerQuestion);
         newQuestion2.text =
             'Enter your long question if needed\n\n' +
             'Select a part of the[-spot 6]and click on Add Spot to automatically [-spot 9]an input field and the corresponding[-spot 16]\n\n' +
@@ -183,20 +182,20 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['}'],
             ['To', 'define', 'the', 'solution', 'for', 'the', 'input', 'fields', 'you', 'need', 'to', 'create', 'a', 'mapping', '(multiple', 'mapping', 'also', 'possible):'],
         ];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
 
         // tests simple indentation
-        const newQuestion3 = cloneDeep(component.question() as ShortAnswerQuestion);
+        const newQuestion3 = deepClone(component.question() as ShortAnswerQuestion);
         newQuestion3.text =
             '[-spot 5]\n' + '    [-spot 6]\n' + '        [-spot 7]\n' + '            [-spot 8]\n' + '                [-spot 9]\n' + '                    [-spot 10]';
         fixture.componentRef.setInput('question', newQuestion3);
         fixture.detectChanges();
 
         expectedTextParts = [['[-spot 5]'], ['    [-spot 6]'], ['        [-spot 7]'], ['            [-spot 8]'], ['                [-spot 9]'], ['                    [-spot 10]']];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
 
         // classic java main method test
-        const newQuestion4 = cloneDeep(component.question() as ShortAnswerQuestion);
+        const newQuestion4 = deepClone(component.question() as ShortAnswerQuestion);
         newQuestion4.text =
             '[-spot 1] class [-spot 2] {\n' +
             '    public static void main([-spot 3][] args){\n' +
@@ -213,10 +212,10 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['    }'],
             ['}'],
         ];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
 
         // test multiple line parameter for method header
-        const newQuestion5 = cloneDeep(component.question() as ShortAnswerQuestion);
+        const newQuestion5 = deepClone(component.question() as ShortAnswerQuestion);
         newQuestion5.text =
             'private[-spot 1] methodCallWithMultipleLineParameter (\n' +
             '    int number,\n' +
@@ -237,10 +236,10 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['        System.out.', '[-spot 4]', '("', '[-spot 5]', '");'],
             ['}'],
         ];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
 
         // test nested arrays
-        const newQuestion6 = cloneDeep(component.question() as ShortAnswerQuestion);
+        const newQuestion6 = deepClone(component.question() as ShortAnswerQuestion);
         newQuestion6.text =
             'const manyArrayFields = [\n' + "    ['test1'],\n" + "    ['test2'],\n" + "    ['[-spot 1]'],\n" + "    ['middleField'],\n" + "    ['[-spot 2]'],\n" + '];';
         fixture.componentRef.setInput('question', newQuestion6);
@@ -255,10 +254,10 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ["    ['", '[-spot 2]', "'],"],
             ['];'],
         ];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
 
         // test textual enumeration
-        const newQuestion7 = cloneDeep(component.question() as ShortAnswerQuestion);
+        const newQuestion7 = deepClone(component.question() as ShortAnswerQuestion);
         newQuestion7.text =
             'If we want a enumeration, we can also [-spot 1] this:\n' +
             '- first major point\n' +
@@ -279,7 +278,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['-', 'third', 'major', 'point'],
             ['        -', 'first', 'very', 'not', 'major', 'point,', 'super', 'indented'],
         ];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
     });
 
     it('should update shortAnswerQuestion and emit questionUpdated on question input change', () => {
@@ -336,7 +335,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             item: {
                 data: testSolution1,
             },
-        };
+        } as unknown as CdkDragDrop<ShortAnswerSolution>;
 
         fixture.detectChanges();
         component.onDragDrop(dropSpot, event);
@@ -383,7 +382,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         // Mock the action to simulate inserting a spot
         vi.spyOn(component.insertShortAnswerSpotAction, 'executeInCurrentEditor').mockImplementation(() => {
-            component.questionEditorText = `[-spot 1]${component.questionEditorText}`;
+            component.questionEditorText.set(`[-spot 1]${component.questionEditorText()}`);
             component.numberOfSpot++;
             component.questionUpdated.emit();
         });
@@ -391,7 +390,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.addSpotAtCursor();
 
         expect(questionUpdatedSpy).toHaveBeenCalled();
-        const text: string = component.questionEditorText;
+        const text: string = component.questionEditorText();
         const firstLine = text.split('\n')[0];
         expect(firstLine).toContain('[-spot 1]');
         expect(component.numberOfSpot).toBe(2);
@@ -405,21 +404,21 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         // Mock the action to simulate inserting an option
         vi.spyOn(component.insertShortAnswerOptionAction, 'executeInCurrentEditor').mockImplementation(() => {
-            component.questionEditorText = `${component.questionEditorText}\n[-option 1]`;
+            component.questionEditorText.set(`${component.questionEditorText()}\n[-option 1]`);
             component.questionUpdated.emit();
         });
 
         component.addOption();
 
         expect(questionUpdatedSpy).toHaveBeenCalled();
-        const text: string = component.questionEditorText;
+        const text: string = component.questionEditorText();
         const lastLine = text.split('\n').last();
         expect(lastLine).toContain('[-option');
     });
 
     it('should add text solution', () => {
         // Setup text
-        component.questionEditorText = '';
+        component.questionEditorText.set('');
         component.addOptionToSpot(1, shortAnswerSolution1.text!);
         component.addOptionToSpot(2, shortAnswerSolution2.text!);
 
@@ -526,7 +525,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.shortAnswerQuestion.spots = [spot1, spot2];
         component.shortAnswerQuestion.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
         component.numberOfSpot = 1;
-        component.textParts = textParts;
+        component.textParts.set(textParts);
 
         component.addSpotAtCursorVisualMode();
 
@@ -544,7 +543,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     it('should toggle preview', () => {
         component.shortAnswerQuestion.text = 'This is the text of a question';
-        component.showVisualMode = false;
+        component.showVisualMode.set(false);
         component.shortAnswerQuestion.spots = [spot1, spot2];
         component.shortAnswerQuestion.correctMappings = [];
         let mapping = new ShortAnswerMapping(spot1, shortAnswerSolution1);
@@ -553,8 +552,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.shortAnswerQuestion.correctMappings.push(mapping);
 
         component.togglePreview();
-        expect(component.textParts).toHaveLength(1);
-        const firstElement = component.textParts.pop();
+        expect(component.textParts()).toHaveLength(1);
+        const firstElement = component.textParts().pop();
         expect(firstElement).toHaveLength(1);
         expect(firstElement).toEqual(['<p>This is the text of a question</p>']);
     });
@@ -594,7 +593,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const backup = new ShortAnswerQuestion();
         component.backupQuestion = backup;
         component.backupQuestion.spots = [spot1, spot2];
-        const modifiedSpot = cloneDeep(spot1);
+        const modifiedSpot = deepClone(spot1);
         modifiedSpot.spotNr = 10; // initial spotNr was 0
         component.shortAnswerQuestion.spots = [modifiedSpot, spot2];
 
@@ -612,19 +611,22 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.shortAnswerQuestion.spots[0]).toEqual(spot2);
     });
 
-    it('should set question text', () => {
+    it('should set question text', async () => {
         const text = 'This is a text for a test';
         const returnValue = { value: text } as unknown as HTMLElement;
         const getNavigationSpy = vi.spyOn(document, 'getElementById').mockReturnValue(returnValue);
         const array = ['0'];
-        component.textParts = [array, array];
+        component.textParts.set([array, array]);
         fixture.changeDetectorRef.detectChanges();
 
         component.setQuestionText('0-0-0-0');
-
         expect(getNavigationSpy).toHaveBeenCalledOnce();
+        // Restore the global getElementById mock, then run a tick so the deferred (afterNextRender) refill executes.
+        getNavigationSpy.mockRestore();
+        TestBed.inject(ApplicationRef).tick();
+
         const splitString = ['This', 'is', 'a', 'text', 'for', 'a', 'test'];
-        expect(component.textParts.pop()).toEqual(splitString);
+        expect(component.textParts().pop()).toEqual(splitString);
     });
 
     it('should toggle exact match', () => {

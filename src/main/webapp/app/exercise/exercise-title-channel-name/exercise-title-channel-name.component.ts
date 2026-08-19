@@ -1,9 +1,16 @@
-import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, input, output, viewChild } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { EMPTY } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
-import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+
+// Empty placeholder used as the default when no exercise input is provided; all fields are undefined so template
+// accesses (title, channelName, id, type) stay safe. Assigned via a variable so it is not an object-literal assertion.
+const emptyExercisePlaceholder: Partial<Exercise> = {};
 
 /**
  * @deprecated Use {@link ExerciseTitleChannelNamePrimengComponent} instead.
@@ -14,11 +21,13 @@ import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise
     imports: [TitleChannelNameComponent],
 })
 export class ExerciseTitleChannelNameComponent {
+    private readonly exerciseService = inject(ExerciseService);
+
     readonly course = input<Course>();
     readonly isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     readonly courseId = input<number>();
 
-    readonly exercise = input<Exercise>({} as Exercise);
+    readonly exercise = input<Exercise>(emptyExercisePlaceholder as Exercise);
     readonly titlePattern = input<string>();
     readonly minTitleLength = input<number>();
     readonly isExamMode = input<boolean>(false);
@@ -33,24 +42,28 @@ export class ExerciseTitleChannelNameComponent {
     readonly onTitleChange = output<string>();
     readonly onChannelNameChange = output<string>();
 
-    readonly alreadyUsedExerciseNames = signal<Set<string>>(new Set());
+    /**
+     * Titles already used in the course (to validate uniqueness). Replaces the former
+     * `fetchExistingExerciseNamesOnInit` effect (a data fetch in an effect() with a leaking subscription): the names
+     * are derived from courseId + exercise type via a switchMap'd stream. While the key is incomplete (or on error) the
+     * stream stays silent (EMPTY), so the previously loaded names are kept — matching the former "only fetch when both
+     * are present" behaviour — and toSignal owns the subscription lifecycle.
+     */
+    readonly alreadyUsedExerciseNames = toSignal(
+        toObservable(computed(() => ({ courseId: this.courseId() ?? this.course()?.id, type: this.exercise().type }))).pipe(
+            switchMap(({ courseId, type }) =>
+                courseId && type
+                    ? this.exerciseService.getExistingExerciseDetailsInCourse(courseId, type).pipe(
+                          map((exerciseDetails) => exerciseDetails.exerciseTitles ?? new Set<string>()),
+                          catchError(() => EMPTY),
+                      )
+                    : EMPTY,
+            ),
+        ),
+        { initialValue: new Set<string>() },
+    );
 
     readonly hideChannelNameInput = computed(() => !this.requiresChannelName(this.exercise(), this.course(), this.isExamMode(), this.isImport()));
-
-    constructor() {
-        const exerciseService = inject(ExerciseService);
-        effect(
-            function fetchExistingExerciseNamesOnInit() {
-                const courseId = this.courseId() ?? this.course()?.id;
-                const exercise = this.exercise();
-                if (courseId && exercise.type) {
-                    exerciseService.getExistingExerciseDetailsInCourse(courseId, exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
-                        this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? new Set());
-                    });
-                }
-            }.bind(this),
-        );
-    }
 
     updateTitle(newTitle: string | undefined) {
         this.exercise().title = newTitle;

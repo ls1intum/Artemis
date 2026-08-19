@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -16,8 +15,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('ExternalSubmissionDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExternalSubmissionDialogComponent>;
     let component: ExternalSubmissionDialogComponent;
     let externalSubmissionService: ExternalSubmissionService;
@@ -81,7 +78,7 @@ describe('ExternalSubmissionDialogComponent', () => {
 
         component.save();
 
-        expect(component.isSaving).toBe(true);
+        expect(component.isSaving()).toBe(true);
         expect(result.feedbacks).toBe(component.feedbacks);
         expect(result.feedbacks?.every((feedback) => feedback.type === FeedbackType.MANUAL)).toBe(true);
         expect(createMock).toHaveBeenCalledOnce();
@@ -92,14 +89,14 @@ describe('ExternalSubmissionDialogComponent', () => {
 
         expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
         expect(dialogRefCloseSpy).toHaveBeenCalledWith(result);
-        expect(component.isSaving).toBe(false);
+        expect(component.isSaving()).toBe(false);
         expect(eventManagerSpy).toHaveBeenCalledOnce();
         expect(eventManagerSpy).toHaveBeenCalledWith({ name: 'resultListModification', content: 'Added a manual result' });
     });
 
     it('should set isSaving to false on saveError', () => {
         component.result = new Result();
-        component.isSaving = true;
+        component.isSaving.set(true);
         fixture.componentRef.setInput('exercise', { id: 2 } as Exercise);
 
         const createMock = vi.spyOn(externalSubmissionService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
@@ -108,7 +105,7 @@ describe('ExternalSubmissionDialogComponent', () => {
         component.save();
         expect(createMock).toHaveBeenCalledOnce();
         expect(onSaveErrorSpy).toHaveBeenCalledOnce();
-        expect(component.isSaving).toBe(false);
+        expect(component.isSaving()).toBe(false);
     });
 
     it('should add a new feedback on pushFeedback and remove last on popFeedback', () => {

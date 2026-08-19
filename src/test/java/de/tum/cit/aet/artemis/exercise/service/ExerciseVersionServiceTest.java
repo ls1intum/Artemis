@@ -162,7 +162,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(snapshot).isNotNull();
 
         Exercise fetchedExercise = fetchExerciseForComparison(exercise);
-        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, gitService);
+        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, ExerciseVersionCommitHashResolver.resolveForExercise(fetchedExercise, gitService));
         // Compare via JSON strings to avoid null vs empty list mismatches from @JsonInclude(NON_EMPTY) round-trip
         assertThat(objectMapper.writeValueAsString(snapshot)).isEqualTo(objectMapper.writeValueAsString(expectedSnapshot));
         assertThat(objectMapper.writeValueAsString(snapshot)).isNotEqualTo(objectMapper.writeValueAsString(previousVersion.getExerciseSnapshot()));
@@ -177,7 +177,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         ExerciseVersion previousVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
 
         // save again to db without changing versionable data
-        Course newCourse = courseUtilService.addEmptyCourse();
+        Course newCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exercise.setCourse(newCourse);
         saveExerciseByType(exercise);
         exerciseVersionService.createExerciseVersion(exercise);
@@ -192,7 +192,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(snapshot).isNotNull();
 
         Exercise fetchedExercise = fetchExerciseForComparison(exercise);
-        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, gitService);
+        ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, ExerciseVersionCommitHashResolver.resolveForExercise(fetchedExercise, gitService));
         // Compare via JSON strings to avoid null vs empty list mismatches from @JsonInclude(NON_EMPTY) round-trip
         assertThat(objectMapper.writeValueAsString(snapshot)).isEqualTo(objectMapper.writeValueAsString(expectedSnapshot));
     }
@@ -228,6 +228,39 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(afterCount).isEqualTo(previousCount);
     }
 
+    /**
+     * {@code findForVersioningById} was changed from a single {@code @EntityGraph} (which produced a Cartesian product of
+     * the independent {@code @OneToMany} collections) to a base query plus one lean query per large collection, merged in
+     * Java. This test guards that refactor: it asserts every collection that versioning relies on is fully loaded, using
+     * ground-truth counts from the setup helpers (not another {@code findForVersioningById} call), so a collection that the
+     * multi-query fetch failed to load or merge would fail here rather than silently drop data from the version snapshot.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testFindForVersioningByIdLoadsAllIndependentCollections() {
+        // Set up a programming exercise with the independent collections that previously formed the Cartesian product:
+        // test cases, tasks (each linked to its test cases) and static code analysis categories.
+        ProgrammingExercise exercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        var createdTestCases = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
+        // Reload so the in-memory exercise carries its test cases; addTasksToProgrammingExercise builds one task per test case.
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        programmingExerciseUtilService.addTasksToProgrammingExercise(exercise);
+
+        ProgrammingExercise fetched = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+
+        // Each independent collection is fully loaded; the counts are ground truth from the setup, so a short/dropped
+        // collection fails here.
+        assertThat(fetched.getTestCases()).hasSize(createdTestCases.size());
+        assertThat(fetched.getTasks()).hasSize(createdTestCases.size());
+        // tasks.testCases must be loaded too (the deepest part of the former Cartesian product): exactly one test case per task.
+        assertThat(fetched.getTasks()).allSatisfy(task -> assertThat(task.getTestCases()).hasSize(1));
+        assertThat(fetched.getTasks().stream().mapToLong(task -> task.getTestCases().size()).sum()).isEqualTo(createdTestCases.size());
+        // The static code analysis categories created by the helper are loaded as well.
+        assertThat(fetched.getStaticCodeAnalysisCategories()).isNotEmpty();
+        // A to-one association from the base query is present, confirming the base query still loads its own attribute paths.
+        assertThat(fetched.getBuildConfig()).isNotNull();
+    }
+
     private Exercise createExerciseByType(ExerciseType exerciseType) {
         return switch (exerciseType) {
             case TEXT -> createTextExercise();
@@ -239,13 +272,13 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     private TextExercise createTextExercise() {
-        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         return (TextExercise) course.getExercises().iterator().next();
     }
 
     private ProgrammingExercise createProgrammingExercise() {
 
-        ProgrammingExercise newProgrammingExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        ProgrammingExercise newProgrammingExercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(TEST_PREFIX);
         newProgrammingExercise = programmingExerciseRepository.findForVersioningById(newProgrammingExercise.getId()).orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(newProgrammingExercise);
 
@@ -284,20 +317,20 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     private ModelingExercise createModelingExercise() {
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         // Create a modeling exercise
         Exercise exercise = course.getExercises().iterator().next();
         return modelingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
     }
 
     private QuizExercise createQuizExercise() {
-        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
         quizExerciseRepository.flush();
         return (QuizExercise) course.getExercises().iterator().next();
     }
 
     private FileUploadExercise createFileUploadExercise() {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         fileUploadExerciseRepository.flush();
         return (FileUploadExercise) course.getExercises().iterator().next();
     }

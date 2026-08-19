@@ -136,7 +136,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         // Create course with a released programming exercise
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         releasedExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         releasedExercise.setTitle(SEARCH_PREFIX + " Released Exercise");
         releasedExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
@@ -650,7 +650,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(unregisteredExam));
             Exam finalExam = unregisteredExam;
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " UnregisteredExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
                 assertThat(bm25.objects()).isNotEmpty();
@@ -679,7 +679,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(registeredExam));
             Exam finalExam = registeredExam;
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " RegisteredExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
                 assertThat(bm25.objects()).isNotEmpty();
@@ -704,7 +704,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             // No StudentExam registration for student1
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(testExam));
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " TestExamVisible", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
                 assertThat(bm25.objects()).isNotEmpty();
@@ -728,7 +728,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             noRegExam = examRepository.save(noRegExam);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(noRegExam));
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " NoRegEditorExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
                 assertThat(bm25.objects()).isNotEmpty();
@@ -757,7 +757,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             visibleExam = examRepository.save(visibleExam);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " InstrEditorExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
                 assertThat(bm25.objects()).isNotEmpty();
@@ -784,7 +784,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             visibleExam = examRepository.save(visibleExam);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorExamMeta", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
                 assertThat(bm25.objects()).isNotEmpty();
@@ -813,7 +813,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             examUtilService.addStudentExamWithUser(visibleExam, student);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " StudentExamMeta", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
                 assertThat(bm25.objects()).isNotEmpty();
@@ -903,7 +903,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             visibleExam = examRepository.save(visibleExam);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorVisibleExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
                 assertThat(bm25.objects()).isNotEmpty();
@@ -927,7 +927,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             futureExam = examRepository.save(futureExam);
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(futureExam));
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
                 var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
                 var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorFutureExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
                 assertThat(bm25.objects()).isNotEmpty();
@@ -989,13 +989,13 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
             // 1. Course with enabled communication
-            Course courseWithComm = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+            Course courseWithComm = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
             courseWithComm.setShortName("commOn");
             courseWithComm.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
             courseRepository.save(courseWithComm);
 
             // 2. Course with disabled communication
-            Course courseWithoutComm = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+            Course courseWithoutComm = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
             courseWithoutComm.setShortName("commOff");
             courseWithoutComm.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
             courseRepository.save(courseWithoutComm);

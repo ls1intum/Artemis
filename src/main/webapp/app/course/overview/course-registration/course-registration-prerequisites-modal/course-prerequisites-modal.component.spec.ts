@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -14,8 +13,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CoursePrerequisitesModal', () => {
-    setupTestBed({ zoneless: true });
-
     let coursePrerequisitesModalComponentFixture: ComponentFixture<CoursePrerequisitesModalComponent>;
     let coursePrerequisitesModalComponent: CoursePrerequisitesModalComponent;
     let prerequisiteService: PrerequisiteService;
@@ -47,7 +44,7 @@ describe('CoursePrerequisitesModal', () => {
         const competencyCards = coursePrerequisitesModalComponentFixture.debugElement.queryAll(By.directive(CompetencyCardComponent));
         expect(competencyCards).toHaveLength(2);
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
-        expect(coursePrerequisitesModalComponent.prerequisites).toHaveLength(2);
+        expect(coursePrerequisitesModalComponent.prerequisites()).toHaveLength(2);
     });
 
     it('should close dialog when cleared', () => {

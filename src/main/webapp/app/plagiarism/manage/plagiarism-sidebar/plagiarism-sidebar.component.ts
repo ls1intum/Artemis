@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, input, output } from '@angular/core';
+import { Component, effect, input, output, signal, untracked } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { faArrowLeft, faArrowRight, faChevronRight, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
@@ -13,7 +13,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './plagiarism-sidebar.component.html',
     imports: [FaIconComponent, TranslateDirective, NgClass, DecimalPipe, ArtemisTranslatePipe],
 })
-export class PlagiarismSidebarComponent implements OnChanges {
+export class PlagiarismSidebarComponent {
     readonly activeID = input<number>();
     readonly comparisons = input<PlagiarismComparison[]>();
     readonly casesFiltered = input(false);
@@ -32,17 +32,17 @@ export class PlagiarismSidebarComponent implements OnChanges {
     /**
      * Index of the currently selected result page.
      */
-    public currentPage = 0;
+    public readonly currentPage = signal(0);
 
     /**
      * Total number of result pages.
      */
-    public numberOfPages = 0;
+    public readonly numberOfPages = signal(0);
 
     /**
      * Subset of currently paged comparisons.
      */
-    public pagedComparisons?: PlagiarismComparison[];
+    public readonly pagedComparisons = signal<PlagiarismComparison[] | undefined>(undefined);
 
     /**
      * Number of comparisons per page.
@@ -54,18 +54,22 @@ export class PlagiarismSidebarComponent implements OnChanges {
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.comparisons?.currentValue !== changes.comparisons?.previousValue) {
-            const comparisons: PlagiarismComparison[] = changes.comparisons.currentValue;
-
-            this.currentPage = 0;
-            if (!comparisons) {
-                this.numberOfPages = 1;
-            } else {
-                this.numberOfPages = this.computeNumberOfPages(comparisons.length);
-            }
-            this.pagedComparisons = this.getPagedComparisons();
-        }
+    constructor() {
+        // Replaces ngOnChanges: reset paging to the first page and recompute the page count + visible slice whenever
+        // the comparisons input changes. Tracks comparisons(); the paging writes run untracked so they are not
+        // themselves triggers (the former hook used `currentValue !== previousValue`, i.e. simply "comparisons changed").
+        effect(() => {
+            const comparisons = this.comparisons();
+            untracked(() => {
+                this.currentPage.set(0);
+                if (!comparisons) {
+                    this.numberOfPages.set(1);
+                } else {
+                    this.numberOfPages.set(this.computeNumberOfPages(comparisons.length));
+                }
+                this.pagedComparisons.set(this.getPagedComparisons());
+            });
+        });
     }
 
     displayRunDetails() {
@@ -77,29 +81,29 @@ export class PlagiarismSidebarComponent implements OnChanges {
     }
 
     getPagedComparisons() {
-        const startIndex = this.currentPage * this.pageSize;
+        const startIndex = this.currentPage() * this.pageSize;
         return this.comparisons()?.slice(startIndex, startIndex + this.pageSize);
     }
 
     getPagedIndex(idx: number) {
-        return idx + this.currentPage * this.pageSize;
+        return idx + this.currentPage() * this.pageSize;
     }
 
     handlePageLeft() {
-        if (this.currentPage === 0) {
+        if (this.currentPage() === 0) {
             return;
         }
 
-        this.currentPage--;
-        this.pagedComparisons = this.getPagedComparisons();
+        this.currentPage.update((page) => page - 1);
+        this.pagedComparisons.set(this.getPagedComparisons());
     }
 
     handlePageRight() {
-        if (this.currentPage + 1 >= this.numberOfPages) {
+        if (this.currentPage() + 1 >= this.numberOfPages()) {
             return;
         }
 
-        this.currentPage++;
-        this.pagedComparisons = this.getPagedComparisons();
+        this.currentPage.update((page) => page + 1);
+        this.pagedComparisons.set(this.getPagedComparisons());
     }
 }

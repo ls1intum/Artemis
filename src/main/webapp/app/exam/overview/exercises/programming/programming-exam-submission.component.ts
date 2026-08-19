@@ -1,4 +1,5 @@
-import { Component, OnInit, effect, inject, input, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, signal, viewChild } from '@angular/core';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -27,6 +28,7 @@ import { CodeEditorConflictStateService } from 'app/programming/shared/code-edit
 import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { CommitState, DomainType, EditorState } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -54,6 +56,7 @@ import { CommitState, DomainType, EditorState } from 'app/programming/shared/cod
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private domainService = inject(DomainService);
+    private examParticipationService = inject(ExamParticipationService);
 
     exerciseType = ExerciseType.PROGRAMMING;
 
@@ -67,7 +70,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     showEditorInstructions = true;
     hasSubmittedOnce = false;
-    submissionCount?: number;
+    readonly submissionCount = signal<number | undefined>(undefined);
     repositoryIsLocked = false;
 
     readonly SubmissionPolicyType = SubmissionPolicyType;
@@ -91,7 +94,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         return this.exercise();
     }
 
-    isSaving: boolean;
+    isSaving = false;
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
@@ -113,9 +116,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         this.setSubmissionCountAndLockIfNeeded();
     }
 
-    onActivate() {
+    override onActivate() {
         super.onActivate();
-        this.instructions().updateMarkdown();
+        // Force a re-render (not just updateMarkdown, which skips unchanged problem statements): while this exercise was
+        // hidden its change detection was detached, so a render that happened in the meantime may have injected the
+        // PlantUML diagrams into stale DOM. Re-rendering now that the exercise is visible restores them reliably.
+        this.instructions().forceReRenderProblemStatement();
         this.updateDomain();
     }
 
@@ -123,7 +129,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Updates the domain to set the active student participation
      */
     updateDomain() {
-        const participation = { ...this.studentParticipation(), exercise: this.exercise() } as StudentParticipation;
+        const participation = cloneWith(this.studentParticipation(), { exercise: this.exercise() }) satisfies StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
@@ -131,7 +137,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Sets the submission count and lock based on the student participation.
      */
     setSubmissionCountAndLockIfNeeded() {
-        this.submissionCount = this.studentParticipation().submissionCount ?? this.submissionCount;
+        this.submissionCount.set(this.studentParticipation().submissionCount ?? this.submissionCount());
         // TODO: update repositoryIsLocked with the actual value from the server
     }
 
@@ -148,6 +154,9 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
             if (commitState === CommitState.CLEAN && this.hasSubmittedOnce) {
                 firstSubmission.submitted = true;
                 firstSubmission.isSynced = true;
+                // isSynced is mutated in place; notify sync-state-dependent UI so it re-evaluates under zoneless
+                // change detection (exam navigation sidebar, exercise overview, save button).
+                this.examParticipationService.notifySubmissionSyncStateChanged();
             } else if (commitState !== CommitState.UNDEFINED && !this.hasSubmittedOnce) {
                 this.hasSubmittedOnce = true;
             }
@@ -158,6 +167,8 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         const studentParticipation = this.studentParticipation();
         if (studentParticipation?.submissions && studentParticipation.submissions.length > 0) {
             studentParticipation.submissions[0].isSynced = false;
+            // Same reason as in onCommitStateChange: the in-place mutation schedules no change detection.
+            this.examParticipationService.notifySubmissionSyncStateChanged();
         }
     }
 

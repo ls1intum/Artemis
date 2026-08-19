@@ -15,31 +15,52 @@
         }}</span>
     </div>
     <div class="list-group list-group-flush" style="max-height: 362px; overflow-y: auto; width: 443px">
-        @for (result of displayedResults(); track result.id) {
+        @for (result of displayedResults(); track result.id ?? $index) {
             <div
+                data-testid="result-history-row"
                 class="list-group-item d-flex align-items-center gap-2 px-3 py-2"
-                [class.list-group-item-action]="isRowClickable()"
+                [class.list-group-item-action]="isRowClickable(result)"
                 [class.bg-active-row]="result.id === activeResultId()"
-                [attr.role]="isRowClickable() ? 'button' : undefined"
-                [attr.tabindex]="isRowClickable() ? 0 : undefined"
-                (click)="isRowClickable() && navigateToSubmission(result, $event)"
-                (keydown.enter)="isRowClickable() && navigateToSubmission(result, $event)"
-                (keydown.space)="isRowClickable() && navigateToSubmission(result, $event)"
+                [attr.role]="isRowClickable(result) ? 'button' : undefined"
+                [attr.tabindex]="isRowClickable(result) ? 0 : undefined"
+                (click)="isRowClickable(result) && navigateToSubmission(result, $event)"
+                (keydown.enter)="isRowClickable(result) && navigateToSubmission(result, $event)"
+                (keydown.space)="handleRowSpaceKeydown(result, $event)"
             >
                 <div class="rounded-pill align-self-stretch" [class.bg-primary]="result.id === activeResultId()" style="width: 3px"></div>
-                <fa-icon [icon]="getResultIcon(result)" [class]="getResultColorClass(result)" class="flex-shrink-0" style="font-size: 14px" />
+                <fa-icon
+                    [icon]="getResultIcon(result)"
+                    [animation]="getResultIconAnimation(result)"
+                    [class]="getResultColorClass(result)"
+                    class="flex-shrink-0"
+                    style="font-size: 14px"
+                />
                 <div class="flex-grow-1 d-flex flex-column overflow-hidden" style="gap: 3px">
                     <div class="d-flex align-items-center gap-1">
-                        <span class="fw-bold" [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">{{ result.score }}%</span>
-                        <span [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">-</span>
+                        @if (shouldShowResultScore(result)) {
+                            <span class="fw-bold" [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">{{ result.score }}%</span>
+                            <span [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">-</span>
+                        }
+                        @if (isAthenaAIResult(result)) {
+                            <fa-icon
+                                data-testid="ai-feedback-indicator"
+                                [icon]="faRobot"
+                                class="flex-shrink-0"
+                                role="img"
+                                [attr.aria-label]="getAthenaFeedbackTooltip(result) | artemisTranslate"
+                                [pTooltip]="getAthenaFeedbackTooltip(result) | artemisTranslate"
+                            />
+                        }
                         <span class="fw-bold text-truncate" style="font-size: 12px" [class]="getResultColorClass(result)">{{ getResultFeedbackMessage(result) }}</span>
                     </div>
-                    <div class="d-flex align-items-center gap-1">
-                        <p-tag [value]="getBadge(result).text | artemisTranslate" [severity]="getBadgeSeverity(result)" />
-                        <span class="text-body-tertiary" style="font-size: 11px">{{ result.completionDate | artemisDate }}</span>
-                    </div>
+                    @if (shouldShowResultMetadata(result)) {
+                        <div class="d-flex align-items-center gap-1">
+                            <p-tag [value]="getBadge(result).text | artemisTranslate" [severity]="getBadge(result).severity" />
+                            <span class="text-body-tertiary" style="font-size: 11px">{{ result.completionDate | artemisDate }}</span>
+                        </div>
+                    }
                 </div>
-                @if (exercise().type === ExerciseType.PROGRAMMING) {
+                @if (exercise().type === ExerciseType.PROGRAMMING && shouldShowResultMetadata(result)) {
                     <p-button
                         [label]="'artemisApp.result.progressString.feedbackButton' | artemisTranslate"
                         [outlined]="true"

@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.dto.ScoreDistributionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -164,7 +165,7 @@ public class StatisticsService {
 
         if (exercises.isEmpty()) {
             // Handle newly created courses that have no exercises
-            return new CourseManagementStatisticsDTO(0.0, Collections.emptyList());
+            return new CourseManagementStatisticsDTO(0.0, List.of());
         }
 
         Course course = exercises.stream().findFirst().orElseThrow().getCourseViaExerciseGroupOrCourseMember();
@@ -213,10 +214,10 @@ public class StatisticsService {
             numberOfStudentsOrTeams = teamRepository.getNumberOfTeamsForExercise(exercise.getId());
         }
         else {
-            Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId(), course.getStudentGroupName());
+            Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId(), course.getId());
             numberOfParticipationsOfStudentsOrTeams = studentParticipations == null ? 0L : studentParticipations;
 
-            numberOfStudentsOrTeams = userRepository.countByDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
+            numberOfStudentsOrTeams = userRepository.countByCourseIdAndRole(course.getId(), CourseRole.STUDENT);
         }
 
         // post stats

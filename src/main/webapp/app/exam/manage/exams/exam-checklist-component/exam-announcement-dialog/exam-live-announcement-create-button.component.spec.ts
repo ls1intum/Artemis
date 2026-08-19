@@ -10,11 +10,8 @@ import { Subject } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamLiveAnnouncementCreateButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamLiveAnnouncementCreateButtonComponent;
     let fixture: ComponentFixture<ExamLiveAnnouncementCreateButtonComponent>;
     let mockDialogService: DialogService;
@@ -55,7 +52,7 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
         fixture.detectChanges();
 
         expect(component.faBullhorn).toEqual(faBullhorn);
-        expect(component.announcementCreationAllowed).toBe(expectedAnnouncementAllowed);
+        expect(component.announcementCreationAllowed()).toBe(expectedAnnouncementAllowed);
     });
 
     it('should open dialog when button is clicked', () => {

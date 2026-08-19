@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // IMPORTANT: The mock must be defined before '@tumaet/apollon' imports to prevent flaky client tests
 // Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
 const { MockApollonEditor } = vi.hoisted(() => {
-    const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
+    // vi.hoisted runs before imports, so the real deepClone from app/foundation/util/deep-clone.util is not
+    // available here. A JSON round trip is enough for the plain Apollon UML models this mock stores.
+    const jsonRoundTripClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
 
     class MockApollonEditorClass {
         _model: any;
@@ -30,6 +32,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         destroy = vi.fn();
 
+        setElementHighlights = vi.fn();
+
         addOrUpdateAssessment = vi.fn((assessment: any) => {
             if (this._model) {
                 if (!this._model.assessments) {
@@ -42,7 +46,7 @@ const { MockApollonEditor } = vi.hoisted(() => {
         nextRender = Promise.resolve();
 
         constructor(_container: HTMLElement, options?: { model?: any }) {
-            this._model = options?.model ? deepClone(options.model) : {};
+            this._model = options?.model ? jsonRoundTripClone(options.model) : {};
             // Ensure v4-compatible structure with nodes/edges arrays,
             // since the real ApollonEditor converts v2/v3 models to v4 internally.
             if (!this._model.nodes) this._model.nodes = [];
@@ -73,7 +77,6 @@ vi.mock('@tumaet/apollon', async (importOriginal) => {
     };
 });
 
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -89,7 +92,7 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
-import { cloneDeep } from 'lodash-es';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Creates a v4 format UMLModel with populated nodes and edges from the v3 test model.
@@ -98,7 +101,7 @@ import { cloneDeep } from 'lodash-es';
  * that can be used to mock apollonEditor.model for testing highlight and element count features.
  */
 function createV4ModelWithNodes(): UMLModel {
-    const v3Model = cloneDeep(testClassDiagram as any);
+    const v3Model = deepClone(testClassDiagram as any);
     const nodes: any[] = [];
     const edges: any[] = [];
 
@@ -144,8 +147,6 @@ function mockApollonEditorModel(apollonEditor: ApollonEditor, model: UMLModel): 
 }
 
 describe('ModelingAssessmentComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ModelingAssessmentComponent>;
     let comp: ModelingAssessmentComponent;
     let translatePipe: ArtemisTranslatePipe;
@@ -155,7 +156,7 @@ describe('ModelingAssessmentComponent', () => {
     const ELEMENT_ID_2 = '2f67120e-b491-4222-beb1-79e87c2cf54d'; // Connected Class
     const RELATIONSHIP_ID = '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd'; // First relationship
 
-    const makeMockModel = () => cloneDeep(testClassDiagram as unknown as UMLModel);
+    const makeMockModel = () => deepClone(testClassDiagram as unknown as UMLModel);
 
     const mockFeedbackWithReference: Feedback = {
         text: 'FeedbackWithReference',
@@ -347,11 +348,12 @@ describe('ModelingAssessmentComponent', () => {
         ];
 
         // Mock translatePipe to return a meaningful value so assessmentNote gets set
-        const spy = vi.spyOn(translatePipe, 'transform').mockImplementation((key: string, params?: any) => {
-            if (key === 'artemisApp.modelingAssessment.impactWarning' && params?.affectedSubmissionsCount) {
-                return `Warning: ${params.affectedSubmissionsCount} other submissions`;
+        const spy = vi.spyOn(translatePipe, 'transform').mockImplementation((key: string | undefined | null, params?: object) => {
+            const affectedSubmissionsCount = (params as { affectedSubmissionsCount?: number } | undefined)?.affectedSubmissionsCount;
+            if (key === 'artemisApp.modelingAssessment.impactWarning' && affectedSubmissionsCount) {
+                return `Warning: ${affectedSubmissionsCount} other submissions`;
             }
-            return key;
+            return key ?? '';
         });
 
         fixture.componentRef.setInput('umlModel', mockModel);
@@ -393,34 +395,40 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
     });
 
-    it('should highlight elements', async () => {
-        const highlightedElements = new Map<string, string>();
-        highlightedElements.set(ELEMENT_ID_1, 'red');
-        highlightedElements.set(RELATIONSHIP_ID, 'blue');
-
-        const v4Model = createV4ModelWithNodes();
-
+    it('applies highlight overlays to the editor when the highlightedElements input changes', async () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
-        fixture.componentRef.setInput('highlightedElements', highlightedElements);
-
         fixture.detectChanges();
         await waitForApollonInitialization();
 
-        expect(comp.apollonEditor).not.toBeNull();
+        const setHighlights = comp.apollonEditor!.setElementHighlights as unknown as ReturnType<typeof vi.fn>;
+        setHighlights.mockClear();
 
-        // Mock the apollonEditor.model to return our v4 model with populated nodes/edges
-        const { getCapturedModel } = mockApollonEditorModel(comp.apollonEditor!, v4Model);
+        const highlights = new Map<string, string>([
+            [ELEMENT_ID_1, 'red'],
+            [RELATIONSHIP_ID, 'blue'],
+        ]);
+        fixture.componentRef.setInput('highlightedElements', highlights);
+        fixture.detectChanges();
+        await waitForApollonInitialization();
 
-        // Call updateHighlightedElements which sets highlight property on nodes/edges
-        await (comp as any).updateHighlightedElements(highlightedElements);
+        expect(setHighlights).toHaveBeenCalledWith(highlights);
+    });
 
-        // Verify the highlight property was actually set on the model elements
-        const updatedModel = getCapturedModel();
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBe('red');
-        expect(findElementById(updatedModel.edges as any[], RELATIONSHIP_ID).highlight).toBe('blue');
+    it('clears stale overlays when highlightedElements is reset to undefined (no lingering highlights)', async () => {
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('highlightedElements', new Map<string, string>([[ELEMENT_ID_1, 'red']]));
+        fixture.detectChanges();
+        await waitForApollonInitialization();
 
-        // Verify elements not in highlightedElements don't have highlight set
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBeUndefined();
+        const setHighlights = comp.apollonEditor!.setElementHighlights as unknown as ReturnType<typeof vi.fn>;
+        setHighlights.mockClear();
+
+        fixture.componentRef.setInput('highlightedElements', undefined);
+        fixture.detectChanges();
+        await waitForApollonInitialization();
+
+        // undefined must reach Apollon as null (clear), not be swallowed as a no-op.
+        expect(setHighlights).toHaveBeenCalledWith(null);
     });
 
     it('should update model', async () => {
@@ -449,44 +457,6 @@ describe('ModelingAssessmentComponent', () => {
         // Verify the apollon editor is still valid and has the correct diagram type
         const apollonModel = comp.apollonEditor!.model;
         expect(apollonModel.type).toBe(newModel.type);
-    });
-
-    it('should update highlighted elements', async () => {
-        const initialHighlights = new Map<string, string>();
-        initialHighlights.set(ELEMENT_ID_1, 'red');
-        initialHighlights.set(ELEMENT_ID_2, 'blue');
-
-        const v4Model = createV4ModelWithNodes();
-
-        fixture.componentRef.setInput('umlModel', makeMockModel());
-        fixture.componentRef.setInput('highlightedElements', initialHighlights);
-
-        fixture.detectChanges();
-        await waitForApollonInitialization();
-
-        expect(comp.apollonEditor).not.toBeNull();
-
-        // Mock the apollonEditor.model to return our v4 model with populated nodes/edges
-        const { getCapturedModel } = mockApollonEditorModel(comp.apollonEditor!, v4Model);
-
-        // Apply initial highlights
-        await (comp as any).updateHighlightedElements(initialHighlights);
-
-        let updatedModel = getCapturedModel();
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBe('red');
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBe('blue');
-
-        // Now update with different highlights - only ELEMENT_ID_2 should be green
-        const newHighlights = new Map<string, string>();
-        newHighlights.set(ELEMENT_ID_2, 'green');
-
-        await (comp as any).updateHighlightedElements(newHighlights);
-
-        updatedModel = getCapturedModel();
-        // ELEMENT_ID_1 should now have undefined highlight (removed)
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBeUndefined();
-        // ELEMENT_ID_2 should have green highlight (updated)
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBe('green');
     });
 
     it('should update highlighted assessments first round', async () => {

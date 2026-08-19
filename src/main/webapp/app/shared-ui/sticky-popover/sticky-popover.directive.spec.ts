@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -10,11 +9,10 @@ import { vi } from 'vitest';
     imports: [StickyPopoverDirective],
 })
 class StickyPopoverComponent {
-    pattern: string;
+    pattern!: string;
 }
 
 describe('StickyPopoverDirective', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<StickyPopoverComponent>;
     let debugDirective: DebugElement;
     let directive: StickyPopoverDirective;

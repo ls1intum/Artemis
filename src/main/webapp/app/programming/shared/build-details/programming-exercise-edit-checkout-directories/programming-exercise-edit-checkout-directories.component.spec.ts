@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -10,8 +9,6 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ProgrammingExerciseEditCheckoutDirectoriesComponent;
     let fixture: ComponentFixture<ProgrammingExerciseEditCheckoutDirectoriesComponent>;
     const course = { id: 123 } as Course;
@@ -78,16 +75,16 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
     it('should update fields correctly', () => {
         component.onAssigmentRepositoryCheckoutPathChange('assignment');
         expect(component.assignmentCheckoutPath()).toBe('assignment');
-        expect(component.formValid).toBe(true);
+        expect(component.formValid()).toBe(true);
         component.onTestRepositoryCheckoutPathChange('tests');
-        expect(component.formValid).toBe(true);
+        expect(component.formValid()).toBe(true);
         expect(component.testCheckoutPath()).toBe('tests');
         component.onSolutionRepositoryCheckoutPathChange('solution');
-        expect(component.formValid).toBe(true);
+        expect(component.formValid()).toBe(true);
         expect(component.solutionCheckoutPath()).toBe('solution');
 
         component.onAssigmentRepositoryCheckoutPathChange('solution');
-        expect(component.formValid).toBe(false);
+        expect(component.formValid()).toBe(false);
 
         component.calculateFormValid();
     });

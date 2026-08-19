@@ -55,6 +55,11 @@ export class CourseStorageService implements OnDestroy {
         return this.storedCourses.find((course) => course.id === courseId);
     }
 
+    /**
+     * Stores (or replaces) a course and notifies subscribers of {@link subscribeToCourseUpdates}.
+     *
+     * @param course the course to store
+     */
     updateCourse(course?: Course): void {
         if (course) {
             // filter out the old course object with the same id
@@ -62,6 +67,18 @@ export class CourseStorageService implements OnDestroy {
             this.storedCourses.push(course);
             return this.courseUpdateSubscriptions.get(course.id!)?.subject.next(course);
         }
+    }
+
+    /**
+     * Drops the stored course, so a response that carried no course does not leave the previous one readable.
+     *
+     * Separate from {@link updateCourse}, which cannot express this: it takes the course to store, so it has no id to
+     * remove by when there is nothing to store.
+     *
+     * @param courseId the course to drop
+     */
+    removeCourse(courseId: number): void {
+        this.storedCourses = this.storedCourses.filter((existingCourse) => existingCourse.id !== courseId);
     }
 
     subscribeToCourseUpdates(courseId: number): Observable<Course> {

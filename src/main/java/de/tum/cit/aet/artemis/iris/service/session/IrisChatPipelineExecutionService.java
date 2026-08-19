@@ -6,14 +6,16 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
-import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -26,6 +28,10 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
@@ -63,6 +69,8 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Conditional(IrisEnabled.class)
 public class IrisChatPipelineExecutionService {
 
+    private static final Logger log = LoggerFactory.getLogger(IrisChatPipelineExecutionService.class);
+
     private final IrisSessionRepository irisSessionRepository;
 
     private final CourseRepository courseRepository;
@@ -81,8 +89,6 @@ public class IrisChatPipelineExecutionService {
 
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
-    private final Optional<LearningMetricsApi> learningMetricsApi;
-
     private final IrisSettingsService irisSettingsService;
 
     private final PyrisDTOService pyrisDTOService;
@@ -92,8 +98,8 @@ public class IrisChatPipelineExecutionService {
     public IrisChatPipelineExecutionService(IrisSessionRepository irisSessionRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
-            Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LearningMetricsApi> learningMetricsApi,
-            IrisSettingsService irisSettingsService, PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService) {
+            Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisSettingsService irisSettingsService,
+            PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService) {
         this.irisSessionRepository = irisSessionRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
@@ -103,7 +109,6 @@ public class IrisChatPipelineExecutionService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.lectureRepositoryApi = lectureRepositoryApi;
-        this.learningMetricsApi = learningMetricsApi;
         this.irisSettingsService = irisSettingsService;
         this.pyrisDTOService = pyrisDTOService;
         this.pyrisPipelineService = pyrisPipelineService;
@@ -118,9 +123,10 @@ public class IrisChatPipelineExecutionService {
      * @param settings         optional pre-resolved course settings; otherwise loaded from the session's course
      * @param latestSubmission optional programming submission already resolved by the caller
      * @param uncommittedFiles uncommitted file changes from the client (empty map when not applicable)
+     * @param context          list of context information (e.g. current page, video timestamp, fullscreen mode) sent to Pyris for contextual responses
      */
     public void execute(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
-            Map<String, String> uncommittedFiles) {
+            Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context) {
         IrisSession loadedSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         if (loadedSession == null) {
             throw new EntityNotFoundException("IrisSession", session.getId());
@@ -142,22 +148,27 @@ public class IrisChatPipelineExecutionService {
             }
         }
 
-        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), chatSession, event, (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(),
-                chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser, latestSubmission, uncommittedFiles));
+        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.supportLevel().jsonValue(), chatSession, event,
+                (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser,
+                        latestSubmission, uncommittedFiles, context));
     }
 
     /**
      * Builds the {@link PyrisChatPipelineExecutionDTO} for the given chat context.
      * Loads mode-specific data (exercise, lecture, submission) on top of the shared course and metrics base.
+     *
+     * @param context Optional list of context objects providing information about what the user is viewing (not persisted, only sent to Pyris)
      */
     private PyrisChatPipelineExecutionDTO buildChatDTO(IrisChatMode chatMode, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
-            Course course, User user, PyrisUserDTO pyrisUser, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles) {
+            Course course, User user, PyrisUserDTO pyrisUser, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles,
+            List<IrisMessageContextDTO> context) {
         var messages = pyrisDTOService.toPyrisMessageDTOList(session.getMessages());
 
         // Base data shared across all chat modes (course chat is the baseline)
+        long courseLoadStart = System.nanoTime();
         var fullCourse = pyrisPipelineService.loadCourseWithParticipationOfStudent(course.getId(), session.getUserId());
         PyrisCourseDTO courseDto = PyrisCourseDTO.of(fullCourse);
-        StudentMetricsDTO metrics = learningMetricsApi.map(api -> api.getStudentCourseMetrics(session.getUserId(), course.getId())).orElse(null);
+        log.debug("Iris chat DTO base data loaded: course {} ms", (System.nanoTime() - courseLoadStart) / 1_000_000);
 
         // Mode-specific fields (additive on top of base data)
         PyrisProgrammingExerciseDTO programmingExercise = null;
@@ -165,12 +176,19 @@ public class IrisChatPipelineExecutionService {
         PyrisLectureDTO lectureDto = null;
         PyrisSubmissionDTO progSubmission = null;
         String textSubmission = null;
+        Long lectureUnitId = null;
+        // Lecture context (video/slides/fullscreen) is only valid for LECTURE_CHAT; other modes receive no context.
+        List<IrisMessageContextDTO> safeContext = List.of();
 
         switch (chatMode) {
             case PROGRAMMING_EXERCISE_CHAT -> {
                 var progExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getEntityId());
                 programmingExercise = pyrisDTOService.toPyrisProgrammingExerciseDTO(progExercise);
-                var actualSubmission = latestSubmission.or(() -> getLatestSubmissionIfExists(progExercise, user));
+                // Reload via the eager graph instead of trusting the caller-supplied entity: latestSubmission may be an event
+                // payload handed off across a thread boundary (e.g. CompletableFuture.runAsync) with no Hibernate session,
+                // so its lazy buildLogEntries/results associations would throw LazyInitializationException otherwise.
+                var actualSubmission = latestSubmission.flatMap(s -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(s.getId()))
+                        .or(() -> getLatestSubmissionIfExists(progExercise, user));
                 progSubmission = actualSubmission.map(s -> pyrisDTOService.toPyrisSubmissionDTO(s, uncommittedFiles)).orElse(null);
             }
             case TEXT_EXERCISE_CHAT -> {
@@ -195,6 +213,16 @@ public class IrisChatPipelineExecutionService {
                     return new PyrisLectureUnitDTO(unit.getId(), courseId, lecture.getId(), toInstant(unit.getReleaseDate()), unit.getName(), attachmentVersion);
                 }).toList();
                 lectureDto = new PyrisLectureDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lectureUnits);
+
+                // Only forward context whose lectureUnitId belongs to this session's lecture.
+                Set<Long> validUnitIds = lectureUnits.stream().map(PyrisLectureUnitDTO::lectureUnitId).collect(Collectors.toSet());
+                safeContext = context.stream().filter(ctx -> switch (ctx) {
+                    case IrisVideoContextDTO v -> validUnitIds.contains(v.lectureUnitId());
+                    case IrisSlidesContextDTO s -> validUnitIds.contains(s.lectureUnitId());
+                    case IrisCombinedViewContextDTO f -> isValidCombinedViewContext(f, validUnitIds);
+                }).toList();
+                lectureUnitId = safeContext.stream().filter(IrisCombinedViewContextDTO.class::isInstance).map(IrisCombinedViewContextDTO.class::cast)
+                        .map(IrisCombinedViewContextDTO::lectureUnitId).findFirst().orElse(null);
             }
             case COURSE_CHAT -> {
                 // All data already loaded in the base section above
@@ -202,8 +230,8 @@ public class IrisChatPipelineExecutionService {
             default -> throw new IllegalArgumentException("IrisChatPipelineExecutionService does not support chat mode " + chatMode);
         }
 
-        return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, executionDto.initialStages(), customInstructions,
-                courseDto, programmingExercise, textExercise, lectureDto, null, progSubmission, textSubmission, metrics);
+        return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, customInstructions, courseDto, programmingExercise,
+                textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, safeContext.isEmpty() ? null : safeContext);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
@@ -216,5 +244,23 @@ public class IrisChatPipelineExecutionService {
         }
         return participations.getLast().getSubmissions().stream().max(Submission::compareTo)
                 .flatMap(sub -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(sub.getId()));
+    }
+
+    private boolean isValidCombinedViewContext(IrisCombinedViewContextDTO combinedViewContext, Set<Long> validUnitIds) {
+        var slides = combinedViewContext.slides();
+        var video = combinedViewContext.video();
+
+        if (slides == null && video == null) {
+            return false;
+        }
+
+        if (slides != null && !validUnitIds.contains(slides.lectureUnitId())) {
+            return false;
+        }
+        if (video != null && !validUnitIds.contains(video.lectureUnitId())) {
+            return false;
+        }
+
+        return slides == null || video == null || slides.lectureUnitId().equals(video.lectureUnitId());
     }
 }

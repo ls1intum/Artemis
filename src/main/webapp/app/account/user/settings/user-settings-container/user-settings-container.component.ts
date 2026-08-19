@@ -1,6 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import { MODULE_FEATURE_PASSKEY, addPublicFilePrefix } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PASSKEY, addPublicFilePrefix } from 'app/app.constants';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -26,22 +26,27 @@ export class UserSettingsContainerComponent implements OnInit {
     private readonly accountService = inject(AccountService);
     private readonly dataGuard = inject(DataGuard);
 
-    currentUser?: User;
+    readonly currentUser = signal<User | undefined>(undefined);
 
-    isPasskeyEnabled = false;
-    isAtLeastTutor = false;
-    isAiEnabled = false;
+    readonly isPasskeyEnabled = signal(false);
+    readonly isAtLeastTutor = signal(false);
+    readonly isAiEnabled = signal(false);
+    // The science settings live in the atlas module (server-side ScienceSettingsResource is @Conditional(AtlasEnabled)).
+    // When atlas is disabled the science-settings endpoint does not exist, so the tab must be hidden instead of opening
+    // an empty page (issue #13173).
+    readonly isScienceEnabled = signal(false);
 
     ngOnInit() {
-        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
+        this.isPasskeyEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY));
+        this.isScienceEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
 
-        this.isAiEnabled = this.dataGuard.isUsingLLM();
+        this.isAiEnabled.set(this.dataGuard.isUsingLLM());
         this.accountService
             .getAuthenticationState()
             .pipe(
-                tap((user: User) => {
-                    this.currentUser = user;
-                    this.isAtLeastTutor = this.accountService.isAtLeastTutor();
+                tap((user: User | undefined) => {
+                    this.currentUser.set(user);
+                    this.isAtLeastTutor.set(this.accountService.isAtLeastTutor());
                 }),
             )
             .subscribe();

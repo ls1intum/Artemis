@@ -39,24 +39,25 @@ public class CompetencyOrchestrationResource {
         this.competencyOrchestrationService = competencyOrchestrationService;
     }
 
-    @PostMapping("programming-exercises/{exerciseId}/run")
+    @PostMapping("exercises/{exerciseId}/run")
     @EnforceAtLeastInstructorInExercise
     @FeatureToggle(Feature.AtlasAgent)
-    public ResponseEntity<CompetencyOrchestrationResultDTO> runForProgrammingExercise(@PathVariable Long exerciseId) {
-        log.info("REST request to run Atlas orchestrator for programming exercise: {}", exerciseId);
-        CompetencyOrchestrationResultDTO result = competencyOrchestrationService.run(exerciseId);
+    public ResponseEntity<CompetencyOrchestrationResultDTO> runForExercise(@PathVariable Long exerciseId) {
+        log.info("REST request to run Atlas orchestrator for exercise: {}", exerciseId);
+        CompetencyOrchestrationResultDTO result = competencyOrchestrationService.runWithQueuedFlush(exerciseId);
         return ResponseEntity.status(httpStatusFor(result)).body(result);
     }
 
     /** Maps orchestration outcome to HTTP status so frontend error handling does not need to parse the response body. */
     private static HttpStatus httpStatusFor(CompetencyOrchestrationResultDTO result) {
         return switch (result.status()) {
-            case SUCCESS -> HttpStatus.OK;
+            case SUCCESS, NO_OP -> HttpStatus.OK;
             case PARTIAL -> HttpStatus.MULTI_STATUS;
             case IN_PROGRESS -> HttpStatus.CONFLICT;
             case FAILED -> switch (result.failureReason()) {
                 case NO_CHAT_CLIENT -> HttpStatus.SERVICE_UNAVAILABLE;
                 case LLM_ERROR -> HttpStatus.BAD_GATEWAY;
+                case INTERNAL_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
                 case UNSUPPORTED_EXERCISE -> HttpStatus.UNPROCESSABLE_CONTENT;
             };
         };

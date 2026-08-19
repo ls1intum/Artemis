@@ -9,9 +9,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 
 /**
  * Service responsible for delivering course notifications to the web application via websockets.
@@ -58,18 +58,18 @@ public class CourseNotificationWebappService extends CourseNotificationBroadcast
      * </p>
      *
      * @param courseNotification The notification data to be sent
-     * @param recipients         The list of users who should receive the notification in the web app
+     * @param recipients         The list of recipients who should receive the notification in the web app
      */
     @Async
     @Override
     @SuppressWarnings("deprecation")
-    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
-        recipients.forEach(user -> {
-            websocketMessagingService.sendMessageToUser(user.getLogin(), WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
-            websocketMessagingService.sendMessageToUser(user.getLogin(), WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification);
+    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
+        recipients.forEach(recipient -> {
+            websocketMessagingService.sendMessageToUser(recipient.login(), WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
+            websocketMessagingService.sendMessageToUser(recipient.login(), WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification);
             // Mirror to the legacy destinations so older subscribers continue to receive notifications during the migration window.
-            websocketMessagingService.sendMessageToUser(user.getLogin(), LEGACY_WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
-            websocketMessagingService.sendMessageToUser(user.getLogin(), LEGACY_WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification);
+            websocketMessagingService.sendMessageToUser(recipient.login(), LEGACY_WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
+            websocketMessagingService.sendMessageToUser(recipient.login(), LEGACY_WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification);
         });
     }
 }

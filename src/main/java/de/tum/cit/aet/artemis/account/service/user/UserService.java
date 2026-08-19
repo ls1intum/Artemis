@@ -17,13 +17,14 @@ import static org.apache.commons.lang3.StringUtils.lowerCase;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
@@ -41,6 +42,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
+import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
@@ -48,6 +51,9 @@ import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -56,12 +62,13 @@ import de.tum.cit.aet.artemis.core.exception.AccountRegistrationBlockedException
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
-import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.UserCourseNotificationStatusService;
@@ -90,6 +97,8 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     private final PasswordService passwordService;
 
     private final AuthorityService authorityService;
@@ -110,7 +119,9 @@ public class UserService {
 
     private final SavedPostRepository savedPostRepository;
 
-    private final UserSshPublicKeyService userSshPublicKeyService;
+    private final AccountCredentialRevocationService accountCredentialRevocationService;
+
+    private final AccountSecurityNotificationService accountSecurityNotificationService;
 
     private final CourseNotificationSettingService courseNotificationSettingService;
 
@@ -118,13 +129,16 @@ public class UserService {
 
     private final GlobalNotificationSettingService globalNotificationSettingService;
 
-    public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
-            Optional<LdapUserService> ldapUserService, PasswordService passwordService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
-            Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
-            SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
-            UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
+    public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
+            AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
+            InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
+            AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
+            CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
+            GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
         this.authorityService = authorityService;
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
@@ -135,7 +149,8 @@ public class UserService {
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.learnerProfileApi = learnerProfileApi;
         this.savedPostRepository = savedPostRepository;
-        this.userSshPublicKeyService = userSshPublicKeyService;
+        this.accountCredentialRevocationService = accountCredentialRevocationService;
+        this.accountSecurityNotificationService = accountSecurityNotificationService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
         this.globalNotificationSettingService = globalNotificationSettingService;
@@ -171,14 +186,33 @@ public class UserService {
     public void ensureInternalAdminExists(String internalAdminUsername, String internalAdminPassword) {
         log.debug("Ensuring internal admin user exists: {}", internalAdminUsername);
 
-        Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(internalAdminUsername);
+        Optional<User> existingInternalAdmin = userRepository.findOneWithAuthoritiesByLogin(internalAdminUsername);
         if (existingInternalAdmin.isPresent()) {
             log.info("Update internal admin user {}", internalAdminUsername);
-            existingInternalAdmin.get().setActivated(true);
-            existingInternalAdmin.get().setPassword(passwordService.hashPassword(internalAdminPassword));
+            User internalAdmin = existingInternalAdmin.get();
+            if (!internalAdmin.isInternal()) {
+                // An instance that started up between #13394 and this change has an admin that was created as an externally
+                // managed account and therefore cannot use the password configured for it. Creating it correctly is not
+                // enough for those instances: the account exists, so only this branch is reached. The account belongs to
+                // Artemis by configuration and its password is set right here on every startup, so owning the flag as well
+                // is what makes that configuration mean something.
+                //
+                // Warned rather than logged quietly, and spelled out, because the flag decides more than the password check:
+                // LdapAuthenticationProvider skips internal users, so this account stops authenticating against the
+                // directory, and prepareUserForPasswordReset accepts internal users, so it becomes eligible for the e-mail
+                // password reset. For the dedicated local admin this property is meant for, all of that is intended. An
+                // operator who pointed it at a directory account instead needs to see it.
+                log.warn("The configured internal admin {} exists as an externally managed account and is now marked internal: it will authenticate with the "
+                        + "configured password instead of the external directory, and it becomes eligible for the Artemis password reset. The flag cannot be "
+                        + "changed back through the admin UI, which offers it only while creating a user. Point "
+                        + "artemis.user-management.internal-admin.username at a dedicated local account if that is not what you want.", internalAdminUsername);
+                internalAdmin.setInternal(true);
+            }
+            internalAdmin.setActivated(true);
+            internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
             // needs to be mutable --> new HashSet<>(Set.of(...))
-            existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
-            saveUser(existingInternalAdmin.get());
+            internalAdmin.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
+            saveUser(internalAdmin);
         }
         else {
             log.info("Create internal admin user {}", internalAdminUsername);
@@ -192,6 +226,12 @@ public class UserService {
         userDto.setLogin(login);
         userDto.setPassword(password);
         userDto.setActivated(true);
+        // Set explicitly because #13394 made the flag caller-controlled - UserCreationService.createUser used to force
+        // internal = true for everyone - and UserDTO defaults it to false. Without this the admin is stored as an externally
+        // managed account and the password configured right here is unusable, because
+        // ArtemisInternalAuthenticationProvider only ever looks for internal users. The update branch above repairs an
+        // account that was created in between.
+        userDto.setInternal(true);
         userDto.setFirstName("Administrator");
         userDto.setLastName("Administrator");
         userDto.setEmail(artemisInternalAdminEmail.orElse("admin@localhost"));
@@ -200,7 +240,6 @@ public class UserService {
         userDto.setLastModifiedBy("system");
         // needs to be mutable --> new HashSet<>(Set.of(...))
         userDto.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN.getAuthority(), STUDENT.getAuthority())));
-        userDto.setGroups(new HashSet<>());
         return userDto;
     }
 
@@ -212,7 +251,7 @@ public class UserService {
      */
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
-        return userRepository.findOneWithGroupsByActivationKey(key).map(user -> {
+        return userRepository.findOneByActivationKey(key).map(user -> {
             activateUser(user);
             return user;
         });
@@ -233,17 +272,25 @@ public class UserService {
     /**
      * Reset user password for given reset key
      *
-     * @param newPassword new password string
-     * @param key         reset key
+     * @param newPassword      new password string
+     * @param key              reset key
+     * @param revocationChoice which of the user's other credentials to revoke alongside the reset
      * @return user for whom the password was performed
      */
-    public Optional<User> completePasswordReset(String newPassword, String key) {
+    public Optional<User> completePasswordReset(String newPassword, String key, CredentialRevocationChoiceDTO revocationChoice) {
         log.debug("Reset user password for reset key {}", key);
         return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
             user.setPassword(passwordService.hashPassword(newPassword));
             user.setResetKey(null);
             user.setResetDate(null);
             saveUser(user);
+            // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
+            // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
+            // exactly as they do when changing a password from inside the account - with the difference that a reset
+            // defaults to revoking everything (see KeyAndPasswordVM#revokeCredentialsOrAll), because completing one
+            // only proves control of the mailbox.
+            accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password reset completed");
+            accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.RESET);
             return user;
         });
     }
@@ -308,14 +355,14 @@ public class UserService {
         newUser.setAuthorities(authorities);
 
         // Find user that has the same login
-        Optional<User> optionalExistingUser = userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase());
+        Optional<User> optionalExistingUser = userRepository.findOneByLogin(userDTO.getLogin().toLowerCase());
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
         }
 
         // Find user that has the same email
-        optionalExistingUser = userRepository.findOneWithGroupsByEmailIgnoreCase(userDTO.getEmail());
+        optionalExistingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
 
@@ -422,8 +469,8 @@ public class UserService {
 
                 // handle edge case, the user already exists in Artemis, but for some reason the values differ
                 if (StringUtils.hasText(ldapUser.getLogin())) {
-                    // load the user with groups and authorities because they might be needed later
-                    var existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(ldapUser.getLogin());
+                    // load the user with authorities because they might be needed later
+                    var existingUser = userRepository.findOneWithAuthoritiesByLogin(ldapUser.getLogin());
                     if (existingUser.isPresent()) {
                         LdapUserService.syncUserDetails(existingUser.get(), ldapUser);
                         saveUser(existingUser.get());
@@ -432,10 +479,10 @@ public class UserService {
                 }
 
                 // Use empty password, so that we don't store the credentials of external users in the Artemis DB
-                User user = userCreationService.createUser(ldapUser.getLogin(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
+                User user = userCreationService.createUser(ldapUser.getLogin(), "", ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
                         ldapUser.getRegistrationNumber(), null, "en", false);
-                // load the user with groups and authorities because they might be needed later
-                return userRepository.findOneWithGroupsAndAuthoritiesById(user.getId());
+                // load the user with authorities because they might be needed later
+                return userRepository.findOneWithAuthoritiesById(user.getId());
             }
             else {
                 log.warn("Ldap User with userIdentifier '{}' not found", userIdentifier);
@@ -450,11 +497,13 @@ public class UserService {
      * @param login user login string
      */
     public void softDeleteUser(String login) {
-        userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
-            participationVCSAccessTokenService.deleteAllByUserId(user.getId());
+        userRepository.findOneByLogin(login).ifPresent(user -> {
+            // Covers the participation and repository tokens and the SSH keys this method used to delete individually,
+            // and additionally the passkeys and the personal VCS access token, which it did not.
+            accountCredentialRevocationService.revokeAllCredentials(user, "user soft deleted");
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
-            userSshPublicKeyService.deleteAllByUserId(user.getId());
             globalNotificationSettingService.deleteAllByUserId(user.getId());
+            userCourseRoleRepository.deleteByUser_Id(user.getId());
             user.setDeleted(true);
             user.setLearnerProfile(null);
             anonymizeUser(user);
@@ -482,7 +531,6 @@ public class UserService {
         user.setRegistrationNumber(null);
         user.setImageUrl(null);
         user.setActivated(false);
-        user.setGroups(Collections.emptySet());
 
         List<SavedPost> savedPostsOfUser = savedPostRepository.findSavedPostsByUserId(user.getId());
 
@@ -517,12 +565,14 @@ public class UserService {
     }
 
     /**
-     * Change password of current user
+     * Change password of current user, revoking the credential types the user selected along with it.
      *
      * @param currentClearTextPassword cleartext password
      * @param newPassword              new password string
+     * @param revocationChoice         which of the user's other credentials to revoke; only the user knows whether the old
+     *                                     password may have been seen by someone else, which is what decides this
      */
-    public void changePassword(String currentClearTextPassword, String newPassword) {
+    public void changePassword(String currentClearTextPassword, String newPassword, CredentialRevocationChoiceDTO revocationChoice) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
             String currentPasswordHash = user.getPassword();
             if (!passwordService.checkPasswordMatch(currentClearTextPassword, currentPasswordHash)) {
@@ -531,6 +581,10 @@ public class UserService {
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);
             saveUser(user);
+            // What else is revoked is the user's decision: only they know whether the old password may have been seen by
+            // someone else, and that is what decides whether losing their enrolled authenticators and keys is warranted.
+            accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password changed");
+            accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.OWNER);
 
             log.debug("Changed password for User: {}", user);
         });
@@ -577,44 +631,80 @@ public class UserService {
     }
 
     /**
-     * Removes the passed group from all users in the Artemis database using a single bulk delete query.
-     * This is more efficient than loading, modifying, and saving each user individually.
+     * Add the user to a course with the given role.
      *
-     * @param groupName the group that should be removed from all existing users
+     * @param user   the user to add
+     * @param course the course to add the user to
+     * @param role   the role the user should have in the course
      */
-    public void removeGroupFromAllUsers(String groupName) {
-        log.info("Remove group {} from all users", groupName);
-        int deletedCount = userRepository.removeGroupFromAllUsers(groupName);
-        log.info("Removed group {} from {} user-group associations", groupName, deletedCount);
-    }
-
-    /**
-     * Add the user to the specified group and update in CIS (like Jenkins) if used, and registers the user to necessary channels
-     *
-     * @param user  the user
-     * @param group the group
-     */
-    public void addUserToGroup(User user, String group) {
-        // internal Artemis database
-        log.debug("Add user {} to group {}", user.getLogin(), group);
-        if (!user.getGroups().contains(group)) {
-            user.getGroups().add(group);
+    public void addUserToCourse(User user, Course course, CourseRole role) {
+        log.debug("Add user {} to course {} with role {}", user.getLogin(), course.getId(), role);
+        // Idempotent: if the user already holds this role, there is nothing to write and the (coarse, global) authorities
+        // cannot change — skip the reload + authority rebuild + save. This keeps bulk re-enrollment cheap.
+        if (userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
+            return;
+        }
+        userCourseRoleRepository.save(new UserCourseRole(user, course, role));
+        // ROLE_STUDENT is always granted, so adding a STUDENT role never changes the global authorities; only a newly
+        // granted TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
+        if (role != CourseRole.STUDENT) {
+            user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
             user.setAuthorities(authorityService.buildAuthorities(user));
             saveUser(user);
         }
     }
 
     /**
-     * remove the user from the specified group
+     * Batch variant of {@link #addUserToCourse(User, Course, CourseRole)} for bulk enrollment (CSV import, bulk exam
+     * registration). Replaces one existsBy query + insert (+ authority rebuild) per user with a single batch
+     * existence check, a single batch insert, and — if {@code role != STUDENT} — a single batch authority rebuild.
      *
-     * @param user  the user
-     * @param group the group
+     * @param users  the users to add; users who already hold the role in the course are skipped
+     * @param course the course to add the users to
+     * @param role   the role the users should have in the course
      */
-    public void removeUserFromGroup(User user, String group) {
-        // internal Artemis database
-        log.info("Remove user {} from group {}", user.getLogin(), group);
-        if (user.getGroups().contains(group)) {
-            user.getGroups().remove(group);
+    public void addUsersToCourse(List<User> users, Course course, CourseRole role) {
+        if (users.isEmpty()) {
+            return;
+        }
+        log.debug("Add {} users to course {} with role {}", users.size(), course.getId(), role);
+
+        Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
+        Set<Long> alreadyEnrolledIds = userCourseRoleRepository.findUserIdsByCourse_IdAndRoleAndUser_IdIn(course.getId(), role, userIds);
+        // Deduplicate by user id: duplicate rows in the import/request body must not produce two UserCourseRole entities
+        // with the same composite key (user, course, role), which would fail the whole bulk enrollment.
+        Set<Long> seenIds = new HashSet<>();
+        List<User> newlyEnrolled = users.stream().filter(user -> !alreadyEnrolledIds.contains(user.getId())).filter(user -> seenIds.add(user.getId())).toList();
+        if (newlyEnrolled.isEmpty()) {
+            return;
+        }
+        userCourseRoleRepository.saveAll(newlyEnrolled.stream().map(user -> new UserCourseRole(user, course, role)).toList());
+
+        // ROLE_STUDENT is always granted, so adding a STUDENT role never changes the global authorities; only a newly
+        // granted TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
+        if (role != CourseRole.STUDENT) {
+            Set<String> logins = newlyEnrolled.stream().map(User::getLogin).collect(Collectors.toSet());
+            List<User> usersWithAuthorities = new ArrayList<>(userRepository.findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(logins));
+            Map<Long, Set<Authority>> rebuiltAuthorities = authorityService.buildAuthoritiesForUsers(usersWithAuthorities);
+            usersWithAuthorities.forEach(user -> user.setAuthorities(rebuiltAuthorities.get(user.getId())));
+            userRepository.saveAll(usersWithAuthorities);
+        }
+    }
+
+    /**
+     * Remove the user from a course role.
+     *
+     * @param user   the user to remove
+     * @param course the course from which the user should be removed
+     * @param role   the role to revoke
+     */
+    public void removeUserFromCourse(User user, Course course, CourseRole role) {
+        log.info("Remove user {} from course {} role {}", user.getLogin(), course.getId(), role);
+        userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
+        // ROLE_STUDENT is always granted, so revoking a STUDENT role never changes the global authorities; only revoking
+        // a TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
+        if (role != CourseRole.STUDENT) {
+            user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
             user.setAuthorities(authorityService.buildAuthorities(user));
             saveUser(user);
         }
@@ -661,40 +751,16 @@ public class UserService {
         return Optional.empty();
     }
 
-    /**
-     * This method first tries to find the user and then adds the user to the course
-     *
-     * @param registrationNumber the registration number of the user
-     * @param login              the login of the user
-     * @param email              the email of the user
-     * @param courseGroupName    the courseGroup the user has to be added to
-     * @return the found user, otherwise returns an empty optional
-     */
-    public Optional<User> findUserAndAddToCourse(@Nullable String registrationNumber, @Nullable String login, @Nullable String email, String courseGroupName) {
-        var optionalUser = findUser(registrationNumber, login, email);
-
-        if (optionalUser.isPresent()) {
-            var user = optionalUser.get();
-            // we only need to add the user to the course group, if the user is not yet part of it, otherwise the user cannot access the course
-            if (!user.getGroups().contains(courseGroupName)) {
-                this.addUserToGroup(user, courseGroupName);
-            }
-            return optionalUser;
-        }
-
-        return Optional.empty();
-    }
-
     private Optional<User> findUserInDatabase(@Nullable String registrationNumber, @Nullable String login, @Nullable String email) {
         Optional<User> optionalUser = Optional.empty();
         if (StringUtils.hasText(login)) {
-            optionalUser = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
+            optionalUser = userRepository.findUserWithAuthoritiesByLogin(login);
         }
         if (optionalUser.isEmpty() && StringUtils.hasText(email)) {
-            optionalUser = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email);
+            optionalUser = userRepository.findUserWithAuthoritiesByEmail(email);
         }
         if (optionalUser.isEmpty() && StringUtils.hasText(registrationNumber)) {
-            optionalUser = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+            optionalUser = userRepository.findUserWithAuthoritiesByRegistrationNumber(registrationNumber);
         }
         return optionalUser;
     }
@@ -718,9 +784,11 @@ public class UserService {
     }
 
     /**
-     * This method first tries to find and then to add each user of the given list to the course
+     * This method first tries to find each user of the given list. When a user is found and the DTO explicitly provides
+     * the {@code isTestUser} flag (i.e. it is not {@code null}), the flag is applied to the user so that test/QA accounts
+     * can be marked (or unmarked) via the user CSV import and excluded from usage statistics.
      *
-     * @param userDtos users to be added to the course
+     * @param userDtos users to be looked up (and optionally flagged as test users)
      * @return a list of not found users
      */
     public List<StudentDTO> importUsers(List<StudentDTO> userDtos) {
@@ -729,6 +797,11 @@ public class UserService {
             var optionalStudent = findUser(userDto.registrationNumber(), userDto.login(), userDto.email());
             if (optionalStudent.isEmpty()) {
                 notFoundUsers.add(userDto);
+            }
+            else if (userDto.isTestUser() != null && optionalStudent.get().isTestUser() != userDto.isTestUser()) {
+                User student = optionalStudent.get();
+                student.setTestUser(userDto.isTestUser());
+                userRepository.save(student);
             }
         }
 

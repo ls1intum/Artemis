@@ -3,14 +3,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 import { PasswordService } from 'app/account/password/password.service';
 import { HttpClient } from '@angular/common/http';
 
 describe('PasswordService', () => {
-    setupTestBed({ zoneless: true });
-
     let passwordService: PasswordService;
     let httpService: HttpClient;
     let postStub: ReturnType<typeof vi.spyOn>;
@@ -39,6 +36,14 @@ describe('PasswordService', () => {
         passwordService.changePassword(newPassword, currentPassword).subscribe();
 
         expect(postStub).toHaveBeenCalledOnce();
-        expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword, newPassword });
+        expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword, newPassword, revokeCredentials: undefined });
+    });
+
+    it('should pass on which other credentials to revoke', () => {
+        const revokeCredentials = { passkeys: true, sshKeys: false, vcsAccessTokens: true };
+
+        passwordService.changePassword('newPassword', 'currentPassword', revokeCredentials).subscribe();
+
+        expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword: 'currentPassword', newPassword: 'newPassword', revokeCredentials });
     });
 });

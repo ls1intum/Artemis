@@ -14,12 +14,17 @@ import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { parseJson } from 'app/foundation/util/json.util';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { TumUiTagComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-assessment-instructions',
     templateUrl: './assessment-instructions.component.html',
+    styleUrl: './assessment-instructions.component.scss',
     imports: [
         ExpandableSectionComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
@@ -28,10 +33,13 @@ import { ExpandableSectionComponent } from '../expandable-section/expandable-sec
         ButtonComponent,
         TranslateDirective,
         ModelingEditorComponent,
+        TumUiTagComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class AssessmentInstructionsComponent {
     private markdownService = inject(ArtemisMarkdownService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
 
     readonly exercise = input.required<Exercise>();
 
@@ -46,21 +54,31 @@ export class AssessmentInstructionsComponent {
 
     readonly problemStatement = computed(() => this.markdownService.safeHtmlForMarkdown(this.exercise().problemStatement));
 
+    // Instructions can only be ticked off while an editable feedback list is mounted to receive them.
+    readonly selectable = computed(() => !this.readOnly() && this.selectionService.isSelectable());
+
+    // How many of all structured grading instructions of this exercise are currently applied, and how many exist.
+    readonly appliedInstructionCount = computed(() => {
+        const applied = this.selectionService.appliedInstructionIds();
+        const instructions = (this.gradingCriteria() ?? []).flatMap((criterion) => criterion.structuredGradingInstructions ?? []);
+        return { applied: instructions.filter((instruction) => instruction.id !== undefined && applied.has(instruction.id)).length, total: instructions.length };
+    });
+
     readonly gradingInstructions = computed(() => {
         const exercise = this.exercise();
         return exercise.gradingInstructions ? this.markdownService.safeHtmlForMarkdown(exercise.gradingInstructions) : undefined;
     });
 
-    readonly programmingExercise = computed(() => {
+    readonly programmingExercise = computed<ProgrammingExercise | undefined>(() => {
         const exercise = this.exercise();
-        return exercise.type === ExerciseType.PROGRAMMING ? (exercise as ProgrammingExercise) : undefined;
+        return exercise.type === ExerciseType.PROGRAMMING ? exercise : undefined;
     });
 
     readonly sampleSolutionModel = computed<UMLModel | undefined>(() => {
         const exercise = this.exercise();
         if (exercise.type === ExerciseType.MODELING) {
             const modelingExercise = exercise as ModelingExercise;
-            return modelingExercise.exampleSolutionModel ? importDiagram(JSON.parse(modelingExercise.exampleSolutionModel)) : undefined;
+            return modelingExercise.exampleSolutionModel ? importDiagram(parseJson(modelingExercise.exampleSolutionModel)) : undefined;
         }
         return undefined;
     });

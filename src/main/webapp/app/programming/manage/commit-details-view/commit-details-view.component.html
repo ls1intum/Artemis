@@ -1,4 +1,4 @@
-@if (currentCommit) {
+@if (currentCommit(); as currentCommit) {
     <h3>
         {{ 'artemisApp.repository.commitHistory.commitDetails.commit' | artemisTranslate }} <span class="text-primary">{{ currentCommit.hash }} </span>
     </h3>
@@ -21,15 +21,15 @@
     </div>
     <br />
 
-    @if (repositoryDiffInformation && diffReady) {
+    @if (repositoryDiffInformation() && diffReady()) {
         <jhi-git-diff-report
-            [repositoryDiffInformation]="repositoryDiffInformation"
+            [repositoryDiffInformation]="repositoryDiffInformation()"
             [diffForTemplateAndSolution]="false"
-            [leftCommitHash]="previousCommit?.hash"
-            [rightCommitHash]="currentCommit?.hash"
-            [participationId]="repositoryId"
+            [leftCommitHash]="previousCommit()?.hash"
+            [rightCommitHash]="currentCommit.hash"
+            [participationId]="repositoryId()"
             [isRepositoryView]="true"
-            [diffForTemplateAndEmptyRepository]="isTemplate"
+            [diffForTemplateAndEmptyRepository]="isTemplate()"
         />
     }
 }

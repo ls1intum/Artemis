@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
@@ -18,8 +17,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExerciseResetDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseResetDialogComponent;
     let fixture: ComponentFixture<ProgrammingExerciseResetDialogComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
@@ -116,14 +113,14 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
             comp.resetProgrammingExercise();
 
             expect(comp.handleResetResponse).not.toHaveBeenCalled();
-            expect(comp.resetInProgress).toBe(false);
+            expect(comp.resetInProgress()).toBe(false);
         });
     });
 
     describe('canSubmit', () => {
         beforeEach(() => {
             comp.confirmText = 'Programming Exercise';
-            comp.resetInProgress = false;
+            comp.resetInProgress.set(false);
             comp.programmingExerciseResetOptions = {
                 deleteParticipationsSubmissionsAndResults: true,
                 recreateBuildPlans: false,
@@ -150,7 +147,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         });
 
         it('should return false when reset is in progress', () => {
-            comp.resetInProgress = true;
+            comp.resetInProgress.set(true);
             expect(comp.canSubmit).toBe(false);
         });
     });

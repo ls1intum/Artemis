@@ -80,6 +80,16 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
     }
 
     /**
+     * Prints test infrastructure output directly to the console after all test logs have been flushed.
+     *
+     * @param output the output to print
+     */
+    public static synchronized void printToConsole(String output) {
+        System.out.print(output);
+        System.out.flush();
+    }
+
+    /**
      * Adds the given string to the logs for the current test group.
      *
      * @param string the string to add to the logs

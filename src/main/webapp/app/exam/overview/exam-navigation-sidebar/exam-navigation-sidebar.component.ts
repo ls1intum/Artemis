@@ -45,7 +45,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     readonly sidebarData = input<SidebarData>(undefined!);
     readonly exercises = input<Exercise[]>([]);
     readonly exerciseIndex = input(0);
-    readonly overviewPageOpen = input<boolean>(undefined!);
     readonly examSessions = input<ExamSession[] | undefined>([]);
     readonly examTimeLineView = input(false);
     readonly isTestRun = input(0);
@@ -56,22 +55,13 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         submission?: ProgrammingSubmission | SubmissionVersion | FileUploadSubmission;
     }>();
 
-    /**
-     * Index indicating that the content is exercise overview
-     */
-    readonly EXERCISE_OVERVIEW_INDEX = -1;
-    subscriptionToLiveExamExerciseUpdates: Subscription;
+    subscriptionToLiveExamExerciseUpdates?: Subscription;
 
     // Icons
-    icon: IconProp = facSaveSuccess;
     readonly faFileLines = faFileLines;
     readonly faChevronRight = faChevronRight;
 
     readonly isCollapsed = signal(false);
-    exerciseId: string;
-    // Plain field on purpose: setExerciseButtonStatus is called from template bindings and writes
-    // through refreshExerciseSaveCount; using a signal here triggers NG0600 in zoneless mode.
-    numberOfSavedExercises = 0;
 
     ngOnInit(): void {
         if (!this.examTimeLineView()) {
@@ -104,14 +94,17 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
                         if (commitState === CommitState.UNCOMMITTED_CHANGES && submission) {
                             // If there are uncommitted changes: set isSynced to false.
                             submission.isSynced = false;
+                            // Use the service-wide notifier rather than a private signal: the exercise overview
+                            // page and the exam save button observe only that one, so a private bump would leave
+                            // them showing a stale saved icon for this resumed-session case.
+                            this.examParticipationService.notifySubmissionSyncStateChanged();
                         }
                     });
             });
-
-        this.refreshExerciseSaveCount();
     }
 
     ngOnDestroy() {
+        this.subscriptionToLiveExamExerciseUpdates?.unsubscribe();
         this.sidebarEventService.emitResetValue();
     }
 
@@ -140,10 +133,8 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
                 forceSave: !!forceSave,
                 submission: submission,
             });
-            this.setExerciseButtonStatus(exerciseIndex);
         } else {
             this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
-            this.setExerciseButtonStatus(this.EXERCISE_OVERVIEW_INDEX);
         }
     }
 
@@ -156,38 +147,44 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         this.changePage(false, foundIndex, true);
     }
 
-    refreshExerciseSaveCount() {
-        let count = 0;
-        this.exercises().forEach((exercise) => {
-            const submission = ExamParticipationService.getSubmissionForExercise(exercise);
-            if (submission && submission.submitted) {
-                count++;
-            }
-        });
-        this.numberOfSavedExercises = count;
+    savedExercisesCount(): number {
+        this.trackSyncState();
+        return this.exercises().filter((exercise) => ExamParticipationService.getSubmissionForExercise(exercise)?.submitted).length;
     }
 
     /**
-     * calculate the exercise status (also see exam-exercise-overview-page.component.ts --> make sure the logic is consistent)
-     * also determines the used icon and its color
-     * TODO: we should try to extract a method for the common logic which avoids side effects (i.e. changing this.icon)
-     *  this method could e.g. return the sync status and the icon
+     * Read the signal that marks a submission's sync state as changed, so the template bindings here
+     * re-evaluate under zoneless change detection.
+     *
+     * `isSynced` and `submitted` are mutated in place on a plain submission object, which schedules no
+     * change detection on its own. Every producer therefore calls
+     * {@link ExamParticipationService.notifySubmissionSyncStateChanged}: each exam submission editor on
+     * an `isSynced` transition, the participation component on save success/failure, and this
+     * component's own repository-status subscription above. Reading that one signal used to be missing
+     * here, which left the sidebar blind to ordinary edits: after typing into a text exercise the status
+     * icon kept showing the "not started" hourglass and the "Exercise not saved" tooltip never appeared,
+     * until some unrelated interaction happened to trigger change detection. During an exam that hid the
+     * unsaved-changes warning from students.
+     */
+    private trackSyncState(): void {
+        this.examParticipationService.submissionSyncVersion();
+    }
+
+    /**
+     * Calculate the exercise status (also see exam-exercise-overview-page.component.ts --> make sure the logic is consistent).
+     * Pure (no side effects), so it is safe to call from template bindings under zoneless change detection.
      *
      * @param exerciseIndex index of the exercise
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
-    setExerciseButtonStatus(exerciseIndex: number): ExerciseButtonStatus {
-        this.icon = facSaveSuccess;
+    getExerciseButtonStatus(exerciseIndex: number): ExerciseButtonStatus {
+        this.trackSyncState();
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
         if (this.examTimeLineView()) {
             return this.exerciseIndex() === exerciseIndex ? ExerciseButtonStatus.SyncedSaved : ExerciseButtonStatus.Synced;
         }
 
-        // start with a yellow status (save warning icon)
-        // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
-        //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
-        this.icon = faHourglassHalf;
         const exercise = this.exercises()[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
@@ -196,23 +193,34 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             return ExerciseButtonStatus.Synced;
         }
         if (submission.submitted && submission.isSynced) {
-            this.icon = facSaveSuccess;
-            this.refreshExerciseSaveCount();
             return ExerciseButtonStatus.SyncedSaved;
         }
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
-            // make save icon green
+            // green save icon
             return ExerciseButtonStatus.Synced;
         } else {
-            // make save icon yellow except for programming exercises with only offline IDE
-            this.icon = facSaveWarning;
+            // yellow save icon except for programming exercises with only offline IDE
             return ExerciseButtonStatus.NotSynced;
+        }
+    }
+
+    /**
+     * Derives the save-state icon for an exercise from the same logic as getExerciseButtonStatus.
+     */
+    getExerciseIcon(exerciseIndex: number): IconProp {
+        switch (this.getExerciseButtonStatus(exerciseIndex)) {
+            case ExerciseButtonStatus.SyncedSaved:
+                return facSaveSuccess;
+            case ExerciseButtonStatus.NotSynced:
+                return facSaveWarning;
+            default:
+                return this.examTimeLineView() ? facSaveSuccess : faHourglassHalf;
         }
     }
 
     isOnlyOfflineIDE(exercise: Exercise): boolean {
         if (exercise instanceof ProgrammingExercise) {
-            const programmingExercise = exercise as ProgrammingExercise;
+            const programmingExercise = exercise;
             return programmingExercise.allowOfflineIde === true && programmingExercise.allowOnlineEditor === false;
         }
         return false;

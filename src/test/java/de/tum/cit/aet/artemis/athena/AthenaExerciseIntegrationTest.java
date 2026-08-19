@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -50,7 +51,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 1, 1);
 
-        course = courseUtilService.addEmptyCourse();
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         textExercise = textExerciseUtilService.createSampleTextExercise(course);
     }
 
@@ -60,7 +61,8 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         textExercise.setId(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
+                HttpStatus.CREATED);
     }
 
     @Test
@@ -69,7 +71,8 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         textExercise.setId(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
+                HttpStatus.CREATED);
     }
 
     @Test
@@ -77,11 +80,11 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     void testUpdateTextExercise_useRestrictedAthenaModule_success() throws Exception {
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        TextExercise updatedExercise = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
-                TextExercise.class, HttpStatus.OK);
+        TextExerciseResponseDTO updatedExercise = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
+                TextExerciseResponseDTO.class, HttpStatus.OK);
 
         // Wait for async Weaviate upsert operation to complete to prevent race conditions
-        assertExerciseExistsInWeaviate(weaviateService, updatedExercise);
+        assertExerciseExistsInWeaviate(weaviateService, textExerciseRepository.findByIdElseThrow(updatedExercise.id()));
     }
 
     @Test
@@ -89,7 +92,8 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     void testUpdateTextExercise_useRestrictedAthenaModule_success2() throws Exception {
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
+                HttpStatus.OK);
     }
 
     @Test
@@ -100,17 +104,19 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testCreateExamTextExercise_useAthena_badRequest() throws Exception {
-        ExerciseGroup group = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup group = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(group);
         examTextExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/text/text-exercises", examTextExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(examTextExercise), TextExerciseResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -121,8 +127,9 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         TextExercise testExamTextExercise = TextExerciseFactory.generateTextExerciseForExam(group);
         testExamTextExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
-        TextExercise created = request.postWithResponseBody("/api/text/text-exercises", testExamTextExercise, TextExercise.class, HttpStatus.CREATED);
-        assertThat(created.getFeedbackSuggestionModule()).isEqualTo(ATHENA_MODULE_TEXT_TEST);
+        TextExerciseResponseDTO created = request.postWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(testExamTextExercise),
+                TextExerciseResponseDTO.class, HttpStatus.CREATED);
+        assertThat(created.feedbackSuggestionModule()).isEqualTo(ATHENA_MODULE_TEXT_TEST);
     }
 
     @Test
@@ -133,9 +140,9 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         TextExercise testExamTextExercise = textExerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(group));
         testExamTextExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
-        TextExercise updated = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(testExamTextExercise),
-                TextExercise.class, HttpStatus.OK);
-        assertThat(updated.getFeedbackSuggestionModule()).isEqualTo(ATHENA_MODULE_TEXT_TEST);
+        TextExerciseResponseDTO updated = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(testExamTextExercise),
+                TextExerciseResponseDTO.class, HttpStatus.OK);
+        assertThat(updated.feedbackSuggestionModule()).isEqualTo(ATHENA_MODULE_TEXT_TEST);
     }
 
 }

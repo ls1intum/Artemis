@@ -5,7 +5,7 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
+import { TestExamWorkingTimeComponent } from 'app/exam/overview/test-exam-working-time/test-exam-working-time.component';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 import dayjs from 'dayjs/esm';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -22,6 +22,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StudentExamDetailTableRowComponent } from '../student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -103,8 +105,25 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
         const studentExam = this.studentExam()!;
         this.studentExamService.updateWorkingTime(this.courseId()!, studentExam.exam!.id!, studentExam.id!, this.workingTimeSeconds()).subscribe({
             next: (res) => {
-                if (res.body) {
-                    this.setStudentExam(res.body);
+                // The response only carries a slimmed-down nested `exam` (no startDate/gracePeriod) and omits `user`/
+                // `exercises`/`examSessions` entirely, so merge just the fields that can actually change (workingTime,
+                // submissionDate) into the already-loaded studentExam instead of replacing it wholesale. Replacing it
+                // would wipe fields the template and isExamOver()/individualEndDate() computeds still depend on.
+                const updatedStudentExam = res.body;
+                if (updatedStudentExam?.workingTime !== undefined) {
+                    const updatedWorkingTime = updatedStudentExam.workingTime;
+                    // The DTO carries the submission date as an ISO string; convert it so the merged exam keeps dayjs semantics.
+                    const updatedSubmissionDate = updatedStudentExam.submissionDate ? dayjs(updatedStudentExam.submissionDate) : undefined;
+                    this.studentExam.update((current) => {
+                        if (!current) {
+                            return current;
+                        }
+                        const merged = deepClone(current);
+                        merged.workingTime = updatedWorkingTime;
+                        merged.submissionDate = updatedSubmissionDate;
+                        return merged;
+                    });
+                    this.workingTimeSeconds.set(updatedWorkingTime);
                 }
                 this.isSavingWorkingTime.set(false);
                 this.alertService.success('artemisApp.studentExamDetail.saveWorkingTimeSuccessful');
@@ -164,8 +183,8 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam.set(studentExam);
 
-        this.student.set(studentExam.user!);
-        this.course.set(studentExam.exam!.course!);
+        this.student.set(studentExam.user);
+        this.course.set(studentExam.exam!.course);
 
         this.workingTimeSeconds.set(studentExam.workingTime ?? 0);
 
@@ -237,7 +256,7 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
             this.studentExamService.toggleSubmittedState(this.courseId()!, studentExam.exam.id, studentExam.id!, studentExam.submitted!).subscribe({
                 next: (res) => {
                     if (res.body) {
-                        const updated = { ...studentExam, submissionDate: res.body.submissionDate, submitted: res.body.submitted };
+                        const updated = cloneWith(studentExam, { submissionDate: res.body.submissionDate, submitted: res.body.submitted });
                         this.studentExam.set(updated);
                     }
                     this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');

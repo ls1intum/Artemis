@@ -273,9 +273,6 @@
             "solutionResult": "Ergebnis der Musterlösung",
             "structureTestOracle": "Oracle Strukturtest aktualisieren",
             "structureTestOracleWarning": "Diese Aktion extrahiert die Struktur-Tests des Test-Repositories and speichert sie in der Datei test.json. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
-            "atlasOrchestrator": {
-                "button": "Kompetenzen vorschlagen"
-            },
             "checkPlagiarism": "Plagiatsprüfung",
             "checkPlagiarismSuccess": "Plagiatsprüfung abgeschlossen. Ergebnisse sind in der zip-Datei enthalten.",
             "repositoryFilesError": "Repository-Dateien konnten nicht abgerufen werden.",
@@ -371,7 +368,7 @@
                 },
                 "activityTitle": "Dateiaktivität",
                 "iteration": "Iteration {{iteration}}",
-                "noActivity": "Es wurden noch keine Dateien erstellt oder aktualisiert.",
+                "noActivity": "Es wurden noch keine Dateien erstellt, aktualisiert oder entfernt.",
                 "attempts": "Versuche: {{attempts}}",
                 "status": {
                     "idle": "Nicht gestartet",
@@ -383,7 +380,8 @@
                     "skipped": "Übersprungen",
                     "skippedMessage": "Übersprungen, weil eine vorherige Repository-Generierung fehlgeschlagen ist.",
                     "fileCreated": "erstellt",
-                    "fileUpdated": "aktualisiert"
+                    "fileUpdated": "aktualisiert",
+                    "fileDeleted": "entfernt"
                 }
             },
             "status": {
@@ -685,7 +683,9 @@
                 "includeTestsIntoExampleSolution": "Tests zusammen mit Lösungsvorschlag veröffentlichen",
                 "includeTestsIntoExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag bereitgestellt werden. Nur auswählbar, wenn ein Veröffentlichungsdatum für den Lösungsvorschlag konfiguriert ist.",
                 "setTestCaseVisibilityToAfterReleaseDateOfResults": "Testergebnisse erst nach Veröffentlichung der Ergebnisse sichtbar machen",
-                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "Während der Klausur sehen Studierende nur, ob ihr Code kompiliert. Details zu den Testergebnissen werden erst nach dem Veröffentlichungsdatum der Ergebnisse angezeigt."
+                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "Während der Klausur sehen Studierende nur, ob ihr Code kompiliert. Details zu den Testergebnissen werden erst nach dem Veröffentlichungsdatum der Ergebnisse angezeigt.",
+                "warningLeakFeedbackHeader": "Warnung: Mögliches Leaken von Feedback",
+                "warningLeakFeedback": "Wenn du diese Option deaktivierst, können Testergebnisse und Feedback während der Prüfung für Studierende sichtbar werden. Bist du sicher, dass du fortfahren möchtest?"
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
@@ -919,6 +919,7 @@
                 "analyze": "Problemstellung analysieren",
                 "analyzing": "Analysiere...",
                 "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Kompetenzbereichen, Schwierigkeitsbewertung und Qualitätsproblemen zu suchen.",
+                "problemStatementTooLong": "Die Problemstellung ist zu lang für die Checkliste. Bitte kürze sie auf höchstens {{ max }} Zeichen und versuche es erneut.",
                 "competencies": {
                     "title": "Geschätzte Lernziele",
                     "empty": "Keine Kompetenzen abgeleitet.",
@@ -981,6 +982,12 @@
                 "outdated": "Veraltet",
                 "reanalyze": "Erneut analysieren"
             }
+        },
+        "checklistAnalysisRequest": {
+            "problemStatementMarkdown": "Problemstellung"
+        },
+        "checklistActionRequest": {
+            "problemStatementMarkdown": "Problemstellung"
         },
         "error": {
             "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",

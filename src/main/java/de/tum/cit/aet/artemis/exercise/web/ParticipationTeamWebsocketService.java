@@ -250,7 +250,7 @@ public class ParticipationTeamWebsocketService {
             return;
         }
 
-        final User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
+        final User user = userRepository.getUserWithAuthorities(principal.getName());
         final Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
 
         if (submission instanceof ModelingSubmission modelingSubmission && exercise instanceof ModelingExercise modelingExercise) {

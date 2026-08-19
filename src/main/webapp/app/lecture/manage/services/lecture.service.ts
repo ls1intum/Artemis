@@ -3,10 +3,12 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Lecture, LectureSeriesCreateLectureDTO, SimpleLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
@@ -71,6 +73,21 @@ export class LectureService {
         );
     }
 
+    /**
+     * Fetches the lectures of a course for the student course overview: the sidebar fields only, without attachments
+     * or lecture units, which are loaded when a single lecture is opened.
+     * These used to arrive as part of the course itself, which made every course visit pay for them.
+     * @param courseId the course to fetch the lectures for
+     */
+    findAllByCourseIdForOverview(courseId: number): Observable<LectureForOverview[]> {
+        return this.http.get<LectureForOverview[]>(`api/lecture/courses/${courseId}/lectures-for-overview`).pipe(
+            map((lectures) =>
+                lectures.map((lecture) => cloneWith(lecture, { startDate: convertDateFromServer(lecture.startDate), endDate: convertDateFromServer(lecture.endDate) })),
+            ),
+            tap((lectures) => lectures.forEach((lecture) => this.entityTitleService.setTitle(EntityType.LECTURE, [lecture.id], lecture.title))),
+        );
+    }
+
     findAllTutorialLecturesByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Lecture[]>(`api/lecture/courses/${courseId}/tutorial-lectures`, {
@@ -124,7 +141,7 @@ export class LectureService {
     }
 
     protected convertLectureDatesFromClient(lecture: Lecture): Lecture {
-        const copy: Lecture = Object.assign({}, lecture, {
+        const copy: Lecture = cloneWith(lecture, {
             startDate: convertDateFromClient(lecture.startDate),
             endDate: convertDateFromClient(lecture.endDate),
         });
@@ -202,6 +219,7 @@ export class LectureService {
                 return this.convertLectureDatesFromServer(lecture)!;
             });
         }
+        return undefined;
     }
 
     private sendTitlesToEntityTitleService(lecture: Lecture | undefined | null) {

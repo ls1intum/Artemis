@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,8 @@ import de.tum.cit.aet.artemis.admin.service.export.DataExportCreationService;
 import de.tum.cit.aet.artemis.admin.service.export.DataExportService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.notification.dto.DataExportEmailDTO;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
 /**
@@ -93,7 +96,8 @@ public class DataExportScheduleService {
                 executor.shutdownNow();
             }
             if (!successfulDataExports.isEmpty()) {
-                mailService.sendSuccessfulDataExportsEmailToAdmin(admin.get(), successfulDataExports);
+                Set<DataExportEmailDTO> dataExportDtos = successfulDataExports.stream().map(DataExportEmailDTO::from).collect(Collectors.toSet());
+                mailService.sendSuccessfulDataExportsEmailToAdmin(MailRecipientDTO.from(admin.get()), dataExportDtos);
             }
         }
     }

@@ -1,9 +1,8 @@
-import { ChangeDetectionStrategy, Component, TemplateRef, contentChild, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TemplateRef, contentChild, effect, inject, input, signal } from '@angular/core';
 import { faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
@@ -36,8 +35,6 @@ export class TutorialGroupsTableComponent {
 
     readonly timeZone = input<string>();
 
-    timeZoneUsedForDisplay = dayjs.tz.guess();
-
     sortingPredicate = 'title';
     ascending = true;
     faSort = faSort;
@@ -46,33 +43,25 @@ export class TutorialGroupsTableComponent {
     /**
      * If true we show the campus column
      */
-    tutorialGroupsSplitAcrossMultipleCampuses = false;
+    readonly tutorialGroupsSplitAcrossMultipleCampuses = signal(false);
     /**
      * If true we show the online / offline column
      */
-    mixOfOfflineAndOfflineTutorialGroups = false;
+    readonly mixOfOfflineAndOfflineTutorialGroups = signal(false);
 
     /**
      * If true we show the language column
      */
-    mifOfDifferentLanguages = false;
+    readonly mifOfDifferentLanguages = signal(false);
 
     constructor() {
-        // Effect to update timeZone
-        effect(() => {
-            const tz = this.timeZone();
-            if (tz) {
-                this.timeZoneUsedForDisplay = tz;
-            }
-        });
-
         // Effect to update tutorial groups display properties
         effect(() => {
             const groups = this.tutorialGroups();
             if (groups && groups.length > 0) {
-                this.tutorialGroupsSplitAcrossMultipleCampuses = groups.some((tutorialGroup) => tutorialGroup.campus !== groups[0].campus);
-                this.mixOfOfflineAndOfflineTutorialGroups = groups.some((tutorialGroup) => tutorialGroup.isOnline !== groups[0].isOnline);
-                this.mifOfDifferentLanguages = groups.some((tutorialGroup) => tutorialGroup.language !== groups[0].language);
+                this.tutorialGroupsSplitAcrossMultipleCampuses.set(groups.some((tutorialGroup) => tutorialGroup.campus !== groups[0].campus));
+                this.mixOfOfflineAndOfflineTutorialGroups.set(groups.some((tutorialGroup) => tutorialGroup.isOnline !== groups[0].isOnline));
+                this.mifOfDifferentLanguages.set(groups.some((tutorialGroup) => tutorialGroup.language !== groups[0].language));
             }
         });
     }

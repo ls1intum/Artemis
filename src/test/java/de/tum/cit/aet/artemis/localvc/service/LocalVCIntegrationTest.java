@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
+import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
@@ -436,6 +437,33 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         request.setRemoteAddr("127.0.0.1");
 
         assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+    }
+
+    /**
+     * A git client that sends a valid username but an empty password (e.g. a remote URL with the username baked in and no credential helper / access token supplying a password)
+     * must be reported as a missing credential, not as a password-length violation. This is the most common cause of "Failed login attempt ... password has to be at least ..."
+     * noise in production, where the external identity provider's own policy already rules out genuinely too-short passwords.
+     */
+    @Test
+    void testFetch_emptyPassword_reportsNoPasswordProvided() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", student1Login, "");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("No password provided");
+    }
+
+    /**
+     * A non-empty but too-short password is a genuine credential issue (as opposed to a missing one) and must still be reported with the length-policy message, so that it is
+     * logged
+     * at warn rather than being downgraded to the debug level used for empty-credential probes.
+     */
+    @Test
+    void testFetch_tooShortPassword_reportsLengthPolicy() {
+        String tooShortPassword = "a".repeat(PASSWORD_MIN_LENGTH - 1);
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", student1Login, tooShortPassword);
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("at least " + PASSWORD_MIN_LENGTH + " characters long");
     }
 
     /**

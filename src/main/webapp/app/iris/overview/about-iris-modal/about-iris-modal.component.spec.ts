@@ -1,11 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { signal } from '@angular/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { MatDialogRef } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { AboutIrisModalComponent } from './about-iris-modal.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -18,19 +16,17 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import type { User } from 'app/account/user/user.model';
 
 describe('AboutIrisModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AboutIrisModalComponent;
     let fixture: ComponentFixture<AboutIrisModalComponent>;
     let dialogRef: { close: ReturnType<typeof vi.fn> };
-    let chatService: { clearChat: ReturnType<typeof vi.fn> };
+    let chatService: { startFreshChat: ReturnType<typeof vi.fn> };
     const userIdentitySignal = signal<User | undefined>(undefined);
 
     beforeEach(async () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         dialogRef = { close: vi.fn() };
-        chatService = { clearChat: vi.fn() };
+        chatService = { startFreshChat: vi.fn() };
 
         TestBed.configureTestingModule({
             imports: [AboutIrisModalComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
@@ -79,15 +75,15 @@ describe('AboutIrisModalComponent', () => {
         expectValidCards(cards);
     });
 
-    it('close() should call dialogRef.close() without clearing chat', () => {
+    it('close() should call dialogRef.close() without starting a fresh chat', () => {
         component.close();
         expect(dialogRef.close).toHaveBeenCalledOnce();
-        expect(chatService.clearChat).not.toHaveBeenCalled();
+        expect(chatService.startFreshChat).not.toHaveBeenCalled();
     });
 
-    it('tryIris() should clear chat and close dialog', () => {
+    it('tryIris() should start a fresh chat and close dialog', () => {
         component.tryIris();
-        expect(chatService.clearChat).toHaveBeenCalledOnce();
+        expect(chatService.startFreshChat).toHaveBeenCalledOnce();
         expect(dialogRef.close).toHaveBeenCalledOnce();
     });
 
@@ -121,57 +117,5 @@ describe('AboutIrisModalComponent', () => {
             userIdentitySignal.set(undefined);
             expect(component.privacyDescKey()).toBe('artemisApp.iris.aboutIrisModal.privacyDesc');
         });
-    });
-});
-
-describe('AboutIrisModalComponent (MatDialogRef only)', () => {
-    setupTestBed({ zoneless: true });
-
-    let component: AboutIrisModalComponent;
-    let fixture: ComponentFixture<AboutIrisModalComponent>;
-    let matDialogRef: { close: ReturnType<typeof vi.fn> };
-    let chatService: { clearChat: ReturnType<typeof vi.fn> };
-    const userIdentitySignal = signal<User | undefined>(undefined);
-
-    beforeEach(async () => {
-        vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-        matDialogRef = { close: vi.fn() };
-        chatService = { clearChat: vi.fn() };
-
-        TestBed.configureTestingModule({
-            imports: [AboutIrisModalComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [
-                { provide: MatDialogRef, useValue: matDialogRef },
-                { provide: IrisChatService, useValue: chatService },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AccountService, useValue: { userIdentity: userIdentitySignal } },
-            ],
-        });
-
-        userIdentitySignal.set(undefined);
-        fixture = TestBed.createComponent(AboutIrisModalComponent);
-        component = fixture.componentInstance;
-        await fixture.whenStable();
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    it('should create when opened via MatDialog', () => {
-        expect(component).toBeTruthy();
-    });
-
-    it('close() should call matDialogRef.close()', () => {
-        component.close();
-        expect(matDialogRef.close).toHaveBeenCalledOnce();
-        expect(chatService.clearChat).not.toHaveBeenCalled();
-    });
-
-    it('tryIris() should clear chat and close MatDialog', () => {
-        component.tryIris();
-        expect(chatService.clearChat).toHaveBeenCalledOnce();
-        expect(matDialogRef.close).toHaveBeenCalledOnce();
     });
 });

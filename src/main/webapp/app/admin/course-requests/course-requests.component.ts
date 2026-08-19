@@ -1,11 +1,18 @@
-import { NgClass } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { DialogModule } from 'primeng/dialog';
-import { faCheck, faEdit, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import {
+    TumUiButtonComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiPaginatorComponent,
+    TumUiTableDirective,
+    TumUiTagComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { faCheck, faExternalLinkAlt, faPencil, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import dayjs from 'dayjs/esm';
 
 import { BaseCourseRequest, CourseRequest, CourseRequestStatus } from 'app/course/request/course-request.model';
 import { CourseRequestService } from 'app/course/request/course-request.service';
@@ -14,7 +21,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { onError } from 'app/foundation/util/global.utils';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
@@ -30,21 +36,25 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 @Component({
     selector: 'jhi-course-requests-admin',
     templateUrl: './course-requests.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        NgClass,
         TranslateDirective,
         ArtemisTranslatePipe,
         ArtemisDatePipe,
-        ButtonComponent,
         FormsModule,
         ReactiveFormsModule,
         RouterLink,
         FaIconComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        PaginatorModule,
+        TumUiPaginatorComponent,
         CourseRequestFormComponent,
-        DialogModule,
+        TumUiDialogComponent,
+        TumUiButtonComponent,
+        TumUiTableDirective,
+        TumUiTagComponent,
+        TumUiInputDirective,
+        TumUiTooltipDirective,
     ],
 })
 export class CourseRequestsComponent implements OnInit {
@@ -52,14 +62,12 @@ export class CourseRequestsComponent implements OnInit {
     private readonly alertService = inject(AlertService);
     private readonly fb = inject(FormBuilder);
 
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
     protected readonly CourseRequestStatus = CourseRequestStatus;
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
     protected readonly faSync = faSync;
-    protected readonly faEdit = faEdit;
+    protected readonly faPencil = faPencil;
     protected readonly SHORT_NAME_PATTERN = SHORT_NAME_PATTERN;
     protected readonly semesters = getCurrentAndFutureSemesters();
 
@@ -69,7 +77,7 @@ export class CourseRequestsComponent implements OnInit {
     readonly decidedRequests = signal<CourseRequest[]>([]);
     /** Total count of decided requests for pagination */
     readonly totalDecidedCount = signal(0);
-    /** Current page for decided requests (1-indexed; the PrimeNG paginator emits 0-indexed pages) */
+    /** Current page for decided requests (1-indexed; the paginator emits 0-indexed pages) */
     readonly decidedPage = signal(1);
     /** Page size for decided requests */
     readonly decidedPageSize = 20;
@@ -92,8 +100,8 @@ export class CourseRequestsComponent implements OnInit {
         title: ['', [Validators.required, Validators.maxLength(255)]],
         shortName: ['', [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)]],
         semester: ['', [Validators.required]],
-        startDate: [undefined as any],
-        endDate: [undefined as any],
+        startDate: [undefined as dayjs.Dayjs | undefined],
+        endDate: [undefined as dayjs.Dayjs | undefined],
         testCourse: [false],
         reason: ['', [Validators.required]],
     });
@@ -127,9 +135,9 @@ export class CourseRequestsComponent implements OnInit {
         this.load();
     }
 
-    /** Handles a PrimeNG paginator page change for the decided requests by converting the 0-indexed event page to the 1-indexed page and reloading. */
-    onDecidedPaginatorChange(event: PaginatorState): void {
-        this.decidedPage.set((event.page ?? 0) + 1);
+    /** Handles a paginator page change for the decided requests by converting the 0-indexed emitted page to the 1-indexed page and reloading. */
+    onDecidedPaginatorChange(page: number): void {
+        this.decidedPage.set(page + 1);
         this.onDecidedPageChange();
     }
 
@@ -193,30 +201,15 @@ export class CourseRequestsComponent implements OnInit {
         });
     }
 
-    badgeClass(status?: CourseRequestStatus) {
+    badgeSeverity(status?: CourseRequestStatus): 'success' | 'danger' | 'secondary' {
         switch (status) {
             case CourseRequestStatus.ACCEPTED:
-                return 'bg-success';
+                return 'success';
             case CourseRequestStatus.REJECTED:
-                return 'bg-danger';
+                return 'danger';
             default:
-                return 'bg-secondary';
+                return 'secondary';
         }
-    }
-
-    /**
-     * Formats the instructor course count for display.
-     * This is only used for pending requests where the count is always computed.
-     * Due to @JsonInclude(NON_EMPTY), a count of 0 is omitted and received as undefined.
-     *
-     * @param count the instructor course count (undefined means 0 due to JSON serialization)
-     * @return "No" if count is 0/undefined, "Yes (count)" if count > 0
-     */
-    formatInstructorCount(count?: number): string {
-        if (!count) {
-            return 'No';
-        }
-        return `Yes (${count})`;
     }
 
     openEditModal(request: CourseRequest) {
@@ -254,8 +247,8 @@ export class CourseRequestsComponent implements OnInit {
             title: this.editForm.get('title')!.value!,
             shortName: this.editForm.get('shortName')!.value!,
             semester: this.editForm.get('semester')!.value ?? undefined,
-            startDate,
-            endDate,
+            startDate: startDate ?? undefined,
+            endDate: endDate ?? undefined,
             testCourse: this.editForm.get('testCourse')!.value ?? false,
             reason: this.editForm.get('reason')!.value!,
         };

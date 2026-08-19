@@ -1,62 +1,61 @@
-import { ComponentRef, Directive, OnDestroy, OnInit, Type, ViewContainerRef, inject, input } from '@angular/core';
+import { ComponentRef, DestroyRef, Directive, OnDestroy, OnInit, Type, ViewContainerRef, inject, input } from '@angular/core';
 import { Detail, ShownDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { TextDetailComponent } from 'app/shared-ui/detail-overview-list/components/text-detail/text-detail.component';
 import { DateDetailComponent } from 'app/shared-ui/detail-overview-list/components/date-detail/date-detail.component';
 import { LinkDetailComponent } from 'app/shared-ui/detail-overview-list/components/link-detail/link-detail.component';
 import { BooleanDetailComponent } from 'app/shared-ui/detail-overview-list/components/boolean-detail/boolean-detail.component';
-import { ProgrammingRepositoryButtonsDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-repository-buttons-detail/programming-repository-buttons-detail.component';
-import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component';
-import { ProgrammingTestStatusDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component';
-import { ProgrammingDiffReportDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
 import { ExerciseCategoriesDetailComponent } from 'app/shared-ui/detail-overview-list/components/exercise-categories-detail/exercise-categories-detail.component';
+// The four programming-specific detail components are NOT imported statically.
+// They are loaded via dynamic import() only when a detail row of that type is
+// actually present. This keeps non-programming pages (course, quiz, text, …)
+// free of the GitDiffReport / TriggerBuildButton / ResultComponent chain.
 
 @Directive({
     selector: '[jhiExerciseDetail]',
 })
 export class ExerciseDetailDirective implements OnInit, OnDestroy {
     viewContainerRef = inject(ViewContainerRef);
+    private readonly destroyRef = inject(DestroyRef);
 
-    detail = input<Detail>();
+    readonly detail = input<Detail>();
 
-    private componentRef: ComponentRef<any>;
+    private componentRef: ComponentRef<unknown> | undefined;
 
-    ngOnInit() {
-        const detail = this.detail();
-        if (!this.isShownDetail(detail)) {
+    async ngOnInit() {
+        const shownDetail = this.detail();
+        if (!this.isShownDetail(shownDetail)) {
             return;
         }
-        const shownDetail = detail as ShownDetail;
 
-        const detailTypeToComponent: {
-            [key in DetailType]?: Type<
-                | TextDetailComponent
-                | DateDetailComponent
-                | LinkDetailComponent
-                | BooleanDetailComponent
-                | ProgrammingRepositoryButtonsDetailComponent
-                | ProgrammingAuxiliaryRepositoryButtonsDetailComponent
-                | ProgrammingTestStatusDetailComponent
-                | ProgrammingDiffReportDetailComponent
-                | ExerciseCategoriesDetailComponent
-            >;
-        } = {
+        // Guard: directive may be destroyed while the dynamic import below is
+        // in flight (e.g. fast navigation away). Must be registered before the
+        // await, since DestroyRef.onDestroy() throws if called after the view
+        // has already been destroyed.
+        let destroyed = false;
+        this.destroyRef.onDestroy(() => (destroyed = true));
+
+        // Light components — statically imported, negligible bundle cost.
+        const eagerMap: Partial<Record<DetailType, Type<unknown>>> = {
             [DetailType.Text]: TextDetailComponent,
             [DetailType.Date]: DateDetailComponent,
             [DetailType.Link]: LinkDetailComponent,
             [DetailType.Boolean]: BooleanDetailComponent,
-            [DetailType.ProgrammingRepositoryButtons]: ProgrammingRepositoryButtonsDetailComponent,
-            [DetailType.ProgrammingAuxiliaryRepositoryButtons]: ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
-            [DetailType.ProgrammingTestStatus]: ProgrammingTestStatusDetailComponent,
-            [DetailType.ProgrammingDiffReport]: ProgrammingDiffReportDetailComponent,
             [DetailType.ExerciseCategories]: ExerciseCategoriesDetailComponent,
         };
 
-        const detailComponent = detailTypeToComponent[shownDetail.type];
-        if (detailComponent) {
-            this.componentRef = this.viewContainerRef.createComponent(detailComponent);
-            this.assignAttributes(shownDetail);
+        let detailComponent: Type<unknown> | undefined = eagerMap[shownDetail.type];
+
+        if (!detailComponent) {
+            detailComponent = await this.loadProgrammingDetailComponent(shownDetail.type);
         }
+
+        if (destroyed || !detailComponent) {
+            return;
+        }
+
+        this.componentRef = this.viewContainerRef.createComponent(detailComponent);
+        this.assignAttributes(shownDetail);
     }
 
     ngOnDestroy() {
@@ -64,15 +63,44 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
     }
 
     /**
-     * @return false if the detail is a {@link NotShownDetail}
+     * @return false if the detail is a {@link NotShownDetail}, narrowing to {@link ShownDetail} otherwise
      */
-    private isShownDetail(detail: Detail | undefined): boolean {
+    private isShownDetail(detail: Detail | undefined): detail is ShownDetail {
         return !!detail;
     }
 
     private assignAttributes(detail: ShownDetail) {
         if (this.componentRef) {
             this.componentRef.setInput('detail', detail);
+        }
+    }
+
+    /**
+     * Heavy programming components — dynamically imported only when this specific detail type
+     * is present in the rendered list. Dispatched via an explicit switch (rather than an
+     * object/function lookup keyed by {@link DetailType}) so the import to run is always
+     * statically determined, not retrieved from data.
+     */
+    private async loadProgrammingDetailComponent(type: DetailType): Promise<Type<unknown> | undefined> {
+        switch (type) {
+            case DetailType.ProgrammingRepositoryButtons:
+                return import('app/shared-ui/detail-overview-list/components/programming-repository-buttons-detail/programming-repository-buttons-detail.component').then(
+                    (m) => m.ProgrammingRepositoryButtonsDetailComponent,
+                );
+            case DetailType.ProgrammingAuxiliaryRepositoryButtons:
+                return import('app/shared-ui/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component').then(
+                    (m) => m.ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
+                );
+            case DetailType.ProgrammingTestStatus:
+                return import('app/shared-ui/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component').then(
+                    (m) => m.ProgrammingTestStatusDetailComponent,
+                );
+            case DetailType.ProgrammingDiffReport:
+                return import('app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component').then(
+                    (m) => m.ProgrammingDiffReportDetailComponent,
+                );
+            default:
+                return undefined;
         }
     }
 }

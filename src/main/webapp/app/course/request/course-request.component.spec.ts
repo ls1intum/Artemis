@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseRequest } from 'app/course/request/course-request.model';
 import dayjs from 'dayjs/esm';
@@ -18,8 +17,6 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('CourseRequestComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseRequestComponent;
     let courseRequestService: {
         create: ReturnType<typeof vi.fn>;
@@ -48,12 +45,13 @@ describe('CourseRequestComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [CourseRequestComponent, TranslateModule.forRoot()],
+            imports: [CourseRequestComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: CourseRequestService, useValue: courseRequestService },
                 { provide: AlertService, useValue: alertService },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(CourseRequestComponent, {
@@ -81,7 +79,7 @@ describe('CourseRequestComponent', () => {
 
         component.submit();
 
-        expect(component.dateRangeInvalid).toBe(true);
+        expect(component.dateRangeInvalid()).toBe(true);
         expect(courseRequestService.create).not.toHaveBeenCalled();
     });
 
@@ -98,7 +96,7 @@ describe('CourseRequestComponent', () => {
 
         component.submit();
 
-        expect(component.dateRangeInvalid).toBe(false);
+        expect(component.dateRangeInvalid()).toBe(false);
         expect(courseRequestService.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 title: 'New Course',
@@ -129,7 +127,7 @@ describe('CourseRequestComponent', () => {
 
         expect(alertService.warning).toHaveBeenCalledWith('artemisApp.courseRequest.form.shortNameNotUnique', { suggestedShortName });
         expect(component.form.get('shortName')?.value).toBe(suggestedShortName);
-        expect(component.isSubmitting).toBe(false);
+        expect(component.isSubmitting()).toBe(false);
     });
 
     it('should handle course request short name conflict error', () => {
@@ -187,7 +185,7 @@ describe('CourseRequestComponent', () => {
         expect(component.form.get('title')?.value).toBe('');
         expect(component.form.get('shortName')?.value).toBe('');
         expect(component.form.get('reason')?.value).toBe('');
-        expect(component.isSubmitting).toBe(false);
+        expect(component.isSubmitting()).toBe(false);
     });
 
     it('should not submit when form is invalid', () => {

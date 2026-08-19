@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -31,8 +30,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 class UserSettingsMockComponent extends UserSettingsDirective {}
 
 describe('User Settings Directive', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: UserSettingsMockComponent;
     let fixture: ComponentFixture<UserSettingsMockComponent>;
 
@@ -111,8 +108,8 @@ describe('User Settings Directive', () => {
             expect(userSettingsService.extractIndividualSettingsFromSettingsStructure).toHaveBeenCalledWith(mockUserSettingsStructure);
             expect(alertService.closeAll).toHaveBeenCalled();
 
-            expect(comp.userSettings).toEqual(mockUserSettingsStructure);
-            expect(comp.settings).toEqual(mockSettings);
+            expect(comp.userSettings()).toEqual(mockUserSettingsStructure);
+            expect(comp.settings()).toEqual(mockSettings);
         });
 
         it('should handle error when loading settings', () => {
@@ -128,8 +125,8 @@ describe('User Settings Directive', () => {
 
     describe('saveSettings', () => {
         beforeEach(() => {
-            comp.settings = mockSettings;
-            comp.userSettings = mockUserSettingsStructure;
+            comp.settings.set(mockSettings);
+            comp.userSettings.set(mockUserSettingsStructure);
             comp.userSettingsCategory = UserSettingsCategory.SCIENCE_SETTINGS;
         });
 
@@ -147,8 +144,8 @@ describe('User Settings Directive', () => {
             expect(userSettingsService.extractIndividualSettingsFromSettingsStructure).toHaveBeenCalledWith(mockUserSettingsStructure);
             expect(comp['finishSaving']).toHaveBeenCalled();
 
-            expect(comp.userSettings).toEqual(mockUserSettingsStructure);
-            expect(comp.settings).toEqual(mockSettings);
+            expect(comp.userSettings()).toEqual(mockUserSettingsStructure);
+            expect(comp.settings()).toEqual(mockSettings);
         });
 
         it('should handle error when saving settings', () => {
@@ -225,8 +222,8 @@ describe('User Settings Directive', () => {
 
     describe('Integration', () => {
         it('should update settings and UI after successful save', () => {
-            comp.settings = mockSettings;
-            comp.userSettings = mockUserSettingsStructure;
+            comp.settings.set(mockSettings);
+            comp.userSettings.set(mockUserSettingsStructure);
             comp.settingsChanged = true;
             comp.userSettingsCategory = UserSettingsCategory.SCIENCE_SETTINGS;
             comp.changeEventMessage = 'settings.changed';
@@ -244,8 +241,8 @@ describe('User Settings Directive', () => {
 
             comp.saveSettings();
 
-            expect(comp.userSettings).toEqual(updatedUserSettingsStructure);
-            expect(comp.settings).toEqual(updatedSettings);
+            expect(comp.userSettings()).toEqual(updatedUserSettingsStructure);
+            expect(comp.settings()).toEqual(updatedSettings);
             expect(comp.settingsChanged).toBe(false);
             expect(userSettingsService.sendApplyChangesEvent).toHaveBeenCalledWith('settings.changed');
             expect(alertService.success).toHaveBeenCalledWith('artemisApp.userSettings.saveSettingsSuccessAlert');

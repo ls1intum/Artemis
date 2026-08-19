@@ -2,14 +2,14 @@ import { Component, OnInit, inject, input, output, viewChild } from '@angular/co
 import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { catchError, debounceTime, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
-import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
+import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { cloneDeep } from 'lodash-es';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-team-owner-search',
@@ -35,11 +35,11 @@ export class TeamOwnerSearchComponent implements OnInit {
     readonly searchFailed = output<boolean>();
     readonly searchNoResults = output<string | undefined>();
 
-    owner: User;
+    owner?: User;
     ownerOptions: User[] = [];
     ownerOptionsLoaded = false;
 
-    inputDisplayValue: string;
+    inputDisplayValue = '';
 
     /**
      * Life cycle hook to indicate component creation is done
@@ -47,7 +47,7 @@ export class TeamOwnerSearchComponent implements OnInit {
     ngOnInit() {
         const team = this.team();
         if (team.owner) {
-            this.owner = cloneDeep(team.owner);
+            this.owner = deepClone(team.owner);
             this.inputDisplayValue = this.searchResultFormatter(this.owner);
         }
     }
@@ -116,7 +116,7 @@ export class TeamOwnerSearchComponent implements OnInit {
      * Load options of team owner
      */
     loadOwnerOptions() {
-        return this.courseService.getAllUsersInCourseGroup(this.course().id!, CourseGroup.TUTORS).pipe(
+        return this.courseService.getAllUsersInCourseRole(this.course().id!, CourseRoleSlug.TUTORS).pipe(
             map((usersResponse) => usersResponse.body!),
             tap((ownerOptions) => {
                 this.ownerOptions = ownerOptions;

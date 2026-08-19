@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LtiCourseCardComponent } from 'app/lti/manage/lti-course-card/lti-course-card.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
@@ -14,7 +13,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('LtiCourseCardComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LtiCourseCardComponent;
     let fixture: ComponentFixture<LtiCourseCardComponent>;
 
@@ -51,14 +49,14 @@ describe('LtiCourseCardComponent', () => {
 
     it('should set default color if no color is specified in course', () => {
         fixture.detectChanges();
-        expect(component.courseColor).toBe(ARTEMIS_DEFAULT_COLOR);
+        expect(component.courseColor()).toBe(ARTEMIS_DEFAULT_COLOR);
     });
 
     it('should use course color if specified', () => {
         const testColor = '#123456';
         fixture.componentRef.setInput('course', { id: 1, shortName: 'lti-course', title: 'LTI COURSE', color: testColor });
         fixture.detectChanges();
-        expect(component.courseColor).toBe(testColor);
+        expect(component.courseColor()).toBe(testColor);
     });
 
     it('should display course ID', () => {
@@ -115,8 +113,8 @@ describe('LtiCourseCardComponent', () => {
         fixture.componentRef.setInput('course', { id: 1, shortName: 'test', title: 'Test', color: darkColor });
         fixture.detectChanges();
 
-        expect(component.courseColor).toBe(darkColor);
-        expect(component.contentColor).toBeDefined();
+        expect(component.courseColor()).toBe(darkColor);
+        expect(component.contentColor()).toBeDefined();
     });
 
     it('should compute contrasting text color for light background', () => {
@@ -124,8 +122,8 @@ describe('LtiCourseCardComponent', () => {
         fixture.componentRef.setInput('course', { id: 1, shortName: 'test', title: 'Test', color: lightColor });
         fixture.detectChanges();
 
-        expect(component.courseColor).toBe(lightColor);
-        expect(component.contentColor).toBeDefined();
+        expect(component.courseColor()).toBe(lightColor);
+        expect(component.contentColor()).toBeDefined();
     });
 
     it('should display course title', () => {

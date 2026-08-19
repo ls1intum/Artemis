@@ -1,9 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
 
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
@@ -13,8 +18,6 @@ import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 
 describe('CourseRequestFormComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseRequestFormComponent;
     let fixture: ComponentFixture<CourseRequestFormComponent>;
     let form: FormGroup;
@@ -32,11 +35,22 @@ describe('CourseRequestFormComponent', () => {
         });
 
         await TestBed.configureTestingModule({
-            imports: [CourseRequestFormComponent, ReactiveFormsModule, TranslateModule.forRoot()],
+            imports: [CourseRequestFormComponent, ReactiveFormsModule],
+            providers: [provideTranslateService()],
         })
             .overrideComponent(CourseRequestFormComponent, {
                 set: {
-                    imports: [ReactiveFormsModule, MockComponent(FormDateTimePickerComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+                    imports: [
+                        ReactiveFormsModule,
+                        ButtonModule,
+                        InputTextModule,
+                        TextareaModule,
+                        SelectModule,
+                        CheckboxModule,
+                        MockComponent(FormDateTimePickerComponent),
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe),
+                    ],
                 },
             })
             .compileComponents();

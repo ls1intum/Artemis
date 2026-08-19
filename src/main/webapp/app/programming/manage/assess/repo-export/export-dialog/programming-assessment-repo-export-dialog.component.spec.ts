@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -15,7 +14,6 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockProvider } from 'ng-mocks';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -27,7 +25,6 @@ const createBlobHttpResponse = () => {
 };
 
 describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: ProgrammingAssessmentRepoExportDialogComponent;
     let fixture: ComponentFixture<ProgrammingAssessmentRepoExportDialogComponent>;
     let exerciseService: ExerciseService;
@@ -56,7 +53,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         };
 
         return TestBed.configureTestingModule({
-            imports: [FormDateTimePickerComponent, OwlNativeDateTimeModule],
+            imports: [FormDateTimePickerComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,

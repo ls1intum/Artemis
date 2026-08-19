@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
@@ -17,8 +16,6 @@ import { TutorSuggestionComponent } from 'app/communication/course-conversations
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ConversationThreadSidebarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ConversationThreadSidebarComponent;
     let fixture: ComponentFixture<ConversationThreadSidebarComponent>;
     let componentRef: ComponentRef<ConversationThreadSidebarComponent>;
@@ -66,9 +63,9 @@ describe('ConversationThreadSidebarComponent', () => {
         post.id = 1;
         fixture.componentRef.setInput('activePost', newPost);
         fixture.detectChanges();
-        expect(component.createdAnswerPost).toBeDefined();
-        expect(component.createdAnswerPost.content).toBe('');
-        expect(component.createdAnswerPost.post).toEqual(newPost);
+        expect(component.createdAnswerPost()).toBeDefined();
+        expect(component.createdAnswerPost().content).toBe('');
+        expect(component.createdAnswerPost().post).toEqual(newPost);
     });
 
     it.each([true, false])('should determine channel moderation rights based on active conversation', (hasModerationRights: boolean) => {
@@ -76,7 +73,7 @@ describe('ConversationThreadSidebarComponent', () => {
         conversation.hasChannelModerationRights = hasModerationRights;
         fixture.componentRef.setInput('activeConversation', conversation);
         fixture.detectChanges();
-        expect(component.hasChannelModerationRights).toBe(hasModerationRights);
+        expect(component.hasChannelModerationRights()).toBe(hasModerationRights);
     });
 
     it('should set min and max width for the resizable thread section', () => {
@@ -96,14 +93,14 @@ describe('ConversationThreadSidebarComponent', () => {
 
         component.expandTooltip = signal<NgbTooltip | undefined>({ close: closeMock } as unknown as NgbTooltip);
 
-        expect(component.isExpanded).toBe(false);
+        expect(component.isExpanded()).toBe(false);
 
         component.toggleExpand();
-        expect(component.isExpanded).toBe(true);
+        expect(component.isExpanded()).toBe(true);
         expect(closeMock).toHaveBeenCalledOnce();
 
         component.toggleExpand();
-        expect(component.isExpanded).toBe(false);
+        expect(component.isExpanded()).toBe(false);
         expect(closeMock).toHaveBeenCalledTimes(2);
     });
 });

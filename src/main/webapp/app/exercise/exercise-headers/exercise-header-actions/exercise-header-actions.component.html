@@ -77,7 +77,13 @@
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{
-                            $implicit: { icon: faPlayCircle, label: 'artemisApp.exerciseActions.startPractice', quizMode: 'practice', hideLabelMobile: false },
+                            $implicit: {
+                                id: 'quiz-start-practice-' + exercise().id,
+                                icon: faPlayCircle,
+                                label: 'artemisApp.exerciseActions.startPractice',
+                                quizMode: 'practice',
+                                hideLabelMobile: false,
+                            },
                         }"
                     />
                 }
@@ -125,6 +131,20 @@
                         [smallButtons]="smallButtons()"
                         [exercise]="exercise()"
                         (practiceModeStarted)="receiveNewParticipation($event)"
+                    />
+                }
+                @if (
+                    exercise().type === ExerciseType.PROGRAMMING &&
+                    !examMode() &&
+                    exercise().allowFeedbackRequests &&
+                    activeParticipationForCode() &&
+                    programmingExercise()?.allowOnlineEditor === false
+                ) {
+                    <jhi-request-feedback-button
+                        [exercise]="exercise()"
+                        [smallButtons]="smallButtons()"
+                        [isSubmitted]="hasProgrammingSubmission()"
+                        [participationId]="activeParticipationForCode()?.id"
                     />
                 }
                 @if (shouldDisplayIDEButtons()) {
@@ -251,11 +271,6 @@
         [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | translate) }"
     ></p>
     <span (click)="closeSubmitPopover()">
-        <jhi-request-feedback-button
-            [exercise]="exercise()"
-            [isGeneratingFeedback]="isGeneratingFeedback()"
-            (generatingFeedback)="generatingFeedback.emit()"
-            [isSubmitted]="true"
-        />
+        <jhi-request-feedback-button [exercise]="exercise()" [isSubmitted]="true" [participationId]="activeParticipationForCode()?.id" />
     </span>
 </ng-template>

@@ -1,46 +1,58 @@
 <div>
     <h5 *adminTitleBarTitle id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
-    <div class="row">
-        <div class="col-md-5">
-            <h4 jhiTranslate="audits.filter.title"></h4>
-            <div class="input-group mb-3">
-                <div class="input-group-prepend">
-                    <span class="input-group-text" jhiTranslate="audits.filter.from"></span>
-                </div>
-                <input type="date" class="form-control" name="start" [ngModel]="fromDate()" (ngModelChange)="updateFromDate($event); transition()" required />
-                <div class="input-group-append">
-                    <span class="input-group-text" jhiTranslate="audits.filter.to"></span>
-                </div>
-                <input type="date" class="form-control" name="end" [ngModel]="toDate()" (ngModelChange)="updateToDate($event); transition()" required />
-            </div>
+    <h4 class="mb-3" jhiTranslate="audits.filter.title"></h4>
+    <div class="mb-4 flex flex-wrap items-start gap-4" data-testid="audits-date-filter">
+        <div class="flex flex-col gap-2">
+            <label for="audits-from-date" jhiTranslate="audits.filter.from"></label>
+            <jhi-date-time-picker
+                #fromPicker
+                name="start"
+                inputId="audits-from-date"
+                [hideLabelName]="true"
+                [hideValidationMessage]="true"
+                [shouldDisplayTimeZoneWarning]="false"
+                [pickerType]="DateTimePickerType.CALENDAR"
+                [ngModel]="fromDateValue()"
+                [ngModelOptions]="{ standalone: true }"
+                (valueChange)="updateFromDate(fromPicker.isValid() ? fromPicker.value() : undefined); transition()"
+                data-testid="audits-from-date"
+            />
+        </div>
+        <div class="flex flex-col gap-2">
+            <label for="audits-to-date" jhiTranslate="audits.filter.to"></label>
+            <jhi-date-time-picker
+                #toPicker
+                name="end"
+                inputId="audits-to-date"
+                [hideLabelName]="true"
+                [hideValidationMessage]="true"
+                [shouldDisplayTimeZoneWarning]="false"
+                [pickerType]="DateTimePickerType.CALENDAR"
+                [ngModel]="toDateValue()"
+                [ngModelOptions]="{ standalone: true }"
+                (valueChange)="updateToDate(toPicker.isValid() ? toPicker.value() : undefined); transition()"
+                data-testid="audits-to-date"
+            />
         </div>
     </div>
     @if (audits().length) {
-        <div class="table-responsive">
-            <table class="table table-sm table-striped" aria-describedby="audits-page-heading">
+        <div class="overflow-x-auto" data-testid="audits-table-container">
+            <table tumUiTable size="small" [striped]="true" aria-describedby="audits-page-heading" data-testid="audits-table">
                 <thead>
-                    @if (canLoad()) {
-                        <tr
-                            jhiSort
-                            [predicate]="predicate()"
-                            [ascending]="ascending()"
-                            (predicateChange)="predicate.set($event!)"
-                            (ascendingChange)="ascending.set($event)"
-                            (sortChange)="transition()"
-                        >
-                            <th scope="col" jhiSortBy="auditEventDate"><span jhiTranslate="audits.table.header.date"></span> <fa-icon [icon]="faSort" /></th>
-                            <th scope="col" jhiSortBy="principal"><span jhiTranslate="audits.table.header.principal"></span> <fa-icon [icon]="faSort" /></th>
-                            <th scope="col" jhiSortBy="auditEventType"><span jhiTranslate="audits.table.header.status"></span> <fa-icon [icon]="faSort" /></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.data"></span></th>
-                        </tr>
-                    } @else {
-                        <tr>
-                            <th scope="col"><span jhiTranslate="audits.table.header.date"></span></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.principal"></span></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.status"></span></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.data"></span></th>
-                        </tr>
-                    }
+                    <!-- Sorting works whether or not a date range is set, so the header is not conditional. -->
+                    <tr
+                        jhiSort
+                        [predicate]="predicate()"
+                        [ascending]="ascending()"
+                        (predicateChange)="predicate.set($event!)"
+                        (ascendingChange)="ascending.set($event)"
+                        (sortChange)="transition()"
+                    >
+                        <th scope="col" jhiSortBy="auditEventDate"><span jhiTranslate="audits.table.header.date"></span> <fa-icon [icon]="faSort" /></th>
+                        <th scope="col" jhiSortBy="principal"><span jhiTranslate="audits.table.header.principal"></span> <fa-icon [icon]="faSort" /></th>
+                        <th scope="col" jhiSortBy="auditEventType"><span jhiTranslate="audits.table.header.status"></span> <fa-icon [icon]="faSort" /></th>
+                        <th scope="col"><span jhiTranslate="audits.table.header.data"></span></th>
+                    </tr>
                 </thead>
                 <tbody>
                     @for (audit of audits(); track audit) {
@@ -63,17 +75,24 @@
                 </tbody>
             </table>
         </div>
-        <div>
-            <div class="row justify-content-center">
+        <div class="mt-3">
+            <div class="flex justify-center">
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
-            <div class="row justify-content-center">
-                <p-paginator [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
+            <div class="flex justify-center">
+                <tum-ui-paginator
+                    [page]="page() - 1"
+                    [pageSize]="itemsPerPage"
+                    [totalRecords]="totalItems()"
+                    [showCurrentPageReport]="false"
+                    [showRowsPerPage]="false"
+                    (pageChange)="onPageChange($event)"
+                />
             </div>
         </div>
     } @else {
-        <div class="alert alert-warning">
+        <tum-ui-message severity="warn" data-testid="audits-not-found">
             <span jhiTranslate="audits.notFound"></span>
-        </div>
+        </tum-ui-message>
     }
 </div>

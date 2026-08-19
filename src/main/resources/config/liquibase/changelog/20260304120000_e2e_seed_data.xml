@@ -48,22 +48,14 @@
             <column name="unenrollment_enabled" type="BOOLEAN"/>
             <column name="learning_paths_enabled" type="BOOLEAN"/>
             <column name="restricted_athena_modules_access" type="BOOLEAN"/>
-            <column name="student_course_analytics_dashboard_enabled" type="BOOLEAN"/>
             <column name="faq_enabled" type="BOOLEAN"/>
             <column name="max_complaint_text_limit" type="NUMERIC"/>
             <column name="max_complaint_response_text_limit" type="NUMERIC"/>
         </loadData>
     </changeSet>
 
-    <!-- ==================== USER GROUPS (course enrollment) ==================== -->
-    <changeSet id="e2e-seed-user-groups" author="e2e" context="e2e">
-        <preConditions onFail="MARK_RAN">
-            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM user_groups WHERE user_groups = 'artemis-e2echannel1-students'</sqlCheck>
-        </preConditions>
-        <loadData file="config/liquibase/e2e/user_groups.csv" separator=";" tableName="user_groups" usePreparedStatements="true">
-            <column name="user_id" type="NUMERIC"/>
-        </loadData>
-    </changeSet>
+    <!-- Course enrollment is seeded into user_course_role in 20260811231613_changelog.xml, because that table does not
+         exist yet at this point in the changelog order. -->
 
     <!-- ==================== CONVERSATIONS (default channels) ==================== -->
     <changeSet id="e2e-seed-conversations" author="e2e" context="e2e">

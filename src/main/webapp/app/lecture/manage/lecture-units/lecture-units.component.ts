@@ -2,7 +2,7 @@ import { Component, ElementRef, OnInit, computed, inject, input, signal, viewChi
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -208,10 +208,14 @@ export class LectureUpdateUnitsComponent implements OnInit {
             attachmentVideoUnit.description = description;
         }
         attachmentVideoUnit.competencyLinks = competencyLinks;
+        const hasUpload = !!file && !!fileName && file.size > 0;
+        if (this.isEditingLectureUnit()) {
+            attachmentVideoUnit.attachmentUpdateIntent = hasUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE;
+        }
         this.currentlyProcessedAttachmentVideoUnit.set(attachmentVideoUnit);
 
         const formData = new FormData();
-        if (!!file && !!fileName) {
+        if (hasUpload) {
             formData.append('file', file, fileName);
             formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
         }
@@ -265,9 +269,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
         lectureUnit.lecture.id = this.lecture().id;
         lectureUnit.lecture.course = this.lecture().course;
 
-        this.currentlyProcessedTextUnit.set(lectureUnit as TextUnit);
-        this.currentlyProcessedOnlineUnit.set(lectureUnit as OnlineUnit);
-        this.currentlyProcessedAttachmentVideoUnit.set(lectureUnit as AttachmentVideoUnit);
+        this.currentlyProcessedTextUnit.set(lectureUnit);
+        this.currentlyProcessedOnlineUnit.set(lectureUnit);
+        this.currentlyProcessedAttachmentVideoUnit.set(lectureUnit);
 
         this.isTextUnitFormOpen.set(lectureUnit.type === LectureUnitType.TEXT);
         this.isExerciseUnitFormOpen.set(lectureUnit.type === LectureUnitType.EXERCISE);

@@ -1,5 +1,4 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -29,8 +28,6 @@ import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participatio
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('Exercise Scores Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExerciseScoresComponent;
     let fixture: ComponentFixture<ExerciseScoresComponent>;
     let resultService: ResultService;
@@ -63,6 +60,9 @@ describe('Exercise Scores Component', () => {
         buildPlanId: '1',
         repositoryUri: 'url',
         testRun: false,
+        testCaseCount: 10,
+        passedTestCaseCount: 5,
+        codeIssueCount: 0,
     };
 
     const scoresToFilter = [3, 11, 22, 33, 44, 55, 66, 77, 88, 100];
@@ -251,11 +251,14 @@ describe('Exercise Scores Component', () => {
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],
             [FilterProp.LOCKED, { type: ExerciseType.TEXT }, true, false],
-        ])('should determine if filter is relevant for exercise configuration', (filter: FilterProp, ex: Exercise, newManualResultsAllowed: boolean, expected: boolean) => {
-            component.exercise.set(ex);
-            component.newManualResultAllowed.set(newManualResultsAllowed);
-            expect(component.relevantFilters().includes(filter)).toBe(expected);
-        });
+        ])(
+            'should determine if filter is relevant for exercise configuration',
+            (filter: FilterProp, ex: Partial<Exercise>, newManualResultsAllowed: boolean, expected: boolean) => {
+                component.exercise.set(ex as Exercise);
+                component.newManualResultAllowed.set(newManualResultsAllowed);
+                expect(component.relevantFilters().includes(filter)).toBe(expected);
+            },
+        );
     });
 
     describe('getBuildPlanUrl', () => {
@@ -344,6 +347,38 @@ describe('Exercise Scores Component', () => {
 
             expect(participation.type).toBe(ParticipationType.STUDENT);
             expect(participation.submissions).toHaveLength(0);
+        });
+
+        it('should produce a plain submission without programming fields for a non-programming exercise', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.TEXT });
+            const dto: ParticipationScoreDTO = { ...sampleDto, participationId: 10, submissionId: 20, resultId: 30, buildFailed: true };
+
+            const participation = component.toParticipation(dto);
+
+            expect(participation.type).toBe(ParticipationType.STUDENT);
+            expect(participation.submissions).toHaveLength(1);
+            expect(participation.submissions![0].id).toBe(20);
+            expect(participation.submissions![0].results).toHaveLength(1);
+            // A text exercise must not pick up the programming-only fields, even when the DTO carries buildFailed.
+            expect(participation.submissions![0].submissionExerciseType).toBeUndefined();
+            expect('buildFailed' in participation.submissions![0]).toBe(false);
+        });
+
+        it('should produce a programming submission with buildFailed: true when dto.buildFailed is true', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
+            const dto: ParticipationScoreDTO = {
+                ...sampleDto,
+                participationId: 10,
+                submissionId: 20,
+                buildFailed: true,
+            };
+
+            const participation = component.toParticipation(dto);
+
+            expect(participation.type).toBe(ParticipationType.PROGRAMMING);
+            expect(participation.submissions).toHaveLength(1);
+            expect((participation.submissions![0] as any).submissionExerciseType).toBe('programming');
+            expect((participation.submissions![0] as any).buildFailed).toBe(true);
         });
     });
 

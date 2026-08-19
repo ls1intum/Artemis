@@ -5,9 +5,13 @@ import { createRequestOption } from 'app/foundation/util/request.util';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<SystemNotification>;
 type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
+
+/** Request options for a paged/sorted query, matching what {@link createRequestOption} consumes. */
+type SystemNotificationQueryOptions = { sort?: string[] } & Record<string, string | number | boolean | string[]>;
 
 @Injectable({ providedIn: 'root' })
 export class SystemNotificationService {
@@ -26,7 +30,7 @@ export class SystemNotificationService {
             .pipe(map((res: EntityResponseType) => this.convertSystemNotificationResponseDatesFromServer(res)));
     }
 
-    query(req?: any): Observable<EntityArrayResponseType> {
+    query(req?: SystemNotificationQueryOptions): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<SystemNotification[]>(this.resourceUrl, { params: options, observe: 'response' })
@@ -49,7 +53,7 @@ export class SystemNotificationService {
      * @return {SystemNotification} A copy of notification with formatted dates.
      */
     convertSystemNotificationDatesFromClient(notification: SystemNotification): SystemNotification {
-        return Object.assign({}, notification, {
+        return cloneWith(notification, {
             notificationDate: convertDateFromClient(notification.notificationDate),
             expireDate: convertDateFromClient(notification.expireDate),
         });

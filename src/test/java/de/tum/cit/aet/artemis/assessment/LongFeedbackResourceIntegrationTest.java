@@ -37,7 +37,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 0);
 
-        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        final Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         final ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         resultStudent1 = participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
@@ -94,7 +94,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     private String getUrl(final long feedbackId) {
-        return String.format("/api/assessment/feedbacks/%d/long-feedback", feedbackId);
+        return "/api/assessment/feedbacks/%d/long-feedback".formatted(feedbackId);
     }
 
     private Feedback addLongFeedbackToResult(final Result result) {

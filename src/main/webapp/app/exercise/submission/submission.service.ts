@@ -13,13 +13,14 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
 
-export class SubmissionWithComplaintDTO {
-    public submission: Submission;
-    public complaint: Complaint;
+export interface SubmissionWithComplaintDTO {
+    submission: Submission;
+    complaint: Complaint;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -36,7 +37,7 @@ export class SubmissionService {
      * @param submissionId - The id of the submission to be deleted
      * @param req - A request with additional options in it
      */
-    delete(submissionId: number, req?: any): Observable<HttpResponse<void>> {
+    delete(submissionId: number, req?: Record<string, string | number | boolean>): Observable<HttpResponse<void>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${submissionId}`, { params: options, observe: 'response' });
     }
@@ -197,7 +198,7 @@ export class SubmissionService {
      * Convert a Submission to a JSON which can be sent to the server.
      */
     public convert<T extends Submission>(submission: T): T {
-        return Object.assign({}, submission);
+        return deepClone(submission);
     }
 
     /**
@@ -234,9 +235,9 @@ export class SubmissionService {
      */
     public handleFeedbackCorrectionRoundTag(correctionRound: number, submission: Submission) {
         if (correctionRound > 0 && submission?.results && submission.results.length > 1) {
-            const firstResult = submission!.results![0] as Result;
-            const secondCorrectionFeedback1 = submission!.results![1].feedbacks as Feedback[];
-            secondCorrectionFeedback1!.forEach((secondFeedback) => {
+            const firstResult = submission.results[0];
+            const secondCorrectionFeedback1 = submission.results[1].feedbacks as Feedback[];
+            secondCorrectionFeedback1.forEach((secondFeedback) => {
                 firstResult.feedbacks!.forEach((firstFeedback) => {
                     if (secondFeedback.copiedFeedbackId === undefined && this.areFeedbacksCopies(firstFeedback, secondFeedback)) {
                         secondFeedback.copiedFeedbackId = firstFeedback.id;

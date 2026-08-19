@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -13,12 +13,15 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { captureException } from '@sentry/angular';
+import { alertIfAssessmentNotPossibleYet } from 'app/assessment/shared/util/assessment-availability.util';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
     template: '',
 })
 export abstract class TextAssessmentBaseComponent implements OnInit {
     protected alertService = inject(AlertService);
+    private datePipe = inject(ArtemisDatePipe);
     protected accountService = inject(AccountService);
     protected assessmentsService = inject(TextAssessmentService);
     protected structuredGradingCriterionService = inject(StructuredGradingCriterionService);
@@ -27,11 +30,42 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
      * Base Component for TextSubmissionAssessmentComponent and ExampleTextSubmissionComponent since they share a lot of same functions.
      */
 
-    exercise?: TextExercise;
+    // These fields are written in async callbacks (HTTP subscribe) by both subclasses and read by their templates.
+    // Under zoneless change detection plain field writes schedule no render, so they are backed by signals while
+    // keeping the plain property API for the subclasses, the State machinery, and the specs.
+    private readonly exerciseSignal = signal<TextExercise | undefined>(undefined);
+    get exercise(): TextExercise | undefined {
+        return this.exerciseSignal();
+    }
+    set exercise(value: TextExercise | undefined) {
+        this.exerciseSignal.set(value);
+    }
+
     protected userId?: number;
-    textBlockRefs: TextBlockRef[];
-    unusedTextBlockRefs: TextBlockRef[];
-    submission?: TextSubmission;
+
+    private readonly textBlockRefsSignal = signal<TextBlockRef[]>([]);
+    get textBlockRefs(): TextBlockRef[] {
+        return this.textBlockRefsSignal();
+    }
+    set textBlockRefs(value: TextBlockRef[]) {
+        this.textBlockRefsSignal.set(value);
+    }
+
+    private readonly unusedTextBlockRefsSignal = signal<TextBlockRef[]>([]);
+    get unusedTextBlockRefs(): TextBlockRef[] {
+        return this.unusedTextBlockRefsSignal();
+    }
+    set unusedTextBlockRefs(value: TextBlockRef[]) {
+        this.unusedTextBlockRefsSignal.set(value);
+    }
+
+    private readonly submissionSignal = signal<TextSubmission | undefined>(undefined);
+    get submission(): TextSubmission | undefined {
+        return this.submissionSignal();
+    }
+    set submission(value: TextSubmission | undefined) {
+        this.submissionSignal.set(value);
+    }
 
     readonly getCourseFromExercise = getCourseFromExercise;
 
@@ -52,6 +86,11 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     }
 
     protected handleError(error: HttpErrorResponse): void {
+        // The exam may have re-opened (e.g. a working time extension), in which case the server explains when
+        // assessment is possible again; without this the tutor would see the raw HTTP failure text.
+        if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+            return;
+        }
         const errorMessage = error.headers?.get('X-artemisApp-message') || error.message;
         this.alertService.error(errorMessage);
     }
@@ -83,9 +122,9 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
             } else if (previousIndex > nextIndex) {
                 const previousRef = textBlockRefs.pop();
                 if (!previousRef) {
-                    captureException('Overlapping Text Blocks with nothing? previousRef: ' + previousRef + ' ref: ' + ref);
+                    captureException('Overlapping Text Blocks with nothing? previousIndex: ' + previousIndex + ' nextIndex: ' + nextIndex);
                 } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.AUTOMATIC)) {
-                    captureException('Overlapping AUTOMATIC Text Blocks! previousRef: ' + previousRef + ' ref: ' + ref);
+                    captureException('Overlapping AUTOMATIC Text Blocks! previousIndex: ' + previousIndex + ' nextIndex: ' + nextIndex);
                 } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.MANUAL)) {
                     // Make sure to select a TextBlockRef that has a feedback.
                     let selectedRef = ref;
@@ -137,7 +176,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         if (newRef.block) {
             newRef.block.startIndex = startIndex;
             newRef.block.endIndex = endIndex;
-            newRef.block.setTextFromSubmission(submission!);
+            newRef.block.setTextFromSubmission(submission);
         }
         textBlockRefs.push(newRef);
     }

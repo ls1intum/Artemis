@@ -2,7 +2,6 @@ import {
     Competency,
     CompetencyExerciseLink,
     CompetencyLectureUnitLink,
-    CompetencyProgress,
     CompetencyRelationDTO,
     CompetencyTaxonomy,
     ConfidenceReason,
@@ -10,7 +9,6 @@ import {
     CourseCompetencyType,
 } from 'app/atlas/shared/entities/competency.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
-import { StandardizedCompetency } from 'app/atlas/shared/entities/standardized-competency.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { DifficultyLevel, Exercise, ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -18,10 +16,10 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { captureException } from '@sentry/angular';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { UMLDiagramType as UMLDiagramTypes } from '@tumaet/apollon';
+import type { UMLDiagramType } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -57,10 +55,6 @@ export interface CourseInfoDTO {
     id: number;
     title?: string;
     semester?: string;
-    studentGroupName?: string;
-    teachingAssistantGroupName?: string;
-    editorGroupName?: string;
-    instructorGroupName?: string;
 }
 
 export interface LinkedCourseCompetencyDTO {
@@ -161,15 +155,12 @@ const toCourse = (dto?: CourseInfoDTO): Course | undefined => {
     if (!dto) {
         return undefined;
     }
-    return {
+    const course: Course = {
         id: dto.id,
         title: dto.title,
         semester: dto.semester,
-        studentGroupName: dto.studentGroupName,
-        teachingAssistantGroupName: dto.teachingAssistantGroupName,
-        editorGroupName: dto.editorGroupName,
-        instructorGroupName: dto.instructorGroupName,
-    } as Course;
+    };
+    return course;
 };
 
 const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise | undefined => {
@@ -183,7 +174,7 @@ const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise |
             exercise = new ProgrammingExercise(course, undefined);
             break;
         case ExerciseType.MODELING:
-            exercise = new ModelingExercise(UMLDiagramTypes.ClassDiagram, course, undefined);
+            exercise = new ModelingExercise('ClassDiagram' satisfies UMLDiagramType, course, undefined);
             break;
         case ExerciseType.TEXT:
             exercise = new TextExercise(course, undefined);
@@ -195,7 +186,7 @@ const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise |
             exercise = new QuizExercise(course, undefined);
             break;
         default:
-            globalThis.console.warn(`Unknown exercise type '${dto.type}' for competency exercise mapping (id=${dto.id}); falling back to TextExercise.`);
+            captureException(new Error(`Unknown exercise type '${String(dto.type)}' for competency exercise mapping (id=${dto.id}); falling back to TextExercise.`));
             exercise = new TextExercise(course, undefined);
             break;
     }
@@ -278,7 +269,7 @@ const toLectureUnit = (dto?: LectureUnitForCompetencyDTO): LectureUnit | undefin
     lectureUnit.completed = dto.completed;
     lectureUnit.visibleToStudents = dto.visibleToStudents;
     lectureUnit.type = dto.type;
-    lectureUnit.lecture = dto.lecture ? ({ id: dto.lecture.id } as Lecture) : undefined;
+    lectureUnit.lecture = dto.lecture ? { id: dto.lecture.id } : undefined;
 
     return lectureUnit;
 };
@@ -295,13 +286,13 @@ const mapCourseCompetencyBase = <T extends CourseCompetency>(dto: CourseCompeten
         competency.type = dto.type;
     }
     if (dto.linkedStandardizedCompetencyId) {
-        competency.linkedStandardizedCompetency = { id: dto.linkedStandardizedCompetencyId } as StandardizedCompetency;
+        competency.linkedStandardizedCompetency = { id: dto.linkedStandardizedCompetencyId };
     }
     competency.userProgress = dto.userProgress?.map((progress) => ({
         progress: progress.progress,
         confidence: progress.confidence,
         confidenceReason: progress.confidenceReason,
-    })) as CompetencyProgress[] | undefined;
+    }));
 
     if (dto.course) {
         competency.course = toCourse(dto.course);
@@ -314,7 +305,7 @@ const mapCourseCompetencyBase = <T extends CourseCompetency>(dto: CourseCompeten
             id: dto.linkedCourseCompetency.courseId,
             title: dto.linkedCourseCompetency.courseTitle,
             semester: dto.linkedCourseCompetency.semester,
-        } as Course;
+        };
         competency.linkedCourseCompetency = linked;
     }
 

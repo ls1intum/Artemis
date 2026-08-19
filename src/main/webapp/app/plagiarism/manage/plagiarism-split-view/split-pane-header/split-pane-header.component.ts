@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, input, output, signal, untracked } from '@angular/core';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { Subject, Subscription } from 'rxjs';
 import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
@@ -22,7 +22,7 @@ export type FileWithHasMatch = {
     styleUrls: ['./split-pane-header.component.scss'],
     imports: [NgbDropdown, NgClass, FaIconComponent, NgbDropdownItem, TranslateDirective, ArtemisTranslatePipe],
 })
-export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
+export class SplitPaneHeaderComponent implements OnInit, OnDestroy {
     readonly files = input<FileWithHasMatch[]>([]);
     readonly studentLogin = input.required<string>();
     fileSelectedSubject = input<Subject<PlagiarismFileElement>>();
@@ -32,7 +32,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
 
     readonly selectFile = output<string>();
 
-    public showFiles = false;
+    readonly showFiles = signal(false);
     public activeFileIndex = 0;
 
     private fileSelectSubscription?: Subscription;
@@ -41,7 +41,21 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
 
     // Icons
     faChevronDown = faChevronDown;
-    hoveredFileIndex: number;
+    readonly hoveredFileIndex = signal<number>(undefined!);
+
+    constructor() {
+        // Replaces ngOnChanges: whenever the file list changes, reset the active index and auto-select the first
+        // file. The reset/emit run untracked so only files() retriggers the effect.
+        effect(() => {
+            const files = this.files();
+            untracked(() => {
+                this.activeFileIndex = 0;
+                if (this.hasFiles()) {
+                    this.selectFile.emit(files[0].file);
+                }
+            });
+        });
+    }
 
     ngOnInit(): void {
         this.subscribeToFileSelection();
@@ -67,7 +81,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
         if (index >= 0) {
             this.handleFileSelect(file, index, false);
         } else {
-            this.showFiles = false;
+            this.showFiles.set(false);
         }
     }
 
@@ -98,19 +112,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     private handleDropdownHover(file: FileWithHasMatch, idx: number): void {
         const index = this.files()[idx]?.file === file.file ? idx : this.getIndexOf(file);
 
-        this.hoveredFileIndex = index >= 0 ? index : -1;
-    }
-
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.files) {
-            const fileWithHasMatch: FileWithHasMatch[] = changes.files.currentValue;
-
-            this.activeFileIndex = 0;
-
-            if (this.hasFiles()) {
-                this.selectFile.emit(fileWithHasMatch[0].file);
-            }
-        }
+        this.hoveredFileIndex.set(index >= 0 ? index : -1);
     }
 
     ngOnDestroy(): void {
@@ -139,7 +141,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
             file.hasMatch = true;
         }
         this.activeFileIndex = idx;
-        this.showFiles = false;
+        this.showFiles.set(false);
         this.selectFile.emit(file.file);
     }
 
@@ -154,10 +156,10 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
      */
     toggleShowFiles(propagateChanges: boolean, showFiles?: boolean): void {
         if (this.hasFiles()) {
-            this.showFiles = showFiles !== undefined ? showFiles : !this.showFiles;
+            this.showFiles.set(showFiles !== undefined ? showFiles : !this.showFiles());
 
             if (propagateChanges) {
-                this.showFilesSubject()!.next(this.showFiles);
+                this.showFilesSubject()!.next(this.showFiles());
             }
         }
     }

@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource;
@@ -57,6 +59,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
     private static final String TEST_PREFIX = "lectureintegrationtest";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @Autowired
     private LectureTestRepository lectureRepository;
 
@@ -65,6 +69,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
     @Autowired
     private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    private SlideTestRepository slideRepository;
 
     @Autowired
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
@@ -115,7 +122,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
         int numberOfTutors = 2;
         userUtilService.addUsers(TEST_PREFIX, 2, numberOfTutors, 0, 1);
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
 
         var lectures = this.course1.getLectures().stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
@@ -127,8 +134,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         // Setting up a lecture with various kinds of content
         ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise, lecture1);
@@ -157,7 +164,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         request.putWithResponseBody("/api/lecture/lectures", new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
         request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
-        request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course1.getId(), null, Lecture.class,
                 HttpStatus.FORBIDDEN);
     }
@@ -263,7 +269,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_lectureFromUnauthorizedCourseWithAuthorizedCourseInBody_shouldReturnForbidden() throws Exception {
-        Course otherCourse = courseUtilService.addEmptyCourse("other-students", "other-tutors", "other-editors", "other-instructors");
+        Course otherCourse = courseUtilService.addEmptyCourse();
         Lecture otherLecture = lectureUtilService.createLecture(otherCourse);
         String originalDescription = otherLecture.getDescription();
 
@@ -280,7 +286,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_mismatchedCourseInBody_shouldReturnBadRequest() throws Exception {
-        Course otherAuthorizedCourse = courseUtilService.addEmptyCourse();
+        Course otherAuthorizedCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
 
         LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Mismatched Update", "Updated with mismatched course",
@@ -350,10 +356,12 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         LectureResource.AttachmentVideoUnitDTO attachmentVideoUnitDTO = filteredLecture.lectureUnits().stream()
                 .filter(unit -> unit.id().equals(attachmentVideoUnitWithSlides.getId())).findFirst().orElseThrow();
         assertThat(attachmentVideoUnitDTO.slides()).hasSize(numberOfSlides);
+        assertThat(attachmentVideoUnitDTO.attachment()).isNotNull();
+        assertThat(attachmentVideoUnitDTO.attachment().displayPageNumbers()).isEqualTo(attachmentVideoUnitWithSlides.getAttachment().getDisplayPageNumbers());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void getLecture_asStudentNotInCourse_shouldReturnForbidden() throws Exception {
         request.get("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN, Lecture.class);
         request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.FORBIDDEN, LectureDetailsDTO.class);
@@ -362,6 +370,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLecture_ExerciseAndAttachmentReleased_shouldGetLectureWithAllLectureUnits() throws Exception {
+        attachmentOfAttachmentVideoUnit.setDisplayPageNumbers(List.of(75, 76, 77));
+        attachmentRepository.save(attachmentOfAttachmentVideoUnit);
+
         LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
         assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
         assertThat(receivedLectureWithDetails.lectureUnits()).hasSize(4);
@@ -369,8 +380,38 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
                 .filter(unit -> unit instanceof LectureDetailsDTO.ExerciseUnitDTO).toList().getFirst();
         assertThat(exerciseUnitDTO.competencyLinks()).hasSize(1);
         assertThat(receivedLectureWithDetails.attachments()).hasSize(2);
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
+                .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
+                .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
+        assertThat(attachmentUnitDTO.attachment()).isNotNull();
+        assertThat(attachmentUnitDTO.attachment().displayPageNumbers()).containsExactly(75, 76, 77);
 
         testGetLecture(lecture1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_attachmentWithHiddenSlides_shouldDropHiddenSlideDisplayPageNumbers() throws Exception {
+        Lecture lecture = LectureFactory.generateLecture(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), course1);
+        lecture = lectureRepository.save(lecture);
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnitWithSlides(lecture, 4);
+        lectureUtilService.addLectureUnitsToLecture(lecture, List.of(unit));
+
+        // Full-deck display page numbers, indexed by slide number (index 0 = slide 1).
+        unit.getAttachment().setDisplayPageNumbers(List.of(10, 5, 12, 7));
+        attachmentRepository.save(unit.getAttachment());
+
+        // Hide slide 2 (display page 5) → it is removed from the student PDF and must disappear from the mapping.
+        Slide hiddenSlide = slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumber(unit.getId(), 2);
+        hiddenSlide.setHidden(ZonedDateTime.now().plusDays(1));
+        slideRepository.save(hiddenSlide);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream().filter(LectureDetailsDTO.AttachmentUnitDTO.class::isInstance)
+                .map(LectureDetailsDTO.AttachmentUnitDTO.class::cast).filter(candidate -> candidate.id().equals(unit.getId())).findFirst().orElseThrow();
+        // The entry for the hidden slide (display page 5) is removed and the rest compacted to stay aligned with the student PDF.
+        assertThat(attachmentUnitDTO.attachment().displayPageNumbers()).containsExactly(10, 12, 7);
     }
 
     @Test
@@ -493,7 +534,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureWithChannel() throws Exception {
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
 
         request.delete("/api/lecture/lectures/" + lecture.getId(), HttpStatus.OK);
@@ -503,7 +544,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void deleteLecture_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
     }
@@ -551,7 +592,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
         final var result = request.getSearchResult("/api/lecture/lectures", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
@@ -577,7 +618,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImport() throws Exception {
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
 
         var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course2.getId(), null,
@@ -675,7 +716,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getTutorialLecturesForCourse_shouldGetTutorialLectures() throws Exception {
         var returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.OK, LectureResource.SimpleLectureDTO.class);
         assertThat(returnedLectures).hasSize(1);

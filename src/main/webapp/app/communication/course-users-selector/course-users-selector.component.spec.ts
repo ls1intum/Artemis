@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, DebugElement, viewChild } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -12,7 +11,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/communication/course-users-selector/course-users-selector.component';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 
 @Component({
@@ -31,8 +30,6 @@ class WrapperComponent {
 }
 
 describe('CourseUsersSelectorComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let wrapperComponent: WrapperComponent;
     let fixture: ComponentFixture<WrapperComponent>;
     let userSelectorComponent: CourseUsersSelectorComponent;
@@ -47,8 +44,8 @@ describe('CourseUsersSelectorComponent', () => {
     beforeEach(async () => {
         vi.useFakeTimers();
         TestBed.configureTestingModule({
-            imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTypeaheadModule, TranslateModule.forRoot()],
-            providers: [{ provide: CourseManagementService, useValue: courseManagementServiceMock }],
+            imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTypeaheadModule],
+            providers: [{ provide: CourseManagementService, useValue: courseManagementServiceMock }, provideTranslateService()],
         });
         fixture = TestBed.createComponent(WrapperComponent);
         wrapperComponent = fixture.componentInstance;
@@ -80,24 +77,24 @@ describe('CourseUsersSelectorComponent', () => {
     testCases.forEach((testCase) => {
         it('changing connected wrapper should update the component property', () => {
             const exampleUserPublicInfoDTO = generateExampleUserPublicInfoDTO({});
-            userSelectorComponent.selectedUsers = [exampleUserPublicInfoDTO];
+            userSelectorComponent.selectedUsers.set([exampleUserPublicInfoDTO]);
             wrapperComponent.multiSelect = testCase.multiSelect;
             fixture.changeDetectorRef.detectChanges();
             vi.advanceTimersByTime(0);
-            expect(userSelectorComponent.selectedUsers).toEqual([exampleUserPublicInfoDTO]);
+            expect(userSelectorComponent.selectedUsers()).toEqual([exampleUserPublicInfoDTO]);
             expect(fixture.debugElement.queryAll(By.css('.selected-user'))).toHaveLength(1);
         });
 
         it('should convert undefined to empty array', () => {
-            userSelectorComponent.selectedUsers = [];
+            userSelectorComponent.selectedUsers.set([]);
             wrapperComponent.multiSelect = testCase.multiSelect;
             fixture.changeDetectorRef.detectChanges();
             vi.advanceTimersByTime(0);
-            expect(userSelectorComponent.selectedUsers).toEqual([]);
+            expect(userSelectorComponent.selectedUsers()).toEqual([]);
         });
 
         it('searching, selecting and deleting a user should update the selectedUsers property', () => {
-            userSelectorComponent.selectedUsers = [];
+            userSelectorComponent.selectedUsers.set([]);
             wrapperComponent.multiSelect = testCase.multiSelect;
             const user = generateExampleUserPublicInfoDTO({});
             const searchResponse: HttpResponse<UserPublicInfoDTO[]> = new HttpResponse({
@@ -117,7 +114,7 @@ describe('CourseUsersSelectorComponent', () => {
             getDropdownButtons(fixture.debugElement)[0].triggerEventHandler('click', {});
             fixture.changeDetectorRef.detectChanges();
             vi.advanceTimersByTime(0);
-            expect(userSelectorComponent.selectedUsers).toEqual([user]);
+            expect(userSelectorComponent.selectedUsers()).toEqual([user]);
 
             // now we delete the user again from the selected users
             expect(fixture.debugElement.queryAll(By.css('.selected-user'))).toHaveLength(1);
@@ -125,18 +122,18 @@ describe('CourseUsersSelectorComponent', () => {
             deleteButton.triggerEventHandler('click', {});
             fixture.changeDetectorRef.detectChanges();
             vi.advanceTimersByTime(0);
-            expect(userSelectorComponent.selectedUsers).toEqual([]);
+            expect(userSelectorComponent.selectedUsers()).toEqual([]);
             expect(wrapperComponent.selectedUsers).toEqual([]);
         });
 
         it('should block the input field and not show delete button', () => {
             wrapperComponent.multiSelect = testCase.multiSelect;
             const exampleUserPublicInfoDTO = generateExampleUserPublicInfoDTO({});
-            userSelectorComponent.selectedUsers = [exampleUserPublicInfoDTO];
-            userSelectorComponent.disabled = true;
+            userSelectorComponent.selectedUsers.set([exampleUserPublicInfoDTO]);
+            userSelectorComponent.disabled.set(true);
             fixture.changeDetectorRef.detectChanges();
             vi.advanceTimersByTime(1000);
-            expect(userSelectorComponent.selectedUsers).toEqual([exampleUserPublicInfoDTO]);
+            expect(userSelectorComponent.selectedUsers()).toEqual([exampleUserPublicInfoDTO]);
             expect(fixture.debugElement.query(By.css('.delete-user'))).toBeFalsy();
         });
 

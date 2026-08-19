@@ -1,24 +1,24 @@
 // Note: we first need to define our own customizations
 @import 'src/main/webapp/content/scss/artemis-variables';
-@import 'src/main/webapp/content/scss/_artemis-mixins.scss';
+@import 'src/main/webapp/content/scss/artemis-mixins';
 
 // Then, we include bootstrap so that it can use some magic functions to compute new values based on those customizations
 // The order is very important, otherwise the background and the button colors might not work correctly
 @import 'node_modules/bootstrap/scss/bootstrap';
-@import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
 
 // Needed for mathematical formulas in markdown editor
-@import 'node_modules/katex/dist/katex.min.css';
-@import 'node_modules/@siemens/ngx-datatable/themes/bootstrap';
+
+/*
+ * Bare specifier (not 'node_modules/…') so Tailwind's PostCSS @import resolver can resolve this .css file;
+ * the 'node_modules/' prefix is treated as a relative path under PostCSS and breaks the build.
+ */
+@import 'katex/dist/katex.min.css';
 
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
 
-// Needed for markdown-it-github-alerts and markdown callouts
-@import 'markdown-it-github-alerts/styles/github-colors-light.css';
-@import 'markdown-it-github-alerts/styles/github-colors-dark-media.css';
-@import 'markdown-it-github-alerts/styles/github-base.css';
-
+// Needed for the in-house GitHub-style markdown alerts and markdown callouts
+@import 'src/main/webapp/content/scss/github-alerts';
 @import 'primeicons/primeicons.css';
 
 // Smooth transition between themes
@@ -45,12 +45,8 @@ h4 {
     font-weight: 500 !important;
 }
 
-/* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
-a,
-a:not(.btn, .dropdown-item, .page-link, .nav-link, .tab-link):hover {
+a:not(.btn, .tum-ui-btn, .dropdown-item, .page-link, .nav-link, .tab-link) {
     color: $link-color;
-
-    /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
 }
 
@@ -67,7 +63,7 @@ a {
     cursor: default !important;
 }
 
-a:not(.btn):not(.tab-link):hover {
+a:not(.btn):not(.tum-ui-btn):not(.tab-link):hover {
     text-decoration: underline !important;
 }
 
@@ -172,10 +168,6 @@ textarea {
     clip-path: inset(50%);
 }
 
-th {
-    border-bottom-color: inherit !important;
-}
-
 /* ==========================================================================
 Browser Upgrade Prompt
 ========================================================================== */
@@ -205,8 +197,7 @@ Generic styles
 
 /* Error highlight on input fields */
 .ng-valid[required],
-.ng-valid.required,
-.ng-invalid:not(form) {
+.ng-valid.required {
     border-left: 5px solid $ng-valid-border;
 
     &.form-check-input {
@@ -214,7 +205,16 @@ Generic styles
     }
 }
 
-.ng-invalid:not(form) {
+/*
+ * Red invalid accent on form CONTROLS only, and only AFTER the user has interacted (dirty or touched):
+ * - a pristine, never-touched field on a fresh form must not show red (best practice — don't flag errors
+ *   before the user has done anything);
+ * - a [formGroup]/container element also receives `.ng-invalid`, so `:not(:has(.ng-invalid))` keeps the
+ *   accent on the innermost invalid element (the field), never a full-height bar down the wrapper.
+ * Applies app-wide.
+ */
+.ng-invalid.ng-dirty:not(form):not(:has(.ng-invalid)),
+.ng-invalid.ng-touched:not(form):not(:has(.ng-invalid)) {
     border-left: 5px solid $ng-invalid-border;
 
     &.form-check-input {
@@ -224,36 +224,6 @@ Generic styles
 
 /* other generic styles */
 
-// This class refers to the gutter inserted by split.js for its split view
-.gutter {
-    background-color: $gutter-background;
-    cursor: col-resize;
-    position: relative;
-    transition: background-color 0.2s;
-
-    &::before {
-        background-color: $slightly-darker-body-bg;
-        border-radius: 1px;
-        content: '';
-        height: 24px;
-        left: 50%;
-        position: absolute;
-        top: 50%;
-        transition: background-color 0.2s;
-        transform: translate(-50%, -50%);
-        width: 2px;
-    }
-
-    &:active,
-    &:hover {
-        background-color: $body-bg;
-
-        &::before {
-            background-color: $darker-body-bg;
-        }
-    }
-}
-
 .error {
     color: $error-color;
     background-color: $error-background;
@@ -261,6 +231,58 @@ Generic styles
 
 .invalid-feedback {
     display: block;
+}
+
+// PrimeNG date picker (jhi-date-time-picker and the tutorial period range picker):
+// Render the invalid border from a wrapper class instead of relying solely on the inner
+// `<p-datepicker [invalid]>` input. Under zoneless change detection the OnPush picker view can stay
+// stale when validity flips from the picker's own input event, leaving the border out of sync with the
+// "missing/invalid" message (PR #13009 review). A class on the wrapper is updated reliably and cascades
+// onto the existing input via plain CSS. `:not(:focus)` lets the focus ring win while editing.
+.invalid-date-input .p-datepicker-input:not(:focus) {
+    border-color: var(--p-inputtext-invalid-border-color) !important;
+}
+
+// PrimeNG date picker: keep the overlay calendar at its natural width. With `appendTo="body"` PrimeNG
+// sets an inline `min-width` equal to the (full-width) input, which stretches the calendar far too wide.
+.jhi-date-time-picker-panel {
+    min-width: auto !important;
+}
+
+// PrimeNG date pickers render their own (rounded) invalid border via `[invalid]` / `.invalid-date-input`
+// above. Suppress the global JHipster 5px red `border-left` "stick" that otherwise lands on the
+// p-datepicker host (when bound via formControlName + a validator) — it doesn't follow the input's
+// rounded corners and looks detached (PR #13009 review).
+p-datepicker.ng-invalid {
+    border-left-width: 0;
+}
+
+jhi-date-time-picker .p-datepicker-input {
+    padding-inline-end: calc((var(--p-form-field-padding-x) * 3) + (var(--p-icon-size) * 2)) !important;
+    border-start-start-radius: var(--tum-ui-input-group-start-radius, var(--p-form-field-border-radius));
+    border-end-start-radius: var(--tum-ui-input-group-start-radius, var(--p-form-field-border-radius));
+    border-start-end-radius: var(--tum-ui-input-group-end-radius, var(--p-form-field-border-radius));
+    border-end-end-radius: var(--tum-ui-input-group-end-radius, var(--p-form-field-border-radius));
+}
+
+jhi-date-time-picker .date-time-picker-warning-border {
+    border-color: var(--color-state-warning) !important;
+}
+
+// Host-side compensation for the TUM UI package while Artemis still loads Bootstrap; drop both once it is gone.
+
+// Bootstrap Reboot's unlayered `border-width: 0` beats the package's layered `tum:border-b` utility.
+.tum-ui-table {
+    thead th,
+    tbody td {
+        border-bottom-width: 1px;
+        border-bottom-style: solid;
+    }
+}
+
+// `tum:disabled:opacity-60` compiles to `:disabled`, which never matches an `<a>`.
+a[tumUiButton].disabled {
+    opacity: 0.6;
 }
 
 .pad {
@@ -642,6 +664,12 @@ code.password:hover {
     margin-bottom: 0;
 }
 
+.tiny-icon-button {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1.2 !important;
+}
+
 .assessments {
     width: calc(100% - 30px);
     height: 100vh;
@@ -732,12 +760,8 @@ code.password:hover {
     background: $displaycolor-background;
 }
 
-// This positions the owl-datetime-picker above the ngbootstrap modal, accounting for a 10px margin which reduces width and height by 20px.
 .cdk-overlay-container {
-    z-index: 1060;
-    margin: 10px;
-    width: calc(100% - 20px);
-    height: calc(100% - 20px);
+    z-index: $zindex-modal + 5;
 }
 
 .not-allowed {
@@ -965,6 +989,11 @@ body[data-onboarding-active-step='1'] > .p-select-overlay {
 /* Bootstrap 5 specific fix for flickering tooltips */
 .tooltip {
     pointer-events: none;
+}
+
+.small-tooltip {
+    font-size: 0.75rem;
+    line-height: 1.2;
 }
 
 /* Boostrap 5 Print Styles (https://github.com/coliff/bootstrap-print-css/) */
@@ -1218,9 +1247,219 @@ body.transparent-background {
     background-color: var(--bs-body-bg);
 }
 
+/*
+ * Horizontal grey dividers around a shell's content region — to the sidebar on one side and to the viewport
+ * edge on the other. One token so the student overview, course management and administration shells match.
+ */
+.shell-divider-x {
+    margin-inline: var(--spacing-divider);
+}
+
+/*
+ * Vertical counterpart, for a divider between stacked regions such as an exercise header and the content below it.
+ * Plain CSS rather than a `mb-divider` Tailwind utility, because utilities are only generated for the paths listed
+ * as `@source` in tailwind.css and most consumers of this sit outside them — the utility would silently be absent.
+ */
+.shell-divider-b {
+    margin-bottom: var(--spacing-divider);
+}
+
+/*
+ * A top bar a page renders itself, as a card, in place of the shell's title bar — the communication search and the FAQ
+ * filters. Same frame as the shell title bars so all three shells read alike: `--title-bar-content-height` of content
+ * with `--title-bar-padding-block` above and below, i.e. `--title-bar-height` in total.
+ *
+ * Pair it with `px-*` for the horizontal padding rather than `p-*`, so Bootstrap's `!important` spacing utility does
+ * not overrule the vertical padding set here.
+ */
+.page-top-bar {
+    box-sizing: border-box;
+    min-height: var(--title-bar-height);
+    padding-block: var(--title-bar-padding-block);
+
+    @include title-bar-compact-controls;
+    @include title-bar-size-container;
+
+    /*
+     * Unlike the shell bars these hold text inputs, which carry their own padding and would otherwise stay taller.
+     *
+     * A minimum rather than a fixed height: the communication search is a `.form-control` that wraps a badge per
+     * selected conversation and author, and pinning it would leave the wrapped rows overflowing the bar. A single-row
+     * control still lands on the contract height, so the bar is 40px in the state it is in almost all of the time.
+     */
+    .form-control {
+        min-height: var(--title-bar-content-height);
+        padding-block: 0;
+    }
+}
+
+/*
+ * Header card of a detail page: a row with the title and the page's actions, the information boxes below it, and one
+ * grey divider to the content card. Shared by the exercise and the lecture page so the two read alike — the rows are
+ * separated by a gap rather than by a rule, and the title row keeps a constant height so a page without actions ends
+ * up exactly as tall as one with them.
+ */
+.detail-header-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    > .detail-header-title-row {
+        display: flex;
+        align-items: center;
+        min-height: var(--detail-header-title-row-height);
+    }
+}
+
+/*
+ * Opt-in for a control a narrow bar drops rather than shrinks. Below the threshold there is no room left for
+ * secondary controls once the title and the primary action have taken theirs, and squeezing them just leaves a row of
+ * unreadable stubs — course management exercises put its search and its import and export buttons in this class, all
+ * three of which its "+" dialog offers as tabs anyway.
+ *
+ * Only mark a control whose action stays reachable another way at that width: `display: none` takes it out of the
+ * accessibility tree and the tab order, which is correct here precisely because it is genuinely unavailable, not
+ * merely invisible.
+ */
+/* stylelint-disable-next-line no-duplicate-selectors */
+.title-bar-optional-control.title-bar-optional-control {
+    /*
+     * The class is repeated to raise its specificity to two classes. Marked controls are component hosts, and Angular
+     * compiles a component's own `:host { display: … }` to `tag[_nghost-x]` — a tag plus an attribute, which outranks
+     * a single class no matter where the rule sits, so a plain `.title-bar-optional-control` never applied.
+     */
+    @container title-bar (max-width: 40rem) {
+        display: none;
+    }
+}
+
+/*
+ * Opt-in for a label that gives way before the bar does. A page projecting several labelled controls into a title bar
+ * runs out of room long before the bar reaches a phone width, because the sidebar takes its share: on course
+ * management the search field was squeezed from 236px to 82px while every label still rendered in full. Marking the
+ * labels lets them collapse first, leaving icon-only controls and the remaining space to the input.
+ *
+ * The query is on the bar (see `title-bar-size-container`), not the viewport, so collapsing follows the space the bar
+ * actually has — a viewport query cannot know how wide the sidebar next to it currently is.
+ *
+ * The threshold is where the controls start to crowd, measured with every label at full length in both languages: the
+ * German labels are the wider ones and they need ~1050px next to a title, so the bar collapses them below 68rem.
+ *
+ * The label is hidden the accessible way rather than with `display: none`: an icon-only button whose label is removed
+ * from the accessibility tree has no name left for screen readers or for a test to query by role.
+ */
+.title-bar-collapsible-label {
+    @container title-bar (max-width: 68rem) {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+}
+
+/*
+ * The content card of the pages that are not inside a shell (course list, course management list, about, legal pages).
+ *
+ * The footer is `position: fixed; bottom: 0`, so the bottom margin has to clear it and leave one divider visible. It
+ * therefore tracks `--footer-height`, which follows the footer as it grows — it wraps on narrow viewports and carries
+ * an extra git line in dev. The shells reach the same result by subtracting both values in `shell-content-height`.
+ *
+ * Keep all three margins here rather than mixing in Bootstrap's spacing utilities: those are declared `!important`, so
+ * a partial override loses and leaves the card tucked behind the footer.
+ */
+.page-content-card {
+    margin: var(--spacing-divider) var(--spacing-divider) calc(var(--footer-height) + var(--spacing-divider));
+}
+
 .scrollable-content {
+    &.no-header-bar-height {
+        --header-height: 16px !important;
+    }
+
     @include dynamic-content-height(--header-height);
+
     overflow-y: auto;
+}
+
+/*
+ * Makes a page that brings its own sidebar (exercises, lectures, exams, communication, …) fill the shell's content
+ * region, so the gap above the footer is one divider rather than a divider plus whatever height the page settles on.
+ *
+ * Unscoped by necessity: the page component is inserted by the router, so it sits outside the shell's template and
+ * carries no `_ngcontent` attribute for Angular's emulated encapsulation to match. A scoped rule in
+ * `course-base-container.component.scss` reaches `.course-body-container` but never its routed child.
+ *
+ * `:not(.scrollable-content)` selects exactly the sidebar-bearing pages; the sidebar-less pages keep that class and
+ * their arbitrary content its natural block layout. Exam conduction drives its own full-viewport layout via
+ * `.exam-wrapper`, and is excluded.
+ *
+ * The `:has(… > *:only-child)` gate means "the routed page renders exactly one root element", which is the case the
+ * fill is safe for. Pages that render several at once — exam participation with its test-run banner beside the exam
+ * content, lecture details with its spinner over the previously loaded lecture — would otherwise give each root
+ * `flex: 1 1 auto` and have them share the region, ballooning a banner or spinner to half of it. Those pages keep
+ * their intrinsic height, since the gate withholds the container's `display: flex` as well. Note `.exam-wrapper`
+ * only covers exam conduction once the exam has *started*: the intro, summary and test-run states arrive here, which
+ * is why the gate is load-bearing rather than defensive.
+ */
+.layout-content:not(.exam-wrapper) > .course-body-container:not(.scrollable-content):has(> *:not(router-outlet):not(.refresh-overlay) > *:only-child) {
+    display: flex;
+    flex-direction: column;
+
+    /* `router-outlet` is an empty anchor and `.refresh-overlay` is absolutely positioned; neither may take height. */
+    > *:not(router-outlet):not(.refresh-overlay) {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+
+        /* The page's own root wrapper has to fill it as well, or the page keeps its intrinsic height. */
+        > * {
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+    }
+
+    /*
+     * A scroll region that is a flex item of the filled page must take its height from that parent rather than
+     * re-derive one from the viewport. `dynamic-content-height` subtracts a hardcoded navbar+footer estimate that is a
+     * few pixels short of what the shell computes, and the difference shows up as extra space above the footer. Only
+     * direct flex children are touched, so a scroll region nested deeper keeps whatever height it sets for itself.
+     */
+    .horizontal-scroll > .scrollable-content {
+        height: auto;
+    }
+
+    /*
+     * `jhi-loading-indicator-container` wraps whatever it is given in an unclassed div. Left at its content height
+     * that wrapper breaks the chain, so a page nested inside it cannot fill and its cards end short of the divider.
+     * Pinning it passes the definite height through. The spinner branch keeps its natural height.
+     */
+    jhi-loading-indicator-container > div:not(.spinner) {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+    }
+
+    /* The sidebar column fills too, so its card ends level with the content pane beside it. */
+    jhi-sidebar {
+        display: flex;
+        height: 100%;
+        min-height: 0;
+
+        > .sidebar-wrap {
+            display: flex;
+            min-height: 0;
+
+            /* The wrapper's margin is the divider; the card must not add a second one on top of it. */
+            > .sidebar {
+                min-height: 0;
+                margin-right: 0;
+            }
+        }
+    }
 }
 
 .sidebar-collapsed-course-overview {
@@ -1244,7 +1483,9 @@ $transition-in-between-delay: 0.05s;
 .sidebar-wrap {
     overflow: hidden;
     max-width: $sidebar-width;
-    margin-right: 0.5rem;
+
+    /* The grey divider between a page's own sidebar (exercises, lectures, communication, …) and the content beside it. */
+    margin-right: var(--spacing-divider);
     transition:
         max-width $transition-sidebar-width-length 0s ease-in-out,
         margin-right $transition-sidebar-width-length 0s ease-in-out;
@@ -1485,7 +1726,36 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     transition: transform 0.3s ease;
 }
 
-// About Iris modal — PrimeNG variant (sidebar chat)
+// Compact tooltip used by Iris context selection (add button and chip label)
+.p-tooltip.iris-context-tooltip .p-tooltip-text {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.55rem;
+    line-height: 1.2;
+}
+
+// Reduced gap between tooltip and trigger (used by the plus add button)
+.p-tooltip.iris-context-tooltip-tight {
+    &.p-tooltip-bottom {
+        margin-top: -0.35rem;
+    }
+
+    &.p-tooltip-top {
+        margin-bottom: -0.35rem;
+    }
+}
+
+// Increased gap between tooltip and trigger (used by the context chip label)
+.p-tooltip.iris-context-tooltip-spaced {
+    &.p-tooltip-bottom {
+        margin-top: 0.1rem;
+    }
+
+    &.p-tooltip-top {
+        margin-bottom: 0.4rem;
+    }
+}
+
+// About Iris modal — PrimeNG DynamicDialog (used by every Iris host)
 .p-dialog-mask.about-iris-dialog {
     background-color: rgba(0, 0, 0, 0.3);
 }
@@ -1500,16 +1770,46 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     }
 }
 
-// About Iris modal — CDK MatDialog variant (exercise/lecture chat widget)
-.about-iris-backdrop {
-    background-color: rgba(0, 0, 0, 0.3);
-}
+// Floating Iris chat widget — PrimeNG DynamicDialog (exercise/lecture chat button).
+// The widget is a non-modal, no-backdrop, bottom-right floating panel. The embedded
+// `.chat-widget` is `position: fixed` and manages its own placement, drag and resize, so the
+// PrimeNG dialog shell must be a transparent, full-viewport, pointer-events-passthrough container
+// that does not impose its own chrome or positioning (mirrors the `.iris-onboarding-dialog` pattern).
+// !important is required because PrimeNG applies inline styles on the `.p-dialog` root.
+.iris-chat-widget-dialog {
+    pointer-events: none !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
 
-.about-iris-dialog .mat-mdc-dialog-surface {
-    border-radius: 1rem;
-    overflow: hidden;
-    background-color: var(--iris-secondary-background);
-    padding: 0;
+    // Neutralize any PrimeNG enter/leave transform on the dialog root: a transformed ancestor would
+    // make the embedded `position: fixed` `.chat-widget` resolve against the dialog instead of the
+    // viewport, breaking its bottom-right placement and drag/resize math.
+    transform: none !important;
+    animation: none !important;
+
+    .p-dialog-content {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        overflow: visible;
+    }
+
+    // Re-enable interaction on the actual widget; the shell above stays click-through.
+    .chat-widget {
+        pointer-events: auto;
+    }
 }
 
 // Communication dialogs (PrimeNG DynamicDialog styling)

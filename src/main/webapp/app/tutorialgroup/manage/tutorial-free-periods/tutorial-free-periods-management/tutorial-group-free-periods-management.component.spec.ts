@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, EmbeddedViewRef, input } from '@angular/core';
 import { MockProvider } from 'ng-mocks';
@@ -25,7 +24,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TutorialGroupFreePeriodsTableComponent } from './tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 
@@ -42,8 +40,6 @@ class MockTutorialGroupFreePeriodsTableComponent {
 }
 
 describe('TutorialGroupFreePeriodsManagementComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TutorialGroupFreePeriodsManagementComponent>;
     let component: TutorialGroupFreePeriodsManagementComponent;
     let configuration: TutorialGroupsConfiguration;
@@ -81,7 +77,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TutorialGroupFreePeriodsManagementComponent, OwlNativeDateTimeModule],
+            imports: [TutorialGroupFreePeriodsManagementComponent],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(AlertService),
@@ -156,15 +152,26 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     });
 
     it('should load all free periods and sort by start date descending', () => {
-        expect(component.tutorialGroupFreePeriods).toEqual([thirdOfJanuaryPeriod, secondOfJanuaryPeriod, firstOfJanuaryPeriod]);
+        expect(component.tutorialGroupFreePeriods()).toEqual([thirdOfJanuaryPeriod, secondOfJanuaryPeriod, firstOfJanuaryPeriod]);
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
         expect(findConfigurationSpy).toHaveBeenCalledWith(courseId);
     });
 
+    it('should write the reloaded configuration back to the course resolved by the parent route', () => {
+        expect(course.tutorialGroupsConfiguration?.tutorialGroupFreePeriods?.map((freePeriod) => freePeriod.id)).toEqual([3, 2, 1]);
+
+        configuration.tutorialGroupFreePeriods = [firstOfJanuaryPeriod];
+        findConfigurationSpy.mockReturnValue(of(new HttpResponse({ body: tutorialGroupConfigurationDtoFromEntity(configuration) })));
+
+        component.onFreePeriodCreated();
+
+        expect(course.tutorialGroupsConfiguration?.tutorialGroupFreePeriods?.map((freePeriod) => freePeriod.id)).toEqual([1]);
+    });
+
     it('should pass free days to the table component', () => {
         // All three periods are "free days" (start at 00:00, end at 23:59 on the same day)
-        expect(component.freeDays).toHaveLength(3);
-        expect(component.freePeriods).toHaveLength(0);
-        expect(component.freePeriodsWithinDay).toHaveLength(0);
+        expect(component.freeDays()).toHaveLength(3);
+        expect(component.freePeriods()).toHaveLength(0);
+        expect(component.freePeriodsWithinDay()).toHaveLength(0);
     });
 });

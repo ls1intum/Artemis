@@ -15,6 +15,7 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { User } from 'app/account/user/user.model';
 import { Feedback, convertFeedbacksFromServer } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ComplaintDTO>;
 export type EntityResponseTypeArray = HttpResponse<ComplaintDTO[]>;
@@ -287,13 +288,13 @@ export class ComplaintService implements IComplaintService {
      */
     private assignParticipant(complaint: Complaint, participant?: ParticipantDTO): void {
         if (participant?.isStudent === true) {
-            complaint.student = Object.assign(new User(), {
+            complaint.student = hydrate(new User(), {
                 id: participant.id,
                 name: participant.name,
                 login: participant.login,
             });
         } else if (participant?.isStudent === false) {
-            complaint.team = Object.assign(new Team(), {
+            complaint.team = hydrate(new Team(), {
                 id: participant.id,
                 name: participant.name,
                 shortName: participant.login,
@@ -313,7 +314,7 @@ export class ComplaintService implements IComplaintService {
         result.assessmentType = resultDto.assessmentType;
 
         if (resultDto.assessor) {
-            result.assessor = Object.assign(new User(), {
+            result.assessor = hydrate(new User(), {
                 id: resultDto.assessor.id,
                 login: resultDto.assessor.login,
                 name: resultDto.assessor.name,
@@ -326,20 +327,21 @@ export class ComplaintService implements IComplaintService {
         }
 
         if (resultDto.submission) {
-            const submission = { id: resultDto.submission.id } as Submission;
+            const submission: Submission = { id: resultDto.submission.id };
 
             if (resultDto.submission.participation) {
-                const participation = Object.assign(new StudentParticipation(), {
+                const participation = hydrate(new StudentParticipation(), {
                     id: resultDto.submission.participation.id,
                 });
 
                 const exerciseDto = resultDto.submission.participation.exercise;
                 if (exerciseDto || resultDto.exerciseTitle) {
-                    participation.exercise = {
+                    const exercise: Partial<Exercise> = {
                         id: exerciseDto?.id,
                         type: exerciseDto?.type,
                         title: resultDto.exerciseTitle,
-                    } as Exercise;
+                    };
+                    participation.exercise = exercise as Exercise;
                 }
                 submission.participation = participation;
             }
@@ -352,17 +354,17 @@ export class ComplaintService implements IComplaintService {
      * Returns feedbacks without circular references.
      */
     public getFeedbacksForUpdateAfterComplaint(assessments: Feedback[]): Feedback[] {
-        return assessments.map((feedback) => Object.assign(new Feedback(), feedback, { result: undefined }));
+        return assessments.map((feedback) => hydrate(new Feedback(), feedback, { result: undefined }));
     }
 
     /**
      * Returns a complaint response payload without circular references.
      */
     public getComplaintResponseForUpdateAfterComplaint(complaintResponse: ComplaintResponse): ComplaintResponse {
-        const sanitizedComplaintResponse = Object.assign(new ComplaintResponse(), complaintResponse);
+        const sanitizedComplaintResponse = hydrate(new ComplaintResponse(), complaintResponse);
 
         if (complaintResponse.complaint) {
-            sanitizedComplaintResponse.complaint = Object.assign(new Complaint(), {
+            sanitizedComplaintResponse.complaint = hydrate(new Complaint(), {
                 id: complaintResponse.complaint.id,
                 accepted: complaintResponse.complaint.accepted,
                 complaintType: complaintResponse.complaint.complaintType,

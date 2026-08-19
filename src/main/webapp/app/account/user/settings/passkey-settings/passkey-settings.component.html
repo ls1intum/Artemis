@@ -9,7 +9,7 @@
 
         <div class="list-group-item">
             @if (registeredPasskeys().length) {
-                <table class="table table-striped flex">
+                <table class="table table-striped">
                     <thead class="thead-dark">
                         <tr>
                             <th class="col-9 fs-5" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.yourPasskeys"></th>
@@ -73,7 +73,7 @@
                                         <button
                                             jhiDeleteButton
                                             (delete)="deletePasskey(passkey)"
-                                            [disabled]="isDeletingPasskey"
+                                            [disabled]="isDeletingPasskey()"
                                             [dialogError]="dialogError$"
                                             deleteQuestion="artemisApp.userSettings.passkeySettingsPage.deletePasskeyQuestion"
                                             [fetchEntitySummary]="getDeleteSummary(passkey)"

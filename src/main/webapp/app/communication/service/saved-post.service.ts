@@ -7,6 +7,7 @@ import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Injectable({
     providedIn: 'root',
@@ -57,7 +58,7 @@ export class SavedPostService {
      */
     public fetchSavedPosts(courseId: number, status: SavedPostStatus): Observable<HttpResponse<Posting[]>> {
         const params = new HttpParams().set('status', status.toString().toLowerCase()).set('courseId', courseId.toString());
-        return this.http.get(`${this.resourceUrl}`, { observe: 'response', params }).pipe(map(this.convertPostResponseFromServer));
+        return this.http.get<Posting[]>(`${this.resourceUrl}`, { observe: 'response', params }).pipe(map(this.convertPostResponseFromServer));
     }
 
     /**
@@ -66,7 +67,7 @@ export class SavedPostService {
      * @return the converted post or answer post
      */
     public convertPostingToCorrespondingType(post: Posting) {
-        return Object.assign(post.postingType === PostingType.POST ? new Post() : new AnswerPost(), post);
+        return hydrate(post.postingType === PostingType.POST ? new Post() : new AnswerPost(), post);
     }
 
     /**

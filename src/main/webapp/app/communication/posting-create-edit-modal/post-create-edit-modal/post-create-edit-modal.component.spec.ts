@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
@@ -19,8 +18,6 @@ import { Channel } from 'app/communication/shared/entities/conversation/channel.
 import { provideHttpClient } from '@angular/common/http';
 
 describe('PostCreateEditModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostCreateEditModalComponent;
     let fixture: ComponentFixture<PostCreateEditModalComponent>;
     let metisService: MetisService;
@@ -108,7 +105,7 @@ describe('PostCreateEditModalComponent', () => {
             title: newTitle,
         });
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledOnce();
         vi.useRealTimers();
     });
@@ -134,7 +131,7 @@ describe('PostCreateEditModalComponent', () => {
             title: newTitle,
         });
         vi.advanceTimersByTime(800);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledOnce();
         vi.useRealTimers();
     });
@@ -161,7 +158,7 @@ describe('PostCreateEditModalComponent', () => {
             title: updatedTitle,
         });
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         vi.useRealTimers();
     });
 

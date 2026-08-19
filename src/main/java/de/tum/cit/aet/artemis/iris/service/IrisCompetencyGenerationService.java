@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.dto.IrisCompetencyGenerationStatusDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
@@ -76,10 +77,12 @@ public class IrisCompetencyGenerationService {
                 "competency-extraction",
                 user.getSelectedLLMUsage(),
                 settings.variant().jsonValue(),
+                settings.supportLevel().jsonValue(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getId())),
                 executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, CompetencyTaxonomy.values(), 5),
-                stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisCompetencyStatusUpdateDTO(stages, null, null))
+                (runId, runState, error) -> websocketService.send(user.getLogin(), websocketTopic(course.getId()),
+                        new IrisCompetencyGenerationStatusDTO(runState, error, null))
         );
         // @formatter:on
     }
@@ -98,7 +101,7 @@ public class IrisCompetencyGenerationService {
         }
 
         var user = userRepository.findById(job.userId()).orElseThrow();
-        websocketService.send(user.getLogin(), websocketTopic(job.courseId()), statusUpdate);
+        websocketService.send(user.getLogin(), websocketTopic(job.courseId()), IrisCompetencyGenerationStatusDTO.of(statusUpdate));
 
         return job;
     }

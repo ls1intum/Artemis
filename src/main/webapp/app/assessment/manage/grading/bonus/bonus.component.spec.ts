@@ -1,6 +1,5 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/assessment/manage/grading/bonus/bonus.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -26,7 +25,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 describe('BonusComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: BonusComponent;
     let fixture: ComponentFixture<BonusComponent>;
 
@@ -246,7 +244,7 @@ describe('BonusComponent', () => {
         },
     ];
 
-    const bonusStrategyToOptionAndDiscretenessMappings = [
+    const bonusStrategyToOptionAndDiscretenessMappings: [BonusStrategy | undefined, BonusStrategyOption | undefined, BonusStrategyDiscreteness | undefined][] = [
         [BonusStrategy.GRADES_CONTINUOUS, BonusStrategyOption.GRADES, BonusStrategyDiscreteness.CONTINUOUS],
         [BonusStrategy.GRADES_DISCRETE, BonusStrategyOption.GRADES, BonusStrategyDiscreteness.DISCRETE],
         [BonusStrategy.POINTS, BonusStrategyOption.POINTS, undefined],
@@ -327,11 +325,11 @@ describe('BonusComponent', () => {
         expect(findGradeStepsSpy).toHaveBeenCalledTimes(1);
         expect(findGradeStepsSpy).toHaveBeenCalledWith(courseId, examId);
 
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(component.bonus.sourceGradingScale).toEqual(sourceGradingScale);
-        expect(component.sourceGradingScales).toHaveLength(1);
+        expect(component.sourceGradingScales()).toHaveLength(1);
 
-        const actual = component.sourceGradingScales[0];
+        const actual = component.sourceGradingScales()[0];
 
         expect(actual.id).toBe(7);
         expect(actual.gradeType).toBe(GradeType.BONUS);
@@ -344,6 +342,33 @@ describe('BonusComponent', () => {
         expect(setGradePointsSpy).toHaveBeenCalledWith(examGradeSteps.gradeSteps, examGradeSteps.maxPoints);
     });
 
+    it('should reconstruct a minimal course from the search DTO so the title and max points are readable', () => {
+        // Load without an existing bonus: setSourceGradingScale would otherwise overwrite the mapped scale's
+        // course/exam from the bonus response and hide the reconstruction this test asserts.
+        findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 404 })));
+
+        const searchDto: GradingScaleDTO = {
+            id: 99,
+            gradeSteps: {
+                title: 'Awesome Bonus Source',
+                gradeType: GradeType.BONUS,
+                gradeSteps: [],
+                maxPoints: 123,
+                plagiarismGrade: GradingScale.DEFAULT_PLAGIARISM_GRADE,
+                noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
+            },
+        };
+        findWithBonusSpy.mockReturnValue(of({ body: { resultsOnPage: [searchDto], numberOfPages: 1 } } as HttpResponse<SearchResult<GradingScaleDTO>>));
+
+        component.ngOnInit();
+
+        expect(component.sourceGradingScales()).toHaveLength(1);
+        const mappedScale = component.sourceGradingScales()[0];
+
+        expect(mappedScale.course?.title).toBe('Awesome Bonus Source');
+        expect(mappedScale.course?.maxPoints).toBe(123);
+    });
+
     it('should get calculation sign', () => {
         expect(component.getCalculationSign(1)).toBe('+');
         expect(component.getCalculationSign(-1)).toBe('−');
@@ -351,7 +376,7 @@ describe('BonusComponent', () => {
 
     it.each(bonusStrategyToOptionAndDiscretenessMappings.slice(0, -1))(
         'should set bonus strategy and discreteness for [%p, %p, %p]',
-        (bonusStrategy: BonusStrategy, bonusStrategyOption: BonusStrategyOption, bonusStrategyDiscreteness: BonusStrategyDiscreteness) => {
+        (bonusStrategy: BonusStrategy | undefined, bonusStrategyOption: BonusStrategyOption | undefined, bonusStrategyDiscreteness: BonusStrategyDiscreteness | undefined) => {
             const bonusSpy = findBonusForExamSpy.mockReturnValue(of({ body: { bonusStrategy } } as EntityResponseType));
             component.ngOnInit();
             expect(bonusSpy).toHaveBeenCalledTimes(1);
@@ -362,7 +387,7 @@ describe('BonusComponent', () => {
 
     it.each(bonusStrategyToOptionAndDiscretenessMappings)(
         'should convert from inputs to BonusStrategy for [%p, %p, %p]',
-        (bonusStrategy: BonusStrategy, bonusStrategyOption: BonusStrategyOption, bonusStrategyDiscreteness: BonusStrategyDiscreteness) => {
+        (bonusStrategy: BonusStrategy | undefined, bonusStrategyOption: BonusStrategyOption | undefined, bonusStrategyDiscreteness: BonusStrategyDiscreteness | undefined) => {
             const actualBonusStrategy = component.convertFromInputsToBonusStrategy(bonusStrategyOption, bonusStrategyDiscreteness);
             expect(actualBonusStrategy).toBe(bonusStrategy);
         },
@@ -373,18 +398,18 @@ describe('BonusComponent', () => {
         component.currentBonusStrategyOption = bonusStrategyOption as BonusStrategyOption;
         component.currentBonusStrategyDiscreteness = bonusStrategyDiscreteness as BonusStrategyDiscreteness;
         component.bonus = { ...bonus };
-        component.bonusToGradeStepsDTO = examGradeSteps;
+        component.bonusToGradeStepsDTO.set(examGradeSteps);
 
         const bonusSpy = vi.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
 
-        expect(component.examples).toHaveLength(0);
+        expect(component.examples()).toHaveLength(0);
 
         component.onBonusStrategyInputChange();
 
         expect(component.bonus.bonusStrategy).toBe(bonusStrategy);
         expect(bonusSpy).toHaveBeenCalledTimes(1);
         expect(bonusSpy).toHaveBeenCalledWith({ ...bonus, bonusStrategy }, examGradeSteps);
-        expect(component.examples).toHaveLength(bonusExamples.length);
+        expect(component.examples()).toHaveLength(bonusExamples.length);
     });
 
     it('should check bonus strategy and weight mismatch', () => {
@@ -392,21 +417,21 @@ describe('BonusComponent', () => {
         vi.spyOn(bonusService, 'doesBonusExceedMax').mockReturnValue(true);
 
         component.bonus = { ...bonus, bonusStrategy: BonusStrategy.GRADES_CONTINUOUS, weight: 1 };
-        component.bonusToGradeStepsDTO = { gradeSteps: [] as GradeStep[] } as GradeStepsDTO;
+        component.bonusToGradeStepsDTO.set({ gradeSteps: [] as GradeStep[] } as GradeStepsDTO);
 
         component.generateExamples();
 
-        expect(component.examples).toHaveLength(0);
-        expect(component.hasBonusStrategyWeightMismatch).toBe(true);
+        expect(component.examples()).toHaveLength(0);
+        expect(component.hasBonusStrategyWeightMismatch()).toBe(true);
     });
 
     it('should remove examples when all required fields are not set', () => {
         component.bonus = { ...bonus, bonusStrategy: undefined };
-        component.examples = bonusExamples;
+        component.examples.set(bonusExamples);
 
         component.onBonusStrategyInputChange();
 
-        expect(component.examples).toHaveLength(0);
+        expect(component.examples()).toHaveLength(0);
     });
 
     it('should create bonus', () => {
@@ -426,7 +451,7 @@ describe('BonusComponent', () => {
         expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
 
         expect(component.bonus.id).toBe(bonus.id);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should update bonus', () => {
@@ -441,7 +466,7 @@ describe('BonusComponent', () => {
         expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, bonus);
 
         expect(component.bonus.id).toBe(bonus.id);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should delete bonus', () => {
@@ -465,7 +490,7 @@ describe('BonusComponent', () => {
         expect(component.bonus.sourceGradingScale).toBeUndefined();
         expect(dialogError).toBe('');
 
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should show error on delete', () => {
@@ -486,7 +511,7 @@ describe('BonusComponent', () => {
         expect(component.bonus).toEqual(bonus);
         expect(dialogError).toBe(errorMessage);
 
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should not delete if id is empty', () => {
@@ -499,7 +524,7 @@ describe('BonusComponent', () => {
         expect(bonusSpy).not.toHaveBeenCalled();
 
         expect(component.bonus).toEqual(unsavedBonus);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should handle find bonus response with error', () => {
@@ -514,7 +539,7 @@ describe('BonusComponent', () => {
         expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
 
         expect(component.bonus).toStrictEqual(new Bonus());
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should handle empty find bonus response', () => {
@@ -526,7 +551,7 @@ describe('BonusComponent', () => {
         expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
 
         expect(component.bonus).toStrictEqual(new Bonus());
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should forward grading scale title call to service', () => {
@@ -569,7 +594,7 @@ describe('BonusComponent', () => {
         const dynamicExample = new BonusExample(10, 50);
 
         component.bonus = bonus;
-        component.bonusToGradeStepsDTO = examGradeSteps;
+        component.bonusToGradeStepsDTO.set(examGradeSteps);
         component.dynamicExample = dynamicExample;
 
         component.calculateDynamicExample();
@@ -584,7 +609,7 @@ describe('BonusComponent', () => {
         const dynamicExample = new BonusExample(10, 50);
 
         component.bonus = bonus;
-        component.bonusToGradeStepsDTO = examGradeSteps;
+        component.bonusToGradeStepsDTO.set(examGradeSteps);
         component.dynamicExample = dynamicExample;
 
         component.onWeightChange();

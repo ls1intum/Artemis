@@ -28,7 +28,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockDirective } from 'ng-mocks';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
@@ -134,8 +133,6 @@ const textExerciseResult = {
 } as ExerciseResult;
 
 describe('ExamResultOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ExamResultOverviewComponent],
@@ -198,7 +195,6 @@ describe('ExamResultOverviewComponent', () => {
         fixture = TestBed.createComponent(ExamResultOverviewComponent);
         component = fixture.componentInstance;
         exam.course = course;
-        component.gradingScaleExists = false;
         fixture.componentRef.setInput('studentExamWithGrade', studentExamWithGrade);
         fixture.componentRef.setInput('exerciseInfos', {});
     });
@@ -213,18 +209,56 @@ describe('ExamResultOverviewComponent', () => {
 
         expect(fixture).not.toBeNull();
         expect(component.studentExamWithGrade().studentExam).toBeUndefined();
-        expect(component.gradingScaleExists).toBe(false);
+        expect(component.gradingScaleExists()).toBe(false);
     });
 
     it('should retrieve exam grade correctly', () => {
         fixture.detectChanges();
 
         expect(fixture).not.toBeNull();
-        expect(component.gradingScaleExists).toBe(true);
-        expect(component.isBonus).toBe(false);
-        expect(component.grade).toEqual(studentExamWithGrade.studentResult.overallGrade);
-        expect(component.isBonus).toEqual(studentExamWithGrade.gradeType === GradeType.BONUS);
-        expect(component.hasPassed).toEqual(studentExamWithGrade.studentResult.hasPassed);
+        expect(component.gradingScaleExists()).toBe(true);
+        expect(component.isBonus()).toBe(false);
+        expect(component.grade()).toEqual(studentExamWithGrade.studentResult.overallGrade);
+        expect(component.isBonus()).toEqual(studentExamWithGrade.gradeType === GradeType.BONUS);
+        expect(component.hasPassed()).toEqual(studentExamWithGrade.studentResult.hasPassed);
+    });
+
+    describe('overallScoreTextColorClass', () => {
+        function setResult(overrides: Partial<StudentExamWithGradeDTO['studentResult']>) {
+            fixture.componentRef.setInput('studentExamWithGrade', {
+                ...studentExamWithGrade,
+                studentResult: { ...studentExamWithGrade.studentResult, ...overrides },
+            });
+            fixture.detectChanges();
+        }
+
+        it('should use the pass color when a grading scale exists and the student passed', () => {
+            setResult({ overallGrade: '1.7', hasPassed: true });
+            expect(component.gradingScaleExists()).toBe(true);
+            expect(component.overallScoreTextColorClass()).toBe('text-state-success');
+        });
+
+        it('should use the fail color when a grading scale exists and the student did not pass', () => {
+            setResult({ overallGrade: '5.0', hasPassed: false });
+            expect(component.gradingScaleExists()).toBe(true);
+            expect(component.overallScoreTextColorClass()).toBe('text-state-danger');
+        });
+
+        it('should color a full score green even without a grading scale', () => {
+            setResult({ overallGrade: undefined, hasPassed: false, overallScoreAchieved: 100 });
+            expect(component.gradingScaleExists()).toBe(false);
+            expect(component.overallScoreTextColorClass()).toBe('text-state-success');
+        });
+
+        it('should color a mid score orange without a grading scale', () => {
+            setResult({ overallGrade: undefined, hasPassed: false, overallScoreAchieved: 50 });
+            expect(component.overallScoreTextColorClass()).toBe('result-orange');
+        });
+
+        it('should color a low score red without a grading scale', () => {
+            setResult({ overallGrade: undefined, hasPassed: false, overallScoreAchieved: 30 });
+            expect(component.overallScoreTextColorClass()).toBe('text-state-danger');
+        });
     });
 
     it('should initialize and calculate scores correctly', () => {
@@ -239,8 +273,8 @@ describe('ExamResultOverviewComponent', () => {
         expect(component.studentExamWithGrade()?.achievedPointsPerExercise?.[modelingExercise.id!]).toBe(3.33);
         expect(component.studentExamWithGrade()?.achievedPointsPerExercise?.[programmingExercise.id!]).toBe(0);
 
-        expect(component.overallAchievedPoints).toBe(35.33);
-        expect(component.maxPoints).toBe(40);
+        expect(component.overallAchievedPoints()).toBe(35.33);
+        expect(component.maxPoints()).toBe(40);
         expect(component.studentExamWithGrade()?.maxBonusPoints).toBe(20);
         expect(component.getMaxNormalAndBonusPointsSum()).toBe(60);
     });
@@ -253,8 +287,8 @@ describe('ExamResultOverviewComponent', () => {
         fixture.detectChanges();
         expect(fixture).not.toBeNull();
 
-        expect(component.overallAchievedPoints).toBe(0);
-        expect(component.maxPoints).toBe(0);
+        expect(component.overallAchievedPoints()).toBe(0);
+        expect(component.maxPoints()).toBe(0);
         expect(component.studentExamWithGrade()?.maxBonusPoints).toBe(20);
         expect(component.getMaxNormalAndBonusPointsSum()).toBe(20);
     });
@@ -346,7 +380,7 @@ describe('ExamResultOverviewComponent', () => {
             component.ngOnInit();
 
             expect(summedAchievedExerciseScorePercentageSpy).toHaveBeenCalledOnce();
-            expect(component.overallAchievedPercentageRoundedByCourseSettings).toBe(76.67);
+            expect(component.overallAchievedPercentageRoundedByCourseSettings()).toBe(76.67);
         });
     });
 });

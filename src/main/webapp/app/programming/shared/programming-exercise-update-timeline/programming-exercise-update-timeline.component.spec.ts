@@ -1,13 +1,12 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProgrammingExerciseUpdateTimelineComponent } from './programming-exercise-update-timeline.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ConfirmationService } from 'primeng/api';
 import { BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -22,8 +21,6 @@ import { BuildPhasesTemplateService } from 'app/programming/shared/services/buil
 import { PROFILE_LOCALCI } from 'app/app.constants';
 
 describe('ProgrammingExerciseUpdateTimelineComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseUpdateTimelineComponent>;
     let component: ProgrammingExerciseUpdateTimelineComponent;
     let activatedRouteUrlSubject: BehaviorSubject<UrlSegment[]>;
@@ -39,7 +36,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     beforeEach(() => {
         activatedRouteUrlSubject = new BehaviorSubject<UrlSegment[]>([{ path: 'programming-exercises' }] as UrlSegment[]);
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, ProgrammingExerciseUpdateTimelineComponent],
+            imports: [ProgrammingExerciseUpdateTimelineComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -546,7 +543,9 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
 
         expect(component.assessmentType()).toBe(AssessmentType.AUTOMATIC);
         expect(component.assessmentDueDate()).toBeUndefined();
-        expect(component.allowComplaintsForAutomaticAssessments()).toBe(false);
+        // Switching to automatic assessment must preserve the user's complaint-on-automatic choice (issue #13070);
+        // only fields that are meaningless in automatic mode (assessment due date, feedback suggestion module) reset.
+        expect(component.allowComplaintsForAutomaticAssessments()).toBe(true);
         expect(component.feedbackSuggestionModule()).toBeUndefined();
     });
 
@@ -594,7 +593,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         fixture.detectChanges();
 
         expect(component.timelineItems()).toHaveLength(0);
-        expect(fixture.debugElement.nativeElement.querySelector('jhi-exercise-timeline')).toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('jhi-timeline')).toBeNull();
         expect(component.formValid).toBe(true);
         expect(component.formEmpty).toBe(false);
     });
@@ -612,6 +611,16 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         checkbox.click();
         fixture.detectChanges();
 
+        expect(component.allowComplaintsForAutomaticAssessments()).toBe(true);
+    });
+
+    it('should preserve a persisted allowComplaintsForAutomaticAssessments on load for automatic assessment (issue #13070)', () => {
+        exercise.allowComplaintsForAutomaticAssessments = true;
+        exercise.assessmentType = AssessmentType.AUTOMATIC;
+        createTestComponent();
+
+        // The on-load effect must not reset the persisted value in AUTOMATIC mode, otherwise the setting is lost
+        // (saved as false) every time the exercise editor is opened.
         expect(component.allowComplaintsForAutomaticAssessments()).toBe(true);
     });
 
@@ -753,5 +762,84 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution').disabled).toBe(true);
+    });
+
+    it('should show a confirmation dialog when unchecking setTestCaseVisibilityToAfterDueDate in exam mode during import', async () => {
+        activatedRouteUrlSubject.next([{ path: 'import' }] as UrlSegment[]);
+        createTestComponent();
+        fixture.componentRef.setInput('isExamMode', true);
+        fixture.componentRef.setInput('setTestCaseVisibilityToAfterDueDate', true);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+
+        const checkbox = fixture.debugElement.nativeElement.querySelector('#setTestCaseVisibilityToAfterDueDate-checkbox');
+        checkbox.click();
+        fixture.detectChanges();
+
+        expect(confirmSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should stay checked when the user cancels the setTestCaseVisibilityToAfterDueDate confirmation dialog', async () => {
+        activatedRouteUrlSubject.next([{ path: 'import' }] as UrlSegment[]);
+        createTestComponent();
+        fixture.componentRef.setInput('isExamMode', true);
+        fixture.componentRef.setInput('setTestCaseVisibilityToAfterDueDate', true);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const checkbox = fixture.debugElement.nativeElement.querySelector('#setTestCaseVisibilityToAfterDueDate-checkbox');
+        checkbox.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const rejectButton = document.querySelector('.p-confirmdialog-reject-button') as HTMLButtonElement;
+        rejectButton.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.setTestCaseVisibilityToAfterDueDate()).toBe(true);
+    });
+
+    it('should uncheck when the user confirms the setTestCaseVisibilityToAfterDueDate confirmation dialog', async () => {
+        activatedRouteUrlSubject.next([{ path: 'import' }] as UrlSegment[]);
+        createTestComponent();
+        fixture.componentRef.setInput('isExamMode', true);
+        fixture.componentRef.setInput('setTestCaseVisibilityToAfterDueDate', true);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const checkbox = fixture.debugElement.nativeElement.querySelector('#setTestCaseVisibilityToAfterDueDate-checkbox');
+        checkbox.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const acceptButton = document.querySelector('.p-confirmdialog-accept-button') as HTMLButtonElement;
+        acceptButton.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.setTestCaseVisibilityToAfterDueDate()).toBe(false);
+    });
+
+    it('should not show a confirmation dialog when checking setTestCaseVisibilityToAfterDueDate in exam mode during import', async () => {
+        activatedRouteUrlSubject.next([{ path: 'import' }] as UrlSegment[]);
+        createTestComponent();
+        fixture.componentRef.setInput('isExamMode', true);
+        fixture.componentRef.setInput('setTestCaseVisibilityToAfterDueDate', false);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+
+        const checkbox = fixture.debugElement.nativeElement.querySelector('#setTestCaseVisibilityToAfterDueDate-checkbox');
+        checkbox.click();
+        fixture.detectChanges();
+
+        expect(confirmSpy).not.toHaveBeenCalled();
+        expect(component.setTestCaseVisibilityToAfterDueDate()).toBe(true);
     });
 });

@@ -2,7 +2,7 @@ import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, in
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -39,6 +39,7 @@ import { ControlCenterComponent } from 'app/course/manage/control-center/control
 import { OnboardingExploreComponent } from 'app/course/manage/onboarding/pages/onboarding-explore.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -110,11 +111,12 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
     readonly isHyperionEnabled = signal(false);
+    readonly isAtlasEnabled = signal(false);
 
     readonly isAdmin = signal(false);
 
-    private eventSubscription: Subscription;
-    private paramSub: Subscription;
+    private eventSubscription?: Subscription;
+    private paramSub?: Subscription;
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
@@ -123,19 +125,20 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
         this.isAthenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
         this.isHyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
+        this.isAtlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
         this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
 
         this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             if (params['fromOnboarding'] === 'true') {
                 this.fromOnboarding.set(true);
-                this.router.navigate([], { queryParams: {}, replaceUrl: true });
+                void this.router.navigate([], { queryParams: {}, replaceUrl: true });
             }
         });
 
         this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ course }) => {
             if (course) {
                 if (course.onboardingDone !== true && course.isAtLeastInstructor && !this.accountService.isAdmin()) {
-                    this.router.navigate(['/course-management', course.id, 'onboarding'], { replaceUrl: true });
+                    void this.router.navigate(['/course-management', course.id, 'onboarding'], { replaceUrl: true });
                     return;
                 }
                 this.course.set(course);
@@ -395,7 +398,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         this.organizationService.getOrganizationsByCourse(courseId).subscribe((organizations) => {
             const currentCourse = this.course();
             if (currentCourse) {
-                this.course.set(Object.assign(new Course(), currentCourse, { organizations }));
+                this.course.set(hydrate(new Course(), currentCourse, { organizations }));
                 this.getCourseDetailSections();
             }
         });

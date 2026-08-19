@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -19,8 +18,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 
 describe('QuizExercise Management Buttons Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizExerciseManageButtonsComponent;
     let fixture: ComponentFixture<QuizExerciseManageButtonsComponent>;
     let quizExerciseService: QuizExerciseService;
@@ -131,12 +128,12 @@ describe('QuizExercise Management Buttons Component', () => {
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
 
-        expect(comp.isEvaluatingQuizExercise).toBeFalsy();
+        expect(comp.isEvaluatingQuizExercise()).toBeFalsy();
         comp.evaluateQuizExercise();
 
         expect(exerciseService.evaluateQuizExercise).toHaveBeenCalledWith(456);
         expect(successSpy).toHaveBeenCalledWith('artemisApp.quizExercise.evaluateQuizExerciseSuccess');
-        expect(comp.isEvaluatingQuizExercise).toBe(false);
+        expect(comp.isEvaluatingQuizExercise()).toBe(false);
     });
 
     it('should handle evaluate quiz exercise error', () => {
@@ -149,7 +146,7 @@ describe('QuizExercise Management Buttons Component', () => {
         comp.evaluateQuizExercise();
 
         expect(exerciseService.evaluateQuizExercise).toHaveBeenCalledWith(456);
-        expect(comp.isEvaluatingQuizExercise).toBe(false);
+        expect(comp.isEvaluatingQuizExercise()).toBe(false);
     });
 
     it('should handle delete quiz exercise error', () => {
@@ -199,13 +196,11 @@ describe('QuizExercise Management Buttons Component', () => {
 
         expect(comp.courseId).toBe(123);
         expect(comp.isExamMode).toBeFalsy();
-        expect(comp.baseUrl).toBe('/course-management/123');
+        expect(comp.baseUrl()).toBe('/course-management/123');
     });
 });
 
 describe('QuizExercise Management Buttons Component - Exam Mode', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizExerciseManageButtonsComponent;
     let fixture: ComponentFixture<QuizExerciseManageButtonsComponent>;
 
@@ -255,7 +250,7 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
         expect(comp.courseId).toBe(123);
         expect(comp.examId).toBe(789);
         expect(comp.isExamMode).toBe(true);
-        expect(comp.baseUrl).toBe('/course-management/123/exams/789/exercise-groups/111');
+        expect(comp.baseUrl()).toBe('/course-management/123/exams/789/exercise-groups/111');
     });
 
     it('should navigate after delete in detail page', () => {

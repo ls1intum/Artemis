@@ -1,8 +1,15 @@
-<div id="exercise-header" class="d-flex flex-column flex-fill">
-    <div class="d-flex align-items-center justify-content-between gap-2">
-        <div class="d-flex align-items-center gap-3">
+<!--
+    Header card: the title with its actions on one row, the information boxes below. The two rows are separated by the
+    same gap as on the lecture page rather than by a rule, so both detail headers read alike.
+-->
+<div id="exercise-header" class="detail-header-card flex-fill">
+    <div class="detail-header-title-row flex-wrap justify-content-between gap-2">
+        <div class="d-flex align-items-center gap-3 overflow-parent">
+            @if (showSidebarToggle() && isSidebarCollapsed()) {
+                <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+            }
             @if (exerciseIcon()) {
-                <h5 class="mb-0">
+                <h5 class="mb-0 text-truncate">
                     <fa-icon [icon]="exerciseIcon()!" />
                     {{ exercise().title }}
                 </h5>
@@ -24,11 +31,9 @@
         />
     </div>
 
-    <hr class="my-2" />
-
     <div class="d-flex align-items-center gap-2">
         <jhi-exercise-headers-information
-            class="flex-grow-1 min-w-0"
+            class="flex-grow-1 overflow-parent"
             [exercise]="exercise()"
             [studentParticipation]="activeParticipation()"
             [submissionPolicy]="submissionPolicy()"
@@ -37,14 +42,15 @@
             [athenaEnabled]="athenaEnabled()"
             [feedbackRequestLimit]="feedbackRequestLimit()"
             [quizLiveStatus]="quizLiveStatus()"
+            [quizLiveHeaderInfo]="quizLiveHeaderInfo()"
             (viewingSubmissionChange)="isViewingSubmission.set($event)"
         />
         <jhi-participation-mode-toggle
             class="ms-auto flex-shrink-0"
             [mode]="participationMode()"
             (modeChange)="participationMode.set($event)"
-            [hasPractice]="hasPracticeSubmission()"
-            [hasGraded]="hasGradedSubmission()"
+            [hasPractice]="showPracticeMode()"
+            [hasGraded]="showGradedMode()"
         />
     </div>
 </div>

@@ -1,4 +1,4 @@
-import { Component, HostListener, effect, inject, input, model, output } from '@angular/core';
+import { Component, HostListener, inject, input, model, output } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
@@ -10,10 +10,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentWarningComponent } from '../assessment-warning/assessment-warning.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Message } from 'primeng/message';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
@@ -25,7 +26,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-assessment-header',
     templateUrl: './assessment-header.component.html',
     styleUrls: ['./assessment-header.component.scss'],
-    imports: [TranslateDirective, NgbAlert, NgbTooltip, FaIconComponent, RouterLink, AssessmentWarningComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, NgbTooltip, FaIconComponent, RouterLink, AssessmentWarningComponent, ArtemisTranslatePipe, Message],
 })
 export class AssessmentHeaderComponent {
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);
@@ -60,7 +61,6 @@ export class AssessmentHeaderComponent {
     readonly onSubmit = output();
     readonly onCancel = output();
     readonly nextSubmission = output();
-    readonly highlightDifferencesChange = output<boolean>();
     readonly useAsExampleSubmission = output();
 
     readonly ExerciseType = ExerciseType;
@@ -72,20 +72,8 @@ export class AssessmentHeaderComponent {
     faSave = faSave;
     faSquareCaretRight = faSquareCaretRight;
 
-    private highlightDifferencesEffectInitialized = false;
-
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
-
-        // Emit highlightDifferencesChange when the model changes (skip initial emission)
-        effect(() => {
-            const value = this.highlightDifferences();
-            if (!this.highlightDifferencesEffectInitialized) {
-                this.highlightDifferencesEffectInitialized = true;
-                return;
-            }
-            this.highlightDifferencesChange.emit(value);
-        });
     }
 
     get overrideVisible() {

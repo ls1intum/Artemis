@@ -1,9 +1,8 @@
-import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
-import { NgClass } from '@angular/common';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminDataExport, DataExportState } from 'app/admin/admin-data-exports/data-export.model';
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
-import { faBan, faCheck, faClock, faDownload, faExclamationTriangle, faPlus, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faClock, faDownload, faExclamationTriangle, faPlus, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -12,9 +11,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminDataExportCreateModalComponent } from 'app/admin/admin-data-exports/admin-data-export-create-modal.component';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiPaginatorComponent, TumUiTableDirective, TumUiTagComponent } from '@tumaet/ui-angular';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-
 /**
  * Admin component for managing user data exports in accordance with GDPR Art. 15.
  *
@@ -30,19 +28,22 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 @Component({
     selector: 'jhi-admin-data-exports',
     templateUrl: './admin-data-exports.component.html',
-    styleUrls: ['./admin-data-exports.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
         FaIconComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        NgClass,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         FormsModule,
         AdminDataExportCreateModalComponent,
-        PaginatorModule,
+        TumUiPaginatorComponent,
         DeleteButtonDirective,
+        TumUiTableDirective,
+        TumUiTagComponent,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
     ],
 })
 export class AdminDataExportsComponent implements OnInit {
@@ -64,7 +65,7 @@ export class AdminDataExportsComponent implements OnInit {
     readonly totalRecords = signal<number>(0);
 
     // Icons for UI
-    protected readonly faBan = faBan;
+    protected readonly faTrash = faTrash;
     protected readonly faDownload = faDownload;
     protected readonly faPlus = faPlus;
     protected readonly faSpinner = faSpinner;
@@ -103,11 +104,21 @@ export class AdminDataExportsComponent implements OnInit {
     /**
      * Handles page change events from the paginator.
      *
-     * @param event The paginator state containing first index and rows per page
+     * @param page The 0-based page index emitted by the paginator
      */
-    onPageChange(event: PaginatorState): void {
-        this.first.set(event.first ?? 0);
-        this.rows.set(event.rows ?? 20);
+    onPageChange(page: number): void {
+        this.first.set(page * this.rows());
+        this.loadDataExports();
+    }
+
+    /**
+     * Handles page-size change events from the paginator, resetting to the first page.
+     *
+     * @param pageSize The new number of rows per page
+     */
+    onPageSizeChange(pageSize: number): void {
+        this.rows.set(pageSize);
+        this.first.set(0);
         this.loadDataExports();
     }
 
@@ -160,48 +171,26 @@ export class AdminDataExportsComponent implements OnInit {
         }
     }
 
-    /**
-     * Returns the Bootstrap badge CSS class for a given export state.
-     * Each state has a unique color for easy identification:
-     * - Primary (blue): requested
-     * - Info (cyan): in creation
-     * - Success (green): ready (email sent)
-     * - Warning (yellow): downloaded or notification failed
-     * - Danger (red): failed
-     * - Secondary (gray): deleted
-     *
-     * @param state The current state of the data export
-     */
-    getStateBadgeClass(state: DataExportState): string {
+    getStateSeverity(state: DataExportState): 'contrast' | 'info' | 'success' | 'warn' | 'danger' | 'secondary' {
         switch (state) {
             case DataExportState.REQUESTED:
-                return 'bg-primary';
+                return 'contrast';
             case DataExportState.IN_CREATION:
-                return 'bg-info';
+                return 'info';
             case DataExportState.EMAIL_SENT:
-                return 'bg-success';
+                return 'success';
             case DataExportState.DOWNLOADED:
-                return 'bg-warning text-dark';
+                return 'warn';
             case DataExportState.FAILED:
-                return 'bg-danger';
+                return 'danger';
             case DataExportState.EMAIL_FAILED:
-                return 'bg-warning text-dark';
+                return 'warn';
             case DataExportState.DELETED:
             case DataExportState.DOWNLOADED_DELETED:
-                return 'bg-secondary';
+                return 'secondary';
             default:
-                return 'bg-secondary';
+                return 'secondary';
         }
-    }
-
-    /**
-     * Track function for ngFor to optimize rendering performance.
-     *
-     * @param index The index of the item in the array
-     * @param item The data export item
-     */
-    trackIdentity(index: number, item: AdminDataExport): number {
-        return item.id;
     }
 
     /**

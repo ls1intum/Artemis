@@ -1,9 +1,8 @@
-import { Component, OnChanges, effect, inject, input, output } from '@angular/core';
+import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Subscription, merge } from 'rxjs';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
@@ -29,11 +28,9 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
         MarkdownEditorMonacoComponent,
     ],
 })
-export class CommonCourseCompetencyFormComponent implements OnChanges {
+export class CommonCourseCompetencyFormComponent {
     private translateService = inject(TranslateService);
 
-    formData = input.required<CourseCompetencyFormData>();
-    isEditMode = input<boolean>(false);
     isInConnectMode = input<boolean>(false);
     isInSingleLectureMode = input<boolean>(false);
     averageStudentScore = input<number>();
@@ -45,7 +42,7 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
     protected readonly competencyValidators = CourseCompetencyValidators;
     protected readonly DateTimePickerType = DateTimePickerType;
 
-    suggestedTaxonomies: string[] = [];
+    readonly suggestedTaxonomies = signal<string[]>([]);
 
     // Icons
     protected readonly faTimes = faTimes;
@@ -94,22 +91,12 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
         });
     }
 
-    ngOnChanges() {
-        if (this.isEditMode() && this.formData()) {
-            this.setFormValues(this.formData());
-        }
-    }
-
-    private setFormValues(formData: CourseCompetencyFormData) {
-        this.form().patchValue(formData);
-    }
-
     /**
      * Suggest some taxonomies based on keywords used in the title or description.
      * Triggered after the user changes the title or description input field.
      */
     suggestTaxonomies() {
-        this.suggestedTaxonomies = [];
+        const suggestedTaxonomies: string[] = [];
         const title = this.titleControl?.value?.toLowerCase() ?? '';
         const description = this.descriptionControl?.value?.toLowerCase() ?? '';
         for (const taxonomy in this.competencyTaxonomy) {
@@ -117,8 +104,9 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
             const taxonomyName = this.translateService.instant('artemisApp.courseCompetency.taxonomies.' + taxonomy);
             keywords.push(taxonomyName);
             if (keywords.map((keyword: string) => keyword.toLowerCase()).some((keyword: string) => title.includes(keyword) || description.includes(keyword))) {
-                this.suggestedTaxonomies.push(taxonomyName);
+                suggestedTaxonomies.push(taxonomyName);
             }
         }
+        this.suggestedTaxonomies.set(suggestedTaxonomies);
     }
 }

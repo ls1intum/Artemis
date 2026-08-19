@@ -3,6 +3,7 @@ import { SidebarCardSmallComponent } from 'app/course/sidebar/sidebar-card-small
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardLargeComponent } from 'app/course/sidebar/sidebar-card-large/sidebar-card-large.component';
 import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Directive({
     selector: '[jhiSidebarCard]',
@@ -18,7 +19,7 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
 
     readonly onUpdateSidebar = output<void>();
 
-    private componentRef: ComponentRef<SidebarCardSmallComponent | SidebarCardMediumComponent | SidebarCardLargeComponent>;
+    private componentRef?: ComponentRef<SidebarCardSmallComponent | SidebarCardMediumComponent | SidebarCardLargeComponent>;
     private updateSubscription?: OutputRefSubscription;
 
     constructor() {
@@ -70,7 +71,7 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
             const sidebarItem = this.sidebarItem();
             if (sidebarItem) {
                 // Do not mutate the signal input value; pass a shallow copy with the cleaned-up title instead.
-                this.componentRef.setInput('sidebarItem', { ...sidebarItem, title: this.removeChannelPrefix(sidebarItem.title) });
+                this.componentRef.setInput('sidebarItem', cloneWith(sidebarItem, { title: this.removeChannelPrefix(sidebarItem.title) }));
             }
         }
     }
@@ -88,7 +89,7 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
         const prefixes = ['exercise-', 'lecture-', 'exam-'];
         const channelTypes = ['exerciseChannels', 'lectureChannels', 'examChannels'];
 
-        if (channelTypes.includes(<string>this.groupKey())) {
+        if (channelTypes.includes(this.groupKey() as string)) {
             prefixes.forEach((prefix) => {
                 if (name?.startsWith(prefix)) {
                     name = name.substring(prefix.length);

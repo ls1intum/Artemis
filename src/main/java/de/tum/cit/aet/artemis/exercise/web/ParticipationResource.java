@@ -144,7 +144,7 @@ public class ParticipationResource {
     public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         boolean triesToCreateAssignmentRepoForExamExercise = exercise.isExamExercise() && exercise instanceof ProgrammingExercise
                 && authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         if (triesToCreateAssignmentRepoForExamExercise) {
@@ -166,6 +166,11 @@ public class ParticipationResource {
         catch (Exception e) {
             if (e instanceof VersionControlException && e.getCause() instanceof LargeObjectException) {
                 throw new InternalServerErrorException("Failed to start exercise because repository contains files that are too large. Please contact your instructor.");
+            }
+            else if (e instanceof VersionControlException) {
+                log.error("Failed to start exercise participation for exercise {} and user {}", exerciseId, user.getLogin(), e);
+                throw new InternalServerErrorException(
+                        "Failed to start exercise participation because the exercise repositories are not accessible. Please try again later or contact your instructor.");
             }
             else {
                 log.error("Failed to start exercise participation for exercise {} and user {}", exerciseId, user.getLogin(), e);
@@ -193,7 +198,7 @@ public class ParticipationResource {
             @RequestParam(value = "useGradedParticipation", defaultValue = "false") boolean useGradedParticipation) throws URISyntaxException {
         log.debug("REST request to practice Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneGradedByExerciseAndParticipant(exercise, user);
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
@@ -247,7 +252,7 @@ public class ParticipationResource {
         // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         participationAuthorizationService.checkAccessPermissionOwner(participation, user);
         if (!isAllowedToParticipateInProgrammingExercise(programmingExercise, participation)) {
             throw new AccessForbiddenException("You are not allowed to resume that participation.");
@@ -285,7 +290,7 @@ public class ParticipationResource {
     public ResponseEntity<StudentParticipation> requestFeedback(@PathVariable Long exerciseId, @PathVariable Long participationId) {
         log.debug("REST request to request feedback for exercise {} and participation {}", exerciseId, participationId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         if (!participation.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("Participation does not belong to the exercise", ENTITY_NAME, "participationExerciseMismatch");
@@ -318,17 +323,12 @@ public class ParticipationResource {
             ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
         }
 
-        if (exercise instanceof TextExercise || exercise instanceof ModelingExercise) {
+        if (exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof ProgrammingExercise) {
             var submissions = submissionRepository.findAllByParticipationId(participation.getId());
             // Only count real submitted entries, not auto-created placeholders
             boolean hasSubmittedOnce = submissions.stream().anyMatch(Submission::isSubmitted);
             if (!hasSubmittedOnce) {
                 throw new BadRequestAlertException("You need to submit at least once", "participation", "noSubmissionExists", true);
-            }
-        }
-        else if (exercise instanceof ProgrammingExercise) {
-            if (participation.findLatestResult() == null) {
-                throw new BadRequestAlertException("You need to submit at least once and have the build results", "participation", "noSubmissionExists", true);
             }
         }
 

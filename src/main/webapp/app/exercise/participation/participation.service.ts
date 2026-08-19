@@ -16,6 +16,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import dayjs from 'dayjs/esm';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -36,6 +37,14 @@ export interface ParticipationDueDateUpdateDTO {
     id: number;
     exerciseId: number;
     individualDueDate?: string;
+}
+
+/**
+ * Request options that are appended as query parameters when deleting a participation.
+ */
+export interface ParticipationDeleteOptions {
+    deleteBuildPlan?: boolean;
+    deleteRepository?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -162,7 +171,7 @@ export class ParticipationService {
         return this.http.get<ParticipationNameExportDTO[]>(`api/exercise/exercises/${exerciseId}/participations/names`);
     }
 
-    delete(participationId: number, req?: any): Observable<HttpResponse<void>> {
+    delete(participationId: number, req?: ParticipationDeleteOptions): Observable<HttpResponse<void>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${participationId}`, { params: options, observe: 'response' });
     }
@@ -184,7 +193,7 @@ export class ParticipationService {
 
     protected convertParticipationDatesFromClient(participation: StudentParticipation): StudentParticipation {
         // return a copy of the object
-        return Object.assign({}, participation, {
+        return cloneWith(participation, {
             initializationDate: convertDateFromClient(participation.initializationDate),
             individualDueDate: convertDateFromClient(participation.individualDueDate),
         });
@@ -255,11 +264,11 @@ export class ParticipationService {
                 }
             } else if (participations[0].type === ParticipationType.PROGRAMMING) {
                 if (nonTestRunParticipations.length) {
-                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations as ProgrammingExerciseStudentParticipation[]);
+                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations);
                     mergedParticipations.push(combinedParticipation);
                 }
                 if (testRunParticipations.length) {
-                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations as ProgrammingExerciseStudentParticipation[]);
+                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations);
                     mergedParticipations.push(combinedParticipationTestRun);
                 }
             }

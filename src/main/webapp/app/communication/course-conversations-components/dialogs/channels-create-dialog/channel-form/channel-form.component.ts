@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { Subject, takeUntil } from 'rxjs';
@@ -6,6 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SelectButton } from 'primeng/selectbutton';
 import { TranslateService } from '@ngx-translate/core';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface ChannelFormData {
     name?: string;
@@ -30,9 +31,9 @@ export class ChannelFormComponent implements OnInit, OnDestroy {
 
     private ngUnsubscribe = new Subject<void>();
 
-    visibilityOptions: { label: string; value: boolean }[] = [];
-    scopeOptions: { label: string; value: boolean }[] = [];
-    typeOptions: { label: string; value: boolean }[] = [];
+    readonly visibilityOptions = signal<{ label: string; value: boolean }[]>([]);
+    readonly scopeOptions = signal<{ label: string; value: boolean }[]>([]);
+    readonly typeOptions = signal<{ label: string; value: boolean }[]>([]);
 
     formData: ChannelFormData = {
         name: undefined,
@@ -46,7 +47,7 @@ export class ChannelFormComponent implements OnInit, OnDestroy {
     readonly isAnnouncementChannelChanged = output<boolean>();
     isCourseWideChannelChanged = output<boolean>();
 
-    form: FormGroup;
+    form!: FormGroup; // set in initializeForm() from ngOnInit()
 
     get nameControl() {
         return this.form.get('name');
@@ -73,18 +74,18 @@ export class ChannelFormComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.visibilityOptions = [
+        this.visibilityOptions.set([
             { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isPublicInput.public'), value: true },
             { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isPublicInput.private'), value: false },
-        ];
-        this.scopeOptions = [
+        ]);
+        this.scopeOptions.set([
             { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isCourseWideChannelInput.true'), value: true },
             { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isCourseWideChannelInput.false'), value: false },
-        ];
-        this.typeOptions = [
+        ]);
+        this.typeOptions.set([
             { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.true'), value: true },
             { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.false'), value: false },
-        ];
+        ]);
         this.initializeForm();
     }
 
@@ -94,7 +95,8 @@ export class ChannelFormComponent implements OnInit, OnDestroy {
     }
 
     submitForm() {
-        this.formSubmitted.emit({ ...this.form.value } as ChannelFormData);
+        const channelFormData: ChannelFormData = deepClone(this.form.value);
+        this.formSubmitted.emit(channelFormData);
     }
 
     private initializeForm() {

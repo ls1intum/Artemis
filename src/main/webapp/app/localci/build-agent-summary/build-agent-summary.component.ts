@@ -6,8 +6,7 @@ import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-i
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/localci/shared/entities/build-agent.model';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
+import { TumUiButtonComponent, TumUiTableDirective, TumUiTagComponent } from '@tumaet/ui-angular';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
 import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
@@ -30,16 +29,32 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FontAwesomeModule, RouterModule, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        FontAwesomeModule,
+        RouterModule,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
+        ArtemisTranslatePipe,
+        TumUiButtonComponent,
+        TumUiTableDirective,
+        TumUiTagComponent,
+        BuildAgentPauseAllModalComponent,
+        BuildAgentClearDistributedDataComponent,
+    ],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly buildQueueService = inject(BuildOverviewService);
     private readonly router = inject(Router);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
+
+    /** Controls the visibility of the "pause all build agents" confirmation dialog */
+    readonly pauseAllModalVisible = signal(false);
+
+    /** Controls the visibility of the "clear distributed data" confirmation dialog */
+    readonly clearDataModalVisible = signal(false);
 
     /** Signal containing the list of all build agents with their current status */
     readonly buildAgents = signal<BuildAgentInformation[]>([]);
@@ -79,7 +94,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     initialLoadSubscription?: Subscription;
 
     /** Current router URL used for navigation */
-    routerLink: string;
+    routerLink!: string; // set in ngOnInit() from router.url
 
     // Font Awesome icons for the UI
     protected readonly faTimes = faTimes;
@@ -132,7 +147,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      */
     navigateToJobDetail(jobId?: string): void {
         if (jobId) {
-            this.router.navigate(['/admin/build-overview', jobId, 'job-details']);
+            void this.router.navigate(['/admin/build-overview', jobId, 'job-details']);
         }
     }
 
@@ -156,19 +171,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      * If confirmed, triggers the pause operation.
      */
     displayPauseBuildAgentModal(): void {
-        const dialogRef = this.dialogService.open(BuildAgentPauseAllModalComponent, {
-            header: this.translateService.instant('artemisApp.buildAgents.pauseAll'),
-            width: '32rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: true,
-        });
-        dialogRef?.onClose.subscribe((confirmed: boolean | undefined) => {
-            if (confirmed) {
-                this.pauseAllBuildAgents();
-            }
-        });
+        this.pauseAllModalVisible.set(true);
     }
 
     /**
@@ -176,19 +179,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      * If confirmed, triggers the clear operation.
      */
     displayClearDistributedDataModal(): void {
-        const dialogRef = this.dialogService.open(BuildAgentClearDistributedDataComponent, {
-            header: this.translateService.instant('artemisApp.buildAgents.clearDistributedData.title'),
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: true,
-        });
-        dialogRef?.onClose.subscribe((confirmed: boolean | undefined) => {
-            if (confirmed) {
-                this.clearDistributedData();
-            }
-        });
+        this.clearDataModalVisible.set(true);
     }
 
     /**

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -36,8 +35,6 @@ const course7 = { id: 7, semester: 'WS22/23' } as CourseForArchiveDTO;
 const courses: CourseForArchiveDTO[] = [course1, course2, course3, course4, course5, course6, course7];
 
 describe('CourseArchiveComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseArchiveComponent;
     let fixture: ComponentFixture<CourseArchiveComponent>;
     let courseService: CourseManagementService;
@@ -95,8 +92,8 @@ describe('CourseArchiveComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.courses).toEqual(courses);
-            expect(component.courses).toHaveLength(7);
+            expect(component.courses()).toEqual(courses);
+            expect(component.courses()).toHaveLength(7);
         });
 
         it('should handle an empty response body correctly when fetching all courses for archive', () => {
@@ -108,7 +105,7 @@ describe('CourseArchiveComponent', () => {
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             req.flush(null);
-            expect(component.courses).toStrictEqual(emptyCourses);
+            expect(component.courses()).toStrictEqual(emptyCourses);
         });
 
         it('should sort the name of the semesters uniquely', () => {
@@ -118,12 +115,12 @@ describe('CourseArchiveComponent', () => {
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
 
-            expect(component.semesters).toHaveLength(5);
-            expect(component.semesters[0]).toBe('WS23/24');
-            expect(component.semesters[1]).toBe('WS22/23');
-            expect(component.semesters[2]).toBe('SS22');
-            expect(component.semesters[3]).toBe('WS21/22');
-            expect(component.semesters[4]).toBe('SS19');
+            expect(component.semesters()).toHaveLength(5);
+            expect(component.semesters()[0]).toBe('WS23/24');
+            expect(component.semesters()[1]).toBe('WS22/23');
+            expect(component.semesters()[2]).toBe('SS22');
+            expect(component.semesters()[3]).toBe('WS21/22');
+            expect(component.semesters()[4]).toBe('SS19');
         });
 
         it('should map courses into semesters', () => {
@@ -135,7 +132,7 @@ describe('CourseArchiveComponent', () => {
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
 
-            expect(component.coursesBySemester).toStrictEqual({
+            expect(component.coursesBySemester()).toStrictEqual({
                 'WS23/24': [course5],
                 'WS22/23': [course7],
                 SS22: [course3, course4],
@@ -154,7 +151,7 @@ describe('CourseArchiveComponent', () => {
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
 
             // we expand all semesters at first
-            expect(component.semesterCollapsed).toStrictEqual({
+            expect(component.semesterCollapsed()).toStrictEqual({
                 'WS23/24': false,
                 'WS22/23': false,
                 SS22: false,
@@ -172,7 +169,7 @@ describe('CourseArchiveComponent', () => {
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
 
-            expect(component.fullFormOfSemesterStrings).toStrictEqual({
+            expect(component.fullFormOfSemesterStrings()).toStrictEqual({
                 'WS23/24': 'artemisApp.course.archive.winterSemester',
                 'WS22/23': 'artemisApp.course.archive.winterSemester',
                 SS22: 'artemisApp.course.archive.summerSemester',
@@ -195,7 +192,7 @@ describe('CourseArchiveComponent', () => {
 
             expect(expandOrCollapseBasedOnSearchValueSpy).toHaveBeenCalledOnce();
             // Every semester accordion should be collapsed except WS21/22, because iPraktikum is in semester WS21/22
-            expect(component.semesterCollapsed).toStrictEqual({
+            expect(component.semesterCollapsed()).toStrictEqual({
                 'WS23/24': true,
                 'WS22/23': true,
                 SS22: true,
@@ -214,8 +211,8 @@ describe('CourseArchiveComponent', () => {
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
-            expect(component.courses).toBeDefined();
-            expect(component.courses).toHaveLength(7);
+            expect(component.courses()).toBeDefined();
+            expect(component.courses()).toHaveLength(7);
 
             const onSortSpy = vi.spyOn(component, 'onSort');
             const button = fixture.debugElement.nativeElement.querySelector('#sort-test');
@@ -225,12 +222,12 @@ describe('CourseArchiveComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(onSortSpy).toHaveBeenCalled();
-            expect(component.isSortAscending).toBe(false);
-            expect(component.semesters[4]).toBe('WS23/24');
-            expect(component.semesters[3]).toBe('WS22/23');
-            expect(component.semesters[2]).toBe('SS22');
-            expect(component.semesters[1]).toBe('WS21/22');
-            expect(component.semesters[0]).toBe('SS19');
+            expect(component.isSortAscending()).toBe(false);
+            expect(component.semesters()[4]).toBe('WS23/24');
+            expect(component.semesters()[3]).toBe('WS22/23');
+            expect(component.semesters()[2]).toBe('SS22');
+            expect(component.semesters()[1]).toBe('WS21/22');
+            expect(component.semesters()[0]).toBe('SS19');
 
             const iconComponent = fixture.debugElement.query(By.css('#icon-test-down')).componentInstance;
 
@@ -246,7 +243,7 @@ describe('CourseArchiveComponent', () => {
             component.ngOnInit();
             await fixture.whenStable();
             fixture.changeDetectorRef.detectChanges();
-            expect(component.courses).toHaveLength(7);
+            expect(component.courses()).toHaveLength(7);
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
 
@@ -267,14 +264,14 @@ describe('CourseArchiveComponent', () => {
             const mapCoursesIntoSemestersSpy = vi.spyOn(component, 'mapCoursesIntoSemesters');
 
             component.ngOnInit();
-            expect(component.courses).toHaveLength(7);
+            expect(component.courses()).toHaveLength(7);
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
             const getCollapseStateForSemestersSpy = vi.spyOn(component, 'getCollapseStateForSemesters');
             component.setSearchValue('');
             expect(getCollapseStateForSemestersSpy).toHaveBeenCalledOnce();
 
-            expect(component.semesterCollapsed).toStrictEqual({
+            expect(component.semesterCollapsed()).toStrictEqual({
                 'WS23/24': false,
                 'WS22/23': false,
                 SS22: false,

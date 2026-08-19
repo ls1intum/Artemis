@@ -9,7 +9,7 @@ import Callout from "../../src/components/Callout/Callout";
 
 # Hyperion Service
 
-Hyperion extends Artemis with AI-assisted authoring features for programming exercises. It offers consistency checks for problem statements and exercise artefacts and can rewrite instructions with the help of generative AI. The functionality is provided entirely by Artemis and Spring AI, so no EduTelligence service needs to be deployed.
+Hyperion extends Artemis with AI-assisted authoring features. For programming exercises, it offers consistency checks for problem statements and exercise artefacts and can rewrite instructions with the help of generative AI. For quiz exercises, it generates Multiple-Choice questions from a topic or, in courses with competencies, from the course's competencies and linked lecture content ([see here](/instructor/exercises/quiz-exercise#generate-multiple-choice-questions-with-ai)), and it can refine existing Multiple-Choice questions from a natural-language instruction, either individually or in bulk ([see here](/instructor/exercises/quiz-exercise#refine-multiple-choice-questions-with-ai)). The functionality is provided by Artemis and Spring AI, so no EduTelligence service needs to be deployed. Competency-grounded quiz generation additionally requires the Atlas module to be enabled. Pyris is used only for semantic lecture search when it is deployed, and quiz generation falls back gracefully to the other context sources if Pyris is not available.
 
 <Callout variant={CalloutVariant.info}>
     For local development setups using LM Studio, refer to the [Spring AI Development Guide](/developer/spring-ai) in the Developer documentation.
@@ -33,20 +33,21 @@ artemis:
 
 ## Configure Spring AI
 
-Hyperion delegates all model interactions to Spring AI. Configure exactly one provider; Artemis currently ships the Azure OpenAI starter, but classic OpenAI endpoints work as well when configured through Spring AI.
+Hyperion delegates all model interactions to Spring AI. Artemis ships the single OpenAI module (backed by the official OpenAI Java SDK), which serves OpenAI, Azure OpenAI / Microsoft Foundry, and OpenAI-compatible local servers from one configuration tree.
 
 ### OpenAI
 
 ```yaml
 spring:
   ai:
-    azure:
-      openai:
-        open-ai-api-key: <openai-api-key> # automatically sets the azure endpoint to https://api.openai.com/v1
-        chat:
-          options:
-            deployment-name: gpt-5-mini # Or another (reasonably capable) model
-            temperature: 1.0 # Required to be 1.0 for gpt-5
+    model:
+      chat: openai
+    openai:
+      api-key: <openai-api-key>
+      timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
+      chat:
+        model: gpt-5-mini # Or another (reasonably capable) model
+        temperature: 1.0 # Required to be 1.0 for gpt-5
     # Retry/response handling tuning for AI providers
     retry:
       # Treat HTTP 429 as transient to allow auto-retry by Spring AI
@@ -59,19 +60,21 @@ spring:
         max-interval: 30000ms
 ```
 
-### Azure OpenAI
+### Azure OpenAI / Microsoft Foundry
 
 ```yaml
 spring:
   ai:
-    azure:
-      openai:
-        api-key: <azure-openai-api-key>
-        endpoint: https://<your-resource-name>.openai.azure.com
-        chat:
-          options:
-            deployment-name: <azure-deployment> # gpt-5-mini deployment recommended
-            temperature: 1.0 # Required to be 1.0 for gpt-5
+    model:
+      chat: openai
+    openai:
+      api-key: <azure-openai-api-key>
+      base-url: https://<your-resource-name>.openai.azure.com
+      microsoft-foundry: true # routes auth as an Azure api-key header; keep false/omitted for plain OpenAI or OpenAI-compatible endpoints
+      timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
+      chat:
+        model: <azure-deployment> # the Azure deployment name; used as the request model. gpt-5-mini deployment recommended
+        temperature: 1.0 # Required to be 1.0 for gpt-5
     # Retry/response handling tuning for AI providers
     retry:
       # Treat HTTP 429 as transient to allow auto-retry by Spring AI

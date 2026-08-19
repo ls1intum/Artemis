@@ -6,7 +6,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
@@ -16,10 +15,11 @@ import { Submission, SubmissionType } from 'app/exercise/shared/entities/submiss
 import { SearchResult } from 'app/foundation/pagination/pageable-table';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('ExampleSubmissionImportComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExampleSubmissionImportComponent;
     let fixture: ComponentFixture<ExampleSubmissionImportComponent>;
     let pagingService: ExampleSubmissionImportPagingService;
@@ -90,7 +90,9 @@ describe('ExampleSubmissionImportComponent', () => {
         component.searchTerm = 'search';
         await vi.advanceTimersByTimeAsync(300);
 
-        expect(searchSpy).toHaveBeenCalledExactlyOnceWith(component.state, { exerciseId: 3 });
+        // The dialog also loads once on init (see the shared ImportComponent regression test), so the paging
+        // service is called for both; assert the search-triggered call passes the exercise id.
+        expect(searchSpy).toHaveBeenCalledWith(component.state, { exerciseId: 3 });
     });
 
     it('should set the submission size when retrieving search results', async () => {
@@ -99,13 +101,29 @@ describe('ExampleSubmissionImportComponent', () => {
         component.searchTerm = 'search';
         await vi.advanceTimersByTimeAsync(300);
 
-        expect(getSubmissionSizeSpy).toHaveBeenCalledExactlyOnceWith(submission, exercise);
-        expect(component.content.resultsOnPage[0].submissionSize).toBe(2);
+        expect(getSubmissionSizeSpy).toHaveBeenCalledWith(submission, exercise);
+        expect(component.content().resultsOnPage[0].submissionSize).toBe(2);
     });
 
     it('should close the dialog on dismiss', () => {
         component.dismiss();
 
         expect(dialogRef.close).toHaveBeenCalledOnce();
+    });
+
+    // The import table renders <jhi-result [result]="getLatestResult(submission)" ...>. This component is the only
+    // caller that resolves the displayed result itself (instead of passing one in), so guard that resolution: the
+    // latest rated result of the submission's participation must be returned, and undefined when there is none.
+    it('getLatestResult returns the latest rated result of the submission participation', () => {
+        const ratedResult = { id: 7, score: 90, rated: true } as Result;
+        const innerSubmission = { id: 5, results: [ratedResult] } as Submission;
+        const participation = { id: 2, type: ParticipationType.STUDENT, submissions: [innerSubmission] } as StudentParticipation;
+        const submissionWithResult = { id: 5, participation } as Submission;
+
+        expect(component.getLatestResult(submissionWithResult)).toEqual(ratedResult);
+    });
+
+    it('getLatestResult returns undefined when the submission has no participation', () => {
+        expect(component.getLatestResult({ id: 9 } as Submission)).toBeUndefined();
     });
 });

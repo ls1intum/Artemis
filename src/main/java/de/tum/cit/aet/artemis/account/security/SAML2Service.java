@@ -40,10 +40,12 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
 /**
@@ -132,7 +134,7 @@ public class SAML2Service {
         log.debug("SAML2 password-enabled: {}", saml2EnablePassword);
 
         final String username = substituteAttributes(properties.getUsernamePattern(), principal);
-        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
+        Optional<User> user = userRepository.findOneWithAuthoritiesByLogin(username);
         if (user.isEmpty()) {
             // create User if not exists
             user = Optional.of(createUser(username, principal));
@@ -143,7 +145,7 @@ public class SAML2Service {
             if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
                 log.debug("Sending SAML2 creation mail");
                 if (userService.prepareUserForPasswordReset(user.get())) {
-                    mailService.sendSAML2SetPasswordMail(user.get());
+                    mailService.sendSAML2SetPasswordMail(MailRecipientDTO.from(user.get()));
                 }
                 else {
                     log.error("User {} was created but could not be found in the database!", user.get());
@@ -161,7 +163,7 @@ public class SAML2Service {
 
         String login = user.get().getLogin();
         auth = new UsernamePasswordAuthenticationToken(login, user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
-        auditEventRepository.add(new AuditEvent(Instant.now(), login, "SAML2_AUTHENTICATION_SUCCESS", details));
+        auditEventRepository.add(new AuditEvent(Instant.now(), login, AuditEventConstants.SAML2_AUTHENTICATION_SUCCESS, details));
         artemisSuccessfulLoginService.sendLoginEmail(login, AuthenticationMethod.SAML2, HttpRequestUtils.getClientEnvironment(request));
         return auth;
     }
@@ -203,11 +205,12 @@ public class SAML2Service {
         } // else set registration number to null to preserve uniqueness
         newUser.setLangKey(substituteAttributes(properties.getLangKeyPattern(), principal));
         newUser.setAuthorities(new HashSet<>(Set.of(Role.STUDENT.getAuthority())));
-        newUser.setGroups(new HashSet<>());
 
         // userService.createUser(ManagedUserVM) does create an activated User
         // a random password is generated
-        return userCreationService.createUser(newUser);
+        User createdUser = userCreationService.createUser(newUser);
+        createdUser.setInternal(false);
+        return userRepository.save(createdUser);
     }
 
     private static Collection<GrantedAuthority> toGrantedAuthorities(final Collection<Authority> authorities) {

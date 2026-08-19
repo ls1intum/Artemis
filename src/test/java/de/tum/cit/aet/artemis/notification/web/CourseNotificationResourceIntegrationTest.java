@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatus;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationBroadcastService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
@@ -54,7 +55,7 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        course = courseUtilService.createCourse();
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
     }
 
     @Test
@@ -81,7 +82,7 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
         CourseNotificationBroadcastService noopService = new CourseNotificationBroadcastService() {
 
             @Override
-            protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
+            protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
                 // Do nothing
             }
         };

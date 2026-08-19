@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -100,6 +99,34 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     List<ProgrammingSubmission> findSubmissionsWithResultsByIdIn(List<Long> ids);
 
     /**
+     * Returns the id of the latest submission (by submission date) for every student participation of the given
+     * programming exercise. This allows callers to fetch only the latest submission per participation (e.g. via
+     * {@link #findSubmissionsWithResultsByIdIn}) instead of loading the exercise's entire submission and result history,
+     * which for large exercises meant transferring tens of thousands of rows.
+     * <p>
+     * Ordering is by {@code submissionDate} (not by id) to match the previous behavior: a submission created out of
+     * order (e.g. a delayed fallback submission) can have the newest id but an older submission date, and must not be
+     * treated as the latest. Ties on the same latest date are broken by the higher id.
+     * <p>
+     * Implemented as a {@code LEFT JOIN} anti-join (select the submission for which no strictly later submission of the
+     * same participation exists) rather than a correlated subquery, following the project's "avoid subqueries" rule.
+     * This returns exactly one id per participation.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return the latest submission id per participation
+     */
+    @Query("""
+            SELECT s.id
+            FROM ProgrammingSubmission s
+                LEFT JOIN ProgrammingSubmission s2
+                    ON s2.participation.id = s.participation.id
+                    AND (s2.submissionDate > s.submissionDate OR (s2.submissionDate = s.submissionDate AND s2.id > s.id))
+            WHERE s.participation.exercise.id = :exerciseId
+                AND s2.id IS NULL
+            """)
+    List<Long> findLatestSubmissionIdsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
      * Provide a list of graded submissions. To be graded a submission must:
      * - be of type 'INSTRUCTOR' or 'TEST'
      * - have a submission date before the exercise due date
@@ -113,7 +140,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
         var ids = findSubmissionIdsAndDatesByParticipationId(participationId, pageable).stream().map(ProgrammingSubmissionIdAndSubmissionDateDTO::programmingSubmissionId).toList();
 
         if (ids.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         return findSubmissionsWithResultsByIdIn(ids);

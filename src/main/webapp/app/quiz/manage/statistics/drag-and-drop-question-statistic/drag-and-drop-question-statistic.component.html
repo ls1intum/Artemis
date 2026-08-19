@@ -1,8 +1,8 @@
-@if (quizExercise) {
+@if (quizExercise()) {
     <div class="row">
         <div class="col-md-8 offset-md-2 text-center">
-            @if (quizExercise.title !== question.title) {
-                <h3>{{ quizExercise.title }}</h3>
+            @if (quizExercise().title !== question.title) {
+                <h3>{{ quizExercise().title }}</h3>
             }
             <div class="row">
                 @if (question) {
@@ -14,7 +14,7 @@
                             }
                         </h3>
                         <h4 [innerHTML]="questionTextRendered"></h4>
-                        <div #containerRef>
+                        <div>
                             <div class="row">
                                 <div class="col-md-7 text-start">
                                     <p id="text" class="chart-title-text">
@@ -32,24 +32,18 @@
                                     </p>
                                 </div>
                             </div>
-                            <ngx-charts-bar-vertical
-                                [view]="[containerRef.offsetWidth, 525]"
-                                [results]="ngxData"
-                                [scheme]="ngxColor"
-                                [showDataLabel]="true"
-                                [showXAxisLabel]="true"
-                                [showYAxisLabel]="true"
-                                [xAxisLabel]="xAxisLabel"
-                                [yAxisLabel]="yAxisLabel"
-                                [xAxis]="true"
-                                [yAxis]="true"
-                                [yScaleMax]="maxScale"
-                                [tooltipDisabled]="true"
-                                [rotateXAxisTicks]="false"
-                                [maxXAxisTickLength]="17"
-                                [dataLabelFormatting]="bindFormatting"
-                                [roundEdges]="false"
-                            />
+                            <div class="quiz-statistic-chart" style="height: 525px">
+                                <p-chart
+                                    type="bar"
+                                    [data]="chartData()"
+                                    [options]="chartOptions()"
+                                    [plugins]="dataLabelsPlugin"
+                                    [ariaLabel]="
+                                        (rated ? 'artemisApp.showStatistic.questionStatistic.titleRated' : 'artemisApp.showStatistic.questionStatistic.titleUnrated')
+                                            | artemisTranslate
+                                    "
+                                />
+                            </div>
                             <div class="col-md-12 text-center button-row">
                                 <button (click)="switchSolution()" type="button" class="btn btn-primary show-solution">
                                     @if (showSolution) {
@@ -130,7 +124,12 @@
                                                         </div>
                                                     }
                                                     @if (correctDragItemForDropLocation(dropLocation)) {
-                                                        <jhi-drag-item [dragItem]="correctDragItemForDropLocation(dropLocation)!" [clickDisabled]="true" [minWidth]="'100%'" />
+                                                        <jhi-drag-item
+                                                            [dragItem]="correctDragItemForDropLocation(dropLocation)!"
+                                                            [clickDisabled]="true"
+                                                            [minWidth]="'100%'"
+                                                            [questionId]="question.id"
+                                                        />
                                                     }
                                                 </div>
                                             }
@@ -144,7 +143,13 @@
                                     @if (question.dragItems && question.dragItems.length) {
                                         <div class="drag-items">
                                             @for (dragItem of question.dragItems; track dragItem) {
-                                                <jhi-drag-item [dragItem]="dragItem" [invalid]="!!dragItem.invalid" [clickDisabled]="true" [minWidth]="'100%'" />
+                                                <jhi-drag-item
+                                                    [dragItem]="dragItem"
+                                                    [invalid]="!!dragItem.invalid"
+                                                    [clickDisabled]="true"
+                                                    [minWidth]="'100%'"
+                                                    [questionId]="question.id"
+                                                />
                                             }
                                         </div>
                                     }

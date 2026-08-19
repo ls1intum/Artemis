@@ -1,4 +1,4 @@
-import { OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
+import { Injectable, OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -32,12 +32,14 @@ export type DateFormat = 'short' | 'long' | 'short-date' | 'long-date' | 'time';
     name: 'artemisDate',
     pure: false,
 })
+// needed to be injectable in services and components that format dates outside of a template, e.g. for alert messages
+@Injectable({ providedIn: 'root' })
 export class ArtemisDatePipe implements PipeTransform, OnDestroy {
     private readonly translateService = inject(TranslateService);
 
-    private dateTime: dayjs.Dayjs;
-    private locale: string;
-    private localizedDateTime: string;
+    private dateTime!: dayjs.Dayjs; // assigned at the start of every transform() call before any read
+    private locale = 'en';
+    private localizedDateTime = '';
     private onLangChange?: Subscription;
     private long = true;
     private showDate = true;
@@ -73,7 +75,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         this.formatLengthBasedOnWindowWidth(window.innerWidth);
 
         // Set locale to current language
-        this.updateLocale(this.translateService.getCurrentLang());
+        this.updateLocale(this.translateService.getCurrentLang() ?? 'en');
         this.updateLocalizedDateTime(timeZone);
 
         // Clean up a possibly existing subscription to onLangChange

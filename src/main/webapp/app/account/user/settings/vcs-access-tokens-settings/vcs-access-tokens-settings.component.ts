@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
@@ -42,12 +42,13 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
 
-    currentUser?: User;
+    // `equal: () => false` so re-setting the same reference emits after the token fields are assigned in place.
+    readonly currentUser = signal<User | undefined>(undefined, { equal: () => false });
 
-    private authStateSubscription: Subscription;
+    private authStateSubscription!: Subscription; // assigned in ngOnInit(), before ngOnDestroy() unsubscribes
     expiryDate?: dayjs.Dayjs;
-    validExpiryDate = false;
-    edit = false;
+    readonly validExpiryDate = signal(false);
+    readonly edit = signal(false);
 
     private dialogErrorSource = new Subject<string>();
 
@@ -57,9 +58,9 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
-                tap((user: User) => {
-                    this.currentUser = user;
-                    return this.currentUser;
+                tap((user: User | undefined) => {
+                    this.currentUser.set(user);
+                    return user;
                 }),
             )
             .subscribe();
@@ -72,9 +73,11 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     deleteVcsAccessToken() {
         this.accountService.deleteUserVcsAccessToken().subscribe({
             next: () => {
-                if (this.currentUser) {
-                    this.currentUser.vcsAccessTokenExpiryDate = undefined;
-                    this.currentUser.vcsAccessToken = undefined;
+                const current = this.currentUser();
+                if (current) {
+                    current.vcsAccessTokenExpiryDate = undefined;
+                    current.vcsAccessToken = undefined;
+                    this.currentUser.set(current);
                 }
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteSuccess');
             },
@@ -86,7 +89,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     }
 
     addNewVcsAccessToken() {
-        this.edit = true;
+        this.edit.set(true);
     }
 
     sendTokenCreationRequest() {
@@ -96,11 +99,13 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
         }
         this.accountService.addNewVcsAccessToken(this.expiryDate.toISOString()).subscribe({
             next: (res) => {
-                if (this.currentUser) {
+                const current = this.currentUser();
+                if (current) {
                     const user = res.body as User;
-                    this.currentUser.vcsAccessToken = user.vcsAccessToken;
-                    this.currentUser.vcsAccessTokenExpiryDate = user.vcsAccessTokenExpiryDate;
-                    this.edit = false;
+                    current.vcsAccessToken = user.vcsAccessToken;
+                    current.vcsAccessTokenExpiryDate = user.vcsAccessTokenExpiryDate;
+                    this.currentUser.set(current);
+                    this.edit.set(false);
                 }
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.addSuccess');
             },
@@ -114,15 +119,15 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
      * Validates if the expiry date is after current time
      */
     validateDate() {
-        this.validExpiryDate = !!this.expiryDate?.isAfter(dayjs()) && !!this.expiryDate?.isBefore(dayjs().add(1, 'year'));
+        this.validExpiryDate.set(!!this.expiryDate?.isAfter(dayjs()) && !!this.expiryDate?.isBefore(dayjs().add(1, 'year')));
     }
 
     /**
      *  Cancel creation of a new token
      */
     cancelTokenCreation() {
-        this.edit = false;
+        this.edit.set(false);
         this.expiryDate = undefined;
-        this.validExpiryDate = false;
+        this.validExpiryDate.set(false);
     }
 }

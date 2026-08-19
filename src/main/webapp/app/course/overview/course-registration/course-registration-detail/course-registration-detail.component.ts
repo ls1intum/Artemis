@@ -1,9 +1,8 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CoursePrerequisitesButtonComponent } from '../course-prerequisites-button/course-prerequisites-button.component';
 import { CourseRegistrationButtonComponent } from '../course-registration-button/course-registration-button.component';
@@ -18,18 +17,18 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
 
-    loading = false;
-    courseId: number;
-    course: Course | undefined = undefined;
-    private paramSubscription: any;
+    readonly loading = signal(false);
+    courseId!: number; // set in ngOnInit() from route params
+    readonly course = signal<Course | undefined>(undefined);
+    private paramSubscription?: Subscription;
 
     ngOnInit(): void {
-        this.loading = true;
-        this.paramSubscription = this.route!.params.subscribe((params) => {
+        this.loading.set(true);
+        this.paramSubscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId']);
             this.courseService.findOneForRegistration(this.courseId).subscribe((res) => {
-                this.course = res.body!;
-                this.loading = false;
+                this.course.set(res.body!);
+                this.loading.set(false);
             });
             this.redirectIfCourseIsFullyAccessible();
         });
@@ -40,23 +39,20 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     }
 
     redirectToCoursePage(): void {
-        this.router.navigate(['courses', this.courseId]);
+        void this.router.navigate(['courses', this.courseId]);
     }
 
     /**
-     * Determines whether the user is already registered for the course by trying to fetch the for-dashboard version
+     * Whether the user already has access to the course, and should therefore be sent into it rather than shown the
+     * enrollment form.
+     *
+     * This used to request the whole course dashboard and read its status code, which loaded every exercise,
+     * participation and result of the course only to throw the response away. The dedicated endpoint answers with a
+     * single boolean and, because not having access is the expected answer here rather than an error, without a 403
+     * that the global error handler would surface as an alert.
      */
     isCourseFullyAccessible(): Observable<boolean> {
-        return this.courseService.findOneForDashboard(this.courseId).pipe(
-            map(() => true),
-            catchError((res: HttpErrorResponse) => {
-                if (res.status === 403) {
-                    return of(false);
-                } else {
-                    return throwError(() => res);
-                }
-            }),
-        );
+        return this.courseService.hasAccessToCourse(this.courseId);
     }
 
     redirectIfCourseIsFullyAccessible() {

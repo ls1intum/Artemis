@@ -3,6 +3,8 @@
         "metis": {
             "loadingPosts": "Loading messages...",
             "noPosts": "No messages found.",
+            "imagePreviewTitle": "Image preview",
+            "imagePreviewAlt": "Enlarged image",
             "postNumberInformation": "{{ number }} match(es)",
             "newMessage": "New message",
             "newAnnouncement": "New announcement",
@@ -51,7 +53,8 @@
                 "lecture": "Lecture",
                 "channel": "Channel",
                 "user": "User",
-                "faq": "FAQ"
+                "faq": "FAQ",
+                "emoji": "Emoji"
             },
             "channel": {
                 "noChannel": "There is no channel available.",
@@ -96,6 +99,7 @@
                 "filterToUnresolved": "Unresolved",
                 "filterToOwn": "Own",
                 "filterToAnsweredOrReacted": "Reacted",
+                "filterToUnverifiedIris": "Iris to verify",
                 "sortPostsBy": "Sort by:",
                 "sortDescending": "Descending",
                 "sortAscending": "Ascending",
@@ -166,7 +170,16 @@
             "answerPost": {
                 "created": "New reply successfully created",
                 "deleted": "Reply successfully deleted",
-                "deleteAnswer": "Delete answer"
+                "deleteAnswer": "Delete answer",
+                "unverifiedIris": {
+                    "badge": "Awaiting tutor review",
+                    "approve": "Approve",
+                    "edit": "Edit",
+                    "reject": "Reject",
+                    "saveAndApprove": "Save & Approve",
+                    "cancelEdit": "Cancel",
+                    "editAreaLabel": "Edit Iris reply"
+                }
             },
             "userRoles": {
                 "instructor": "Instructor",

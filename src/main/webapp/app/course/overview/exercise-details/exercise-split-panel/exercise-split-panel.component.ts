@@ -1,17 +1,14 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { faAlignLeft, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
-import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
-import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
-import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
-import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission/file-upload-submission.component';
-import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
+import { isExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import { QuizParticipationBase } from 'app/quiz/overview/participation/quiz-participation.base';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
@@ -22,7 +19,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ResetRepoButtonComponent } from 'app/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { LtiInitializerComponent } from 'app/course/overview/exercise-details/lti-initializer/lti-initializer.component';
@@ -35,6 +31,7 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
@@ -74,7 +71,7 @@ export class ExerciseSplitPanelComponent {
     private readonly _quizBatchStarted = signal(false);
     private readonly _quizEnded = signal(false);
     private readonly _quizHasStarted = signal(false);
-    private readonly _quizComponent = signal<QuizParticipationComponent | undefined>(undefined);
+    private readonly _quizComponent = signal<QuizParticipationBase | undefined>(undefined);
     private quizStartedSubscription: { unsubscribe(): void } | undefined;
     private quizSubmittedSubscription: { unsubscribe(): void } | undefined;
     private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
@@ -88,6 +85,7 @@ export class ExerciseSplitPanelComponent {
 
     readonly quizSubmitDisabled = computed(() => this._quizComponent()?.isSubmitDisabled() ?? false);
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
+    readonly quizLiveHeaderInfo = computed(() => this._quizComponent()?.liveHeaderInfo());
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faGear = faGear;
     protected readonly faComment = faComment;
@@ -109,6 +107,23 @@ export class ExerciseSplitPanelComponent {
     readonly allowComplaintsForAutomaticAssessments = input<boolean>(false);
     readonly exampleSolutionInfo = input<ExampleSolutionInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
+
+    /**
+     * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route
+     * *identity* (exercise type/id, participation id, mode, online-editor flag) — never the exercise/participation
+     * object references. An incoming result replaces the participation object while keeping its id; without this key
+     * the navigation effect would re-run on every such change and re-issue router.navigate mid-transition, re-creating
+     * the whole code-editor subtree in a loop (flooding the server, see PR #12976). Returns undefined while no
+     * navigable target exists yet.
+     */
+    private readonly navigationTargetKey = computed(() => {
+        const exercise = this.exercise();
+        if (!exercise?.id) {
+            return undefined;
+        }
+        const participationId = this.studentParticipation()?.id;
+        return [exercise.type, exercise.id, participationId ?? '', this.participationMode(), (exercise as ProgrammingExercise).allowOnlineEditor ?? ''].join('|');
+    });
 
     readonly showDiscussion = computed(() => {
         const course = this.exercise().course;
@@ -207,36 +222,45 @@ export class ExerciseSplitPanelComponent {
             const exercise = this.exercise();
             const mode = ExerciseSplitPanelComponent.getChatMode(exercise.type!);
             if (this.showIris() && exercise.id && mode) {
-                this.chatService.switchTo(mode, exercise.id);
+                const exerciseId = exercise.id;
+                // Use untracked to avoid re-running this effect when chatService state changes
+                untracked(() => this.chatService.openChat(mode, exerciseId));
             }
         });
         effect(() => {
-            const participation = this.studentParticipation();
-            const exercise = this.exercise();
-            const mode = this.participationMode();
-            if (!exercise.id) return;
+            // Depend ONLY on the stable target identity, so object-reference churn (e.g. an incoming result that
+            // replaces the participation object but keeps its id) does not re-run this navigation. The imperative
+            // navigation runs untracked so it cannot add the exercise/participation objects as dependencies — that
+            // combination prevents the navigate-thrash loop that re-created the code-editor subtree (see PR #12976).
+            if (!this.navigationTargetKey()) return;
+            untracked(() => {
+                const participation = this.studentParticipation();
+                const exercise = this.exercise();
+                const mode = this.participationMode();
+                if (!exercise.id) return;
 
-            const type = exercise.type;
-            if (type === ExerciseType.QUIZ) {
-                const targetSegment = mode === 'practice' ? 'practice' : 'live';
-                const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
-                if (currentSegment !== targetSegment) {
-                    this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
+                const type = exercise.type;
+                if (type === ExerciseType.QUIZ) {
+                    const targetSegment = mode === 'practice' ? 'practice' : 'live';
+                    const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
+                    if (currentSegment !== targetSegment) {
+                        void this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
+                    }
+                    return;
                 }
-                return;
-            }
-            if (!participation?.id) return;
-            const currentParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
-            if (currentParticipationId === String(participation.id)) return;
-            if (type === ExerciseType.TEXT) {
-                this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
-            } else if (type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
-                this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
-            } else if (type === ExerciseType.MODELING) {
-                this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
-            } else if (type === ExerciseType.FILE_UPLOAD) {
-                this.router.navigate(['file-upload-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
-            }
+                if (!participation?.id) return;
+                const currentParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
+                if (currentParticipationId === String(participation.id)) return;
+                if (type === ExerciseType.TEXT) {
+                    void this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                } else if (type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
+                    void this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
+                } else if (type === ExerciseType.MODELING) {
+                    void this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                } else if (type === ExerciseType.FILE_UPLOAD) {
+                    void this.router.navigate(['file-upload-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                }
+            });
         });
     }
 
@@ -271,34 +295,28 @@ export class ExerciseSplitPanelComponent {
     });
 
     submitExercise(): void {
-        const context = this.childrenOutletContexts.getContext('primary');
-        if (context?.outlet?.isActivated) {
-            const component = context.outlet.component;
-            if (component instanceof TextEditorComponent) {
-                component.submit();
-            } else if (component instanceof CodeEditorStudentContainerComponent) {
-                component.commit();
-            } else if (component instanceof ModelingSubmissionComponent) {
-                component.submit();
-            } else if (component instanceof FileUploadSubmissionComponent) {
-                component.submitExercise();
-            } else if (component instanceof QuizParticipationComponent) {
-                component.onSubmit();
-            }
+        const outlet = this.childrenOutletContexts.getContext('primary')?.outlet;
+        // `outlet.component` throws when the outlet is not activated, so the guard order matters.
+        if (!outlet?.isActivated) {
+            return;
+        }
+        const component = outlet.component;
+        if (isExerciseSubmission(component)) {
+            component.submitExercise();
         }
     }
 
     restartPractice(): boolean {
         const quizComponent = this._quizComponent();
-        if (quizComponent && quizComponent.mode === 'practice') {
+        if (quizComponent && quizComponent.mode() === 'practice') {
             quizComponent.restartPractice();
             return true;
         }
         return false;
     }
 
-    onOutletActivate(component: any): void {
-        if (component instanceof QuizParticipationComponent) {
+    onOutletActivate(component: unknown): void {
+        if (component instanceof QuizParticipationBase) {
             this._quizComponent.set(component);
             this.quizStartedSubscription = component.quizStartedEvent.subscribe(() => {
                 this._quizHasStarted.set(true);

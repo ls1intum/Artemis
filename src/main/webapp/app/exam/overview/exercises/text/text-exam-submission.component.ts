@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 import { Subject } from 'rxjs';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -9,6 +9,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -41,6 +42,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     private textService = inject(TextEditorService);
     private stringCountService = inject(StringCountService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
+    private examParticipationService = inject(ExamParticipationService);
 
     exerciseType = ExerciseType.TEXT;
 
@@ -54,8 +56,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
 
     // answer represents the view state
-    answer: string;
-    problemStatementHtml: SafeHtml;
+    readonly answer = signal('');
+    readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
     private textEditorInput = new Subject<string>();
 
     // Icons
@@ -66,7 +68,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     ngOnInit(): void {
         // show submission answers in UI
-        this.problemStatementHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement);
+        this.problemStatementHtml.set(this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement));
         this.updateViewFromSubmission();
     }
 
@@ -79,8 +81,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
-        this.problemStatementHtml = newProblemStatementHtml;
-        this.changeDetectorReference.detectChanges();
+        this.problemStatementHtml.set(newProblemStatementHtml);
     }
 
     getSubmission(): Submission {
@@ -88,7 +89,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     updateViewFromSubmission(): void {
-        this.answer = this.studentSubmission().text ?? '';
+        this.answer.set(this.studentSubmission().text ?? '');
     }
 
     public hasUnsavedChanges(): boolean {
@@ -96,29 +97,31 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     public updateSubmissionFromView(): void {
-        this.studentSubmission().text = this.answer;
-        this.studentSubmission().language = this.textService.predictLanguage(this.answer);
+        this.studentSubmission().text = this.answer();
+        this.studentSubmission().language = this.textService.predictLanguage(this.answer());
     }
 
     get wordCount(): number {
-        return this.stringCountService.countWords(this.answer);
+        return this.stringCountService.countWords(this.answer());
     }
 
     get characterCount(): number {
-        return this.stringCountService.countCharacters(this.answer);
+        return this.stringCountService.countCharacters(this.answer());
     }
 
     onTextEditorInput(event: Event) {
         this.studentSubmission().isSynced = false;
-        this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
+        // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate reactively.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
+        this.textEditorInput.next((event.target as HTMLTextAreaElement).value);
     }
 
     private updateViewFromSubmissionVersion() {
         if (this.submissionVersion?.content) {
-            this.answer = this.submissionVersion.content;
+            this.answer.set(this.submissionVersion.content);
         } else {
             // the content of the submission version can be undefined if an empty submission was saved
-            this.answer = '';
+            this.answer.set('');
         }
     }
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { Location } from '@angular/common';
@@ -42,8 +42,6 @@ const examples: ConversationDTO[] = [
 ];
 examples.forEach((activeConversation) => {
     describe('ConversationHeaderComponent with' + +(activeConversation instanceof ChannelDTO ? activeConversation.subType + ' ' : '') + activeConversation.type, () => {
-        setupTestBed({ zoneless: true });
-
         let component: ConversationHeaderComponent;
         let fixture: ComponentFixture<ConversationHeaderComponent>;
         let metisConversationService: MetisConversationService;
@@ -92,23 +90,30 @@ examples.forEach((activeConversation) => {
 
         it('should create', () => {
             expect(component).toBeTruthy();
-            expect(component.activeConversation).toEqual(activeConversation);
+            expect(component.activeConversation()).toEqual(activeConversation);
         });
 
         it('should open the add users dialog', () => {
+            // `canAddUsers` is a plain function (not a signal); under zoneless change detection a changed return
+            // value does not mark the component's view dirty on its own, so the view's ChangeDetectorRef must be
+            // marked for check before re-rendering. `fixture.changeDetectorRef` refers to the test host wrapper,
+            // not the component view, so resolve the component view's ChangeDetectorRef from its injector.
+            const componentCdr = fixture.componentRef.injector.get(ChangeDetectorRef);
+
             canAddUsers.mockReturnValue(false);
-            fixture.changeDetectorRef.detectChanges();
+            componentCdr.markForCheck();
+            fixture.detectChanges();
             expect(fixture.debugElement.nativeElement.querySelector('.addUsers')).toBeFalsy();
 
             canAddUsers.mockReturnValue(true);
-            fixture.changeDetectorRef.detectChanges();
+            componentCdr.markForCheck();
+            fixture.detectChanges();
             const addUsersButton = fixture.debugElement.nativeElement.querySelector('.addUsers');
             expect(addUsersButton).toBeTruthy();
 
             const dialogService = TestBed.inject(DialogService);
             const mockDialogRef = { onClose: new Subject(), close: vi.fn() } as unknown as DynamicDialogRef;
             const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-            fixture.changeDetectorRef.detectChanges();
             addUsersButton.click();
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(openDialogSpy).toHaveBeenCalledWith(ConversationAddUsersDialogComponent, expect.anything());
@@ -139,23 +144,23 @@ examples.forEach((activeConversation) => {
                 { id: 2, isRequestingUser: false },
             ];
 
-            component.activeConversation = oneToOneChat;
+            component.activeConversation.set(oneToOneChat);
             component.getOtherUser();
 
-            expect(component.otherUser).toEqual(oneToOneChat.members[1]);
+            expect(component.otherUser()).toEqual(oneToOneChat.members[1]);
         });
 
         it('should toggle pinned messages visibility', () => {
             const togglePinnedMessagesSpy = vi.spyOn(component, 'togglePinnedMessages');
 
-            expect(component.showPinnedMessages).toBe(false);
+            expect(component.showPinnedMessages()).toBe(false);
 
             component.togglePinnedMessages();
             expect(togglePinnedMessagesSpy).toHaveBeenCalled();
-            expect(component.showPinnedMessages).toBe(true);
+            expect(component.showPinnedMessages()).toBe(true);
 
             component.togglePinnedMessages();
-            expect(component.showPinnedMessages).toBe(false);
+            expect(component.showPinnedMessages()).toBe(false);
         });
 
         it('should emit togglePinnedMessage event', () => {
@@ -166,33 +171,33 @@ examples.forEach((activeConversation) => {
         });
 
         it('should set showPinnedMessages to false if pinnedMessageCount changes to 0 while it is currently showing pinned messages', () => {
-            component.showPinnedMessages = true;
+            component.showPinnedMessages.set(true);
             fixture.componentRef.setInput('pinnedMessageCount', 3);
             fixture.detectChanges();
 
             fixture.componentRef.setInput('pinnedMessageCount', 0);
             fixture.detectChanges();
 
-            expect(component.showPinnedMessages).toBe(false);
+            expect(component.showPinnedMessages()).toBe(false);
         });
 
         it('should not change showPinnedMessages if pinnedMessageCount changes but is not 0', () => {
-            component.showPinnedMessages = true;
+            component.showPinnedMessages.set(true);
             fixture.componentRef.setInput('pinnedMessageCount', 3);
             fixture.detectChanges();
 
             fixture.componentRef.setInput('pinnedMessageCount', 5);
             fixture.detectChanges();
 
-            expect(component.showPinnedMessages).toBe(true);
+            expect(component.showPinnedMessages()).toBe(true);
         });
 
         it('should correctly handle first change of pinnedMessageCount', () => {
-            component.showPinnedMessages = false;
+            component.showPinnedMessages.set(false);
             fixture.componentRef.setInput('pinnedMessageCount', 2);
             fixture.detectChanges();
 
-            expect(component.showPinnedMessages).toBe(false);
+            expect(component.showPinnedMessages()).toBe(false);
         });
 
         if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {

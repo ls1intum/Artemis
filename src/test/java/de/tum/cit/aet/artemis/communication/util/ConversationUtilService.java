@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.UserSummaryDTO;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepo
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -70,6 +72,12 @@ public class ConversationUtilService {
 
     @Autowired
     private CourseTestRepository courseRepo;
+
+    @Autowired
+    private UserTestRepository userRepo;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     @Autowired
     private ExerciseTestRepository exerciseRepo;
@@ -113,9 +121,21 @@ public class ConversationUtilService {
      * @return The created Course
      */
     public Course createCourseWithPostsDisabled() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        return createCourseWithPostsDisabled("");
+    }
+
+    /**
+     * Creates and saves a Course with disabled posts, enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created Course
+     */
+    public Course createCourseWithPostsDisabled(String userPrefix) {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
-        return courseRepo.save(course);
+        course = courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 
     /**
@@ -202,7 +222,7 @@ public class ConversationUtilService {
         participant2.setUnreadMessagesCount(0L);
         participant2.setLastRead(ZonedDateTime.now().minusYears(2));
         conversationParticipantRepository.save(participant2);
-        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
+        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUsers(chat.getId()).orElseThrow();
 
         var posts = new ArrayList<Post>();
         for (int i = 0; i < numberOfPosts; i++) {
@@ -289,7 +309,7 @@ public class ConversationUtilService {
         List<Post> posts = new ArrayList<>();
         for (Channel channelContext : channelContexts) {
             for (int i = 0; i < 4; i++) {
-                Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "student", (i + 1))));
+                Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities("%s%s".formatted(userPrefix + "student", (i + 1))));
                 postToAdd.setConversation(channelContext);
                 postRepository.save(postToAdd);
                 posts.add(postToAdd);
@@ -307,7 +327,7 @@ public class ConversationUtilService {
      * @return The created Post
      */
     public Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
-        Post postToAdd = ConversationFactory.createBasicPost(0, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "instructor", 1)));
+        Post postToAdd = ConversationFactory.createBasicPost(0, userUtilService.getUserByLoginWithoutAuthorities("%s%s".formatted(userPrefix + "instructor", 1)));
         postToAdd.setPlagiarismCase(plagiarismCase);
         return postRepository.save(postToAdd);
     }
@@ -323,7 +343,7 @@ public class ConversationUtilService {
     private List<Post> createBasicPosts(Conversation conversation, String userPrefix, String userRole) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + userRole, (i + 1))));
+            Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities("%s%s".formatted(userPrefix + userRole, (i + 1))));
             postToAdd.setConversation(conversation);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -674,13 +694,15 @@ public class ConversationUtilService {
      * @param login       The login of the User the Post and AnswerPost belong to
      * @param course      The Course the OneToOneChat belongs to
      * @param messageText The content of the Post
+     * @return The created AnswerPost, so callers can attach further data to exactly this reply instead of looking it up again
      */
-    public void addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
+    public AnswerPost addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
         Conversation oneToOneChat = new OneToOneChat();
         oneToOneChat.setCourse(course);
         var message = createMessageWithReactionForUser(login, messageText, oneToOneChat);
-        addThreadReplyWithReactionForUserToPost(login, message);
+        AnswerPost reply = addThreadReplyWithReactionForUserToPost(login, message);
         conversationRepository.save(oneToOneChat);
+        return reply;
     }
 
     /**
@@ -688,8 +710,9 @@ public class ConversationUtilService {
      *
      * @param login               The login of the User the AnswerPost and Reaction belong to
      * @param answerPostBelongsTo The Post the AnswerPost belongs to
+     * @return The created AnswerPost
      */
-    public void addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
+    public AnswerPost addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
         AnswerPost answerPost = new AnswerPost();
         answerPost.setAuthor(userUtilService.getUserByLogin(login));
         answerPost.setContent("answer post");
@@ -697,7 +720,7 @@ public class ConversationUtilService {
         answerPost.setPost(answerPostBelongsTo);
         addReactionForUserToAnswerPost(login, answerPost);
         postRepository.save(answerPostBelongsTo);
-        answerPostRepository.save(answerPost);
+        return answerPostRepository.save(answerPost);
     }
 
     /**

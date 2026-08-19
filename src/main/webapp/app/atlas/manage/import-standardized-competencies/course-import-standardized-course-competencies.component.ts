@@ -10,7 +10,7 @@ import {
 } from 'app/atlas/shared/entities/standardized-competency.model';
 import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, HostListener, OnInit, inject, viewChild } from '@angular/core';
+import { Component, HostListener, OnInit, inject, signal, viewChild } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { forkJoin, map } from 'rxjs';
@@ -24,6 +24,7 @@ import { DocumentationType } from 'app/shared-ui/components/buttons/documentatio
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 interface StandardizedCompetencyForImport extends StandardizedCompetencyForTree {
     selected?: boolean;
@@ -46,7 +47,6 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected translateService = inject(TranslateService);
     protected sortService = inject(SortService);
 
-    /** Reference to the knowledge area tree component for tree control */
     private readonly knowledgeAreaTree = viewChild(KnowledgeAreaTreeComponent);
 
     protected override get knowledgeAreaTreeComponent(): KnowledgeAreaTreeComponent | undefined {
@@ -56,9 +56,9 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
     protected selectedCompetency?: StandardizedCompetencyForImport;
     protected sourceString = '';
-    protected courseId: number;
+    protected courseId!: number; // set in ngOnInit() from the route paramMap
     protected sources: Source[] = [];
-    protected isLoading = false;
+    protected readonly isLoading = signal(false);
     protected isSubmitted = false;
 
     // constants
@@ -75,7 +75,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected readonly faSort = faSort;
 
     ngOnInit(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const getKnowledgeAreasObservable = this.standardizedCompetencyService.getAllForTreeView();
         const getSourcesObservable = this.standardizedCompetencyService.getSources();
         forkJoin([getKnowledgeAreasObservable, getSourcesObservable]).subscribe({
@@ -92,7 +92,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             complete: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
@@ -132,7 +132,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
 
         const idsToImport = this.selectedCompetencies.map((competency) => competency.id!);
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         service
             .importStandardizedCompetencies(idsToImport, this.courseId)
             .pipe(map((response) => response.body!.length))
@@ -140,17 +140,17 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
                 next: (countImportedCompetencies) => {
                     this.isSubmitted = true;
                     this.alertService.success('artemisApp.standardizedCompetency.courseImport.success', { count: countImportedCompetencies });
-                    this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 complete: () => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 },
             });
     }
 
     protected cancel() {
-        this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
 
     /**
@@ -166,7 +166,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
      * Only allow to leave page after submitting or if no pending changes exist
      */
     canDeactivate() {
-        return this.isSubmitted || (!this.isLoading && this.selectedCompetencies.length === 0);
+        return this.isSubmitted || (!this.isLoading() && this.selectedCompetencies.length === 0);
     }
 
     get canDeactivateWarning(): string {
@@ -178,11 +178,11 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
         const competencies = knowledgeAreaDTO.competencies?.map((competency) =>
             this.convertToStandardizedCompetencyForImport(competency, knowledgeAreaDTO.title, isVisible, selected),
         );
-        return { ...knowledgeAreaDTO, children: children, competencies: competencies, level: level, isVisible: isVisible };
+        return cloneWith(knowledgeAreaDTO, { children: children, competencies: competencies, level: level, isVisible: isVisible });
     }
 
     private convertToStandardizedCompetencyForImport(competencyDTO: StandardizedCompetencyDTO, knowledgeAreaTitle?: string, isVisible = true, selected = false) {
-        const competencyForTree: StandardizedCompetencyForImport = { ...competencyDTO, isVisible: isVisible, knowledgeAreaTitle: knowledgeAreaTitle, selected: selected };
+        const competencyForTree: StandardizedCompetencyForImport = cloneWith(competencyDTO, { isVisible: isVisible, knowledgeAreaTitle: knowledgeAreaTitle, selected: selected });
         return competencyForTree;
     }
 

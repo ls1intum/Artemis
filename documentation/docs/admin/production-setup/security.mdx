@@ -31,8 +31,46 @@ jhipster:
     Always replace default credentials before deploying. Failing to do so exposes your system to serious security risks.
 </Callout>
 
+<Callout variant={CalloutVariant.warning}>
+    `artemis.user-management.internal-admin.username` has to name a dedicated local account, not a login from your external
+    directory. Artemis owns that account: it sets the configured password and the administrator authorities on every startup
+    and marks the account as internally managed. An internally managed account authenticates against Artemis rather than
+    against the directory, and it is eligible for the e-mail password reset - so pointing this property at a directory login
+    moves that account out of your directory's control, and the flag cannot be changed back through the admin UI, which
+    offers it only while a user is being created. Artemis logs a warning when it has to mark an account that existed as an
+    externally managed one.
+</Callout>
+
 <Callout variant={CalloutVariant.info}>
     Always restrict read access to configuration files for the minimum required set of users (usually only the system user that runs the Artemis service) only.
+</Callout>
+
+### Startup Validation
+
+Under the `prod` profile, Artemis refuses to start when one of these properties still holds a value that is published in this repository: the JWT signing key, the internal admin password (this includes a password identical to the username), and the build-agent git password. The startup error names the property and how to supply a value.
+
+The signing key is checked through both `jhipster.security.authentication.jwt.base64-secret` and the plain `jhipster.security.authentication.jwt.secret`, because either one can be the key that is actually used. It is also rejected when it is absent altogether, and when it decodes to fewer than 64 bytes, which is the minimum HS512 accepts. The comparison happens on the decoded key as well as on the configured spelling, so re-encoding a published value - different padding, an added line break - does not get past it. Generate a key with:
+
+```bash
+openssl rand -base64 64 | tr -d '\n'
+```
+
+`docker/artemis/config/prod.env` therefore keeps placeholders that this validation rejects: a deployment that has not been configured yet fails immediately instead of running on values that anyone can read. Supply your own values from outside version control — an env file of your own added through a compose override file, or `ARTEMIS_ENV_FILE` for the `docker/test-server-*.yml` compose files, which replaces `prod.env` entirely (see [Docker Compose Setup](/developer/docker-compose)):
+
+```env
+JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET="<output of the command above>"
+ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD="<a unique password>"
+ARTEMIS_VERSIONCONTROL_BUILDAGENTGITPASSWORD="<a unique password, kept in sync with the build agents>"
+```
+
+Artemis also pins the restrictive rendering profile of the diagram renderer at startup, in every profile. If `PLANTUML_SECURITY_PROFILE` is set explicitly, it has to name either `SANDBOX` or `ALLOWLIST`; any other value is rejected. Artemis passes its diagram theme as inline content, so no Artemis feature depends on the other profiles.
+
+### Database Credentials
+
+The database services used by `docker/artemis-prod-postgres.yml` and `docker/artemis-prod-mysql.yml` extend the shared `docker/postgres.yml`/`docker/mysql.yml` service definitions, which default to `docker/postgres/default.env` and `docker/mysql/default.env` for local development and testing. Those default env files intentionally use no real authentication (Postgres `POSTGRES_HOST_AUTH_METHOD=trust`, MySQL `MYSQL_ALLOW_EMPTY_PASSWORD=yes` with an empty root password) so a fresh local setup works without any configuration.
+
+<Callout variant={CalloutVariant.warning}>
+    Never run a production deployment with the default database env files. Override the database service's `env_file` with your own file that sets a real `POSTGRES_PASSWORD` (Postgres) or `MYSQL_ROOT_PASSWORD`/a dedicated application user and password (MySQL) before exposing the deployment to any network the database container is reachable from.
 </Callout>
 
 ## LDAP Authentication

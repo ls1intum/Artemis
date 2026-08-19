@@ -6,13 +6,13 @@
             <ul class="list-group">
                 @for (competencyLink of competencyLinks(); track competencyLink) {
                     @if (competencyLink.competency?.title) {
-                        <a class="list-group-item" [routerLink]="navigationArray">{{ competencyLink.competency!.title }}</a>
+                        <a class="list-group-item" [routerLink]="navigationArray()">{{ competencyLink.competency!.title }}</a>
                     }
                 }
             </ul>
         </div>
     } @else {
-        <a [routerLink]="navigationArray" jhiTranslate="artemisApp.competency.competencyPopover.noCompetencies"></a>
+        <a [routerLink]="navigationArray()" jhiTranslate="artemisApp.competency.competencyPopover.noCompetencies"></a>
     }
 </ng-template>
 <button type="button" class="btn btn-sm btn-primary competency-button" [ngbPopover]="popContent" [popoverTitle]="popTitle" popoverClass="competency-popover">

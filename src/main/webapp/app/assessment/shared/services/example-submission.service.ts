@@ -9,6 +9,8 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
+import { parseJson } from 'app/foundation/util/json.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
@@ -100,18 +102,18 @@ export class ExampleSubmissionService {
      * Convert a returned JSON object to ExampleSubmission.
      */
     private convertItemFromServer(exampleSubmission: ExampleSubmission): ExampleSubmission {
-        return Object.assign({}, exampleSubmission);
+        return deepClone(exampleSubmission);
     }
 
     /**
      * Convert a ExampleSubmission to a JSON which can be sent to the server.
      */
     private convert(exampleSubmission: ExampleSubmission): ExampleSubmission {
-        const jsonCopy = Object.assign({}, exampleSubmission);
+        const jsonCopy = deepClone(exampleSubmission);
         if (jsonCopy.exercise) {
             jsonCopy.exercise = ExerciseService.convertExerciseDatesFromClient(jsonCopy.exercise);
-            jsonCopy.exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(jsonCopy.exercise!);
-            jsonCopy.exercise.categories = ExerciseService.stringifyExerciseCategories(jsonCopy.exercise);
+            jsonCopy.exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(jsonCopy.exercise);
+            ExerciseService.stringifyExerciseCategories(jsonCopy.exercise);
         }
         return jsonCopy;
     }
@@ -127,7 +129,7 @@ export class ExampleSubmissionService {
         if (submission && exercise && exercise.type === ExerciseType.TEXT) {
             return this.stringCountService.countWords((submission as TextSubmission).text);
         } else if (submission && exercise && exercise.type === ExerciseType.MODELING) {
-            const umlModel = JSON.parse((submission as ModelingSubmission).model!);
+            const umlModel = parseJson<{ elements: unknown[]; relationships: unknown[] }>((submission as ModelingSubmission).model!);
             return umlModel ? umlModel.elements?.length + umlModel.relationships?.length : 0;
         }
         return 0;

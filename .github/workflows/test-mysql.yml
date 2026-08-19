@@ -4,17 +4,24 @@ name: Test (MySQL)
 on:
   workflow_dispatch: # Manual trigger only for now
 
-# Limit the number of concurrent runs to one per PR
+# Manual-only workflow: dedupe repeated dispatches on the same ref (no PR context exists, so
+# keying on github.ref is what actually groups runs; the old pull_request.number fallback to
+# run_id was unique per run and never deduped).
 concurrency:
-  group: test-mysql-${{ github.event.pull_request.number || github.run_id }}
+  group: test-mysql-${{ github.ref }}
   cancel-in-progress: true
 
-# Keep in sync with test.yml
+# Keep in sync with ci-test.yml
 env:
   CI: true
   node: 24
   java: 25
   RUN_ALL_TESTS: ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft == false) || github.event.repository.default_branch == github.ref_name }}
+
+permissions:
+  contents: read
+  checks: write
+  actions: read
 
 jobs:
 
@@ -31,7 +38,9 @@ jobs:
         java-version: |
           17
           ${{ env.java }}
-        cache: 'gradle'
+    - name: Setup Gradle
+      # Sole Gradle dependency-cache mechanism (prunes unused artifacts -> leaner cache, less eviction). See ci-build.yml.
+      uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
     - name: Java Tests (module-affected)
       if: ${{ !env.RUN_ALL_TESTS }}
       run: |
@@ -48,40 +57,60 @@ jobs:
           TEST_MODULE_TAGS=$(echo "-DincludeModules=${CHANGED_MODULES[*]}")
 
           echo "Executing tests for modules: $CHANGED_MODULES"
-          ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" -Dzonky.test.database.type=MYSQL | tee tests.log
+          ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification "$TEST_MODULE_TAGS" -Dzonky.test.database.type=MYSQL | tee tests.log
           exit 0
         fi
 
         echo "Executing all tests"
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification -Dzonky.test.database.type=MYSQL | tee tests.log
+        ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification -Dzonky.test.database.type=MYSQL | tee tests.log
     - name: Java Tests (All)
       if: ${{ env.RUN_ALL_TESTS }}
       run: |
         set -o pipefail
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification -Dzonky.test.database.type=MYSQL | tee tests.log
+        ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification -Dzonky.test.database.type=MYSQL | tee tests.log
+    - name: JaCoCo Coverage Verification (advisory)
+      id: jacoco-verification
+      if: ${{ env.RUN_ALL_TESTS }}
+      # Advisory: violations surface via ::error:: annotations from the next step but do
+      # not fail the job. Kept in sync with ci-test.yml's equivalent step.
+      continue-on-error: true
+      run: |
+        set -Eeuo pipefail
+        ./gradlew --console=plain jacocoTestCoverageVerification -x test -x webapp 2>&1 | tee jacoco-verification.log
+    - name: Print JaCoCo coverage violations
+      if: steps.jacoco-verification.outcome == 'failure'
+      run: |
+        set -Eeuo pipefail
+        VIOLATIONS=$(grep "Rule violated for bundle" jacoco-verification.log || true)
+        if [ -n "$VIOLATIONS" ]; then
+          MODULES=$(grep 'jacocoTestCoverageVerification-.*FAILED' jacoco-verification.log | sed 's/.*jacocoTestCoverageVerification-\([a-zA-Z]*\).*/\1/' | sort -u | tr '\n' ', ' | sed 's/, $//' || true)
+          echo "::error::JaCoCo code coverage thresholds violated${MODULES:+ in module(s): $MODULES}"
+          echo ""
+          echo "$VIOLATIONS"
+          echo ""
+          if [ -n "$MODULES" ]; then
+            echo "If this is not related to your PR, adjust the thresholds for module(s) [$MODULES] in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+          else
+            echo "If this is not related to your PR, adjust the thresholds in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+          fi
+        fi
     - name: Upload JUnit Test Results
-      if: success() || failure()
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v7
       with:
         name: JUnit Test Results (MySQL)
         path: build/test-results/test/*.xml
     - name: Print failed tests
       if: failure()
-      run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
-    - name: Annotate Server Test Results
-      uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac
-      if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
-      with:
-        access-token: ${{ secrets.GITHUB_TOKEN }}
-        path: build/test-results/test/*.xml
-        numFailures: 99
+      run: grep "Test >.* FAILED\$" tests.log | grep -v "Starting logs for" || echo "No failed tests."
     - name: Test Report
-      uses: dorny/test-reporter@v3
-      if: success() || failure()
+      # Renders the JUnit report as a check-run AND annotates failing tests in the PR diff.
+      uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
+      if: ${{ !cancelled() }}
       with:
         name: MySQL Tests
         path: build/test-results/test/*.xml
         reporter: java-junit
     - name: Number of Server Starts
-      if: success() || failure()
+      if: ${{ !cancelled() }}
       run: bash supporting_scripts/extract_number_of_server_starts.sh

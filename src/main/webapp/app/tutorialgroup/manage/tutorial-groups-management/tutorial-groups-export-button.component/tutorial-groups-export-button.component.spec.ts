@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { HttpResponse } from '@angular/common/http';
 import { TutorialGroupsExportButtonComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-export-button.component/tutorial-groups-export-button.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupExportData } from 'app/openapi/model/tutorialGroupExportData';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupExportData } from 'app/openapi/model/tutorial-group-export-data';
 
 interface TutorialGroupApiServiceMock {
     exportTutorialGroupsToCSV: ReturnType<typeof vi.fn>;
@@ -19,8 +19,6 @@ interface AlertServiceMock {
 }
 
 describe('TutorialGroupsExportButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialGroupsExportButtonComponent;
     let fixture: ComponentFixture<TutorialGroupsExportButtonComponent>;
     const exampleCourseId = 1;
@@ -34,7 +32,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
         global.URL.revokeObjectURL = vi.fn();
 
         mockTutorialGroupApiService = {
-            exportTutorialGroupsToCSV: vi.fn().mockReturnValue(of(new Blob(['dummy data'], { type: 'text/csv' }))),
+            exportTutorialGroupsToCSV: vi.fn().mockReturnValue(of(new HttpResponse({ body: new Blob(['dummy data'], { type: 'text/csv' }) }))),
             exportTutorialGroupsToJSON: vi.fn().mockReturnValue(of([{ title: 'Tutorial Group 1' }] satisfies TutorialGroupExportData[])),
         };
 
@@ -46,7 +44,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TutorialGroupsExportButtonComponent],
             providers: [
-                { provide: TutorialGroupApiService, useValue: mockTutorialGroupApiService },
+                { provide: TutorialGroupApi, useValue: mockTutorialGroupApiService },
                 { provide: AlertService, useValue: mockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -78,16 +76,16 @@ describe('TutorialGroupsExportButtonComponent', () => {
 
     it('should select all fields when toggleSelectAll is called', () => {
         component.toggleSelectAll();
-        expect(component.selectAll).toBe(true);
-        expect(component.selectedFields).toHaveLength(component.availableFields.length);
+        expect(component.selectAll()).toBe(true);
+        expect(component.selectedFields()).toHaveLength(component.availableFields.length);
         expect(component.availableFields.every((field) => field.selected)).toBe(true);
     });
 
     it('should deselect all fields when toggleSelectAll is called twice', () => {
         component.toggleSelectAll();
         component.toggleSelectAll();
-        expect(component.selectAll).toBe(false);
-        expect(component.selectedFields).toHaveLength(0);
+        expect(component.selectAll()).toBe(false);
+        expect(component.selectedFields()).toHaveLength(0);
         expect(component.availableFields.every((field) => !field.selected)).toBe(true);
     });
 
@@ -95,17 +93,17 @@ describe('TutorialGroupsExportButtonComponent', () => {
         const field = component.availableFields[0];
         component.onFieldSelectionChange(field);
         expect(field.selected).toBe(true);
-        expect(component.selectedFields).toContain(field.value);
+        expect(component.selectedFields()).toContain(field.value);
     });
 
     it('should export CSV successfully', () => {
         const blob = new Blob(['dummy data'], { type: 'text/csv' });
-        mockTutorialGroupApiService.exportTutorialGroupsToCSV.mockReturnValue(of(blob));
+        mockTutorialGroupApiService.exportTutorialGroupsToCSV.mockReturnValue(of(new HttpResponse({ body: blob })));
 
         component.dialogVisible.set(true);
         component.exportCSV();
 
-        expect(mockTutorialGroupApiService.exportTutorialGroupsToCSV).toHaveBeenCalledWith(exampleCourseId, component.selectedFields);
+        expect(mockTutorialGroupApiService.exportTutorialGroupsToCSV).toHaveBeenCalledWith(exampleCourseId, component.selectedFields());
         expect(component.dialogVisible()).toBe(false);
     });
 
@@ -115,7 +113,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
         component.dialogVisible.set(true);
         component.exportCSV();
 
-        expect(mockTutorialGroupApiService.exportTutorialGroupsToCSV).toHaveBeenCalledWith(exampleCourseId, component.selectedFields);
+        expect(mockTutorialGroupApiService.exportTutorialGroupsToCSV).toHaveBeenCalledWith(exampleCourseId, component.selectedFields());
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.tutorialGroupExportDialog.failedCSV');
         expect(component.dialogVisible()).toBe(false);
     });
@@ -126,7 +124,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
         component.dialogVisible.set(true);
         component.exportJSON();
 
-        expect(mockTutorialGroupApiService.exportTutorialGroupsToJSON).toHaveBeenCalledWith(exampleCourseId, component.selectedFields);
+        expect(mockTutorialGroupApiService.exportTutorialGroupsToJSON).toHaveBeenCalledWith(exampleCourseId, component.selectedFields());
         expect(component.dialogVisible()).toBe(false);
     });
 
@@ -136,7 +134,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
         component.dialogVisible.set(true);
         component.exportJSON();
 
-        expect(mockTutorialGroupApiService.exportTutorialGroupsToJSON).toHaveBeenCalledWith(exampleCourseId, component.selectedFields);
+        expect(mockTutorialGroupApiService.exportTutorialGroupsToJSON).toHaveBeenCalledWith(exampleCourseId, component.selectedFields());
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.tutorialGroupExportDialog.failedJSON');
         expect(component.dialogVisible()).toBe(false);
     });

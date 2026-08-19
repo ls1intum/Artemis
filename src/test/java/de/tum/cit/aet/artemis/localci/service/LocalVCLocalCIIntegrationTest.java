@@ -518,7 +518,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         private ProgrammingExerciseBuildConfig createBuildConfig(String networkName) {
             // Create build config.
-            String dockerFlags = String.format("{\"network\": \"%s\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}", networkName);
+            String dockerFlags = "{\"network\": \"%s\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}".formatted(networkName);
             ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
             buildConfig.setDockerFlags(dockerFlags);
             programmingExerciseBuildConfigRepository.save(buildConfig);

@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { TeamUpdateDialogComponent } from 'app/exercise/team/team-update-dialog/team-update-dialog.component';
@@ -34,8 +33,6 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
  * (zone-based change detection), this whole class of NG0100 false positives does not occur.
  */
 describe('TeamUpdateDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: TeamUpdateDialogComponent;
     let fixture: ComponentFixture<TeamUpdateDialogComponent>;
     let debugElement: DebugElement;
@@ -166,7 +163,7 @@ describe('TeamUpdateDialogComponent', () => {
         // editForm.invalid || isSaving || teamSizeViolationUnconfirmed. The early-test assertions
         // (lines around 111, 128, 144, 156) already validate the binding wires `submitButton.disabled`
         // to the same expression, so we test the logical state here without re-reading the DOM.
-        expect(comp.editForm().invalid || comp.isSaving || comp.teamSizeViolationUnconfirmed).toBe(false);
+        expect(comp.editForm().invalid || comp.isSaving() || comp.teamSizeViolationUnconfirmed).toBe(false);
 
         // Add the rest of the students to the team
         otherStudents.forEach((student) => comp.onAddStudent(student));
@@ -174,7 +171,7 @@ describe('TeamUpdateDialogComponent', () => {
         fixture.detectChanges(false);
         await fixture.whenStable();
         expect(comp.teamSizeViolationUnconfirmed).toBe(false);
-        expect(comp.editForm().invalid || comp.isSaving || comp.teamSizeViolationUnconfirmed).toBe(false);
+        expect(comp.editForm().invalid || comp.isSaving() || comp.teamSizeViolationUnconfirmed).toBe(false);
 
         // Submit via the form's ngSubmit (form.submit doesn't trigger Angular's ngSubmit listener,
         // so dispatch the submit event on the form element directly).
@@ -195,7 +192,7 @@ describe('TeamUpdateDialogComponent', () => {
         expect(createTeamArg.id).toBeUndefined();
         expect(updateSpy).not.toHaveBeenCalled();
 
-        expect(comp.isSaving).toBe(false);
+        expect(comp.isSaving()).toBe(false);
         expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith(createdTeam);
 
         fixture.destroy();
@@ -265,7 +262,7 @@ describe('TeamUpdateDialogComponent', () => {
         expect(updateTeamArg.students).toEqual(mockTeam.students?.slice(1).concat(mockNonTeamStudents));
         expect(createSpy).not.toHaveBeenCalled();
 
-        expect(comp.isSaving).toBe(false);
+        expect(comp.isSaving()).toBe(false);
         expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith(updatedTeam);
 
         fixture.destroy();

@@ -58,6 +58,10 @@ echo "Compose file: $COMPOSE_FILE"
 # port 7921 is not exposed on the local machine.
 export HOST_HOSTNAME="nginx"
 
+# The prod-profile stacks need a JWT signing key. A key committed to the repository would be one anyone can use to forge
+# a token, so it is generated per run and shared by every service that reads docker/artemis/config/playwright.env.
+export ARTEMIS_E2E_JWT_SECRET="${ARTEMIS_E2E_JWT_SECRET:-$(openssl rand -base64 64 | tr -d '\n')}"
+
 # Set Docker tag (required by compose file, but we build locally so value doesn't matter)
 export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
 # Admin credentials configure the Artemis server (via docker/artemis/config/playwright.env)
@@ -94,20 +98,24 @@ if [ -n "$TEST_FILTER" ]; then
 # AUTO-GENERATED - DO NOT COMMIT
 services:
     artemis-playwright:
+        # Both installs are required: specs load src/main/webapp models, which resolve their own dependencies from the
+        # repository root upwards, so a Playwright-only install leaves them unresolvable and collection finds no tests.
         command: >
             sh -c '
-            cd /app/artemis/src/test/playwright &&
+            cd /app/artemis &&
             chmod 777 /root &&
-            rm -f test-reports/results*.xml &&
             corepack enable &&
+            pnpm install --frozen-lockfile &&
+            cd /app/artemis/src/test/playwright &&
+            rm -f test-reports/results*.xml &&
             pnpm install --frozen-lockfile &&
             pnpm run playwright:setup &&
             PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml pnpm exec playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
             '
 EOF
-    OVERRIDE_ARGS="-f playwright-local-override.yml"
+    OVERRIDE_ARGS=(-f playwright-local-override.yml)
 else
-    OVERRIDE_ARGS=""
+    OVERRIDE_ARGS=()
 fi
 
 # Cleanup function
@@ -120,12 +128,12 @@ trap cleanup EXIT
 # Pull required images (except artemis-app which we build)
 echo ""
 echo "Pulling Docker images..."
-docker compose --env-file ../.env -f $COMPOSE_FILE pull $DB nginx 2>/dev/null || true
+docker compose --env-file ../.env -f "$COMPOSE_FILE" pull "$DB" nginx 2>/dev/null || true
 
 # Build Artemis image from external WAR file
 echo ""
 echo "Building Artemis Docker image from WAR file..."
-docker compose --env-file ../.env -f $COMPOSE_FILE build \
+docker compose --env-file ../.env -f "$COMPOSE_FILE" build \
     --build-arg WAR_FILE_STAGE=external_builder \
     --no-cache \
     --pull \
@@ -143,10 +151,10 @@ echo ""
 # Disable exit on error to capture exit code
 set +e
 if [ "$DEBUG" = true ]; then
-    docker compose --env-file ../.env -f $COMPOSE_FILE $OVERRIDE_ARGS up --exit-code-from artemis-playwright
+    docker compose --env-file ../.env -f "$COMPOSE_FILE" "${OVERRIDE_ARGS[@]}" up --exit-code-from artemis-playwright
 else
     # Only show Playwright output; other service logs are saved to the log directory
-    docker compose --env-file ../.env -f $COMPOSE_FILE $OVERRIDE_ARGS up --attach artemis-playwright --exit-code-from artemis-playwright
+    docker compose --env-file ../.env -f "$COMPOSE_FILE" "${OVERRIDE_ARGS[@]}" up --attach artemis-playwright --exit-code-from artemis-playwright
 fi
 EXIT_CODE=$?
 set -e

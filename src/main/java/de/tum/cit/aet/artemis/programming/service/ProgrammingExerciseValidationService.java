@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ALLOWED_CHECKOUT_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
@@ -18,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
@@ -171,6 +174,12 @@ public class ProgrammingExerciseValidationService {
         }
     }
 
+    public void validatePackageName(ProgrammingExercise programmingExercise) {
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        validatePackageName(programmingExercise, programmingLanguageFeature);
+    }
+
     private void validatePackageName(ProgrammingExercise programmingExercise, ProgrammingLanguageFeature programmingLanguageFeature) {
         if (!programmingLanguageFeature.packageNameRequired()) {
             return;
@@ -178,6 +187,9 @@ public class ProgrammingExerciseValidationService {
         // Check if package name is set
         if (programmingExercise.getPackageName() == null) {
             throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
+        }
+        if (programmingExercise.getPackageName().length() > MAX_PACKAGE_NAME_LENGTH) {
+            throw new BadRequestAlertException("The package name is too long", "Exercise", "packagenameTooLong");
         }
 
         // Check if package name matches regex
@@ -297,7 +309,18 @@ public class ProgrammingExerciseValidationService {
             return;
         }
 
-        List<BuildPhaseDTO> phases = programmingExercise.getBuildConfig().getBuildPlanPhases().map(BuildPlanPhasesDTO::phases).orElse(null);
+        if (programmingExercise.getBuildConfig().getBuildScript() != null) {
+            throw new BadRequestAlertException("The build config is invalid", "programmingExercise", "invalidBuildConfig");
+        }
+
+        List<BuildPhaseDTO> phases;
+        try {
+            phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExercise.getBuildConfig().getBuildPlanConfiguration()).phases();
+        }
+        catch (JsonProcessingException e) {
+            throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
+        }
+
         if (phases == null) {
             return; // default will be used when saving
         }

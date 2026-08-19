@@ -21,6 +21,11 @@ artemis:
         enabled: true # Disable sending any telemetry information to the telemetry service by setting this to false
         sendAdminDetails: true # Include personal identifiable information of the admin, including email and name in the telemetry data
         destination: https://telemetry.artemis.cit.tum.de
+    audit-events:
+        # The audit table is pruned on two schedules: the login record is high-volume and short-lived, while deliberate
+        # actions on courses, exercises, exams and accounts may still be needed years later (e.g. an exam dispute).
+        general-retention-period: 365 # Days before login/logout audit events are deleted (one year).
+        application-retention-period: 1825 # Days before all other audit events are deleted (five years).
     continuous-integration:
         build-job:
             retention-period: 365 # Number of days before build job entries are deleted.
@@ -46,6 +51,12 @@ spring:
                 useServerPrepStmts: true
     jpa:
         show-sql: false
+        # Tell Hibernate the dialect explicitly so it does not probe JDBC DatabaseMetaData while bootstrapping the EntityManagerFactory. For a schema with ~200 tables that
+        # metadata access means repeated database round-trips on every startup (slower the further the DB is), so skipping it shortens production startup. Default to PostgreSQL
+        # (the production database going forward); MySQL deployments must override this with `spring.jpa.database: MYSQL` until MySQL support is removed.
+        database: POSTGRESQL
+        properties:
+            hibernate.boot.allow_jdbc_metadata_access: false
     mail:
         host: localhost
         port: 25
@@ -77,7 +88,7 @@ server:
     port: 8080
     compression:
         enabled: true
-        mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json,image/svg+xml
+        mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json,image/svg+xml,application/wasm
         min-response-size: 1024
 
 # ===================================================================
@@ -114,7 +125,10 @@ jhipster:
             port: 5000
             ring-buffer-size: 512
     audit-events:
-        retention-period: 365 # Number of days before audit events and VCS access logs are deleted.
+        # Nothing reads this key: audit events are pruned via artemis.audit-events.* above, and
+        # AutomaticVcsAccessLogCleanupService reads artemis.audit-events.retention-period, a different namespace, so it
+        # always falls back to its own default. Kept only so that removing it is a separate, deliberate change.
+        retention-period: 365
 
 # Properties to be exposed on the /info management endpoint
 info:

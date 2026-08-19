@@ -8,6 +8,7 @@ import { onError } from 'app/foundation/util/global.utils';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-learning-paths-configuration',
@@ -35,7 +36,7 @@ export class LearningPathsConfigurationComponent {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            untracked(() => this.loadLearningPathsConfiguration(courseId));
+            void untracked(() => this.loadLearningPathsConfiguration(courseId));
         });
     }
 
@@ -53,10 +54,9 @@ export class LearningPathsConfigurationComponent {
 
     protected toggleIncludeAllGradedExercises(): void {
         this.configHasBeenChanged.set(true);
-        this.learningPathsConfiguration.set({
-            ...this.learningPathsConfiguration(),
-            includeAllGradedExercises: !this.includeAllGradedExercisesEnabled(),
-        });
+        this.learningPathsConfiguration.update((configuration) =>
+            configuration ? cloneWith(configuration, { includeAllGradedExercises: !this.includeAllGradedExercisesEnabled() }) : configuration,
+        );
     }
 
     protected async saveLearningPathsConfiguration(): Promise<void> {

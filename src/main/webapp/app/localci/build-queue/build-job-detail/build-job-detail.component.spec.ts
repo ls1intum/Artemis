@@ -1,6 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { captureException } from '@sentry/angular';
+
+vi.mock('@sentry/angular', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@sentry/angular')>()),
+    captureException: vi.fn(),
+}));
 
 import { BuildJobDetailComponent } from './build-job-detail.component';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
@@ -12,10 +17,9 @@ import { EMPTY, Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { BuildJobDetail } from 'app/localci/shared/entities/build-job.model';
 
 describe('BuildJobDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: BuildJobDetailComponent;
     let fixture: ComponentFixture<BuildJobDetailComponent>;
     let buildQueueService: BuildOverviewService;
@@ -37,7 +41,7 @@ describe('BuildJobDetailComponent', () => {
             buildStartDate: '2024-01-01T10:00:05Z',
         },
         buildConfig: { commitHashToBuild: 'abc123def456' },
-    };
+    } as unknown as BuildJobDetail;
 
     const mockFinishedJob = {
         id: 'test-job-2',
@@ -55,7 +59,7 @@ describe('BuildJobDetailComponent', () => {
         buildCompletionDate: '2024-01-01T10:00:35Z',
         commitHash: 'abc123def456',
         buildDuration: '30s',
-    };
+    } as unknown as BuildJobDetail;
 
     const mockRoute = {
         snapshot: {
@@ -70,6 +74,7 @@ describe('BuildJobDetailComponent', () => {
     };
 
     beforeEach(() => {
+        vi.mocked(captureException).mockClear();
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: mockRoute },
@@ -297,13 +302,10 @@ describe('BuildJobDetailComponent', () => {
             throw new Error('Failed to create object URL');
         });
 
-        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
         component.downloadBuildLogs();
 
-        expect(consoleErrorSpy).toHaveBeenCalled();
+        expect(vi.mocked(captureException)).toHaveBeenCalled();
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.buildQueue.logs.downloadError');
-        consoleErrorSpy.mockRestore();
     });
 
     it('should not load logs if already loading', () => {
@@ -381,7 +383,7 @@ describe('BuildJobDetailComponent', () => {
             ...mockFinishedJob,
             buildStartDate: '2024-01-01T10:00:05Z',
             buildCompletionDate: '2024-01-01T10:02:08Z', // 2 minutes and 3 seconds
-        };
+        } as unknown as BuildJobDetail;
         vi.mocked(buildQueueService.getBuildJobById).mockReturnValue(of(longDurationJob));
         fixture.detectChanges();
 
@@ -443,7 +445,7 @@ describe('BuildJobDetailComponent', () => {
             ...mockRunningJob,
             status: undefined,
             jobTimingInfo: { submissionDate: '2024-01-01T10:00:00Z' },
-        };
+        } as unknown as BuildJobDetail;
         vi.mocked(buildQueueService.getBuildJobById).mockReturnValue(of(queuedJob));
         fixture.detectChanges();
 
@@ -455,7 +457,7 @@ describe('BuildJobDetailComponent', () => {
             ...mockRunningJob,
             status: undefined,
             buildStartDate: '2024-01-01T10:00:05Z',
-        };
+        } as unknown as BuildJobDetail;
         vi.mocked(buildQueueService.getBuildJobById).mockReturnValue(of(buildingJob));
         fixture.detectChanges();
 

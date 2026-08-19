@@ -1,10 +1,11 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { IWatchParams, ReconnectionTimeMode, RxStomp, RxStompConfig, RxStompState, TickerStrategy } from '@stomp/rx-stomp';
-import { IMessage, StompHeaders } from '@stomp/stompjs';
-import { gzip, ungzip } from 'pako';
+import { IMessage } from '@stomp/stompjs';
+import { parseJson } from 'app/foundation/util/json.util';
+import { gunzipSync, gzipSync, strFromU8, strToU8 } from 'fflate';
 import { BehaviorSubject, EMPTY, Observable, Subscription, of, timer } from 'rxjs';
-import { distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { distinctUntilChanged, map, mergeMap, share, switchMap } from 'rxjs/operators';
 
 /**
  * Name of the STOMP header that indicates whether a message payload is compressed.
@@ -238,6 +239,17 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     private subscriptionCounter = 0;
 
     /**
+     * One shared, reference-counted observable per STOMP destination.
+     *
+     * The broker rejects a second subscription to a destination that is already subscribed on the same session, so
+     * every destination must be subscribed exactly once no matter how many callers want it. Entries are removed again
+     * once the last consumer unsubscribes.
+     * @private
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the map is keyed by destination and holds streams of different payload types; the cast back to Observable<T> happens in subscribe()
+    private readonly sharedChannelObservables = new Map<string, Observable<any>>();
+
+    /**
      * Unique session identifier for this WebSocket connection.
      * @private
      */
@@ -298,12 +310,15 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         if (this.rxStomp) {
             void this.rxStomp.deactivate();
             this.connectionStateSubscription?.unsubscribe();
+            // The cached streams belong to the client being replaced. Handing one of them to a caller after the
+            // reconnect would leave it watching a dead client and silently receiving nothing.
+            this.sharedChannelObservables.clear();
         }
         // NOTE: we add 'websocket' twice to use STOMP without SockJS
         const url = `//${window.location.host}/websocket/websocket`;
         const config: RxStompConfig = {
             brokerURL: url,
-            connectHeaders: {} as StompHeaders,
+            connectHeaders: {},
             heartbeatOutgoing: 10000, // should be identical to the server settings
             heartbeatIncoming: 10000, // should be identical to the server settings
             reconnectDelay: 500, // initial value is quite small, will be increased by ReconnectionTimeMode.EXPONENTIAL
@@ -435,8 +450,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * @internal
      */
     private static compressAndEncode(payload: string): string {
-        // 1. Compress if larger than 1 KB
-        const compressedPayload = gzip(payload);
+        const compressedPayload = gzipSync(strToU8(payload));
         // 2. Convert binary data to base64 string
         return window.btoa(
             Array.from(compressedPayload)
@@ -463,8 +477,8 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     private static decodeAndDecompress(payload: string): string {
         // 1. Decode the Base64 string to binary (ArrayBuffer) and convert to Uint8Array
         const binaryData = Uint8Array.from(window.atob(payload), (char) => char.charCodeAt(0));
-        // 2. Decompress using pako
-        return ungzip(binaryData, { to: 'string' });
+        // 2. Decompress using fflate
+        return strFromU8(gunzipSync(binaryData));
     }
 
     /**
@@ -500,6 +514,9 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             this.wasConnectedOnce = false;
             this.sessionId = '';
             this.subscriptionCounter = 0;
+            // The connection is gone, so the cached per-destination streams belong to a session that no longer
+            // exists and must not be handed to a caller that subscribes after a reconnect.
+            this.sharedChannelObservables.clear();
         }
     }
 
@@ -567,6 +584,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      *
      * See the examples in {@link IWebsocketService.subscribe}.
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- default kept as `any` (not `unknown`) so callers that omit the type argument and pass a callback with a concrete payload type (e.g. notification/course-notification-websocket) stay assignable under strictFunctionTypes; those call sites live outside this module and cannot be re-typed here
     subscribe<T = any>(channel: string): Observable<T> {
         if (!channel) {
             return EMPTY;
@@ -577,8 +595,34 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         if (!this.rxStomp) {
             return EMPTY;
         }
+        const existing = this.sharedChannelObservables.get(channel);
+        if (existing) {
+            return existing as Observable<T>;
+        }
         const params: IWatchParams = { destination: channel, subHeaders: { id: this.sessionId + '-' + this.subscriptionCounter++ } };
-        return this.rxStomp.watch(params).pipe(map(this.handleIncomingMessage<T>()));
+        const decode = this.handleIncomingMessage<T>();
+        const shared = this.rxStomp.watch(params).pipe(
+            // Drop a frame that cannot be decoded instead of letting it error the stream. All consumers of a
+            // destination share one subscription, so an error would disconnect every one of them (and, because
+            // `share` resets on error, silently leave them without a subscription) over a single bad message.
+            // The failure itself is still reported to Sentry inside the decoder.
+            mergeMap((message) => {
+                try {
+                    return of(decode(message));
+                } catch {
+                    return EMPTY;
+                }
+            }),
+            // One STOMP subscription for all consumers of this destination; it is unsubscribed once the last of
+            // them leaves and re-established when a consumer returns.
+            share({ resetOnRefCountZero: true }),
+        );
+        // Kept for the lifetime of the connection rather than dropped when the last consumer leaves. Callers may hold
+        // on to the returned observable and resubscribe later (IrisSearchAnswerService does exactly that), and such a
+        // resubscription would not put the entry back. A concurrent fresh subscribe() would then open a second watch
+        // for a destination that is already subscribed, which is the broker error this cache exists to prevent.
+        this.sharedChannelObservables.set(channel, shared);
+        return shared;
     }
 
     /**
@@ -604,7 +648,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      */
     private static parseJSON<T>(response: string): T {
         try {
-            return JSON.parse(response);
+            return parseJson<T>(response);
         } catch {
             return response as T;
         }

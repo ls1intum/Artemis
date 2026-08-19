@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
@@ -18,8 +17,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CourseNotificationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseNotificationComponent;
     let fixture: ComponentFixture<CourseNotificationComponent>;
     let courseNotificationService: CourseNotificationService;
@@ -82,13 +79,27 @@ describe('CourseNotificationComponent', () => {
     });
 
     it('should set notification parameters correctly', () => {
-        expect(componentAsAny.notificationParameters).toEqual({
+        expect(componentAsAny.notificationParameters()).toEqual({
             courseTitle: 'Test Course',
             courseIconUrl: 'test-icon-url',
             courseName: 'Test Course',
             courseId: 101,
         });
-        expect(componentAsAny.notificationType).toBe('newPostNotification');
+        expect(componentAsAny.notificationType()).toBe('newPostNotification');
+    });
+
+    it('should render markdown-bearing parameters to plain text (resolved asynchronously)', async () => {
+        const notification = createMockNotification(2, 102, 'newPostNotification', { postMarkdownContent: '**bold** _italic_' });
+        fixture.componentRef.setInput('courseNotification', notification);
+        fixture.detectChanges();
+
+        expect(componentAsAny.notificationInitialized()).toBe(false);
+
+        // Rendering markdown lazily loads the pipeline, so the parameter is populated after a microtask.
+        await vi.waitFor(() => {
+            expect(componentAsAny.notificationParameters()?.postMarkdownContent).toBe('bold italic');
+        });
+        expect(componentAsAny.notificationInitialized()).toBe(true);
     });
 
     it('should show close button when isShowClose is true', () => {
@@ -135,6 +146,18 @@ describe('CourseNotificationComponent', () => {
         expect(notificationWrap.classes['is-unseen']).toBeFalsy();
     });
 
+    it('should add is-fluid class and host fluid class only when fluid is true', () => {
+        fixture.componentRef.setInput('fluid', false);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.course-notification-wrap')).classes['is-fluid']).toBeFalsy();
+        expect((fixture.nativeElement as HTMLElement).classList.contains('fluid')).toBe(false);
+
+        fixture.componentRef.setInput('fluid', true);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.course-notification-wrap')).classes['is-fluid']).toBe(true);
+        expect((fixture.nativeElement as HTMLElement).classList.contains('fluid')).toBe(true);
+    });
+
     it('should show profile picture when author details are present', () => {
         const notificationWithAuthor = createMockNotification(1, 101, 'newPostNotification', {
             authorName: 'Test Author',
@@ -145,10 +168,10 @@ describe('CourseNotificationComponent', () => {
         fixture.componentRef.setInput('courseNotification', notificationWithAuthor);
         fixture.detectChanges();
 
-        expect(componentAsAny.isShowProfilePicture).toBe(true);
-        expect(componentAsAny.authorName).toBe('Test Author');
-        expect(componentAsAny.authorId).toBe(42);
-        expect(componentAsAny.authorImageUrl).toBe('test-author-image.jpg');
+        expect(componentAsAny.isShowProfilePicture()).toBe(true);
+        expect(componentAsAny.authorName()).toBe('Test Author');
+        expect(componentAsAny.authorId()).toBe(42);
+        expect(componentAsAny.authorImageUrl()).toBe('test-author-image.jpg');
 
         const profilePicture = fixture.debugElement.query(By.css('jhi-profile-picture'));
         expect(profilePicture).not.toBeNull();
@@ -160,14 +183,14 @@ describe('CourseNotificationComponent', () => {
         fixture.componentRef.setInput('courseNotification', notificationWithoutAuthor);
         fixture.detectChanges();
 
-        expect(componentAsAny.isShowProfilePicture).toBe(false);
+        expect(componentAsAny.isShowProfilePicture()).toBe(false);
 
         const iconElement = fixture.debugElement.query(By.css('.course-notification-icon'));
         expect(iconElement).not.toBeNull();
     });
 
     it('should update notification details when courseNotification input changes', () => {
-        const initialType = componentAsAny.notificationType;
+        const initialType = componentAsAny.notificationType();
 
         vi.spyOn(courseNotificationService, 'getIconFromType').mockReturnValue(faBell);
 
@@ -176,8 +199,8 @@ describe('CourseNotificationComponent', () => {
         fixture.detectChanges();
 
         expect(courseNotificationService.getIconFromType).toHaveBeenCalledWith('differentNotificationType');
-        expect(componentAsAny.notificationType).toBe('differentNotificationType');
-        expect(componentAsAny.notificationType).not.toBe(initialType);
+        expect(componentAsAny.notificationType()).toBe('differentNotificationType');
+        expect(componentAsAny.notificationType()).not.toBe(initialType);
     });
 
     it('should show loading indicator when displayTimeInMilliseconds is defined', () => {

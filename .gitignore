@@ -5,6 +5,7 @@
 ######################
 .github/act-events/
 /build/www/**
+/dist/
 /src/test/javascript/coverage/
 /src/test/javascript/PhantomJS*/
 /uploads
@@ -164,7 +165,6 @@ local-vcs-repos
 /exports
 /legal/server-integration-test
 data-exports/
-/src/main/webapp/content/scripts/pdf.worker.min.mjs
 
 ######################
 # Gradle Wrapper
@@ -187,6 +187,9 @@ data-exports/
 ######################
 /docker/.env
 /docker/playwright-local-override.yml
+# Local credentials for the prod-profile docker setups, see documentation/docs/developer/docker-compose.mdx
+/docker/artemis/config/local-secrets.env
+/docker/local-secrets.yml
 /docker/.docker-data/artemis-data/*
 !/docker/.docker-data/artemis-data/.gitkeep
 /docker/.docker-data/artemis-mysql-data/*
@@ -266,3 +269,6 @@ deferredEagerBeanInstantiationViolations.dot
 # Local planning notes
 ######################
 /docs/superpowers/plans/
+
+# Playwright MCP browser snapshot dumps (local debugging artifacts)
+.playwright-mcp/

@@ -1,16 +1,23 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { faChalkboardUser, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { ChangeDetectionStrategy, Component, DestroyRef, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { faChalkboardUser, faComments, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { TranslateService } from '@ngx-translate/core';
+import { ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { SelectModule } from 'primeng/select';
+import { ChipModule } from 'primeng/chip';
+import { TooltipModule } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { forkJoin } from 'rxjs';
 
 interface ContextOption {
     label: string;
@@ -32,68 +39,128 @@ const EXERCISE_TYPE_TO_CHAT_MODE: Record<string, ChatServiceMode> = {
     [ExerciseType.PROGRAMMING]: ChatServiceMode.PROGRAMMING_EXERCISE,
 };
 
+/** Icon for a selected context, derived from its mode alone so the chip does not need the entity loaded. */
+function iconForMode(mode: ChatServiceMode): IconDefinition {
+    if (mode === ChatServiceMode.LECTURE) {
+        return faChalkboardUser;
+    }
+    const exerciseType = Object.keys(EXERCISE_TYPE_TO_CHAT_MODE).find((type) => EXERCISE_TYPE_TO_CHAT_MODE[type] === mode);
+    // Modes that are not an exercise type, such as a tutor suggestion, would otherwise reach getIcon(undefined)
+    if (!exerciseType) {
+        return faComments;
+    }
+    return getIcon(exerciseType as ExerciseType) as IconDefinition;
+}
+
 @Component({
     selector: 'jhi-context-selection',
     templateUrl: './context-selection.component.html',
     styleUrls: ['./context-selection.component.scss'],
-    imports: [SelectModule, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
+    imports: [SelectModule, ChipModule, TooltipModule, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
 })
 export class ContextSelectionComponent {
-    private readonly courseStorageService = inject(CourseStorageService);
     private readonly chatService = inject(IrisChatService);
+    private readonly lectureService = inject(LectureService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly entityTitleService = inject(EntityTitleService);
+    private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
+
+    protected readonly faPlus = faPlus;
+    protected readonly faXmark = faXmark;
 
     readonly disabled = input<boolean>(false);
     readonly contextChanged = output<void>();
 
     readonly courseId = signal<number | undefined>(this.chatService.getCourseId());
 
-    private readonly currentMode = toSignal(this.chatService.currentChatMode(), { initialValue: undefined });
-    private readonly currentEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
+    /**
+     * The selectable lectures and exercises. Loaded when the dropdown is first opened rather than up front: the Iris
+     * chat is embedded on lecture and exercise pages where the picker is often never used, and these options used to be
+     * read off a course object that the course overview happened to have loaded — which silently produced an empty
+     * picker as soon as the overview stopped loading that content.
+     */
+    private readonly lecturesSignal = signal<LectureForOverview[]>([]);
+    private readonly exercisesSignal = signal<ExerciseTitle[]>([]);
+    private optionsLoadedForCourseId?: number;
 
-    readonly courseName = computed<string>(() => {
+    readonly lectures = this.lecturesSignal.asReadonly();
+    readonly exercises = this.exercisesSignal.asReadonly();
+
+    /** Resolved name of the currently selected context; the page can set a context without carrying its name. */
+    private readonly activeContextName = signal<string>('');
+
+    constructor() {
+        effect((onCleanup) => {
+            const context = this.chatService.displayContext();
+            if (!context || context.mode === ChatServiceMode.COURSE) {
+                this.activeContextName.set('');
+                return;
+            }
+            if (context.entityName) {
+                this.activeContextName.set(context.entityName);
+                return;
+            }
+            // Do not keep showing the previous entity's title while the current one is being resolved.
+            this.activeContextName.set('');
+            // A tutor suggestion is keyed by the id of the communication post it was raised from, not by an exercise.
+            // Resolving that id as an exercise title labels the chip with whichever unrelated exercise happens to share
+            // the number, and leaves it blank when none does.
+            if (context.mode === ChatServiceMode.TUTOR_SUGGESTION) {
+                this.activeContextName.set(this.translateService.instant('artemisApp.iris.contextSelection.tutorSuggestionContext'));
+                return;
+            }
+            const entityType = context.mode === ChatServiceMode.LECTURE ? EntityType.LECTURE : EntityType.EXERCISE;
+            const subscription = this.entityTitleService.getTitle(entityType, [context.entityId]).subscribe((title) => this.activeContextName.set(title));
+            // Effects can rerun many times during the component lifetime. Cancel the previous lookup so a slower
+            // response for an old context cannot overwrite the title of the newly selected context.
+            onCleanup(() => subscription.unsubscribe());
+        });
+    }
+
+    /**
+     * Loads the pickable lectures and exercises for the course, once per course. Called when the dropdown opens.
+     */
+    loadContextOptions(): void {
         const courseId = this.courseId();
-        return courseId !== undefined ? (this.courseStorageService.getCourse(courseId)?.title ?? '') : '';
-    });
-    readonly lectures = computed<Lecture[]>(() => {
-        const courseId = this.courseId();
-        return courseId !== undefined ? (this.courseStorageService.getCourse(courseId)?.lectures ?? []) : [];
-    });
-    readonly exercises = computed<Exercise[]>(() => {
-        const courseId = this.courseId();
-        return courseId !== undefined ? (this.courseStorageService.getCourse(courseId)?.exercises ?? []) : [];
-    });
+        if (courseId === undefined || this.optionsLoadedForCourseId === courseId) {
+            return;
+        }
+        this.optionsLoadedForCourseId = courseId;
+        forkJoin({
+            lectures: this.lectureService.findAllByCourseIdForOverview(courseId),
+            exercises: this.exerciseService.getTitlesForCourse(courseId),
+        })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: ({ lectures, exercises }) => {
+                    this.lecturesSignal.set(lectures);
+                    this.exercisesSignal.set(exercises);
+                },
+                error: () => {
+                    this.lecturesSignal.set([]);
+                    this.exercisesSignal.set([]);
+                    if (this.optionsLoadedForCourseId === courseId) {
+                        this.optionsLoadedForCourseId = undefined;
+                    }
+                },
+            });
+    }
 
     readonly supportedExercises = computed(() => this.exercises().filter((e) => e.type && e.type in EXERCISE_TYPE_TO_CHAT_MODE));
 
     readonly selectedValue = computed(() => {
-        const mode = this.currentMode();
-        const entityId = this.currentEntityId();
-        if (mode === undefined || entityId === undefined) return undefined;
-        return `${mode}:${entityId}`;
+        const ctx = this.chatService.displayContext();
+        if (ctx === undefined) return undefined;
+        return `${ctx.mode}:${ctx.entityId}`;
     });
 
     readonly allGroups = computed<ContextGroup[]>(() => {
-        const courseId = this.courseId();
-        const courseName = this.courseName();
         const lectures = this.lectures();
         const exercises = this.supportedExercises();
         const groups: ContextGroup[] = [];
-
-        if (courseName && courseId !== undefined) {
-            groups.push({
-                label: 'artemisApp.iris.contextSelection.courseGroup',
-                items: [
-                    {
-                        label: courseName,
-                        value: `${ChatServiceMode.COURSE}:${courseId}`,
-                        faIcon: faGraduationCap,
-                        mode: ChatServiceMode.COURSE,
-                        entityId: courseId,
-                    },
-                ],
-            });
-        }
 
         if (lectures.length > 0) {
             groups.push({
@@ -105,7 +172,7 @@ export class ContextSelectionComponent {
                         value: `${ChatServiceMode.LECTURE}:${lecture.id}`,
                         faIcon: faChalkboardUser,
                         mode: ChatServiceMode.LECTURE,
-                        entityId: lecture.id!,
+                        entityId: lecture.id,
                     })),
             });
         }
@@ -120,7 +187,7 @@ export class ContextSelectionComponent {
                         value: `${EXERCISE_TYPE_TO_CHAT_MODE[exercise.type!]}:${exercise.id}`,
                         faIcon: getIcon(exercise.type) as IconDefinition,
                         mode: EXERCISE_TYPE_TO_CHAT_MODE[exercise.type!],
-                        entityId: exercise.id!,
+                        entityId: exercise.id,
                     })),
             });
         }
@@ -128,12 +195,36 @@ export class ContextSelectionComponent {
         return groups;
     });
 
+    readonly activeChip = computed<ContextOption | undefined>(() => {
+        const context = this.chatService.displayContext();
+        if (context === undefined || context.mode === ChatServiceMode.COURSE) {
+            return undefined;
+        }
+        // Built from the context itself rather than by searching the picker options, so the chip renders correctly even
+        // when the options have never been loaded (the picker is lazy, and a page can set a context on its own).
+        return {
+            label: this.activeContextName(),
+            value: `${context.mode}:${context.entityId}`,
+            faIcon: iconForMode(context.mode),
+            mode: context.mode,
+            entityId: context.entityId,
+        };
+    });
+
     onSelectionChange(value: string): void {
         const option = this.allGroups()
             .flatMap((g) => g.items)
             .find((o) => o.value === value);
         if (option) {
-            this.chatService.switchToNewSession(option.mode, option.entityId);
+            this.chatService.stagePendingContext(option.mode, option.entityId, option.label);
+            this.contextChanged.emit();
+        }
+    }
+
+    onChipRemove(): void {
+        const courseId = this.courseId();
+        if (courseId !== undefined) {
+            this.chatService.stagePendingContext(ChatServiceMode.COURSE, courseId);
             this.contextChanged.emit();
         }
     }

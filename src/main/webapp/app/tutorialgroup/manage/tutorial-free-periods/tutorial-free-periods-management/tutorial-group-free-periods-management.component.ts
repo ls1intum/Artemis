@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
@@ -39,14 +39,13 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
-    private cdr = inject(ChangeDetectorRef);
 
     readonly createFreePeriodDialog = viewChild<CreateTutorialGroupFreePeriodComponent>('createFreePeriodDialog');
 
-    isLoading = false;
-    tutorialGroupsConfiguration: TutorialGroupsConfiguration;
-    tutorialGroupFreePeriods: TutorialGroupFreePeriod[] = [];
-    course: Course;
+    readonly isLoading = signal(false);
+    readonly tutorialGroupsConfiguration = signal<TutorialGroupsConfiguration>(undefined!);
+    readonly tutorialGroupFreePeriods = signal<TutorialGroupFreePeriod[]>([]);
+    readonly course = signal<Course>(undefined!);
     faTimes = faTimes;
     faPlus = faPlus;
 
@@ -54,6 +53,10 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     dialogError$ = this.dialogErrorSource.asObservable();
 
     ngUnsubscribe = new Subject<void>();
+
+    // Bound once. `loadAll.bind(this)` in the template minted a new function on every change-detection pass, which
+    // changed the tables' `[loadAll]` input every pass for the same reason the lists above did.
+    readonly reloadFreePeriods = () => this.loadAll();
 
     ngOnInit(): void {
         this.loadAll();
@@ -65,27 +68,31 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
         this.dialogErrorSource.unsubscribe();
     }
 
-    get freeDays(): TutorialGroupFreePeriod[] {
-        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod));
-    }
+    // The three lists below are computed rather than getters. The template reads each one twice - once in its `@if`
+    // and once as the table's `[tutorialGroupFreePeriods]` input - so a getter returned a freshly filtered array on
+    // every read, changing the child's input on every change-detection pass and defeating its OnPush check.
+    readonly freeDays = computed(() =>
+        this.tutorialGroupFreePeriods().filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod)),
+    );
+
     public static isFreeDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
         const startIsMidnight: boolean = tutorialGroupFreePeriod.start!.hour() === 0 && tutorialGroupFreePeriod.start!.minute() === 0;
         const endIsMidnight: boolean = tutorialGroupFreePeriod.end!.hour() === 23 && tutorialGroupFreePeriod.end!.minute() === 59;
 
-        return tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day') && startIsMidnight && endIsMidnight;
+        return tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end, 'day') && startIsMidnight && endIsMidnight;
     }
 
-    get freePeriods(): TutorialGroupFreePeriod[] {
-        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tutorialGroupFreePeriod));
-    }
+    readonly freePeriods = computed(() =>
+        this.tutorialGroupFreePeriods().filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tutorialGroupFreePeriod)),
+    );
 
     public static isFreePeriod(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
-        return !tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day');
+        return !tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end, 'day');
     }
 
-    get freePeriodsWithinDay(): TutorialGroupFreePeriod[] {
-        return this.tutorialGroupFreePeriods.filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tutorialGroupFreePeriod));
-    }
+    readonly freePeriodsWithinDay = computed(() =>
+        this.tutorialGroupFreePeriods().filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tutorialGroupFreePeriod)),
+    );
 
     public static isFreePeriodWithinDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod) {
         return tutorialGroupFreePeriod.start!.date() === tutorialGroupFreePeriod.end!.date() && !TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod);
@@ -96,31 +103,34 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     }
 
     loadAll() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         combineLatest([this.activatedRoute.data])
             .pipe(
                 take(1),
                 switchMap(([{ course }]) => {
-                    this.course = course;
-                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!);
+                    this.course.set(course);
+                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course().id!);
                 }),
-                finalize(() => (this.isLoading = false)),
+                finalize(() => this.isLoading.set(false)),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroupsConfigurationResult) => {
                     if (tutorialGroupsConfigurationResult.body) {
-                        this.tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(tutorialGroupsConfigurationResult.body);
-                        if (this.tutorialGroupsConfiguration.tutorialGroupFreePeriods) {
-                            this.tutorialGroupFreePeriods = this.sortService.sortByProperty(this.tutorialGroupsConfiguration.tutorialGroupFreePeriods, 'start', false);
+                        const configuration = tutorialGroupsConfigurationEntityFromDto(tutorialGroupsConfigurationResult.body);
+                        this.tutorialGroupsConfiguration.set(configuration);
+                        // the parent route resolves the course once, so the overview would keep showing the free periods from before this page
+                        this.course().tutorialGroupsConfiguration = configuration;
+                        const freePeriods = configuration.tutorialGroupFreePeriods;
+                        if (freePeriods) {
+                            this.tutorialGroupFreePeriods.set(this.sortService.sortByProperty(freePeriods, 'start', false));
                         } else {
-                            this.tutorialGroupFreePeriods = [];
+                            this.tutorialGroupFreePeriods.set([]);
                         }
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+            });
     }
 
     openCreateFreePeriodDialog(event: MouseEvent) {

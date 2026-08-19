@@ -1,5 +1,5 @@
 <div class="editable-instruction-container__status__container">
-    @if (invalidTestCases.length + missingTestCases.length + repeatedTestCases.length > 0) {
+    @if (invalidTestCases().length + missingTestCases().length + repeatedTestCases().length > 0) {
         <div id="instruction_analysis_test-case-issues" class="editable-instruction-container__status__item">
             <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="testCasesTooltipContent" />
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues"></span>
@@ -12,34 +12,34 @@
     }
     <ng-template #testCasesTooltipContent>
         <div class="text-start w-100">
-            @if (invalidTestCases.length) {
+            @if (invalidTestCases().length) {
                 <div>
-                    <span [innerHTML]="'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCases' | artemisTranslate: { number: invalidTestCases.length }"
-                        >There are {{ invalidTestCases.length }} test cases that are part of the problem statement but can't be found in your test repository:</span
+                    <span [innerHTML]="'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCases' | artemisTranslate: { number: invalidTestCases().length }"
+                        >There are {{ invalidTestCases().length }} test cases that are part of the problem statement but can't be found in your test repository:</span
                     >
                     <ul>
-                        @for (test of invalidTestCases; track test) {
+                        @for (test of invalidTestCases(); track test) {
                             <li>{{ test }}</li>
                         }
                     </ul>
                 </div>
             }
-            @if (missingTestCases.length) {
+            @if (missingTestCases().length) {
                 <div class="text-start">
-                    <span jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.missingTestCases" [translateValues]="{ number: missingTestCases.length }"></span>
+                    <span jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.missingTestCases" [translateValues]="{ number: missingTestCases().length }"></span>
                     <ul>
-                        @for (test of missingTestCases; track test) {
+                        @for (test of missingTestCases(); track test) {
                             <li>{{ test }}</li>
                         }
                     </ul>
                 </div>
             }
 
-            @if (repeatedTestCases.length) {
+            @if (repeatedTestCases().length) {
                 <div class="text-start">
-                    <span jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.repeatedTestCases" [translateValues]="{ number: repeatedTestCases.length }"></span>
+                    <span jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.repeatedTestCases" [translateValues]="{ number: repeatedTestCases().length }"></span>
                     <ul>
-                        @for (test of repeatedTestCases; track test) {
+                        @for (test of repeatedTestCases(); track test) {
                             <li>{{ test }}</li>
                         }
                     </ul>
@@ -47,5 +47,5 @@
             }
         </div>
     </ng-template>
-    <jhi-task-count-warning [numOfTasks]="numOfTasks" />
+    <jhi-task-count-warning [numOfTasks]="numOfTasks()" />
 </div>

@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROP
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.OIDC_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
@@ -219,6 +220,16 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if OIDC-based single sign-on is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if OIDC is enabled, false otherwise
+     */
+    public boolean isOIDCEnabled(Environment environment) {
+        return environment.getProperty(OIDC_ENABLED_PROPERTY_NAME, Boolean.class, false);
+    }
+
+    /**
      * Check if the Theia module is enabled.
      *
      * @param environment the Spring environment
@@ -317,7 +328,7 @@ public class ArtemisConfigHelper {
         Boolean value = environment.getProperty(key, Boolean.class);
         if (value == null) {
             throw new RuntimeException(
-                    String.format("Property %s not found in Artemis configuration. Make sure to add it to your application.yml-file. Allowed values: true, false", key));
+                    "Property %s not found in Artemis configuration. Make sure to add it to your application.yml-file. Allowed values: true, false".formatted(key));
         }
         return value;
     }

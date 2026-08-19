@@ -9,7 +9,6 @@ import {
     CompetencyRelationDTO,
     CompetencyWithTailRelationDTO,
     CourseCompetency,
-    CourseCompetencyImportOptionsDTO,
     CourseCompetencyProgress,
     CourseCompetencyType,
 } from 'app/atlas/shared/entities/competency.model';
@@ -30,6 +29,7 @@ import {
     toCompetency,
     toPrerequisite,
 } from 'app/atlas/shared/dto/course-competency-response.dto';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityArrayResponseType = HttpResponse<CourseCompetency[]>;
 type EntityResponseDTOType = HttpResponse<CourseCompetencyResponseDTO>;
@@ -56,7 +56,7 @@ export class CourseCompetencyService {
                     const emptyResult: SearchResult<CourseCompetency> = { resultsOnPage: [], numberOfPages: 0 };
                     return emptyResult;
                 }
-                return Object.assign({}, body, {
+                return cloneWith(body, {
                     resultsOnPage: body.resultsOnPage.map((dto) => this.toCourseCompetency(dto)),
                 });
             }),
@@ -164,7 +164,7 @@ export class CourseCompetencyService {
                     importRelations: importRelations,
                     importExercises: false,
                     importLectures: false,
-                } as CourseCompetencyImportOptionsDTO,
+                },
                 { observe: 'response' },
             )
             .pipe(
@@ -254,7 +254,7 @@ export class CourseCompetencyService {
     }
 
     protected convertCompetencyFromClient(courseCompetency: CourseCompetency): CourseCompetency {
-        const copy = Object.assign({}, courseCompetency, {
+        const copy = cloneWith(courseCompetency, {
             softDueDate: convertDateFromClient(courseCompetency.softDueDate),
         });
 

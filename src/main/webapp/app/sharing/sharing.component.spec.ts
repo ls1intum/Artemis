@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -25,8 +24,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 const flushPromises = () => vi.advanceTimersByTimeAsync(0);
 
 describe('SharingComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<SharingComponent>;
     let httpMock: HttpTestingController;
     let accountService: AccountService;
@@ -111,7 +108,7 @@ describe('SharingComponent', () => {
 
         // further actions -> select course
         fixture.componentInstance.onCourseSelected(courses[0]);
-        expect(fixture.componentInstance.selectedCourse).toStrictEqual(courses[0]);
+        expect(fixture.componentInstance.selectedCourse()).toStrictEqual(courses[0]);
         expect(fixture.componentInstance.courseId()).toBe(1);
         expect(fixture.componentInstance.trackId(0, courses[0])).toBe(1);
         fixture.componentInstance.sortRows(); // just for coverage ;-)
@@ -158,11 +155,11 @@ describe('SharingComponent', () => {
 
     it('test formatted ExpiryDate', () => {
         const someValidityDate = new Date('1.1.2025 17:30');
-        fixture.componentInstance.shoppingBasket = {
+        fixture.componentInstance.shoppingBasket.set({
             exerciseInfo: [],
             userInfo: { email: 'test@banana.com' },
             tokenValidUntil: someValidityDate,
-        };
+        });
         expect(fixture.componentInstance.formattedExpiryDate).toBe(someValidityDate.toLocaleString());
     });
 

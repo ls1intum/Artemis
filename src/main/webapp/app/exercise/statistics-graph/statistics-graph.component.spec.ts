@@ -1,19 +1,18 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StatisticsGraphComponent } from 'app/exercise/statistics-graph/statistics-graph.component';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
+import { MockComponent } from 'ng-mocks';
+import { ChartModule, UIChart } from 'primeng/chart';
 import { vi } from 'vitest';
 
 describe('StatisticsGraphComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<StatisticsGraphComponent>;
     let component: StatisticsGraphComponent;
     let service: StatisticsService;
@@ -22,8 +21,13 @@ describe('StatisticsGraphComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [StatisticsGraphComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting(), provideNoopAnimationsForTests()],
-        }).compileComponents();
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+        })
+            .overrideComponent(StatisticsGraphComponent, {
+                remove: { imports: [ChartModule] },
+                add: { imports: [MockComponent(UIChart)] },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(StatisticsGraphComponent);
         component = fixture.componentInstance;
         service = TestBed.inject(StatisticsService);
@@ -70,7 +74,7 @@ describe('StatisticsGraphComponent', () => {
 
             expect(component.dataForSpanType).toEqual(graphData);
             graphData.forEach((data, index) => {
-                expect(component.ngxData[index].value).toBe(data);
+                expect(component.chartEntries()[index].value).toBe(data);
             });
             expect(component.currentSpan()).toEqual(span);
         }

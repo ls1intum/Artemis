@@ -1,32 +1,34 @@
-@if (exam && course && course.isAtLeastInstructor) {
-    <div class="exam-action-buttons">
-        <span>
-            <a [routerLink]="['/course-management', courseId, 'exams', examId, 'grading']" class="btn btn-info mt-1" id="grading-key-button-{{ exam.id }}">
-                <fa-icon [icon]="faClipboard" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.gradingSystem"></span>
-            </a>
-        </span>
-        <button
-            id="evaluateQuizExercisesButton"
-            class="btn btn-primary mt-1"
-            (click)="evaluateQuizExercises()"
-            [disabled]="isLoading || isAssessingUnsubmittedExams || isEvaluatingQuizExercises || !isExamOver"
-        >
-            @if (isEvaluatingQuizExercises) {
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            }
-            <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises"></span>
-        </button>
-        <button
-            class="btn btn-primary mt-1"
-            id="assessUnsubmittedExamModelingAndTextParticipationsButton"
-            (click)="assessUnsubmittedExamModelingAndTextParticipations()"
-            [disabled]="isLoading || isAssessingUnsubmittedExams || isEvaluatingQuizExercises || !isExamOver"
-        >
-            @if (isAssessingUnsubmittedExams) {
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            }
-            <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams"></span>
-        </button>
-    </div>
+@if (exam(); as exam) {
+    @if (course()?.isAtLeastInstructor) {
+        <div class="exam-action-buttons">
+            <span>
+                <a [routerLink]="['/course-management', courseId(), 'exams', examId(), 'grading']" class="btn btn-info mt-1" id="grading-key-button-{{ exam.id }}">
+                    <fa-icon [icon]="faClipboard" />
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.gradingSystem"></span>
+                </a>
+            </span>
+            <button
+                id="evaluateQuizExercisesButton"
+                class="btn btn-primary mt-1"
+                (click)="evaluateQuizExercises()"
+                [disabled]="isLoading() || isAssessingUnsubmittedExams() || isEvaluatingQuizExercises() || !isExamOver()"
+            >
+                @if (isEvaluatingQuizExercises()) {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                }
+                <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises"></span>
+            </button>
+            <button
+                class="btn btn-primary mt-1"
+                id="assessUnsubmittedExamModelingAndTextParticipationsButton"
+                (click)="assessUnsubmittedExamModelingAndTextParticipations()"
+                [disabled]="isLoading() || isAssessingUnsubmittedExams() || isEvaluatingQuizExercises() || !isExamOver()"
+            >
+                @if (isAssessingUnsubmittedExams()) {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                }
+                <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams"></span>
+            </button>
+        </div>
+    }
 }

@@ -12,6 +12,57 @@ import Aura from '@primeuix/themes/aura';
  */
 export const AuraArtemis = definePreset(Aura, {
     semantic: {
+        colorScheme: {
+            light: {
+                formField: {
+                    background: 'var(--artemis-control-background)',
+                    disabledBackground: 'var(--artemis-control-disabled-background)',
+                    borderColor: 'var(--artemis-control-border)',
+                    hoverBorderColor: 'var(--artemis-control-border-hover)',
+                    color: 'var(--artemis-control-color)',
+                    disabledColor: 'var(--artemis-control-disabled-color)',
+                    placeholderColor: 'var(--artemis-control-muted)',
+                    iconColor: 'var(--artemis-control-muted)',
+                },
+            },
+            // Bind PrimeNG's DARK surface ramp to the Artemis slate family (hue ~213, low saturation,
+            // lightness-only steps) so PrimeNG components match the chrome by construction. surface-900 IS
+            // --module-bg, so a PrimeNG card/table sitting inside an Artemis panel has no temperature seam.
+            // Light is left as stock Aura slate (already coherent with the cool light chrome).
+            dark: {
+                surface: {
+                    0: '#ffffff',
+                    50: '#f4f5f6',
+                    100: '#e2e5e9',
+                    200: '#c6cbd2',
+                    300: '#a4acb7',
+                    400: '#7e8b9a',
+                    500: '#5e6a78',
+                    600: '#434c56',
+                    700: '#343a42',
+                    800: '#262b31',
+                    900: 'var(--module-bg)',
+                    950: '#101214',
+                },
+                // The stock Aura dark content border (surface.700) reads as bright "white" hairlines against the
+                // extra-dark Artemis surfaces (tables, cards, panels, dividers). Step it down to surface.800 for a
+                // subtle separator that harmonizes with the chrome. Drives --p-content-border-color, which p-table /
+                // p-card / p-panel borders and the global Tailwind default border-color (see tailwind.css) all use.
+                content: {
+                    borderColor: '{surface.800}',
+                },
+                formField: {
+                    background: 'var(--artemis-control-background)',
+                    disabledBackground: 'var(--artemis-control-disabled-background)',
+                    borderColor: 'var(--artemis-control-border)',
+                    hoverBorderColor: 'var(--artemis-control-border-hover)',
+                    color: 'var(--artemis-control-color)',
+                    disabledColor: 'var(--artemis-control-disabled-color)',
+                    placeholderColor: 'var(--artemis-control-muted)',
+                    iconColor: 'var(--artemis-control-muted)',
+                },
+            },
+        },
         primary: {
             // Reference the --primary CSS variable from your theme
             50: 'color-mix(in srgb, var(--primary) 10%, white)',
@@ -27,6 +78,9 @@ export const AuraArtemis = definePreset(Aura, {
             950: 'color-mix(in srgb, var(--primary) 10%, black)',
         },
     },
+    // definePreset's semantic tree only rebrands primary/surface, so the primitive ramps that severity
+    // components read (green/red/yellow/orange/cyan) can't be reached through it — they must be remapped
+    // to Artemis' state colors via this raw-CSS escape hatch.
     // Use CSS to override primitive colors used by severity components
     css: `
         :root {

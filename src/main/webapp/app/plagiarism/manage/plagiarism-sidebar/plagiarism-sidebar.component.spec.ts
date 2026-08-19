@@ -1,17 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { SimpleChange } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismSidebarComponent } from 'app/plagiarism/manage/plagiarism-sidebar/plagiarism-sidebar.component';
 
 describe('Plagiarism Sidebar Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: PlagiarismSidebarComponent;
     let fixture: ComponentFixture<PlagiarismSidebarComponent>;
 
@@ -55,64 +51,53 @@ describe('Plagiarism Sidebar Component', () => {
     });
 
     it('computes the paged index', () => {
-        comp.currentPage = 2;
+        comp.currentPage.set(2);
         const pagedIndex = comp.getPagedIndex(1);
 
         expect(pagedIndex).toBe(21);
     });
 
     it('pages left', () => {
-        comp.currentPage = 2;
+        comp.currentPage.set(2);
         comp.handlePageLeft();
 
-        expect(comp.currentPage).toBe(1);
+        expect(comp.currentPage()).toBe(1);
     });
 
     it('does not page left', () => {
-        comp.currentPage = 0;
+        comp.currentPage.set(0);
         comp.handlePageLeft();
 
-        expect(comp.currentPage).toBe(0);
+        expect(comp.currentPage()).toBe(0);
     });
 
     it('pages right', () => {
-        comp.currentPage = 2;
-        comp.numberOfPages = 3;
+        comp.currentPage.set(2);
+        comp.numberOfPages.set(3);
         comp.handlePageRight();
 
-        expect(comp.currentPage).toBe(2);
+        expect(comp.currentPage()).toBe(2);
     });
 
     it('does not pages right', () => {
-        comp.currentPage = 3;
-        comp.numberOfPages = 3;
+        comp.currentPage.set(3);
+        comp.numberOfPages.set(3);
         comp.handlePageRight();
 
-        expect(comp.currentPage).toBe(3);
+        expect(comp.currentPage()).toBe(3);
     });
 
     it('should reset pagination on changes', () => {
-        const comparisons = [
-            { id: 1 } as PlagiarismComparison,
-            { id: 2 } as PlagiarismComparison,
-            { id: 3 } as PlagiarismComparison,
-            { id: 4 } as PlagiarismComparison,
-            { id: 5 } as PlagiarismComparison,
-            { id: 6 } as PlagiarismComparison,
-            { id: 7 } as PlagiarismComparison,
-            { id: 8 } as PlagiarismComparison,
-            { id: 9 } as PlagiarismComparison,
-            { id: 10 } as PlagiarismComparison,
-            { id: 11 } as PlagiarismComparison,
-            { id: 12 } as PlagiarismComparison,
-        ];
+        // submissionA/submissionB are populated so the rendered template (driven by detectChanges) can read studentLogin.
+        const comparisons = Array.from({ length: 12 }, (_, index) => ({ id: index + 1, submissionA: {}, submissionB: {} }) as PlagiarismComparison);
         const pagedComparisons = comparisons.slice(0, 10);
+
+        // The constructor effect resets paging whenever comparisons() changes (replaces the former ngOnChanges).
         fixture.componentRef.setInput('comparisons', comparisons);
-        comp.ngOnChanges({
-            comparisons: new SimpleChange([], comparisons, true),
-        });
-        expect(comp.currentPage).toBe(0);
-        expect(comp.numberOfPages).toBe(2);
-        expect(comp.pagedComparisons).toEqual(pagedComparisons);
+        fixture.detectChanges();
+
+        expect(comp.currentPage()).toBe(0);
+        expect(comp.numberOfPages()).toBe(2);
+        expect(comp.pagedComparisons()).toEqual(pagedComparisons);
     });
 });

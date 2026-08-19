@@ -1,9 +1,9 @@
 import { Component, DestroyRef, WritableSignal, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DecimalPipe, NgClass } from '@angular/common';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition } from '@fortawesome/fontawesome-common-types';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { Tag } from 'primeng/tag';
 import { ButtonDirective } from 'primeng/button';
 import { Badge } from 'primeng/badge';
@@ -27,12 +27,12 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Panel } from 'primeng/panel';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
-import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest';
-import { DifficultyAssessment } from 'app/openapi/model/difficultyAssessment';
-import { QualityIssue } from 'app/openapi/model/qualityIssue';
-import { InferredCompetency } from 'app/openapi/model/inferredCompetency';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
+import { ChecklistAnalysisResponse } from 'app/openapi/model/checklist-analysis-response';
+import { ChecklistActionRequest } from 'app/openapi/model/checklist-action-request';
+import { DifficultyAssessmentDeltaEnum, DifficultyAssessmentSuggestedEnum } from 'app/openapi/model/difficulty-assessment';
+import { QualityIssue } from 'app/openapi/model/quality-issue';
+import { InferredCompetency } from 'app/openapi/model/inferred-competency';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import {
@@ -49,8 +49,10 @@ import { catchError, concatMap, map, pairwise, switchMap, tap, toArray } from 'r
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { FormsModule } from '@angular/forms';
 import { Checkbox } from 'primeng/checkbox';
+import { MAX_PROBLEM_STATEMENT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Type-safe section identifier used for stale tracking and section-level re-analysis.
@@ -91,10 +93,10 @@ const PENALTY_LOW = 0.1;
     templateUrl: './checklist-panel.component.html',
     styleUrls: ['./checklist-panel.component.scss'],
     standalone: true,
-    imports: [NgClass, DecimalPipe, TranslateModule, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge, Checkbox, Panel],
+    imports: [NgClass, DecimalPipe, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge, Checkbox, Panel],
 })
 export class ChecklistPanelComponent {
-    private hyperionApiService = inject(HyperionProblemStatementApiService);
+    private hyperionApiService = inject(HyperionProblemStatementApi);
     private alertService = inject(AlertService);
     private competencyService = inject(CompetencyService);
     private destroyRef = inject(DestroyRef);
@@ -200,15 +202,15 @@ export class ChecklistPanelComponent {
      * and the AI-suggested difficulty. Reacts immediately when the instructor adapts difficulty
      * via the checklist panel or when the exercise input changes reference.
      */
-    readonly effectiveDelta = computed((): DifficultyAssessment.DeltaEnum => {
+    readonly effectiveDelta = computed((): DifficultyAssessmentDeltaEnum => {
         const suggested = this.analysisResult()?.difficultyAssessment?.suggested;
         const declared = this.localDeclaredDifficulty();
         const RANKS: Record<string, number> = { EASY: 1, MEDIUM: 2, HARD: 3 };
         const s = suggested !== undefined ? RANKS[suggested] : undefined;
         const d = declared !== undefined ? RANKS[declared] : undefined;
-        if (s === undefined || d === undefined) return DifficultyAssessment.DeltaEnum.Unknown;
-        if (s === d) return DifficultyAssessment.DeltaEnum.Match;
-        return s < d ? DifficultyAssessment.DeltaEnum.Lower : DifficultyAssessment.DeltaEnum.Higher;
+        if (s === undefined || d === undefined) return 'UNKNOWN';
+        if (s === d) return 'MATCH';
+        return s < d ? 'LOWER' : 'HIGHER';
     });
 
     sectionExpanded: Record<ChecklistSectionType, ReturnType<typeof signal<boolean>>> = {
@@ -244,6 +246,10 @@ export class ChecklistPanelComponent {
     analyze() {
         const cId = this.courseId();
         if (cId == null || this.isLoading() || this.isApplyingAction() || this.sectionLoading().size > 0) {
+            return;
+        }
+
+        if (!this.validateProblemStatementLength()) {
             return;
         }
 
@@ -411,6 +417,10 @@ export class ChecklistPanelComponent {
         const cId = this.courseId();
         if (cId == null || this.isApplyingAction() || this.sectionLoading().size > 0) return;
 
+        if (!this.validateProblemStatementLength(request.problemStatementMarkdown)) {
+            return;
+        }
+
         this.isApplyingAction.set(true);
         this.actionLoadingKey.set(loadingKey);
 
@@ -466,6 +476,10 @@ export class ChecklistPanelComponent {
         const cId = this.courseId();
         if (cId == null || this.isLoading() || this.sectionLoading().has(section) || this.isApplyingAction()) return;
 
+        if (!this.validateProblemStatementLength()) {
+            return;
+        }
+
         this.updateSet(this.sectionLoading, section, 'add');
         const ex = this.exercise();
         const request = {
@@ -482,7 +496,7 @@ export class ChecklistPanelComponent {
                 next: (res: ChecklistAnalysisResponse) => {
                     const current = this.analysisResult();
                     if (current) {
-                        const updated = Object.assign({}, current, { [SECTION_TO_FIELD[section]]: res[SECTION_TO_FIELD[section]] });
+                        const updated = cloneWith(current, { [SECTION_TO_FIELD[section]]: res[SECTION_TO_FIELD[section]] });
                         this.analysisResult.set(updated);
                     } else {
                         this.analysisResult.set(res);
@@ -507,10 +521,21 @@ export class ChecklistPanelComponent {
         this.analysisResult.update((current) => (current ? updater(current) : current));
     }
 
+    /**
+     * Checks if problem statement does not exceed maximum length.
+     */
+    private validateProblemStatementLength(problemStatement: string = this.effectiveProblemStatement()): boolean {
+        if (problemStatement.length <= MAX_PROBLEM_STATEMENT_LENGTH) {
+            return true;
+        }
+        this.alertService.error('artemisApp.programmingExercise.instructorChecklist.problemStatementTooLong', { max: MAX_PROBLEM_STATEMENT_LENGTH });
+        return false;
+    }
+
     fixQualityIssue(issue: QualityIssue, index: number) {
         this.applyAction(
             {
-                actionType: ChecklistActionRequest.ActionTypeEnum.FixQualityIssue,
+                actionType: 'FIX_QUALITY_ISSUE',
                 problemStatementMarkdown: this.effectiveProblemStatement(),
                 context: {
                     issueDescription: issue.description || '',
@@ -520,7 +545,7 @@ export class ChecklistPanelComponent {
             },
             `fix-issue-${index}`,
             ['competencies', 'difficulty'],
-            () => this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) })),
+            () => this.updateAnalysisOptimistically((r) => cloneWith(r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) })),
         );
     }
 
@@ -530,14 +555,14 @@ export class ChecklistPanelComponent {
 
         this.applyAction(
             {
-                actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
+                actionType: 'FIX_ALL_QUALITY_ISSUES',
                 problemStatementMarkdown: this.effectiveProblemStatement(),
                 context: { allIssues },
             },
             'fix-all',
             ['competencies', 'difficulty'],
             () => {
-                this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: [] }));
+                this.updateAnalysisOptimistically((r) => cloneWith(r, { qualityIssues: [] }));
                 this.selectedIssueIndices.set(new Set());
             },
         );
@@ -548,7 +573,7 @@ export class ChecklistPanelComponent {
      * The quality radar graph updates reactively since qualityScores is a computed signal.
      */
     discardQualityIssue(index: number) {
-        this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) }));
+        this.updateAnalysisOptimistically((r) => cloneWith(r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) }));
         // Reindex selected indices after removal
         this.selectedIssueIndices.update((current) => {
             const updated = new Set<number>();
@@ -623,14 +648,14 @@ export class ChecklistPanelComponent {
 
         this.applyAction(
             {
-                actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
+                actionType: 'FIX_ALL_QUALITY_ISSUES',
                 problemStatementMarkdown: this.effectiveProblemStatement(),
                 context: { allIssues },
             },
             'fix-selected',
             ['competencies', 'difficulty'],
             () => {
-                this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => !selected.has(i)) }));
+                this.updateAnalysisOptimistically((r) => cloneWith(r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => !selected.has(i)) }));
                 this.selectedIssueIndices.set(new Set());
             },
         );
@@ -644,7 +669,7 @@ export class ChecklistPanelComponent {
         const selected = this.selectedIssueIndices();
         if (selected.size === 0) return;
 
-        this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => !selected.has(i)) }));
+        this.updateAnalysisOptimistically((r) => cloneWith(r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => !selected.has(i)) }));
         this.selectedIssueIndices.set(new Set());
         this.alertService.success('artemisApp.programmingExercise.instructorChecklist.quality.discardedMultiple');
     }
@@ -701,7 +726,7 @@ export class ChecklistPanelComponent {
         const toDiscard = this.analysisResult()?.inferredCompetencies?.[index];
         if (!toDiscard) return;
         this.unlinkDiscardedCompetencies([toDiscard]);
-        this.updateAnalysisOptimistically((r) => Object.assign({}, r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => i !== index) }));
+        this.updateAnalysisOptimistically((r) => cloneWith(r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => i !== index) }));
         this.selectedCompetencyIndices.update((current) => {
             const updated = new Set<number>();
             for (const idx of current) {
@@ -731,7 +756,7 @@ export class ChecklistPanelComponent {
         const allInferred = this.analysisResult()?.inferredCompetencies ?? [];
         const toDiscard = allInferred.filter((_, i) => selected.has(i));
         this.unlinkDiscardedCompetencies(toDiscard);
-        this.updateAnalysisOptimistically((r) => Object.assign({}, r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => !selected.has(i)) }));
+        this.updateAnalysisOptimistically((r) => cloneWith(r, { inferredCompetencies: (r.inferredCompetencies ?? []).filter((_, i) => !selected.has(i)) }));
         this.selectedCompetencyIndices.set(new Set());
         // Reindex expanded competencies: remove discarded, shift down indices above removed ones
         this.expandedCompetencies.update((current) => {
@@ -767,14 +792,14 @@ export class ChecklistPanelComponent {
         this.applyCompetenciesFromList(selectedInferred);
     }
 
-    adaptDifficulty(targetDifficulty: DifficultyAssessment.SuggestedEnum) {
+    adaptDifficulty(targetDifficulty: DifficultyAssessmentSuggestedEnum) {
         const current = this.exercise()?.difficulty || 'unknown';
         const assessment = this.analysisResult()?.difficultyAssessment;
         const reasoning = assessment?.reasoning || '';
 
         this.applyAction(
             {
-                actionType: ChecklistActionRequest.ActionTypeEnum.AdaptDifficulty,
+                actionType: 'ADAPT_DIFFICULTY',
                 problemStatementMarkdown: this.effectiveProblemStatement(),
                 context: {
                     targetDifficulty,
@@ -788,10 +813,11 @@ export class ChecklistPanelComponent {
             ['quality', 'competencies'],
             () => {
                 this.updateAnalysisOptimistically((r) =>
-                    Object.assign({}, r, {
-                        difficultyAssessment: Object.assign({}, r.difficultyAssessment, {
+                    cloneWith(r, {
+                        // `?? {}` preserves the previous Object.assign behaviour when no assessment exists yet.
+                        difficultyAssessment: cloneWith(r.difficultyAssessment ?? {}, {
                             suggested: targetDifficulty,
-                            delta: DifficultyAssessment.DeltaEnum.Match,
+                            delta: 'MATCH',
                             reasoning: this.translateService.instant('artemisApp.programmingExercise.instructorChecklist.actions.adaptedReasoning', {
                                 difficulty: targetDifficulty,
                             }),

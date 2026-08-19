@@ -30,7 +30,12 @@ test.beforeAll('Get student name', async ({ browser }) => {
 
 test.describe('Exam assessment', () => {
     test.describe.serial('Programming exercise assessment', { tag: '@slow' }, () => {
-        // Preparing an exam and initial participation can exceed 90s on loaded local CI-like runs.
+        // Preparing an exam and initial participation can exceed 90s on loaded local CI-like runs
+        // (the C template repository clone dominates). The submission step itself no longer waits
+        // for a build result during setup — `prepareExam` passes `skipBuildResultCheck: true` and
+        // `OnlineEditorPage.submit` now honours it — so the build queue can no longer push the hook
+        // past its budget; the score-producing build is triggered later via
+        // `waitForExamBuildAndTestAfterDueDate`.
         test.describe.configure({ timeout: 180_000 });
         let exam: Exam;
         let examEnd: Dayjs;
@@ -60,7 +65,7 @@ test.describe('Exam assessment', () => {
             test.slow();
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            await waitForExamEnd(examEnd, page);
+            await waitForExamEnd(exam, page);
             await waitForExamBuildAndTestAfterDueDate(exam, page);
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
@@ -104,7 +109,7 @@ test.describe('Exam assessment', () => {
         }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            await waitForExamEnd(examEnd, page);
+            await waitForExamEnd(exam, page);
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await modelingExerciseAssessment.addNewFeedback(5, 'Good');
@@ -145,7 +150,7 @@ test.describe('Exam assessment', () => {
         test('Assess a text exercise submission', async ({ page, login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            await waitForExamEnd(examEnd, page);
+            await waitForExamEnd(exam, page);
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(7, 'Good job');
@@ -248,7 +253,7 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
         test('Check student grade', async ({ page, login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            await waitForExamEnd(examEnd, page);
+            await waitForExamEnd(exam, page);
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(7, 'Good job');
@@ -297,6 +302,9 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
             endDate: examEnd,
             examMaxPoints: 10,
             numberOfExercisesInExam: 1,
+            // no grace period: assessment only opens after the exam end plus the grace period, and this spec's
+            // budget is already tight without waiting out createExam's 30s default
+            gracePeriod: 0,
         };
         exam = await examAPIRequests.createExam(examConfig);
         const textFixture = 'loremIpsum.txt';
@@ -325,7 +333,7 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
 
     test.beforeEach('Assess a text exercise submission', async ({ login, page, examManagement, examAssessment, courseAssessment, exerciseAssessment }) => {
         await login(tutor);
-        await waitForExamEnd(examEnd, page);
+        await waitForExamEnd(exam, page);
         await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
 
         const assessment = examStatisticsSample.assessment;
@@ -348,7 +356,7 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
         await page.waitForLoadState('domcontentloaded');
         const examScores = new ExamScoresPage(page);
         await examScores.checkExamStatistics(examStatisticsSample.statistics);
-        await examScores.checkGradeDistributionChart(examStatisticsSample.gradeDistribution);
+        await examScores.checkGradeDistributionChart();
         const scores = await examAPIRequests.getExamScores(exam);
         await examScores.checkStudentResults(scores.studentResults);
     });

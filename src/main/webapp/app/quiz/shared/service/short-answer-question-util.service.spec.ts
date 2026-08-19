@@ -1,18 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
-import { cloneDeep } from 'lodash-es';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ShortAnswerQuestionUtil', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ShortAnswerQuestionUtil;
 
     const spot = new ShortAnswerSpot();
@@ -110,7 +107,7 @@ describe('ShortAnswerQuestionUtil', () => {
         let mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings!);
         expect(mappedSolutionsHaveSpots).toBe(true);
 
-        const wrongMapping = cloneDeep(shortAnswerQuestion.correctMappings);
+        const wrongMapping = deepClone(shortAnswerQuestion.correctMappings);
         // @ts-ignore
         wrongMapping.forEach((m) => (m.spot = undefined));
         mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(wrongMapping!);
@@ -125,7 +122,7 @@ describe('ShortAnswerQuestionUtil', () => {
         let hasDuplicatedMappings = service.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings!);
         expect(hasDuplicatedMappings).toBe(false);
 
-        const duplicatedMapping = cloneDeep(shortAnswerQuestion.correctMappings!);
+        const duplicatedMapping = deepClone(shortAnswerQuestion.correctMappings!);
         duplicatedMapping.push(duplicatedMapping[0]);
         hasDuplicatedMappings = service.hasMappingDuplicateValues(duplicatedMapping);
         expect(hasDuplicatedMappings).toBe(true);

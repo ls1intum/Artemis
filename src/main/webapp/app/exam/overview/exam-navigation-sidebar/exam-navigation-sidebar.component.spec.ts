@@ -17,12 +17,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { facSaveSuccess, facSaveWarning } from 'app/foundation/icons/icons';
+import { computed } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamNavigationSidebarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamNavigationSidebarComponent>;
     let comp: ExamNavigationSidebarComponent;
     let repositoryService: CodeEditorRepositoryService;
@@ -93,7 +91,6 @@ describe('ExamNavigationSidebarComponent', () => {
 
     it('should change the exercise', () => {
         vi.spyOn(comp.onPageChanged, 'emit');
-        vi.spyOn(comp, 'setExerciseButtonStatus');
 
         expect(comp.exerciseIndex()).toBe(0);
 
@@ -103,12 +100,10 @@ describe('ExamNavigationSidebarComponent', () => {
         comp.changePage(false, exerciseIndex, force);
 
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
-        expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
     });
 
     it('should not change the exercise with invalid index', () => {
         vi.spyOn(comp.onPageChanged, 'emit');
-        vi.spyOn(comp, 'setExerciseButtonStatus');
 
         expect(comp.exerciseIndex()).toBe(0);
 
@@ -119,11 +114,10 @@ describe('ExamNavigationSidebarComponent', () => {
 
         expect(comp.exerciseIndex()).toBe(0);
         expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
-        expect(comp.setExerciseButtonStatus).not.toHaveBeenCalledWith(exerciseIndex);
     });
 
     it('should set the exercise button status for undefined submission', () => {
-        const result = comp.setExerciseButtonStatus(1);
+        const result = comp.getExerciseButtonStatus(1);
 
         expect(result).toBe('synced');
     });
@@ -131,7 +125,7 @@ describe('ExamNavigationSidebarComponent', () => {
     it('should set the exercise button status for submitted and synced submission active', () => {
         exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
-        const result = comp.setExerciseButtonStatus(0);
+        const result = comp.getExerciseButtonStatus(0);
 
         expect(result).toBe('synced saved');
     });
@@ -139,24 +133,24 @@ describe('ExamNavigationSidebarComponent', () => {
     it('should set the exercise button status for submitted submission', () => {
         exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
 
-        const result = comp.setExerciseButtonStatus(0);
+        const result = comp.getExerciseButtonStatus(0);
 
-        expect(comp.icon).toEqual(facSaveWarning);
+        expect(comp.getExerciseIcon(0)).toEqual(facSaveWarning);
         expect(result).toBe('notSynced');
     });
 
     it('should set the exercise button status for submitted and synced submission saved', () => {
         exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
-        const result = comp.setExerciseButtonStatus(0);
-        expect(comp.icon).toEqual(facSaveSuccess);
+        const result = comp.getExerciseButtonStatus(0);
+        expect(comp.getExerciseIcon(0)).toEqual(facSaveSuccess);
         expect(result).toBe('synced saved');
     });
 
     it('should set the exercise button status for submitted and synced submission not active', () => {
         exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
-        const result = comp.setExerciseButtonStatus(1);
+        const result = comp.getExerciseButtonStatus(1);
 
         expect(result).toBe('synced');
     });
@@ -209,15 +203,15 @@ describe('ExamNavigationSidebarComponent', () => {
     it('should set exercise button status to synced active if it is the active exercise in the exam timeline view', () => {
         fixture.componentRef.setInput('examTimeLineView', true);
         fixture.componentRef.setInput('exerciseIndex', 0);
-        expect(comp.setExerciseButtonStatus(0)).toBe('synced saved');
-        expect(comp.icon).toEqual(facSaveSuccess);
+        expect(comp.getExerciseButtonStatus(0)).toBe('synced saved');
+        expect(comp.getExerciseIcon(0)).toEqual(facSaveSuccess);
     });
 
     it('should set exercise button status to synced if it is not the active exercise in the exam timeline view', () => {
         fixture.componentRef.setInput('examTimeLineView', true);
         fixture.componentRef.setInput('exerciseIndex', 0);
-        expect(comp.setExerciseButtonStatus(1)).toBe('synced');
-        expect(comp.icon).toEqual(facSaveSuccess);
+        expect(comp.getExerciseButtonStatus(1)).toBe('synced');
+        expect(comp.getExerciseIcon(1)).toEqual(facSaveSuccess);
     });
 
     it('should toggle sidebar based on isCollapsed', () => {
@@ -260,5 +254,30 @@ describe('ExamNavigationSidebarComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         window.dispatchEvent(event);
         expect(preventDefaultSpy).toHaveBeenCalled();
+    });
+
+    it('should re-evaluate the save-state icon when a submission editor reports an isSynced change', () => {
+        // Regression guard: `isSynced` is mutated in place on a plain submission object, so under
+        // zoneless change detection only a signal read makes these bindings re-evaluate. The sidebar used
+        // to read just its own syncStateVersion, which is bumped exclusively by the programming-repository
+        // watcher, so editing a text exercise left the icon stale and the "Exercise not saved" indicator
+        // never appeared. A cached `computed` reproduces a template binding: it only recomputes if
+        // getExerciseIcon actually tracked the service-wide signal the editors bump.
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const exercise = {
+            id: 3,
+            type: ExerciseType.TEXT,
+            studentParticipations: [{ submissions: [{ id: 7, submitted: true, isSynced: true } as Submission] } as StudentParticipation],
+        } as Exercise;
+        fixture.componentRef.setInput('exercises', [exercise]);
+
+        const icon = TestBed.runInInjectionContext(() => computed(() => comp.getExerciseIcon(0)));
+        expect(icon()).toEqual(facSaveSuccess);
+
+        // Exactly what the text/quiz/modeling editors do when the student edits their answer.
+        ExamParticipationService.getSubmissionForExercise(exercise)!.isSynced = false;
+        examParticipationService.notifySubmissionSyncStateChanged();
+
+        expect(icon()).toEqual(facSaveWarning);
     });
 });

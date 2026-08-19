@@ -9,14 +9,13 @@ import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exer
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 @Component({
     selector: 'jhi-problem-statement',
     templateUrl: './problem-statement.component.html',
     styleUrls: ['../../course-overview/course-overview.scss'],
-    imports: [ProgrammingExerciseInstructionComponent, TranslateDirective, HtmlForMarkdownPipe, NgClass],
+    imports: [ProgrammingExerciseInstructionComponent, TranslateDirective, MarkdownDirective, NgClass],
 })
 export class ProblemStatementComponent implements OnInit {
     private route = inject(ActivatedRoute);
@@ -36,10 +35,10 @@ export class ProblemStatementComponent implements OnInit {
     /** Returns the exercise as ProgrammingExercise if it's a programming exercise, undefined otherwise */
     readonly programmingExercise = computed(() => {
         const ex = this.exercise();
-        return ex?.type === ExerciseType.PROGRAMMING ? (ex as ProgrammingExercise) : undefined;
+        return ex?.type === ExerciseType.PROGRAMMING ? ex : undefined;
     });
 
-    isStandalone: boolean = false;
+    readonly isStandalone = signal(false);
 
     ngOnInit() {
         this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
@@ -64,7 +63,7 @@ export class ProblemStatementComponent implements OnInit {
         const url = this.route.url;
         if (url) {
             url.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((segments) => {
-                this.isStandalone = segments.some((segment) => segment.path == 'problem-statement');
+                this.isStandalone.set(segments.some((segment) => segment.path == 'problem-statement'));
             });
         }
     }

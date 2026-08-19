@@ -85,6 +85,8 @@
                 "freePeriodsButtons": "Freie Tage",
                 "creatTutorialGroupButton": "Neue Übungsgruppe",
                 "editConfigurationButton": "Globale Konfiguration bearbeiten",
+                "configurationRequiredForTutor": "Die Übungsgruppenverwaltung ist erst verfügbar, nachdem Lehrende die Übungsgruppen für diesen Kurs konfiguriert haben.",
+                "notAuthorized": "Du bist nicht berechtigt, auf die Übungsgruppenverwaltung dieses Kurses zuzugreifen.",
                 "deleteDialog": {
                     "question": "Sicher, dass die Übungsgruppe mit dem Titel {{ title }} gelöscht werden soll?",
                     "confirm": "Bitte den Titel der Übungsgruppe zur Bestätigung eingeben"
@@ -310,7 +312,6 @@
                 "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",
                 "title": "Freie Zeiträume verwalten",
                 "createFreePeriodButton": "Neuen freien Zeitraum hinzufügen",
-                "timeZoneExplanation": "Jeder Tag wird in der Zeitzone {{ timeZone }} angezeigt",
                 "deleteDialog": {
                     "question": "Sicher, dass der freie Tag {{ title }} gelöscht werden soll?"
                 }
@@ -320,8 +321,7 @@
                 "edit": "Freien Tag bearbeiten"
             },
             "tutorialGroupSessionManagement": {
-                "title": "Sitzungsverwaltung",
-                "timeZoneExplanation": "Jede Sitzung wird in der Zeitzone {{ timeZone }} angezeigt"
+                "title": "Sitzungsverwaltung"
             },
             "createTutorialGroupsConfiguration": {
                 "title": "Globalen Übungsgruppen Konfiguration erstellen",

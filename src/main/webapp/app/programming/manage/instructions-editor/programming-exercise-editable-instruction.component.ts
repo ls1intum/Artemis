@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, HostListener, OnDestroy, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { EMPTY, Observable, Subject, Subscription, of } from 'rxjs';
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
@@ -83,9 +83,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     private previousExercise?: ProgrammingExercise;
 
-    unsavedChangesValue = false;
+    readonly unsavedChangesValue = signal(false);
 
-    exerciseTestCases: string[] = [];
+    readonly exerciseTestCases = signal<string[]>([]);
 
     taskRegex = TaskAction.GLOBAL_TASK_REGEX;
     testCaseAction = new TestCaseAction();
@@ -110,10 +110,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     });
     protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
 
-    savingInstructions = false;
+    readonly savingInstructions = signal(false);
 
-    testCaseSubscription: Subscription;
-    forceRenderSubscription: Subscription;
+    testCaseSubscription?: Subscription;
+    forceRenderSubscription?: Subscription;
     private problemStatementStateReplacementSubscription?: Subscription;
     private problemStatementInitialSyncFinalizedSubscription?: Subscription;
     private problemStatementSyncState?: ProblemStatementSyncState;
@@ -171,7 +171,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     set unsavedChanges(hasChanges: boolean) {
-        this.unsavedChangesValue = hasChanges;
+        this.unsavedChangesValue.set(hasChanges);
         // Why emit only `true` transitions? Once an exercise is saved, the page would automatically re-navigate to the exercise page.
         // This would unmount this component and clear the unsaved changes indicator.
         if (hasChanges) {
@@ -243,13 +243,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     /** Save the problem statement on the server.
      * @param event
      **/
-    saveInstructions(event: any) {
+    saveInstructions(event: Event) {
         event.stopPropagation();
         this.persistProblemStatement().subscribe();
     }
 
     private persistProblemStatement(): Observable<void> {
-        this.savingInstructions = true;
+        this.savingInstructions.set(true);
         const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
         const problemStatementToSave = currentProblemStatement?.trim() || undefined;
         return this.programmingExerciseService.updateProblemStatement(this.exercise().id!, problemStatementToSave).pipe(
@@ -263,7 +263,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 return EMPTY;
             }),
             finalize(() => {
-                this.savingInstructions = false;
+                this.savingInstructions.set(false);
             }),
         );
     }
@@ -286,6 +286,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     updateProblemStatement(problemStatement: string) {
         if (this.exercise().problemStatement !== problemStatement) {
+            // Guard against the internal `model.setValue('')` that clears Monaco before the Yjs binding is created (see initializeProblemStatementSync). While the initial sync is
+            // still pending, a blank value is never a real user edit; propagating it to the parent would wipe the persisted problem statement if the exercise is saved before the sync
+            // finalizes (issue #13046). Non-blank content still propagates so the model is restored once the real statement arrives.
+            if (this.problemStatementSyncService.isAwaitingInitialSync() && problemStatement.trim().length === 0) {
+                return;
+            }
             if (this.suppressUnsavedForNextProblemStatementChange) {
                 this.suppressUnsavedForNextProblemStatementChange = false;
             } else if (this.shouldMarkProblemStatementAsUnsaved()) {
@@ -341,8 +347,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                         return of();
                     }),
                     tap((testCaseNames: string[]) => {
-                        this.exerciseTestCases = testCaseNames;
-                        const cases = this.exerciseTestCases.map((value) => ({ value, id: value }));
+                        this.exerciseTestCases.set(testCaseNames);
+                        const cases = this.exerciseTestCases().map((value) => ({ value, id: value }));
                         this.testCaseAction.setValues(cases);
                     }),
                     catchError(() => of()),
@@ -356,12 +362,22 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * This is the fallback for older programming exercises without test cases in the database.
      * @param templateParticipationId
      */
-    loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<Array<string | undefined>> => {
+    loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<string[]> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
-            map((result) => (!result?.feedbacks ? throwError(() => new Error('no result available')) : result)),
+            map((result) => {
+                if (!result?.feedbacks) {
+                    throw new Error('no result available');
+                }
+                return result;
+            }),
             // use the text (legacy case) or the name of the provided test case attribute
-            map(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text ?? feedback.testCase?.testName).sort()),
+            map(({ feedbacks }: Result) =>
+                feedbacks!
+                    .map((feedback) => feedback.text ?? feedback.testCase?.testName)
+                    .filter((name): name is string => name != undefined)
+                    .sort(),
+            ),
             catchError(() => of([])),
         );
     };
@@ -496,7 +512,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param payload The thread id whose consistency inline fix was applied in the editor.
      */
     onApplyInlineFix(payload: { threadId: number }): void {
-        if (this.savingInstructions) {
+        if (this.savingInstructions()) {
             return;
         }
 
@@ -586,7 +602,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.suppressUnsavedForNextProblemStatementChange = true;
             // Late leader replacement can carry content originally seeded from Windows peers.
             // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
-            const replacedText = this.normalizeLineEndings(syncState.text.toString());
+            const replacedText = this.normalizeLineEndings(syncState.text.toJSON());
             model.setValue(replacedText);
             this.enforceLfEol(model);
             this.createProblemStatementBinding(syncState, model, editorInstance);

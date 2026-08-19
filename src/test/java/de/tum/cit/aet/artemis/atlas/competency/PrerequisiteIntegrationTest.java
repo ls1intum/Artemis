@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.competency;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,11 +20,14 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 
 class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
 
-    private static final String TEST_PREFIX = "prerequisiteintegrationtest";
+    private static final String TEST_PREFIX = "prerequisite";
+
+    /** Student/instructor not enrolled in either test course; exercises the wrong-course branches. */
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     @BeforeEach
     void setupTestScenario() {
-        super.setupTestScenario(TEST_PREFIX, prerequisiteUtilService::createPrerequisite);
+        super.setupTestScenario(TEST_PREFIX, OTHER_PREFIX, prerequisiteUtilService::createPrerequisite);
     }
 
     @Nested
@@ -36,7 +38,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
             request.post("/api/atlas/courses/" + course.getId() + "/prerequisites", new CourseCompetencyRequestDTO(null, "Title", "Description", null, 1, null, false),
                     HttpStatus.FORBIDDEN);
             request.delete("/api/atlas/courses/" + course.getId() + "/prerequisites/" + courseCompetency.getId(), HttpStatus.FORBIDDEN);
-            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/bulk", Collections.emptyList(), HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/bulk", List.of(), HttpStatus.FORBIDDEN);
             // import
             request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/import-all", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
                     HttpStatus.FORBIDDEN);
@@ -44,7 +46,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
                     HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/import/bulk", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
                     HttpStatus.FORBIDDEN);
-            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/import-standardized", Collections.emptyList(), HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/prerequisites/import-standardized", List.of(), HttpStatus.FORBIDDEN);
         }
 
         @Test
@@ -82,7 +84,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForUserNotInCourse() throws Exception {
         super.shouldReturnForbiddenForUserNotInCourse();
     }
@@ -110,7 +112,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void shouldReturnCompetenciesForStudentNotInCourse() throws Exception {
         super.shouldReturnCompetenciesForCourse(new Prerequisite());
     }
@@ -132,7 +134,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForDelete() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForDelete();
     }
@@ -207,7 +209,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForCreate() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForCreate(new Prerequisite());
     }
@@ -229,7 +231,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForImport() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForImport();
     }
@@ -263,7 +265,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForCreateBulk() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForCreateBulk();
     }
@@ -297,7 +299,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorNotInCourse() throws Exception {
         super.shouldReturnForbiddenForInstructorNotInCourse();
     }
@@ -330,7 +332,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForBulkImport() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForBulkImport();
     }

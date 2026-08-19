@@ -42,7 +42,7 @@ export class AttachmentAction extends TextEditorAction {
         this.openFileDialogCallback = callback;
     }
 
-    register(editor: TextEditor, translateService: TranslateService) {
+    override register(editor: TextEditor, translateService: TranslateService) {
         super.register(editor, translateService);
         this.disposablePasteListener = editor.addPasteListener(async (insertedText: string) => {
             // We do not read from the clipboard if the user pasted text. This prevents an unnecessary prompt on Firefox.
@@ -66,7 +66,7 @@ export class AttachmentAction extends TextEditorAction {
         });
     }
 
-    dispose() {
+    override dispose() {
         super.dispose();
         this.disposablePasteListener?.dispose();
         this.uploadCallback = undefined;
@@ -77,7 +77,7 @@ export class AttachmentAction extends TextEditorAction {
      * Executes the action in the current editor with the given arguments (url and text).
      * @param args The text and url of the attachment to insert. If one or both are not provided, checks for selected text to wrap.
      */
-    executeInCurrentEditor(args?: AttachmentArguments): void {
+    override executeInCurrentEditor(args?: AttachmentArguments): void {
         super.executeInCurrentEditor(args);
     }
 

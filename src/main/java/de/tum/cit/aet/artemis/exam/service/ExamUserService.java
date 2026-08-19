@@ -6,7 +6,6 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -154,7 +153,7 @@ public class ExamUserService {
         List<ExamUserWithImageDTO> examUserWithImageDTOs = parsePDF(file);
 
         for (var examUserWithImageDTO : examUserWithImageDTOs) {
-            Optional<User> user = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(examUserWithImageDTO.studentRegistrationNumber());
+            Optional<User> user = userRepository.findUserWithAuthoritiesByRegistrationNumber(examUserWithImageDTO.studentRegistrationNumber());
             if (user.isEmpty()) {
                 notFoundExamUsersRegistrationNumbers.add(examUserWithImageDTO.studentRegistrationNumber());
                 continue;
@@ -304,7 +303,7 @@ public class ExamUserService {
         Page<Long> idPage = examUserRepository.findExamUserIdsForExam(examId, search);
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), idPage.getPageable(), idPage.getTotalElements());
+            return new PageImpl<>(List.of(), idPage.getPageable(), idPage.getTotalElements());
         }
 
         List<ExamUser> examUsers = examUserRepository.findByIdsWithUser(ids);
@@ -321,17 +320,21 @@ public class ExamUserService {
 
     /**
      * Searches Artemis users by login prefix, full-name substring, email substring, or registration-number substring,
+     * excluding course staff (teaching assistants, editors, instructors) and admins,
      * and marks each result as already registered for the given exam.
      *
+     * @param courseId   the id of the course the exam belongs to (used to exclude its staff)
      * @param examId     the exam to check existing registrations against
      * @param searchTerm the text entered by the instructor
      * @param page       zero-based page index
      * @param size       number of results per page
      * @return a page of {@link UserForRegistrationDTO} with {@code isRegistered} set appropriately
      */
-    public Page<UserForRegistrationDTO> searchUsersForExamRegistration(long examId, String searchTerm, int page, int size) {
+    public Page<UserForRegistrationDTO> searchStudentsForExamRegistration(long courseId, long examId, String searchTerm, int page, int size) {
+        // The repository applies a deterministic order for the LIMIT/OFFSET pages, so the pages are stable across
+        // requests and no matching user shuffles between pages (see issue #13069).
         PageRequest pageable = PageRequest.of(page, size);
-        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm);
+        Page<User> users = userRepository.searchNonStaffByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm, courseId);
 
         List<Long> userIds = users.getContent().stream().map(User::getId).toList();
         Set<Long> registeredIds = userIds.isEmpty() ? Set.of() : examUserRepository.findRegisteredUserIdsByExamIdAndUserIds(examId, userIds);

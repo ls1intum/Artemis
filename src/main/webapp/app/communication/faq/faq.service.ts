@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { parseJson } from 'app/foundation/util/json.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<Faq>;
 type EntityArrayResponseType = HttpResponse<Faq[]>;
@@ -78,21 +80,22 @@ export class FaqService {
      * Converts a faqs categories into a json string (to send them to the server). Does nothing if no categories exist
      * @param faq the faq
      */
-    static stringifyFaqCategories(faq: CreateFaqDTO | UpdateFaqDTO) {
-        return faq.categories?.map((category) => JSON.stringify(category) as unknown as FaqCategory);
+    static stringifyFaqCategories(faq: CreateFaqDTO | UpdateFaqDTO): string[] | undefined {
+        // Skip already-serialized entries so a second call does not double-encode them.
+        return faq.categories?.map((category) => (typeof category === 'string' ? category : JSON.stringify(category)));
     }
 
     convertFaqCategoriesAsStringFromServer(categories: string[]): FaqCategory[] {
-        return categories.map((category) => JSON.parse(category));
+        return categories.map((category) => parseJson<FaqCategory>(category));
     }
 
     /**
      * Converts the faq category json strings into FaqCategory objects (if it exists).
      * @param res the response
      */
-    static convertFaqCategoryArrayFromServer<E extends Faq, EART extends EntityArrayResponseType>(res: EART): EART {
+    static convertFaqCategoryArrayFromServer<EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
-            res.body.forEach((faq: E) => FaqService.parseFaqCategories(faq));
+            res.body.forEach((faq: Faq) => FaqService.parseFaqCategories(faq));
         }
         return res;
     }
@@ -104,7 +107,8 @@ export class FaqService {
     static parseFaqCategories(faq?: Faq) {
         if (faq?.categories) {
             faq.categories = faq.categories.map((category) => {
-                const categoryObj = JSON.parse(category as unknown as string);
+                // Server sends categories as JSON strings; the model field carries FaqCategory objects after parsing.
+                const categoryObj = typeof category === 'string' ? parseJson<FaqCategory>(category) : category;
                 return new FaqCategory(categoryObj.category, categoryObj.color);
             });
         }
@@ -115,7 +119,7 @@ export class FaqService {
      * @param { CreateFaqDTO } createFaq - faq that will be modified
      */
     static convertCreateFaqFromClient<F extends CreateFaqDTO>(createFaq: F): CreateFaqDTO {
-        const copy = Object.assign({}, createFaq);
+        const copy = deepClone(createFaq);
         copy.categories = FaqService.stringifyFaqCategories(copy);
         return copy;
     }
@@ -125,7 +129,7 @@ export class FaqService {
      * @param { UpdateFaqDTO } updateFaq - faq that will be modified
      */
     static convertUpdateFaqFromClient<F extends UpdateFaqDTO>(updateFaq: F): UpdateFaqDTO {
-        const copy = Object.assign({}, updateFaq);
+        const copy = deepClone(updateFaq);
         copy.categories = FaqService.stringifyFaqCategories(copy);
         return copy;
     }
@@ -153,6 +157,7 @@ export class FaqService {
         if (categories) {
             return categories.some((category) => filteredCategory.has(category!));
         }
+        return false;
     }
 
     hasSearchTokens(faq: Faq, searchTerm: string): boolean {

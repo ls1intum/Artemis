@@ -94,9 +94,7 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly courseId = input.required<number>();
     readonly smallButtons = input<boolean>(false);
     readonly examMode = input<boolean>(false);
-    readonly isGeneratingFeedback = input<boolean>(false);
 
-    readonly generatingFeedback = output<void>();
     readonly newParticipation = output<StudentParticipation>();
 
     private readonly _uninitializedQuiz = signal(false);
@@ -122,6 +120,7 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly numberOfGradedParticipationResults = this._numberOfGradedParticipationResults.asReadonly();
     readonly isLoading = this._isLoading.asReadonly();
     readonly studentParticipations = this._studentParticipations.asReadonly();
+    readonly hasGradedSubmission = computed(() => !!this._gradedParticipation()?.submissions?.some((submission) => submission.submitted));
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 
@@ -136,7 +135,7 @@ export class ExerciseDetailsStudentActionsComponent {
             this._uninitializedQuiz.set(ArtemisQuizService.isUninitialized(quizExercise));
             this._quizNotStarted.set(ArtemisQuizService.notStarted(quizExercise));
         } else if (exercise.type === ExerciseType.PROGRAMMING) {
-            this._programmingExercise.set(exercise as ProgrammingExercise);
+            this._programmingExercise.set(exercise);
         } else if (exercise.type === ExerciseType.MODELING) {
             this._editorLabel.set('openModelingEditor');
         } else if (exercise.type === ExerciseType.TEXT) {
@@ -304,7 +303,9 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     get assignedTeamId(): number | undefined {
         const participations = this._studentParticipations();
-        return participations?.length ? participations[0].team?.id : this.exercise().studentAssignedTeamId;
+        // Fall through rather than branch: the course overview projects the participation without its team, and even
+        // before that a team-mode participation could arrive without one. The exercise carries the resolved team id.
+        return participations?.[0]?.team?.id ?? this.exercise().studentAssignedTeamId;
     }
 
     get allowEditing(): boolean {

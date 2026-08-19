@@ -1,23 +1,27 @@
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { toSubmitStudentExamDTO } from 'app/exam/overview/services/submit-student-exam-dto.mapper';
 import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
@@ -40,6 +44,18 @@ export class ExamParticipationService {
     private shouldUpdateTestExams = new BehaviorSubject<boolean>(false);
     shouldUpdateTestExamsObservable = this.shouldUpdateTestExams.asObservable();
 
+    // Version counter bumped whenever a submission's `isSynced` flag is mutated in place (on an answer/model/text
+    // change, or when a save succeeds/fails). Submissions are plain mutable objects, so under zoneless change
+    // detection those in-place mutations are invisible to signal-based bindings. UI that reflects the sync state
+    // (e.g. the in-exercise save button's `disabled`/icon) reads this version to re-evaluate reactively.
+    private readonly submissionSyncVersionSignal = signal(0);
+    readonly submissionSyncVersion = this.submissionSyncVersionSignal.asReadonly();
+
+    /** Notify sync-state-dependent UI that a submission's `isSynced` flag changed (see {@link submissionSyncVersion}). */
+    notifySubmissionSyncStateChanged(): void {
+        this.submissionSyncVersionSignal.update((version) => version + 1);
+    }
+
     public getResourceURL(courseId: number, examId: number): string {
         return `api/exam/courses/${courseId}/exams/${examId}`;
     }
@@ -58,7 +74,11 @@ export class ExamParticipationService {
      */
     public loadStudentExamWithExercisesForConduction(courseId: number, examId: number, studentExamId: number): Observable<StudentExam | undefined> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction';
-        return this.getStudentExamFromServer(url, courseId, examId);
+        return this.getStudentExamFromServer(url).pipe(
+            // During the conduction, blocking the student on a failed request would be worse than letting them work on
+            // the copy cached on this device, which is a faithful snapshot of the exam they were handed.
+            catchError(() => of(this.getStudentExamFromLocalStorage(courseId, examId))),
+        );
     }
 
     /**
@@ -68,26 +88,30 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      */
     public loadStudentExamWithExercisesForConductionFromLocalStorage(courseId: number, examId: number): Observable<StudentExam | undefined> {
-        const localStoredExam = this.localStorageService.retrieve<StudentExam>(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId));
-        return of(localStoredExam);
+        return of(this.getStudentExamFromLocalStorage(courseId, examId));
     }
 
     /**
-     * Retrieves a {@link StudentExam} from server or localstorage for display of the summary.
+     * Retrieves a {@link StudentExam} from the server for display of the summary.
+     *
+     * Deliberately without a localstorage fallback: the cached exam is the conduction-era copy, i.e. it carries neither
+     * results nor scores. Substituting it would present stale data as the current summary once the error toast is gone,
+     * so the error is propagated and the caller surfaces a retryable error state instead.
+     *
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param studentExamId the id of the studentExam
      * @returns a studentExam with Exercises for the summary-phase
      */
-    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExam | undefined> {
+    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/summary';
-        return this.getStudentExamFromServer(url, courseId, examId);
+        return this.getStudentExamFromServer(url);
     }
 
     /**
-     * Retrieves a {@link StudentExam} from server or localstorage.
+     * Retrieves a {@link StudentExam} from the server.
      */
-    private getStudentExamFromServer(url: string, courseId: number, examId: number): Observable<StudentExam | undefined> {
+    private getStudentExamFromServer(url: string): Observable<StudentExam> {
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
                 if (studentExam.examSessions && studentExam.examSessions.length > 0 && studentExam.examSessions[0].sessionToken) {
@@ -98,11 +122,14 @@ export class ExamParticipationService {
             tap((studentExam: StudentExam) => {
                 this.currentlyLoadedStudentExam.next(studentExam);
             }),
-            catchError(() => {
-                const localStoredExam = this.localStorageService.retrieve<StudentExam>(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId));
-                return of(localStoredExam);
-            }),
         );
+    }
+
+    /**
+     * Retrieves the {@link StudentExam} cached on this device during the conduction, if any.
+     */
+    private getStudentExamFromLocalStorage(courseId: number, examId: number): StudentExam | undefined {
+        return this.localStorageService.retrieve<StudentExam>(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId));
     }
 
     /**
@@ -139,11 +166,30 @@ export class ExamParticipationService {
             }),
         );
     }
+    /**
+     * Fetches the exams of a course that are visible to the current user, for the exams tab of the course overview.
+     * These used to arrive as part of the course itself, which made every course visit pay for them.
+     * @param courseId the course to fetch the exams for
+     */
+    public getExamsForOverview(courseId: number): Observable<ExamForOverview[]> {
+        return this.httpClient.get<ExamForOverview[]>(`api/exam/courses/${courseId}/exams-for-overview`).pipe(
+            map((exams) =>
+                exams.map((exam) =>
+                    cloneWith(exam, {
+                        visibleDate: convertDateFromServer(exam.visibleDate),
+                        startDate: convertDateFromServer(exam.startDate),
+                        endDate: convertDateFromServer(exam.endDate),
+                    }),
+                ),
+            ),
+        );
+    }
+
     public getRealExamSidebarData(courseId: number): Observable<Exam[]> {
         const url = `api/exam/courses/${courseId}/real-exams-sidebar-data`;
         return this.httpClient.get<Exam[]>(url).pipe(
             map((exams: Exam[]) => {
-                return exams.map((exam) => ExamParticipationService.convertExamDateFromServer(exam)).filter((exam) => exam !== undefined) as Exam[];
+                return exams.map((exam) => ExamParticipationService.convertExamDateFromServer(exam)).filter((exam) => exam !== undefined);
             }),
         );
     }
@@ -160,20 +206,27 @@ export class ExamParticipationService {
     }
 
     /**
-     * Loads {@link StudentExam} objects linked to a test exam per user and per course from server
+     * Loads {@link StudentExamDTO} objects linked to a test exam per user and per course from server
      * @param courseId the id of the course we are interested
-     * @returns a List of all StudentExams without Exercises per User and Course
+     * @returns a List of all StudentExams without Exercises per User and Course. Each includes a nested `exam`
+     * (id, title, testExam, workingTime, course{id, groupNames}) but no `user`, `exercises`, or `examSessions`.
      */
-    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExam[]> {
+    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExamDTO[]> {
         const url = `api/exam/courses/${courseId}/test-exams-per-user`;
         return this.httpClient
-            .get<StudentExam[]>(url, { observe: 'response' })
-            .pipe(map((studentExam: HttpResponse<StudentExam[]>) => this.processListOfStudentExamsFromServer(studentExam)));
+            .get<StudentExamDTO[]>(url, { observe: 'response' })
+            .pipe(map((studentExam: HttpResponse<StudentExamDTO[]>) => this.processListOfStudentExamsFromServer(studentExam)));
     }
 
-    private processListOfStudentExamsFromServer(studentExamsResponse: HttpResponse<StudentExam[]>) {
+    /**
+     * Unlike {@link convertStudentExamDateFromServer}, this does not touch the nested `exam` — the DTO returned by
+     * `test-exams-per-user` (`ExamForStudentExamDTO`) never carries date fields (no `startDate`/`endDate`), so there
+     * is nothing to convert there.
+     */
+    private processListOfStudentExamsFromServer(studentExamsResponse: HttpResponse<StudentExamDTO[]>): StudentExamDTO[] {
         studentExamsResponse.body!.forEach((studentExam) => {
-            return ExamParticipationService.convertStudentExamDateFromServer(studentExam);
+            studentExam.submissionDate = studentExam.submissionDate && dayjs(studentExam.submissionDate);
+            studentExam.startedDate = studentExam.startedDate && dayjs(studentExam.startedDate);
         });
         return studentExamsResponse.body!;
     }
@@ -186,10 +239,9 @@ export class ExamParticipationService {
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/submit';
-        const studentExamCopy = cloneDeep(studentExam);
-        ExamParticipationService.breakCircularDependency(studentExamCopy);
+        const submitStudentExamDTO = toSubmitStudentExamDTO(studentExam);
 
-        return this.httpClient.post<void>(url, studentExamCopy).pipe(
+        return this.httpClient.post<void>(url, submitStudentExamDTO).pipe(
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
                     return throwError(() => new Error('artemisApp.studentExam.submissionNotInTime'));
@@ -267,7 +319,7 @@ export class ExamParticipationService {
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
         // if the following code fails, this should never affect the exam
         try {
-            const studentExamCopy = cloneDeep(studentExam);
+            const studentExamCopy = deepClone(studentExam);
             ExamParticipationService.breakCircularDependency(studentExamCopy);
             this.localStorageService.store(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId), studentExamCopy);
         } catch (error) {
@@ -309,7 +361,17 @@ export class ExamParticipationService {
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         // Add a default exercise group to connect exercises with the exam.
         studentExam.exercises = studentExam.exercises.map((exercise: Exercise) => {
-            exercise.exerciseGroup = { ...exercise.exerciseGroup!, exam: studentExam.exam } as ExerciseGroup;
+            // Built field by field, not copied: the group's `exercises` are the very objects being mapped here, so they
+            // must stay the same instances. `?? new ExerciseGroup()` keeps the previous spread behaviour, which produced
+            // a group carrying only the exam when the server sent none.
+            const group = exercise.exerciseGroup ?? new ExerciseGroup();
+            const groupWithExam = new ExerciseGroup();
+            groupWithExam.id = group.id;
+            groupWithExam.title = group.title;
+            groupWithExam.isMandatory = group.isMandatory;
+            groupWithExam.exercises = group.exercises;
+            groupWithExam.exam = studentExam.exam;
+            exercise.exerciseGroup = groupWithExam;
             return exercise;
         });
         return studentExam;
@@ -323,6 +385,7 @@ export class ExamParticipationService {
             exam.publishResultsDate = exam.publishResultsDate ? dayjs(exam.publishResultsDate) : undefined;
             exam.examStudentReviewStart = exam.examStudentReviewStart ? dayjs(exam.examStudentReviewStart) : undefined;
             exam.examStudentReviewEnd = exam.examStudentReviewEnd ? dayjs(exam.examStudentReviewEnd) : undefined;
+            exam.examSummaryPublicationDate = exam.examSummaryPublicationDate ? dayjs(exam.examSummaryPublicationDate) : undefined;
         }
         return exam;
     }
@@ -340,6 +403,7 @@ export class ExamParticipationService {
             // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
             return studentParticipation.submissions.last();
         }
+        return undefined;
     }
 
     /**
@@ -351,6 +415,7 @@ export class ExamParticipationService {
         if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0) {
             return exercise.studentParticipations[0];
         }
+        return undefined;
     }
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {

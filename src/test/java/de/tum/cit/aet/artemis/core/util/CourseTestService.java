@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
@@ -68,7 +67,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageRequest;
@@ -84,6 +82,8 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
@@ -107,6 +107,8 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticip
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
@@ -118,13 +120,18 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.dto.CourseAccessStateDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseCreateDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForImportDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.OnlineCourseDTO;
@@ -177,12 +184,15 @@ import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
+import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.ComplaintResponseRequestDTO;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
@@ -217,6 +227,9 @@ public class CourseTestService {
 
     @Autowired
     private UserTestRepository userRepo;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     @Autowired
     private ExamTestRepository examRepo;
@@ -380,35 +393,19 @@ public class CourseTestService {
 
     private String userPrefix;
 
+    private String otherPrefix;
+
     public void setup(String userPrefix, MockDelegate mockDelegate) {
         this.userPrefix = userPrefix;
+        this.otherPrefix = userPrefix + "other";
         this.mockDelegate = mockDelegate;
 
         userUtilService.addUsers(userPrefix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(userPrefix + "tutor6");
-        userUtilService.createAndSaveUser(userPrefix + "instructor2");
-
-        User customUser = userUtilService.createAndSaveUser(userPrefix + "custom1");
-        customUser.setGroups(Set.of(userPrefix + "customGroup"));
-        userRepo.save(customUser);
-    }
-
-    private void adjustUserGroupsToCustomGroups(String suffix) {
-        userUtilService.adjustUserGroupsToCustomGroups(userPrefix, suffix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
-    }
-
-    public void adjustUserGroupsToCustomGroups() {
-        adjustUserGroupsToCustomGroups("");
-    }
-
-    private void adjustCourseGroups(Course course, String suffix) {
-        course.setStudentGroupName(userPrefix + "student" + suffix);
-        course.setTeachingAssistantGroupName(userPrefix + "tutor" + suffix);
-        course.setEditorGroupName(userPrefix + "editor" + suffix);
-        course.setInstructorGroupName(userPrefix + "instructor" + suffix);
-        courseRepo.save(course);
+        userUtilService.createAndSaveUser(otherPrefix + "tutor6");
+        userUtilService.createAndSaveUser(otherPrefix + "instructor2");
+        userUtilService.createAndSaveUser(otherPrefix + "custom1");
     }
 
     // Test
@@ -436,7 +433,7 @@ public class CourseTestService {
         course1 = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         assertThat(courseRepo.findByIdElseThrow(course1.getId())).isNotNull();
 
-        Course course2 = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course2 = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course2.setShortName("shortName");
         request.performMvcRequest(buildCreateCourse(course2)).andExpect(status().isBadRequest());
         assertThat(courseRepo.findAllByShortName(course2.getShortName())).as("Course has not been stored").hasSize(1);
@@ -485,6 +482,79 @@ public class CourseTestService {
     }
 
     // Test
+    public void testCreateCourseWithTooHighMaxPoints() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setMaxPoints(10000);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testCreateCourseWithNegativeMaxPoints() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setMaxPoints(-1);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testCreateCourseWithTooHighPresentationScore() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setPresentationScore(10000);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testCreateCourseWithNegativePresentationScore() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setPresentationScore(-1);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testUpdateCourseWithTooHighMaxPoints() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setMaxPoints(10000);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+    }
+
+    // Test
+    public void testUpdateCourseWithMaxPointsAtLimit() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setMaxPoints(9999);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
+    }
+
+    // Test
+    public void testUpdateCourseWithPresentationScoreAtLimit() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setPresentationScore(100);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
+    }
+
+    // Test
+    public void testUpdateCourseWithPresentationScoreAboveLimit() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setPresentationScore(101);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+    }
+
+    // Test
+    public void testUpdateCourseWithMaxPointsZero() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setMaxPoints(0);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+    }
+
+    // Test
     public void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
 
@@ -512,23 +582,9 @@ public class CourseTestService {
     }
 
     // Test
-    public void testCreateCourseWithCustomNonExistingGroupNames() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
-        course.setStudentGroupName("StudentGroupName");
-        course.setTeachingAssistantGroupName("TeachingAssistantGroupName");
-        course.setEditorGroupName("EditorGroupName");
-        course.setInstructorGroupName("InstructorGroupName");
-        var result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
-        course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
-        courseRepo.findByIdElseThrow(course.getId());
-        List<Course> repoContent = courseRepo.findAllByShortName(course.getShortName());
-        assertThat(repoContent).as("Course got stored").hasSize(1);
-    }
-
-    // Test
     public void testCreateCourseWithOptions() throws Exception {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, communication = false, messaging = true
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, null, 5, 5, 14, 2000, 2000, false, false, 0);
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), 5, 5, 14, 2000, 2000, false, false, 0);
 
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
@@ -558,12 +614,8 @@ public class CourseTestService {
     // Test
     public void testDeleteCourseWithPermission() throws Exception {
         // add to new list so that we can add another course with ARTEMIS_GROUP_DEFAULT_PREFIX so that delete group will be tested properly
-        List<Course> courses = new ArrayList<>(courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5));
-        Course course3 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), null, null, null, null, true);
-        course3.setStudentGroupName(course3.getDefaultStudentGroupName());
-        course3.setTeachingAssistantGroupName(course3.getDefaultTeachingAssistantGroupName());
-        course3.setEditorGroupName(course3.getDefaultEditorGroupName());
-        course3.setInstructorGroupName(course3.getDefaultInstructorGroupName());
+        List<Course> courses = new ArrayList<>(courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, true, 5));
+        Course course3 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), true);
         course3 = courseRepo.save(course3);
         courses.add(course3);
         addConversationsToCourse(course3);
@@ -701,25 +753,19 @@ public class CourseTestService {
 
     // Test
     public void testResetCourseWithPermission() throws Exception {
-        // Create a simple course with text exercise (no programming exercises which need CI mocking)
-        Course course = courseUtilService.createCourse();
+        // Create course with userPrefix so TEST_PREFIX users are enrolled via UCR
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         Long courseId = course.getId();
 
         // Add a text exercise with participations
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
                 ZonedDateTime.now().plusDays(2));
 
-        // Get group names
-        String studentGroupName = course.getStudentGroupName();
-        String tutorGroupName = course.getTeachingAssistantGroupName();
-        String editorGroupName = course.getEditorGroupName();
-        String instructorGroupName = course.getInstructorGroupName();
-
-        // Verify initial state
-        Set<User> studentsBefore = userRepo.findAllByDeletedIsFalseAndGroupsContains(studentGroupName);
-        Set<User> tutorsBefore = userRepo.findAllByDeletedIsFalseAndGroupsContains(tutorGroupName);
-        Set<User> editorsBefore = userRepo.findAllByDeletedIsFalseAndGroupsContains(editorGroupName);
-        Set<User> instructorsBefore = userRepo.findAllByDeletedIsFalseAndGroupsContains(instructorGroupName);
+        // Verify initial state via UCR (group-string checks removed — auth is via user_course_role)
+        List<UserCourseRole> studentsBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.STUDENT);
+        List<UserCourseRole> tutorsBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.TEACHING_ASSISTANT);
+        List<UserCourseRole> editorsBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.EDITOR);
+        List<UserCourseRole> instructorsBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.INSTRUCTOR);
 
         assertThat(studentsBefore).as("Course has students before reset").isNotEmpty();
         assertThat(tutorsBefore).as("Course has tutors before reset").isNotEmpty();
@@ -746,22 +792,22 @@ public class CourseTestService {
         assertThat(courseRepo.findById(courseId)).as("Course still exists after reset").isPresent();
         assertThat(exerciseRepo.findAllExercisesByCourseId(courseId)).as("Exercises still exist after reset").isNotEmpty();
 
-        // Verify students are unenrolled
-        Set<User> studentsAfter = userRepo.findAllByDeletedIsFalseAndGroupsContains(studentGroupName);
+        // Verify students are unenrolled (UCR entries removed by reset)
+        List<UserCourseRole> studentsAfter = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.STUDENT);
         assertThat(studentsAfter).as("Students are unenrolled after reset").isEmpty();
 
         // Verify tutors are removed
-        Set<User> tutorsAfter = userRepo.findAllByDeletedIsFalseAndGroupsContains(tutorGroupName);
+        List<UserCourseRole> tutorsAfter = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.TEACHING_ASSISTANT);
         assertThat(tutorsAfter).as("Tutors are removed after reset").isEmpty();
 
         // Verify editors are removed
-        Set<User> editorsAfter = userRepo.findAllByDeletedIsFalseAndGroupsContains(editorGroupName);
+        List<UserCourseRole> editorsAfter = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.EDITOR);
         assertThat(editorsAfter).as("Editors are removed after reset").isEmpty();
 
-        // Verify instructors are preserved
-        Set<User> instructorsAfter = userRepo.findAllByDeletedIsFalseAndGroupsContains(instructorGroupName);
+        // Verify instructors are preserved (reset only removes STUDENT/TA/EDITOR)
+        List<UserCourseRole> instructorsAfter = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.INSTRUCTOR);
         assertThat(instructorsAfter).as("Instructors are preserved after reset").isNotEmpty();
-        assertThat(instructorsAfter).as("Same instructors as before reset").containsExactlyInAnyOrderElementsOf(instructorsBefore);
+        assertThat(instructorsAfter).as("Same number of instructors as before reset").hasSameSizeAs(instructorsBefore);
 
         // Verify tutorial group definitions are preserved but registrations are deleted
         tutorialGroupRepository.ifPresent(repo -> {
@@ -840,8 +886,9 @@ public class CourseTestService {
 
     // Test
     public void testEditCourseWithPermission() throws Exception {
-        Course course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
         course = courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
 
         course.setTitle("Test Course");
         course.setStartDate(ZonedDateTime.now().minusDays(5));
@@ -857,7 +904,7 @@ public class CourseTestService {
     // Test
     public void testEditCourseShouldPreserveAssociations() throws Exception {
         Course course = courseUtilService.createCourseWithOrganizations();
-        course = courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
 
         Set<Organization> organizations = course.getOrganizations();
 
@@ -880,32 +927,6 @@ public class CourseTestService {
         assertThat(updatedCourse.getOrganizations()).containsExactlyElementsOf(organizations);
         assertThat(updatedCourse.getCompetencies()).containsExactlyElementsOf(competencies);
         assertThat(updatedCourse.getPrerequisites()).containsExactlyElementsOf(prerequisites);
-    }
-
-    // Test
-    public void testUpdateCourseGroups() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-
-        course.setInstructorGroupName("new-instructor-group");
-        course.setEditorGroupName("new-editor-group");
-        course.setTeachingAssistantGroupName("new-ta-group");
-
-        // Create instructor in the course
-        User user = userUtilService.createAndSaveUser("instructor11");
-        user.setGroups(Set.of("new-instructor-group"));
-        userRepo.save(user);
-
-        // Create teaching assisstant in the course
-        user = UserFactory.generateActivatedUser("teaching-assisstant11");
-        user.setGroups(Set.of("new-ta-group"));
-        userRepo.save(user);
-
-        MvcResult result = request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
-        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
-
-        assertThat(updatedCourse.getInstructorGroupName()).isEqualTo("new-instructor-group");
-        assertThat(updatedCourse.getEditorGroupName()).isEqualTo("new-editor-group");
-        assertThat(updatedCourse.getTeachingAssistantGroupName()).isEqualTo("new-ta-group");
     }
 
     // Test
@@ -972,7 +993,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesWithPermission() throws Exception {
-        List<Course> coursesCreated = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
+        List<Course> coursesCreated = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, false, 0);
         List<Course> courses = request.getList("/api/course/courses", HttpStatus.OK, Course.class);
 
         for (Course course : coursesCreated) {
@@ -988,7 +1009,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesWithQuizExercises() throws Exception {
-        List<Course> coursesCreated = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
+        List<Course> coursesCreated = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, false, 0);
         Course activeCourse = coursesCreated.getFirst();
         Course inactiveCourse = coursesCreated.get(1);
 
@@ -1008,7 +1029,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/course/courses/" + courses.getFirst().getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
                 CourseForDashboardDTO.class);
         Course receivedCourse = receivedCourseForDashboard.course();
@@ -1050,32 +1071,289 @@ public class CourseTestService {
         }
     }
 
+    // Test
+    public void testGetCourseAvailableTabs() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        CourseAvailableTabsDTO tabs = request.get("/api/course/courses/" + courses.getFirst().getId() + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class);
+
+        // The created course has lectures and competencies, but no exams visible to the student
+        assertThat(tabs.lectures()).as("lectures tab available").isTrue();
+        assertThat(tabs.competencies()).as("competencies tab available").isTrue();
+        assertThat(tabs.exams()).as("no exam is visible to the student").isFalse();
+        assertThat(tabs.tutorialGroups()).as("no tutorial groups").isFalse();
+        assertThat(tabs.faq()).as("no accepted FAQs").isFalse();
+    }
+
+    // Test
+    public void testGetCourseAvailableTabsWithVisibleExam() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course course = courses.getFirst();
+        // A visible exam the student is registered for must make the exams tab available (the user-scoped visibility check)
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        examUtilService.registerUsersForExamAndSaveExam(exam, userPrefix, 1, 1);
+
+        CourseAvailableTabsDTO tabs = request.get("/api/course/courses/" + course.getId() + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class);
+
+        assertThat(tabs.exams()).as("a visible exam the student is registered for makes the exams tab available").isTrue();
+    }
+
+    // Test
+    public void testGetCourseForOverviewIsLean() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course expected = courses.getFirst();
+
+        CourseForOverviewDTO overview = request.get("/api/course/courses/" + expected.getId() + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class);
+
+        assertThat(overview.id()).isEqualTo(expected.getId());
+        assertThat(overview.title()).isEqualTo(expected.getTitle());
+        // The whole point of this endpoint: it is a flat projection, so none of the expensive content can come along.
+        // Asserting on the serialized response rather than the record, because the record simply has no such fields.
+        String body = request.performMvcRequest(MockMvcRequestBuilders.get("/api/course/courses/" + expected.getId() + "/for-overview")).andReturn().getResponse()
+                .getContentAsString();
+        assertThat(body).as("no content collections are serialized").doesNotContain("\"exercises\":", "\"lectures\":", "\"exams\":", "\"competencies\":", "\"tutorialGroups\":");
+        assertThat(body).as("nor a nested course object").doesNotContain("\"course\":");
+    }
+
+    // Test
+    public void testGetCourseForOverviewForbidden() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(false);
+        unenrollStudent1FromAllCourses();
+        request.get("/api/course/courses/" + course.getId() + "/for-overview", HttpStatus.FORBIDDEN, CourseForOverviewDTO.class);
+    }
+
+    // Test
+    public void testGetCourseExercisesForOverview() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course course = courses.getFirst();
+        ZonedDateTime now = ZonedDateTime.now();
+        User student = userUtilService.getUserByLogin(userPrefix + "student1");
+
+        // Pin every programming action field read by the overview. The graded participation deliberately differs from
+        // the practice participation so the projection cannot accidentally copy the wrong repository.
+        ProgrammingExercise programmingExercise = course.getExercises().stream().filter(ProgrammingExercise.class::isInstance).map(ProgrammingExercise.class::cast).findFirst()
+                .orElseThrow();
+        programmingExercise.setAllowFeedbackRequests(true);
+        programmingExercise.setAllowOnlineEditor(true);
+        programmingExercise.setAllowOfflineIde(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        ProgrammingExerciseStudentParticipation gradedProgrammingParticipation = participationRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .filter(ProgrammingExerciseStudentParticipation.class::isInstance).map(ProgrammingExerciseStudentParticipation.class::cast)
+                .filter(participation -> student.getLogin().equals(participation.getParticipantIdentifier())).filter(participation -> !participation.isPracticeMode()).findFirst()
+                .orElseThrow();
+        String gradedRepositoryUri = "https://vcs.example.org/course/student1.git";
+        gradedProgrammingParticipation.setRepositoryUri(gradedRepositoryUri);
+        gradedProgrammingParticipation.setPresentationScore(100.0);
+        participationRepository.save(gradedProgrammingParticipation);
+
+        // Exercise both participation projections. The common fixture contains only individual exercises, while the
+        // endpoint also has a separate team query and must expose the requesting student's assigned team id.
+        TextExercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, now.minusDays(3), now.plusDays(1), now.plusDays(2));
+        User instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
+        var assignedTeam = teamUtilService.createTeam(Set.of(student), instructor, teamExercise, "overview-team");
+        Result teamRatedResult = participationUtilService.createParticipationSubmissionAndResult(teamExercise.getId(), assignedTeam, teamExercise.getMaxPoints(),
+                teamExercise.getBonusPoints(), 60, true);
+        course.addExercises(teamExercise);
+
+        // Result creation schedules participant-score updates. Let the initial updates finish before changing result
+        // dates, otherwise the rescheduling can interrupt a task while it holds a database connection.
+        await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
+
+        course.getExercises().forEach(exercise -> {
+            exercise.setReleaseDate(now.minusDays(3));
+            exercise.setDueDate(now.minusHours(6));
+            exercise.setAssessmentDueDate(now.minusHours(1));
+        });
+        exerciseRepo.saveAll(course.getExercises());
+        Set<Result> completedResults = course.getExercises().stream().flatMap(exercise -> resultRepo.findAllBySubmissionParticipationExerciseId(exercise.getId()).stream())
+                .collect(Collectors.toSet());
+        completedResults.forEach(result -> result.setCompletionDate(now.minusHours(12)));
+        resultRepo.saveAll(completedResults);
+        await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
+
+        CourseExercisesForOverviewDTO exercises = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+
+        assertThat(exercises.exercises()).as("the course exercises are returned").isNotEmpty();
+        assertThat(exercises.exercises()).allSatisfy(exercise -> {
+            assertThat(exercise.id()).isNotNull();
+            assertThat(exercise.title()).isNotNull();
+            assertThat(exercise.type()).isNotNull();
+        });
+        var projectedTeamExercise = exercises.exercises().stream().filter(exercise -> exercise.id().equals(teamExercise.getId())).findFirst().orElseThrow();
+        assertThat(projectedTeamExercise.teamMode()).isTrue();
+        assertThat(projectedTeamExercise.studentAssignedTeamId()).isEqualTo(assignedTeam.getId());
+        assertThat(projectedTeamExercise.studentAssignedTeamIdComputed()).isTrue();
+
+        var projectedProgrammingExercise = exercises.exercises().stream().filter(exercise -> exercise.id().equals(programmingExercise.getId())).findFirst().orElseThrow();
+        assertThat(projectedProgrammingExercise.allowFeedbackRequests()).as("manual feedback action remains available").isTrue();
+        assertThat(projectedProgrammingExercise.allowOnlineEditor()).as("online editor action remains available").isTrue();
+        assertThat(projectedProgrammingExercise.allowOfflineIde()).as("clone and offline IDE actions remain available").isTrue();
+        assertThat(projectedProgrammingExercise.studentParticipations()).as("graded and practice programming participations are projected").hasSize(2);
+        assertThat(projectedProgrammingExercise.studentParticipations()).filteredOn(participation -> Boolean.FALSE.equals(participation.testRun())).singleElement()
+                .satisfies(participation -> assertThat(participation.repositoryUri()).as("graded repository URI").isEqualTo(gradedRepositoryUri));
+        assertThat(projectedProgrammingExercise.studentParticipations()).filteredOn(participation -> Boolean.TRUE.equals(participation.testRun())).singleElement()
+                .satisfies(participation -> assertThat(participation.repositoryUri()).as("practice repository is not confused with the graded repository").isNull());
+
+        var projectedQuizExercise = exercises.exercises().stream().filter(exercise -> exercise.type() == ExerciseType.QUIZ).findFirst().orElseThrow();
+        assertThat(projectedQuizExercise.quizEnded()).as("past quiz is marked as ended").isTrue();
+        assertThat(projectedQuizExercise.quizBatches()).as("the requesting student's synchronized quiz batch is represented by one minimal marker").singleElement()
+                .satisfies(batch -> assertThat(batch.started()).isTrue());
+        assertThat(projectedQuizExercise.allowOnlineEditor()).as("programming-only fields do not leak onto quizzes").isNull();
+        assertThat(projectedQuizExercise.allowOfflineIde()).as("programming-only fields do not leak onto quizzes").isNull();
+
+        assertThat(exercises.totalScores()).as("the derived scores are returned").isNotNull();
+        assertThat(exercises.totalScores().studentScores().absoluteScore()).as("the projection-backed calculator evaluates a non-zero result").isPositive();
+        assertThat(exercises.totalScores().studentScores().presentationScore()).as("the stateless calculator counts projected basic presentation scores").isEqualTo(1.0);
+
+        // The new endpoint uses database projections and a stateless DTO calculator. Keep its score semantics pinned to
+        // the entity-based endpoint while native clients still use that path.
+        CourseForDashboardDTO dashboard = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        assertThat(exercises.totalScores()).isEqualTo(dashboard.totalScores());
+        assertThat(exercises.textScores()).isEqualTo(dashboard.textScores());
+        assertThat(exercises.programmingScores()).isEqualTo(dashboard.programmingScores());
+        assertThat(exercises.modelingScores()).isEqualTo(dashboard.modelingScores());
+        assertThat(exercises.fileUploadScores()).isEqualTo(dashboard.fileUploadScores());
+        assertThat(exercises.quizScores()).isEqualTo(dashboard.quizScores());
+        assertThat(exercises.participationResults()).containsExactlyInAnyOrderElementsOf(dashboard.participationResults());
+        assertThat(exercises.achievedPointsPerVariantGroup()).isEqualTo(dashboard.achievedPointsPerVariantGroup());
+
+        var programmingGradeBeforePendingSubmission = exercises.participationResults().stream()
+                .filter(result -> result.participationId().equals(gradedProgrammingParticipation.getId())).findFirst().orElseThrow();
+        assertThat(programmingGradeBeforePendingSubmission.score()).as("the existing individual grade is meaningful").isPositive();
+        assertThat(programmingGradeBeforePendingSubmission.rated()).as("the existing individual grade is rated").isTrue();
+        StudentParticipation teamParticipation = (StudentParticipation) teamRatedResult.getSubmission().getParticipation();
+        var teamGradeBeforePendingSubmission = exercises.participationResults().stream().filter(result -> result.participationId().equals(teamParticipation.getId())).findFirst()
+                .orElseThrow();
+        assertThat(teamGradeBeforePendingSubmission.score()).as("the existing team grade matches the fixture").isEqualTo(60.0);
+        assertThat(teamGradeBeforePendingSubmission.rated()).as("the existing team grade is rated").isTrue();
+
+        // A pending build or assessment must not erase the last grade. The newest submissions deliberately have no
+        // result; the score projection must still select the prior rated result for both individual and team modes.
+        ProgrammingSubmission pendingProgrammingSubmission = new ProgrammingSubmission();
+        pendingProgrammingSubmission.setSubmissionDate(now.minusHours(7));
+        pendingProgrammingSubmission.setSubmitted(true);
+        pendingProgrammingSubmission.setParticipation(gradedProgrammingParticipation);
+        Long pendingProgrammingSubmissionId = submissionRepository.save(pendingProgrammingSubmission).getId();
+
+        TextSubmission pendingTeamSubmission = new TextSubmission();
+        pendingTeamSubmission.setSubmissionDate(now.minusHours(7));
+        pendingTeamSubmission.setSubmitted(true);
+        pendingTeamSubmission.setParticipation(teamParticipation);
+        submissionRepository.save(pendingTeamSubmission);
+
+        CourseExercisesForOverviewDTO whileSubmissionsPending = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+
+        assertThat(whileSubmissionsPending.totalScores()).as("a pending submission does not change the total score").isEqualTo(exercises.totalScores());
+        assertThat(whileSubmissionsPending.programmingScores()).as("the individual programming score is retained").isEqualTo(exercises.programmingScores());
+        assertThat(whileSubmissionsPending.textScores()).as("the team text score is retained").isEqualTo(exercises.textScores());
+        assertThat(whileSubmissionsPending.participationResults()).filteredOn(result -> result.participationId().equals(gradedProgrammingParticipation.getId())).singleElement()
+                .as("the complete prior individual grade remains while the newest submission is pending").isEqualTo(programmingGradeBeforePendingSubmission);
+        assertThat(whileSubmissionsPending.participationResults()).filteredOn(result -> result.participationId().equals(teamParticipation.getId())).singleElement()
+                .as("the complete prior team grade remains while the newest submission is pending").isEqualTo(teamGradeBeforePendingSubmission);
+        var programmingWhilePending = whileSubmissionsPending.exercises().stream().filter(exercise -> exercise.id().equals(programmingExercise.getId())).findFirst().orElseThrow();
+        assertThat(programmingWhilePending.studentParticipations()).filteredOn(participation -> Boolean.FALSE.equals(participation.testRun())).singleElement()
+                .satisfies(participation -> assertThat(participation.submissions()).singleElement().satisfies(submission -> {
+                    assertThat(submission.id()).as("the UI still displays the newest pending submission").isEqualTo(pendingProgrammingSubmissionId);
+                    assertThat(submission.results()).as("the result collection is omitted while the newest submission is pending").isNull();
+                }));
+    }
+
+    // Test
+    public void testGetCourseExercisesForOverviewUsesCurrentStudentsQuizBatch() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        ZonedDateTime now = ZonedDateTime.now();
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(now.minusDays(1), now.plusDays(1), QuizMode.INDIVIDUAL, course);
+        quizExercise = exerciseRepo.save(quizExercise);
+        long quizExerciseId = quizExercise.getId();
+
+        QuizBatch otherStudentsStartedBatch = QuizExerciseFactory.generateQuizBatch(quizExercise, now.minusMinutes(5));
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(otherStudentsStartedBatch, quizExercise);
+        QuizSubmission otherStudentsSubmission = new QuizSubmission();
+        otherStudentsSubmission.setQuizBatch(otherStudentsStartedBatch.getId());
+        otherStudentsSubmission.setSubmissionDate(now.minusMinutes(4));
+        otherStudentsSubmission.setSubmitted(false);
+        quizExerciseUtilService.saveQuizSubmission(quizExercise, otherStudentsSubmission, userPrefix + "student2");
+
+        QuizBatch currentStudentsFutureBatch = QuizExerciseFactory.generateQuizBatch(quizExercise, now.plusMinutes(5));
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(currentStudentsFutureBatch, quizExercise);
+        QuizSubmission currentStudentsSubmission = new QuizSubmission();
+        currentStudentsSubmission.setQuizBatch(currentStudentsFutureBatch.getId());
+        currentStudentsSubmission.setSubmissionDate(now);
+        currentStudentsSubmission.setSubmitted(false);
+        quizExerciseUtilService.saveQuizSubmission(quizExercise, currentStudentsSubmission, userPrefix + "student1");
+
+        CourseExercisesForOverviewDTO beforeOwnBatchStarts = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+        var projectedQuizBeforeStart = beforeOwnBatchStarts.exercises().stream().filter(exercise -> exercise.id() == quizExerciseId).findFirst().orElseThrow();
+        assertThat(projectedQuizBeforeStart.quizEnded()).isFalse();
+        assertThat(projectedQuizBeforeStart.quizBatches()).as("another student's started batch is not exposed").isNullOrEmpty();
+        assertThat(projectedQuizBeforeStart.studentParticipations()).as("only the requesting student's participation is exposed").singleElement()
+                .satisfies(participation -> assertThat(participation.id()).isEqualTo(currentStudentsSubmission.getParticipation().getId()));
+
+        currentStudentsFutureBatch.setStartTime(now.minusMinutes(1));
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(currentStudentsFutureBatch, quizExercise);
+
+        CourseExercisesForOverviewDTO afterOwnBatchStarts = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+        var projectedQuizAfterStart = afterOwnBatchStarts.exercises().stream().filter(exercise -> exercise.id() == quizExerciseId).findFirst().orElseThrow();
+        assertThat(projectedQuizAfterStart.quizBatches()).as("the requesting student's started batch is exposed as one minimal marker").singleElement()
+                .satisfies(batch -> assertThat(batch.started()).isTrue());
+    }
+
+    // Test
+    public void testGetCourseExercisesForOverviewForbidden() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        unenrollStudent1FromAllCourses();
+        request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.FORBIDDEN, CourseExercisesForOverviewDTO.class);
+    }
+
+    // Test
+    public void testGetCourseAvailableTabsForbidden() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(false);
+        unenrollStudent1FromAllCourses();
+        request.get("/api/course/courses/" + course.getId() + "/available-tabs", HttpStatus.FORBIDDEN, CourseAvailableTabsDTO.class);
+    }
+
+    // Test
+    public void testGetCourseAvailableTabsForbiddenWithEnrollmentPossible() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        unenrollStudent1FromAllCourses();
+
+        // The container requests available-tabs and for-overview in parallel, so both have to refuse the same way. A
+        // plain access error here reached the user as a danger toast alongside the other request's silent one, and
+        // buried the enrollment offer that a shared course link is supposed to lead to.
+        var response = request.performMvcRequest(get("/api/course/courses/" + course.getId() + "/available-tabs")).andExpect(status().isForbidden()).andReturn().getResponse();
+
+        assertThat(response.getContentAsString()).as("the refusal must offer enrollment").contains("noAccessButCouldEnroll");
+        assertThat(response.getContentAsString()).as("and must stay silent so the client can redirect instead of alerting").contains("skipAlert");
+    }
+
     private Course createCourseWithEnrollmentEnabled(boolean enrollmentEnabled) throws Exception {
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         Course course = courses.getFirst();
         course.setEnrollmentEnabled(enrollmentEnabled);
         courseRepo.save(course);
         return course;
     }
 
-    private void removeAllGroupsFromStudent1() {
+    private void unenrollStudent1FromAllCourses() {
         User student = userUtilService.getUserByLogin(userPrefix + "student1");
-        // remove student from all courses so that they are not already enrolled
-        student.setGroups(new HashSet<>());
-        userRepo.save(student);
+        userUtilService.removeUserFromAllCourses(student);
     }
 
     // Test
     public void testGetCourseForDashboardAccessDenied(boolean userRefresh) throws Exception {
         Course course = createCourseWithEnrollmentEnabled(true);
-        removeAllGroupsFromStudent1();
+        unenrollStudent1FromAllCourses();
         request.get("/api/course/courses/" + course.getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
     public void testGetCourseForDashboardForbiddenWithEnrollmentPossible() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(true);
-        removeAllGroupsFromStudent1();
+        unenrollStudent1FromAllCourses();
         // still expect forbidden (403) from endpoint (only now the skipAlert flag will be set)
         request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
@@ -1083,41 +1361,54 @@ public class CourseTestService {
     // Test
     public void testGetCourseForEnrollment() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(true);
-        // remove student from course so that they are not already enrolled
-        course.setStudentGroupName("someNonExistingStudentGroupName");
-        courseRepo.save(course);
+        // remove student from course so that they are not already enrolled (UCR-based unenrollment)
+        unenrollStudent1FromAllCourses();
         request.get("/api/course/courses/" + course.getId() + "/for-enrollment", HttpStatus.OK, Course.class);
+    }
+
+    // Test
+    public void testGetCourseAccessStateReportsAccessForEnrolledStudent() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        var accessState = request.get("/api/course/courses/" + course.getId() + "/access-state", HttpStatus.OK, CourseAccessStateDTO.class);
+        assertThat(accessState.hasAccess()).isTrue();
+    }
+
+    // Test
+    public void testGetCourseAccessStateReportsNoAccessWithoutEnrollment() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        unenrollStudent1FromAllCourses();
+        // Not being enrolled is the answer, not an error: the enrollment page asks precisely because it expects it.
+        var accessState = request.get("/api/course/courses/" + course.getId() + "/access-state", HttpStatus.OK, CourseAccessStateDTO.class);
+        assertThat(accessState.hasAccess()).isFalse();
     }
 
     // Test
     public void testGetCourseForEnrollmentAccessDenied() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(false);
-        removeAllGroupsFromStudent1();
+        unenrollStudent1FromAllCourses();
         request.get("/api/course/courses/" + course.getId() + "/for-enrollment", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
     public void testGetAllCoursesForDashboardExams(boolean userRefresh) throws Exception {
-        User customUser = userRepo.findOneWithGroupsByLogin(userPrefix + "custom1").orElseThrow();
-        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").orElseThrow();
-        String suffix = "instructorExam";
-        adjustUserGroupsToCustomGroups(suffix);
+        User customUser = userRepo.findOneByLogin(otherPrefix + "custom1").orElseThrow();
+        User student = userRepo.findOneByLogin(userPrefix + "student1").orElseThrow();
 
         // Custom user is student in 0 and 1, tutor in 2, editor in 3 and instructor in 4
         Course[] courses = new Course[5];
-        courses[0] = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "customGroup", userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix,
-                userPrefix + "instructor" + suffix);
-        courses[1] = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "customGroup", userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix,
-                userPrefix + "instructor" + suffix);
-        courses[2] = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "customGroup", userPrefix + "editor" + suffix,
-                userPrefix + "instructor" + suffix);
-        courses[3] = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "customGroup",
-                userPrefix + "instructor" + suffix);
-        courses[4] = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix,
-                userPrefix + "customGroup");
+        courses[0] = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        courses[1] = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        courses[2] = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        courses[3] = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        courses[4] = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+
+        // Roles for customUser per course
+        CourseRole[] customUserRoles = { CourseRole.STUDENT, CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR, CourseRole.INSTRUCTOR };
 
         for (int i = 0; i < courses.length; i++) {
             courses[i] = courseRepo.save(courses[i]);
+            userUtilService.enrollPrefixedUsersInCourse(courses[i], userPrefix);
+            userUtilService.enrollUserInCourse(customUser, courses[i], customUserRoles[i]);
             Exam examRegistered = ExamFactory.generateExam(courses[i]);
             Exam examUnregistered = ExamFactory.generateExam(courses[i]);
             Exam testExam = ExamFactory.generateTestExam(courses[i]);
@@ -1174,14 +1465,11 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesForDashboardPracticeRepositories() throws Exception {
-        String suffix = "practiceRepo";
-        adjustUserGroupsToCustomGroups(suffix);
-
         User student = userUtilService.getUserByLogin(userPrefix + "student3");
 
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), new HashSet<>(), userPrefix + "student" + suffix,
-                userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), new HashSet<>());
         course = courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
@@ -1226,13 +1514,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForDashboard() throws Exception {
-        String suffix = "getall";
-        adjustUserGroupsToCustomGroups(suffix);
-        // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
-        List<Course> coursesCreated = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false, NUMBER_OF_TUTORS);
-        for (var course : coursesCreated) {
-            courseUtilService.updateCourseGroups(userPrefix, course, suffix);
-        }
+        List<Course> coursesCreated = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false, NUMBER_OF_TUTORS);
 
         // Perform the request that is being tested here
         var coursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
@@ -1284,11 +1566,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesWithoutActiveExercises() throws Exception {
-        String suffix = "active";
-        adjustUserGroupsToCustomGroups(suffix);
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
-                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         var coursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
         List<Course> courses = coursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
         final var finalCourse = course;
@@ -1299,17 +1577,15 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
-        String suffix = "timezone";
-        adjustUserGroupsToCustomGroups(suffix);
-        Course courseActive = CourseFactory.generateCourse(null, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
-                userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
-        Course courseNotActivePast = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(),
-                userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
-        Course courseNotActiveFuture = CourseFactory.generateCourse(null, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(),
-                userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        Course courseActive = CourseFactory.generateCourse(null, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>());
+        Course courseNotActivePast = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>());
+        Course courseNotActiveFuture = CourseFactory.generateCourse(null, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>());
         courseActive = courseRepo.save(courseActive);
+        userUtilService.enrollPrefixedUsersInCourse(courseActive, userPrefix);
         courseNotActivePast = courseRepo.save(courseNotActivePast);
+        userUtilService.enrollPrefixedUsersInCourse(courseNotActivePast, userPrefix);
         courseNotActiveFuture = courseRepo.save(courseNotActiveFuture);
+        userUtilService.enrollPrefixedUsersInCourse(courseNotActiveFuture, userPrefix);
         var coursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
         List<Course> courses = coursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
 
@@ -1334,7 +1610,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseWithExercisesAndLecturesAndCompetencies() throws Exception {
-        Course course = courseUtilService.createCourseWithExercisesAndLecturesAndCompetencies();
+        Course course = courseUtilService.createEnrolledCourseWithExercisesAndLecturesAndCompetencies(userPrefix);
         Course receivedCourse = request.get("/api/course/courses/" + course.getId() + "/with-exercises-lectures-competencies", HttpStatus.OK, Course.class);
 
         assertThat(receivedCourse.getExercises()).isNotEmpty();
@@ -1350,6 +1626,7 @@ public class CourseTestService {
     // Test
     public void testGetCourseWithOrganizations() throws Exception {
         Course courseWithOrganization = courseUtilService.createCourseWithOrganizations();
+        userUtilService.enrollPrefixedUsersInCourse(courseWithOrganization, userPrefix);
         Course course = request.get("/api/course/courses/" + courseWithOrganization.getId() + "/with-organizations", HttpStatus.OK, Course.class);
         assertThat(course.getOrganizations()).isEqualTo(courseWithOrganization.getOrganizations());
         assertThat(course.getOrganizations()).isNotEmpty();
@@ -1357,13 +1634,9 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesWithUserStats() throws Exception {
-        adjustUserGroupsToCustomGroups();
-        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
+        // createEnrolledCoursesWithExercisesAndLectures calls enrollPrefixedUsersInCourse internally
+        List<Course> testCourses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, false, 0);
         Course course = testCourses.getFirst();
-        course.setStudentGroupName(userPrefix + "student");
-        course.setTeachingAssistantGroupName(userPrefix + "tutor");
-        course.setInstructorGroupName(userPrefix + "instructor");
-        courseRepo.save(course);
 
         List<Course> receivedCourses = request.getList("/api/course/courses/with-user-stats", HttpStatus.OK, Course.class);
 
@@ -1379,25 +1652,23 @@ public class CourseTestService {
     // Test
     public void testGetCoursesForEnrollmentAndAccurateTimeZoneEvaluation() throws Exception {
         Course courseEnrollmentActiveEnrollmentEnabled = CourseFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25),
-                new HashSet<>(), "testuser", "tutor", "editor", "instructor");
+                new HashSet<>());
         courseEnrollmentActiveEnrollmentEnabled.setEnrollmentEnabled(true);
         courseEnrollmentActiveEnrollmentEnabled.setEnrollmentStartDate(ZonedDateTime.now().minusMinutes(25));
         courseEnrollmentActiveEnrollmentEnabled.setEnrollmentEndDate(ZonedDateTime.now().plusMinutes(25));
 
         Course courseEnrollmentActiveEnrollmentDisabled = CourseFactory.generateCourse(2L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25),
-                new HashSet<>(), "testuser", "tutor", "editor", "instructor");
+                new HashSet<>());
         courseEnrollmentActiveEnrollmentDisabled.setEnrollmentEnabled(false);
         courseEnrollmentActiveEnrollmentDisabled.setEnrollmentStartDate(ZonedDateTime.now().minusMinutes(25));
         courseEnrollmentActiveEnrollmentDisabled.setEnrollmentEndDate(ZonedDateTime.now().plusMinutes(25));
 
-        Course courseEnrollmentNotActivePast = CourseFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "testuser",
-                "tutor", "editor", "instructor");
+        Course courseEnrollmentNotActivePast = CourseFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>());
         courseEnrollmentNotActivePast.setEnrollmentEnabled(true);
         courseEnrollmentNotActivePast.setEnrollmentStartDate(ZonedDateTime.now().minusDays(5));
         courseEnrollmentNotActivePast.setEnrollmentEndDate(ZonedDateTime.now().minusMinutes(25));
 
-        Course courseEnrollmentNotActiveFuture = CourseFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "testuser",
-                "tutor", "editor", "instructor");
+        Course courseEnrollmentNotActiveFuture = CourseFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>());
         courseEnrollmentNotActiveFuture.setEnrollmentEnabled(true);
         courseEnrollmentNotActiveFuture.setEnrollmentStartDate(ZonedDateTime.now().plusMinutes(25));
         courseEnrollmentNotActiveFuture.setEnrollmentEndDate(ZonedDateTime.now().plusDays(5));
@@ -1415,7 +1686,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForAssessmentDashboardWithStats() throws Exception {
-        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
+        List<Course> testCourses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, true, 5);
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/course/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
@@ -1459,7 +1730,7 @@ public class CourseTestService {
 
     // Tests that average rating and number of ratings are computed correctly in '/for-assessment-dashboard'
     public void testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly() throws Exception {
-        var testCourse = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5).getFirst();
+        var testCourse = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, true, 5).getFirst();
         var exercise = ExerciseUtilService.getFirstExerciseWithType(testCourse, TextExercise.class);
 
         int[] ratings = { 3, 4, 5 };
@@ -1480,30 +1751,22 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForInstructorDashboardWithStats_instructorNotInCourse() throws Exception {
-        Course testCourse = courseUtilService.createCourse();
+        Course testCourse = courseUtilService.createEnrolledCourse(userPrefix);
         request.get("/api/course/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
     public void testGetCourseForAssessmentDashboardWithStats_tutorNotInCourse() throws Exception {
-        Course testCourse = courseUtilService.createCourse();
+        Course testCourse = courseUtilService.createEnrolledCourse(userPrefix);
         request.get("/api/course/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/course/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, StatsForDashboardDTO.class);
     }
 
     // Test
-    public void testGetAllGroupsForAllCourses() throws Exception {
-        Set<String> allGroups = new HashSet<>(request.getList("/api/core/admin/courses/groups", HttpStatus.OK, String.class));
-        courseRepo.findAll().stream().findAny().ifPresent(course -> assertThat(allGroups)
-                .containsAll(List.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName())));
-    }
-
-    // Test
     public void testGetAssessmentDashboardStats_withoutAssessments() throws Exception {
         String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        // create 6 * 4 = 24 submissions
-        adjustUserGroupsToCustomGroups();
-        Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 0, 0, true, 0, validModel);
+        // create 6 * 4 = 24 submissions; addEnrolledCourseWithExercisesAndSubmissions calls enrollPrefixedUsersInCourse internally
+        Course testCourse = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 0, 0, true, 0, validModel);
 
         StatsForDashboardDTO stats = request.get("/api/course/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
 
@@ -1519,11 +1782,36 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetAssessmentDashboardStats_countsOnlyLockedAssessments() throws Exception {
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        // One exercise with three submitted submissions and no assessments at all.
+        // addEnrolledCourseWithExercisesAndSubmissions calls enrollPrefixedUsersInCourse internally
+        Course testCourse = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(userPrefix, "", 1, 3, 0, 0, true, 0, validModel);
+        Exercise exercise = testCourse.getExercises().iterator().next();
+
+        List<Submission> submissions = submissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).stream()
+                .sorted(Comparator.comparing(Submission::getId)).toList();
+        assertThat(submissions).hasSize(3);
+
+        String assessorLogin = userPrefix + "tutor1";
+        // Locked: an assessment was started (an assessor is set) but never finished (no completion date).
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submissions.getFirst(), assessorLogin, List.of());
+        // Finished assessment, so not locked.
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now().minusHours(1), submissions.get(1), assessorLogin, List.of());
+        // submissions.get(2) deliberately keeps no result at all, so it is not locked either.
+
+        StatsForDashboardDTO stats = request.get("/api/course/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+
+        // Only the started-but-unfinished assessment is a lock. Verified to return 2 before the fix: the previous query used a LEFT JOIN and only
+        // checked "completionDate IS NULL", which is also true when the join produced no result row at all, so the unassessed submission was counted too.
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).as("only a started but unfinished assessment counts as an assessment lock").isEqualTo(1L);
+    }
+
+    // Test
     public void testGetAssessmentDashboardStats_withAssessments() throws Exception {
         String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        String suffix = "statswithassessments";
-        adjustUserGroupsToCustomGroups(suffix);
-        Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 2, 0, true, 0, validModel);
+        // addEnrolledCourseWithExercisesAndSubmissions calls enrollPrefixedUsersInCourse internally
+        Course testCourse = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 2, 0, true, 0, validModel);
         StatsForDashboardDTO stats = request.get("/api/course/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::userId)).toList();
 
@@ -1537,9 +1825,7 @@ public class CourseTestService {
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaints() throws Exception {
         String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        String suffix = "dashboardstatswithcomplaints";
-        adjustUserGroupsToCustomGroups(suffix);
-        Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, true, 0, validModel);
+        Course testCourse = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 4, 2, true, 0, validModel);
         StatsForDashboardDTO stats = request.get("/api/course/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::userId)).toList();
 
@@ -1563,9 +1849,7 @@ public class CourseTestService {
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedbackRequests() throws Exception {
         String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        String suffix = "statsfeedbackrequests";
-        adjustUserGroupsToCustomGroups(suffix);
-        Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, false, 0, validModel);
+        Course testCourse = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 4, 2, false, 0, validModel);
         StatsForDashboardDTO stats = request.get("/api/course/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::userId)).toList();
 
@@ -1590,10 +1874,7 @@ public class CourseTestService {
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses() throws Exception {
         String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
 
-        // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
-        String suffix = "assessStatsCom";
-        adjustUserGroupsToCustomGroups(suffix);
-        Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, true, 1, validModel);
+        Course testCourse = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 4, 2, true, 1, validModel);
 
         StatsForDashboardDTO stats = request.get("/api/course/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::userId)).toList();
@@ -1628,10 +1909,7 @@ public class CourseTestService {
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedBackRequestsAndResponses() throws Exception {
         String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
 
-        // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
-        String suffix = "assessStatsFR";
-        adjustUserGroupsToCustomGroups(suffix);
-        Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, false, 1, validModel);
+        Course testCourse = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 4, 2, false, 1, validModel);
 
         StatsForDashboardDTO stats = request.get("/api/course/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         var tutorLeaderboardEntries = stats.getTutorLeaderboardEntries().stream().sorted(Comparator.comparing(TutorLeaderboardDTO::userId)).toList();
@@ -1665,16 +1943,12 @@ public class CourseTestService {
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses_Large() throws Exception {
         String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
-        String suffix = "assessStatsLarge";
-        adjustUserGroupsToCustomGroups(suffix);
-
         int exercises = 9;
         int submissions = 5;
         int assessments = 5;
         int complaints = 3;
 
-        Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, exercises, submissions, assessments, complaints, true, complaints,
+        Course testCourse = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(userPrefix, "", exercises, submissions, assessments, complaints, true, complaints,
                 validModel);
 
         StatsForDashboardDTO stats = request.get("/api/course/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
@@ -1709,23 +1983,12 @@ public class CourseTestService {
 
     // Test
     public void testGetCourse() throws Exception {
-        adjustUserGroupsToCustomGroups();
-        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
+        List<Course> testCourses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, false, 0);
         for (Course testCourse : testCourses) {
-            testCourse.setInstructorGroupName(userPrefix + "instructor");
-            testCourse.setTeachingAssistantGroupName(userPrefix + "tutor");
-            testCourse.setEditorGroupName(userPrefix + "editor");
-            testCourse.setStudentGroupName(userPrefix + "student");
-            courseRepo.save(testCourse);
-
             Course courseWithExercises = request.get("/api/course/courses/" + testCourse.getId() + "/with-exercises", HttpStatus.OK, Course.class);
             Course courseOnly = request.get("/api/course/courses/" + testCourse.getId(), HttpStatus.OK, Course.class);
 
             // Check course properties on courseOnly
-            assertThat(courseOnly.getStudentGroupName()).as("Student group name is correct").isEqualTo(userPrefix + "student");
-            assertThat(courseOnly.getTeachingAssistantGroupName()).as("Teaching assistant group name is correct").isEqualTo(userPrefix + "tutor");
-            assertThat(courseOnly.getEditorGroupName()).as("Editor group name is correct").isEqualTo(userPrefix + "editor");
-            assertThat(courseOnly.getInstructorGroupName()).as("Instructor group name is correct").isEqualTo(userPrefix + "instructor");
             assertThat(courseOnly.getEndDate()).as("End date is after start date").isAfter(courseOnly.getStartDate());
             assertThat(courseOnly.getMaxComplaints()).as("Max complaints is correct").isEqualTo(3);
             assertThat(courseOnly.getPresentationScore()).as("Presentation score is correct").isEqualTo(2);
@@ -1751,7 +2014,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCategoriesInCourse() throws Exception {
-        List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
+        List<Course> testCourses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, false, 0);
         Course course1 = testCourses.getFirst();
         Course course2 = testCourses.get(1);
         List<String> categories1 = request.getList("/api/course/courses/" + course1.getId() + "/categories", HttpStatus.OK, String.class);
@@ -1770,8 +2033,8 @@ public class CourseTestService {
     public void testEnrollInCourse() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
+        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
         course1.setEnrollmentEnabled(true);
         course1.setEnrollmentStartDate(pastTimestamp);
         course2.setEnrollmentEndDate(futureTimestamp);
@@ -1779,8 +2042,11 @@ public class CourseTestService {
         course1 = courseRepo.save(course1);
         course2 = courseRepo.save(course2);
 
-        Set<String> updatedGroups = request.postSetWithResponseBody("/api/course/courses/" + course1.getId() + "/enroll", null, String.class, HttpStatus.OK);
-        assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
+        // enroll endpoint now returns Void; verify enrollment via UCR
+        request.postWithoutLocation("/api/course/courses/" + course1.getId() + "/enroll", null, HttpStatus.OK, null);
+        User enrolledUser = userRepo.findOneByLogin("ab12cde").orElseThrow();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(enrolledUser.getId(), course1.getId(), CourseRole.STUDENT))
+                .as("User is enrolled in course as STUDENT").isTrue();
 
         List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.ENROLL_IN_COURSE);
         AuditEvent auditEvent = auditEvents.stream().max(Comparator.comparing(AuditEvent::getTimestamp)).orElse(null);
@@ -1794,8 +2060,8 @@ public class CourseTestService {
     public void testEnrollInCourse_notMeetsDate() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course notYetStartedCourse = CourseFactory.generateCourse(null, futureTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        Course finishedCourse = CourseFactory.generateCourse(null, pastTimestamp, pastTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
+        Course notYetStartedCourse = CourseFactory.generateCourse(null, futureTimestamp, futureTimestamp, new HashSet<>());
+        Course finishedCourse = CourseFactory.generateCourse(null, pastTimestamp, pastTimestamp, new HashSet<>());
         notYetStartedCourse.setEnrollmentEnabled(true);
         notYetStartedCourse.setEnrollmentStartDate(futureTimestamp);
         notYetStartedCourse.setEnrollmentEndDate(futureTimestamp);
@@ -1810,9 +2076,6 @@ public class CourseTestService {
     // Test
     public void testUnenrollFromCourse() throws Exception {
         User student = userUtilService.getUserByLogin(userPrefix + "student1");
-        var groups = new HashSet<>(Set.of("unenrolltestcourse1", "unenrolltestcourse2", "unenrolltestcourse3"));
-        student.setGroups(groups);
-        userRepo.save(student);
 
         Course[] courses = generateCoursesForUnenrollmentTest();
         courseRepo.saveAll(Arrays.stream(courses).toList());
@@ -1823,8 +2086,12 @@ public class CourseTestService {
     }
 
     private void testUnenrollFromCourseSuccessfull(Course course) throws Exception {
-        Set<String> updatedGroups = request.postSetWithResponseBody("/api/course/courses/" + course.getId() + "/unenroll", null, String.class, HttpStatus.OK);
-        assertThat(updatedGroups).as("User is not enrolled in course").doesNotContain(course.getStudentGroupName());
+        // unenrollFromCourse returns 200 with no body (ResponseEntity<Void>)
+        request.postWithoutLocation("/api/course/courses/" + course.getId() + "/unenroll", null, HttpStatus.OK, null);
+        // Verify student is no longer enrolled in the course via UCR
+        User student = userUtilService.getUserByLogin(userPrefix + "student1");
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course.getId(), CourseRole.STUDENT)).as("User is not enrolled in course")
+                .isFalse();
         List<AuditEvent> auditEvents = auditEventRepo.find(userPrefix + "student1", Instant.now().minusSeconds(20), Constants.UNENROLL_FROM_COURSE);
         assertThat(auditEvents).as("Audit Event for course unenrollment added").hasSize(1);
         AuditEvent auditEvent = auditEvents.getFirst();
@@ -1834,11 +2101,11 @@ public class CourseTestService {
     private Course[] generateCoursesForUnenrollmentTest() {
         Course[] courses = new Course[3];
 
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        courses[0] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse1", "tutor", "editor", "instructor");
-        courses[1] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse2", "tutor", "editor", "instructor");
-        courses[2] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse3", "tutor", "editor", "instructor");
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+        courses[0] = courseUtilService.createEnrolledCourse(userPrefix);
+        courses[1] = courseUtilService.createEnrolledCourse(userPrefix);
+        courses[2] = courseUtilService.createEnrolledCourse(userPrefix);
         courses[0].setUnenrollmentEnabled(true);
         courses[0].setUnenrollmentEndDate(futureTimestamp);
         courses[1].setUnenrollmentEnabled(false);
@@ -1850,7 +2117,7 @@ public class CourseTestService {
 
     // Test
     public void testUpdateCourse_instructorNotInCourse() throws Exception {
-        var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
         course = courseRepo.save(course);
 
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isForbidden());
@@ -1858,10 +2125,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse() throws Exception {
-        adjustUserGroupsToCustomGroups();
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
 
         // Get all students for course
         List<User> students = request.getList("/api/course/courses/" + course.getId() + "/students", HttpStatus.OK, User.class);
@@ -1880,10 +2144,7 @@ public class CourseTestService {
      * Searches for others users of a course in multiple roles
      */
     public void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
-        adjustUserGroupsToCustomGroups();
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("nameOfUser", "student1");
@@ -1912,8 +2173,7 @@ public class CourseTestService {
      * Tries to search for users of another course and expects to be forbidden
      */
     public void testSearchStudentsAndTutorsAndInstructorsInOtherCourseForbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createCourse();
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("nameOfUser", "student2");
@@ -1924,10 +2184,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllEditorsInCourse() throws Exception {
-        adjustUserGroupsToCustomGroups();
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
 
         // Get all editors for course
         List<User> editors = request.getList("/api/course/courses/" + course.getId() + "/editors", HttpStatus.OK, User.class);
@@ -1936,15 +2193,13 @@ public class CourseTestService {
 
     // Test
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createCourse();
         testGetAllStudentsOrTutorsOrInstructorsInCourse__forbidden(course);
     }
 
     // Test
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsTutor_forbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         testGetAllStudentsOrTutorsOrInstructorsInCourse__forbidden(course);
     }
 
@@ -1956,9 +2211,7 @@ public class CourseTestService {
 
     // Test
     public void testAddStudentOrTutorOrEditorOrInstructorToCourse() throws Exception {
-        adjustUserGroupsToCustomGroups();
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         course.setLearningPathsEnabled(true);
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
@@ -1969,26 +2222,19 @@ public class CourseTestService {
 
     // Test
     public void testAddStudentOrTutorOrInstructorToCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createCourse();
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
     }
 
     // Test
     public void testAddStudentOrTutorOrInstructorToCourse_AsTutor_forbidden() throws Exception {
-        adjustUserGroupsToCustomGroups();
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
     }
 
     // Test
     public void testAddStudentOrTutorOrInstructorToCourse_WithNonExistingUser() throws Exception {
-        adjustUserGroupsToCustomGroups();
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
 
         request.postWithoutLocation("/api/course/courses/" + course.getId() + "/students/maxMustermann", null, HttpStatus.NOT_FOUND, null);
         request.postWithoutLocation("/api/course/courses/" + course.getId() + "/tutors/maxMustermann", null, HttpStatus.NOT_FOUND, null);
@@ -1997,7 +2243,6 @@ public class CourseTestService {
     }
 
     private void testAddStudentOrTutorOrEditorOrInstructorToCourse(Course course, HttpStatus httpStatus) throws Exception {
-        adjustUserGroupsToCustomGroups();
         request.postWithoutLocation("/api/course/courses/" + course.getId() + "/students/" + userPrefix + "student1", null, httpStatus, null);
         request.postWithoutLocation("/api/course/courses/" + course.getId() + "/tutors/" + userPrefix + "tutor1", null, httpStatus, null);
         request.postWithoutLocation("/api/course/courses/" + course.getId() + "/editors/" + userPrefix + "editor1", null, httpStatus, null);
@@ -2006,18 +2251,14 @@ public class CourseTestService {
 
     // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.OK);
         // TODO check that the roles have changed accordingly
     }
 
     // Test
     public void testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_WithNonExistingUser() throws Exception {
-        adjustUserGroupsToCustomGroups();
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         request.delete("/api/course/courses/" + course.getId() + "/students/maxMustermann", HttpStatus.NOT_FOUND);
         request.delete("/api/course/courses/" + course.getId() + "/tutors/maxMustermann", HttpStatus.NOT_FOUND);
         request.delete("/api/course/courses/" + course.getId() + "/editors/maxMustermann", HttpStatus.NOT_FOUND);
@@ -2026,28 +2267,24 @@ public class CourseTestService {
 
     // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createCourse();
         testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
     }
 
     // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsTutor_forbidden() throws Exception {
-        adjustUserGroupsToCustomGroups();
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
     }
 
     private void testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(Course course, HttpStatus httpStatus) throws Exception {
         // Retrieve users from whom to remove groups
-        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").orElseThrow();
-        User tutor = userRepo.findOneWithGroupsByLogin(userPrefix + "tutor1").orElseThrow();
-        User editor = userRepo.findOneWithGroupsByLogin(userPrefix + "editor1").orElseThrow();
-        User instructor = userRepo.findOneWithGroupsByLogin(userPrefix + "instructor1").orElseThrow();
+        User student = userRepo.findOneByLogin(userPrefix + "student1").orElseThrow();
+        User tutor = userRepo.findOneByLogin(userPrefix + "tutor1").orElseThrow();
+        User editor = userRepo.findOneByLogin(userPrefix + "editor1").orElseThrow();
+        User instructor = userRepo.findOneByLogin(userPrefix + "instructor1").orElseThrow();
 
-        // Remove users from their group
+        // Remove users from course membership
         request.delete("/api/course/courses/" + course.getId() + "/students/" + student.getLogin(), httpStatus);
         request.delete("/api/course/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), httpStatus);
         request.delete("/api/course/courses/" + course.getId() + "/editors/" + editor.getLogin(), httpStatus);
@@ -2056,7 +2293,7 @@ public class CourseTestService {
 
     // Test
     public void testGetLockedSubmissionsForCourseAsTutor() throws Exception {
-        Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithDifferentModelingExercises(userPrefix);
         ModelingExercise classExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
 
         List<Submission> lockedSubmissions = request.getList("/api/course/courses/" + course.getId() + "/locked-submissions", HttpStatus.OK, Submission.class);
@@ -2097,7 +2334,7 @@ public class CourseTestService {
 
     // Test
     public Course testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
-        var course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
+        var course = courseUtilService.createEnrolledCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         request.put("/api/course/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
         await().until(() -> courseRepo.findById(course.getId()).orElseThrow().getCourseArchivePath() != null);
         var updatedCourse = courseRepo.findById(course.getId()).orElseThrow();
@@ -2112,7 +2349,7 @@ public class CourseTestService {
         var quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.INDIVIDUAL);
         quizExercise = exerciseRepo.save(quizExercise);
         participationUtilService.createAndSaveParticipationForExercise(quizExercise, userPrefix + "student2");
-        var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()), Collections.emptyMap());
+        var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()), Map.of());
         assertThat(archivePath).isNotEmpty();
         extractAndAssertContent(archivePath.orElseThrow(), quizSubmission);
     }
@@ -2121,7 +2358,7 @@ public class CourseTestService {
     public void testArchiveCourseWithQuizExerciseCannotExportExerciseDetails() throws IOException {
         var course = courseUtilService.createCourse();
         var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
-        var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()), Collections.emptyMap());
+        var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()), Map.of());
         assertThat(archivePath).isNotEmpty();
         Predicate<Path> missingPathPredicate = path -> "Exercise-Details-quiz.json".equals(path.getFileName().toString());
         extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
@@ -2134,7 +2371,7 @@ public class CourseTestService {
         var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
         try (MockedStatic<ImageIO> mockedImageIO = mockStatic(ImageIO.class)) {
             mockedImageIO.when(() -> ImageIO.read(any(File.class))).thenThrow(new IOException());
-            var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
+            var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Map.of());
             assertThat(archivePath).isNotEmpty();
             Predicate<Path> missingPathPredicate = path -> path.getFileName().toString().contains("dragAndDropQuestion") && path.getFileName().toString().endsWith(".pdf");
             extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
@@ -2148,7 +2385,7 @@ public class CourseTestService {
         quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
         try (MockedStatic<DataExportUtil> mockedFiles = mockStatic(DataExportUtil.class)) {
             mockedFiles.when(() -> DataExportUtil.createDirectoryIfNotExistent(any())).thenThrow(new IOException());
-            var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
+            var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Map.of());
             assertThat(archivePath).isNotEmpty();
         }
 
@@ -2162,7 +2399,7 @@ public class CourseTestService {
         try (MockedStatic<org.apache.commons.io.FileUtils> mockedFiles = mockStatic(org.apache.commons.io.FileUtils.class)) {
             mockedFiles.when(() -> org.apache.commons.io.FileUtils.writeLines(argThat(file -> file.toString().contains(fileName)), anyString(), anyList()))
                     .thenThrow(new IOException());
-            var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
+            var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Map.of());
             assertThat(archivePath).isNotEmpty();
             Predicate<Path> missingPathPredicate = path -> path.getFileName().toString().contains(fileName) && path.getFileName().toString().endsWith(".txt");
             extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
@@ -2221,7 +2458,7 @@ public class CourseTestService {
      * Test
      */
     public void searchStudentsInCourse() throws Exception {
-        var course = courseUtilService.createCourse();
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
 
         MultiValueMap<String, String> params1 = new LinkedMultiValueMap<>();
         params1.add("loginOrName", userPrefix + "student");
@@ -2372,11 +2609,9 @@ public class CourseTestService {
     }
 
     private Course createCourseForUserSearchTest() {
-        String suffix = "searchUserTest";
-        adjustUserGroupsToCustomGroups(suffix);
-        var course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix,
-                userPrefix + "instructor" + suffix);
+        var course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
@@ -2393,14 +2628,14 @@ public class CourseTestService {
         }
         else {
             assertThat(foundUsers).isNull();
-            return emptyList();
+            return List.of();
         }
     }
 
     // Test
     // TODO: reactivate test as part of Modeling Tests
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
-        Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
+        Course course = courseUtilService.createEnrolledCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst();
         assertThat(modelingExercise).isPresent();
         archiveCourseAndAssertExerciseDoesntExist(course, modelingExercise.get());
@@ -2409,7 +2644,7 @@ public class CourseTestService {
     // Test
     // TODO: reactivate test as part of Modeling Tests
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportTextExercise() throws Exception {
-        Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
+        Course course = courseUtilService.createEnrolledCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         Optional<TextExercise> textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst();
         assertThat(textExercise).isPresent();
         archiveCourseAndAssertExerciseDoesntExist(course, textExercise.get());
@@ -2418,7 +2653,7 @@ public class CourseTestService {
     // Test
     // TODO: reactivate test as part of Modeling Tests
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportFileUploadExercise() throws Exception {
-        Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
+        Course course = courseUtilService.createEnrolledCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst();
         assertThat(fileUploadExercise).isPresent();
         archiveCourseAndAssertExerciseDoesntExist(course, fileUploadExercise.get());
@@ -2435,7 +2670,7 @@ public class CourseTestService {
 
     private List<Path> archiveCourseAndExtractFiles(Course course) throws IOException {
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
-        Optional<Path> exportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
+        Optional<Path> exportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Map.of());
         assertThat(exportedCourse).isNotEmpty();
 
         // Extract the archive
@@ -2452,31 +2687,31 @@ public class CourseTestService {
     }
 
     public void testExportCourse_cannotCreateTmpDir() throws Exception {
-        Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
+        Course course = courseUtilService.createEnrolledCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectories(argThat(path -> path.toString().contains("exports")))).thenThrow(IOException.class);
-        Optional<Path> exportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
+        Optional<Path> exportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Map.of());
         mockedFiles.close();
 
         assertThat(exportedCourse).isEmpty();
     }
 
     public void testExportCourse_cannotCreateCourseExercisesDir() throws Exception {
-        Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
+        Course course = courseUtilService.createEnrolledCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectory(argThat(path -> path.toString().contains("course-exercises")))).thenThrow(IOException.class);
-        Optional<Path> exportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
+        Optional<Path> exportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Map.of());
         mockedFiles.close();
 
         assertThat(exportedCourse).isEmpty();
     }
 
     public void testExportCourseExam_cannotCreateTmpDir() throws Exception {
-        Course course = courseUtilService.createCourseWithExamExercisesAndSubmissions(userPrefix);
+        Course course = courseUtilService.createEnrolledCourseWithExamExercisesAndSubmissions(userPrefix);
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         Optional<Exam> exam = examRepo.findByCourseId(course.getId()).stream().findFirst();
@@ -2491,14 +2726,14 @@ public class CourseTestService {
     }
 
     public void testExportCourseExam_cannotCreateExamsDir() throws Exception {
-        Course course = courseUtilService.createCourseWithExamExercisesAndSubmissions(userPrefix);
+        Course course = courseUtilService.createEnrolledCourseWithExamExercisesAndSubmissions(userPrefix);
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         course = courseRepo.findWithEagerExercisesById(course.getId());
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectory(argThat(path -> path.toString().contains("exams")))).thenThrow(IOException.class);
-        Optional<Path> exportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
+        Optional<Path> exportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Map.of());
         mockedFiles.close();
 
         assertThat(exportedCourse).isEmpty();
@@ -2518,8 +2753,7 @@ public class CourseTestService {
     // Test
     public void testDownloadCourseArchiveAsInstructor_not_found() throws Exception {
         // Generate a course that has no archive and assert that an 404 status is thrown
-        Course course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course = courseRepo.save(course);
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
 
         var downloadedArchive = request.get("/api/course/courses/" + course.getId() + "/download-archive", HttpStatus.NOT_FOUND, String.class);
         assertThat(downloadedArchive).isNull();
@@ -2583,7 +2817,7 @@ public class CourseTestService {
     // Test
     public void testCleanupCourseAsInstructor_no_Archive() throws Exception {
         // Generate a course that has an archive
-        Course course = courseRepo.save(courseUtilService.createCourse());
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
 
         request.delete("/api/course/courses/" + course.getId() + "/cleanup", HttpStatus.BAD_REQUEST);
     }
@@ -2591,7 +2825,7 @@ public class CourseTestService {
     // Test
     public void testCleanupCourseAsInstructor() throws Exception {
         // Generate a course that has an archive
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA, userPrefix);
         course.setCourseArchivePath("some-archive-path");
         course = courseRepo.save(course);
 
@@ -2637,17 +2871,13 @@ public class CourseTestService {
     // Test
     public void testGetAllCoursesForManagementOverview() throws Exception {
         // Add two courses, containing one not belonging to the instructor
-        var testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
+        var testCourses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, false, 0);
         var instructorsCourse = testCourses.getFirst();
-        instructorsCourse.setInstructorGroupName("test-instructors");
-        courseRepo.save(instructorsCourse);
         var nonInstructorsCourse = testCourses.get(1);
 
+        // Remove instructor1 from nonInstructorsCourse so they only see instructorsCourse
         var instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
-        var groups = new HashSet<String>();
-        groups.add("test-instructors");
-        instructor.setGroups(groups);
-        userRepo.save(instructor);
+        userUtilService.unenrollUserFromCourse(instructor, nonInstructorsCourse);
 
         var courses = request.getList("/api/course/courses/course-management-overview", HttpStatus.OK, Course.class);
 
@@ -2664,17 +2894,13 @@ public class CourseTestService {
     public void testGetExercisesForCourseOverview() throws Exception {
 
         // Add two courses, containing one not belonging to the instructor
-        var testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
+        var testCourses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, false, 0);
         var instructorsCourse = testCourses.getFirst();
-        instructorsCourse.setInstructorGroupName("test-instructors");
-        courseRepo.save(instructorsCourse);
         var nonInstructorsCourse = testCourses.get(1);
 
+        // Remove instructor1 from nonInstructorsCourse so they only see instructorsCourse
         var instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
-        var groups = new HashSet<String>();
-        groups.add("test-instructors");
-        instructor.setGroups(groups);
-        userRepo.save(instructor);
+        userUtilService.unenrollUserFromCourse(instructor, nonInstructorsCourse);
 
         var courses = request.getList("/api/course/courses/exercises-for-management-overview", HttpStatus.OK, Course.class);
 
@@ -2705,11 +2931,7 @@ public class CourseTestService {
 
     // Test
     public void testGetExerciseStatsForCourseOverview() throws Exception {
-        String testSuffix = "exercisestatsoverview";
-        adjustUserGroupsToCustomGroups(testSuffix);
-        // Add a course and set the instructor group name
-        var instructorsCourse = courseUtilService.createCourse();
-        adjustCourseGroups(instructorsCourse, testSuffix);
+        var instructorsCourse = courseUtilService.createEnrolledCourse(userPrefix);
 
         instructorsCourse.setStartDate(ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.MONDAY));
         instructorsCourse.setEndDate(ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.WEDNESDAY));
@@ -2840,11 +3062,7 @@ public class CourseTestService {
     // Test
     public void testGetExerciseStatsForCourseOverviewWithPastExercises() throws Exception {
         // Add a single course with six past exercises, from which only five are returned
-        String testSuffix = "statspast";
-        adjustUserGroupsToCustomGroups(testSuffix);
-
-        var instructorsCourse = courseUtilService.createCourse();
-        adjustCourseGroups(instructorsCourse, testSuffix);
+        var instructorsCourse = courseUtilService.createEnrolledCourse(userPrefix);
 
         var releaseDate = ZonedDateTime.now().minusDays(7);
         var dueDate = ZonedDateTime.now().minusDays(4);
@@ -2887,24 +3105,18 @@ public class CourseTestService {
     }
 
     public void testGetCourseManagementDetailDataForFutureCourse() throws Exception {
-        adjustUserGroupsToCustomGroups();
         ZonedDateTime now = ZonedDateTime.now();
         var course = courseUtilService.createCourse();
-        course.setInstructorGroupName(userPrefix + "instructor");
-        course.setEditorGroupName(userPrefix + "editor");
-        course.setTeachingAssistantGroupName(userPrefix + "tutor");
-        course.setStudentGroupName(userPrefix + "student");
 
         course.setStartDate(now.plusWeeks(3));
 
         userUtilService.createAndSaveUser(userPrefix + "user1");
         userUtilService.createAndSaveUser(userPrefix + "user2");
 
-        var instructor2 = userUtilService.createAndSaveUser(userPrefix + "instructor2");
-        instructor2.setGroups(Set.of(userPrefix + "instructor"));
-        userRepo.save(instructor2);
-
-        courseRepo.save(course);
+        var instructor2 = userUtilService.createAndSaveUser(otherPrefix + "instructor2");
+        course = courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        userUtilService.enrollUserInCourse(instructor2, course, CourseRole.INSTRUCTOR);
 
         // API call
         var courseDTO = request.get("/api/course/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
@@ -2915,20 +3127,15 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseManagementDetailData() throws Exception {
-        adjustUserGroupsToCustomGroups();
         // we inject a fixed clock in our tests that TimeUtil uses, so the timestamp below is always the same in tests.
         Clock fixedClock = Clock.fixed(Instant.parse("2025-09-10T10:25:00Z"), ZoneOffset.UTC);
         TimeUtil.setClock(fixedClock);
         ZonedDateTime now = TimeUtil.now();
         // add courses with exercises
-        var courses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
+        var courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, true, 5);
         var course1 = courses.getFirst();
         var course2 = courses.get(1);
         course1.setStartDate(now.minusWeeks(2));
-        course1.setStudentGroupName(userPrefix + "student");
-        course1.setTeachingAssistantGroupName(userPrefix + "tutor");
-        course1.setEditorGroupName(userPrefix + "editor");
-        course1.setInstructorGroupName(userPrefix + "instructor");
 
         /*
          * We will duplicate the following submission and result configuration with course2. course1 contains additional submissions created by the ParticipationUtilService. These
@@ -2936,10 +3143,6 @@ public class CourseTestService {
          * distribution only for course2.
          */
         course2.setStartDate(now.minusWeeks(2));
-        course2.setStudentGroupName(userPrefix + "student");
-        course2.setTeachingAssistantGroupName(userPrefix + "tutor");
-        course2.setEditorGroupName(userPrefix + "editor");
-        course2.setInstructorGroupName(userPrefix + "instructor");
 
         var student1 = userUtilService.createAndSaveUser(userPrefix + "user1");
         var student2 = userUtilService.createAndSaveUser(userPrefix + "user2");
@@ -3028,11 +3231,14 @@ public class CourseTestService {
         Feedback feedback5 = new Feedback();
         feedback5.setCredits(2.0);
         feedback5.setReference(TextExerciseFactory.generateTextBlock(0, 5, "test5").getId());
-        var feedbackListForComplaint = Arrays.asList(feedback1, feedback2, feedback3, feedback4, feedback5);
+        var feedbackListForComplaint = Arrays.asList(feedback1, feedback2, feedback3, feedback4, feedback5).stream().map(FeedbackDTO::of).toList();
 
-        var assessmentUpdate = new TextAssessmentUpdateDTO(feedbackListForComplaint, complaintResponse, null, new HashSet<>());
+        var assessmentUpdate = new TextAssessmentUpdateDTO(feedbackListForComplaint,
+                new ComplaintResponseRequestDTO(complaintResponse.getId(), complaintResponse.getResponseText(),
+                        new ComplaintResponseRequestDTO.ComplaintRequestDTO(complaintResponse.getComplaint().getId(), complaintResponse.getComplaint().isAccepted())),
+                null, new HashSet<>());
         request.putWithResponseBody("/api/text/participations/" + result1.getSubmission().getParticipation().getId() + "/submissions/" + result1.getSubmission().getId()
-                + "/text-assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
+                + "/text-assessment-after-complaint", assessmentUpdate, ResultDTO.class, HttpStatus.OK);
 
         // Feedback request
         Complaint feedbackRequest = new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
@@ -3042,11 +3248,14 @@ public class CourseTestService {
         ComplaintResponse feedbackResponse = complaintUtilService.createInitialEmptyResponse(userPrefix + "tutor2", feedbackRequest);
         feedbackResponse.getComplaint().setAccepted(true);
         feedbackResponse.setResponseText("accepted");
-        var feedbackListForMoreFeedback = Arrays.asList(feedback1, feedback2, feedback3, feedback4);
+        var feedbackListForMoreFeedback = Arrays.asList(feedback1, feedback2, feedback3, feedback4).stream().map(FeedbackDTO::of).toList();
 
-        final var feedbackUpdate = new TextAssessmentUpdateDTO(feedbackListForMoreFeedback, feedbackResponse, null, new HashSet<>());
+        final var feedbackUpdate = new TextAssessmentUpdateDTO(feedbackListForMoreFeedback,
+                new ComplaintResponseRequestDTO(feedbackResponse.getId(), feedbackResponse.getResponseText(),
+                        new ComplaintResponseRequestDTO.ComplaintRequestDTO(feedbackResponse.getComplaint().getId(), feedbackResponse.getComplaint().isAccepted())),
+                null, new HashSet<>());
         request.putWithResponseBody("/api/text/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
-                + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
+                + "/text-assessment-after-complaint", feedbackUpdate, ResultDTO.class, HttpStatus.OK);
 
         // Wait for async participant score calculation to complete
         // Use longer timeout for slow CI environments where async tasks may take longer
@@ -3124,9 +3333,8 @@ public class CourseTestService {
     }
 
     // Test
-    public void testAddUsersToCourseGroup(String group, String registrationNumber1, String registrationNumber2, String email) throws Exception {
-
-        var course = courseUtilService.createCourse();
+    public void testAddUsersToCourseMembership(String group, String registrationNumber1, String registrationNumber2, String email) throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
         StudentDTO dto1 = new StudentDTO("newstudent1", null, null, registrationNumber1, null);
         StudentDTO dto2 = new StudentDTO("newstudent2", null, null, registrationNumber2, null);
         StudentDTO dto3 = new StudentDTO(null, null, null, null, email);
@@ -3138,19 +3346,19 @@ public class CourseTestService {
 
     // Test
     public void testCreateCourseWithValidStartAndEndDate() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated());
     }
 
     // Test
     public void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now(), new HashSet<>());
         request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
     }
 
     // Test
     public void testCreateInvalidOnlineCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
 
         // with EnrollmentEnabled
         course.setOnlineCourse(true);
@@ -3160,7 +3368,7 @@ public class CourseTestService {
 
     // Test
     public void testCreateValidOnlineCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
         Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
@@ -3170,7 +3378,7 @@ public class CourseTestService {
     }
 
     public void testUpdateToOnlineCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
         Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
@@ -3183,7 +3391,7 @@ public class CourseTestService {
     }
 
     public void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
         course = courseRepo.save(course);
         var courseId = course.getId();
@@ -3196,7 +3404,7 @@ public class CourseTestService {
 
     // Test
     public void testUpdateOnlineCourseConfiguration() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
@@ -3216,7 +3424,7 @@ public class CourseTestService {
 
     // Test
     public void testUpdateCourseRemoveOnlineCourseConfiguration() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
@@ -3232,7 +3440,7 @@ public class CourseTestService {
 
     // Test
     public void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
         CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
@@ -3244,7 +3452,7 @@ public class CourseTestService {
 
     // Test
     public void testUpdateInvalidOnlineCourseConfiguration() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
@@ -3261,7 +3469,7 @@ public class CourseTestService {
     }
 
     public void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
         CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
@@ -3272,7 +3480,7 @@ public class CourseTestService {
     }
 
     public void testUpdateValidOnlineCourseConfigurationNotOnlineCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(false);
 
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
@@ -3285,7 +3493,7 @@ public class CourseTestService {
     }
 
     public void testUpdateValidOnlineCourseConfiguration_IdMismatch() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
@@ -3298,7 +3506,7 @@ public class CourseTestService {
     }
 
     public void testUpdateValidOnlineCourseConfiguration() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
         CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
@@ -3328,12 +3536,13 @@ public class CourseTestService {
         ltiPlatformConfiguration.setJwkSetUri("jwkUri");
         ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
 
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
         OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
         onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
 
         course = courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
 
         OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
@@ -3375,14 +3584,13 @@ public class CourseTestService {
      * @return the corresponding CourseCreateDTO
      */
     private CourseCreateDTO toCourseCreateDTO(@NonNull Course course) {
-        return new CourseCreateDTO(course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStudentGroupName(),
-                course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName(), course.getStartDate(), course.getEndDate(),
+        return new CourseCreateDTO(course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStartDate(), course.getEndDate(),
                 course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(), course.isOnlineCourse(),
                 course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getLearningPathsEnabled(),
-                course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(),
-                course.isAthenaFormativeEnabled(), course.isAthenaGradingEnabled(), course.getTimeZone(), course.getCourseInformationSharingConfiguration());
+                course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.isAthenaFormativeEnabled(), course.isAthenaGradingEnabled(),
+                course.getTimeZone(), course.getCourseInformationSharingConfiguration(), course.isGradeRelevant());
     }
 
     public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {
@@ -3405,7 +3613,7 @@ public class CourseTestService {
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(course.getCourseIcon()).as("Course icon got stored").isNotNull();
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, course.getCourseIcon());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, course.getCourseIcon());
         var imgResult = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG)).andReturn();
         assertThat(imgResult.getResponse().getContentAsByteArray()).isNotEmpty();
 
@@ -3421,14 +3629,10 @@ public class CourseTestService {
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     public void testEditCourseRemoveExistingIcon() throws Exception {
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        Course savedCourse = courseRepo.save(course);
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
-        Course savedCourseWithFile = request.putWithMultipartFile("/api/course/courses/" + savedCourse.getId(), savedCourse, "course", iconFile, Course.class, HttpStatus.OK, null);
+        Course savedCourseWithFile = request.putWithMultipartFile("/api/course/courses/" + course.getId(), course, "course", iconFile, Course.class, HttpStatus.OK, null);
         Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(savedCourseWithFile.getCourseIcon()), FilePathType.COURSE_ICON);
 
         savedCourseWithFile.setCourseIcon(null);
@@ -3446,13 +3650,11 @@ public class CourseTestService {
     // Test
     // TODO: reactivate test as part of Learning Paths
     public void testUpdateCourseEnableLearningPaths() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>(), "editlearningpathenabledcourse",
-                "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>());
         course.setLearningPathsEnabled(false);
         courseRepo.save(course);
         User student = userUtilService.getUserByLogin(userPrefix + "student1");
-        student.setGroups(Set.of("editlearningpathenabledcourse"));
-        userRepo.save(student);
+        userUtilService.enrollUserInCourse(student, course, CourseRole.STUDENT);
 
         course.setLearningPathsEnabled(true);
 
@@ -3472,7 +3674,7 @@ public class CourseTestService {
     public void testGetCoursesForImport() throws Exception {
         List<Course> coursesExpected = new ArrayList<>();
         for (int i = 1; i < 3; i++) {
-            coursesExpected.add(courseUtilService.createCourse());
+            coursesExpected.add(courseUtilService.createEnrolledCourse(userPrefix));
         }
         // when the search tem is not "", the sort order is descending, and we get the last inserted courses first and these contain the courses we just created
         var searchTerm = pageableSearchUtilService.configureSearch("Course");
@@ -3494,7 +3696,7 @@ public class CourseTestService {
         // we have to set the semester of all existing courses to null to avoid them being selected by the archive logic
         courseRepo.clearSemester();
         for (int i = 1; i <= 4; i++) {
-            expectedOldCourses.add(courseUtilService.createCourse());
+            expectedOldCourses.add(courseUtilService.createEnrolledCourse(userPrefix));
         }
 
         expectedOldCourses.get(0).setSemester("SS20");
@@ -3536,7 +3738,7 @@ public class CourseTestService {
         courseRepo.save(course3);
 
         // remove student from all courses
-        removeAllGroupsFromStudent1();
+        unenrollStudent1FromAllCourses();
 
         final Set<CourseForArchiveDTO> actualCoursesForStudent = request.getSet("/api/course/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
         assertThat(actualCoursesForStudent).as("Course archive does not show any courses to the user removed from these courses").hasSize(0);
@@ -3544,14 +3746,24 @@ public class CourseTestService {
 
     // Test
     public void testGetExistingExerciseDetails_asTutor() throws Exception {
-        Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
+        Course course = courseUtilService.createEnrolledCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor(userPrefix);
         request.getList("/api/course/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.FORBIDDEN,
                 CourseExistingExerciseDetailsDTO.class);
     }
 
     // Test
     public void testGetExistingExerciseDetails_asEditor() throws Exception {
-        Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
-        request.get("/api/course/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK, CourseExistingExerciseDetailsDTO.class);
+        Course course = courseUtilService.createEnrolledCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor(userPrefix);
+        // The sample programming exercises in the fixture above are not actually associated with the course, so add one that
+        // really belongs to it (course set + persisted) with a known title / short name.
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
+        CourseExistingExerciseDetailsDTO details = request.get("/api/course/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK,
+                CourseExistingExerciseDetailsDTO.class);
+
+        assertThat(details.exerciseTitles()).contains(programmingExercise.getTitle());
+        // Regression guard: short names were never returned because includeShortNames compared the lowercase request param
+        // ("programming") against ExerciseType.PROGRAMMING.toString() ("PROGRAMMING"), which is always false (#12940).
+        assertThat(details.shortNames()).contains(programmingExercise.getShortName());
     }
 }

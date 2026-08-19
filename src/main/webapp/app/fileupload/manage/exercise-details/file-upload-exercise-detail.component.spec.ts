@@ -8,9 +8,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { BehaviorSubject, Subscription, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import 'app/foundation/util/array.extension';
 
@@ -23,17 +22,17 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EventManager } from 'app/foundation/service/event-manager.service';
+import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { DetailOverviewListComponent, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('FileUploadExerciseDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FileUploadExerciseDetailComponent;
     let fixture: ComponentFixture<FileUploadExerciseDetailComponent>;
     let fileUploadExerciseService: FileUploadExerciseService;
@@ -76,10 +75,10 @@ describe('FileUploadExerciseDetailComponent', () => {
     });
 
     beforeEach(async () => {
-        routeParams$ = new BehaviorSubject({ exerciseId: 456 });
+        routeParams$ = new BehaviorSubject<Params>({ exerciseId: 456 });
 
         await TestBed.configureTestingModule({
-            imports: [FileUploadExerciseDetailComponent, TranslateModule.forRoot()],
+            imports: [FileUploadExerciseDetailComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -103,6 +102,8 @@ describe('FileUploadExerciseDetailComponent', () => {
                         destroy: vi.fn(),
                     },
                 },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(FileUploadExerciseDetailComponent, {
@@ -275,8 +276,8 @@ describe('FileUploadExerciseDetailComponent', () => {
             const exercise = createExercise(course);
             const findSpy = vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
             const eventManager = TestBed.inject(EventManager);
-            let subscribedCallback: (() => void) | undefined;
-            vi.spyOn(eventManager, 'subscribe').mockImplementation((name: string, callback: () => void) => {
+            let subscribedCallback: ((event: string | EventWithContent<unknown>) => void) | undefined;
+            vi.spyOn(eventManager, 'subscribe').mockImplementation((name: string | string[], callback: (event: string | EventWithContent<unknown>) => void) => {
                 subscribedCallback = callback;
                 return new Subscription();
             });

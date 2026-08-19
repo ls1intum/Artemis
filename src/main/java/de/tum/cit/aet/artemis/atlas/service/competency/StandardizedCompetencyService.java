@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.service.competency;
 import static de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency.FIRST_VERSION;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -156,8 +155,8 @@ public class StandardizedCompetencyService {
      */
     public void importStandardizedCompetencyCatalog(StandardizedCompetencyCatalogDTO standardizedCompetencyCatalogDTO) {
         List<KnowledgeAreaForCatalogDTO> topLevelKnowledgeAreas = standardizedCompetencyCatalogDTO.knowledgeAreas() != null ? standardizedCompetencyCatalogDTO.knowledgeAreas()
-                : Collections.emptyList();
-        List<SourceDTO> sourceDTOs = standardizedCompetencyCatalogDTO.sources() != null ? standardizedCompetencyCatalogDTO.sources() : Collections.emptyList();
+                : List.of();
+        List<SourceDTO> sourceDTOs = standardizedCompetencyCatalogDTO.sources() != null ? standardizedCompetencyCatalogDTO.sources() : List.of();
         var sourceIds = sourceDTOs.stream().map(SourceDTO::id).toList();
 
         for (var knowledgeAreaDTO : topLevelKnowledgeAreas) {
@@ -196,8 +195,8 @@ public class StandardizedCompetencyService {
      * @param sourceIds     the list of valid source ids
      */
     private void verifySourcesForSelfAndDescendants(KnowledgeAreaForCatalogDTO knowledgeArea, List<Long> sourceIds) {
-        List<KnowledgeAreaForCatalogDTO> children = knowledgeArea.children() != null ? knowledgeArea.children() : Collections.emptyList();
-        List<StandardizedCompetencyForCatalogDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : Collections.emptyList();
+        List<KnowledgeAreaForCatalogDTO> children = knowledgeArea.children() != null ? knowledgeArea.children() : List.of();
+        List<StandardizedCompetencyForCatalogDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : List.of();
 
         for (var competency : competencies) {
             var sourceId = competency.sourceId();

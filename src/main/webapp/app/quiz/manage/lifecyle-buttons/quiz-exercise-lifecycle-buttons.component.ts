@@ -1,21 +1,38 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faEye, faFileExport, faPlayCircle, faPlus, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBoxesStacked, faEye, faFileExport, faPlayCircle, faPlus, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { input, output } from '@angular/core';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonDirective, TumUiPopoverComponent, TumUiPopoverTriggerDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-quiz-exercise-lifecycle-buttons',
     templateUrl: './quiz-exercise-lifecycle-buttons.component.html',
-    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective],
+    styleUrl: './quiz-exercise-lifecycle-buttons.component.scss',
+    // flex-nowrap: keep the lifecycle buttons (e.g. Batches + End) on a single line rather than stacking them when space
+    // is tight — they are a related action group, and the exercise-management table measures their inline width to size
+    // the actions column (a wrap would mis-measure it).
+    host: { class: 'd-flex gap-1 align-items-center flex-nowrap' },
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        DeleteButtonDirective,
+        ArtemisTranslatePipe,
+        TumUiButtonDirective,
+        TumUiTagComponent,
+        TumUiTooltipDirective,
+        TumUiPopoverComponent,
+        TumUiPopoverTriggerDirective,
+    ],
 })
 export class QuizExerciseLifecycleButtonsComponent {
     private quizExerciseService = inject(QuizExerciseService);
@@ -26,6 +43,7 @@ export class QuizExerciseLifecycleButtonsComponent {
     protected readonly ActionType = ActionType;
 
     // Icons
+    faBoxesStacked = faBoxesStacked;
     faSort = faSort;
     faPlus = faPlus;
     faTimes = faTimes;
@@ -44,20 +62,46 @@ export class QuizExerciseLifecycleButtonsComponent {
     readonly loadOne = output<number>();
     readonly handleNewQuizExercise = output<QuizExercise>();
 
+    protected readonly isInVariantGroup = computed(() => !!this.quizExercise().exerciseVariantGroup);
+
+    readonly showBatchMenu = computed<boolean>(() => {
+        const quiz = this.quizExercise();
+        return quiz.quizMode === QuizMode.BATCHED && (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE);
+    });
+
+    protected readonly showStartButton = computed<boolean>(() => {
+        const quiz = this.quizExercise();
+        return (
+            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.INVISIBLE) && quiz.quizMode === QuizMode.SYNCHRONIZED && !!quiz.isAtLeastEditor && !quiz.quizStarted
+        );
+    });
+
+    protected readonly showEndButton = computed<boolean>(() => {
+        const quiz = this.quizExercise();
+        return (
+            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE) && quiz.quizMode !== QuizMode.SYNCHRONIZED && !!quiz.isAtLeastInstructor && !quiz.quizEnded
+        );
+    });
+
+    protected readonly showSetVisibleButton = computed<boolean>(() => {
+        const quiz = this.quizExercise();
+        return quiz.status === QuizStatus.INVISIBLE && !!quiz.isAtLeastEditor && !quiz.visibleToStudents;
+    });
+
     /**
      * Start the given quiz-exercise immediately
      */
     startQuiz() {
         this.quizExerciseService.start(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExerciseDates>) => {
-                const updatedExercise = { ...this.quizExercise() };
+                const updatedExercise = deepClone(this.quizExercise());
 
                 this.applyDatesToExercise(updatedExercise, res.body!);
                 updatedExercise.visibleToStudents = true;
                 updatedExercise.status = QuizStatus.ACTIVE;
                 const batches = updatedExercise.quizBatches ? [...updatedExercise.quizBatches] : [];
                 if (batches.length > 0) {
-                    const firstBatch = { ...batches[0] };
+                    const firstBatch = deepClone(batches[0]);
                     firstBatch.started = true;
                     firstBatch.startTime = updatedExercise.startDate;
                     batches[0] = firstBatch;
@@ -82,7 +126,7 @@ export class QuizExerciseLifecycleButtonsComponent {
     endQuiz() {
         return this.quizExerciseService.end(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExerciseDates>) => {
-                const updatedExercise = { ...this.quizExercise() };
+                const updatedExercise = deepClone(this.quizExercise());
                 this.applyDatesToExercise(updatedExercise, res.body!);
                 updatedExercise.quizEnded = true;
                 this.handleNewQuizExercise.emit(updatedExercise);
@@ -100,11 +144,11 @@ export class QuizExerciseLifecycleButtonsComponent {
     startBatch(quizBatchId: number) {
         this.quizExerciseService.startBatch(quizBatchId).subscribe({
             next: () => {
-                const updatedExercise = { ...this.quizExercise() };
+                const updatedExercise = deepClone(this.quizExercise());
                 if (updatedExercise.quizBatches) {
                     updatedExercise.quizBatches = updatedExercise.quizBatches.map((batch) => {
                         if (batch.id === quizBatchId) {
-                            return { ...batch, started: true };
+                            return cloneWith(batch, { started: true });
                         }
                         return batch;
                     });
@@ -123,7 +167,7 @@ export class QuizExerciseLifecycleButtonsComponent {
     addBatch() {
         this.quizExerciseService.addBatch(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizBatch>) => {
-                const updatedExercise = { ...this.quizExercise() };
+                const updatedExercise = deepClone(this.quizExercise());
                 const newBatch = res.body!;
 
                 const currentBatches = updatedExercise.quizBatches ? [...updatedExercise.quizBatches] : [];
@@ -144,7 +188,7 @@ export class QuizExerciseLifecycleButtonsComponent {
     showQuiz() {
         this.quizExerciseService.setVisible(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExerciseDates>) => {
-                const updatedExercise = { ...this.quizExercise() };
+                const updatedExercise = deepClone(this.quizExercise());
                 this.applyDatesToExercise(updatedExercise, res.body!);
                 updatedExercise.visibleToStudents = true;
                 this.handleNewQuizExercise.emit(updatedExercise);

@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -32,15 +31,15 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @Override
     void setupTestScenario() {
         super.setupTestScenario();
-        userUtilService.addStudent(exampleCourse.getStudentGroupName(), testPrefix + "student1");
-        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), testPrefix + "tutor1");
-        userUtilService.addEditor(exampleCourse.getEditorGroupName(), testPrefix + "editor1");
-        userUtilService.addInstructor(exampleCourse.getInstructorGroupName(), testPrefix + "instructor1");
+        userUtilService.addStudentToCourse(testPrefix + "student1", exampleCourse);
+        userUtilService.addTeachingAssistantToCourse(testPrefix + "tutor1", exampleCourse);
+        userUtilService.addEditorToCourse(testPrefix + "editor1", exampleCourse);
+        userUtilService.addInstructorToCourse(testPrefix + "instructor1", exampleCourse);
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
         this.exampleTutorialGroupId = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1",
-                Language.ENGLISH.name(), userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Collections.emptySet()).getId();
+                Language.ENGLISH.name(), userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Set.of()).getId();
     }
 
     private static final String TEST_PREFIX = "tutorialgroupfreeperiod";

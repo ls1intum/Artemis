@@ -1,5 +1,5 @@
 <h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.keysTablePageTitle"></h2>
-@if (!isLoading) {
+@if (!isLoading()) {
     <div class="list-group d-block">
         <div class="list-group-item">
             <dt>
@@ -9,7 +9,7 @@
         </div>
 
         <div class="list-group-item">
-            @if (keyCount > 0) {
+            @if (keyCount() > 0) {
                 <table class="table table-striped">
                     <thead>
                         <tr>
@@ -18,7 +18,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (key of sshPublicKeys; track key; let i = $index) {
+                        @for (key of sshPublicKeys(); track key; let i = $index) {
                             <tr>
                                 <td>
                                     <div class="fw-bold">{{ key.label }}</div>
@@ -68,7 +68,7 @@
             }
         </div>
 
-        @if (keyCount === 0) {
+        @if (keyCount() === 0) {
             <div class="list-group-item">
                 <a class="btn btn-primary btn-sm" data-testid="addNewSshKeyButton" [routerLink]="['add']">
                     <fa-icon [icon]="faPlus" />

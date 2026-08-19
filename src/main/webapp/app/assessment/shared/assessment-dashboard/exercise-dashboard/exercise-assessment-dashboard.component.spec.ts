@@ -1,6 +1,5 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -70,9 +69,10 @@ import { LanguageTableCellComponent } from 'app/assessment/shared/assessment-das
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import dayjs from 'dayjs/esm';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: ExerciseAssessmentDashboardComponent;
     let fixture: ComponentFixture<ExerciseAssessmentDashboardComponent>;
 
@@ -283,7 +283,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         exerciseServiceGetStatsForTutorsStub = vi.spyOn(exerciseService, 'getStatsForTutors');
         exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
         exerciseServiceGetStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ body: stats, headers: new HttpHeaders() })));
-        comp.exerciseId = modelingExercise.id!;
+        comp.exerciseId.set(modelingExercise.id!);
         modelingSubmissionStubWithoutAssessment = vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment');
         modelingSubmissionStubWithAssessment = vi.spyOn(modelingSubmissionService, 'getSubmissions');
         textSubmissionStubWithoutAssessment = vi.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment');
@@ -300,7 +300,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         programmingSubmissionStubWithoutAssessment.mockReturnValue(of(programmingSubmission));
         modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [modelingSubmissionAssessed], headers: new HttpHeaders() })));
         modelingSubmissionStubWithoutAssessment.mockReturnValue(of(modelingSubmission));
-        comp.submissionsWithComplaints = [submissionWithComplaintDTO];
+        comp.submissionsWithComplaints.set([submissionWithComplaintDTO]);
         accountService = TestBed.inject(AccountService);
         translateService = TestBed.inject(TranslateService);
     });
@@ -314,11 +314,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         accountService.userIdentity.set(user);
         fixture.detectChanges();
 
-        expect(comp.courseId).toBe(1);
+        expect(comp.courseId()).toBe(1);
         expect(comp.examId).toBe(2);
-        expect(comp.exerciseId).toBe(modelingExercise.id);
+        expect(comp.exerciseId()).toBe(modelingExercise.id);
 
-        expect(comp.tutor).toEqual(user);
+        expect(comp.tutor()).toEqual(user);
 
         const setupGraphSpy = vi.spyOn(comp, 'setupGraph');
 
@@ -346,10 +346,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         fixture.detectChanges();
 
-        expect(comp.numberOfTutorAssessments).toBe(tutorLeaderBoardEntry.numberOfAssessments);
-        expect(comp.complaintsDashboardInfo.tutor).toBe(tutorLeaderBoardEntry.numberOfTutorComplaints);
-        expect(comp.moreFeedbackRequestsDashboardInfo.tutor).toBe(tutorLeaderBoardEntry.numberOfTutorMoreFeedbackRequests);
-        expect(comp.ratingsDashboardInfo.tutor).toBe(tutorLeaderBoardEntry.numberOfTutorRatings);
+        expect(comp.numberOfTutorAssessments()).toBe(tutorLeaderBoardEntry.numberOfAssessments);
+        expect(comp.complaintsDashboardInfo().tutor).toBe(tutorLeaderBoardEntry.numberOfTutorComplaints);
+        expect(comp.moreFeedbackRequestsDashboardInfo().tutor).toBe(tutorLeaderBoardEntry.numberOfTutorMoreFeedbackRequests);
+        expect(comp.ratingsDashboardInfo().tutor).toBe(tutorLeaderBoardEntry.numberOfTutorRatings);
 
         const setupGraphSpy = vi.spyOn(comp, 'setupGraph');
 
@@ -366,10 +366,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.unassessedSubmissionByRound?.get(0)).toEqual(modelingSubmission);
-        expect(comp.unassessedSubmissionByRound?.get(0)?.latestResult).toBeUndefined();
-        expect(comp.submissionLockLimitReached).toBe(false);
-        expect(comp.assessedSubmissionsByRound?.get(0)).toHaveLength(0);
+        expect(comp.unassessedSubmissionByRound()[0]).toEqual(modelingSubmission);
+        expect(comp.unassessedSubmissionByRound()[0]?.latestResult).toBeUndefined();
+        expect(comp.submissionLockLimitReached()).toBe(false);
+        expect(comp.assessedSubmissionsByRound()[0]).toHaveLength(0);
     });
 
     it('should not set unassessedSubmission if lock limit is reached', () => {
@@ -382,23 +382,22 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.unassessedSubmissionByRound?.get(1)).toBeUndefined();
-        expect(comp.submissionLockLimitReached).toBe(true);
-        expect(comp.assessedSubmissionsByRound?.get(1)).toHaveLength(0);
+        expect(comp.unassessedSubmissionByRound()[1]).toBeUndefined();
+        expect(comp.submissionLockLimitReached()).toBe(true);
+        expect(comp.assessedSubmissionsByRound()[1]).toHaveLength(0);
     });
 
     it('should handle if no more submissions are assessable', () => {
-        comp.unassessedSubmissionByRound = new Map<number, Submission>();
-        comp.unassessedSubmissionByRound.set(0, modelingSubmission);
-        comp.unassessedSubmissionByRound.set(1, modelingSubmission);
+        comp.unassessedSubmissionByRound.set([]);
+        comp.unassessedSubmissionByRound.set([modelingSubmission, modelingSubmission]);
 
         modelingSubmissionStubWithoutAssessment.mockReturnValue(of(undefined));
 
         comp.loadAll();
 
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
-        expect(comp.unassessedSubmissionByRound.get(0)).toBeUndefined();
-        expect(comp.unassessedSubmissionByRound.get(1)).toBeUndefined();
+        expect(comp.unassessedSubmissionByRound()[0]).toBeUndefined();
+        expect(comp.unassessedSubmissionByRound()[1]).toBeUndefined();
     });
 
     it('should handle generic error', () => {
@@ -426,30 +425,30 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.numberOfAssessmentsOfCorrectionRounds[0].inTime).toBe(1);
-        expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).toBe(8);
-        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).toBe(2);
-        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).toBe(7);
-        expect(comp.assessedSubmissionsByRound?.get(1)).toHaveLength(0);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds()[0].inTime).toBe(1);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds()[1].inTime).toBe(8);
+        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound()[0].inTime).toBe(2);
+        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound()[1].inTime).toBe(7);
+        expect(comp.assessedSubmissionsByRound()[1]).toHaveLength(0);
     });
 
     it('should  set assessed Submission and latest result', () => {
         comp.loadAll();
 
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
-        expect(comp.assessedSubmissionsByRound?.get(1)![0]).toEqual(modelingSubmissionAssessed);
-        expect(comp.assessedSubmissionsByRound?.get(1)![0]?.participation!.submissions![0]).toEqual(comp.assessedSubmissionsByRound?.get(1)![0]);
-        expect(comp.assessedSubmissionsByRound?.get(1)![0]?.latestResult).toEqual(result2);
+        expect(comp.assessedSubmissionsByRound()[1]![0]).toEqual(modelingSubmissionAssessed);
+        expect(comp.assessedSubmissionsByRound()[1]![0]?.participation!.submissions![0]).toEqual(comp.assessedSubmissionsByRound()[1]![0]);
+        expect(comp.assessedSubmissionsByRound()[1]![0]?.latestResult).toEqual(result2);
     });
 
     it('should set exam and stats properties', () => {
-        expect(comp.exam).toBeUndefined();
+        expect(comp.exam()).toBeUndefined();
 
         comp.loadAll();
-        expect(comp.exercise.id).toBe(modelingExercise.id);
-        expect(comp.exam).toEqual(exam);
-        expect(comp.exam?.numberOfCorrectionRoundsInExam).toBe(numberOfAssessmentsOfCorrectionRounds.length);
-        expect(comp.numberOfAssessmentsOfCorrectionRounds).toEqual(numberOfAssessmentsOfCorrectionRounds);
+        expect(comp.exercise().id).toBe(modelingExercise.id);
+        expect(comp.exam()).toEqual(exam);
+        expect(comp.exam()?.numberOfCorrectionRoundsInExam).toBe(numberOfAssessmentsOfCorrectionRounds.length);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds()).toEqual(numberOfAssessmentsOfCorrectionRounds);
     });
 
     it('should calculateStatus DRAFT', () => {
@@ -458,7 +457,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should call hasBeenCompletedByTutor', () => {
-        comp.exampleSubmissionsCompletedByTutor = [{ id: 1 }, { id: 2 }];
+        comp.exampleSubmissionsCompletedByTutor.set([{ id: 1 }, { id: 2 }]);
         expect(comp.hasBeenCompletedByTutor(1)).toBe(true);
     });
 
@@ -466,28 +465,28 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const tutorParticipationServiceCreateStub = vi.spyOn(tutorParticipationService, 'create');
         const dto: TutorParticipationDTO = {
             id: 1,
-            exerciseId: comp.exerciseId,
+            exerciseId: comp.exerciseId(),
             tutorId: 2,
             status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
         };
 
         tutorParticipationServiceCreateStub.mockImplementation(() => {
-            expect(comp.isLoading).toBe(true);
+            expect(comp.isLoading()).toBe(true);
             return of(new HttpResponse({ body: dto, headers: new HttpHeaders() }));
         });
 
-        expect(comp.tutorParticipation).toBeUndefined();
-        expect(comp.isLoading).toBe(false);
+        expect(comp.tutorParticipation()).toBeUndefined();
+        expect(comp.isLoading()).toBe(false);
 
         comp.readInstruction();
 
         expect(tutorParticipationServiceCreateStub).toHaveBeenCalledTimes(1);
-        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledWith(comp.exerciseId);
+        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledWith(comp.exerciseId());
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading()).toBe(false);
 
-        expect(comp.tutorParticipation).toEqual(dto);
-        expect(comp.tutorParticipationStatus).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        expect(comp.tutorParticipation()).toEqual(dto);
+        expect(comp.tutorParticipationStatus()).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
     });
 
     describe('test calls for all exercise types', () => {
@@ -513,11 +512,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(textSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
             expect(textSubmissionStubWithAssessment).toHaveBeenCalledTimes(2);
 
-            expect(comp.exampleSubmissionsToReview).toHaveLength(1);
-            expect(comp.exampleSubmissionsToReview[0]).toEqual(textExercise.exampleSubmissions![0]);
+            expect(comp.exampleSubmissionsToReview()).toHaveLength(1);
+            expect(comp.exampleSubmissionsToReview()[0]).toEqual(textExercise.exampleSubmissions![0]);
 
-            expect(comp.exampleSubmissionsToAssess).toHaveLength(1);
-            expect(comp.exampleSubmissionsToAssess[0]).toEqual(textExercise.exampleSubmissions![1]);
+            expect(comp.exampleSubmissionsToAssess()).toHaveLength(1);
+            expect(comp.exampleSubmissionsToAssess()[0]).toEqual(textExercise.exampleSubmissions![1]);
         });
 
         it('programmingSubmission', () => {
@@ -580,15 +579,15 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
 
         function initComponent() {
-            comp.exercise = {
+            comp.exercise.set({
                 allowFeedbackRequests: false,
                 type: fakeExerciseType,
                 numberOfAssessmentsOfCorrectionRounds: [],
                 studentAssignedTeamIdComputed: false,
                 secondCorrectionEnabled: false,
-            };
-            comp.courseId = fakeCourseId;
-            comp.exerciseId = fakeExerciseId;
+            });
+            comp.courseId.set(fakeCourseId);
+            comp.exerciseId.set(fakeExerciseId);
             comp.examId = fakeExamId;
             comp.exerciseGroupId = fakeExerciseGroupId;
         }
@@ -614,7 +613,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         it('Expect more feedback request to delegate the correct query', () => {
             const moreFeedbackComplaint = { complaintType: ComplaintType.MORE_FEEDBACK };
             const arrayLength = 42;
-            comp.numberOfAssessmentsOfCorrectionRounds = new Array(arrayLength);
+            comp.numberOfAssessmentsOfCorrectionRounds.set(new Array(arrayLength));
             const complaintQuery = comp.getComplaintQueryParams(moreFeedbackComplaint);
 
             expect(complaintQuery).toEqual(comp.getAssessmentQueryParams(arrayLength - 1));
@@ -648,7 +647,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 complaintType: ComplaintType.COMPLAINT,
                 result: { submission },
             };
-            comp.submissionsWithComplaints = [{ submission, complaint: complaintComplaint }];
+            comp.submissionsWithComplaints.set([{ submission, complaint: complaintComplaint }]);
             const complaintQuery = comp.getComplaintQueryParams(complaintComplaint);
 
             expect(complaintQuery).toEqual(comp.getAssessmentQueryParams(fakeResults.length - 1));
@@ -659,7 +658,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         it('Expect not present submission to resolve undefined', () => {
             const fakeDTOList: SubmissionWithComplaintDTO[] = [];
             const inputSubmission = { id: 1 };
-            comp.submissionsWithComplaints = fakeDTOList;
+            comp.submissionsWithComplaints.set(fakeDTOList);
             const submissionToView = comp.getSubmissionToViewFromComplaintSubmission(inputSubmission);
 
             expect(submissionToView).toBeUndefined();
@@ -669,7 +668,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             const fakeDTOList: SubmissionWithComplaintDTO[] = [{ submission: { id: 1 }, complaint: {} }];
             const expectedSubmission = { id: 1, results: [] };
             const inputSubmission = { id: 1 };
-            comp.submissionsWithComplaints = fakeDTOList;
+            comp.submissionsWithComplaints.set(fakeDTOList);
             const submissionToView = comp.getSubmissionToViewFromComplaintSubmission(inputSubmission);
 
             expect(submissionToView).toEqual(expectedSubmission);
@@ -685,7 +684,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             const fakeDTOList: SubmissionWithComplaintDTO[] = [{ submission: { id: 1, results: fakeResults }, complaint: {} }];
             const expectedSubmissionToView = { id: 1, results: [{ assessmentType: AssessmentType.MANUAL }, { assessmentType: AssessmentType.SEMI_AUTOMATIC }] };
             const inputSubmission = { id: 1 };
-            comp.submissionsWithComplaints = fakeDTOList;
+            comp.submissionsWithComplaints.set(fakeDTOList);
             const submissionToView = comp.getSubmissionToViewFromComplaintSubmission(inputSubmission);
 
             expect(submissionToView).toEqual(expectedSubmissionToView);
@@ -702,10 +701,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
 
         it('should openExampleSubmission', () => {
-            comp.exercise = exercise;
-            comp.exercise.type = ExerciseType.PROGRAMMING;
-            comp.courseId = 4;
-            comp.exercise = exercise;
+            comp.exercise.set(exercise);
+            comp.exercise().type = ExerciseType.PROGRAMMING;
+            comp.courseId.set(4);
+            comp.exercise.set(exercise);
             const submission = { id: 8 };
             comp.openExampleSubmission(submission!.id, true, true);
             expect(navigateSpy).toHaveBeenCalledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/example-submissions/${submission.id}`], {
@@ -715,33 +714,33 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('generate exercise detail link', () => {
-        comp.exercise = modelingExercise;
-        comp.courseId = 4;
-        const exerciseDetailsLink = comp.getExerciseDetailsLink();
+        comp.exercise.set(modelingExercise);
+        comp.courseId.set(4);
+        const exerciseDetailsLink = comp.exerciseDetailsLink();
         expect(exerciseDetailsLink).toEqual(['/course-management', 4, ExerciseType.MODELING + '-exercises', modelingExercise.id]);
     });
 
     it('should toggle second correction', () => {
-        comp.exercise = exercise;
-        comp.exercise.type = ExerciseType.TEXT;
+        comp.exercise.set(exercise);
+        comp.exercise().type = ExerciseType.TEXT;
 
         const secondCorrectionEnabled = true;
         vi.spyOn(exerciseService, 'toggleSecondCorrection').mockImplementation((exerciseId) => {
-            expect(comp.togglingSecondCorrectionButton).toBe(secondCorrectionEnabled);
+            expect(comp.togglingSecondCorrectionButton()).toBe(secondCorrectionEnabled);
 
-            expect(exerciseId).toBe(comp.exerciseId);
+            expect(exerciseId).toBe(comp.exerciseId());
             return of(secondCorrectionEnabled);
         });
 
         comp.toggleSecondCorrection();
 
-        expect(comp.togglingSecondCorrectionButton).toBe(false);
-        expect(comp.secondCorrectionEnabled).toBe(secondCorrectionEnabled);
-        expect(comp.numberOfCorrectionRoundsEnabled).toBe(2);
+        expect(comp.togglingSecondCorrectionButton()).toBe(false);
+        expect(comp.secondCorrectionEnabled()).toBe(secondCorrectionEnabled);
+        expect(comp.numberOfCorrectionRoundsEnabled()).toBe(2);
     });
 
     it('should check if complaint locked', () => {
-        comp.exercise = exercise;
+        comp.exercise.set(exercise);
         const complaintService = TestBed.inject(ComplaintService);
         const complaintServiceSpy = vi.spyOn(complaintService, 'isComplaintLockedForLoggedInUser');
 
@@ -782,15 +781,15 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.sortMoreFeedbackRows();
 
         expect(sortServicePropertySpy).toHaveBeenCalledTimes(2);
-        expect(sortServicePropertySpy).toHaveBeenNthCalledWith(1, comp.submissionsWithMoreFeedbackRequests, 'complaint.submittedTime', true);
-        expect(sortServicePropertySpy).toHaveBeenNthCalledWith(2, comp.submissionsWithMoreFeedbackRequests, 'complaint.accepted', false);
+        expect(sortServicePropertySpy).toHaveBeenNthCalledWith(1, comp.submissionsWithMoreFeedbackRequests(), 'complaint.submittedTime', true);
+        expect(sortServicePropertySpy).toHaveBeenNthCalledWith(2, comp.submissionsWithMoreFeedbackRequests(), 'complaint.accepted', false);
 
         comp.sortPredicates[2] = 'responseTime';
         const sortServiceFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
 
         comp.sortMoreFeedbackRows();
 
-        expect(sortServiceFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests, expect.any(Function), false);
+        expect(sortServiceFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests(), expect.any(Function), false);
     });
 
     it('should return submission language', () => {
@@ -802,5 +801,155 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         };
         expect(comp.language(textSubmissionWithoutLanguage)).toBe(unkownLanguage);
         expect(comp.language(programmingSubmission)).toBe(unkownLanguage);
+    });
+
+    describe('assessment not possible yet', () => {
+        const exerciseWithRunningExam = {
+            ...modelingExercise,
+            latestExamEndDate: dayjs().add(1, 'hour'),
+            assessmentPossibleFrom: dayjs().add(1, 'hour'),
+        } as ModelingExercise;
+
+        it('should explain why assessment is not possible yet while the exam is still running', () => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseWithRunningExam, headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(comp.assessmentNotPossibleYetReason()).toEqual({
+                translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`,
+                date: exerciseWithRunningExam.latestExamEndDate,
+                assessmentPossibleFrom: exerciseWithRunningExam.assessmentPossibleFrom,
+            });
+        });
+
+        it('should keep test runs assessable, because they happen before the exam starts', () => {
+            comp.exercise.set(exerciseWithRunningExam);
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeDefined();
+
+            comp.isTestRun.set(true);
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
+            expect(comp.assessmentNotPossibleYetTooltip()).toBe('');
+        });
+
+        it('should re-enable assessment once the moment it becomes possible has passed, without a page reload', () => {
+            vi.useFakeTimers();
+            try {
+                const assessmentPossibleFrom = dayjs().add(5, 'minutes');
+                exerciseServiceGetForTutorsStub.mockReturnValue(
+                    of(new HttpResponse({ body: { ...modelingExercise, latestExamEndDate: assessmentPossibleFrom, assessmentPossibleFrom } as ModelingExercise })),
+                );
+
+                comp.loadAll();
+                expect(comp.assessmentNotPossibleYetReason()).toBeDefined();
+                expect(modelingSubmissionStubWithoutAssessment).not.toHaveBeenCalled();
+
+                vi.advanceTimersByTime(5 * 60 * 1000 + 2000);
+
+                expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
+                // the submissions that could not be fetched while assessment was blocked are fetched now
+                expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalled();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('should not ask the server for submissions to assess while the exam is still running', () => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseWithRunningExam, headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(modelingSubmissionStubWithoutAssessment).not.toHaveBeenCalled();
+        });
+
+        const notPossibleYetError = () =>
+            new HttpErrorResponse({
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: dayjs().add(1, 'hour').toISOString() } },
+            });
+
+        it('should not show a toast for the "assessment is not possible yet" error while the banner explains it', () => {
+            const alertService = TestBed.inject(AlertService);
+            const alertServiceSpy = vi.spyOn(alertService, 'error');
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseWithRunningExam, headers: new HttpHeaders() })));
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => notPossibleYetError()));
+            modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeDefined();
+            expect(alertServiceSpy).not.toHaveBeenCalled();
+        });
+
+        it('should still explain the error in a toast when no banner is shown, e.g. when the browser clock runs ahead', () => {
+            // the banner is computed from the browser clock while the gate uses the server clock, so the two can
+            // disagree; without a toast the tutor would get no feedback at all
+            const alertService = TestBed.inject(AlertService);
+            const alertServiceSpy = vi.spyOn(alertService, 'error');
+            vi.spyOn(TestBed.inject(ArtemisDatePipe), 'transform').mockReturnValue('1 Aug 2026, 10:00');
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => notPossibleYetError()));
+            modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
+            // the date the server sent, rendered in the browser's locale
+            expect(alertServiceSpy).toHaveBeenCalledWith(`error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, { date: '1 Aug 2026, 10:00' });
+        });
+
+        it('should render the explanation and make the assessment actions unreachable, also via the keyboard', () => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseWithRunningExam, headers: new HttpHeaders() })));
+
+            fixture.detectChanges();
+
+            const banner = fixture.nativeElement.querySelector('#assessment-not-possible-yet');
+            expect(banner).not.toBeNull();
+
+            const continueAssessment = fixture.nativeElement.querySelector('#continue-assessment');
+            expect(continueAssessment).not.toBeNull();
+            expect(continueAssessment.classList).toContain('disabled');
+            // the disabled class only stops mouse clicks, so the route must be gone and the link out of the tab order
+            expect(continueAssessment.getAttribute('href')).toBeNull();
+            expect(continueAssessment.getAttribute('aria-disabled')).toBe('true');
+            expect(continueAssessment.getAttribute('tabindex')).toBe('-1');
+        });
+
+        it('should not overflow the timer delay for an exam that is still more than 24 days away', () => {
+            vi.useFakeTimers();
+            const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+            try {
+                const assessmentPossibleFrom = dayjs().add(60, 'days');
+                exerciseServiceGetForTutorsStub.mockReturnValue(
+                    of(new HttpResponse({ body: { ...modelingExercise, latestExamEndDate: assessmentPossibleFrom, assessmentPossibleFrom } as ModelingExercise })),
+                );
+
+                comp.loadAll();
+
+                // a larger delay would overflow setTimeout's signed 32-bit delay and fire immediately, spinning the loop
+                const delays = setTimeoutSpy.mock.calls.map((call) => call[1]);
+                expect(delays).toContain(2_147_483_647);
+                expect(Math.max(...(delays as number[]))).toBeLessThanOrEqual(2_147_483_647);
+            } finally {
+                setTimeoutSpy.mockRestore();
+                vi.useRealTimers();
+            }
+        });
+
+        it('should offer no explanation once assessment is possible', () => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: { ...modelingExercise, latestExamEndDate: dayjs().subtract(1, 'hour'), assessmentPossibleFrom: dayjs().subtract(1, 'hour') } as ModelingExercise,
+                        headers: new HttpHeaders(),
+                    }),
+                ),
+            );
+
+            comp.loadAll();
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
+            expect(comp.assessmentNotPossibleYetTooltip()).toBe('');
+            expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalled();
+        });
     });
 });

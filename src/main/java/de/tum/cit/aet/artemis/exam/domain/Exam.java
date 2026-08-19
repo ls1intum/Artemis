@@ -82,6 +82,13 @@ public class Exam extends DomainObject {
     private ZonedDateTime examStudentReviewEnd;
 
     /**
+     * The date from which students can see the summary (submission overview) of their submitted exam.
+     * If null, the summary is available immediately after submission (default behavior).
+     */
+    @Column(name = "exam_summary_publication_date")
+    private ZonedDateTime examSummaryPublicationDate;
+
+    /**
      * The duration in which the students can do final submissions before the exam ends in seconds
      */
     @Column(name = "grace_period", columnDefinition = "integer default 180")
@@ -144,8 +151,6 @@ public class Exam extends DomainObject {
     @JsonIgnoreProperties(value = "exam", allowSetters = true)
     private List<ExerciseGroup> exerciseGroups = new ArrayList<>();
 
-    // No @Cache on studentExams / examUsers / examRoomExamAssignments: all grow / are mutated during exam registration and prep while conduction monitoring reads
-    // them concurrently; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "exam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exam")
     private Set<StudentExam> studentExams = new HashSet<>();
@@ -254,6 +259,14 @@ public class Exam extends DomainObject {
 
     public void setExamStudentReviewEnd(ZonedDateTime examStudentReviewEnd) {
         this.examStudentReviewEnd = examStudentReviewEnd;
+    }
+
+    public ZonedDateTime getExamSummaryPublicationDate() {
+        return examSummaryPublicationDate;
+    }
+
+    public void setExamSummaryPublicationDate(ZonedDateTime examSummaryPublicationDate) {
+        this.examSummaryPublicationDate = examSummaryPublicationDate;
     }
 
     public Integer getGracePeriod() {
@@ -485,6 +498,23 @@ public class Exam extends DomainObject {
     }
 
     /**
+     * Checks whether the student exam summary (submission overview incl. exam questions, the student's own answers and the PDF export) may be shown to students.
+     * <p>
+     * If no publication date is set, the summary is available immediately after submission (default behavior). Otherwise it becomes available once the publication
+     * date has passed. As a safeguard it is always available once the results are published, so a misconfigured date can never hide the overview after grades are out.
+     *
+     * @return true if the exam summary may be shown to students, false otherwise
+     */
+    @JsonIgnore
+    public boolean isExamSummaryPublished() {
+        // test exams are self-service practice with no shift concern; their summary is always available
+        if (isTestExam() || examSummaryPublicationDate == null) {
+            return true;
+        }
+        return examSummaryPublicationDate.isBefore(ZonedDateTime.now()) || resultsPublished();
+    }
+
+    /**
      * Checks if the exam has completely ended even for students with time extensions
      *
      * @return true if the exam writing time of the student with the longest extension has been exceeded
@@ -526,9 +556,19 @@ public class Exam extends DomainObject {
         this.quizExamMaxPoints = quizExamMaxPoints;
     }
 
+    /**
+     * Returns the exam title in a form that is safe to use in file or directory names.
+     *
+     * @return the sanitized exam title, or a stable unique fallback if the title has no ASCII representation
+     */
     @JsonIgnore
     public String getSanitizedExamTitle() {
-        // exam titles are non-nullable
-        return StringUtil.sanitizeStringForFileName(this.title);
+        // exam titles are non-nullable, but may sanitize to an empty string when they consist only of non-ASCII letters
+        // (sanitizeStringForFileName reduces the input to ASCII). Fall back to a stable, unique name in that case.
+        String sanitizedTitle = this.title == null ? "" : StringUtil.sanitizeStringForFileName(this.title);
+        if (sanitizedTitle.isBlank()) {
+            return getId() != null ? "exam_" + getId() : "exam";
+        }
+        return sanitizedTitle;
     }
 }

@@ -1,7 +1,9 @@
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { ChangeDetectorRef, Directive, OnDestroy, OnInit, inject, input, model } from '@angular/core';
+import { Directive, OnDestroy, OnInit, inject, input, model, signal } from '@angular/core';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DisplayPriority } from 'app/communication/metis.util';
+import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
+import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
@@ -18,16 +20,16 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
     readonly hasChannelModerationRights = input(false);
     readonly isThreadSidebar = input<boolean | undefined>();
-    abstract get reactionsBar(): any;
-    showDropdown = false;
-    dropdownPosition = { x: 0, y: 0 };
+    abstract get reactionsBar(): PostingReactionsBarComponent<T> | undefined;
+    readonly showDropdown = signal(false);
+    readonly dropdownPosition = signal<{ x: number; y: number }>({ x: 0, y: 0 });
     showReactionSelector = false;
     clickPosition = { x: 0, y: 0 };
 
     isAnswerPost = false;
     isDeleted = false;
     readonly timeToDeleteInSeconds = 6;
-    deleteTimerInSeconds = 6;
+    readonly deleteTimerInSeconds = signal(6);
     deleteTimer: NodeJS.Timeout | undefined;
     deleteInterval: NodeJS.Timeout | undefined;
 
@@ -36,7 +38,6 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     protected oneToOneChatService = inject(OneToOneChatService);
     protected metisConversationService = inject(MetisConversationService);
     protected metisService = inject(MetisService);
-    protected changeDetector = inject(ChangeDetectorRef);
     protected router = inject(Router);
 
     // Icons
@@ -48,45 +49,47 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     }
 
     ngOnDestroy(): void {
-        if (this.deleteTimer !== undefined) {
-            clearTimeout(this.deleteTimer);
-            // Only delete if still marked as deleted
-            if (this.isDeleted) {
-                this.deletePostingWithoutTimeout();
-            }
-        }
-
-        if (this.deleteInterval !== undefined) {
-            clearInterval(this.deleteInterval);
+        const shouldDeletePosting = this.deleteTimer !== undefined && this.isDeleted;
+        this.clearDeleteTimers();
+        // Only delete if still marked as deleted
+        if (shouldDeletePosting) {
+            this.deletePostingWithoutTimeout();
         }
     }
 
     onDeleteEvent(isDelete: boolean) {
         this.isDeleted = isDelete;
 
-        if (this.deleteTimer !== undefined) {
-            clearTimeout(this.deleteTimer);
-        }
-
-        if (this.deleteInterval !== undefined) {
-            clearInterval(this.deleteInterval);
-        }
+        this.clearDeleteTimers();
 
         if (isDelete) {
-            this.deleteTimerInSeconds = this.timeToDeleteInSeconds;
+            this.deleteTimerInSeconds.set(this.timeToDeleteInSeconds);
 
             this.deleteTimer = setTimeout(
                 () => {
                     this.deletePostingWithoutTimeout();
+                    this.isDeleted = false;
+                    this.clearDeleteTimers();
                 },
                 // We add a tiny buffer to make it possible for the user to react a bit longer than the ui displays (+1000)
-                this.deleteTimerInSeconds * 1000 + 1000,
+                this.deleteTimerInSeconds() * 1000 + 1000,
             );
 
             this.deleteInterval = setInterval(() => {
-                this.deleteTimerInSeconds = Math.max(0, this.deleteTimerInSeconds - 1);
-                this.changeDetector.detectChanges();
+                this.deleteTimerInSeconds.set(Math.max(0, this.deleteTimerInSeconds() - 1));
             }, 1000);
+        }
+    }
+
+    private clearDeleteTimers() {
+        if (this.deleteTimer !== undefined) {
+            clearTimeout(this.deleteTimer);
+            this.deleteTimer = undefined;
+        }
+
+        if (this.deleteInterval !== undefined) {
+            clearInterval(this.deleteInterval);
+            this.deleteInterval = undefined;
         }
     }
 
@@ -95,8 +98,8 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      * Closes the dropdown afterward.
      */
     editPosting() {
-        this.reactionsBar.editPosting();
-        this.showDropdown = false;
+        this.reactionsBar!.editPosting();
+        this.showDropdown.set(false);
     }
 
     /**
@@ -104,41 +107,40 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      * Closes dropdown and updates the view.
      */
     togglePin() {
-        this.reactionsBar.togglePin();
-        this.showDropdown = false;
-        this.changeDetector.detectChanges();
+        this.reactionsBar!.togglePin();
+        this.showDropdown.set(false);
     }
 
     /**
      * Deletes the post by invoking the delete method from the reaction bar.
      */
     deletePost() {
-        this.reactionsBar.deletePosting();
-        this.showDropdown = false;
+        this.reactionsBar!.deletePosting();
+        this.showDropdown.set(false);
     }
 
     /**
      * Initiates the forward message logic from the reaction bar.
      */
     forwardMessage() {
-        this.reactionsBar.forwardMessage();
+        this.reactionsBar!.forwardMessage();
     }
 
     /**
      * Delegates pin status retrieval to the reaction bar (used for dropdown display).
      */
     checkIfPinned(): DisplayPriority {
-        return this.reactionsBar.checkIfPinned();
+        return this.reactionsBar!.checkIfPinned();
     }
 
-    selectReaction(event: any) {
-        this.reactionsBar.selectReaction(event);
+    selectReaction(event: EmojiEvent) {
+        this.reactionsBar!.selectReaction(event);
         this.showReactionSelector = false;
     }
 
     addReaction(event: MouseEvent) {
         event.preventDefault();
-        this.showDropdown = false;
+        this.showDropdown.set(false);
 
         this.clickPosition = {
             x: event.clientX,
@@ -187,7 +189,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
             return;
         }
         if (this.isAnswerPost) {
-            this.metisService.deleteAnswerPost(posting);
+            this.metisService.deleteAnswerPost(posting).subscribe();
         } else {
             this.metisService.deletePost(posting);
         }
@@ -202,10 +204,14 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {
             if (this.isCommunicationPage()) {
-                this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
+                this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe({
+                    // the chat itself is created before the conversations are reloaded, and a failed reload is already
+                    // reported by the service, so it must not surface as an unhandled error here
+                    error: () => {},
+                });
             } else {
                 this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
-                    this.router.navigate(['courses', course.id, 'communication'], {
+                    void this.router.navigate(['courses', course.id, 'communication'], {
                         queryParams: {
                             conversationId: res.body!.id,
                         },
@@ -228,10 +234,13 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {
             if (this.isCommunicationPage()) {
-                this.metisConversationService.createOneToOneChatWithId(referencedUserId).subscribe();
+                this.metisConversationService.createOneToOneChatWithId(referencedUserId).subscribe({
+                    // see above, a failed reload of the conversations must not surface as an unhandled error
+                    error: () => {},
+                });
             } else {
                 this.oneToOneChatService.createWithId(course.id!, referencedUserId).subscribe((res) => {
-                    this.router.navigate(['courses', course.id, 'communication'], {
+                    void this.router.navigate(['courses', course.id, 'communication'], {
                         queryParams: {
                             conversationId: res.body!.id,
                         },

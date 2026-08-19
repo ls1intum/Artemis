@@ -1,14 +1,15 @@
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { faBan, faPlus, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 
 /**
@@ -17,7 +18,19 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-edit-lti-configuration',
     templateUrl: './edit-lti-configuration.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        TumUiInputDirective,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiMessageComponent,
+        AdminTitleBarTitleDirective,
+    ],
 })
 export class EditLtiConfigurationComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
@@ -25,8 +38,8 @@ export class EditLtiConfigurationComponent implements OnInit {
     private readonly router = inject(Router);
     private readonly alertService = inject(AlertService);
 
-    platform: LtiPlatformConfiguration;
-    platformConfigurationForm: FormGroup;
+    readonly platform = signal<LtiPlatformConfiguration>(undefined!);
+    platformConfigurationForm!: FormGroup; // initialized in ngOnInit() via initializeForm()
 
     /** Whether save is in progress */
     readonly isSaving = signal(false);
@@ -39,7 +52,6 @@ export class EditLtiConfigurationComponent implements OnInit {
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
-    protected readonly faPlus = faPlus;
 
     /**
      * Gets the configuration for the course encoded in the route and prepares the form
@@ -54,7 +66,7 @@ export class EditLtiConfigurationComponent implements OnInit {
             this.isEditMode.set(true);
             this.ltiConfigurationService.getLtiPlatformById(Number(platformId)).subscribe({
                 next: (data) => {
-                    this.platform = data;
+                    this.platform.set(data);
                     this.patchFormValues();
                 },
                 error: (error) => {
@@ -76,7 +88,7 @@ export class EditLtiConfigurationComponent implements OnInit {
         }
         this.isSaving.set(true);
         const platformConfiguration = this.platformConfigurationForm.getRawValue();
-        if (this.platform?.id) {
+        if (this.platform()?.id) {
             this.updateLtiConfiguration(platformConfiguration);
         } else {
             this.addLtiConfiguration(platformConfiguration);
@@ -86,7 +98,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     /**
      * Update existing platform configuration
      */
-    updateLtiConfiguration(platformConfiguration: any) {
+    updateLtiConfiguration(platformConfiguration: LtiPlatformConfiguration) {
         this.ltiConfigurationService
             .updateLtiPlatformConfiguration(platformConfiguration)
             .pipe(
@@ -105,7 +117,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     /**
      * Create new platform configuration
      */
-    addLtiConfiguration(platformConfiguration: any) {
+    addLtiConfiguration(platformConfiguration: LtiPlatformConfiguration) {
         this.ltiConfigurationService
             .addLtiPlatformConfiguration(platformConfiguration)
             .pipe(
@@ -151,16 +163,17 @@ export class EditLtiConfigurationComponent implements OnInit {
     }
 
     private patchFormValues() {
-        if (this.platform && this.platformConfigurationForm) {
+        const platform = this.platform();
+        if (platform && this.platformConfigurationForm) {
             this.platformConfigurationForm.patchValue({
-                id: this.platform.id,
-                registrationId: this.platform.registrationId,
-                originalUrl: this.platform.originalUrl ?? '',
-                customName: this.platform.customName ?? '',
-                clientId: this.platform.clientId,
-                authorizationUri: this.platform.authorizationUri,
-                tokenUri: this.platform.tokenUri,
-                jwkSetUri: this.platform.jwkSetUri,
+                id: platform.id,
+                registrationId: platform.registrationId,
+                originalUrl: platform.originalUrl ?? '',
+                customName: platform.customName ?? '',
+                clientId: platform.clientId,
+                authorizationUri: platform.authorizationUri,
+                tokenUri: platform.tokenUri,
+                jwkSetUri: platform.jwkSetUri,
             });
         }
     }
@@ -169,6 +182,6 @@ export class EditLtiConfigurationComponent implements OnInit {
      * Returns to the lti configuration page
      */
     navigateToLtiConfigurationPage() {
-        this.router.navigate(['admin', 'lti-configuration']);
+        void this.router.navigate(['admin', 'lti-configuration']);
     }
 }

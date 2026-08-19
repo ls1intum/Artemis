@@ -6,6 +6,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Result>;
 type ModelingAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string };
@@ -59,8 +60,9 @@ export class ModelingAssessmentService {
         return this.http.get<Result>(url).pipe(map((res) => this.convertResult(res)));
     }
 
-    cancelAssessment(submissionId: number): Observable<void> {
-        return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
+    cancelAssessment(submissionId: number, resultId?: number): Observable<void> {
+        const params = resultId ? new HttpParams().set('resultId', resultId) : undefined;
+        return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null, { params });
     }
 
     /**
@@ -82,14 +84,14 @@ export class ModelingAssessmentService {
             result.submission.submissionDate = convertDateFromServer(result.submission.submissionDate);
         }
         if (result.submission?.participation) {
-            result.submission!.participation!.initializationDate = convertDateFromServer(result.submission.participation.initializationDate);
+            result.submission.participation.initializationDate = convertDateFromServer(result.submission.participation.initializationDate);
         }
 
         return res.clone({ body: result });
     }
 
     private static convertItemFromServer(result: Result): Result {
-        return Object.assign({}, result);
+        return deepClone(result);
     }
 
     /**

@@ -1,15 +1,15 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { Course, CourseGroup, courseGroups } from 'app/course/shared/entities/course.model';
+import { Course, CourseRoleSlug, courseRoleSegments } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { UserService } from 'app/account/user/shared/user.service';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription, of } from 'rxjs';
 import { capitalize } from 'lodash-es';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { captureException } from '@sentry/angular';
 import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-course-group-membership',
@@ -25,48 +25,24 @@ export class CourseGroupMembershipComponent implements OnInit {
 
     allCourseGroupUsers = signal<User[]>([]);
     course = signal<Course | undefined>(undefined);
-    courseGroup = signal<CourseGroup | undefined>(undefined);
+    courseRoleSlug = signal<CourseRoleSlug | undefined>(undefined);
     isLoading = signal(false);
     isAdmin = signal(false);
-    paramSub: Subscription;
+    paramSub?: Subscription;
     filteredUsersSize = signal(0);
 
     readonly capitalize = capitalize;
 
     /**
-     * Property that returns the course group name, e.g. "artemis-test-students"
-     */
-    courseGroupName = computed(() => {
-        const course = this.course();
-        const courseGroup = this.courseGroup();
-        if (!course || !courseGroup) {
-            return undefined;
-        }
-        switch (courseGroup) {
-            case CourseGroup.STUDENTS:
-                return course.studentGroupName;
-            case CourseGroup.TUTORS:
-                return course.teachingAssistantGroupName;
-            case CourseGroup.EDITORS:
-                return course.editorGroupName;
-            case CourseGroup.INSTRUCTORS:
-                return course.instructorGroupName;
-            default:
-                captureException('Unknown course group: ' + courseGroup);
-                return undefined;
-        }
-    });
-
-    /**
-     * Property that returns the course group entity name, e.g. "students" or "tutors".
+     * Property that returns the course role entity name, e.g. "students" or "tutors".
      * If the count of users is exactly 1, singular is used instead of plural.
      */
     courseGroupEntityName = computed(() => {
-        const courseGroup = this.courseGroup();
-        if (!courseGroup) {
+        const courseRoleSlug = this.courseRoleSlug();
+        if (!courseRoleSlug) {
             return '';
         }
-        return this.allCourseGroupUsers().length === 1 ? courseGroup.slice(0, -1) : courseGroup;
+        return this.allCourseGroupUsers().length === 1 ? courseRoleSlug.slice(0, -1) : courseRoleSlug;
     });
 
     exportFilename = computed(() => {
@@ -84,9 +60,23 @@ export class CourseGroupMembershipComponent implements OnInit {
 
     userSearch = (loginOrName: string) => this.userService.search(loginOrName);
 
-    addToGroup = (login: string) => this.courseService.addUserToCourseGroup(this.course()!.id!, this.courseGroup()!, login);
+    addToRole = (login: string): Observable<HttpResponse<void>> => {
+        const courseId = this.course()?.id;
+        const courseRoleSlug = this.courseRoleSlug();
+        if (courseId === undefined || !courseRoleSlug) {
+            return of(new HttpResponse<void>());
+        }
+        return this.courseService.addUserToCourseRole(courseId, courseRoleSlug, login);
+    };
 
-    removeFromGroup = (login: string) => this.courseService.removeUserFromCourseGroup(this.course()!.id!, this.courseGroup()!, login);
+    removeFromRole = (login: string): Observable<HttpResponse<void>> => {
+        const courseId = this.course()?.id;
+        const courseRoleSlug = this.courseRoleSlug();
+        if (courseId === undefined || !courseRoleSlug) {
+            return of(new HttpResponse<void>());
+        }
+        return this.courseService.removeUserFromCourseRole(courseId, courseRoleSlug, login);
+    };
 
     /**
      * Update the number of filtered users
@@ -102,14 +92,20 @@ export class CourseGroupMembershipComponent implements OnInit {
     loadAll = () => {
         this.isLoading.set(true);
         this.isAdmin.set(this.accountService.isAdmin());
-        this.route.parent!.data.subscribe(({ course }) => {
+        this.route.parent!.data.subscribe(({ course }: { course?: Course }) => {
             this.course.set(course);
+            const courseId = course?.id;
             this.paramSub = this.route.params.subscribe((params) => {
-                this.courseGroup.set(params['courseGroup']);
-                if (!courseGroups.includes(this.courseGroup()!)) {
-                    return this.router.navigate(['/course-management']);
+                const slug: CourseRoleSlug = params['courseRoleSlug'];
+                if (!courseRoleSegments.includes(slug)) {
+                    void this.router.navigate(['/course-management']);
+                    return;
                 }
-                this.courseService.getAllUsersInCourseGroup(this.course()!.id!, this.courseGroup()!).subscribe((usersResponse) => {
+                this.courseRoleSlug.set(slug);
+                if (courseId === undefined) {
+                    return;
+                }
+                this.courseService.getAllUsersInCourseRole(courseId, slug).subscribe((usersResponse) => {
                     this.allCourseGroupUsers.set(usersResponse.body!);
                     this.isLoading.set(false);
                 });

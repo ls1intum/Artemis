@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -28,8 +27,6 @@ import { TranslateService } from '@ngx-translate/core';
  * `localStorage`, etc.).
  */
 describe('TeamsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: TeamsComponent;
     let fixture: ComponentFixture<TeamsComponent>;
     let debugElement: DebugElement;
@@ -77,8 +74,18 @@ describe('TeamsComponent', () => {
         // Make sure that all 3 teams were received for exercise
         expect(comp.teams()).toHaveLength(mockTeams.length);
 
-        // Check that ngx-datatable host element is rendered (via NO_ERRORS_SCHEMA)
-        const datatable = debugElement.query(By.css('jhi-data-table'));
+        // Check that jhi-table-view host element is rendered (via NO_ERRORS_SCHEMA)
+        const datatable = debugElement.query(By.css('jhi-table-view'));
         expect(datatable).not.toBeNull();
+    });
+
+    it('should include the owner (tutor) name and login in the searchable fields', () => {
+        expect(comp.tableOptions.globalFilterFields).toEqual(expect.arrayContaining(['owner.name', 'owner.login']));
+    });
+
+    it('should track the filtered team count reported by the table for the header', () => {
+        expect(comp.filteredTeamsSize()).toBeUndefined();
+        comp.onFilteredTeamsSizeChange(2);
+        expect(comp.filteredTeamsSize()).toBe(2);
     });
 });

@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -24,11 +25,13 @@ import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
-import de.tum.cit.aet.artemis.admin.dto.OrganizationCountDTO;
 import de.tum.cit.aet.artemis.admin.organization.util.OrganizationUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -46,6 +49,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     /**
      * Builds a search DTO with the given search term and page size.
@@ -85,8 +91,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
+        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
         course1.setEnrollmentEnabled(true);
         course1.setEnrollmentStartDate(pastTimestamp);
         course1.setEnrollmentEndDate(futureTimestamp);
@@ -120,9 +126,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
-        Course course3 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
+        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
+        Course course3 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
 
         course1.setEnrollmentEnabled(true);
         course1.setEnrollmentStartDate(pastTimestamp);
@@ -137,13 +143,15 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         course2 = courseRepository.save(course2);
         course3 = courseRepository.save(course3);
 
-        Set<String> updatedGroups = request.postWithResponseBody("/api/course/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
-        assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
+        request.postWithoutLocation("/api/course/courses/" + course1.getId() + "/enroll", null, HttpStatus.OK, null);
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course1.getId(), CourseRole.STUDENT))
+                .as("User is enrolled in course1 as student").isTrue();
 
-        updatedGroups = request.postWithResponseBody("/api/course/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.OK);
-        assertThat(updatedGroups).as("User is enrolled in course").contains(course2.getStudentGroupName());
+        request.postWithoutLocation("/api/course/courses/" + course2.getId() + "/enroll", null, HttpStatus.OK, null);
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course2.getId(), CourseRole.STUDENT))
+                .as("User is enrolled in course2 as student").isTrue();
 
-        request.postWithResponseBody("/api/course/courses/" + course3.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/course/courses/" + course3.getId() + "/enroll", null, HttpStatus.FORBIDDEN, null);
     }
 
     /**
@@ -155,7 +163,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
 
         request.postWithoutLocation("/api/core/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
@@ -173,7 +181,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemoveCourseToOrganization() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();
@@ -300,7 +308,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteOrganization() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();
@@ -430,7 +438,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         String uniqueName = "userAndCourseCount";
         Organization organization = organizationUtilService.createOrganization(uniqueName, "shortname", "url", "desc", null, "emailpattern");
 
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "name", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
@@ -543,12 +551,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetOrganizationCoursesPaginated() throws Exception {
         Organization organization = organizationUtilService.createOrganization();
-        Course course1 = courseRepository
-                .save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "PagedCourse1", "tutor", "editor", "instructor"));
-        Course course2 = courseRepository
-                .save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "PagedCourse2", "tutor", "editor", "instructor"));
-        Course course3 = courseRepository
-                .save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "PagedCourse3", "tutor", "editor", "instructor"));
+        Course course1 = courseRepository.save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>()));
+        Course course2 = courseRepository.save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>()));
+        Course course3 = courseRepository.save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>()));
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
         courseRepository.addOrganizationToCourse(course2.getId(), organization);
         courseRepository.addOrganizationToCourse(course3.getId(), organization);
@@ -584,11 +589,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     void testGetOrganizationCoursesPaginated_filterBySearchTerm() throws Exception {
         String uniqueTitle = "uniqueCourseFilter";
         Organization organization = organizationUtilService.createOrganization();
-        Course matchingCourse = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tutor", "tutor", "editor", "instructor");
+        Course matchingCourse = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         matchingCourse.setTitle(uniqueTitle + " Matching");
         matchingCourse = courseRepository.save(matchingCourse);
-        Course nonMatchingCourse = courseRepository
-                .save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tutor", "tutor", "editor", "instructor"));
+        Course nonMatchingCourse = courseRepository.save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>()));
         courseRepository.addOrganizationToCourse(matchingCourse.getId(), organization);
         courseRepository.addOrganizationToCourse(nonMatchingCourse.getId(), organization);
 
@@ -600,29 +604,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     /**
-     * Test get number of users and courses of a given organization
-     */
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetNumberOfUsersAndCoursesOfOrganization() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        course1 = courseRepository.save(course1);
-
-        Organization organization = organizationUtilService.createOrganization();
-        organization = organizationRepo.save(organization);
-
-        courseRepository.addOrganizationToCourse(course1.getId(), organization);
-        User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testGetNumberOfUsers_");
-
-        userTestRepository.addOrganizationToUser(student.getId(), organization);
-
-        OrganizationCountDTO result = request.get("/api/core/admin/organizations/" + organization.getId() + "/count", HttpStatus.OK, OrganizationCountDTO.class);
-
-        assertThat(result.numberOfUsers()).isEqualTo(1);
-        assertThat(result.numberOfCourses()).isEqualTo(1);
-    }
-
-    /**
      * Test retrieving an organization by its id
      */
     @Test
@@ -631,7 +612,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
@@ -665,7 +646,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetAllOrganizationByCourse() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();
@@ -724,6 +705,114 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         final Organization expectedOrganization = organization;
         Awaitility.await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> assertThat(organizationRepo.getAllMatchingOrganizationsByUserEmail(student.getEmail())).containsExactly(expectedOrganization));
+    }
+
+    /**
+     * Test that searchUsersForOrganizationRegistration returns all matching users
+     * and correctly marks existing members with isRegistered=true.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testSearchUsersForOrganizationRegistration() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+        User member = userUtilService.createAndSaveUser(TEST_PREFIX + "searchRegBasicMember");
+        User nonMember = userUtilService.createAndSaveUser(TEST_PREFIX + "searchRegBasicNonMember");
+        userTestRepository.addOrganizationToUser(member.getId(), organization);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("loginOrName", TEST_PREFIX + "searchRegBasic");
+        params.add("pageIndex", "0");
+        params.add("pageSize", "10");
+
+        List<UserForRegistrationDTO> result = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users/search", HttpStatus.OK,
+                UserForRegistrationDTO.class, params);
+
+        assertThat(result).hasSize(2);
+        UserForRegistrationDTO memberDTO = result.stream().filter(u -> u.id().equals(member.getId())).findFirst().orElseThrow();
+        UserForRegistrationDTO nonMemberDTO = result.stream().filter(u -> u.id().equals(nonMember.getId())).findFirst().orElseThrow();
+        assertThat(memberDTO.isRegistered()).isTrue();
+        assertThat(nonMemberDTO.isRegistered()).isFalse();
+    }
+
+    /**
+     * Test that searchUsersForOrganizationRegistration paginates correctly:
+     * page 0 of size 2 returns 2 results, page 1 returns the remaining one,
+     * and X-Total-Count reports 3 on both pages.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testSearchUsersForOrganizationRegistration_pagination() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+        String prefix = TEST_PREFIX + "searchRegPage";
+        userUtilService.createAndSaveUser(prefix + "A");
+        userUtilService.createAndSaveUser(prefix + "B");
+        userUtilService.createAndSaveUser(prefix + "C");
+
+        var firstPageParams = new LinkedMultiValueMap<String, String>();
+        firstPageParams.add("loginOrName", prefix);
+        firstPageParams.add("pageIndex", "0");
+        firstPageParams.add("pageSize", "2");
+
+        MvcResult firstPageResult = request
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations/" + organization.getId() + "/users/search").params(firstPageParams))
+                .andExpect(status().isOk()).andReturn();
+        List<UserForRegistrationDTO> firstPage = request.getObjectMapper().readValue(firstPageResult.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, UserForRegistrationDTO.class));
+
+        var secondPageParams = new LinkedMultiValueMap<String, String>();
+        secondPageParams.add("loginOrName", prefix);
+        secondPageParams.add("pageIndex", "1");
+        secondPageParams.add("pageSize", "2");
+
+        MvcResult secondPageResult = request
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations/" + organization.getId() + "/users/search").params(secondPageParams))
+                .andExpect(status().isOk()).andReturn();
+        List<UserForRegistrationDTO> secondPage = request.getObjectMapper().readValue(secondPageResult.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, UserForRegistrationDTO.class));
+
+        assertThat(firstPageResult.getResponse().getHeader("X-Total-Count")).isEqualTo("3");
+        assertThat(firstPage).hasSize(2);
+        assertThat(secondPageResult.getResponse().getHeader("X-Total-Count")).isEqualTo("3");
+        assertThat(secondPage).hasSize(1);
+    }
+
+    /**
+     * Test that searchUsersForOrganizationRegistration returns an empty list and zero total count
+     * when no users match the search term.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testSearchUsersForOrganizationRegistration_noMatchReturnsEmptyList() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("loginOrName", "thisTermMatchesNobody_xyz987qwerty");
+        params.add("pageIndex", "0");
+        params.add("pageSize", "10");
+
+        MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations/" + organization.getId() + "/users/search").params(params))
+                .andExpect(status().isOk()).andReturn();
+        List<UserForRegistrationDTO> body = request.getObjectMapper().readValue(result.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, UserForRegistrationDTO.class));
+
+        assertThat(result.getResponse().getHeader("X-Total-Count")).isEqualTo("0");
+        assertThat(body).isEmpty();
+    }
+
+    /**
+     * Test that searchUsersForOrganizationRegistration returns 403 for non-admin users.
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSearchUsersForOrganizationRegistration_requiresAdmin() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("loginOrName", "test");
+        params.add("pageIndex", "0");
+        params.add("pageSize", "10");
+
+        request.getList("/api/core/admin/organizations/" + organization.getId() + "/users/search", HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, params);
     }
 
     @Test

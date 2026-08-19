@@ -6,6 +6,31 @@
             "userSettings": "User Settings",
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
+            "vcsAccessTokensOverview": {
+                "title": "Access Tokens",
+                "description": "An overview of the VCS access tokens you can use to clone repositories over HTTPS. Each token is limited to a single repository. Revoking a token disables it immediately; a new token is created automatically the next time you open that repository's clone dialog.",
+                "table": {
+                    "course": "Course",
+                    "exercise": "Exercise",
+                    "type": "Type",
+                    "repository": "Repository",
+                    "empty": "You do not have any VCS access tokens yet."
+                },
+                "type": {
+                    "participation": "Participation",
+                    "template": "Template",
+                    "solution": "Solution",
+                    "tests": "Tests",
+                    "auxiliary": "Auxiliary",
+                    "assignment": "Assignment",
+                    "repository": "Repository"
+                },
+                "revoke": {
+                    "label": "Revoke",
+                    "question": "Are you sure you want to revoke this VCS access token? It stops working immediately. A new token is created automatically the next time you open that repository's clone dialog.",
+                    "success": "The VCS access token was revoked."
+                }
+            },
             "passkeys": "Passkeys",
             "LLMUsage": "AI Experience",
             "accountInformation": "Account Information",
@@ -132,7 +157,22 @@
                 },
                 "setupLater": "Set Up Later",
                 "setupPasskey": "Set Up Passkey",
-                "remindMeIn30Days": "Remind Me in 30 Days"
+                "remindMeIn30Days": "Remind Me in 30 Days",
+                "heroTitle": "Set Up Your First Passkey on This Device",
+                "facts": {
+                    "faster": {
+                        "title": "Faster sign-in:",
+                        "desc": "skip repeated login screens after your device recognizes you"
+                    },
+                    "noPasswords": {
+                        "title": "No passwords needed:",
+                        "desc": "never forget or reset a password again"
+                    },
+                    "secure": {
+                        "title": "More secure than passwords:",
+                        "desc": "phishing-resistant and bound to your device"
+                    }
+                }
             },
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",
@@ -231,7 +271,10 @@
                     "NEW_PASSKEY_ADDED": "New Passkey Added",
                     "VCS_TOKEN_EXPIRED": "VCS Token Expired",
                     "SSH_KEY_EXPIRED": "SSH Key Expired",
-                    "MAINTENANCE": "Planned Maintenance Announcements"
+                    "MAINTENANCE": "Planned Maintenance Announcements",
+                    "MAVEN_CENTRAL_RATE_LIMIT": "Failing Exercise Builds due to Maven Central Rate Limits (Instructors)",
+                    "PASSWORD_CHANGED": "Password Changed",
+                    "CREDENTIALS_REVOKED": "Passkeys, SSH Keys or Access Tokens Revoked"
                 },
                 "viewPasskeySettings": "View Passkey Settings",
                 "viewVcsTokenSettings": "View VCS Token Settings",
@@ -272,6 +315,16 @@
                 "leaderboardVisibilityInfo": "When enabled, your name will appear in the Quiz Training leaderboard across all courses. Disable this option if you don't want to appear in the leaderboard.",
                 "visitQuizTrainingFirst": "Please visit the Quiz Training mode first to enable leaderboard settings.",
                 "updateSuccess": "Leaderboard settings updated successfully."
+            },
+            "credentialRevocation": {
+                "title": "Revoke credentials",
+                "explanation": "Passkeys, SSH keys and repository access tokens each let someone use your account on their own, and they keep working after a password change. Revoke them here if any of them may have been copied or if you no longer need them. This does not change your password.",
+                "passkeys": "Delete all passkeys. You will have to register your devices again the next time you sign in with one.",
+                "sshKeys": "Delete all SSH keys. Repository access over SSH stops working until you add a key again.",
+                "vcsAccessTokens": "Delete all repository access tokens. Cloning over HTTPS with a token stops working until you create a new one.",
+                "revoke": "Revoke selected credentials",
+                "confirmationQuestion": "Are you sure you want to revoke the selected credentials? This cannot be undone, and anything that uses them stops working immediately.",
+                "success": "The selected credentials were revoked."
             }
         }
     }

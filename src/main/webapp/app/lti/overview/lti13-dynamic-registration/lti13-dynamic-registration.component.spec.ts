@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Lti13DynamicRegistrationComponent } from 'app/lti/overview/lti13-dynamic-registration/lti13-dynamic-registration.component';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router, convertToParamMap } from '@angular/router';
@@ -11,7 +10,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Lti13DynamicRegistrationComponentTest', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<Lti13DynamicRegistrationComponent>;
     let comp: Lti13DynamicRegistrationComponent;
     let route: ActivatedRoute;
@@ -49,22 +47,22 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
 
         comp.ngOnInit();
 
-        expect(comp.isRegistering).toBe(false);
-        expect(comp.registeredSuccessfully).toBe(false);
+        expect(comp.isRegistering()).toBe(false);
+        expect(comp.registeredSuccessfully()).toBe(false);
     });
 
     it('onInit success to call dynamic registration endpoint', () => {
         const httpStub = vi.spyOn(http, 'post').mockReturnValue(of({ body: {} }));
 
-        expect(comp.isRegistering).toBe(true);
+        expect(comp.isRegistering()).toBe(true);
 
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/lti/admin/lti13/dynamic-registration', null, expect.anything());
 
-        expect(comp.isRegistering).toBe(false);
-        expect(comp.registeredSuccessfully).toBe(true);
+        expect(comp.isRegistering()).toBe(false);
+        expect(comp.registeredSuccessfully()).toBe(true);
     });
 
     it('onInit dynamic registration fails on error', () => {
@@ -80,8 +78,8 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/lti/admin/lti13/dynamic-registration', null, expect.anything());
 
-        expect(comp.isRegistering).toBe(false);
-        expect(comp.registeredSuccessfully).toBe(false);
+        expect(comp.isRegistering()).toBe(false);
+        expect(comp.registeredSuccessfully()).toBe(false);
     });
 
     it('should extract courseId from params', () => {
@@ -99,7 +97,7 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(comp.registeredSuccessfully).toBe(true);
+        expect(comp.registeredSuccessfully()).toBe(true);
     });
 
     it('should post message to parent window after registration completes', () => {

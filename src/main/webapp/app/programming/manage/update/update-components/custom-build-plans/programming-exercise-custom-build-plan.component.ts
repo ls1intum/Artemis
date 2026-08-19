@@ -7,8 +7,9 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
-import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, BuildPlanPhases, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -41,13 +42,13 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
         if (configJson) {
             const parsed = parseBuildPlanPhases(configJson);
             if (parsed?.phases?.length) {
-                this.buildPhasesTemplateService.buildPlan.set(parsed as BuildPlanPhases);
+                this.buildPhasesTemplateService.buildPlan.set(parsed);
                 return;
             }
         }
 
         const legacyBuildScript = buildConfig?.buildScript;
-        if (!legacyBuildScript?.trim() || !this.programmingExercise().programmingLanguage) {
+        if ((!legacyBuildScript?.trim() && !configJson) || !this.programmingExercise().programmingLanguage) {
             this.resetCustomBuildPlan();
             this.buildPhasesTemplateService.resetToDefault();
             return;
@@ -129,7 +130,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
      * Called when the build phases editor emits a change.
      */
     onPhasesChange(phases: BuildPhase[]) {
-        this.buildPhasesTemplateService.buildPlan.update((state) => (state ? { ...state, phases } : ({ phases } as BuildPlanPhases)));
+        this.buildPhasesTemplateService.buildPlan.update((state) => (state ? cloneWith(state, { phases }) : { phases }));
     }
 
     /**
@@ -139,7 +140,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
      */
     setDockerImage(dockerImage: string) {
         this.buildPhasesTemplateService.buildPlan.update((state) =>
-            state ? { ...state, dockerImage: dockerImage.trim() } : ({ dockerImage: dockerImage.trim(), phases: [] } as BuildPlanPhases),
+            state ? cloneWith(state, { dockerImage: dockerImage.trim() }) : { dockerImage: dockerImage.trim(), phases: [] },
         );
     }
 

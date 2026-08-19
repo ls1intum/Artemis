@@ -42,7 +42,7 @@
                     (ngModelChange)="onBonusSourceChange($event)"
                     [title]="'artemisApp.bonus.bonusSource.title' | artemisTranslate"
                 >
-                    @for (sourceGradingScale of sourceGradingScales; track sourceGradingScale) {
+                    @for (sourceGradingScale of sourceGradingScales(); track sourceGradingScale) {
                         <option [ngValue]="sourceGradingScale">{{ getGradingScaleTitle(sourceGradingScale) }}</option>
                     }
                 </select>
@@ -88,7 +88,7 @@
         }
         @if (bonus.bonusStrategy && bonus.sourceGradingScale && bonus.weight) {
             <h5 class="mb-0" jhiTranslate="artemisApp.bonus.formula.title"></h5>
-            @if (bonus.bonusStrategy && bonus.weight && bonusToGradeStepsDTO) {
+            @if (bonus.bonusStrategy && bonus.weight && bonusToGradeStepsDTO()) {
                 <div class="fs-3 mb-4">
                     <div class="d-flex pb-2 align-items-center">
                         <div class="pe-2">
@@ -118,10 +118,10 @@
                     <div class="row fs-6 ps-2" jhiTranslate="artemisApp.bonus.formula.finalGradeLimit" [translateValues]="{ maxPossibleGrade: maxPossibleGrade() }"></div>
                 </div>
             }
-            @if (hasBonusStrategyWeightMismatch) {
+            @if (hasBonusStrategyWeightMismatch()) {
                 <div class="alert alert-warning" jhiTranslate="artemisApp.bonus.warnStrategyWeightMismatch"></div>
             }
-            @if (examples.length) {
+            @if (examples().length) {
                 <div>
                     <h5 jhiTranslate="artemisApp.bonus.examples.title"></h5>
                     <p class="mb-1" jhiTranslate="artemisApp.bonus.examples.helpText"></p>
@@ -139,7 +139,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (example of examples; track example) {
+                            @for (example of examples(); track example) {
                                 <tr>
                                     <td>{{ example.studentPointsOfBonusTo }}</td>
                                     <td>{{ example.examGrade }}</td>
@@ -222,7 +222,7 @@
                 </div>
             }
             <div>
-                <button (click)="save()" [disabled]="isLoading" class="btn btn-primary mr-1 mb-1" type="button">
+                <button (click)="save()" [disabled]="isLoading()" class="btn btn-primary mr-1 mb-1" type="button">
                     <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                 </button>
                 @if (bonus.id) {
@@ -234,7 +234,7 @@
                         deleteQuestion="artemisApp.bonus.deleteQuestion"
                         (delete)="delete()"
                         [dialogError]="dialogError$"
-                        [disabled]="isLoading"
+                        [disabled]="isLoading()"
                     >
                         <fa-icon [icon]="faTimes"><span jhiTranslate="entity.action.delete"></span></fa-icon>
                     </button>

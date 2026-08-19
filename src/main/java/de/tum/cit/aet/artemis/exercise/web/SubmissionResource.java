@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -119,7 +118,7 @@ public class SubmissionResource {
             resultService.deleteResult(result, true);
         }
         // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
-        submission.get().setResults(Collections.emptyList());
+        submission.get().setResults(List.of());
         if (submission.get() instanceof ProgrammingSubmission programmingSubmission) {
             buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
         }
@@ -147,7 +146,7 @@ public class SubmissionResource {
         if (!authCheckService.isAtLeastEditorForExercise(exercise)) {
             throw new AccessForbiddenException();
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         var testRunParticipations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
                 List.of(exercise));
@@ -227,7 +226,7 @@ public class SubmissionResource {
 
     private void checkAccessPermissionAtInstructor(Submission submission) {
         Course course = findCourseFromSubmission(submission);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException();

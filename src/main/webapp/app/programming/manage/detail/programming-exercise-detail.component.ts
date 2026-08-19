@@ -18,14 +18,11 @@ import {
     faUndo,
     faUserCheck,
     faUsers,
-    faWandMagicSparkles,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TooltipModule } from 'primeng/tooltip';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -51,14 +48,12 @@ import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-di
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
-import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { onError } from 'app/foundation/util/global.utils';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
@@ -69,9 +64,7 @@ import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../sha
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
-import { AppliedActionDTO, CompetencyOrchestrationResultDTO, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
-import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
 @Component({
@@ -88,7 +81,6 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         NgbTooltip,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
         FeatureToggleDirective,
-        FeatureToggleHideDirective,
         ProgrammingExerciseResetButtonDirective,
         DeleteButtonDirective,
         ExerciseDetailStatisticsComponent,
@@ -96,8 +88,8 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
         ProgrammingExerciseInstructorExerciseSharingComponent,
-        OrchestrationResultDialogComponent,
-        TooltipModule,
+        AtlasOrchestrationTriggerComponent,
+        ConsistencyCheckComponent,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -109,7 +101,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
     private eventManager = inject(EventManager);
-    private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private profileService = inject(ProfileService);
     private statisticsService = inject(StatisticsService);
@@ -117,13 +108,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private consistencyCheckService = inject(ConsistencyCheckService);
     private sharingService = inject(ProgrammingExerciseSharingService);
-    private competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
-
-    protected readonly orchestrationDialogVisible = signal(false);
-    protected readonly orchestrationDialogMessage = signal('');
-    protected readonly orchestrationDialogActions = signal<AppliedActionDTO[]>([]);
-    protected readonly orchestrationRunning = signal(false);
-    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
 
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
@@ -150,42 +134,45 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly faEye = faEye;
     protected readonly faHistory = faHistory;
     protected readonly faUserCheck = faUserCheck;
-    protected readonly faWandMagicSparkles = faWandMagicSparkles;
 
-    programmingExercise: ProgrammingExercise;
+    readonly programmingExercise = signal<ProgrammingExercise>(undefined!);
     programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
     repositoryDiffInformation?: RepositoryDiffInformation;
     templateFileContentByPath?: Map<string, string>;
     solutionFileContentByPath?: Map<string, string>;
-    isExamExercise: boolean;
+    readonly isExamExercise = signal<boolean>(false);
     supportsAuxiliaryRepositories = false; // default value
-    baseResource: string;
-    shortBaseResource: string;
-    teamBaseResource: string;
-    loadingTemplateParticipationResults = true;
-    loadingSolutionParticipationResults = true;
+    readonly baseResource = signal<string>(undefined!);
+    readonly shortBaseResource = signal<string>(undefined!);
+    readonly teamBaseResource = signal<string>(undefined!);
+    // Signal-backed so the child ProgrammingTestStatusDetailComponent re-renders when the participation
+    // results finish loading; a plain field mutated in the async pipe would not schedule change detection.
+    readonly loadingTemplateParticipationResults = signal(true);
+    readonly loadingSolutionParticipationResults = signal(true);
     diffReady = false;
     lineChangesLoading = false;
 
-    private diffDetailData: ProgrammingDiffReportDetail['data'] = {
-        repositoryDiffInformation: undefined,
-        templateFileContentByPath: new Map<string, string>(),
-        solutionFileContentByPath: new Map<string, string>(),
-        lineChangesLoading: false,
+    // Signal-backed so that late updates (the diff is computed asynchronously after the detail sections render)
+    // schedule change detection in the zoneless app. The child detail component reads these signals reactively.
+    private readonly diffDetailData = {
+        repositoryDiffInformation: signal<RepositoryDiffInformation | undefined>(undefined),
+        templateFileContentByPath: signal<Map<string, string>>(new Map<string, string>()),
+        solutionFileContentByPath: signal<Map<string, string>>(new Map<string, string>()),
+        lineChangesLoading: signal<boolean>(false),
     };
 
-    courseId: number;
-    doughnutStats: ExerciseManagementStatisticsDto;
-    formattedGradingInstructions: SafeHtml;
-    localCIEnabled = true;
-    plagiarismEnabled = false;
+    courseId!: number; // set in handleRouteData() from the loaded exercise before any read
+    readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
+    formattedGradingInstructions!: SafeHtml; // set in handleRouteData() from the loaded exercise before any read
+    readonly localCIEnabled = signal(true);
+    readonly plagiarismEnabled = signal(false);
 
-    isExportToSharingEnabled = false;
+    readonly isExportToSharingEnabled = signal(false);
 
     isAdmin = false;
-    isBuildPlanEditable = false;
+    readonly isBuildPlanEditable = signal(false);
 
-    plagiarismCheckSupported = false; // default value
+    readonly plagiarismCheckSupported = signal(false); // default value
 
     /**
      * Determines if the current user can access participations and scores for this exercise.
@@ -196,27 +183,29 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      *
      * This aligns with the access rights documented in docs/admin/access-rights.mdx
      */
-    canAccessParticipationsAndScores = false;
+    readonly canAccessParticipationsAndScores = signal(false);
 
-    private templateAndSolutionParticipationSubscription: Subscription;
-    private exerciseStatisticsSubscription: Subscription;
-    private sharingEnabledSubscription: Subscription;
+    private templateAndSolutionParticipationSubscription?: Subscription;
+    private exerciseStatisticsSubscription?: Subscription;
+    private sharingEnabledSubscription?: Subscription;
     private diffFetchSubscription?: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    private consistencyCheckDialogRef?: DynamicDialogRef;
+    /** Declarative consistency-check modal state (rendered in the template). */
+    readonly showConsistencyCheck = signal(false);
+    readonly consistencyExercises = signal<ProgrammingExercise[]>([]);
 
-    exerciseDetailSections: DetailOverviewSection[];
+    readonly exerciseDetailSections = signal<DetailOverviewSection[]>([]);
 
     private diffRunId = 0;
     private lastUpdateTime = 0;
     private readonly UPDATE_DEBOUNCE_MS = 1000;
 
     ngOnInit() {
-        this.isBuildPlanEditable = this.profileService.isProfileActive(PROFILE_JENKINS);
-        this.isExportToSharingEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING);
+        this.isBuildPlanEditable.set(this.profileService.isProfileActive(PROFILE_JENKINS));
+        this.isExportToSharingEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING));
         // Get route data directly from snapshot - no subscription needed
         const programmingExercise = this.activatedRoute.snapshot.data?.programmingExercise;
         if (programmingExercise) {
@@ -240,7 +229,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 }),
             )
             .subscribe((isEnabled) => {
-                this.isExportToSharingEnabled = isEnabled;
+                this.isExportToSharingEnabled.set(isEnabled);
             });
     }
 
@@ -250,7 +239,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.exerciseStatisticsSubscription?.unsubscribe();
         this.sharingEnabledSubscription?.unsubscribe();
         this.diffFetchSubscription?.unsubscribe();
-        this.consistencyCheckDialogRef?.close();
     }
 
     /**
@@ -258,28 +246,30 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * This is called from the effect that watches the route data signal.
      */
     private handleRouteData(programmingExercise: ProgrammingExercise): void {
-        this.programmingExercise = programmingExercise;
+        this.programmingExercise.set(programmingExercise);
         this.programmingExerciseBuildConfig = programmingExercise.buildConfig;
-        const exerciseId = this.programmingExercise.id!;
-        this.isExamExercise = !!this.programmingExercise.exerciseGroup;
+        const exerciseId = this.programmingExercise().id!;
+        this.isExamExercise.set(!!this.programmingExercise().exerciseGroup);
         // Course exercises: TAs and above can access; Exam exercises: only instructors (for exam confidentiality)
-        this.canAccessParticipationsAndScores = (this.programmingExercise?.isAtLeastTutor && !this.isExamExercise) || !!this.programmingExercise?.isAtLeastInstructor;
-        this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
+        this.canAccessParticipationsAndScores.set((this.programmingExercise()?.isAtLeastTutor && !this.isExamExercise()) || !!this.programmingExercise()?.isAtLeastInstructor);
+        this.courseId = this.isExamExercise() ? this.programmingExercise().exerciseGroup!.exam!.course!.id! : this.programmingExercise().course!.id!;
         this.isAdmin = this.accountService.isAdmin();
-        this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
+        this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise().gradingInstructions);
 
-        if (!this.isExamExercise) {
-            this.baseResource = `/course-management/${this.courseId}/programming-exercises/${exerciseId}/`;
-            this.shortBaseResource = `/course-management/${this.courseId}/`;
-            this.teamBaseResource = `/course-management/${this.courseId}/exercises/${exerciseId}/`;
+        if (!this.isExamExercise()) {
+            this.baseResource.set(`/course-management/${this.courseId}/programming-exercises/${exerciseId}/`);
+            this.shortBaseResource.set(`/course-management/${this.courseId}/`);
+            this.teamBaseResource.set(`/course-management/${this.courseId}/exercises/${exerciseId}/`);
         } else {
-            this.baseResource =
-                `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
-                `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${exerciseId}/`;
-            this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
-            this.teamBaseResource =
-                `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
-                `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${exerciseId}/`;
+            this.baseResource.set(
+                `/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}` +
+                    `/exercise-groups/${this.programmingExercise().exerciseGroup?.id}/programming-exercises/${exerciseId}/`,
+            );
+            this.shortBaseResource.set(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/`);
+            this.teamBaseResource.set(
+                `/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}` +
+                    `/exercise-groups/${this.programmingExercise().exerciseGroup?.id}/exercises/${exerciseId}/`,
+            );
         }
 
         this.templateAndSolutionParticipationSubscription = this.programmingExerciseService
@@ -287,37 +277,37 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             .pipe(
                 tap((exerciseWithParticipations) => {
                     // Only update the template and solution participations, preserving all other exercise properties
-                    this.programmingExercise.templateParticipation = exerciseWithParticipations.body!.templateParticipation;
-                    this.programmingExercise.solutionParticipation = exerciseWithParticipations.body!.solutionParticipation;
-                    this.loadingTemplateParticipationResults = false;
-                    this.loadingSolutionParticipationResults = false;
+                    this.programmingExercise().templateParticipation = exerciseWithParticipations.body!.templateParticipation;
+                    this.programmingExercise().solutionParticipation = exerciseWithParticipations.body!.solutionParticipation;
+                    this.loadingTemplateParticipationResults.set(false);
+                    this.loadingSolutionParticipationResults.set(false);
                 }),
                 tap(() => {
-                    this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+                    this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
                     const profileInfo = this.profileService.getProfileInfo();
-                    if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
-                        this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
+                    if (this.programmingExercise().projectKey && this.programmingExercise().templateParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
+                        this.programmingExercise().templateParticipation!.buildPlanUrl = createBuildPlanUrl(
                             profileInfo.buildPlanURLTemplate,
-                            this.programmingExercise.projectKey,
-                            this.programmingExercise.templateParticipation.buildPlanId,
+                            this.programmingExercise().projectKey!,
+                            this.programmingExercise().templateParticipation!.buildPlanId!,
                         );
                     }
-                    if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
-                        this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
+                    if (this.programmingExercise().projectKey && this.programmingExercise().solutionParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
+                        this.programmingExercise().solutionParticipation!.buildPlanUrl = createBuildPlanUrl(
                             profileInfo.buildPlanURLTemplate,
-                            this.programmingExercise.projectKey,
-                            this.programmingExercise.solutionParticipation.buildPlanId,
+                            this.programmingExercise().projectKey!,
+                            this.programmingExercise().solutionParticipation!.buildPlanId!,
                         );
                     }
                     if (programmingExercise.programmingLanguage) {
                         this.supportsAuxiliaryRepositories =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ?? false;
                     }
-                    this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
+                    this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
                 }),
                 mergeMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId)),
                 tap((submissionPolicy) => {
-                    this.programmingExercise.submissionPolicy = submissionPolicy;
+                    this.programmingExercise().submissionPolicy = submissionPolicy;
                 }),
             )
             // split pipe to keep type checks
@@ -325,8 +315,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 next: () => {
                     this.checkAndAlertInconsistencies();
                     if (programmingExercise.programmingLanguage) {
-                        this.plagiarismCheckSupported =
-                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.plagiarismCheckSupported ?? false;
+                        this.plagiarismCheckSupported.set(
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.plagiarismCheckSupported ?? false,
+                        );
                     }
 
                     this.startDiffRefresh();
@@ -336,14 +327,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 },
             });
 
-        this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
-            this.doughnutStats = statistics;
+        this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+            this.doughnutStats.set(statistics);
         });
     }
 
     private ensureExerciseDetailsInitialized() {
-        if (!this.exerciseDetailSections) {
-            this.exerciseDetailSections = this.getExerciseDetails();
+        // The signal is initialized with an empty array (previously an undefined field), so check emptiness.
+        if (this.exerciseDetailSections().length === 0) {
+            this.exerciseDetailSections.set(this.getExerciseDetails());
         }
     }
 
@@ -359,10 +351,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.repositoryDiffInformation = undefined;
         this.lineChangesLoading = true;
 
-        this.diffDetailData.repositoryDiffInformation = undefined;
-        this.diffDetailData.lineChangesLoading = true;
-        this.diffDetailData.templateFileContentByPath = new Map<string, string>();
-        this.diffDetailData.solutionFileContentByPath = new Map<string, string>();
+        this.diffDetailData.repositoryDiffInformation.set(undefined);
+        this.diffDetailData.lineChangesLoading.set(true);
+        this.diffDetailData.templateFileContentByPath.set(new Map<string, string>());
+        this.diffDetailData.solutionFileContentByPath.set(new Map<string, string>());
 
         this.ensureExerciseDetailsInitialized();
 
@@ -396,7 +388,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         return;
                     }
                     this.lineChangesLoading = false;
-                    this.diffDetailData.lineChangesLoading = false;
+                    this.diffDetailData.lineChangesLoading.set(false);
                 },
             });
     }
@@ -409,7 +401,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * <strong>When adding a new call to this method, make sure that no duplicated and unnecessary requests are made.</strong>
      */
     getExerciseDetails(): DetailOverviewSection[] {
-        const exercise = this.programmingExercise;
+        const exercise = this.programmingExercise();
         exercise.buildConfig = this.programmingExerciseBuildConfig;
         return [
             this.getExerciseDetailsGeneralSection(exercise),
@@ -422,10 +414,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private getDiffReportDetail(): ProgrammingDiffReportDetail | undefined {
         const showDiffReport =
-            this.diffDetailData.lineChangesLoading ||
-            !!this.diffDetailData.repositoryDiffInformation ||
-            this.diffDetailData.templateFileContentByPath.size > 0 ||
-            this.diffDetailData.solutionFileContentByPath.size > 0;
+            this.diffDetailData.lineChangesLoading() ||
+            !!this.diffDetailData.repositoryDiffInformation() ||
+            this.diffDetailData.templateFileContentByPath().size > 0 ||
+            this.diffDetailData.solutionFileContentByPath().size > 0;
 
         if (!showDiffReport) {
             return undefined;
@@ -563,7 +555,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         },
                     },
                 exercise.isAtLeastEditor &&
-                    this.localCIEnabled && {
+                    this.localCIEnabled() && {
                         type: DetailType.ProgrammingCheckoutDirectories,
                         title: 'artemisApp.programmingExercise.checkoutDirectories',
                         data: {
@@ -572,7 +564,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             isLocal: true,
                         },
                     },
-                !this.localCIEnabled && {
+                !this.localCIEnabled() && {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.templateBuildPlanId',
                     data: {
@@ -580,7 +572,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         text: exercise.templateParticipation?.buildPlanId,
                     },
                 },
-                !this.localCIEnabled && {
+                !this.localCIEnabled() && {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.solutionBuildPlanId',
                     data: {
@@ -625,11 +617,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
                         data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
                     },
-                this.localCIEnabled &&
+                this.localCIEnabled() &&
                     !!buildPlanPhases?.phases?.length && {
                         type: DetailType.ProgrammingBuildPhases,
                         title: 'artemisApp.programmingExercise.buildPhasesEditor.title',
-                        data: { phases: buildPlanPhases.phases, isExamMode: this.isExamExercise },
+                        data: { phases: buildPlanPhases.phases, isExamMode: this.isExamExercise() },
                     },
                 {
                     type: DetailType.Text,
@@ -713,7 +705,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         title: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.detailLabel',
                         data: { text: exercise.submissionPolicy.exceedingPenalty },
                     },
-                { type: DetailType.ProgrammingTimeline, title: 'artemisApp.programmingExercise.timeline.timelineLabel', data: { exercise, isExamMode: this.isExamExercise } },
+                { type: DetailType.ProgrammingTimeline, title: 'artemisApp.programmingExercise.timeline.timelineLabel', data: { exercise, isExamMode: this.isExamExercise() } },
                 {
                     type: DetailType.Boolean,
                     title: 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
@@ -753,7 +745,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     generateStructureOracle() {
-        this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id!).subscribe({
+        this.programmingExerciseService.generateStructureOracle(this.programmingExercise().id!).subscribe({
             next: (res) => {
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
@@ -773,7 +765,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     deleteProgrammingExercise(event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.programmingExercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+        this.programmingExerciseService.delete(this.programmingExercise().id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
@@ -781,10 +773,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 });
                 this.dialogErrorSource.next('');
 
-                if (!this.isExamExercise) {
-                    this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
+                if (!this.isExamExercise()) {
+                    void this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
                 } else {
-                    this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/exercise-groups`);
+                    void this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/exercise-groups`);
                 }
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -792,61 +784,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens modal and executes a consistency check for the given programming exercise
+     * Opens the declarative consistency-check modal (rendered in the template) for the given programming exercise.
      * @param exercise the programming exercise to check
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        this.consistencyCheckDialogRef =
-            this.dialogService.open(ConsistencyCheckComponent, {
-                modal: true,
-                closable: true,
-                closeOnEscape: true,
-                header: this.translateService.instant('artemisApp.consistencyCheck.title'),
-                data: { exercisesToCheck: Array.of(exercise) },
-            }) ?? undefined;
-    }
-
-    async triggerAtlasOrchestrator() {
-        const exerciseId = this.programmingExercise?.id;
-        if (!exerciseId || this.orchestrationRunning()) {
-            return;
-        }
-        this.orchestrationRunning.set(true);
-        try {
-            // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/502/503)
-            // surface as HttpErrorResponse and are handled in the catch block below.
-            const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
-            // PARTIAL responds with 207 (MULTI_STATUS, still 2xx), so both SUCCESS and PARTIAL land here.
-            // summary/appliedActions may be omitted from the response when empty (@JsonInclude(NON_EMPTY)).
-            const summary = result.summary?.trim() ?? '';
-            this.orchestrationDialogMessage.set(summary);
-            this.orchestrationDialogActions.set(result.appliedActions ?? []);
-            this.orchestrationDialogVisible.set(true);
-            if (result.status === CompetencyOrchestrationStatus.Partial) {
-                this.alertService.addAlert({
-                    type: AlertType.WARNING,
-                    message: summary || 'artemisApp.atlasOrchestrator.partial',
-                    disableTranslation: summary.length > 0,
-                });
-            }
-        } catch (err) {
-            const httpErr = err as HttpErrorResponse;
-            const body = httpErr?.error as CompetencyOrchestrationResultDTO | undefined;
-            const summary = body?.summary?.trim() || '';
-            if (httpErr?.status === 409) {
-                this.alertService.warning('artemisApp.atlasOrchestrator.inProgress');
-            } else if (httpErr?.status === 422 || httpErr?.status === 502 || httpErr?.status === 503) {
-                this.alertService.addAlert({
-                    type: AlertType.DANGER,
-                    message: summary || 'artemisApp.atlasOrchestrator.error',
-                    disableTranslation: summary.length > 0,
-                });
-            } else {
-                onError(this.alertService, httpErr);
-            }
-        } finally {
-            this.orchestrationRunning.set(false);
-        }
+        this.consistencyExercises.set([exercise]);
+        this.showConsistencyCheck.set(true);
     }
 
     /**
@@ -854,8 +797,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * This is only run if the user is at least an instructor in the course
      */
     checkAndAlertInconsistencies() {
-        if (this.programmingExercise.isAtLeastEditor) {
-            this.consistencyCheckService.checkConsistencyForProgrammingExercise(this.programmingExercise.id!).subscribe((inconsistencies) => {
+        if (this.programmingExercise().isAtLeastEditor) {
+            this.consistencyCheckService.checkConsistencyForProgrammingExercise(this.programmingExercise().id!).subscribe((inconsistencies) => {
                 if (inconsistencies.length) {
                     this.alertService.warning('artemisApp.consistencyCheck.inconsistenciesFoundAlert');
                 }
@@ -864,7 +807,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     fetchExerciseDeletionSummary(): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(this.programmingExercise);
+        return this.exerciseService.getDeletionSummary(this.programmingExercise());
     }
 
     /**
@@ -872,9 +815,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param participationId of the participation
      */
     getParticipationSubmissionLink(participationId: number) {
-        const link = [this.baseResource, 'participations', participationId];
+        const link = [this.baseResource(), 'participations', participationId];
         // For unknown reason normal exercises append /submissions to the submission view whereas exam exercises do not
-        if (!this.isExamExercise) {
+        if (!this.isExamExercise()) {
             link.push('submissions');
         }
         return link;
@@ -882,8 +825,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     fetchRepositoryFiles(): Observable<{ templateFiles: Map<string, string> | undefined; solutionFiles: Map<string, string> | undefined }> {
         return forkJoin({
-            templateFiles: this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.programmingExercise.id!),
-            solutionFiles: this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.programmingExercise.id!),
+            templateFiles: this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.programmingExercise().id!),
+            solutionFiles: this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.programmingExercise().id!),
         });
     }
 
@@ -897,11 +840,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.templateFileContentByPath = new Map<string, string>();
                 this.solutionFileContentByPath = new Map<string, string>();
                 this.repositoryDiffInformation = undefined;
-                this.diffDetailData.templateFileContentByPath = new Map<string, string>();
-                this.diffDetailData.solutionFileContentByPath = new Map<string, string>();
-                this.diffDetailData.repositoryDiffInformation = undefined;
+                this.diffDetailData.templateFileContentByPath.set(new Map<string, string>());
+                this.diffDetailData.solutionFileContentByPath.set(new Map<string, string>());
+                this.diffDetailData.repositoryDiffInformation.set(undefined);
                 this.lineChangesLoading = false;
-                this.diffDetailData.lineChangesLoading = false;
+                this.diffDetailData.lineChangesLoading.set(false);
             }
             return;
         }
@@ -911,12 +854,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
         this.diffReady = false;
         this.repositoryDiffInformation = undefined;
-        this.diffDetailData.repositoryDiffInformation = undefined;
+        this.diffDetailData.repositoryDiffInformation.set(undefined);
 
         this.lineChangesLoading = true;
-        this.diffDetailData.templateFileContentByPath = templateFiles;
-        this.diffDetailData.solutionFileContentByPath = solutionFiles;
-        this.diffDetailData.lineChangesLoading = true;
+        this.diffDetailData.templateFileContentByPath.set(templateFiles);
+        this.diffDetailData.solutionFileContentByPath.set(solutionFiles);
+        this.diffDetailData.lineChangesLoading.set(true);
 
         this.ensureExerciseDetailsInitialized();
 
@@ -930,7 +873,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             if (runId !== this.diffRunId) {
                 return;
             }
-            this.diffDetailData.repositoryDiffInformation = this.repositoryDiffInformation;
+            this.diffDetailData.repositoryDiffInformation.set(this.repositoryDiffInformation);
             this.diffReady = true;
         } catch (error) {
             if (runId !== this.diffRunId) {
@@ -945,11 +888,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     removedLineCount: 0,
                 },
             };
-            this.diffDetailData.repositoryDiffInformation = this.repositoryDiffInformation;
+            this.diffDetailData.repositoryDiffInformation.set(this.repositoryDiffInformation);
         } finally {
             if (runId === this.diffRunId) {
                 this.lineChangesLoading = false;
-                this.diffDetailData.lineChangesLoading = false;
+                this.diffDetailData.lineChangesLoading.set(false);
             }
         }
     }

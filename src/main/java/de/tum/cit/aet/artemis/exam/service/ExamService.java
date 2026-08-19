@@ -86,6 +86,7 @@ import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.detail.StudentExamForDetailDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -585,7 +586,7 @@ public class ExamService {
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
         var gradingType = gradingScale.map(GradingScale::getGradeType).orElse(null);
         var achievedPointsPerExercise = calculatePointsStudentAchievedInExercises(studentExamGrades, exam.getCourse(), plagiarismMapping);
-        return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, studentExam, studentResult, achievedPointsPerExercise);
+        return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, StudentExamForDetailDTO.of(studentExam), studentResult, achievedPointsPerExercise);
     }
 
     @Nullable
@@ -659,7 +660,7 @@ public class ExamService {
     private Map<Long, BonusSourceResultDTO> calculateExamScoresAsBonusSource(Long examId, Collection<Long> studentIds) {
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
             Long studentId = studentIds.iterator().next();
-            User targetUser = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(studentId);
+            User targetUser = userRepository.findByIdWithAuthoritiesElseThrow(studentId);
             StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(targetUser.getId(), examId, IS_TEST_RUN)
                     .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + studentId));
 
@@ -751,8 +752,8 @@ public class ExamService {
             if (exercise instanceof QuizExercise) {
                 // reload and replace the quiz exercise
                 var quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
-                // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
-                if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
+                // filter quiz solutions unless they may be revealed: see StudentExam#shouldRevealQuizSolutions
+                if (!studentExam.shouldRevealQuizSolutions()) {
                     quizExercise.filterForStudentsDuringQuiz();
                 }
                 studentExam.getExercises().set(i, quizExercise);
@@ -1240,8 +1241,9 @@ public class ExamService {
                 }
             }
 
-            // get number of successfully initialized participations
-            numberOfInitializedParticipationsByExercise.add(studentParticipationRepository.countInitializedParticipationsByExerciseIdIgnoreTestRuns(exercise.getId()));
+            // get number of successfully initialized participations for current exercise and exam
+            numberOfInitializedParticipationsByExercise
+                    .add(studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exercise.getId(), exam.getId()));
             if (log.isDebugEnabled()) {
                 log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
             }
@@ -1367,7 +1369,7 @@ public class ExamService {
             studentParticipationRepository.addNumberOfExamExerciseParticipations(exerciseGroup);
         });
         // set transient number of registered users
-        examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
+        examRepository.setNumberOfExamUsersForExams(List.of(exam));
     }
 
     /**
@@ -1398,8 +1400,7 @@ public class ExamService {
         final long numberOfComplaintResponses = complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExerciseIds(userRepository.getUserWithGroupsAndAuthorities().getId(),
-                exerciseIds);
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExerciseIds(userRepository.getUserWithAuthorities().getId(), exerciseIds);
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseIds(exerciseIds);
@@ -1476,10 +1477,10 @@ public class ExamService {
         }
         else {
             if (withExercises) {
-                examPage = examRepository.queryNonEmptyBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
+                examPage = examRepository.queryNonEmptyBySearchTermInCoursesWhereInstructor(searchTerm, user.getId(), pageable);
             }
             else {
-                examPage = examRepository.queryBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
+                examPage = examRepository.queryBySearchTermInCoursesWhereInstructor(searchTerm, user.getId(), pageable);
             }
         }
         return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
@@ -1512,7 +1513,7 @@ public class ExamService {
         var now = ZonedDateTime.now();
         var fromDate = now.minusDays(EXAM_ACTIVE_DAYS);
         var toDate = now.plusDays(EXAM_ACTIVE_DAYS);
-        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getGroups(), pageable, fromDate, now, toDate);
+        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getId(), pageable, fromDate, now, toDate);
     }
 
     /**
@@ -1554,18 +1555,7 @@ public class ExamService {
         for (var studentExam : studentExams) {
             int originalStudentWorkingTime = studentExam.getWorkingTime();
             originalWorkingTimes.put(studentExam.getId(), originalStudentWorkingTime);
-            int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
-            // NOTE: take the original working time extensions into account
-            if (originalTimeExtension == 0) {
-                studentExam.setWorkingTime(originalStudentWorkingTime + workingTimeChange);
-            }
-            else {
-                double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
-                int newNormalWorkingTime = originalExamDuration + workingTimeChange;
-                int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
-                int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
-                studentExam.setWorkingTime(adjustedWorkingTime);
-            }
+            studentExam.setWorkingTime(ExamDateService.projectWorkingTimeAfterDurationChange(originalStudentWorkingTime, originalExamDuration, workingTimeChange));
         }
         // Important: persist all student exams BEFORE sending WebSocket notifications.
         // The client uses a REST fallback (GET /student-exams/live-events) to recover missed events.
@@ -1579,6 +1569,22 @@ public class ExamService {
                 int originalStudentWorkingTime = originalWorkingTimes.get(studentExam.getId());
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, studentExam.getWorkingTime(), originalStudentWorkingTime, true);
             }
+        }
+    }
+
+    /**
+     * Notifies all student exams of the given exam about a changed exam schedule (start/end date) while the working
+     * time stays the same. Sends each student their current (unchanged) working time together with the exam's new
+     * start and end dates, so a conducting student can refresh the pre-start countdown and the start-based content
+     * visibility. This complements {@link #updateStudentExamsAndRescheduleExercises}, which only runs when the working
+     * time itself changes. The exam's student exams must be loaded, and the exam must already carry the new dates.
+     *
+     * @param exam the exam with its student exams loaded
+     */
+    public void sendScheduleUpdateToStudentExams(Exam exam) {
+        for (var studentExam : exam.getStudentExams()) {
+            int workingTime = studentExam.getWorkingTime();
+            examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, workingTime, workingTime, true);
         }
     }
 

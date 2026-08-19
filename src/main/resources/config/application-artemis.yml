@@ -41,6 +41,13 @@ artemis:
       allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'    # example for a TUM identifier, e.g. ab12cde
     login:
       account-name: TUM                   # optional: customization for the welcome page "please sign in with your <account-name> account"
+  programming:
+    # Optional Maven Central mirror for the test repositories of Java and Kotlin exercises. Maven Central rate-limits
+    # requests (HTTP 429), which makes exercise builds fail. When this is set, Artemis declares the mirror as the first
+    # repository (dependencies and plugins) in every newly created Java/Kotlin test repository, so builds resolve through
+    # the mirror instead of Maven Central. Leave it unset to keep resolving from Maven Central directly.
+    # TUM-operated instances can use the mirror the Artemis team provides:
+    # maven-central-mirror-url: https://reposilite.aet.cit.tum.de/releases
   version-control:
     url: https://artemis.tum.de
     user: <username>                # e.g. ga12abc
@@ -93,18 +100,35 @@ artemis:
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
-    model-costs:  # Token costs for usage tracking (EUR per million tokens)
-      gpt-5-mini:
-        input-cost-per-million-eur: 0.23
-        output-cost-per-million-eur: 1.84
+    # Token costs (EUR per million tokens). Baselines (gpt-5-mini, gpt-5.4, gpt-5.4-mini) are seeded in
+    # LLMModelCostConfiguration. Add entries here only to override or register a model. Keep this commented:
+    # an active entry here uses a literal key (e.g. gpt-5-mini) that would collide with the same model
+    # configured via environment variables (where it arrives stripped, e.g. gpt5mini). Dotted keys must be
+    # bracket-quoted, e.g. "[gpt-5.4]".
+    # model-costs:
+    #   "[gpt-5.4]":
+    #     input-cost-per-million-eur: 2.30
+    #     output-cost-per-million-eur: 13.80
   atlas:
     # *-model values are Azure deployment aliases — replace with your own deployment names.
     chat-model: gpt-5.4-mini
     temperature: 0.8
+    flavor-strip-model: gpt-5.4-mini # Azure deployment name of a small/fast model used to strip narrative scaffolding from exercise text before downstream LLM processing. Set to an empty string to disable stripping (raw passthrough).
+    flavor-strip-reasoning-effort: medium # Reasoning effort passed via AzureOpenAiChatOptions.reasoningEffort (e.g. low|medium|high). Leave blank to omit the parameter. "medium" is the v3 default — the multi-step constraint checks (keep_verbatim list + heading rule + metacognitive gate) require multi-step reasoning that "low" effort skips.
+    flavor-strip-temperature: 1.0 # Temperature for the flavor-strip LLM call. Some models (e.g. gpt-5 family) only accept the default value of 1.
     orchestrator:
       model: gpt-5.4
       temperature: 1.0
       reasoning-effort: medium
+      # Automatic competency orchestration (Feature.AtlasAgent). Disabled by default;
+      # admins flip the toggle to opt the instance in. The scheduler ticks at scheduler-rate-ms and only
+      # claims a course's bucket once debounce-window-seconds have elapsed since the last content edit.
+      debounce-window-seconds: 1800
+      max-daily-orchestrations: 10
+      scheduler-rate-ms: 30000
+      # Per-run cap on AtlasML similarity-shortlist calls (one per changed exercise). Bounds the AtlasML
+      # fan-out feeding the execute prompt; exercises beyond the budget contribute no candidates.
+      max-atlasml-calls-per-run: 10
     atlasml:
       enabled: false # If disabled, no artifacts of the AtlasML service are accessible. This might impact the experience for instructors, i.e. some of the AI recommendations are not available.
       base-url: <your-atlasml-url> # Required address to you own AtlasML instance
@@ -115,9 +139,44 @@ artemis:
     programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
     vulnerability-scan-time: 0 0 8 * * MON # every Monday at 8am
+    # Data-privacy cleanup jobs (only run when the matching artemis.cleanup.*-schedule-enabled flag is true).
+    old-courses-warning-time: 0 0 2 * * SUN # every Sunday at 2am: archive + warn instructors of old courses due for reset
+    old-courses-reset-time: 0 0 3 * * SUN # every Sunday at 3am: reset student data of old courses past the grace period
+    old-feedback-cleanup-time: 0 30 4 * * SUN # every Sunday at 4:30am: delete feedback of non-latest results of old courses
+    old-submission-versions-cleanup-time: 0 45 4 * * SUN # every Sunday at 4:45am: delete submission versions of old courses
+    not-enrolled-users-warning-time: 0 0 5 1 * * # 1st of every month at 5am: warn inactive users enrolled in no course
+    not-enrolled-users-cleanup-time: 0 0 6 1 * * # 1st of every month at 6am: soft-delete warned users enrolled in no course
+    plagiarism-cases-cleanup-time: 0 30 3 * * SUN # every Sunday at 3:30am: delete plagiarism cases of courses ended > 5 years ago
 
   data-export:
     days-between-data-exports: 14
+
+  cleanup: # Data-privacy (GDPR) retention cutoffs and schedule kill switches for the admin data cleanup jobs.
+    # Legal basis (defaults chosen for TUM / Bavaria; adjust per your institution's regulations):
+    #  - GDPR Art. 5(1)(e) storage limitation + Art. 17 (erasure): personal data must be deleted once no longer needed.
+    #  - Grade-relevant courses hold examination data (Prüfungsunterlagen). For Bavarian universities these must be kept
+    #    5 years (Bavarian State Ministry circular; the 2-year RaPO period applies to Fachhochschulen, not universities),
+    #    then destroyed. The authoritative long-term grade/degree record (reduced exam file, 50 years) is kept in the
+    #    campus-management system (e.g. TUMonline), not in Artemis. See the privacy statement (BayHSchG Art. 61, TUM APSO).
+    #  - Non-grade-relevant courses carry no exam-retention obligation, so their student data is minimized after 1 year.
+    #  NOTE: a pending objection/legal proceeding legally extends retention. Enable the affected course's data-retention
+    #  hold (course settings -> data privacy) until the proceeding concludes: held courses are skipped by the warning and
+    #  reset jobs for as long as the hold lasts, regardless of the cutoffs below.
+    grade-relevant-retention-years: 5 # reset student data of grade-relevant courses 5 years after they end
+    non-grade-relevant-retention-years: 1 # reset student data of non-grade-relevant courses 1 year after they end
+    reset-warning-grace-period-days: 30 # days between warning instructors and actually resetting the student data
+    old-feedback-cutoff-weeks: 8 # weeks after course end before feedback of non-latest results is purged (final result's feedback is kept)
+    old-submission-versions-cutoff-weeks: 8 # weeks after course end before submission versions (editor history) are purged
+    not-enrolled-users-inactivity-months: 6 # months of inactivity (by last login) before a not-enrolled user is warned and later deleted
+    not-enrolled-users-warning-grace-period-days: 30 # days between warning a not-enrolled user and deleting the account (logging in cancels it)
+    # Schedule kill switches (all off by default: nothing runs automatically until an admin opts in).
+    old-courses-warning-schedule-enabled: false
+    old-courses-reset-schedule-enabled: false
+    old-feedback-schedule-enabled: false
+    old-submission-versions-schedule-enabled: false
+    not-enrolled-users-warning-schedule-enabled: false
+    not-enrolled-users-schedule-enabled: false
+    plagiarism-cases-schedule-enabled: false
 
   plagiarism-checks:
     plagiarism-results-limit: 100
@@ -130,6 +189,23 @@ artemis:
     enabled: false
     url: <your-pyris-url>
     secret-token: <your-secret>
+    response-streaming-enabled: true
+    dashboard:
+      max-query-window-days: 90
+      stale-threshold-minutes: 5
+      digest:
+        enabled: false
+        cron: "0 0 7 * * *"
+        recipients: []
+      alert:
+        enabled: false
+        no-response-rate-threshold: 10
+        check-interval-minutes: 30
+        cooldown-minutes: 360
+        lookback-minutes: 60
+        minimum-eligible-sessions: 10
+        minimum-user-messages: 20
+        recipients: []
 
   weaviate:
     enabled: false
@@ -138,43 +214,37 @@ artemis:
 spring:
   ai:
     model:
-      chat: azure-openai # use openai or none as alternatives
+      chat: openai # use none to disable chat models
     chat:
       client:
         enabled: #{${artemis.hyperion.enabled} or ${artemis.atlas.enabled}}
       memory:
         max-messages: 20 # Maximum number of messages to retain in conversation history per session
+    # Single OpenAI module (official OpenAI Java SDK) since Spring AI 2.0.0-M6: one config tree serves
+    # Azure OpenAI / Microsoft Foundry (prod), OpenAI itself, and OpenAI-compatible local servers (dev).
+    # https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html
     openai:
-      # These are the "global" settings; chat-specific ones override them if set
-      base-url: http://localhost:1234
-      api-key: dummy-key      # most local servers ignore it
+      ## Variant 1 (active here): Azure OpenAI / Microsoft Foundry
+      base-url: https://endpoint.openai.azure.com
+      api-key: my-api-key-for-azure-openai
+      microsoft-foundry: true # auto-detected for *.openai.azure.com base URLs; set explicitly for custom domains
+      # HTTP client request timeout (default 60s) — LLM tool-calling loops can need several minutes.
+      # Must be set at this level (spring.ai.openai.timeout); the chat-level timeout key does not feed the HTTP client.
+      timeout: 5m
       chat:
-        # If your server uses /v1/chat/completions (Ollama-like proxies):
-        completions-path: /v1/chat/completions
-        # OR if it uses this:
-        # completions-path: /api/v0/chat/completions
-        options:
-          model: openai/gpt-oss-20b    # or whatever name your local server expects
-          temperature: 0.7
-    ## Alternative configuration for Azure OpenAI
-    # Use Azure OpenAI chat model auto-config
-#    model:
-#      chat: azure-openai
-    # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
-    azure:
-      openai:
-        api-key: my-api-key-for-azure-openai
-        # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets endpoint automatically
-        endpoint: https://endpoint.openai.azure.com
-        # deployment-name should match the Azure OpenAI deployment
-        chat:
-          options:
-            deployment-name: gpt-5-mini
-            # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
-            temperature: 1.0
-        client:
-          connect-timeout: 30s
-          read-timeout: 5m
+        # The Azure deployment name; used as the request model by the default ChatClient
+        model: gpt-5-mini
+        # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
+        temperature: 1.0
+      ## Variant 2: local OpenAI-compatible server (LM Studio, Ollama, vLLM, ...) — same tree.
+      ## The SDK appends /chat/completions itself, so include the /v1 prefix in the base URL
+      ## (the former spring.ai.openai.chat.completions-path property no longer exists).
+      # base-url: http://localhost:1234/v1
+      # api-key: dummy-key      # most local servers ignore it
+      # timeout: 5m
+      # chat:
+      #   model: openai/gpt-oss-20b    # or whatever name your local server expects
+      #   temperature: 0.7
     # Retry/response handling tuning for AI providers
     retry:
       # Treat HTTP 429 as transient to allow auto-retry by Spring AI

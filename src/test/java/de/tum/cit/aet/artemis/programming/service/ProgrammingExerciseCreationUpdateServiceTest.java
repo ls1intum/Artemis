@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -48,7 +49,8 @@ class ProgrammingExerciseCreationUpdateServiceTest {
                 mock(ProgrammingExerciseRepository.class), mock(ChannelService.class), mock(ProgrammingExerciseTaskService.class), mock(ProgrammingExerciseBuildPlanService.class),
                 mock(ProgrammingExerciseCreationScheduleService.class), mock(ProgrammingExerciseAtlasIrisService.class), moduleFeatureService,
                 mock(TemplateProgrammingExerciseParticipationRepository.class), mock(SolutionProgrammingExerciseParticipationRepository.class),
-                mock(AuxiliaryRepositoryRepository.class), Optional.empty(), mock(GitService.class), mock(CompetencyExerciseLinkService.class), Optional.empty());
+                mock(AuxiliaryRepositoryRepository.class), Optional.empty(), mock(GitService.class), mock(CompetencyExerciseLinkService.class), Optional.empty(),
+                mock(RepositoryVcsAccessTokenService.class));
     }
 
     @Test

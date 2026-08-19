@@ -1,20 +1,23 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
+import { CleanupOperation, OperationName } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
-import { Subject } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { TumUiButtonDirective, TumUiDatePickerComponent, TumUiTableDirective } from '@tumaet/ui-angular';
 /**
  * Admin component for managing data cleanup operations.
  * Allows scheduling and executing various cleanup tasks like deleting orphaned entities.
@@ -23,7 +26,6 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     selector: 'jhi-cleanup-service',
     templateUrl: './cleanup-service.component.html',
     imports: [
-        FormDateTimePickerComponent,
         ArtemisTranslatePipe,
         HelpIconComponent,
         TranslateDirective,
@@ -31,13 +33,37 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
         CleanupOperationModalComponent,
+        TumUiTableDirective,
+        TumUiButtonDirective,
+        TumUiDatePickerComponent,
+        FaIconComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CleanupServiceComponent implements OnInit {
-    private dialogErrorSource = new Subject<string>();
-    dialogError = this.dialogErrorSource.asObservable();
-
     private readonly dataCleanupService = inject(DataCleanupService);
+    private readonly alertService = inject(AlertService);
+
+    protected readonly faTrash = faTrash;
+
+    // Maps each client operation to the server CleanupJobType.label() it corresponds to. The names differ for
+    // several jobs (e.g. 'deleteOldRatedResults' -> server 'deleteRatedResults'), so the execution records must
+    // be matched by this explicit job type, NOT by array position (which silently mislabels dates if the server
+    // ever changes the order or the set of returned job types).
+    private readonly serverJobTypeByName: Record<OperationName, string> = {
+        deleteOrphans: 'deleteOrphans',
+        deletePlagiarismComparisons: 'deletePlagiarismComparisons',
+        deleteNonRatedResults: 'deleteNonRatedResults',
+        deleteOldRatedResults: 'deleteRatedResults',
+        deleteOldSubmissionVersions: 'deleteSubmissionVersions',
+        deleteOldFeedback: 'deleteFeedback',
+        warnOldCoursesReset: 'warnOldCoursesReset',
+        resetOldCourses: 'resetOldCourses',
+        deleteOldCourseSubmissionVersions: 'deleteOldCourseSubmissionVersions',
+        warnNotEnrolledUsers: 'warnNotEnrolledUsers',
+        deleteNotEnrolledUsers: 'deleteNotEnrolledUsers',
+        deletePlagiarismCases: 'deletePlagiarismCases',
+    };
 
     /** Whether the cleanup operation modal is visible */
     showCleanupModal = signal<boolean>(false);
@@ -53,6 +79,9 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
         },
         {
             name: 'deletePlagiarismComparisons',
@@ -60,6 +89,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deleteNonRatedResults',
@@ -67,6 +98,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deleteOldRatedResults',
@@ -74,6 +107,8 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
         },
         {
             name: 'deleteOldSubmissionVersions',
@@ -81,6 +116,80 @@ export class CleanupServiceComponent implements OnInit {
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
             datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+        },
+        // Age-based operations: no admin-picked date range, driven by configurable server-side cutoffs. They render
+        // without date pickers and are always valid (deleteFromValid/deleteToValid stay true and are unused).
+        {
+            name: 'warnOldCoursesReset',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'resetOldCourses',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'deleteOldFeedback',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'deleteOldCourseSubmissionVersions',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'warnNotEnrolledUsers',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'deleteNotEnrolledUsers',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'deletePlagiarismCases',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
         },
     ]);
 
@@ -89,25 +198,35 @@ export class CleanupServiceComponent implements OnInit {
     }
 
     loadLastExecutions(): void {
-        this.dataCleanupService.getLastExecutions().subscribe((executionRecordsBody: HttpResponse<CleanupServiceExecutionRecordDTO[]>) => {
-            const executionRecords = executionRecordsBody.body!;
-            if (executionRecords && executionRecords.length > 0) {
+        this.dataCleanupService.getLastExecutions().subscribe({
+            next: (response) => {
+                const executionRecords = response.body ?? [];
+                // Match by server job type, not array position (see serverJobTypeByName).
+                const executionDateByJobType = new Map(executionRecords.map((record) => [record.jobType, record.executionDate]));
                 this.cleanupOperations.update((operations) =>
-                    operations.map((operation, index) => {
-                        const executionRecord = executionRecords[index];
-                        if (executionRecord && executionRecord.executionDate) {
-                            return { ...operation, lastExecuted: convertDateFromServer(executionRecord.executionDate) };
-                        }
-                        return operation;
+                    operations.map((operation) => {
+                        const executionDate = executionDateByJobType.get(this.serverJobTypeByName[operation.name]);
+                        return executionDate ? cloneWith(operation, { lastExecuted: convertDateFromServer(executionDate) }) : operation;
                     }),
                 );
-            }
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
 
     validateDates(operation: CleanupOperation): void {
-        const datesValid = operation.deleteFrom && operation.deleteTo && dayjs(operation.deleteTo).isAfter(dayjs(operation.deleteFrom));
+        const datesValid = !!(operation.deleteFrom && operation.deleteTo && dayjs(operation.deleteTo).isAfter(dayjs(operation.deleteFrom)));
         operation.datesValid.set(datesValid);
+    }
+
+    onDeleteFromChange(operation: CleanupOperation, value: dayjs.Dayjs | undefined): void {
+        operation.deleteFrom = value;
+        this.validateDates(operation);
+    }
+
+    onDeleteToChange(operation: CleanupOperation, value: dayjs.Dayjs | undefined): void {
+        operation.deleteTo = value;
+        this.validateDates(operation);
     }
 
     /**

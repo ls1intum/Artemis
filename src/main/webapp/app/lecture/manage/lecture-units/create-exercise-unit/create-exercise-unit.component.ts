@@ -94,7 +94,7 @@ export class CreateExerciseUnitComponent implements OnInit {
                 concatMap((unit) => this.exerciseUnitService.create(unit, this.resolvedLectureId()!)),
                 finalize(() => {
                     if (this.shouldNavigateOnSubmit()) {
-                        this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                        void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                     } else {
                         this.onExerciseUnitCreated.emit();
                     }

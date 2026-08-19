@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
@@ -12,6 +13,7 @@ import { isCommunicationEnabled } from 'app/course/shared/entities/course.model'
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
@@ -38,7 +40,7 @@ export class LearningPathLectureUnitComponent {
     constructor() {
         effect(() => {
             const lectureUnitId = this.lectureUnitId();
-            untracked(() => this.loadLectureUnit(lectureUnitId));
+            void untracked(() => this.loadLectureUnit(lectureUnitId));
         });
     }
 
@@ -48,16 +50,17 @@ export class LearningPathLectureUnitComponent {
             const lectureUnit = await lastValueFrom(this.lectureUnitService.getLectureUnitById(lectureUnitId));
             this.lectureUnit.set(lectureUnit);
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLoading.set(false);
         }
     }
 
     setLearningObjectCompletion(completionEvent: LectureUnitCompletionEvent): void {
-        this.lectureUnitService.completeLectureUnit(this.lectureUnit()!.lecture!, completionEvent);
-        if (this.lectureUnit()?.completed === completionEvent.completed) {
+        this.lectureUnitService.completeLectureUnit(this.lectureUnit()!.lecture!, completionEvent, () => {
+            // Publish a new reference so the unit card reacts (zoneless change detection), then propagate to the navigation.
+            this.lectureUnit.update((unit) => (unit ? cloneWith(unit, { completed: completionEvent.completed }) : unit));
             this.learningPathNavigationService.setCurrentLearningObjectCompletion(completionEvent.completed);
-        }
+        });
     }
 }

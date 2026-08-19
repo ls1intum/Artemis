@@ -32,9 +32,9 @@
                 (blur)="onInputBlur()"
             />
         </div>
-        @if (showDropdown && filteredOptions.length > 0) {
+        @if (showDropdown() && filteredOptions().length > 0) {
             <ul class="list-group autocomplete-dropdown" tabindex="0">
-                @for (option of filteredOptions; track option) {
+                @for (option of filteredOptions(); track option) {
                     <li
                         class="list-group-item list-group-item-action"
                         [ngClass]="{ 'channel-option': option.type === 'channel', 'chat-option': option.type === 'chat' }"
@@ -74,7 +74,7 @@
         [colorAction]="undefined"
         [headerActions]="undefined"
         [metaActions]="[]"
-        [defaultActions]="defaultActions"
+        [defaultActions]="defaultActions()"
         [initialEditorHeight]="editorHeight()"
         [resizableMinHeight]="editorHeight()"
         [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
@@ -100,7 +100,7 @@
                     />
                     <span class="forwarded-message-author">{{ postToForward()?.author?.name }}</span>
                 </div>
-                <div class="forwarded-message-body" [ngClass]="{ expanded: showFullForwardedMessage }" id="messageContent" #messageContent>
+                <div class="forwarded-message-body" [ngClass]="{ expanded: showFullForwardedMessage() }" id="messageContent" #messageContent>
                     <jhi-posting-content
                         [previewMode]="false"
                         [content]="postToForward()?.content!"
@@ -111,9 +111,9 @@
                         [isSubscribeToMetis]="false"
                     />
                 </div>
-                @if (isContentLong) {
+                @if (isContentLong()) {
                     <button type="button" class="btn btn-link p-0" style="width: fit-content" (click)="toggleShowFullForwardedMessage()">
-                        {{ showFullForwardedMessage ? ('artemisApp.metis.forward.showLess' | artemisTranslate) : ('artemisApp.metis.forward.showMore' | artemisTranslate) }}
+                        {{ showFullForwardedMessage() ? ('artemisApp.metis.forward.showLess' | artemisTranslate) : ('artemisApp.metis.forward.showMore' | artemisTranslate) }}
                     </button>
                 }
             </div>

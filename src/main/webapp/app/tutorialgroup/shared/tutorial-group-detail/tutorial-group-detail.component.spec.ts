@@ -1,5 +1,4 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupDetailAccessLevel, TutorialGroupDetailComponent } from './tutorial-group-detail.component';
 import { HttpResponse } from '@angular/common/http';
@@ -17,23 +16,20 @@ import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutor
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { ScaleType } from '@swimlane/ngx-charts';
 import { of, throwError } from 'rxjs';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { User } from 'app/account/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
-import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
-import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
-import { ConfirmationService } from 'primeng/api';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorial-group-detail-data';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorial-group-session';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/create-or-update-tutorial-group-session-request';
+import { Confirmation, ConfirmationService } from 'primeng/api';
 import {
     TutorialSessionCreateOrEditModalComponent,
     UpdateTutorialGroupSessionData,
 } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
 
 describe('TutorialGroupDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialGroupDetailComponent;
     let fixture: ComponentFixture<TutorialGroupDetailComponent>;
 
@@ -664,8 +660,7 @@ describe('TutorialGroupDetailComponent', () => {
 
         const pieChartColors = component.pieChartColors();
         expect(pieChartColors).toBeDefined();
-        expect(pieChartColors.group).toBe(ScaleType.Ordinal);
-        expect(pieChartColors.domain).toEqual(['var(--green)', GraphColors.LIGHT_GREY]);
+        expect(pieChartColors).toEqual(['var(--green)', GraphColors.LIGHT_GREY]);
     });
 
     it('should compute green and gray color for 70% <= average attendance < 80%', () => {
@@ -686,8 +681,7 @@ describe('TutorialGroupDetailComponent', () => {
 
         const pieChartColors = component.pieChartColors();
         expect(pieChartColors).toBeDefined();
-        expect(pieChartColors.group).toBe(ScaleType.Ordinal);
-        expect(pieChartColors.domain).toEqual(['var(--yellow)', GraphColors.LIGHT_GREY]);
+        expect(pieChartColors).toEqual(['var(--yellow)', GraphColors.LIGHT_GREY]);
     });
 
     it('should compute green and gray color for 80% <= average attendance < 90%', () => {
@@ -708,8 +702,7 @@ describe('TutorialGroupDetailComponent', () => {
 
         const pieChartColors = component.pieChartColors();
         expect(pieChartColors).toBeDefined();
-        expect(pieChartColors.group).toBe(ScaleType.Ordinal);
-        expect(pieChartColors.domain).toEqual(['var(--orange)', GraphColors.LIGHT_GREY]);
+        expect(pieChartColors).toEqual(['var(--orange)', GraphColors.LIGHT_GREY]);
     });
 
     it('should compute green and gray color for 90% <= average attendance', () => {
@@ -730,8 +723,7 @@ describe('TutorialGroupDetailComponent', () => {
 
         const pieChartColors = component.pieChartColors();
         expect(pieChartColors).toBeDefined();
-        expect(pieChartColors.group).toBe(ScaleType.Ordinal);
-        expect(pieChartColors.domain).toEqual(['var(--red)', GraphColors.LIGHT_GREY]);
+        expect(pieChartColors).toEqual(['var(--red)', GraphColors.LIGHT_GREY]);
     });
 
     it('should compute gray color if no capacity set for group', () => {
@@ -749,8 +741,7 @@ describe('TutorialGroupDetailComponent', () => {
 
         const pieChartColors = component.pieChartColors();
         expect(pieChartColors).toBeDefined();
-        expect(pieChartColors.group).toBe(ScaleType.Ordinal);
-        expect(pieChartColors.domain).toEqual([GraphColors.LIGHT_GREY]);
+        expect(pieChartColors).toEqual([GraphColors.LIGHT_GREY]);
     });
 
     it('should compute gray color if no attendances recorded', () => {
@@ -770,8 +761,7 @@ describe('TutorialGroupDetailComponent', () => {
 
         const pieChartColors = component.pieChartColors();
         expect(pieChartColors).toBeDefined();
-        expect(pieChartColors.group).toBe(ScaleType.Ordinal);
-        expect(pieChartColors.domain).toEqual([GraphColors.LIGHT_GREY]);
+        expect(pieChartColors).toEqual([GraphColors.LIGHT_GREY]);
     });
 
     it('should display no data available disclaimer if no average attendance available', () => {
@@ -830,7 +820,7 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.detectChanges();
 
         const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
             confirmation.accept?.();
             return confirmationService;
         });
@@ -850,7 +840,7 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.detectChanges();
 
         const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
             confirmation.accept?.();
             return confirmationService;
         });

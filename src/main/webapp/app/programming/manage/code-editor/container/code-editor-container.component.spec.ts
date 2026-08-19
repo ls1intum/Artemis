@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorContainerComponent, CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import {
@@ -38,8 +37,6 @@ class MockFileService {
 const fileTreeChange$ = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
 
 describe('CodeEditorContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CodeEditorContainerComponent;
     let fixture: ComponentFixture<CodeEditorContainerComponent>;
     let alertService: AlertService;
@@ -106,9 +103,9 @@ describe('CodeEditorContainerComponent', () => {
         ]);
         fixture.detectChanges();
 
-        expect(Object.keys(component.fileBadges)).toEqual(expect.arrayContaining(['src/main/App.java', 'src/Other.java']));
-        expect(component.fileBadges['src/main/App.java'][0].type).toBe(FileBadgeType.FEEDBACK_SUGGESTION);
-        expect(component.fileBadges['src/main/App.java'][0].count).toBe(2);
+        expect(Object.keys(component.fileBadges())).toEqual(expect.arrayContaining(['src/main/App.java', 'src/Other.java']));
+        expect(component.fileBadges()['src/main/App.java'][0].type).toBe(FileBadgeType.FEEDBACK_SUGGESTION);
+        expect(component.fileBadges()['src/main/App.java'][0].count).toBe(2);
     });
 
     it('should count only active review thread badges per file (one badge count per thread)', () => {
@@ -188,14 +185,14 @@ describe('CodeEditorContainerComponent', () => {
         fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
         fixture.detectChanges();
 
-        const appBadges = component.fileBadges['src/main/App.java'];
+        const appBadges = component.fileBadges()['src/main/App.java'];
         const reviewThreadBadge = appBadges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT);
         expect(reviewThreadBadge?.count).toBe(2);
 
-        const otherBadges = component.fileBadges['src/main/Other.java'];
+        const otherBadges = component.fileBadges()['src/main/Other.java'];
         expect(otherBadges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
 
-        const problemStatementBadges = component.fileBadges[PROBLEM_STATEMENT_IDENTIFIER];
+        const problemStatementBadges = component.fileBadges()[PROBLEM_STATEMENT_IDENTIFIER];
         expect(problemStatementBadges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
     });
 
@@ -230,7 +227,7 @@ describe('CodeEditorContainerComponent', () => {
         fixture.componentRef.setInput('selectedAuxiliaryRepositoryId', 20);
         fixture.detectChanges();
 
-        const badges = component.fileBadges['src/main/Aux.java'];
+        const badges = component.fileBadges()['src/main/Aux.java'];
         expect(badges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
     });
 
@@ -239,7 +236,7 @@ describe('CodeEditorContainerComponent', () => {
         fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
         fixture.detectChanges();
 
-        expect(component.fileBadges['src/main/App.java']).toBeUndefined();
+        expect(component.fileBadges()['src/main/App.java']).toBeUndefined();
 
         reviewCommentService.threads.set([
             {
@@ -255,13 +252,13 @@ describe('CodeEditorContainerComponent', () => {
         ] as any);
         fixture.detectChanges();
 
-        let badges = component.fileBadges['src/main/App.java'];
+        let badges = component.fileBadges()['src/main/App.java'];
         expect(badges.find((badge) => badge.type === FileBadgeType.REVIEW_COMMENT)?.count).toBe(1);
 
         reviewCommentService.threads.set([]);
         fixture.detectChanges();
 
-        badges = component.fileBadges['src/main/App.java'];
+        badges = component.fileBadges()['src/main/App.java'];
         expect(badges).toBeUndefined();
     });
 
@@ -413,8 +410,8 @@ describe('CodeEditorContainerComponent', () => {
     it('should forward annotations and compute error files', () => {
         component.onAnnotations([{ fileName: 'A.java', type: 'warning' } as any, { fileName: 'B.java', type: 'error' } as any, { fileName: 'B.java', type: 'error' } as any]);
 
-        expect(component.errorFiles).toEqual(['B.java']);
-        expect(component.annotations).toHaveLength(3);
+        expect(component.errorFiles()).toEqual(['B.java']);
+        expect(component.annotations()).toHaveLength(3);
     });
 
     it('should propagate error messages and include connection details', () => {

@@ -10,6 +10,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
 @Injectable({ providedIn: 'root' })
 export class AthenaService {
@@ -57,7 +58,7 @@ export class AthenaService {
     /**
      * Find a grading instruction by id in the given exercise
      */
-    private findGradingInstruction(exercise: Exercise, id: number): any | undefined {
+    private findGradingInstruction(exercise: Exercise, id: number): GradingInstruction | undefined {
         for (const criterion of exercise.gradingCriteria ?? []) {
             for (const instruction of criterion.structuredGradingInstructions) {
                 if (instruction.id == id) {
@@ -124,10 +125,11 @@ export class AthenaService {
                     feedback.credits = suggestion.credits;
                     feedback.text = FEEDBACK_SUGGESTION_IDENTIFIER + suggestion.title;
                     feedback.detailText = suggestion.description;
-                    if (suggestion.filePath != undefined && (suggestion.lineEnd ?? suggestion.lineStart) != undefined) {
+                    if (suggestion.filePath && Number.isInteger(suggestion.lineStart) && suggestion.lineStart! > 0) {
                         // Referenced feedback
                         feedback.type = FeedbackType.MANUAL;
-                        feedback.reference = `file:${suggestion.filePath}_line:${suggestion.lineEnd ?? suggestion.lineStart}`; // Only use a single line for now because Artemis does not support line ranges
+                        const lineEnd = Number.isInteger(suggestion.lineEnd) && suggestion.lineEnd! > suggestion.lineStart! ? suggestion.lineEnd : suggestion.lineStart;
+                        feedback.reference = `file:${suggestion.filePath}_line:${suggestion.lineStart}${lineEnd !== suggestion.lineStart ? `-${lineEnd}` : ''}`;
                     } else {
                         // Unreferenced feedback
                         feedback.type = FeedbackType.MANUAL_UNREFERENCED;

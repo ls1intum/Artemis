@@ -5,8 +5,6 @@ import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleEntityUsa
 /**
  * Architecture test to verify that REST controllers in the Plagiarism module
  * do not use @Entity types directly. Controllers should use DTOs instead.
- * <p>
- * TODO: Reduce violation counts to 0 by introducing DTOs for all endpoints.
  */
 class PlagiarismEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitectureTest {
 
@@ -15,10 +13,9 @@ class PlagiarismEntityUsageArchitectureTest extends AbstractModuleEntityUsageArc
         return ARTEMIS_PACKAGE + ".plagiarism";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 6;
+        return 0;
     }
 
     // Plagiarism request bodies are fully DTO-based; do not let any new entity @RequestBody slip back in.
@@ -27,9 +24,8 @@ class PlagiarismEntityUsageArchitectureTest extends AbstractModuleEntityUsageArc
         return 0;
     }
 
-    // TODO: Reduce this to 0 by removing entity references from DTOs
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 1;
+        return 0;
     }
 }

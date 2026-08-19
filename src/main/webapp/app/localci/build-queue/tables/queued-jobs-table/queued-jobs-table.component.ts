@@ -9,7 +9,7 @@ import { SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-
+import { TumUiButtonComponent, TumUiTableDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
 /**
  * Component that displays a table of queued build jobs.
  * Supports both admin and course-specific views with optional course ID column.
@@ -21,7 +21,18 @@ import dayjs from 'dayjs/esm';
     templateUrl: './queued-jobs-table.component.html',
     styleUrls: ['../build-jobs-table.scss', './queued-jobs-table.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, HelpIconComponent, FaIconComponent, RouterLink, ArtemisDatePipe, ArtemisTranslatePipe, SlicePipe],
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        RouterLink,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        SlicePipe,
+        TumUiTableDirective,
+        TumUiButtonComponent,
+        TumUiTooltipDirective,
+    ],
 })
 export class QueuedJobsTableComponent {
     /** List of queued build jobs to display */

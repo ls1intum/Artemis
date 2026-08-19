@@ -1,5 +1,6 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subject, Subscription, combineLatest } from 'rxjs';
@@ -12,21 +13,30 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
-import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { faEye, faFileImport, faFilter, faPencil, faPlus, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    TumUiButtonComponent,
+    TumUiButtonDirective,
+    TumUiCheckboxComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiMessageComponent,
+    TumUiPaginatorComponent,
+    TumUiRadioButtonComponent,
+    TumUiTableDirective,
+    TumUiTableSortEvent,
+    TumUiTableSortableColumnComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { UsersImportButtonComponent } from 'app/shared-ui/user-import/button/users-import-button.component';
+import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteUsersButtonComponent } from './delete-users-button/delete-users-button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { NgClass } from '@angular/common';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -35,6 +45,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MODULE_FEATURE_LDAP, addPublicFilePrefix } from 'app/app.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -108,29 +119,35 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
-    styleUrls: ['./user-management.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
-        UsersImportButtonComponent,
+        UsersImportDialogComponent,
         RouterLink,
         FaIconComponent,
         FormsModule,
         ReactiveFormsModule,
         DeleteUsersButtonComponent,
         DeleteButtonDirective,
-        NgClass,
-        SortDirective,
-        SortByDirective,
         ProfilePictureComponent,
         SearchHighlightComponent,
         ItemCountComponent,
-        PaginatorModule,
+        TumUiPaginatorComponent,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiTooltipDirective,
+        TumUiInputDirective,
+        TumUiCheckboxComponent,
+        TumUiRadioButtonComponent,
+        TumUiMessageComponent,
         HelpIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        DialogModule,
+        TumUiDialogComponent,
     ],
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
@@ -138,6 +155,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     private readonly accountService = inject(AccountService);
     private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly credentialRevocationConfirmationService = inject(CredentialRevocationConfirmationService);
     private readonly router = inject(Router);
     private readonly eventManager = inject(EventManager);
     private readonly localStorageService = inject(LocalStorageService);
@@ -203,18 +221,17 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     readonly dialogError = this.dialogErrorSource.asObservable();
 
     /** Search form */
-    userSearchForm: FormGroup;
+    userSearchForm!: FormGroup; // initialized in ngOnInit()
 
     /** Icons */
-    protected readonly faSort = faSort;
     protected readonly faPlus = faPlus;
-    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
     protected readonly faEye = faEye;
-    protected readonly faWrench = faWrench;
+    protected readonly faPencil = faPencil;
+    protected readonly faFileImport = faFileImport;
+    protected readonly faSync = faSync;
 
     /** Button constants */
-    protected readonly medium = ButtonSize.MEDIUM;
-    protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
 
     /**
@@ -253,8 +270,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.userSearchForm = new FormGroup({
             searchControl: new FormControl('', { updateOn: 'change' }),
         });
-        this.accountService.identity().then((user) => {
-            this.currentAccount.set(user!);
+        void this.accountService.identity().then((user) => {
+            this.currentAccount.set(user);
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();
         });
@@ -294,7 +311,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         const tempInStorage = temp
             ? temp
                   .split(',')
-                  .map((filter: keyof Filter) => type[filter] as E) // type assertion
+                  .map((filter: string) => type[filter as keyof Filter] as E) // type assertion
                   .filter(Boolean)
             : [];
         return new Set<E>(tempInStorage);
@@ -319,7 +336,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     toggleAuthorityFilter(filter: Set<AuthorityFilter>, value: AuthorityFilter) {
         this.updateNoAuthority(false);
-        this.toggleFilter<AuthorityFilter>(filter, value, this.authorityKey);
+        // updateNoAuthority replaces the filter object with a detached copy, so `filter` is no longer the Set the
+        // signal holds. Re-read it instead of mutating the caller's now-orphaned reference.
+        this.toggleFilter<AuthorityFilter>(this.filters().authorityFilter, value, this.authorityKey);
     }
 
     /**
@@ -397,7 +416,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     updateNoAuthority(value: boolean) {
         this.localStorageService.store<boolean>(UserStorageKey.NO_AUTHORITY, value);
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.noAuthority = value;
         this.filters.set(filters);
     }
@@ -406,7 +425,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Deselect all roles
      */
     deselectAllRoles() {
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.authorityFilter = new Set();
         this.filters.set(filters);
         this.localStorageService.remove(UserStorageKey.AUTHORITY);
@@ -417,7 +436,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select empty roles
      */
     selectEmptyRoles() {
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.authorityFilter = new Set();
         this.filters.set(filters);
         this.updateNoAuthority(true);
@@ -427,7 +446,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select all roles
      */
     selectAllRoles() {
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.authorityFilter = new Set(this.authorityFilters);
         this.filters.set(filters);
         this.updateNoAuthority(false);
@@ -453,7 +472,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param user whose activation status should be changed
      * @param isActivated true if user should be activated, otherwise false
      */
-    setActive(user: User, isActivated: boolean) {
+    async setActive(user: User, isActivated: boolean): Promise<void> {
+        // Deactivating revokes every credential of the account, so it is confirmed like any other deletion. Activating
+        // deletes nothing and is not interrupted.
+        if (!isActivated) {
+            const confirmed = await this.credentialRevocationConfirmationService.confirm({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            if (!confirmed) {
+                return;
+            }
+        }
         const action = isActivated ? this.adminUserService.activate : this.adminUserService.deactivate;
         action.call(this.adminUserService, user.id!).subscribe({
             next: () => {
@@ -558,7 +585,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Transitions to another page and/or sorting order
      */
     transition(): void {
-        this.router.navigate(['/admin/user-management'], {
+        void this.router.navigate(['/admin/user-management'], {
             relativeTo: this.activatedRoute.parent,
             queryParams: {
                 page: this.page(),
@@ -567,9 +594,19 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** Handles a PrimeNG paginator page change by converting the 0-indexed event page to the 1-indexed page and navigating. */
-    onPageChange(event: PaginatorState): void {
-        this.page.set((event.page ?? 0) + 1);
+    /** Handles a tum-ui paginator page change by converting the 0-indexed page to the 1-indexed page and navigating. */
+    onPageChange(page: number): void {
+        this.page.set(page + 1);
+        this.transition();
+    }
+
+    /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
+    onTableSort(event: TumUiTableSortEvent): void {
+        if (!event.field) {
+            return;
+        }
+        this.predicate.set(event.field);
+        this.ascending.set(event.order === 1);
         this.transition();
     }
 

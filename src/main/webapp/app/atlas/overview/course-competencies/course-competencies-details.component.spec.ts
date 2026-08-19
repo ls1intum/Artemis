@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCompetenciesDetailsComponent } from 'app/atlas/overview/course-competencies/course-competencies-details.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -27,7 +28,6 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
@@ -38,16 +38,13 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 import { ScienceService } from 'app/foundation/science/science.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetenciesDetails', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
     let component: CourseCompetenciesDetailsComponent;
 
     let courseCompetencyService: CourseCompetencyService;
 
-    let setCompletionSpy: ReturnType<typeof vi.spyOn>;
     let getProgressSpy: ReturnType<typeof vi.spyOn>;
 
     const parentParams = { courseId: 1 };
@@ -72,7 +69,7 @@ describe('CourseCompetenciesDetails', () => {
                 MockComponent(HelpIconComponent),
                 MockComponent(FireworksComponent),
                 MockPipe(ArtemisTimeAgoPipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
             ],
             providers: [
                 provideHttpClient(),
@@ -100,10 +97,8 @@ describe('CourseCompetenciesDetails', () => {
                 fixture = TestBed.createComponent(CourseCompetenciesDetailsComponent);
                 component = fixture.componentInstance;
                 courseCompetencyService = TestBed.inject(CourseCompetencyService);
-                const lectureUnitService = TestBed.inject(LectureUnitService);
                 const featureToggleService = TestBed.inject(FeatureToggleService);
                 vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-                setCompletionSpy = vi.spyOn(lectureUnitService, 'setCompletion');
                 getProgressSpy = vi.spyOn(courseCompetencyService, 'getProgress');
             });
     });
@@ -131,7 +126,7 @@ describe('CourseCompetenciesDetails', () => {
         const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
 
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.competency.lectureUnitLinks).toHaveLength(2);
+        expect(component.competency()!.lectureUnitLinks).toHaveLength(2);
         expect(textUnit).not.toBeNull();
         expect(exerciseUnit).not.toBeNull();
     });
@@ -149,7 +144,7 @@ describe('CourseCompetenciesDetails', () => {
         const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
 
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.competency.lectureUnitLinks).toHaveLength(1);
+        expect(component.competency()!.lectureUnitLinks).toHaveLength(1);
         expect(exerciseUnit).not.toBeNull();
     });
 
@@ -174,21 +169,21 @@ describe('CourseCompetenciesDetails', () => {
             component.showFireworksIfMastered();
 
             vi.advanceTimersByTime(1000);
-            expect(component.showFireworks).toBeTruthy();
+            expect(component.showFireworks()).toBeTruthy();
 
             vi.advanceTimersByTime(5000);
-            expect(component.showFireworks).toBeFalsy();
+            expect(component.showFireworks()).toBeFalsy();
         } finally {
             vi.useRealTimers();
         }
     });
 
     it('should detect if due date is passed', () => {
-        component.competency = { softDueDate: dayjs().add(1, 'days') } as Competency;
+        component.competency.set({ softDueDate: dayjs().add(1, 'days') } as Competency);
         fixture.changeDetectorRef.detectChanges();
         expect(component.softDueDatePassed).toBeFalsy();
 
-        component.competency = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
+        component.competency.set({ softDueDate: dayjs().subtract(1, 'days') } as Competency);
         fixture.changeDetectorRef.detectChanges();
         expect(component.softDueDatePassed).toBeTruthy();
     });
@@ -197,7 +192,7 @@ describe('CourseCompetenciesDetails', () => {
         { competency: { softDueDate: dayjs().add(1, 'days') } as Competency, expectedBadge: 'success' },
         { competency: { softDueDate: dayjs().subtract(1, 'days') } as Competency, expectedBadge: 'danger' },
     ])('should have [ngClass] resolve to correct date badge', ({ competency, expectedBadge }) => {
-        component.competency = competency;
+        component.competency.set(competency);
         fixture.changeDetectorRef.detectChanges();
         const badge = fixture.debugElement.query(By.css('#date-badge')).nativeElement;
         expect(badge.classList).toContain('bg-' + expectedBadge);
@@ -205,13 +200,38 @@ describe('CourseCompetenciesDetails', () => {
 
     it('should update progress after lecture unit completion', () => {
         component.competencyId = 42;
-        component.courseId = 21;
+        component.courseId.set(21);
 
-        setCompletionSpy.mockReturnValue(of(new HttpResponse({ body: null })));
+        const completeLectureUnitSpy = vi.spyOn(TestBed.inject(LectureUnitService), 'completeLectureUnit').mockImplementation((_lecture, event, onSuccess) => {
+            event.lectureUnit.completed = event.completed;
+            onSuccess?.();
+        });
         const lectureUnitCompletionEvent = { lectureUnit: { id: 1, lecture: { id: 2 }, visibleToStudents: true, completed: false }, completed: true } as LectureUnitCompletionEvent;
         component.completeLectureUnit(lectureUnitCompletionEvent);
 
-        expect(setCompletionSpy).toHaveBeenCalledOnce();
+        expect(completeLectureUnitSpy).toHaveBeenCalledOnce();
         expect(getProgressSpy).toHaveBeenCalledWith(42, 21, true);
+    });
+
+    it('should publish a fresh lecture-unit reference on completion so the card reacts', () => {
+        component.competencyId = 42;
+        component.courseId.set(21);
+
+        vi.spyOn(TestBed.inject(LectureUnitService), 'completeLectureUnit').mockImplementation((_lecture, event, onSuccess) => {
+            event.lectureUnit.completed = event.completed;
+            onSuccess?.();
+        });
+
+        const lectureUnit = Object.assign(new TextUnit(), { id: 1, completed: false });
+        const originalLink = new CompetencyLectureUnitLink(undefined, lectureUnit, 1);
+        component.competency.set({ id: 42, lectureUnitLinks: [originalLink] } as Competency);
+
+        const event = { lectureUnit: { id: 1, lecture: { id: 2 }, visibleToStudents: true, completed: false }, completed: true } as LectureUnitCompletionEvent;
+        component.completeLectureUnit(event);
+
+        const updatedUnit = component.competency()!.lectureUnitLinks![0].lectureUnit;
+        expect(updatedUnit!.completed).toBe(true);
+        // A fresh object reference (not the original) is what makes the unit card's signal input update in a zoneless app.
+        expect(updatedUnit).not.toBe(lectureUnit);
     });
 });

@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockBehavior, DeferBlockState, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
@@ -21,10 +20,10 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('Course Management Detail Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseDetailComponent;
     let fixture: ComponentFixture<CourseDetailComponent>;
     let courseManagementService: CourseManagementService;
@@ -84,7 +83,9 @@ describe('Course Management Detail Component', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(EventManager),
                 MockProvider(Router),
+                { provide: DialogService, useClass: MockDialogService },
             ],
+            deferBlockBehavior: DeferBlockBehavior.Manual,
         }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
         component = fixture.componentInstance;
@@ -161,5 +162,25 @@ describe('Course Management Detail Component', () => {
                 expect(detail).toBeTruthy();
             }
         }
+    });
+
+    it('should keep the charts unmounted behind a geometry-bearing placeholder until the viewport defer block triggers', async () => {
+        vi.spyOn(courseManagementService, 'getStatisticsData').mockReturnValue(of([]));
+        component.course.set({ ...course, complaintsEnabled: true, requestMoreFeedbackEnabled: true, numberOfStudents: 42 });
+        fixture.detectChanges();
+
+        // Regression guard: the defer trigger must target a placeholder with real geometry, not an empty/zero-height sentinel.
+        const placeholder = fixture.nativeElement.querySelector('div[style*="min-height: 350px"]');
+        expect(placeholder).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('jhi-course-detail-line-chart')).toBeNull();
+
+        const [chartsBlock] = await fixture.getDeferBlocks();
+        expect(chartsBlock).toBeDefined();
+
+        await chartsBlock.render(DeferBlockState.Complete);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll('jhi-course-detail-doughnut-chart').length).toBeGreaterThan(0);
+        expect(fixture.nativeElement.querySelector('jhi-course-detail-line-chart')).toBeTruthy();
     });
 });

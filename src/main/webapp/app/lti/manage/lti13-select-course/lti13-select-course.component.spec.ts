@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
@@ -16,7 +15,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ActivatedRoute } from '@angular/router';
 
 describe('LtiCoursesComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LtiCoursesComponent;
     let fixture: ComponentFixture<LtiCoursesComponent>;
     let courseManagementService: CourseManagementService;
@@ -70,8 +68,8 @@ describe('LtiCoursesComponent', () => {
         await fixture.whenStable();
 
         expect(courseManagementService.findAllOnlineCoursesWithRegistrationId).toHaveBeenCalledWith('1');
-        expect(component.courses).toHaveLength(3);
-        expect(component.courses[0].title).toBe('Course A');
+        expect(component.courses()).toHaveLength(3);
+        expect(component.courses()[0].title).toBe('Course A');
     });
 
     it('should set courses to empty array when clientId is null', async () => {
@@ -81,7 +79,7 @@ describe('LtiCoursesComponent', () => {
         await fixture.whenStable();
 
         expect(courseManagementService.findAllOnlineCoursesWithRegistrationId).not.toHaveBeenCalled();
-        expect(component.courses).toEqual([]);
+        expect(component.courses()).toEqual([]);
     });
 
     it('should handle error when loading courses fails', async () => {
@@ -114,6 +112,6 @@ describe('LtiCoursesComponent', () => {
         await fixture.whenStable();
 
         expect(courseManagementService.findAllOnlineCoursesWithRegistrationId).toHaveBeenCalledWith('registration-123');
-        expect(component.courses).toEqual(mockCourses);
+        expect(component.courses()).toEqual(mockCourses);
     });
 });

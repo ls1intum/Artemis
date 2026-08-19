@@ -1,21 +1,19 @@
-@if (hasTranslation() === false && headerKey() !== null && isSubHeader() === false) {
-    <h5 class="expandable-header" (click)="toggleCollapsed()">
-        {{ headerKey() }}
-        <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown" />
-    </h5>
+@if (headerKey() !== null) {
+    <div class="expandable-header-row">
+        @if (isSubHeader()) {
+            <h6 class="expandable-header" (click)="toggleCollapsed()">
+                {{ hasTranslation() ? (headerKey() | artemisTranslate) : headerKey() }}
+                <fa-icon [icon]="isCollapsed() ? faAngleRight : faAngleDown" />
+            </h6>
+        } @else {
+            <h5 class="expandable-header" (click)="toggleCollapsed()">
+                {{ hasTranslation() ? (headerKey() | artemisTranslate) : headerKey() }}
+                <fa-icon [icon]="isCollapsed() ? faAngleRight : faAngleDown" />
+            </h5>
+        }
+        <ng-content select="[expandableSectionHeaderActions]" />
+    </div>
 }
-@if (hasTranslation() === true && headerKey() !== null && isSubHeader() === false) {
-    <h5 class="expandable-header" (click)="toggleCollapsed()">
-        {{ headerKey() | artemisTranslate }}
-        <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown" />
-    </h5>
-}
-@if (hasTranslation() === false && headerKey() !== null && isSubHeader() === true) {
-    <h6 class="expandable-header" (click)="toggleCollapsed()">
-        {{ headerKey() }}
-        <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown" />
-    </h6>
-}
-<div [ngbCollapse]="isCollapsed">
+<div [ngbCollapse]="isCollapsed()">
     <ng-content />
 </div>

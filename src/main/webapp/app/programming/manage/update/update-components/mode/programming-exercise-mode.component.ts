@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
@@ -50,9 +50,9 @@ export class ProgrammingExerciseModeComponent implements OnInit {
 
     readonly triggerValidation = output<void>();
 
-    theiaEnabled = false;
+    readonly theiaEnabled = signal(false);
 
     ngOnInit(): void {
-        this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
+        this.theiaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA));
     }
 }

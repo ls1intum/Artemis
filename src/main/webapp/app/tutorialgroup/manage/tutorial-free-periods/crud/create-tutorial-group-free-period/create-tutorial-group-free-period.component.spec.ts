@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -9,7 +8,6 @@ import { By } from '@angular/platform-browser';
 import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/manage/service/tutorial-group-free-period.service';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import {
     formDataToTutorialGroupFreePeriodDTO,
     generateExampleTutorialGroupFreePeriod,
@@ -22,8 +20,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CreateTutorialGroupFreePeriodComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CreateTutorialGroupFreePeriodComponent>;
     let component: CreateTutorialGroupFreePeriodComponent;
     let tutorialGroupFreePeriodService: TutorialGroupFreePeriodService;
@@ -32,7 +28,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CreateTutorialGroupFreePeriodComponent, OwlNativeDateTimeModule],
+            imports: [CreateTutorialGroupFreePeriodComponent],
             providers: [
                 MockProvider(TutorialGroupFreePeriodService),
                 MockProvider(AlertService),

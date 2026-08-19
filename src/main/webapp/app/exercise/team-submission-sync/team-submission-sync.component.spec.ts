@@ -3,7 +3,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockProvider } from 'ng-mocks';
@@ -30,8 +29,6 @@ import { ConnectionState } from 'app/foundation/service/websocket.service';
 import { ApollonEditor } from '@tumaet/apollon';
 
 describe('Team Submission Sync Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TeamSubmissionSyncComponent>;
     let component: TeamSubmissionSyncComponent;
     let websocketService: WebsocketService;
@@ -185,6 +182,34 @@ describe('Team Submission Sync Component', () => {
         expect(reconnectedSpy).toHaveBeenCalledTimes(2);
 
         generateInitialSyncSpy.mockRestore();
+    });
+
+    it('additionally re-broadcasts the awareness sync for modeling exercises on every STOMP (re)connect', () => {
+        // The shared (re)connect lifecycle is covered by the test above; this asserts only the modeling delta:
+        // modeling sends a second patch carrying the initial awareness sync, on the first connect and on every reconnect.
+        const mock = websocketService as unknown as MockWebsocketService;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
+        const expectedTopic = '/topic/participations/3/team/modeling-submissions/patch';
+        const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const generateInitialAwarenessSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialAwarenessSyncMessage').mockReturnValue('initial-awareness-stub');
+        fixture.componentRef.setInput('submissionObservable', undefined);
+        const sendSpy = vi.spyOn(websocketService, 'send');
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+
+        component.ngOnInit();
+
+        expect(sendSpy.mock.calls.map((call) => [call[0], (call[1] as SubmissionPatch).patch])).toEqual([
+            [expectedTopic, 'initial-sync-stub'],
+            [expectedTopic, 'initial-awareness-stub'],
+        ]);
+
+        mock.setConnectionState(new ConnectionState(false, true));
+        mock.setConnectionState(new ConnectionState(true, true));
+        expect(sendSpy).toHaveBeenCalledTimes(4);
+        expect((sendSpy.mock.calls[3][1] as SubmissionPatch).patch).toBe('initial-awareness-stub');
+
+        generateInitialSyncSpy.mockRestore();
+        generateInitialAwarenessSyncSpy.mockRestore();
     });
 
     it('should stop reacting to connection-state changes after ngOnDestroy', () => {

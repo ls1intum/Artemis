@@ -19,6 +19,7 @@ import { WebauthnService } from 'app/account/user/settings/passkey-settings/weba
 import { BadgeModule } from 'primeng/badge';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Authority, IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface DisplayedPasskey extends PasskeyDTO {
     isEditingLabel?: boolean;
@@ -74,15 +75,15 @@ export class PasskeySettingsComponent implements OnDestroy {
     });
 
     deleteMessage = '';
-    isDeletingPasskey = false;
+    readonly isDeletingPasskey = signal<boolean>(false);
 
-    private authStateSubscription: Subscription;
+    private authStateSubscription!: Subscription; // assigned in loadCurrentUser() from the constructor, before ngOnDestroy() unsubscribes
 
     constructor() {
         this.loadCurrentUser();
 
         effect(() => {
-            this.loadPasskeysWhenUserDetailsChange().then();
+            void this.loadPasskeysWhenUserDetailsChange();
         });
     }
 
@@ -99,11 +100,11 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.registeredPasskeys.set(await this.passkeySettingsApiService.getRegisteredPasskeys());
 
         if (this.registeredPasskeys().length === 0) {
-            this.accountService.userIdentity.set({
-                ...this.accountService.userIdentity(),
-                askToSetupPasskey: true,
-                internal: this.accountService.userIdentity()?.internal ?? false,
-            });
+            // Guarding on the current identity is a behaviour fix: the previous `{ ...userIdentity(), … }` spread
+            // produced a bogus User carrying only these two fields when no one was signed in.
+            this.accountService.userIdentity.update((currentUserIdentity) =>
+                currentUserIdentity ? cloneWith(currentUserIdentity, { askToSetupPasskey: true, internal: currentUserIdentity.internal ?? false }) : currentUserIdentity,
+            );
         }
     }
 
@@ -111,7 +112,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
-                tap((user: User) => {
+                tap((user: User | undefined) => {
                     this.currentUser.set(user);
                     return this.currentUser;
                 }),
@@ -161,14 +162,14 @@ export class PasskeySettingsComponent implements OnDestroy {
     }
 
     async deletePasskey(passkey: PasskeyDTO) {
-        this.isDeletingPasskey = true;
+        this.isDeletingPasskey.set(true);
         try {
             await this.passkeySettingsApiService.deletePasskey(passkey.credentialId);
             await this.updateRegisteredPasskeys();
         } catch (error) {
             this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.delete');
         }
-        this.isDeletingPasskey = false;
+        this.isDeletingPasskey.set(false);
         this.dialogErrorSource.next('');
     }
 }

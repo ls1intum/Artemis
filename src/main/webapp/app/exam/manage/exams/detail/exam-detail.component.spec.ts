@@ -41,7 +41,6 @@ import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-compon
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
@@ -51,8 +50,6 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 class DummyComponent {}
 
 describe('ExamDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamDetailComponent>;
     let component: ExamDetailComponent;
     let service: ExamManagementService;
@@ -143,7 +140,7 @@ describe('ExamDetailComponent', () => {
         exam.numberOfExamUsers = 3;
         exam.examMaxPoints = 100;
         exam.exerciseGroups = [];
-        component.exam = exam;
+        component.exam.set(exam);
     });
 
     afterEach(() => {
@@ -153,7 +150,7 @@ describe('ExamDetailComponent', () => {
     it('should load exam from route and display it to user', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(component.examDetailSections).toBeDefined();
+        expect(component.examDetailSections()).toBeDefined();
         expect(fixture.debugElement.nativeElement.innerHTML).toContain(exam.title!);
     });
 
@@ -220,7 +217,7 @@ describe('ExamDetailComponent', () => {
         const alertService = TestBed.inject(AlertService);
 
         // GIVEN
-        component.exam = { ...exam, studentExams: [{ id: 1, numberOfExamSessions: 0 }] };
+        component.exam.set({ ...exam, studentExams: [{ id: 1, numberOfExamSessions: 0 }] });
         const responseFakeReset = { body: exam } as HttpResponse<Exam>;
         vi.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
         vi.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
@@ -231,14 +228,14 @@ describe('ExamDetailComponent', () => {
 
         // THEN
         expect(service.reset).toHaveBeenCalledOnce();
-        expect(component.exam).toEqual(exam);
+        expect(component.exam()).toEqual(exam);
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.reset.success');
     });
 
     it('should delete an exam when delete exam is called', () => {
         // GIVEN
-        component.exam = exam;
+        component.exam.set(exam);
         const responseFakeDelete = new HttpResponse<void>({ status: 200 });
         const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
         vi.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));

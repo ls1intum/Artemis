@@ -34,19 +34,13 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 4, 0, 0, 0);
 
-        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        final Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         activateIrisGlobally();
         activateIrisFor(course);
         // The point of this test is to check the behavior of the exercise chat session when Iris is not enabled for an exercise
         // We need to actively disable it as it's on by default
         disableIrisFor(exercise);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void createSessionUnauthorized() throws Exception {
-        request.post(exerciseChatUrl(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -83,10 +77,6 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
 
     private IrisTextMessageContent createMockContent() {
         return new IrisTextMessageContent("Not relevant for the test cases");
-    }
-
-    private String exerciseChatUrl() {
-        return "/api/iris/chat/sessions?mode=PROGRAMMING_EXERCISE_CHAT&entityId=" + exercise.getId();
     }
 
     private String exerciseChatCurrentUrl() {

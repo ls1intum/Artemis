@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, effect, input, signal } from '@angular/core';
 
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -14,7 +14,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
     templateUrl: './exam-start-information.component.html',
 })
 export class ExamStartInformationComponent {
-    examInformationBoxData: InformationBox[] = [];
+    readonly examInformationBoxData = signal<InformationBox[]>([]);
 
     readonly exam = input<Exam>(undefined!);
     readonly studentExam = input<StudentExam>(undefined!);
@@ -48,7 +48,6 @@ export class ExamStartInformationComponent {
             this.startDate = exam.startDate;
             this.endDate = exam.endDate;
             this.gracePeriodInMinutes = exam.gracePeriod !== undefined ? Math.floor(exam.gracePeriod / 60) : undefined;
-            this.examInformationBoxData = [];
             this.prepareInformationBoxData();
         });
     }
@@ -63,13 +62,14 @@ export class ExamStartInformationComponent {
     }
 
     prepareInformationBoxData(): void {
+        const informationBoxData: InformationBox[] = [];
         if (this.moduleNumber) {
             const boxContentModuleNumber: InformationBoxContent = {
                 type: 'string',
                 value: this.moduleNumber,
             };
             const informationBoxModuleNumber = this.buildInformationBox('artemisApp.exam.moduleNumber', boxContentModuleNumber);
-            this.examInformationBoxData.push(informationBoxModuleNumber);
+            informationBoxData.push(informationBoxModuleNumber);
         }
         if (this.courseName) {
             const boxContentCourseName: InformationBoxContent = {
@@ -77,7 +77,7 @@ export class ExamStartInformationComponent {
                 value: this.courseName,
             };
             const informationBoxCourseName = this.buildInformationBox('artemisApp.exam.course', boxContentCourseName);
-            this.examInformationBoxData.push(informationBoxCourseName);
+            informationBoxData.push(informationBoxCourseName);
         }
         if (this.examiner) {
             const boxContentExaminer: InformationBoxContent = {
@@ -85,7 +85,7 @@ export class ExamStartInformationComponent {
                 value: this.examiner,
             };
             const informationBoxExaminer = this.buildInformationBox('artemisApp.examManagement.examiner', boxContentExaminer);
-            this.examInformationBoxData.push(informationBoxExaminer);
+            informationBoxData.push(informationBoxExaminer);
         }
         if (this.examinedStudent) {
             const boxContentExaminedStudent: InformationBoxContent = {
@@ -93,7 +93,7 @@ export class ExamStartInformationComponent {
                 value: this.examinedStudent,
             };
             const informationBoxExaminedStudent = this.buildInformationBox('artemisApp.exam.examinedStudent', boxContentExaminedStudent);
-            this.examInformationBoxData.push(informationBoxExaminedStudent);
+            informationBoxData.push(informationBoxExaminedStudent);
         }
         if (this.startDate) {
             const boxContentStartDate: InformationBoxContent = {
@@ -101,7 +101,7 @@ export class ExamStartInformationComponent {
                 value: this.startDate,
             };
             const informationBoxStartDate = this.buildInformationBox('artemisApp.exam.date', boxContentStartDate, true);
-            this.examInformationBoxData.push(informationBoxStartDate);
+            informationBoxData.push(informationBoxStartDate);
         }
 
         const boxContentExamWorkingTime: InformationBoxContent = {
@@ -110,14 +110,14 @@ export class ExamStartInformationComponent {
         };
 
         const informationBoxTotalWorkingTime = this.buildInformationBox('artemisApp.exam.workingTime', boxContentExamWorkingTime, true);
-        this.examInformationBoxData.push(informationBoxTotalWorkingTime);
+        informationBoxData.push(informationBoxTotalWorkingTime);
         const boxContentTotalPoints: InformationBoxContent = {
             type: 'string',
             value: this.totalPoints?.toString() ?? '',
         };
 
         const informationBoxTotalPoints = this.buildInformationBox('artemisApp.exam.points', boxContentTotalPoints);
-        this.examInformationBoxData.push(informationBoxTotalPoints);
+        informationBoxData.push(informationBoxTotalPoints);
 
         if (this.numberOfExercisesInExam) {
             const boxContent: InformationBoxContent = {
@@ -125,7 +125,9 @@ export class ExamStartInformationComponent {
                 value: this.numberOfExercisesInExam?.toString(),
             };
             const informationBoxNumberOfExercises = this.buildInformationBox('artemisApp.exam.exercises', boxContent);
-            this.examInformationBoxData.push(informationBoxNumberOfExercises);
+            informationBoxData.push(informationBoxNumberOfExercises);
         }
+
+        this.examInformationBoxData.set(informationBoxData);
     }
 }

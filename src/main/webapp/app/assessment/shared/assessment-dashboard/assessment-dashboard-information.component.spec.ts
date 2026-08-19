@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -11,7 +10,6 @@ import {
 } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard-information.component';
 
 describe('AssessmentDashboardInformationComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: AssessmentDashboardInformationComponent;
     let fixture: ComponentFixture<AssessmentDashboardInformationComponent>;
 
@@ -54,10 +52,12 @@ describe('AssessmentDashboardInformationComponent', () => {
         fixture.componentRef.setInput('numberOfSubmissions', submissions);
         fixture.componentRef.setInput('numberOfCorrectionRounds', 1);
 
-        expect(component.customColors()[0].name).toBe('artemisApp.exerciseAssessmentDashboard.openAssessments');
-        expect(component.customColors()[1].name).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
+        expect(component.assessments()[0].name).toBe('artemisApp.exerciseAssessmentDashboard.openAssessments');
+        expect(component.assessments()[1].name).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
         expect(component.assessments()[0].value).toBe(600);
         expect(component.assessments()[1].value).toBe(150);
+        expect(component.chartData().labels).toEqual(['artemisApp.exerciseAssessmentDashboard.openAssessments', 'artemisApp.exerciseAssessmentDashboard.closedAssessments']);
+        expect(component.chartData().datasets[0].data).toEqual([600, 150]);
     });
 
     it('should set up links correctly', () => {

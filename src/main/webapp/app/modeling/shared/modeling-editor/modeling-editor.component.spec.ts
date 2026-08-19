@@ -1,11 +1,17 @@
 import { vi } from 'vitest';
+import type { ApollonOptions } from '@tumaet/apollon';
+
+type MockApollonOptions = Pick<ApollonOptions, 'model' | 'collaboration'>;
 
 // Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
 const { MockApollonEditor } = vi.hoisted(() => {
-    const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
+    // vi.hoisted runs before imports, so the real deepClone from app/foundation/util/deep-clone.util is not
+    // available here. A JSON round trip is enough for the plain Apollon UML models this mock stores.
+    const jsonRoundTripClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
 
     class MockApollonEditorClass {
         _model: any;
+        _options: MockApollonOptions | undefined;
         _subscriptions = new Map<number, (model: any) => void>();
         _subscriptionCounter = 0;
         _broadcastCallback: ((patch: string) => void) | undefined;
@@ -29,6 +35,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         broadcastFullState = vi.fn();
 
+        setLocalAwarenessUser = vi.fn();
+
         destroy = vi.fn(() => {
             this._destroyed = true;
             this._subscriptions.clear();
@@ -38,8 +46,9 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         nextRender = Promise.resolve();
 
-        constructor(_container: HTMLElement, options?: { model?: any }) {
-            this._model = options?.model ? deepClone(options.model) : {};
+        constructor(_container: HTMLElement, options?: MockApollonOptions) {
+            this._options = options;
+            this._model = options?.model ? jsonRoundTripClone(options.model) : {};
         }
 
         get model() {
@@ -74,24 +83,21 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
-import { cloneDeep } from 'lodash-es';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ModelingEditorComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ModelingEditorComponent>;
     let component: ModelingEditorComponent;
 
     const course = { id: 123 } as Course;
     const diagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
     // @ts-ignore
-    const classDiagram = cloneDeep(testClassDiagram as UMLModel); // note: clone is needed to prevent weird errors with setters, because testClassDiagram is not an actual object
+    const classDiagram = deepClone(testClassDiagram as UMLModel); // note: clone is needed to prevent weird errors with setters, because testClassDiagram is not an actual object
     const route = { params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -173,6 +179,29 @@ describe('ModelingEditorComponent', () => {
         expect(editor.destroy).toHaveBeenCalled();
     });
 
+    it('should wait for the local user before mounting a collaborative editor', () => {
+        const collaborationUser = { id: 'student1', name: 'Student One', color: '#123456' };
+        fixture.componentRef.setInput('umlModel', classDiagram);
+        fixture.componentRef.setInput('collaborationEnabled', true);
+        fixture.detectChanges();
+
+        expect(component['apollonEditor']).toBeUndefined();
+
+        fixture.componentRef.setInput('collaborationUser', collaborationUser);
+        fixture.detectChanges();
+
+        const editor = component['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
+        expect(editor).toBeDefined();
+        expect(editor._options?.collaboration).toEqual({
+            enabled: true,
+            user: collaborationUser,
+            showPresence: true,
+            showCursors: true,
+            showSelectionHighlights: true,
+            showFollow: true,
+        });
+    });
+
     it('ngOnChanges', async () => {
         // @ts-ignore
         const model = classDiagram;
@@ -180,7 +209,7 @@ describe('ModelingEditorComponent', () => {
         fixture.detectChanges();
         await component.ngAfterViewInit();
 
-        const changedModel = cloneDeep(model) as any;
+        const changedModel = deepClone(model) as any;
         // Apollon v4 uses nodes/edges instead of elements/relationships
         changedModel.nodes = {};
         changedModel.edges = {};
@@ -356,6 +385,22 @@ describe('ModelingEditorComponent', () => {
         const editor = component['apollonEditor'] as any;
         component.broadcastFullState();
         expect(editor.broadcastFullState).toHaveBeenCalledOnce();
+    });
+
+    it('reannounceLocalAwareness re-pushes the local user and no-ops when not yet mounted', () => {
+        const collaborationUser = { id: 'student1', name: 'Student One', color: '#123456' };
+        // Before mount: calling must be a safe no-op
+        fixture.componentRef.setInput('collaborationUser', collaborationUser);
+        expect(() => component.reannounceLocalAwareness()).not.toThrow();
+
+        fixture.componentRef.setInput('umlModel', classDiagram);
+        fixture.componentRef.setInput('collaborationEnabled', true);
+        fixture.detectChanges();
+
+        const editor = component['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
+        editor.setLocalAwarenessUser.mockClear();
+        component.reannounceLocalAwareness();
+        expect(editor.setLocalAwarenessUser).toHaveBeenCalledExactlyOnceWith(collaborationUser);
     });
 
     it('should subscribe to model change patches and emit them.', async () => {

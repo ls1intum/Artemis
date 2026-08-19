@@ -1,21 +1,38 @@
-<div class="d-flex justify-content-between">
-    @if (course) {
-        <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
-            <jhi-sidebar
-                [itemSelected]="lectureSelected"
-                [courseId]="courseId"
-                [sidebarData]="sidebarData"
-                [collapseState]="DEFAULT_COLLAPSE_STATE"
-                [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
-            />
-        </div>
+<!--
+    Same frame as the exercises shell, including `horizontal-scroll`: that is what lets the content pane take its
+    height from the filled shell rather than from `dynamic-content-height`'s viewport arithmetic, which ends 3px short
+    of the divider above the footer.
+-->
+<div class="d-flex horizontal-scroll justify-content-between">
+    @if (course()) {
+        @if (sidebarData(); as currentSidebarData) {
+            <div [class.sidebar-collapsed]="isCollapsed()">
+                <jhi-sidebar
+                    [itemSelected]="lectureSelected()"
+                    [courseId]="courseId()"
+                    [sidebarData]="currentSidebarData"
+                    [collapseState]="DEFAULT_COLLAPSE_STATE"
+                    [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                    [pageTitle]="pageTitle()"
+                    [showSidebarToggle]="true"
+                    [isSidebarCollapsed]="isCollapsed()"
+                    (toggleSidebar)="toggleSidebar()"
+                />
+            </div>
+        }
 
-        @if (lectureSelected) {
-            <div [ngClass]="{ 'content-sidebar-width': !isCollapsed }" class="content-width module-bg rounded-3">
-                <router-outlet (deactivate)="onSubRouteDeactivate()" />
+        @if (lectureSelected()) {
+            <!-- Transparent like the exercises pane: the lecture detail supplies its own header and content cards. -->
+            <div [class.content-sidebar-width]="!isCollapsed()" class="content-width scrollable-content no-header-bar-height">
+                <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
-            <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">
+            <div class="vw-100 module-bg rounded-3 p-3 d-flex flex-column">
+                @if (isCollapsed()) {
+                    <div>
+                        <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
+                    </div>
+                }
                 <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.lectureDetails.selectLecture"></div>
             </div>
         }

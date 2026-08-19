@@ -11,6 +11,7 @@ import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -54,7 +55,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -241,8 +241,6 @@ function sharedSetup(url: string[]) {
 }
 
 describe('ExamResultSummaryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     sharedSetup(['', '']);
 
     it('should expand all exercises and call print when Export PDF is clicked', async () => {
@@ -252,17 +250,17 @@ describe('ExamResultSummaryComponent', () => {
 
         expect(exportToPDFButton).not.toBeNull();
 
-        component.exerciseInfos[1].isCollapsed = true;
-        component.exerciseInfos[2].isCollapsed = true;
-        component.exerciseInfos[3].isCollapsed = true;
-        component.exerciseInfos[4].isCollapsed = true;
+        component.exerciseInfos()[1].isCollapsed = true;
+        component.exerciseInfos()[2].isCollapsed = true;
+        component.exerciseInfos()[3].isCollapsed = true;
+        component.exerciseInfos()[4].isCollapsed = true;
 
         exportToPDFButton.nativeElement.click();
 
-        expect(component.exerciseInfos[1].isCollapsed).toBe(false);
-        expect(component.exerciseInfos[2].isCollapsed).toBe(false);
-        expect(component.exerciseInfos[3].isCollapsed).toBe(false);
-        expect(component.exerciseInfos[4].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[1].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[2].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[3].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[4].isCollapsed).toBe(false);
 
         await fixture.whenStable();
         expect(printStub).toHaveBeenCalledOnce();
@@ -278,7 +276,7 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.studentExam()).toEqual(studentExam);
         expect(serviceSpy).toHaveBeenCalledOnce();
         expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.id, studentExam.user!.id);
-        expect(component.studentExamGradeInfoDTO).toEqual({ ...gradeInfo, studentExam });
+        expect(component.studentExamGradeInfoDTO()).toEqual({ ...gradeInfo, studentExam });
     });
 
     it.each([
@@ -334,18 +332,18 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.studentExam().id).toBe(studentExam.id);
 
         const courseId = 10;
-        component.courseId = courseId;
+        component.courseId.set(courseId);
         plagiarismServiceSpy.mockClear();
 
         // After init, studentExamGradeInfoDTO should be set with the original studentExam
-        component.studentExamGradeInfoDTO = {} as StudentExamWithGradeDTO;
+        component.studentExamGradeInfoDTO.set({} as StudentExamWithGradeDTO);
 
         // Switch to a different studentExam — the effect propagates the new value to studentExamGradeInfoDTO and reloads plagiarism cases with the new courseId
         const studentExam3 = { id: 3, exam: studentExam.exam, user, exercises } as StudentExam;
         fixture.componentRef.setInput('studentExam', studentExam3);
         fixture.detectChanges();
         await Promise.resolve();
-        expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam3);
+        expect(component.studentExamGradeInfoDTO()!.studentExam).toEqual(studentExam3);
         expect(component.studentExam().id).toBe(studentExam3.id);
         expect(plagiarismServiceSpy).toHaveBeenCalledOnce();
         expect(plagiarismServiceSpy).toHaveBeenCalledWith(courseId, [1, 2, 3, 4]);
@@ -355,29 +353,29 @@ describe('ExamResultSummaryComponent', () => {
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(true);
-        expect(component.testExamConduction).toBe(true);
+        expect(component.testExamConduction()).toBe(true);
 
         studentExamForTestExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(true);
-        expect(component.testExamConduction).toBe(false);
+        expect(component.testExamConduction()).toBe(false);
     });
 
     it('should correctly identify a RealExam', () => {
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(false);
-        expect(component.testExamConduction).toBe(false);
-        expect(component.isTestRun).toBe(false);
+        expect(component.testExamConduction()).toBe(false);
+        expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
 
         studentExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
         expect(component.isTestExam).toBe(false);
-        expect(component.testExamConduction).toBe(false);
-        expect(component.isTestRun).toBe(false);
+        expect(component.testExamConduction()).toBe(false);
+        expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
     });
 
@@ -386,16 +384,16 @@ describe('ExamResultSummaryComponent', () => {
         component.testRunConduction = true;
         expect(component.resultsArePublished).toBe(false);
 
-        component.testExamConduction = true;
+        component.testExamConduction.set(true);
         component.testRunConduction = false;
         expect(component.resultsArePublished).toBe(false);
 
-        component.isTestRun = true;
-        component.testExamConduction = false;
+        component.isTestRun.set(true);
+        component.testExamConduction.set(false);
         expect(component.resultsArePublished).toBe(true);
 
         component.isTestExam = true;
-        component.isTestRun = false;
+        component.isTestRun.set(false);
         expect(component.resultsArePublished).toBe(true);
 
         component.isTestExam = false;
@@ -423,22 +421,22 @@ describe('ExamResultSummaryComponent', () => {
 
         component.isTestExam = true;
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(true);
+        expect(component.isAfterStudentReviewStart()).toBe(true);
 
         component.isTestExam = false;
-        component.isTestRun = true;
+        component.isTestRun.set(true);
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(true);
+        expect(component.isAfterStudentReviewStart()).toBe(true);
 
-        component.isTestRun = false;
+        component.isTestRun.set(false);
         component.studentExam().exam!.examStudentReviewStart = examStudentReviewStart;
         component.studentExam().exam!.examStudentReviewEnd = examStudentReviewEnd;
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(true);
+        expect(component.isAfterStudentReviewStart()).toBe(true);
 
         component.studentExam().exam!.examStudentReviewStart = dayjs().add(30, 'minutes');
         component.ngOnInit();
-        expect(component.isAfterStudentReviewStart).toBe(false);
+        expect(component.isAfterStudentReviewStart()).toBe(false);
 
         expect(dateSpy).toHaveBeenCalled();
     });
@@ -449,21 +447,21 @@ describe('ExamResultSummaryComponent', () => {
 
         component.isTestExam = true;
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(true);
+        expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
         component.isTestExam = false;
-        component.isTestRun = true;
+        component.isTestRun.set(true);
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(true);
+        expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
-        component.isTestRun = false;
+        component.isTestRun.set(false);
         component.studentExam().exam!.examStudentReviewEnd = examStudentReviewEnd;
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(true);
+        expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
         component.studentExam().exam!.examStudentReviewEnd = dayjs().subtract(30, 'minutes');
         component.ngOnInit();
-        expect(component.isBeforeStudentReviewEnd).toBe(false);
+        expect(component.isBeforeStudentReviewEnd()).toBe(false);
 
         expect(dateSpy).toHaveBeenCalled();
     });
@@ -482,11 +480,11 @@ describe('ExamResultSummaryComponent', () => {
                 },
             } as StudentResult;
 
-            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam, studentResult };
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentExam, studentResult });
         });
 
         it('should return undefined if exercise result is undefined', () => {
-            component.studentExamGradeInfoDTO.studentResult.exerciseGroupIdToExerciseResult = {};
+            component.studentExamGradeInfoDTO()!.studentResult.exerciseGroupIdToExerciseResult = {};
             const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
 
             expect(scoreAsPercentage).toBeUndefined();
@@ -504,7 +502,7 @@ describe('ExamResultSummaryComponent', () => {
             textExerciseResult.achievedScore = undefined;
             textExerciseResult.maxScore = 10;
             textExerciseResult.achievedPoints = 6.066666;
-            component.studentExamGradeInfoDTO.studentExam!.exam!.course!.accuracyOfScores = 3;
+            component.studentExamGradeInfoDTO()!.studentExam!.exam!.course!.accuracyOfScores = 3;
 
             const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
 
@@ -518,6 +516,34 @@ describe('ExamResultSummaryComponent', () => {
             const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
 
             expect(scoreAsPercentage).toBeUndefined();
+        });
+    });
+
+    describe('getTextColorAndIconClassByExercise', () => {
+        function exerciseWithStaleResult(exerciseId: number, staleScore: number): TextExercise {
+            const staleResult = { id: exerciseId, score: staleScore, rated: true, completionDate: dayjs().subtract(1, 'hour') } as Result;
+            const submission = { id: exerciseId, results: [staleResult] } as TextSubmission;
+            const participation = { id: exerciseId, submissions: [submission] } as StudentParticipation;
+            return { id: exerciseId, type: ExerciseType.TEXT, studentParticipations: [participation], exerciseGroup } as TextExercise;
+        }
+
+        it('should color the percentage based on the authoritative exam score, not the stale participation result', () => {
+            // Participation result still holds the pre-complaint (failing) score, while the exam grade info
+            // reflects the accepted complaint with full points.
+            const exercise = exerciseWithStaleResult(42, 20);
+            const studentResult = {
+                exerciseGroupIdToExerciseResult: { [exercise.id!]: { exerciseId: exercise.id, achievedScore: 100 } as ExerciseResult },
+            } as StudentResult;
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentResult });
+
+            expect(component.getTextColorAndIconClassByExercise(exercise).textColorClass).toBe('text-state-success');
+        });
+
+        it('should fall back to the participation result color when there is no authoritative exam score', () => {
+            const exercise = exerciseWithStaleResult(43, 20);
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentResult: { exerciseGroupIdToExerciseResult: {} } as StudentResult });
+
+            expect(component.getTextColorAndIconClassByExercise(exercise).textColorClass).toBe('text-state-danger');
         });
     });
 
@@ -556,7 +582,7 @@ describe('ExamResultSummaryComponent', () => {
             const scrollIntoViewSpy = vi.fn();
 
             fixture.componentRef.setInput('studentExam', studentExam);
-            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam };
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentExam });
 
             // Call detectChanges first to render the DOM before mocking getElementById
             fixture.detectChanges();
@@ -575,9 +601,9 @@ describe('ExamResultSummaryComponent', () => {
 
     describe('toggleShowSampleSolution', () => {
         it('should be called on button click', () => {
-            component.exerciseInfos = {
+            component.exerciseInfos.set({
                 1: { isCollapsed: false, displayExampleSolution: true } as ResultSummaryExerciseInfo,
-            };
+            });
             exam.exampleSolutionPublicationDate = dayjs().subtract(1, 'hour');
             const toggleShowSampleSolutionSpy = vi.spyOn(component, 'toggleShowSampleSolution');
 

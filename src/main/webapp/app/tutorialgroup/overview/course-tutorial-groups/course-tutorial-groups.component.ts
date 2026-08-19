@@ -1,6 +1,6 @@
 import { Component, Signal, computed, effect, inject, signal } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs/operators';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { filter, map } from 'rxjs/operators';
@@ -8,25 +8,28 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/foundation/types/sidebar';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import dayjs from 'dayjs/esm';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { HttpResponse } from '@angular/common/http';
-import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
-    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective],
 })
-export class CourseTutorialGroupsComponent {
+export class CourseTutorialGroupsComponent implements SidebarView {
     protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {
         allGroups: true,
         registeredGroups: false,
@@ -48,21 +51,27 @@ export class CourseTutorialGroupsComponent {
     private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private courseStorageService = inject(CourseStorageService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private lectureService = inject(LectureService);
     private courseOverviewService = inject(CourseOverviewService);
     private sessionStorageService = inject(SessionStorageService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     courseId = this.getCurrentCourseIdSignal();
-    tutorialGroups = signal<TutorialGroup[]>([]);
-    tutorialLectures = signal<Lecture[]>([]);
+    // Undefined until loaded, so a refresh that legitimately returns nothing is distinguishable from the initial state
+    tutorialGroups = signal<TutorialGroup[] | undefined>(undefined);
+    tutorialLectures = signal<Lecture[] | undefined>(undefined);
     sidebarData = signal<SidebarData | undefined>(undefined);
     itemSelected = this.getItemSelectedSignal();
-    isCollapsed = false;
+    readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     currentTutorialLectureId = computed(() => this.computeCurrentTutorialLectureId());
 
+    private readonly activeDetail = signal<CourseTutorialGroupDetailContainerComponent | CourseLectureDetailsComponent | undefined>(undefined);
+    protected readonly activeDetailSidebarSync = effect(() => this.activeDetail()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
+
     constructor() {
-        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup');
+        this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup'));
 
         effect(() => {
             const courseId = this.courseId();
@@ -71,13 +80,30 @@ export class CourseTutorialGroupsComponent {
             }
         });
 
+        // Selecting this tab while already on it acts as a refresh. It goes to the loaders directly rather than through
+        // setTutorialGroupsAndTutorialLectures, which prefers whatever the stored course already holds and would
+        // therefore make the refresh a no-op.
+        this.courseTabRefreshService
+            .reselections(this.activatedRoute)
+            .pipe(takeUntilDestroyed())
+            .subscribe(() => {
+                const courseId = this.courseId();
+                if (courseId) {
+                    this.loadAndSetTutorialGroups(courseId);
+                    this.loadAndSetTutorialLectures(courseId);
+                }
+            });
+
         effect(() => {
             const tutorialGroups = this.tutorialGroups();
             const tutorialLectures = this.tutorialLectures();
-            if (tutorialGroups.length || tutorialLectures.length) {
-                this.prepareSidebarData(tutorialGroups, tutorialLectures);
-                this.autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups);
+            // Rebuild as soon as either side has loaded, empty result included. Skipping the rebuild when both came
+            // back empty left the previous course's — or a since-deleted group's — cards on screen after a refresh.
+            if (tutorialGroups === undefined && tutorialLectures === undefined) {
+                return;
             }
+            this.prepareSidebarData(tutorialGroups ?? [], tutorialLectures ?? []);
+            this.autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups ?? []);
         });
 
         effect(() => {
@@ -86,8 +112,18 @@ export class CourseTutorialGroupsComponent {
     }
 
     toggleSidebar() {
-        this.isCollapsed = !this.isCollapsed;
-        this.courseOverviewService.setSidebarCollapseState('tutorialGroup', this.isCollapsed);
+        this.isCollapsed.update((collapsed) => !collapsed);
+        this.courseOverviewService.setSidebarCollapseState('tutorialGroup', this.isCollapsed());
+    }
+
+    onSubRouteActivate(componentRef: unknown) {
+        if (componentRef instanceof CourseTutorialGroupDetailContainerComponent || componentRef instanceof CourseLectureDetailsComponent) {
+            this.activeDetail.set(componentRef);
+        }
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
     }
 
     private setTutorialGroupsAndTutorialLectures(courseId: number) {
@@ -108,11 +144,10 @@ export class CourseTutorialGroupsComponent {
 
     private loadAndSetTutorialGroups(courseId: number) {
         this.tutorialGroupApiService
-            .getTutorialGroupsForCourse(courseId, 'response')
-            .pipe(map((res: HttpResponse<TutorialGroup[]>) => convertTutorialGroupResponseArrayDatesFromServer(res)))
+            .getTutorialGroupsForCourse(courseId)
+            .pipe(map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)))
             .subscribe({
-                next: ({ body }) => {
-                    const tutorialGroups = body ?? [];
+                next: (tutorialGroups) => {
                     this.tutorialGroups.set(tutorialGroups);
                     this.updateCachedTutorialGroups(tutorialGroups, courseId);
                 },
@@ -145,8 +180,15 @@ export class CourseTutorialGroupsComponent {
             return;
         }
         const existingLectures = course.lectures ?? [];
-        const remainingLectures = existingLectures.filter((existing) => !lecturesToUpdate.some((updated) => updated.id === existing.id));
-        course.lectures = [...remainingLectures, ...lecturesToUpdate];
+        // Replace the tutorial subset wholesale rather than merging by id. Merging cannot express a deletion: a refresh
+        // that returns nothing removed nothing, so a deleted tutorial lecture stayed in the stored course and came
+        // straight back the next time the tab read its cache. Non-tutorial lectures belong to the lectures tab and are
+        // kept, as is anything the fresh response re-supplies under a different flag.
+        const freshLectureIds = new Set(lecturesToUpdate.map((lecture) => lecture.id));
+        const retainedLectures = existingLectures.filter((existing) => !existing.isTutorialLecture && !freshLectureIds.has(existing.id));
+        course.lectures = [...retainedLectures, ...lecturesToUpdate];
+        // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
+        // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
         this.courseStorageService.updateCourse(course);
     }
 
@@ -209,9 +251,9 @@ export class CourseTutorialGroupsComponent {
         const lastSelectedSubRoute = this.getLastSelectedSubRoute();
         const nothingSelected = !this.itemSelected();
         if (nothingSelected && lastSelectedSubRoute) {
-            this.router.navigate([lastSelectedSubRoute], { relativeTo: this.activatedRoute, replaceUrl: true });
+            void this.router.navigate([lastSelectedSubRoute], { relativeTo: this.activatedRoute, replaceUrl: true });
         } else if (nothingSelected && upcomingTutorialGroup) {
-            this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
+            void this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
         }
     }
 
@@ -222,11 +264,11 @@ export class CourseTutorialGroupsComponent {
     private getCurrentCourseIdSignal(): Signal<number | undefined> {
         return toSignal(
             this.activatedRoute.parent!.paramMap.pipe(
-                map((parameterMap) => {
+                map((parameterMap): number | undefined => {
                     const courseIdParameter = parameterMap.get('courseId');
                     return courseIdParameter !== null ? Number(courseIdParameter) : undefined;
                 }),
-                distinctUntilChanged(),
+                distinctUntilChanged<number | undefined>(),
             ),
             { initialValue: undefined },
         );

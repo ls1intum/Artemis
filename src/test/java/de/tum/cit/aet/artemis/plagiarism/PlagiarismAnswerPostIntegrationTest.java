@@ -54,8 +54,9 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
-        List<Post> existingPostsAndConversationPostsWithAnswers = conversationUtilService.createPostsWithAnswerPostsWithinCourse(courseUtilService.createCourse(), TEST_PREFIX)
-                .stream().filter(coursePost -> coursePost.getAnswers() != null && !coursePost.getAnswers().isEmpty()).toList();
+        List<Post> existingPostsAndConversationPostsWithAnswers = conversationUtilService
+                .createPostsWithAnswerPostsWithinCourse(courseUtilService.createEnrolledCourse(TEST_PREFIX), TEST_PREFIX).stream()
+                .filter(coursePost -> coursePost.getAnswers() != null && !coursePost.getAnswers().isEmpty()).toList();
 
         existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getPlagiarismCase() != null).toList();
 
@@ -119,6 +120,23 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
         courseRepository.saveAndFlush(persistedCourse);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateAnswerPostPersistsAndIsNotOrphanRemoved() throws Exception {
+        // Regression test for the orphan-removal bug in PlagiarismAnswerPostService.createAnswerPost: it used to
+        // re-save the (detached) parent post after saving the new answer. Because Post.answers is
+        // @OneToMany(orphanRemoval = true), that merge could delete the just-created answer, intermittently losing it.
+        // The created answer must remain persisted.
+        Post parentPost = existingPostsWithAnswers.getFirst();
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(new ParentPostDTO(parentPost.getId()), "Content Answer Post", false);
+
+        AnswerPostResponseDTO createdAnswerPost = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(createdAnswerPost.id()).isNotNull();
+        assertThat(answerPostRepository.findById(createdAnswerPost.id())).as("the created plagiarism answer post must not be orphan-removed by a parent-post re-save").isPresent();
     }
 
     // Note: the previous testCreateExistingAnswerPost_badRequest case (creating with an existing id and expecting

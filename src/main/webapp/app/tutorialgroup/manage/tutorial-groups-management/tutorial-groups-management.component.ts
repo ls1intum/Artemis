@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subject, combineLatest, finalize } from 'rxjs';
+import { Subject, finalize } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { Course, isMessagingEnabled } from 'app/course/shared/entities/course.model';
@@ -21,13 +21,10 @@ import { TutorialGroupsCourseInformationComponent } from './tutorial-groups-cour
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TutorialGroupsTableComponent } from 'app/tutorialgroup/manage/tutorial-groups-table/tutorial-groups-table.component';
 import { TutorialGroupFreeDaysOverviewComponent } from 'app/tutorialgroup/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
-import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { HttpResponse } from '@angular/common/http';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { map } from 'rxjs/operators';
-import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
@@ -54,37 +51,40 @@ import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgr
     ],
 })
 export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
-    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
-    private cdr = inject(ChangeDetectorRef);
 
     ngUnsubscribe = new Subject<void>();
 
-    courseId: number;
-    course: Course;
-    isAtLeastInstructor = false;
-    isAtLeastEditor = false;
+    readonly courseId = signal<number>(undefined!);
+    readonly course = signal<Course>(undefined!);
+    readonly isAtLeastInstructor = signal(false);
+    readonly isAtLeastEditor = signal(false);
 
-    configuration: TutorialGroupsConfiguration;
+    readonly configuration = signal<TutorialGroupsConfiguration>(undefined!);
 
-    isLoading = false;
-    tutorialGroups: TutorialGroup[] = [];
+    readonly isLoading = signal(false);
+    readonly tutorialGroups = signal<TutorialGroup[]>([]);
     faPlus = faPlus;
     faUmbrellaBeach = faUmbrellaBeach;
 
     readonly isMessagingEnabled = isMessagingEnabled;
 
-    tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
+    readonly tutorialGroupFreeDays = signal<TutorialGroupFreePeriod[]>([]);
 
     ngOnInit(): void {
         this.activatedRoute.data.pipe(takeUntil(this.ngUnsubscribe)).subscribe(({ course }) => {
             if (course) {
-                this.course = course;
-                this.courseId = course.id!;
-                this.isAtLeastInstructor = course.isAtLeastInstructor;
-                this.isAtLeastEditor = course.isAtLeastEditor;
+                this.course.set(course);
+                this.courseId.set(course.id);
+                this.isAtLeastInstructor.set(course.isAtLeastInstructor);
+                this.isAtLeastEditor.set(course.isAtLeastEditor);
+                const configuration = course.tutorialGroupsConfiguration;
+                if (configuration) {
+                    this.configuration.set(configuration);
+                    this.tutorialGroupFreeDays.set(configuration.tutorialGroupFreePeriods ?? []);
+                }
                 this.loadTutorialGroups();
             }
         });
@@ -96,23 +96,19 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     }
 
     loadTutorialGroups() {
-        this.isLoading = true;
+        this.isLoading.set(true);
 
-        const tutorialGroupObservable = this.tutorialGroupApiService
-            .getTutorialGroupsForCourse(this.courseId, 'response')
-            .pipe(map((res: HttpResponse<TutorialGroup[]>) => convertTutorialGroupResponseArrayDatesFromServer(res)));
-        const tutorialGroupsConfigurationObservable = this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!);
-
-        combineLatest([tutorialGroupObservable, tutorialGroupsConfigurationObservable])
+        this.tutorialGroupApiService
+            .getTutorialGroupsForCourse(this.courseId())
             .pipe(
+                map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)),
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: ([tutorialGroupsRes, configurationRes]) => {
-                    const tutorialGroups = tutorialGroupsRes.body!;
+                next: (tutorialGroups: TutorialGroup[]) => {
                     tutorialGroups.sort((a, b) => {
                         if (a.isUserTutor && !b.isUserTutor) {
                             return -1;
@@ -122,15 +118,9 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
                             return a.title!.localeCompare(b.title!);
                         }
                     });
-                    this.tutorialGroups = tutorialGroups;
-
-                    this.configuration = tutorialGroupsConfigurationEntityFromDto(configurationRes.body!);
-                    if (this.configuration.tutorialGroupFreePeriods) {
-                        this.tutorialGroupFreeDays = this.configuration.tutorialGroupFreePeriods;
-                    }
+                    this.tutorialGroups.set(tutorialGroups);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+            });
     }
 }

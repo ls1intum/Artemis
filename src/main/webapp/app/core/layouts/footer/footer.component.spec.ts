@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -12,16 +11,14 @@ import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import dayJs from 'dayjs/esm';
 
 describe('FooterComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FooterComponent;
     let fixture: ComponentFixture<FooterComponent>;
     let profileService: ProfileService;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [FooterComponent, MockPipe(ArtemisTranslatePipe), TranslateModule.forRoot(), RouterModule.forRoot([])],
-            providers: [{ provide: ProfileService, useClass: MockProfileService }],
+            imports: [FooterComponent, MockPipe(ArtemisTranslatePipe), RouterModule.forRoot([])],
+            providers: [{ provide: ProfileService, useClass: MockProfileService }, provideTranslateService()],
         });
         await TestBed.compileComponents();
 
@@ -54,8 +51,8 @@ describe('FooterComponent', () => {
 
     describe('Git Information', () => {
         it('should display git information if not in production or on a test server', () => {
-            component.isProduction = false;
-            component.isTestServer = true;
+            component.isProduction.set(false);
+            component.isTestServer.set(true);
             fixture.changeDetectorRef.detectChanges();
 
             const gitInfoElement = fixture.debugElement.nativeElement.querySelector('.footer-git');
@@ -64,8 +61,8 @@ describe('FooterComponent', () => {
     });
 
     it('should not display git information if in production and not a test server', () => {
-        component.isProduction = true;
-        component.isTestServer = false;
+        component.isProduction.set(true);
+        component.isTestServer.set(false);
         fixture.changeDetectorRef.detectChanges();
 
         const gitInfoElement = fixture.debugElement.nativeElement.querySelector('.footer-git-wrapper');
@@ -74,12 +71,12 @@ describe('FooterComponent', () => {
 
     describe('Git Information Detailed Testing', () => {
         beforeEach(() => {
-            component.gitBranch = 'main';
-            component.gitCommitId = 'abc123';
-            component.gitTimestamp = dayJs.utc('2023-04-01T12:00:00Z');
-            component.gitCommitUser = 'user123';
-            component.isProduction = false;
-            component.isTestServer = false;
+            component.gitBranch.set('main');
+            component.gitCommitId.set('abc123');
+            component.gitTimestamp.set(dayJs.utc('2023-04-01T12:00:00Z'));
+            component.gitCommitUser.set('user123');
+            component.isProduction.set(false);
+            component.isTestServer.set(false);
             fixture.changeDetectorRef.detectChanges();
         });
 

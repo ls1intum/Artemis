@@ -3,16 +3,27 @@ import { Injectable, inject } from '@angular/core';
 import { MODULE_FEATURE_SHARING } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
 import dayjs from 'dayjs/esm';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
+
+/**
+ * Minimal structural view of a participation used only to strip the circular-reference-prone fields
+ * (`exercise`, `results`, `submissions`) before sending the exercise to the sharing platform. The
+ * index signature preserves all remaining participation fields for the rest spread.
+ */
+interface ParticipationWithCircularReferences {
+    exercise?: unknown;
+    results?: unknown;
+    submissions?: unknown;
+    [key: string]: unknown;
+}
 
 /** the programming exercise sharing service */
 @Injectable({ providedIn: 'root' })
@@ -68,25 +79,34 @@ export class ProgrammingExerciseSharingService {
      * @param exercise for which the data should be converted
      */
     convertDataFromClient(exercise: ProgrammingExercise) {
-        const copy = {
-            ...ExerciseService.convertExerciseDatesFromClient(exercise),
+        const copy = cloneWith(ExerciseService.convertExerciseDatesFromClient(exercise), {
             buildAndTestStudentSubmissionsAfterDueDate:
                 exercise.buildAndTestStudentSubmissionsAfterDueDate && dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
                     ? dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
                     : undefined,
-        };
+        });
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
-            const { exercise: _ignoredExercise, results: _ignoredResults, submissions: _ignoredSubmissions, ...filteredTemplateParticipation } = copy.templateParticipation as any;
-            copy.templateParticipation = { ...filteredTemplateParticipation } as TemplateProgrammingExerciseParticipation;
+            const {
+                exercise: _ignoredExercise,
+                results: _ignoredResults,
+                submissions: _ignoredSubmissions,
+                ...filteredTemplateParticipation
+            } = copy.templateParticipation as ParticipationWithCircularReferences;
+            copy.templateParticipation = deepClone(filteredTemplateParticipation);
         }
         if (copy.solutionParticipation) {
-            const { exercise: _ignoredExercise, results: _ignoredResults, submissions: _ignoredSubmissions, ...filteredSolutionParticipation } = copy.solutionParticipation as any;
-            copy.solutionParticipation = { ...filteredSolutionParticipation } as SolutionProgrammingExerciseParticipation;
+            const {
+                exercise: _ignoredExercise,
+                results: _ignoredResults,
+                submissions: _ignoredSubmissions,
+                ...filteredSolutionParticipation
+            } = copy.solutionParticipation as ParticipationWithCircularReferences;
+            copy.solutionParticipation = deepClone(filteredSolutionParticipation);
         }
 
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
 
         return copy as ProgrammingExercise;
     }

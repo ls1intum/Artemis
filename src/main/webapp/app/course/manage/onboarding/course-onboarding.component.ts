@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
+import { MAX_GRADING_POINTS } from 'app/foundation/constants/input.constants';
 import { CourseManagementService } from '../services/course-management.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -130,14 +131,14 @@ export class CourseOnboardingComponent implements OnInit {
         if (!current.onboardingDone) {
             current.onboardingDone = true;
             this.courseManagementService.update(current.id, current).subscribe({
-                next: () => this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } }),
+                next: () => void this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } }),
                 error: (error: HttpErrorResponse) => {
                     current.onboardingDone = false;
                     onError(this.alertService, error);
                 },
             });
         } else {
-            this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } });
+            void this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } });
         }
     }
 
@@ -202,6 +203,14 @@ export class CourseOnboardingComponent implements OnInit {
                     this.alertService.error('artemisApp.course.onboarding.validation.maxPointsPositive');
                     return false;
                 }
+                if (current.maxPoints !== undefined && !Number.isInteger(current.maxPoints)) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsWholeNumber');
+                    return false;
+                }
+                if (current.maxPoints !== undefined && current.maxPoints > MAX_GRADING_POINTS) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsTooHigh', { max: MAX_GRADING_POINTS });
+                    return false;
+                }
                 break;
             }
         }
@@ -259,6 +268,6 @@ export class CourseOnboardingComponent implements OnInit {
     }
 
     private updateStepUrl(step: number) {
-        this.router.navigate([], { queryParams: { step }, queryParamsHandling: 'merge', replaceUrl: true });
+        void this.router.navigate([], { queryParams: { step }, queryParamsHandling: 'merge', replaceUrl: true });
     }
 }

@@ -1,5 +1,4 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -31,8 +30,6 @@ const quizQuestionStatOne = { ratedCorrectCounter: 1, unRatedCorrectCounter: 3 }
 const quizQuestionStatTwo = { ratedCorrectCounter: 2, unRatedCorrectCounter: 4 };
 
 describe('QuizStatisticComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizStatisticComponent;
     let fixture: ComponentFixture<QuizStatisticComponent>;
     let quizService: QuizExerciseService;
@@ -139,7 +136,7 @@ describe('QuizStatisticComponent', () => {
             comp.loadQuizSuccess(quizExercise);
 
             // check
-            expect(comp.quizExercise).toBe(quizExercise);
+            expect(comp.quizExercise()).toBe(quizExercise);
             expect(comp.maxScore).toBe(11);
             expect(loadDataSpy).toHaveBeenCalledOnce();
         });
@@ -176,7 +173,7 @@ describe('QuizStatisticComponent', () => {
                 { points: 1, invalid: false, exportQuiz: false, randomizeOrder: true },
                 { points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 
@@ -191,7 +188,7 @@ describe('QuizStatisticComponent', () => {
             // setup
             quizExercise.quizQuestions = undefined;
             quizExercise.maxPoints = 42;
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 
@@ -217,7 +214,7 @@ describe('QuizStatisticComponent', () => {
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             // setup
             const updateChartSpy = vi.spyOn(comp, 'loadDataInDiagram');
             comp.rated = true;
@@ -241,7 +238,7 @@ describe('QuizStatisticComponent', () => {
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             comp.rated = false;
             comp.maxScore = 1;
 
@@ -260,7 +257,7 @@ describe('QuizStatisticComponent', () => {
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.rated = true;
             comp.maxScore = 1;
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
 
             // call
             comp.loadData();
@@ -289,17 +286,27 @@ describe('QuizStatisticComponent', () => {
     it('should format correctly', () => {
         fixture = TestBed.createComponent(QuizStatisticComponent);
         comp = fixture.componentInstance;
-        comp.totalParticipants = 100;
         comp.participants = 100;
 
-        let result = comp.bindFormatting(30);
+        // the data label formatter is wired into the chart options
+        const formatter = (comp.chartOptions().plugins as any).datalabels.formatter;
 
-        expect(result).toBe('30 (30%)');
+        expect(formatter(30)).toBe('30 (30%)');
 
-        comp.totalParticipants = 0;
+        // without participants the percentage cannot be computed and falls back to 0%
+        comp.participants = 0;
 
-        result = comp.bindFormatting(0);
+        expect(formatter(30)).toBe('30 (0%)');
+    });
 
-        expect(result).toBe('0 (0%)');
+    it('uses the correct-solutions tooltip for question bars and the average tooltip for the last bar', () => {
+        fixture = TestBed.createComponent(QuizStatisticComponent);
+        comp = fixture.componentInstance;
+        // two question bars plus the trailing average bar
+        comp.data = [10, 20, 15];
+        const label = (comp.chartOptions().plugins as any).tooltip.callbacks.label;
+
+        expect(label({ dataIndex: 0, parsed: { y: 10 } })).toContain('tooltip.correctSolutions');
+        expect(label({ dataIndex: 2, parsed: { y: 15 } })).toContain('tooltip.average');
     });
 });

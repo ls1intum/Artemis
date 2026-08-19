@@ -1,39 +1,86 @@
-<p-dialog
-    [visible]="visible()"
-    (visibleChange)="visible.set($event)"
-    [modal]="true"
-    [closable]="false"
-    [dismissableMask]="false"
-    [draggable]="false"
-    [appendTo]="'body'"
-    [style]="{ width: '50dvw' }"
->
+<tum-ui-dialog [(visible)]="visible" [closable]="false" [closeOnEscape]="false" [dismissableMask]="false" size="medium">
     <ng-template #header>
-        <h4>
+        <div class="flex items-center gap-2">
             <fa-icon [icon]="faShieldHalved" />
             <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.title"></span>
-        </h4>
-    </ng-template>
-    <p jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
-    <p jhiTranslate="artemisApp.userSettings.setupPasskeyModal.description.howItWorks"></p>
-    <p jhiTranslate="artemisApp.userSettings.setupPasskeyModal.description.recommendation"></p>
-    <ng-template #footer>
-        <button type="button" class="btn btn-outline-secondary" (click)="remindMeIn30Days()">
-            <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days"></span>
-        </button>
-
-        <div class="ms-auto">
-            <button
-                type="button"
-                class="btn btn-secondary"
-                (click)="closeModal()"
-                jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupLater"
-                aria-label="Set Up Later"
-            ></button>
-            <button type="button" class="btn btn-primary" (click)="setupPasskey()">
-                <fa-icon [icon]="faKey" />
-                <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></span>
-            </button>
         </div>
     </ng-template>
-</p-dialog>
+
+    <div class="flex flex-col gap-4 py-1">
+        <div class="flex items-center gap-3.5 px-1">
+            <div class="flex items-center justify-center w-14 h-14 bg-primary/10 text-primary rounded-2xl shrink-0 text-2xl">
+                <fa-icon [icon]="faFingerprint" />
+            </div>
+            <div class="min-w-0 flex-1">
+                <h2 class="!text-lg sm:!text-xl font-bold text-color m-0 tracking-tight leading-snug" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.heroTitle"></h2>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-3 bg-surface-card p-4 rounded-2xl border border-surface">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-card border border-surface text-primary shrink-0 shadow-sm">
+                    <fa-icon [icon]="faBolt" class="text-sm" />
+                </div>
+                <div class="text-sm leading-snug">
+                    <span class="font-semibold text-color" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.faster.title"></span>
+                    <span class="text-muted-color ml-1" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.faster.desc"></span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-card border border-surface text-primary shrink-0 shadow-sm">
+                    <fa-icon [icon]="faLock" class="text-sm" />
+                </div>
+                <div class="text-sm leading-snug">
+                    <span class="font-semibold text-color" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.noPasswords.title"></span>
+                    <span class="text-muted-color ml-1" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.noPasswords.desc"></span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-card border border-surface text-primary shrink-0 shadow-sm">
+                    <fa-icon [icon]="faShieldHalved" class="text-sm" />
+                </div>
+                <div class="text-sm leading-snug">
+                    <span class="font-semibold text-color" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.secure.title"></span>
+                    <span class="text-muted-color ml-1" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.secure.desc"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template #footer>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full gap-2">
+            <tum-ui-button
+                severity="secondary"
+                variant="outlined"
+                size="small"
+                (clicked)="remindMeIn30Days()"
+                [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days' | translate"
+            >
+                <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days"></span>
+            </tum-ui-button>
+
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ms-auto">
+                <tum-ui-button
+                    severity="secondary"
+                    variant="text"
+                    size="small"
+                    (clicked)="closeModal()"
+                    [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.setupLater' | translate"
+                >
+                    <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupLater"></span>
+                </tum-ui-button>
+                <tum-ui-button
+                    severity="primary"
+                    size="small"
+                    [icon]="faKey"
+                    (clicked)="setupPasskey()"
+                    [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.setupPasskey' | translate"
+                >
+                    <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></span>
+                </tum-ui-button>
+            </div>
+        </div>
+    </ng-template>
+</tum-ui-dialog>

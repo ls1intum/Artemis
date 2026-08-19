@@ -42,6 +42,22 @@ PLAYWRIGHT_EXTRA_ARGS=()
 export PLAYWRIGHT_VIDEO_MODE="${PLAYWRIGHT_VIDEO_MODE:-off}"
 export PLAYWRIGHT_COVERAGE="${PLAYWRIGHT_COVERAGE:-off}"
 
+# Iris (AI tutor) e2e support: when RUN_IRIS=true the runner brings up the REAL
+# Pyris stack (real Pyris + Weaviate + a mock OpenAI-compatible LLM, see
+# src/test/playwright/support/iris-stack/) and enables Iris on the Artemis server,
+# pointed at the containerised Pyris. Off by default so normal runs are unaffected.
+# Requires the pyris-e2e:local image to be built first (see the iris-stack README).
+RUN_IRIS="${RUN_IRIS:-false}"
+IRIS_STACK_COMPOSE="src/test/playwright/support/iris-stack/docker-compose.yml"
+# The shared secret Artemis sends to Pyris; MUST equal api_keys[0].token in
+# src/test/playwright/support/iris-stack/application.local.yml.
+IRIS_SECRET_TOKEN="${IRIS_SECRET_TOKEN:-iris-e2e-secret-token}"
+# Pyris (in a container) reaches Artemis (on the host) for status callbacks via
+# host.docker.internal. This is the server.url Artemis hands to Pyris.
+IRIS_ARTEMIS_CALLBACK_URL="${IRIS_ARTEMIS_CALLBACK_URL:-http://host.docker.internal:8080}"
+# The Iris-enabled seed course whose course-level Iris settings get turned on.
+IRIS_COURSE_ID="${IRIS_COURSE_ID:-9022}"
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         --stop) STOP=true; shift ;;
@@ -89,6 +105,15 @@ kill_tree() {
 # down stale processes every time they re-run E2E tests. Do NOT replace this with
 # a simple "error and exit" — that was tried and reverted because it broke the
 # hands-free workflow that this script is designed to provide.
+# How long to wait for a killed process to release its listening socket before giving up.
+# Validated rather than trusted: a non-numeric value would otherwise blow up the integer comparison below with a
+# bash arithmetic error, in a pre-flight step whose whole job is to get out of the developer's way.
+PORT_RELEASE_TIMEOUT="${PORT_RELEASE_TIMEOUT:-30}"
+if ! [[ "$PORT_RELEASE_TIMEOUT" =~ ^[0-9]+$ ]]; then
+    echo "Ignoring PORT_RELEASE_TIMEOUT='${PORT_RELEASE_TIMEOUT}': expected a non-negative integer number of seconds. Using 30."
+    PORT_RELEASE_TIMEOUT=30
+fi
+
 check_port_available() {
     local port=$1
     local service_name=$2
@@ -104,15 +129,31 @@ check_port_available() {
             echo "  Killing PID $pid..."
             kill_tree "$pid"
         done
-        sleep 2
-        # Verify port is now free after killing
-        listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+        # Poll for the port to be released instead of sleeping a fixed 2s and checking once. A JVM
+        # shutting down can hold its listening socket noticeably longer than that, and the single
+        # check then aborts the whole run over a port that frees a moment later.
+        #
+        # Shaped so the check always happens at least once and always happens *after* the last sleep: a
+        # pre-kill `lsof` result must never be what decides the error, otherwise PORT_RELEASE_TIMEOUT=0
+        # skips the loop entirely and a port released during the final second is still reported as busy.
+        local waited=0
+        while true; do
+            listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+            if [ -z "$listeners" ]; then
+                break
+            fi
+            if [ "$waited" -ge "$PORT_RELEASE_TIMEOUT" ]; then
+                break
+            fi
+            sleep 1
+            waited=$((waited + 1))
+        done
         if [ -n "$listeners" ]; then
-            echo -e "${RED}ERROR: Port ${port} is still in use after killing processes. Cannot start ${service_name}.${NC}"
+            echo -e "${RED}ERROR: Port ${port} is still in use ${PORT_RELEASE_TIMEOUT}s after killing processes. Cannot start ${service_name}.${NC}"
             echo "$listeners"
             exit 1
         fi
-        echo -e "${GREEN}Port ${port} is now free.${NC}"
+        echo -e "${GREEN}Port ${port} is now free (released after ${waited}s).${NC}"
     fi
 }
 
@@ -141,6 +182,12 @@ if [ "$STOP" = true ]; then
         fi
     fi
     check_port_available 9000 "Angular client"
+
+    # Stop the Iris/Pyris stack if it is running (real Pyris + Weaviate + mock LLM)
+    if docker compose -f "$IRIS_STACK_COMPOSE" ps -q 2>/dev/null | grep -q .; then
+        echo "Stopping Iris/Pyris stack..."
+        docker compose -f "$IRIS_STACK_COMPOSE" down -v 2>/dev/null || true
+    fi
 
     # Stop Postgres
     echo "Stopping Postgres..."
@@ -248,6 +295,48 @@ if [ "$SKIP_SERVER" = false ]; then
     check_port_available 8080 "Artemis server"
     check_port_available 7921 "local VC SSH server"
 
+    # Optional: bring up the REAL Pyris stack and enable Iris on the server.
+    # Iris is enabled purely via the property artemis.iris.enabled=true (no Spring
+    # profile); that property also makes management/info activeModuleFeatures
+    # include "iris", which is what gates the Iris UI client-side.
+    if [ "$RUN_IRIS" = true ]; then
+        echo -e "${BLUE}Iris enabled (RUN_IRIS=true): bringing up the real Pyris stack...${NC}"
+        # Kill any stale NON-Docker listener on Pyris's port 8000 (e.g. a leftover
+        # pyris stub from a previous attempt). On macOS, localhost resolves IPv4
+        # first, so a stale 127.0.0.1:8000 listener silently shadows the real
+        # (Docker, IPv6 *:8000) Pyris and Artemis's run requests never arrive.
+        STALE_8000=$(lsof -nP -iTCP:8000 -sTCP:LISTEN 2>/dev/null | awk 'NR>1 && $1 !~ /docker|com.docke/ {print $2}' | sort -u)
+        for pid in $STALE_8000; do
+            echo -e "${YELLOW}Killing stale non-Docker process on port 8000 (PID $pid)...${NC}"
+            kill_tree "$pid"
+        done
+        if ! docker image inspect "${PYRIS_IMAGE:-pyris-e2e:local}" >/dev/null 2>&1; then
+            echo -e "${RED}ERROR: Pyris image ${PYRIS_IMAGE:-pyris-e2e:local} not found.${NC}"
+            echo "Build it first (see src/test/playwright/support/iris-stack/README.md):"
+            echo "  docker build -f iris/Dockerfile -t pyris-e2e:local <edutelligence-repo-root>"
+            exit 1
+        fi
+        docker compose -f "$IRIS_STACK_COMPOSE" up -d
+        echo "Waiting for Pyris to report healthy (Weaviate up + chat pipeline valid)..."
+        IRIS_READY=false
+        for _ in $(seq 1 60); do
+            if curl -sf -H "Authorization: ${IRIS_SECRET_TOKEN}" http://localhost:8000/api/v1/health/ 2>/dev/null | grep -Eq '"isHealthy"[[:space:]]*:[[:space:]]*true'; then
+                IRIS_READY=true
+                break
+            fi
+            sleep 2
+        done
+        if [ "$IRIS_READY" = true ]; then
+            echo -e "${GREEN}Pyris is healthy.${NC}"
+        else
+            echo -e "${RED}WARNING: Pyris did not become healthy in time; Iris tests may skip/fail.${NC}"
+            docker compose -f "$IRIS_STACK_COMPOSE" logs --tail 30 pyris-app || true
+        fi
+        export ARTEMIS_IRIS_ENABLED="true"
+        export ARTEMIS_IRIS_URL="http://localhost:8000"
+        export ARTEMIS_IRIS_SECRETTOKEN="${IRIS_SECRET_TOKEN}"
+    fi
+
     # Server environment variables
     export SPRING_PROFILES_ACTIVE="artemis,scheduling,localvc,localci,buildagent,core,dev"
     export SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/Artemis?sslmode=disable"
@@ -258,6 +347,7 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_USERMANAGEMENT_INTERNALADMIN_USERNAME="artemis_admin"
     export ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD="artemis_admin"
     export ARTEMIS_USERMANAGEMENT_USEEXTERNAL="false"
+    export ARTEMIS_USERMANAGEMENT_PASSKEY_ENABLED="true"
     export ARTEMIS_VERSIONCONTROL_URL="http://localhost:8080"
     export ARTEMIS_VERSIONCONTROL_USER="artemis_admin"
     export ARTEMIS_VERSIONCONTROL_PASSWORD="artemis_admin"
@@ -282,6 +372,17 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_VERSIONCONTROL_SSHPORT="7921"
     export ARTEMIS_TELEMETRY_ENABLED="false"
     export SERVER_URL="http://localhost:8080"
+    # When Iris is enabled, Pyris runs in a container and must reach Artemis on the
+    # host for status callbacks. server.url is the artemisBaseUrl Artemis hands to
+    # Pyris, so point it at host.docker.internal. The Playwright browser uses
+    # BASE_URL (http://localhost:9000) independently, and the Iris suite uses
+    # lecture/course flows only (no host-side server.url git operations), so this
+    # override is safe for the Iris-filtered run.
+    if [ "$RUN_IRIS" = true ]; then
+        export SERVER_URL="${IRIS_ARTEMIS_CALLBACK_URL}"
+        echo "Iris: server.url set to ${SERVER_URL} so Pyris callbacks reach the host"
+    fi
+    export ARTEMIS_USERMANAGEMENT_PASSKEY_ADDITIONALALLOWEDORIGINS="http://localhost:9000"
     export EUREKA_CLIENT_ENABLED="false"
     export INFO_TESTSERVER="true"
 
@@ -398,11 +499,6 @@ echo -e "${BLUE}Step 4: Running Playwright tests...${NC}"
 export BASE_URL="http://localhost:9000"
 export ADMIN_USERNAME="artemis_admin"
 export ADMIN_PASSWORD="artemis_admin"
-export ALLOW_GROUP_CUSTOMIZATION="true"
-export STUDENT_GROUP_NAME="students"
-export TUTOR_GROUP_NAME="tutors"
-export EDITOR_GROUP_NAME="editors"
-export INSTRUCTOR_GROUP_NAME="instructors"
 export EXERCISE_REPO_DIRECTORY="test-exercise-repos"
 export TEST_WORKERS="${TEST_WORKERS:-${FAST_SLOW_WORKERS:-6}}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"
@@ -614,6 +710,10 @@ if [ $TOTAL_TESTS -gt 0 ]; then
             # Build a grep pattern from failed test names (escape regex special chars)
             RERUN_PATTERN=""
             for name in "${FAIL_NAMES[@]}"; do
+                # The $ and () inside the single-quoted sed script are regex metacharacters, not shell
+                # expansions, so they are intentionally literal (SC2016); sed is clearer here than a
+                # bash parameter expansion (SC2001).
+                # shellcheck disable=SC2001,SC2016
                 escaped=$(echo "$name" | sed 's/[.[\*^$()+?{|]/\\&/g')
                 if [ -z "$RERUN_PATTERN" ]; then
                     RERUN_PATTERN="$escaped"

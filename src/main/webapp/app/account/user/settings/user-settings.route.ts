@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_STUDENT, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { DataGuard } from 'app/account/user/settings/data-guard.service';
+import { scienceSettingsGuard } from 'app/account/user/settings/science-settings/science-settings.guard';
 
 export const routes: Routes = [
     {
@@ -45,6 +46,17 @@ export const routes: Routes = [
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.SCIENCE_SETTINGS',
                 },
+                canActivate: [scienceSettingsGuard],
+            },
+            {
+                path: 'credentials',
+                loadComponent: () =>
+                    import('app/account/user/settings/credential-revocation-settings/credential-revocation-settings.component').then(
+                        (m) => m.CredentialRevocationSettingsComponent,
+                    ),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.credentialRevocation.title',
+                },
             },
             {
                 path: 'ssh',
@@ -86,6 +98,14 @@ export const routes: Routes = [
                     pageTitle: 'artemisApp.userSettings.categories.VCS_TOKEN_SETTINGS',
                 },
                 canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'access-tokens',
+                loadComponent: () =>
+                    import('app/account/user/settings/vcs-access-token-overview/vcs-access-token-overview.component').then((m) => m.VcsAccessTokenOverviewComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.vcsAccessTokensOverview.title',
+                },
             },
             {
                 path: 'passkeys',

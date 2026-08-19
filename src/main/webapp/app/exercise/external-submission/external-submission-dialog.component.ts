@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
@@ -14,13 +14,13 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
     templateUrl: './external-submission-dialog.component.html',
-    imports: [FormsModule, TranslateDirective, NgClass, FaIconComponent, HtmlForMarkdownPipe],
+    imports: [FormsModule, TranslateDirective, NgClass, FaIconComponent, MarkdownDirective],
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
     private externalSubmissionService = inject(ExternalSubmissionService);
@@ -32,12 +32,19 @@ export class ExternalSubmissionDialogComponent implements OnInit {
     readonly exercise = input.required<Exercise>();
 
     student: User = new User();
-    result: Result;
+    // result is a deep two-way [(ngModel)] target (result.score/successful/rated); use a getter/setter facade over a signal.
+    private readonly _result = signal<Result>(undefined!);
+    get result(): Result {
+        return this._result();
+    }
+    set result(value: Result) {
+        this._result.set(value);
+    }
     feedbacks: Feedback[] = [];
-    isSaving = false;
-    userId: number;
-    isAssessor: boolean;
-    complaint: Complaint;
+    readonly isSaving = signal(false);
+    userId?: number;
+    isAssessor?: boolean;
+    complaint?: Complaint;
 
     // Icons
     faSave = faSave;
@@ -69,7 +76,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
      */
     save() {
         this.result.feedbacks = this.feedbacks;
-        this.isSaving = true;
+        this.isSaving.set(true);
         for (let i = 0; i < this.result.feedbacks.length; i++) {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }
@@ -93,7 +100,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
      */
     onSaveSuccess(result: HttpResponse<Result>) {
         this.dialogRef.close(result.body);
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
     }
 
@@ -101,7 +108,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
      * Indicate that saving didn't work by setting isSaving to false.
      */
     onSaveError() {
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 
     /**

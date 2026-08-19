@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { Component, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Observable } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -12,14 +12,12 @@ import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.ac
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal, onError } from 'app/foundation/util/global.utils';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { LectureTitleChannelNameComponent } from '../lecture-title-channel-name/lecture-title-channel-name.component';
 import { LectureSeriesCreateComponent } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
-import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
+import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lecture-timeline.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -33,6 +31,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export enum LectureCreationMode {
     SINGLE = 'single',
@@ -55,7 +55,7 @@ interface CreateLectureOption {
         FormStatusBarComponent,
         LectureTitleChannelNameComponent,
         MarkdownEditorMonacoComponent,
-        LectureUpdatePeriodComponent,
+        LectureTimelineComponent,
         FaIconComponent,
         LectureUpdateUnitsComponent,
         NgbTooltip,
@@ -67,7 +67,7 @@ interface CreateLectureOption {
         CourseTitleBarTitleDirective,
     ],
 })
-export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsavedChangesComponent {
+export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComponent {
     protected readonly documentationType: DocumentationType = 'Lecture';
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSave = faSave;
@@ -86,28 +86,27 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
 
-    private subscriptions = new Subscription();
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     titleSection = viewChild(LectureTitleChannelNameComponent);
-    lecturePeriodSection = viewChild(LectureUpdatePeriodComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
     courseId = signal<number | undefined>(undefined);
     lecture = signal<Lecture>(new Lecture());
-    lectureOnInit: Lecture;
+    lectureOnInit!: Lecture; // set in ngOnInit() (and re-cloned on save success)
     existingLectures = signal<Lecture[]>([]);
     isEditMode = signal<boolean>(false);
-    isSaving: boolean;
-    isProcessing: boolean;
-    processUnitMode: boolean;
-    formStatusSections: FormSectionStatus[];
+    readonly isSaving = signal<boolean>(undefined!);
+    readonly isProcessing = signal<boolean>(undefined!);
+    readonly processUnitMode = signal<boolean>(undefined!);
+    readonly formStatusSections = signal<FormSectionStatus[]>(undefined!);
     domainActionsDescription = [new FormulaAction()];
-    file: File;
-    fileName: string;
+    file?: File;
+    readonly fileName = signal<string>(undefined!);
     fileInputTouched = false;
     isNewlyCreatedExercise = false;
-    isChangeMadeToTitleOrPeriodSection = false;
+    readonly isChangeMadeToTitleOrPeriodSection = signal(false);
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: true });
     shouldDisplayDismissWarning = true;
     areSectionsValid = computed(() => this.computeAreSectionsValid());
     createLectureOptions = computed(() => this.computeCreateLectureOptions());
@@ -117,29 +116,17 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     tutorialLectureTooltip = computed<string>(() => this.computeTutorialLectureTooltip());
 
     constructor() {
+        // The title/channel-name fields are signal-based models without dedicated change outputs
+        // (the explicit titleChange/channelNameChange outputs were removed to resolve the Angular 22
+        // NG1054 model/output conflict). Track the model signals directly so the "changes made to
+        // title/period section" flag stays reactive to user edits.
         effect(() => {
             if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) return;
             const titleChannelNameComponent = this.titleSection()?.titleChannelNameComponent();
-            const lecturePeriodSection = this.lecturePeriodSection();
             if (titleChannelNameComponent) {
-                this.subscriptions.add(
-                    titleChannelNameComponent.titleChange.subscribe(() => {
-                        this.updateIsChangesMadeToTitleOrPeriodSection();
-                    }),
-                );
-                this.subscriptions.add(
-                    titleChannelNameComponent.channelNameChange.subscribe(() => {
-                        this.updateIsChangesMadeToTitleOrPeriodSection();
-                    }),
-                );
-            }
-            if (lecturePeriodSection) {
-                lecturePeriodSection.periodSectionDatepickers().forEach((datepicker: FormDateTimePickerComponent) => {
-                    const subscription = datepicker.valueChange.subscribe(() => {
-                        this.updateIsChangesMadeToTitleOrPeriodSection();
-                    });
-                    this.subscriptions.add(subscription);
-                });
+                titleChannelNameComponent.title();
+                titleChannelNameComponent.channelName();
+                this.updateIsChangesMadeToTitleOrPeriodSection();
             }
         });
 
@@ -147,22 +134,18 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
             this.updateFormStatusBar();
         });
 
-        effect(
-            function scrollToLastSectionAfterLectureCreation() {
-                if (this.unitSection() && this.isNewlyCreatedExercise) {
-                    this.isNewlyCreatedExercise = false;
-                    this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.sections.period');
-                }
-            }.bind(this),
-        );
-
         effect(() => {
-            if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) {
-                this.subscriptions.unsubscribe();
-                this.subscriptions = new Subscription();
+            if (this.unitSection() && this.isNewlyCreatedExercise) {
+                this.isNewlyCreatedExercise = false;
+                this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.sections.period');
             }
         });
 
+        // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as an effect(): it writes the
+        // isTutorialLecture toggle into the (non-signal) lecture entity in place, a side effect that a computed()
+        // cannot perform, so the value is present on the object that save() later sends, and refreshes the derived
+        // "changes made" flag. (The other effects above track model signals and scroll the DOM, so they are genuine
+        // side effects too.)
         effect(() => {
             this.lecture().isTutorialLecture = this.isTutorialLecture();
             this.updateIsChangesMadeToTitleOrPeriodSection();
@@ -170,9 +153,9 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     }
 
     ngOnInit() {
-        this.isSaving = false;
-        this.processUnitMode = false;
-        this.isProcessing = false;
+        this.isSaving.set(false);
+        this.processUnitMode.set(false);
+        this.isProcessing.set(false);
         this.activatedRoute.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'] as Lecture;
@@ -191,14 +174,10 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
         this.courseId.set(Number(paramMap.get('courseId')));
 
         this.isEditMode.set(!this.router.url.endsWith('/new'));
-        this.lectureOnInit = cloneDeep(this.lecture());
+        this.lectureOnInit = deepClone(this.lecture());
 
         const existingLectures = (this.router.currentNavigation()?.extras.state?.['existingLectures'] ?? []) as Lecture[];
         this.existingLectures.set(existingLectures);
-    }
-
-    ngOnDestroy() {
-        this.subscriptions.unsubscribe();
     }
 
     updateFormStatusBar() {
@@ -211,7 +190,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
             },
             {
                 title: 'artemisApp.lecture.sections.period',
-                valid: this.lecturePeriodSection()?.isPeriodSectionValid() ?? false,
+                valid: this.timelineStatus().valid,
             },
         );
 
@@ -222,7 +201,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
             });
         }
 
-        this.formStatusSections = updatedFormStatusSections;
+        this.formStatusSections.set(updatedFormStatusSections);
     }
 
     isChangeMadeToTitleSection() {
@@ -248,7 +227,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     }
 
     protected updateIsChangesMadeToTitleOrPeriodSection() {
-        this.isChangeMadeToTitleOrPeriodSection = this.isChangeMadeToTitleSection() || this.isChangeMadeToPeriodSection();
+        this.isChangeMadeToTitleOrPeriodSection.set(this.isChangeMadeToTitleSection() || this.isChangeMadeToPeriodSection());
     }
 
     /**
@@ -267,7 +246,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
      */
     save() {
         this.shouldDisplayDismissWarning = false;
-        this.isSaving = true;
+        this.isSaving.set(true);
         if (this.lecture().id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture()));
         } else {
@@ -277,7 +256,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     }
 
     proceedToUnitSplit() {
-        this.isProcessing = true;
+        this.isProcessing.set(true);
         this.save();
     }
 
@@ -286,17 +265,17 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
      * This function is called by checking Automatic unit processing checkbox when creating a new lecture
      */
     onSelectProcessUnit() {
-        this.processUnitMode = !this.processUnitMode;
+        this.processUnitMode.update((value) => !value);
     }
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
         if (!input.files?.length) {
-            this.fileName = '';
+            this.fileName.set('');
             return;
         }
         this.file = input.files[0];
-        this.fileName = this.file.name;
+        this.fileName.set(this.file.name);
     }
 
     /**
@@ -314,30 +293,30 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
      * Action on successful lecture creation or edit
      */
     protected onSaveSuccess(lecture: Lecture) {
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         if (!lecture.course?.id) {
-            captureException('Lecture has no course id: ' + lecture);
+            captureException('Lecture has no course id: ' + lecture.id);
             return;
         }
 
-        if (this.processUnitMode) {
-            this.isProcessing = false;
+        if (this.processUnitMode()) {
+            this.isProcessing.set(false);
             this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
-            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 'process'], {
-                state: { file: this.file, fileName: this.fileName },
+            void this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 'process'], {
+                state: { file: this.file, fileName: this.fileName() },
             });
         } else if (this.isEditMode()) {
-            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id]);
+            void this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id]);
         } else {
             // after create we stay on the edit page, as now lecture units are available (we need the lecture id to save them)
             this.isNewlyCreatedExercise = true;
             this.isEditMode.set(true);
-            this.lectureOnInit = cloneDeep(lecture);
+            this.lectureOnInit = deepClone(lecture);
             this.lecture.set(lecture);
             this.updateIsChangesMadeToTitleOrPeriodSection();
 
-            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'edit']);
+            void this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'edit']);
             this.shouldDisplayDismissWarning = true;
         }
 
@@ -349,7 +328,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
      * @param errorRes the errorRes handed to the alert service
      */
     protected onSaveError(errorRes: HttpErrorResponse) {
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         if (errorRes.error && errorRes.error.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
@@ -358,29 +337,18 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
         }
     }
 
-    onDatesValuesChanged = () => {
-        const startDate = this.lecture().startDate;
-        const endDate = this.lecture().endDate;
-
-        // Prevent endDate from being before startDate, if both dates are set
-        if (endDate && startDate?.isAfter(endDate)) {
-            this.lecture().endDate = startDate.clone();
-        }
-    };
-
     onLectureChange(updatedLecture: Lecture): void {
         this.lecture.set(updatedLecture);
     }
 
     private computeAreSectionsValid(): boolean {
         const titleSection = this.titleSection();
-        const lecturePeriodSection = this.lecturePeriodSection();
         const unitSection = this.unitSection();
-        if (titleSection && lecturePeriodSection) {
+        if (titleSection) {
             if (unitSection) {
-                return titleSection.titleChannelNameComponent().isValid() && lecturePeriodSection.isPeriodSectionValid() && unitSection.isUnitConfigurationValid();
+                return titleSection.titleChannelNameComponent().isValid() && this.timelineStatus().valid && unitSection.isUnitConfigurationValid();
             } else {
-                return titleSection.titleChannelNameComponent().isValid() && lecturePeriodSection.isPeriodSectionValid();
+                return titleSection.titleChannelNameComponent().isValid() && this.timelineStatus().valid;
             }
         }
         return false;

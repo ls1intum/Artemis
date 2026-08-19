@@ -5,13 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, Params, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Params, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import 'app/foundation/util/array.extension';
 
@@ -44,10 +44,9 @@ import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 
 describe('FileUploadAssessmentComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FileUploadAssessmentComponent;
     let fixture: ComponentFixture<FileUploadAssessmentComponent>;
     let httpMock: HttpTestingController;
@@ -126,10 +125,10 @@ describe('FileUploadAssessmentComponent', () => {
     };
 
     let routeParams$: BehaviorSubject<Params>;
-    let routeQueryParams$: BehaviorSubject<Params>;
+    let routeQueryParams$: BehaviorSubject<ParamMap>;
 
     beforeEach(async () => {
-        routeParams$ = new BehaviorSubject({ exerciseId: 20, courseId: 123, submissionId: 7 });
+        routeParams$ = new BehaviorSubject<Params>({ exerciseId: 20, courseId: 123, submissionId: 7 });
         routeQueryParams$ = new BehaviorSubject(
             convertToParamMap({
                 testRun: 'false',
@@ -138,7 +137,7 @@ describe('FileUploadAssessmentComponent', () => {
         );
 
         await TestBed.configureTestingModule({
-            imports: [FileUploadAssessmentComponent, TranslateModule.forRoot()],
+            imports: [FileUploadAssessmentComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -190,6 +189,7 @@ describe('FileUploadAssessmentComponent', () => {
                         downloadFile: vi.fn(),
                     },
                 },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(FileUploadAssessmentComponent, {
@@ -243,8 +243,8 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.isTestRun).toBe(true);
-            expect(component.correctionRound).toBe(1);
+            expect(component.isTestRun()).toBe(true);
+            expect(component.correctionRound()).toBe(1);
         });
 
         it('should extract route params for course and exercise', () => {
@@ -282,11 +282,12 @@ describe('FileUploadAssessmentComponent', () => {
             routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 'new' });
             vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
             const alertSpy = vi.spyOn(alertService, 'info');
-            vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+            const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
-            component.exercise = createExercise();
+            component.exercise.set(createExercise());
             component.ngOnInit();
 
+            expect(navigateSpy).toHaveBeenCalledWith('/course-management/123/assessment-dashboard/20');
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.noSubmissions');
         });
 
@@ -297,10 +298,10 @@ describe('FileUploadAssessmentComponent', () => {
             );
             vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
-            component.exercise = createExercise();
+            component.exercise.set(createExercise());
             component.ngOnInit();
 
-            expect(component.loadingInitialSubmission).toBe(false);
+            expect(component.loadingInitialSubmission()).toBe(false);
         });
 
         it('should validate assessments after loading submission', () => {
@@ -312,7 +313,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.assessmentsAreValid).toBe(true);
+            expect(component.assessmentsAreValid()).toBe(true);
         });
 
         it('should set examId and exerciseGroupId from route params for exam exercises', () => {
@@ -337,12 +338,12 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.submission).toBe(submission);
-            expect(component.participation).toBe(submission.participation);
-            expect(component.exercise).toBe(exercise);
-            expect(component.result).toEqual(result);
-            expect(component.busy).toBe(false);
-            expect(component.isLoading).toBe(false);
+            expect(component.submission()).toBe(submission);
+            expect(component.participation()).toBe(submission.participation);
+            expect(component.exercise()).toBe(exercise);
+            expect(component.result()).toEqual(result);
+            expect(component.busy()).toBe(false);
+            expect(component.isLoading()).toBe(false);
         });
 
         it('should load feedbacks from result into unreferencedFeedback', () => {
@@ -356,7 +357,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.unreferencedFeedback).toHaveLength(2);
+            expect(component.unreferencedFeedback()).toHaveLength(2);
         });
 
         it('should load complaint if submission has complaint', () => {
@@ -372,11 +373,11 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.complaint).toMatchObject({
+            expect(component.complaint()).toMatchObject({
                 id: complaint.id,
                 complaintText: complaint.complaintText,
             });
-            expect(component.complaint.result).toBe(component.result);
+            expect(component.complaint().result).toBe(component.result());
         });
 
         it('should show lock alert for unassessed submission owned by current user', async () => {
@@ -405,31 +406,90 @@ describe('FileUploadAssessmentComponent', () => {
         });
     });
 
+    describe('when assessment is not possible yet', () => {
+        // The submission exists and the student may still change it, so the page has to say that the exam is not over
+        // yet — the "submission not found" state it shows for any other load error would contradict that.
+        const notPossibleYetResponse = () =>
+            new HttpErrorResponse({
+                status: 403,
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+            });
+
+        it('should explain the wait instead of claiming that the submission was not found', () => {
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(throwError(() => notPossibleYetResponse()));
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            expect(component.assessmentNotPossibleYet()).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
+            expect(fixture.debugElement.query(By.css('#assessment-not-possible-yet'))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.fileUploadAssessment.notFound"]'))).toBeNull();
+            // a toast would fade and leave only the misleading state behind, so the page carries the explanation
+            expect(alertErrorSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear the explanation when the next submission is loaded into the reused component', () => {
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(throwError(() => notPossibleYetResponse()));
+
+            component.ngOnInit();
+            expect(component.assessmentNotPossibleYet()).toBeDefined();
+
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 8 });
+
+            expect(component.assessmentNotPossibleYet()).toBeUndefined();
+            expect(component.submission()).toBe(submission);
+        });
+
+        it('should replace an already loaded assessment when the next submission turns out to be blocked', () => {
+            // the exam can be extended while the tutor is correcting, so a loaded assessment does not mean the next
+            // one is assessable — the previous submission must not stay on screen in place of the explanation
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+
+            component.ngOnInit();
+            expect(component.submission()).toBe(submission);
+
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(throwError(() => notPossibleYetResponse()));
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 8 });
+            fixture.detectChanges();
+
+            expect(component.submission()).toBeUndefined();
+            expect(component.result()).toBeUndefined();
+            expect(component.assessmentNotPossibleYet()).toBeDefined();
+            expect(fixture.debugElement.query(By.css('#assessment-not-possible-yet'))).not.toBeNull();
+        });
+    });
+
     describe('feedback management', () => {
         beforeEach(() => {
-            component.exercise = createExercise();
-            component.submission = createSubmission();
+            component.exercise.set(createExercise());
+            component.submission.set(createSubmission());
         });
 
         it('should add a new empty feedback when addFeedback is called', () => {
-            expect(component.unreferencedFeedback).toHaveLength(0);
+            expect(component.unreferencedFeedback()).toHaveLength(0);
 
             component.addFeedback();
 
-            expect(component.unreferencedFeedback).toHaveLength(1);
-            expect(component.unreferencedFeedback[0]).toBeInstanceOf(Feedback);
+            expect(component.unreferencedFeedback()).toHaveLength(1);
+            expect(component.unreferencedFeedback()[0]).toBeInstanceOf(Feedback);
         });
 
         it('should remove feedback when deleteAssessment is called', () => {
             const feedback1 = createFeedback();
             const feedback2 = createFeedback();
-            component.unreferencedFeedback = [feedback1, feedback2];
+            component.unreferencedFeedback.set([feedback1, feedback2]);
 
             component.deleteAssessment(feedback1);
 
-            expect(component.unreferencedFeedback).toHaveLength(1);
-            expect(component.unreferencedFeedback).not.toContain(feedback1);
-            expect(component.unreferencedFeedback).toContain(feedback2);
+            expect(component.unreferencedFeedback()).toHaveLength(1);
+            expect(component.unreferencedFeedback()).not.toContain(feedback1);
+            expect(component.unreferencedFeedback()).toContain(feedback2);
         });
 
         it('should revalidate assessment after adding feedback', () => {
@@ -442,7 +502,7 @@ describe('FileUploadAssessmentComponent', () => {
 
         it('should revalidate assessment after deleting feedback', () => {
             const feedback = createFeedback();
-            component.unreferencedFeedback = [feedback];
+            component.unreferencedFeedback.set([feedback]);
             const validateSpy = vi.spyOn(component, 'validateAssessment');
 
             component.deleteAssessment(feedback);
@@ -453,7 +513,7 @@ describe('FileUploadAssessmentComponent', () => {
         it('should return combined assessments from assessments getter', () => {
             const feedback1 = createFeedback();
             const feedback2 = createFeedback();
-            component.unreferencedFeedback = [feedback1, feedback2];
+            component.unreferencedFeedback.set([feedback1, feedback2]);
 
             const assessments = component.assessments;
 
@@ -465,43 +525,43 @@ describe('FileUploadAssessmentComponent', () => {
         it('should update total score correctly after loading feedbacks', () => {
             const structuredGradingService = TestBed.inject(StructuredGradingCriterionService);
             vi.spyOn(structuredGradingService, 'computeTotalScore').mockReturnValue(15);
-            component.unreferencedFeedback = [createFeedback({ credits: 5 }), createFeedback({ credits: 10 })];
+            component.unreferencedFeedback.set([createFeedback({ credits: 5 }), createFeedback({ credits: 10 })]);
 
             component.validateAssessment();
 
-            expect(component.totalScore).toBe(15);
+            expect(component.totalScore()).toBe(15);
         });
     });
 
     describe('validateAssessment', () => {
         beforeEach(() => {
-            component.exercise = createExercise();
-            component.submission = createSubmission();
+            component.exercise.set(createExercise());
+            component.submission.set(createSubmission());
         });
 
         it('should set assessmentsAreValid to true when all feedbacks have credits and comments', () => {
-            component.unreferencedFeedback = [createFeedback({ credits: 5, detailText: 'Valid feedback' })];
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: 'Valid feedback' })]);
 
             component.validateAssessment();
 
-            expect(component.assessmentsAreValid).toBe(true);
+            expect(component.assessmentsAreValid()).toBe(true);
         });
 
         it('should set assessmentsAreValid to false when feedback lacks detailText', () => {
-            component.unreferencedFeedback = [createFeedback({ credits: 5, detailText: undefined })];
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: undefined })]);
 
             component.validateAssessment();
 
-            expect(component.assessmentsAreValid).toBe(false);
+            expect(component.assessmentsAreValid()).toBe(false);
         });
 
         it('should call submissionService.handleFeedbackCorrectionRoundTag', () => {
-            component.correctionRound = 1;
-            component.unreferencedFeedback = [];
+            component.correctionRound.set(1);
+            component.unreferencedFeedback.set([]);
 
             component.validateAssessment();
 
-            expect(submissionService.handleFeedbackCorrectionRoundTag).toHaveBeenCalledWith(1, component.submission);
+            expect(submissionService.handleFeedbackCorrectionRoundTag).toHaveBeenCalledWith(1, component.submission());
         });
 
         it('should calculate total score during validation', () => {
@@ -518,9 +578,9 @@ describe('FileUploadAssessmentComponent', () => {
         beforeEach(() => {
             const exercise = createExercise();
             const submission = createSubmission(exercise);
-            component.exercise = exercise;
-            component.submission = submission;
-            component.result = createResult(submission);
+            component.exercise.set(exercise);
+            component.submission.set(submission);
+            component.result.set(createResult(submission));
         });
 
         it('should save assessment and update result on success', () => {
@@ -534,7 +594,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             expect(alertCloseSpy).toHaveBeenCalled();
             expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.assessment.messages.saveSuccessful');
-            expect(component.result).toBe(savedResult);
+            expect(component.result()).toBe(savedResult);
         });
 
         it('should show error alert on save failure', () => {
@@ -549,12 +609,12 @@ describe('FileUploadAssessmentComponent', () => {
         it('should pass assessment note when saving', () => {
             const savedResult = createResult();
             savedResult.assessmentNote = { id: 1, note: 'Test note' };
-            component.result = savedResult;
+            component.result.set(savedResult);
             const saveSpy = vi.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(of(savedResult));
 
             component.onSaveAssessment();
 
-            expect(saveSpy).toHaveBeenCalledWith(expect.any(Array), component.submission!.id, 'Test note');
+            expect(saveSpy).toHaveBeenCalledWith(expect.any(Array), component.submission()!.id, 'Test note');
         });
     });
 
@@ -564,13 +624,13 @@ describe('FileUploadAssessmentComponent', () => {
             const submission = createSubmission(exercise);
             const result = createResult(submission);
             setLatestSubmissionResult(submission, result);
-            component.exercise = exercise;
-            component.submission = submission;
-            component.result = result;
+            component.exercise.set(exercise);
+            component.submission.set(submission);
+            component.result.set(result);
         });
 
         it('should not submit if assessments are invalid', () => {
-            component.unreferencedFeedback = [createFeedback({ credits: 5, detailText: undefined })];
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: undefined })]);
             const saveSpy = vi.spyOn(fileUploadAssessmentService, 'saveAssessment');
             const alertErrorSpy = vi.spyOn(alertService, 'error');
 
@@ -581,17 +641,17 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should submit assessment with submit=true on valid assessments', () => {
-            component.unreferencedFeedback = [createFeedback({ credits: 5, detailText: 'Valid' })];
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: 'Valid' })]);
             const savedResult = createResult();
             const saveSpy = vi.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(of(savedResult));
 
             component.onSubmitAssessment();
 
-            expect(saveSpy).toHaveBeenCalledWith(expect.any(Array), component.submission!.id, undefined, true);
+            expect(saveSpy).toHaveBeenCalledWith(expect.any(Array), component.submission()!.id, undefined, true);
         });
 
         it('should show success alert on successful submission', () => {
-            component.unreferencedFeedback = [createFeedback({ credits: 5, detailText: 'Valid' })];
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: 'Valid' })]);
             vi.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(of(createResult()));
             const alertSuccessSpy = vi.spyOn(alertService, 'success');
 
@@ -601,20 +661,20 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should update participation with result after successful submission', () => {
-            component.unreferencedFeedback = [createFeedback({ credits: 5, detailText: 'Valid' })];
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: 'Valid' })]);
             const savedResult = createResult();
             vi.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(of(savedResult));
 
             component.onSubmitAssessment();
 
-            expect(component.result).toBe(savedResult);
+            expect(component.result()).toBe(savedResult);
         });
     });
 
     describe('onCancelAssessment', () => {
         beforeEach(() => {
-            component.submission = createSubmission();
-            component.exercise = createExercise();
+            component.submission.set(createSubmission());
+            component.exercise.set(createExercise());
         });
 
         it('should cancel assessment when user confirms', () => {
@@ -624,7 +684,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.onCancelAssessment();
 
-            expect(cancelSpy).toHaveBeenCalledWith(component.submission!.id);
+            expect(cancelSpy).toHaveBeenCalledWith(component.submission()!.id, component.result()?.id);
         });
 
         it('should not cancel assessment when user declines confirmation', () => {
@@ -649,7 +709,7 @@ describe('FileUploadAssessmentComponent', () => {
 
     describe('assessNext', () => {
         beforeEach(() => {
-            component.exercise = createExercise();
+            component.exercise.set(createExercise());
             component.courseId = 123;
             component.exerciseId = 20;
         });
@@ -662,19 +722,28 @@ describe('FileUploadAssessmentComponent', () => {
             nextSubmission.participation = nextParticipation;
             vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(nextSubmission));
             const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            component.correctionRound.set(1);
 
             component.assessNext();
 
-            expect(navigateSpy).toHaveBeenCalled();
-            expect(component.isLoading).toBe(false);
+            // Assert the exact navigation contract: the correction round has to travel with the next submission, and it
+            // has to be merged rather than replace the query string, otherwise testRun is dropped on the way.
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', '123', 'file-upload-exercises', '20', 'submissions', '999', 'assessment'], {
+                queryParams: { 'correction-round': 1 },
+                queryParamsHandling: 'merge',
+            });
+            expect(component.isLoading()).toBe(false);
         });
 
-        it('should clear submission when no next submission is available', () => {
+        it('should navigate back and show an info alert when no next submission is available', () => {
             vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+            const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+            const alertInfoSpy = vi.spyOn(alertService, 'info');
 
             component.assessNext();
 
-            expect(component.submission).toBeUndefined();
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith('/course-management/123/assessment-dashboard/20');
+            expect(alertInfoSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exerciseAssessmentDashboard.noSubmissions');
         });
 
         it('should show error alert on fetch failure', () => {
@@ -687,12 +756,33 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should reset unreferencedFeedback when loading next assessment', () => {
-            component.unreferencedFeedback = [createFeedback()];
+            component.unreferencedFeedback.set([createFeedback()]);
             vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+            vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
             component.assessNext();
 
-            expect(component.unreferencedFeedback).toHaveLength(0);
+            expect(component.unreferencedFeedback()).toHaveLength(0);
+        });
+
+        it('should say when assessment is possible instead of reporting a missing authorization', () => {
+            // an exam can re-open while the tutor is correcting, e.g. when a student is granted more working time
+            vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 403,
+                            error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+                        }),
+                ),
+            );
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.assessNext();
+
+            // the current assessment stays on the page, so this one belongs in an alert
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith(`error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, expect.anything());
+            expect(alertErrorSpy).not.toHaveBeenCalledWith('error.http.403');
         });
     });
 
@@ -702,13 +792,13 @@ describe('FileUploadAssessmentComponent', () => {
             const submission = createSubmission(exercise);
             const result = createResult(submission);
             setLatestSubmissionResult(submission, result);
-            component.exercise = exercise;
-            component.submission = submission;
-            component.result = result;
+            component.exercise.set(exercise);
+            component.submission.set(submission);
+            component.result.set(result);
         });
 
         it('should not update if assessments are invalid', () => {
-            component.unreferencedFeedback = [createFeedback({ credits: 5, detailText: undefined })];
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: undefined })]);
             let onSuccessCalled = false;
             let onErrorCalled = false;
             const assessmentAfterComplaint = {
@@ -728,7 +818,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should update assessment after complaint on valid assessments', () => {
-            component.unreferencedFeedback = [createFeedback({ credits: 5, detailText: 'Valid' })];
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: 'Valid' })]);
             const updatedResult = createResult();
             vi.spyOn(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').mockReturnValue(of(new HttpResponse({ body: updatedResult })));
             let onSuccessCalled = false;
@@ -746,7 +836,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should handle complaint lock error specifically', () => {
-            component.unreferencedFeedback = [createFeedback({ credits: 5, detailText: 'Valid' })];
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: 'Valid' })]);
             vi.spyOn(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').mockReturnValue(
                 throwError(
                     () =>
@@ -770,7 +860,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should show generic error message on non-complaint-lock error', () => {
-            component.unreferencedFeedback = [createFeedback({ credits: 5, detailText: 'Valid' })];
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: 'Valid' })]);
             vi.spyOn(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
             const assessmentAfterComplaint = {
                 complaintResponse: new ComplaintResponse(),
@@ -787,49 +877,49 @@ describe('FileUploadAssessmentComponent', () => {
 
     describe('canOverride', () => {
         beforeEach(() => {
-            component.exercise = createExercise();
-            component.result = createResult();
+            component.exercise.set(createExercise());
+            component.result.set(createResult());
             component.userId = 1;
         });
 
         it('should return true for instructors', () => {
-            component.exercise!.isAtLeastInstructor = true;
+            component.exercise()!.isAtLeastInstructor = true;
 
             expect(component.canOverride).toBe(true);
         });
 
         it('should return false when there is a complaint and user is the assessor', () => {
-            component.complaint = new Complaint();
-            component.complaint.id = 1;
-            component.isAssessor = true;
+            component.complaint.set(new Complaint());
+            component.complaint().id = 1;
+            component.isAssessor.set(true);
 
             expect(component.canOverride).toBe(false);
         });
 
         it('should return false when assessment due date has passed', () => {
-            component.exercise!.assessmentDueDate = dayjs().subtract(1, 'day');
-            component.isAssessor = true;
+            component.exercise()!.assessmentDueDate = dayjs().subtract(1, 'day');
+            component.isAssessor.set(true);
 
             expect(component.canOverride).toBe(false);
         });
 
         it('should return true for assessor before assessment due date without complaint', () => {
-            component.exercise!.assessmentDueDate = dayjs().add(1, 'day');
-            component.isAssessor = true;
-            component.complaint = undefined!;
+            component.exercise()!.assessmentDueDate = dayjs().add(1, 'day');
+            component.isAssessor.set(true);
+            component.complaint.set(undefined!);
 
             expect(component.canOverride).toBe(true);
         });
 
         it('should return false when exercise is undefined', () => {
-            component.exercise = undefined;
+            component.exercise.set(undefined);
 
             expect(component.canOverride).toBe(false);
         });
 
         it('should return true when no assessment due date is set', () => {
-            component.exercise!.assessmentDueDate = undefined;
-            component.isAssessor = true;
+            component.exercise()!.assessmentDueDate = undefined;
+            component.isAssessor.set(true);
 
             expect(component.canOverride).toBe(true);
         });
@@ -859,7 +949,7 @@ describe('FileUploadAssessmentComponent', () => {
 
     describe('getComplaint', () => {
         beforeEach(() => {
-            component.submission = createSubmission();
+            component.submission.set(createSubmission());
         });
 
         it('should load complaint successfully', () => {
@@ -870,7 +960,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.getComplaint();
 
-            expect(component.complaint).toEqual(complaint);
+            expect(component.complaint()).toEqual(complaint);
         });
 
         it('should not set complaint when response body is null', () => {
@@ -878,7 +968,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.getComplaint();
 
-            expect(component.complaint).toBeUndefined();
+            expect(component.complaint()).toBeUndefined();
         });
 
         it('should show error alert on failure', () => {
@@ -893,8 +983,8 @@ describe('FileUploadAssessmentComponent', () => {
 
     describe('navigateBack', () => {
         beforeEach(() => {
-            component.exercise = createExercise();
-            component.submission = createSubmission();
+            component.exercise.set(createExercise());
+            component.submission.set(createSubmission());
         });
 
         it('should navigate back when called', () => {
@@ -918,8 +1008,8 @@ describe('FileUploadAssessmentComponent', () => {
 
     describe('updateAssessment', () => {
         it('should call validateAssessment when updateAssessment is called', () => {
-            component.exercise = createExercise();
-            component.submission = createSubmission();
+            component.exercise.set(createExercise());
+            component.submission.set(createSubmission());
             const validateSpy = vi.spyOn(component, 'validateAssessment');
 
             component.updateAssessment();

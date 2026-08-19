@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 @Component({
     selector: 'jhi-course-iris',
@@ -15,7 +16,7 @@ import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
     imports: [CourseChatbotComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CourseIrisComponent {
+export class CourseIrisComponent implements SidebarView {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly irisChatService = inject(IrisChatService);
@@ -35,7 +36,7 @@ export class CourseIrisComponent {
         return Number.isNaN(parsed) ? undefined : parsed;
     });
 
-    isCollapsed = false;
+    readonly isCollapsed = computed<boolean>(() => !(this.courseChatbot()?.isChatHistoryOpen() ?? true));
 
     constructor() {
         // When the user opts out of AI from the chat's LLM selection modal while on this page,
@@ -43,13 +44,12 @@ export class CourseIrisComponent {
         this.irisChatService.llmOptedOut$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             const id = this.courseId();
             if (id !== undefined) {
-                this.router.navigate(['/courses', id, CourseOverviewRoutePath.EXERCISES]);
+                void this.router.navigate(['/courses', id, CourseOverviewRoutePath.EXERCISES]);
             }
         });
     }
 
     toggleSidebar(): void {
         this.courseChatbot()?.toggleChatHistory();
-        this.isCollapsed = !this.isCollapsed;
     }
 }

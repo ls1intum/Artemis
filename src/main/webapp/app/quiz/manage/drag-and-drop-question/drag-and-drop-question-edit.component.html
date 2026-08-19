@@ -1,4 +1,4 @@
-<div class="edit-dnd-question" [hidden]="showPreview" (mousemove)="mouseMove($event)" (mouseup)="mouseUp()">
+<div class="edit-dnd-question" [hidden]="showPreview()" (mousemove)="mouseMove($event)" (mouseup)="mouseUp()">
     @if (!reEvaluationInProgress()) {
         <div class="question-options question-card-header">
             <button
@@ -187,7 +187,7 @@
                 <div class="question-content">
                     <jhi-markdown-editor-monaco
                         #markdownEditor
-                        [markdown]="questionEditorText"
+                        [markdown]="questionEditorText()"
                         [showPreviewButton]="false"
                         [domainActions]="dragAndDropDomainActions"
                         (markdownChange)="changesInMarkdown($event)"
@@ -202,7 +202,7 @@
                             <!-- TODO: Fix file upload    -->
                             <jhi-markdown-editor-monaco
                                 #markdownEditor
-                                [markdown]="questionEditorText"
+                                [markdown]="questionEditorText()"
                                 [showPreviewButton]="false"
                                 [domainActions]="dragAndDropDomainActions"
                                 (markdownChange)="changesInMarkdown($event)"
@@ -267,17 +267,17 @@
                 <div class="background-area">
                     <jhi-image
                         #backgroundImage
-                        [src]="addPublicFilePrefix(filePreviewPaths.get(question().backgroundFilePath!)) || ''"
+                        [src]="addPublicFilePrefix(filePreviewPaths().get(question().backgroundFilePath!)) || ''"
                         [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | artemisTranslate"
                         style="visibility: hidden"
                     />
-                    <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{ disabled: !question().backgroundFilePath || !backgroundReady }">
-                        @if (backgroundReady) {
+                    <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{ disabled: !question().backgroundFilePath || !backgroundReady() }">
+                        @if (backgroundReady()) {
                             @for (dropLocation of question().dropLocations ?? []; track dropLocation) {
                                 <div
                                     id="drop-location"
                                     class="drop-location"
-                                    [ngClass]="dropAllowed ? 'drop-allowed' : ''"
+                                    [ngClass]="dropAllowed() ? 'drop-allowed' : ''"
                                     [ngStyle]="{
                                         top: dropLocation.posY! / 2 + '%',
                                         left: dropLocation.posX! / 2 + '%',
@@ -352,7 +352,7 @@
                         <div class="drag-item" id="drag-item-{{ i }}" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="dragItem">
                             @if (dragItem.pictureFilePath) {
                                 <div>
-                                    <jhi-image [src]="addPublicFilePrefix(filePreviewPaths.get(dragItem.pictureFilePath))!" />
+                                    <jhi-image [src]="addPublicFilePrefix(filePreviewPaths().get(dragItem.pictureFilePath))!" />
                                 </div>
                             }
                             @if (!dragItem.pictureFilePath) {
@@ -420,7 +420,7 @@
                                     </div>
                                     @if (dragItem.pictureFilePath) {
                                         <div>
-                                            <jhi-image [src]="addPublicFilePrefix(filePreviewPaths.get(dragItem.pictureFilePath)) || ''" />
+                                            <jhi-image [src]="addPublicFilePrefix(filePreviewPaths().get(dragItem.pictureFilePath)) || ''" />
                                         </div>
                                     }
                                     @if (!dragItem.pictureFilePath) {
@@ -478,9 +478,9 @@
         }
     </div>
 </div>
-@if (!reEvaluationInProgress() && showPreview) {
+@if (!reEvaluationInProgress() && showPreview()) {
     <div class="preview-dnd-question">
-        <jhi-drag-and-drop-question [question]="question()" [mappings]="[]" [questionIndex]="questionIndex()" [filePreviewPaths]="filePreviewPaths" />
+        <jhi-drag-and-drop-question [question]="question()" [mappings]="[]" [questionIndex]="questionIndex()" [filePreviewPaths]="filePreviewPaths()" />
         <hr />
         <div class="btn btn-outline-secondary" (click)="togglePreview()">
             <fa-icon [icon]="faPencilAlt" />

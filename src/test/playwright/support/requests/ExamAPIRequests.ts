@@ -4,7 +4,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import { Page } from '@playwright/test';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { UserCredentials } from '../users';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -53,6 +52,7 @@ export class ExamAPIRequests {
         examStudentReviewStart?: dayjs.Dayjs;
         examStudentReviewEnd?: dayjs.Dayjs;
         publishResultsDate?: dayjs.Dayjs;
+        examSummaryPublicationDate?: dayjs.Dayjs;
         gracePeriod?: number;
         channelName?: string;
     }): Promise<Exam> {
@@ -72,6 +72,7 @@ export class ExamAPIRequests {
             examStudentReviewStart = null,
             examStudentReviewEnd = null,
             publishResultsDate = null,
+            examSummaryPublicationDate = null,
             gracePeriod = 30,
         } = options;
 
@@ -90,6 +91,7 @@ export class ExamAPIRequests {
             examStudentReviewStart,
             examStudentReviewEnd,
             publishResultsDate,
+            examSummaryPublicationDate,
             gracePeriod,
             channelName: titleLowercase(title),
         } as Exam;
@@ -115,10 +117,15 @@ export class ExamAPIRequests {
     }
 
     /**
-     * Register the student for the exam
+     * Register the student for the exam.
+     * Uses the bulk students endpoint (POST .../students with a list of ExamUserDTOs); the server resolves each
+     * entry via UserService.findUser, which matches by login when a login is provided. The former
+     * POST .../students/{login} endpoint was removed during the exam-registration refactor.
      */
     async registerStudentForExam(exam: Exam, student: UserCredentials) {
-        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/students/${student.username}`);
+        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/students`, {
+            data: [{ login: student.username }],
+        });
     }
 
     /**
@@ -126,23 +133,6 @@ export class ExamAPIRequests {
      */
     async registerAllCourseStudentsForExam(exam: Exam) {
         await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/register-course-students`);
-    }
-
-    /**
-     * Creates an exam test run with the provided settings.
-     * @param exam the exam object
-     * @param exerciseArray an array of exercises
-     * @param workingTime the working time in seconds
-     */
-    async createExamTestRun(exam: Exam, exerciseArray: Array<Exercise>, workingTime = 1080) {
-        const courseId = exam.course!.id;
-        const examId = exam.id!;
-        const data = {
-            exam,
-            exerciseArray,
-            workingTime,
-        };
-        await this.page.request.post(`api/exam/courses/${courseId}/exams/${examId}/test-run`, { data });
     }
 
     /**
@@ -181,6 +171,18 @@ export class ExamAPIRequests {
     async getAllStudentExams(exam: Exam) {
         const response = await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams`);
         return await response.json();
+    }
+
+    /**
+     * Gets the exercise groups (including their exercises) of an exam.
+     * @param exam the exam to get the exercise groups for
+     */
+    async getExerciseGroups(exam: Exam): Promise<ExerciseGroup[]> {
+        const response = await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/exercise-groups`);
+        if (!response.ok()) {
+            throw new Error(`Failed to get exercise groups for exam ${exam.id}: ${response.status()}`);
+        }
+        return (await response.json()) as ExerciseGroup[];
     }
 
     /**

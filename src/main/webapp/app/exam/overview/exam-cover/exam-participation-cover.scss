@@ -25,6 +25,7 @@
 }
 
 .scrollable-content-exam-cover {
-    @include dynamic-content-height(--header-height);
+    @include dynamic-content-height;
+
     overflow-y: auto;
 }

@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
@@ -111,7 +110,9 @@ public class ConversationMessagingService extends PostingService {
      * @return the created message and associated data
      */
     public CreatedConversationMessage createMessage(Long courseId, CreatePostDTO message) {
-        var author = this.userRepository.getUserWithGroupsAndAuthorities();
+        // Pre-load course roles: preCheckUserAndCourseForMessaging + setAuthorRoleForPosting perform several
+        // course-role checks below for the same author/course; without this, each falls back to its own query.
+        var author = this.userRepository.getUserWithCourseRolesAndAuthorities();
 
         var newMessage = message.toEntity();
         newMessage.setAuthor(author);
@@ -119,8 +120,11 @@ public class ConversationMessagingService extends PostingService {
 
         var conversationId = message.conversation().id();
 
-        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
-                .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
+        var conversation = conversationService.loadConversationWithParticipantsIfGroupChat(conversationId);
+        // the path courseId is authoritative: reject messages targeting a conversation that belongs to a different course.
+        // this must happen before isMemberOrCreateForCourseWideElseThrow, which would otherwise persist a course-wide auto-join for a mismatching course.
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
+        conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty());
         log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
 
         newMessage.setConversation(conversation);
@@ -145,6 +149,13 @@ public class ConversationMessagingService extends PostingService {
 
         var createdMessage = conversationMessageRepository.save(newMessage);
         log.debug("      conversationMessageRepository.save DONE");
+
+        // Increment the recipients' unread counters here rather than on the @Async notification path below. The read
+        // side resets this counter to zero, and nothing orders the two, so an increment running asynchronously could
+        // land after a recipient had already read the message and leave them an unread badge for it (#13396 in spirit:
+        // the counter contradicted what the user had seen). Running it in the request also means the counter is correct
+        // by the time the websocket broadcast reaches the client.
+        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
         log.debug("      conversationMessageRepository.save DONE");
@@ -172,12 +183,11 @@ public class ConversationMessagingService extends PostingService {
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         Set<ConversationNotificationRecipientSummary> recipientSummaries;
         preparePostForBroadcast(createdMessage);
-        PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE);
         createdMessage.getConversation().hideDetails();
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
             if (conversationService.isChannelVisibleToStudents(channel)) {
-                broadcastForPost(postDTO, course.getId(), null);
+                broadcastForPost(createdMessage, MetisCrudAction.CREATE, course.getId(), null);
             }
             log.debug("      broadcastForPost DONE");
 
@@ -197,7 +207,7 @@ public class ConversationMessagingService extends PostingService {
                 }
             }
 
-            broadcastForPost(postDTO, course.getId(), recipientSummaries);
+            broadcastForPost(createdMessage, MetisCrudAction.CREATE, course.getId(), recipientSummaries);
 
             log.debug("      broadcastForPost DONE");
         }
@@ -256,8 +266,6 @@ public class ConversationMessagingService extends PostingService {
 
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
-        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
-
         try {
             autonomousTutorApi.ifPresent(api -> api.onNewMessage(createdMessage, conversation, course));
         }
@@ -291,8 +299,16 @@ public class ConversationMessagingService extends PostingService {
         List<Long> conversationIds = Arrays.stream(postContextFilter.conversationIds()).boxed().collect(Collectors.toCollection(ArrayList::new));
         conversationParticipantRepository.userHasAccessToAllConversationsElseThrow(conversationIds, requestingUser.getId(), courseId);
 
+        boolean requesterIsAtLeastTutor = authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId);
+        if (Boolean.TRUE.equals(postContextFilter.filterToUnverifiedIris()) && !requesterIsAtLeastTutor) {
+            throw new AccessForbiddenException("Only tutors and above may filter for unverified Iris replies");
+        }
+
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
         setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
+
+        // students must never see unverified Iris replies, even if a previous fetch included them in the in-memory answers
+        hidePendingIrisRepliesFromStudents(conversationPosts.getContent(), courseId);
 
         // This check is needed to avoid resetting the unread count when searching
         if (postContextFilter.searchText() == null && postContextFilter.conversationIds().length == 1) {
@@ -333,7 +349,7 @@ public class ConversationMessagingService extends PostingService {
      * @return updated post that was persisted
      */
     public Post updateMessage(Long courseId, Long postId, UpdatePostingDTO messagePost) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         // check
         if (!Objects.equals(messagePost.id(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
@@ -341,6 +357,7 @@ public class ConversationMessagingService extends PostingService {
 
         Post existingMessage = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         parseUserMentions(course, messagePost.content());
@@ -357,7 +374,7 @@ public class ConversationMessagingService extends PostingService {
 
         // emit a post update via websocket
         preparePostForBroadcast(updatedPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(updatedPost, MetisCrudAction.UPDATE, course.getId(), null);
 
         return updatedPost;
     }
@@ -370,11 +387,12 @@ public class ConversationMessagingService extends PostingService {
      * @param postId   id of the message post to delete
      */
     public void deleteMessageById(Long courseId, Long postId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
 
         // checks
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         var conversation = mayUpdateOrDeleteMessageElseThrow(post, user);
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
         post.setConversation(conversation);
 
@@ -393,7 +411,7 @@ public class ConversationMessagingService extends PostingService {
 
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
         preparePostForBroadcast(post);
-        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null);
+        broadcastForPost(post, MetisCrudAction.DELETE, course.getId(), null);
     }
 
     /**
@@ -405,11 +423,13 @@ public class ConversationMessagingService extends PostingService {
      * @return updated post that was persisted
      */
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         preCheckUserAndCourseForCommunicationOrMessaging(user, course);
 
         Post message = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
+        // the path courseId is authoritative: reject before isMemberOrCreateForCourseWideElseThrow can persist a course-wide auto-join for a mismatching course
+        ensureConversationBelongsToCourseElseThrow(message.getConversation(), courseId);
 
         Conversation conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(message.getConversation().getId(), user, Optional.empty())
                 .orElse(message.getConversation());
@@ -425,7 +445,7 @@ public class ConversationMessagingService extends PostingService {
         message.getConversation().hideDetails();
         preparePostForBroadcast(message);
         preparePostForBroadcast(updatedMessage);
-        broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(message, MetisCrudAction.UPDATE, course.getId(), null);
         return updatedMessage;
     }
 

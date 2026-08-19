@@ -3,13 +3,13 @@
         <fa-icon [icon]="conversation().isFavorite ? faHeartSolid : faHeartRegular" size="sm" />
     </button>
     <div ngbDropdown container="body" class="d-inline-block">
-        <button class="btn btn-outline-secondary dropdown-toggle sidebar-button py-0 px-2" type="button" ngbDropdownToggle>
+        <button class="btn btn-outline-secondary dropdown-toggle sidebar-button py-0 pe-1 ps-0" type="button" ngbDropdownToggle>
             <fa-icon [icon]="faEllipsisVertical" size="sm" />
         </button>
         <div ngbDropdownMenu>
-            @if (conversationAsChannel?.subTypeReferenceId) {
-                <a class="sub-type-reference" ngbDropdownItem [routerLink]="channelSubTypeReferenceRouterLink">
-                    {{ channelSubTypeReferenceTranslationKey | artemisTranslate }}
+            @if (conversationAsChannel()?.subTypeReferenceId) {
+                <a class="sub-type-reference" ngbDropdownItem [routerLink]="channelSubTypeReferenceRouterLink()">
+                    {{ channelSubTypeReferenceTranslationKey() | artemisTranslate }}
                 </a>
             }
             @if (!isOneToOneChat(conversation())) {

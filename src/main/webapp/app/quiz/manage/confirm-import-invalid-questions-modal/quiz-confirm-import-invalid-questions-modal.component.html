@@ -7,7 +7,7 @@
             <fa-icon [icon]="faExclamationTriangle" />
             <div jhiTranslate="artemisApp.quizExercise.importWarningLong"></div>
             <p></p>
-            @for (reason of invalidFlaggedQuestions; track reason) {
+            @for (reason of invalidFlaggedQuestions(); track reason) {
                 <div>
                     @if ((reason.translateValues | json) !== '{}') {
                         <p jhiTranslate="{{ reason.translateKey }}" [translateValues]="{ index: reason.translateValues.index }"></p>

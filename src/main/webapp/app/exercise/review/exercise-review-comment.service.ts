@@ -12,8 +12,8 @@ import {
     ExerciseEditorSyncEventType,
     ExerciseEditorSyncService,
     ExerciseEditorSyncTarget,
-    ReviewThreadSyncUpdateEvent,
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
 type CommentThreadArrayResponseType = HttpResponse<CommentThread[]>;
 type CommentThreadResponseType = HttpResponse<CommentThread>;
@@ -169,7 +169,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (!createdThread?.id) {
                     return;
                 }
-                const normalizedThread: CommentThread = createdThread.comments ? createdThread : Object.assign({}, createdThread, { comments: [] });
+                const normalizedThread: CommentThread = createdThread.comments ? createdThread : cloneWith(createdThread, { comments: [] });
                 this.updateThreads((threads) => this.appendThreadToThreads(threads, normalizedThread));
                 onSuccess?.();
             },
@@ -502,7 +502,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (remainingComments.length === thread.comments.length) {
                     return thread;
                 }
-                return Object.assign({}, thread, { comments: remainingComments });
+                return cloneWith(thread, { comments: remainingComments });
             })
             .filter((thread) => !thread.comments || thread.comments.length > 0);
     }
@@ -526,7 +526,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
             if (createdComment.id !== undefined && comments.some((comment) => comment.id === createdComment.id)) {
                 return thread;
             }
-            return Object.assign({}, thread, { comments: [...comments, createdComment] });
+            return cloneWith(thread, { comments: [...comments, createdComment] });
         });
     }
 
@@ -545,8 +545,8 @@ export class ExerciseReviewCommentService implements OnDestroy {
             if (thread.id !== updatedComment.threadId || !thread.comments) {
                 return thread;
             }
-            return Object.assign({}, thread, {
-                comments: thread.comments.map((comment) => (comment.id === updatedComment.id ? Object.assign({}, comment, updatedComment) : comment)),
+            return cloneWith(thread, {
+                comments: thread.comments.map((comment) => (comment.id === updatedComment.id ? cloneWith(comment, deepClone(updatedComment)) : comment)),
             });
         });
     }
@@ -620,7 +620,9 @@ export class ExerciseReviewCommentService implements OnDestroy {
             if (thread.id !== updatedThread.id) {
                 return thread;
             }
-            return Object.assign({}, thread, updatedThread, { comments: mergedComments });
+            // hydrate mutates its target and deep-clones each source, so `deepClone(thread)` is the detached base and
+            // `thread` itself is copied exactly once.
+            return hydrate(deepClone(thread), updatedThread, { comments: mergedComments });
         });
     }
 
@@ -690,7 +692,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
             if (!affectedThreadIds.has(thread.id)) {
                 return thread;
             }
-            return Object.assign({}, thread, { groupId });
+            return cloneWith(thread, { groupId });
         });
     }
 
@@ -735,7 +737,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
         if (event.eventType !== ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE || event.target !== ExerciseEditorSyncTarget.REVIEW_COMMENTS) {
             return;
         }
-        const reviewUpdateEvent = event as ReviewThreadSyncUpdateEvent;
+        const reviewUpdateEvent = event;
         const reviewUpdate: ReviewThreadSyncUpdate = {
             action: reviewUpdateEvent.action,
             exerciseId: reviewUpdateEvent.exerciseId,

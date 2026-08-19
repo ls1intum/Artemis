@@ -3,7 +3,6 @@
  * Tests language prediction functionality for German and English text.
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 
 import { provideHttpClient } from '@angular/common/http';
@@ -13,7 +12,6 @@ import { TestBed } from '@angular/core/testing';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 describe('TextEditorService', () => {
-    setupTestBed({ zoneless: true });
     let textEditorService: TextEditorService;
     let httpMock: HttpTestingController;
 
@@ -31,6 +29,12 @@ describe('TextEditorService', () => {
     it('Can detect a short German string', () => {
         const testString = 'Das ist ein kurzer, deutscher Satz';
         expect(textEditorService.predictLanguage(testString)).toBe(Language.GERMAN);
+    });
+    it.each(['Vielen Dank', 'Danke', 'Viele Grüße', 'Schöne Grüße'])('Can detect a short German courtesy phrase: %s', (testString) => {
+        expect(textEditorService.predictLanguage(testString)).toBe(Language.GERMAN);
+    });
+    it.each(['Thanks', 'Thank you', 'Best regards'])('Can detect a short English courtesy phrase: %s', (testString) => {
+        expect(textEditorService.predictLanguage(testString)).toBe(Language.ENGLISH);
     });
     it("Can detect that a French sentence isn't German or English", () => {
         const testString = "Il s'agit d'une courte phrase en français";

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -13,8 +12,6 @@ import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('ProgrammingExerciseParticipation Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ProgrammingExerciseParticipationService;
     let httpMock: HttpTestingController;
     let accountService: AccountService;
@@ -147,6 +144,19 @@ describe('ProgrammingExerciseParticipation Service', () => {
             const expectedURL = `${resourceUrl}${exerciseId}/files-content-commit-details?commitId=${commitId}&repositoryType=${repositoryType}&participationId=${participationId}`;
             const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
             req.flush(files);
+        });
+
+        it('getSelectedParticipationRepositoryFilesAtCommit', () => {
+            const filePaths = ['src/Main.java', 'src/Other.java'];
+
+            service.getSelectedParticipationRepositoryFilesAtCommit(123, 42, 'commitId', filePaths).subscribe((files) => {
+                expect(files).toEqual(new Map([['src/Main.java', 'content']]));
+            });
+
+            const expectedURL = `${resourceUrl}123/files-content-commit-details/selected?commitId=commitId&participationId=42`;
+            const req = httpMock.expectOne({ method: 'POST', url: expectedURL });
+            expect(req.request.body).toEqual(filePaths);
+            req.flush({ 'src/Main.java': 'content' });
         });
     });
 

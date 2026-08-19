@@ -1,13 +1,14 @@
-@import 'src/main/webapp/content/scss/artemis-mixins.scss';
+@import 'src/main/webapp/content/scss/artemis-mixins';
 
 .scrollable-item-content {
-    --search-height: 60px;
+    --search-height: 47px;
+
     overflow-y: auto;
 
-    @include dynamic-content-height(--header-height, --search-height, --filter-height, --channel-search-height);
+    @include dynamic-content-height(--header-height, --search-height, --channel-search-height);
 
-    &.filter-height {
-        --filter-height: 30px;
+    &.no-header-bar-height {
+        --header-height: 70px !important;
     }
 
     &.channel-search-height {

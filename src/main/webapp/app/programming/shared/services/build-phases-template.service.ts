@@ -68,7 +68,7 @@ export class BuildPhasesTemplateService {
         projectType?: ProjectType,
         staticAnalysis?: boolean,
         sequentialRuns?: boolean,
-    ): { uri: string; params: any } {
+    ): { uri: string; params: { staticAnalysis: boolean; sequentialRuns: boolean; examMode: boolean } } {
         const path: string = [language, projectType].filter(Boolean).join('/');
         const params = {
             staticAnalysis: !!staticAnalysis,

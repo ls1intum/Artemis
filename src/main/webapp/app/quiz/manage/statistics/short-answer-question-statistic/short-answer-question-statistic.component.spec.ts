@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -29,7 +28,7 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 
 const route = { params: of({ courseId: 1, exerciseId: 4, questionId: 1 }) };
 const answerSpot = { posX: 5, invalid: false, id: 1, tempID: 2 } as ShortAnswerSpot;
-const shortAnswerCounter = { spot: answerSpot } as ShortAnswerSpotCounter;
+const shortAnswerCounter = { spotId: answerSpot.id } as ShortAnswerSpotCounter;
 const shortAnswerSolution = { id: 1, tempID: 2 } as ShortAnswerSolution;
 const shortAnswerMapping = { spot: answerSpot, solution: shortAnswerSolution } as ShortAnswerMapping;
 const questionStatistic = { shortAnswerSpotCounters: [shortAnswerCounter] } as ShortAnswerQuestionStatistic;
@@ -54,8 +53,6 @@ let quizExercise = {
 } as QuizExercise;
 
 describe('QuizExercise Short Answer Question Statistic Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ShortAnswerQuestionStatisticComponent;
     let fixture: ComponentFixture<ShortAnswerQuestionStatisticComponent>;
     let quizService: QuizExerciseService;

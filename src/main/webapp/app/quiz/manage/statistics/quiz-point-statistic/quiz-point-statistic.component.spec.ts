@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -40,8 +39,6 @@ let quizExercise = {
 } as QuizExercise;
 
 describe('QuizExercise Point Statistic Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizPointStatisticComponent;
     let fixture: ComponentFixture<QuizPointStatisticComponent>;
     let quizService: QuizExerciseService;
@@ -93,9 +90,9 @@ describe('QuizExercise Point Statistic Component', () => {
             const updateDisplayedTimesSpy = vi.spyOn(comp, 'updateDisplayedTimes');
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
-            comp.quizExercise = quizExercise;
-            comp.quizExercise.quizPointStatistic = new QuizPointStatistic();
-            comp.quizExercise.quizPointStatistic.pointCounters = pointCounters;
+            comp.quizExercise.set(quizExercise);
+            comp.quizExercise().quizPointStatistic = new QuizPointStatistic();
+            comp.quizExercise().quizPointStatistic!.pointCounters = pointCounters;
 
             // call
             comp.ngOnInit();
@@ -127,26 +124,26 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should update remaining time', () => {
             // setup
             quizExercise.dueDate = dayjs();
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
 
             // call
             comp.updateDisplayedTimes();
 
             // check
-            expect(comp.remainingTimeSeconds).toBe(-1);
-            expect(comp.remainingTimeText).toEqual(translateService.instant('artemisApp.showStatistic.quizHasEnded'));
+            expect(comp.remainingTimeSeconds()).toBe(-1);
+            expect(comp.remainingTimeText()).toEqual(translateService.instant('artemisApp.showStatistic.quizHasEnded'));
         });
 
         it('should show remaining time as zero if time unknown', () => {
             // setup
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
 
             // call
             comp.updateDisplayedTimes();
 
             // check
-            expect(comp.remainingTimeSeconds).toBe(0);
-            expect(comp.remainingTimeText).toBe('?');
+            expect(comp.remainingTimeSeconds()).toBe(0);
+            expect(comp.remainingTimeText()).toBe('?');
         });
     });
 
@@ -188,7 +185,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
             // check
             expect(routerSpy).not.toHaveBeenCalled();
-            expect(comp.quizExercise).toEqual(quizExercise);
+            expect(comp.quizExercise()).toEqual(quizExercise);
             expect(comp.waitingForQuizStart).toBe(false);
             expect(loadDataSpy).toHaveBeenCalledOnce();
         });
@@ -209,7 +206,7 @@ describe('QuizExercise Point Statistic Component', () => {
         // setup
         quizExercise.quizQuestions = undefined;
         quizExercise.maxPoints = 42;
-        comp.quizExercise = quizExercise;
+        comp.quizExercise.set(quizExercise);
         accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
 
         vi.spyOn(comp, 'loadData').mockImplementation(() => {});
@@ -218,7 +215,7 @@ describe('QuizExercise Point Statistic Component', () => {
         comp.loadQuizSuccess(quizExercise);
 
         // check
-        expect(comp.maxScore).toBe(42);
+        expect(comp.maxScore()).toBe(42);
     });
 
     describe('loadData', () => {
@@ -227,7 +224,7 @@ describe('QuizExercise Point Statistic Component', () => {
             const loadDataInDiagramSpy = vi.spyOn(comp, 'loadDataInDiagram');
             comp.quizPointStatistic = new QuizPointStatistic();
             comp.quizPointStatistic.pointCounters = pointCounters;
-            comp.maxScore = 4;
+            comp.maxScore.set(4);
 
             // call
             comp.loadData();
@@ -258,7 +255,7 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should recalculate', () => {
             const recalculateMock = vi.spyOn(quizService, 'recalculate').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             const loadQuizSucessMock = vi.spyOn(comp, 'loadQuizSuccess').mockImplementation(() => {});
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
 
             comp.recalculate();
 
@@ -266,6 +263,16 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(recalculateMock).toHaveBeenCalledWith(42);
             expect(loadQuizSucessMock).toHaveBeenCalledOnce();
             expect(loadQuizSucessMock).toHaveBeenCalledWith(quizExercise);
+        });
+    });
+
+    describe('tooltip labels', () => {
+        it('uses the point-range tooltip for every bar', () => {
+            comp.data = [3, 0, 2];
+            const label = (comp.chartOptions().plugins as any).tooltip.callbacks.label;
+
+            expect(label({ dataIndex: 0, parsed: { y: 3 } })).toContain('tooltip.pointRange');
+            expect(label({ dataIndex: 2, parsed: { y: 2 } })).toContain('tooltip.pointRange');
         });
     });
 });

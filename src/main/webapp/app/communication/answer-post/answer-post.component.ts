@@ -1,16 +1,17 @@
 import {
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     HostListener,
     OnDestroy,
     OnInit,
     Renderer2,
     ViewContainerRef,
+    computed,
     effect,
     inject,
     input,
     output,
+    signal,
     untracked,
     viewChild,
 } from '@angular/core';
@@ -18,8 +19,12 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import dayjs from 'dayjs/esm';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { faBookmark, faPencilAlt, faShare, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { TextareaModule } from 'primeng/textarea';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingHeaderComponent } from '../posting-header/posting-header.component';
@@ -27,8 +32,11 @@ import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -41,6 +49,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         NgClass,
+        FormsModule,
+        ButtonModule,
+        TextareaModule,
         FaIconComponent,
         TranslateDirective,
         NgbTooltip,
@@ -53,12 +64,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         CdkConnectedOverlay,
         EmojiPickerComponent,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnDestroy {
-    changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
+    private alertService = inject(AlertService);
 
     lastReadDate = input<dayjs.Dayjs | undefined>(undefined);
     isLastAnswer = input<boolean>(false);
@@ -72,37 +84,49 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     containerRef = viewChild.required('createEditAnswerPostContainer', { read: ViewContainerRef });
     reactionsBarComponent = viewChild<PostingReactionsBarComponent<AnswerPost>>(PostingReactionsBarComponent);
 
-    isAnswerPost = true;
-    course: Course;
+    override isAnswerPost = true;
+    readonly course = signal<Course>(undefined!);
 
     // Icons
-    faBookmark = faBookmark;
+    override faBookmark = faBookmark;
 
     readonly faPencilAlt = faPencilAlt;
     readonly faShare = faShare;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
+    readonly faCheck = faCheck;
+    readonly faTriangleExclamation = faTriangleExclamation;
+    readonly faXmark = faXmark;
     static activeDropdownPost: AnswerPostComponent | undefined = undefined;
-    mayEdit = false;
-    mayDelete = false;
+    readonly mayEdit = signal<boolean>(false);
+    readonly mayDelete = signal<boolean>(false);
+    readonly isVerifying = signal(false);
+    readonly isEditingIrisReply = signal(false);
+    editedIrisContent = '';
 
     constructor() {
         super();
-        this.course = this.metisService.getCourse();
-        // Track posting signal changes (replaces ngOnChanges)
+        this.course.set(this.metisService.getCourse());
+        // Normalise the bound posting to an AnswerPost instance whenever it changes.
+        //
+        // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as an effect(): `posting` is a two-way
+        // `model()` from PostingDirective, and consumers (and the spec) rely on `posting()` itself being an AnswerPost
+        // instance — so this cannot become a `computed()`/`linkedSignal()` without breaking the two-way contract. The
+        // read+write of the same signal is deliberately defused: the write runs inside `untracked()` and only fires
+        // when the value is not already an AnswerPost, so it self-terminates after one pass (no loop).
         effect(() => {
             this.posting();
             untracked(() => {
                 const posting = this.posting();
                 if (!posting) return;
                 if (!(posting instanceof AnswerPost)) {
-                    this.posting.set(Object.assign(new AnswerPost(), posting));
+                    this.posting.set(hydrate(new AnswerPost(), posting));
                 }
             });
         });
     }
 
-    ngOnInit() {
+    override ngOnInit() {
         super.ngOnInit();
         this.assignPostingToAnswerPost();
     }
@@ -130,7 +154,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
      */
     @HostListener('document:click')
     onClickOutside() {
-        this.showDropdown = false;
+        this.showDropdown.set(false);
         this.enableBodyScroll();
     }
 
@@ -157,12 +181,82 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     /** Updates internal flag for delete permission */
     onMayDelete(value: boolean) {
-        this.mayDelete = value;
+        this.mayDelete.set(value);
     }
 
     /** Updates internal flag for edit permission */
     onMayEdit(value: boolean) {
-        this.mayEdit = value;
+        this.mayEdit.set(value);
+    }
+
+    /** True when the current answer is an Iris-generated reply that has not yet been verified by a tutor. */
+    readonly isUnverifiedIris = computed(() => {
+        const posting = this.posting();
+        return !!posting && posting.author?.bot === true && posting.verified === false;
+    });
+
+    /** True for users who are allowed to approve, edit, or reject unverified Iris replies. */
+    get mayVerify(): boolean {
+        return this.metisService.metisUserIsAtLeastTutorInCourse();
+    }
+
+    /**
+     * Approves the current Iris answer, optionally replacing its content. The websocket update
+     * broadcast by the server will refresh the cached post and remove the badge from the UI.
+     */
+    approveAnswer(content?: string): void {
+        const posting = this.posting();
+        if (!posting?.id || this.isVerifying()) {
+            return;
+        }
+        this.isVerifying.set(true);
+        this.metisService.verifyAnswerPost(posting, content?.trim() || undefined).subscribe({
+            next: (verified) => {
+                // The verify response's parent carries only its id (AnswerMessageDTO -> ParentPostDTO), so replacing the
+                // posting wholesale would drop post.conversation and make AnswerPostService.getResourceEndpoint route a
+                // later edit/delete to the plagiarism API. Preserve the existing full parent post (incl. conversation).
+                const merged = hydrate(new AnswerPost(), verified, { post: posting.post });
+                this.posting.set(merged);
+                this.isEditingIrisReply.set(false);
+                this.isVerifying.set(false);
+            },
+            error: (err: HttpErrorResponse) => {
+                captureException(err, { extra: { action: 'approve', postingId: posting.id } });
+                onError(this.alertService, err);
+                this.isVerifying.set(false);
+            },
+        });
+    }
+
+    /** Switches to inline-edit mode so the tutor can adjust the Iris content before approving. */
+    editAnswer(): void {
+        this.editedIrisContent = this.posting()?.content ?? '';
+        this.isEditingIrisReply.set(true);
+    }
+
+    /** Cancels inline editing without making any changes. */
+    cancelEditAnswer(): void {
+        this.isEditingIrisReply.set(false);
+        this.editedIrisContent = '';
+    }
+
+    /** Rejects an unverified Iris answer by deleting it directly (no undo timer). */
+    rejectAnswer(): void {
+        const posting = this.posting();
+        if (!posting?.id || this.isVerifying()) {
+            return;
+        }
+        this.isVerifying.set(true);
+        this.metisService.deleteAnswerPost(posting).subscribe({
+            next: () => {
+                this.isVerifying.set(false);
+            },
+            error: (err: HttpErrorResponse) => {
+                captureException(err, { extra: { action: 'reject', postingId: posting.id } });
+                onError(this.alertService, err);
+                this.isVerifying.set(false);
+            },
+        });
     }
 
     /**
@@ -189,12 +283,12 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
             AnswerPostComponent.activeDropdownPost = this;
 
-            this.dropdownPosition = {
+            this.dropdownPosition.set({
                 x: event.clientX,
                 y: event.clientY,
-            };
+            });
 
-            this.showDropdown = true;
+            this.showDropdown.set(true);
             this.adjustDropdownPosition();
             this.disableBodyScroll();
         }
@@ -207,8 +301,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         const dropdownWidth = 200;
         const screenWidth = window.innerWidth;
 
-        if (this.dropdownPosition.x + dropdownWidth > screenWidth) {
-            this.dropdownPosition.x = screenWidth - dropdownWidth - 10;
+        if (this.dropdownPosition().x + dropdownWidth > screenWidth) {
+            this.dropdownPosition.update((position) => cloneWith(position, { x: screenWidth - dropdownWidth - 10 }));
         }
     }
 
@@ -218,14 +312,14 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
      */
     private static cleanupActiveDropdown(): void {
         if (AnswerPostComponent.activeDropdownPost) {
-            AnswerPostComponent.activeDropdownPost.showDropdown = false;
+            AnswerPostComponent.activeDropdownPost.showDropdown.set(false);
             AnswerPostComponent.activeDropdownPost.enableBodyScroll();
-            AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
             AnswerPostComponent.activeDropdownPost = undefined;
         }
     }
 
-    ngOnDestroy(): void {
+    override ngOnDestroy(): void {
+        super.ngOnDestroy();
         if (AnswerPostComponent.activeDropdownPost === this) {
             AnswerPostComponent.cleanupActiveDropdown();
         }
@@ -235,7 +329,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         // This is needed because otherwise instanceof returns 'object'.
         const posting = this.posting();
         if (posting && !(posting instanceof AnswerPost)) {
-            this.posting.set(Object.assign(new AnswerPost(), posting));
+            this.posting.set(hydrate(new AnswerPost(), posting));
         }
     }
 }

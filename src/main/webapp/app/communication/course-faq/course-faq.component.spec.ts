@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -31,8 +30,6 @@ function createFaq(id: number, category: string, color: string): Faq {
 }
 
 describe('CourseFaqs', () => {
-    setupTestBed({ zoneless: true });
-
     let courseFaqComponentFixture: ComponentFixture<CourseFaqComponent>;
     let courseFaqComponent: CourseFaqComponent;
 
@@ -138,7 +135,7 @@ describe('CourseFaqs', () => {
 
         courseFaqComponentFixture.detectChanges();
         expect(findAllSpy).toHaveBeenCalledExactlyOnceWith(1, FaqState.ACCEPTED);
-        expect(courseFaqComponent.faqs).toHaveLength(3);
+        expect(courseFaqComponent.faqs()).toHaveLength(3);
     });
 
     it('should toggle filter correctly', () => {
@@ -146,9 +143,9 @@ describe('CourseFaqs', () => {
         courseFaqComponentFixture.detectChanges();
         courseFaqComponent.toggleFilters('category2');
         expect(toggleFilterSpy).toHaveBeenCalledOnce();
-        expect(courseFaqComponent.filteredFaqs).toHaveLength(2);
-        expect(courseFaqComponent.filteredFaqs).not.toContain(faq1);
-        expect(courseFaqComponent.filteredFaqs).toEqual([faq2, faq3]);
+        expect(courseFaqComponent.filteredFaqs()).toHaveLength(2);
+        expect(courseFaqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(courseFaqComponent.filteredFaqs()).toEqual([faq2, faq3]);
     });
 
     it('should search through already filtered array', () => {
@@ -160,9 +157,9 @@ describe('CourseFaqs', () => {
         expect(searchSpy).toHaveBeenCalledTimes(2);
         expect(searchSpy).toHaveBeenCalledWith(faq2, 'questionTitle');
         expect(searchSpy).toHaveBeenCalledWith(faq3, 'questionTitle');
-        expect(courseFaqComponent.filteredFaqs).toHaveLength(2);
-        expect(courseFaqComponent.filteredFaqs).not.toContain(faq1);
-        expect(courseFaqComponent.filteredFaqs).toEqual([faq2, faq3]);
+        expect(courseFaqComponent.filteredFaqs()).toHaveLength(2);
+        expect(courseFaqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(courseFaqComponent.filteredFaqs()).toEqual([faq2, faq3]);
     });
 
     it('should catch error if no categories are found', () => {
@@ -191,10 +188,10 @@ describe('CourseFaqs', () => {
         courseFaqComponentFixture.detectChanges();
 
         // Verify component displays FAQs in the exact order received from server
-        expect(courseFaqComponent.faqs).toHaveLength(3);
-        expect(courseFaqComponent.faqs[0].id).toBe(3); // Newest
-        expect(courseFaqComponent.faqs[1].id).toBe(2);
-        expect(courseFaqComponent.faqs[2].id).toBe(1); // Oldest
+        expect(courseFaqComponent.faqs()).toHaveLength(3);
+        expect(courseFaqComponent.faqs()[0].id).toBe(3); // Newest
+        expect(courseFaqComponent.faqs()[1].id).toBe(2);
+        expect(courseFaqComponent.faqs()[2].id).toBe(1); // Oldest
     });
 
     it('should scroll and focus on the faq element with given id', () => {

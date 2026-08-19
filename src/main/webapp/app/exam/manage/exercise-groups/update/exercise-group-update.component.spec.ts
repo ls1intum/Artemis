@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -14,14 +13,11 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import '@angular/localize/init';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseGroupUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const course = { id: 456 } as Course;
     const exam: Exam = new Exam();
     const exerciseGroup: ExerciseGroup = new ExerciseGroup();
@@ -73,7 +69,7 @@ describe('ExerciseGroupUpdateComponent', () => {
     it('should save exercise group', async () => {
         expect(component).not.toBeNull();
         expect(component.exam).toEqual(exam);
-        expect(component.exerciseGroup).toEqual(exerciseGroup);
+        expect(component.exerciseGroup()).toEqual(exerciseGroup);
 
         const responseFakeExerciseGroup = { body: exerciseGroup } as EntityResponseType;
         vi.spyOn(service, 'update').mockReturnValue(of(responseFakeExerciseGroup));
@@ -85,7 +81,7 @@ describe('ExerciseGroupUpdateComponent', () => {
     });
 
     it('should save exercise group without ID', async () => {
-        component.exerciseGroup.id = undefined;
+        component.exerciseGroup().id = undefined;
 
         const responseFakeExerciseGroup = { body: exerciseGroup } as EntityResponseType;
         vi.spyOn(service, 'create').mockReturnValue(of(responseFakeExerciseGroup));
@@ -100,7 +96,7 @@ describe('ExerciseGroupUpdateComponent', () => {
     it('should fail while saving with ErrorResponse', async () => {
         alertServiceStub = vi.spyOn(alertService, 'error');
         const error = { status: 404 };
-        component.exerciseGroup.id = undefined;
+        component.exerciseGroup().id = undefined;
 
         vi.spyOn(service, 'create').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
 

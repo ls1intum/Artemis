@@ -1,14 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
@@ -26,17 +28,14 @@ import { TeamService } from 'app/exercise/team/team.service';
 import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
-import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, NEVER, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -66,20 +65,8 @@ import { ProblemStatementComponent } from 'app/course/overview/exercise-details/
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { Component, input } from '@angular/core';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { ScienceService } from 'app/foundation/science/science.service';
 
-// Simple mock to avoid ng-mocks issues with signal-based viewChild
-@Component({
-    selector: 'jhi-exercise-chatbot-button',
-    template: '',
-    standalone: true,
-})
-class MockIrisExerciseChatbotButtonComponent {
-    readonly mode = input<ChatServiceMode>();
-}
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -94,10 +81,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { ElementRef, signal } from '@angular/core';
 import { ResetRepoButtonComponent } from 'app/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('CourseExerciseDetailsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseExerciseDetailsComponent;
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let exerciseService: ExerciseService;
@@ -166,13 +152,12 @@ describe('CourseExerciseDetailsComponent', () => {
                 FaIconComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ExerciseActionButtonComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
-                MockComponent(ResultHistoryComponent),
                 MockComponent(ResultComponent),
                 MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
@@ -212,9 +197,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(DialogService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
-        }).overrideComponent(CourseExerciseDetailsComponent, {
-            remove: { imports: [IrisExerciseChatbotButtonComponent] },
-            add: { imports: [MockIrisExerciseChatbotButtonComponent] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
@@ -298,7 +280,7 @@ describe('CourseExerciseDetailsComponent', () => {
             return participations?.find((p) => p.testRun === testRun);
         });
 
-        const changedParticipation = cloneDeep(studentParticipation);
+        const changedParticipation = deepClone(studentParticipation);
         const changedResult = { ...result, id: 2 };
 
         changedParticipation.submissions![0].results = [changedResult];
@@ -594,5 +576,235 @@ describe('CourseExerciseDetailsComponent', () => {
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeTruthy();
+    });
+
+    it('should propagate a newly started participation into the cached course so the sidebar updates live', () => {
+        const courseStorageService = TestBed.inject(CourseStorageService);
+        const cachedExercise = { id: exercise.id, studentParticipations: [] } as unknown as Exercise;
+        const cachedCourse = { id: 1, exercises: [cachedExercise] } as unknown as Course;
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
+
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [] } as Exercise;
+        const newParticipation = { id: 777 } as StudentParticipation;
+
+        comp.onNewParticipation(newParticipation);
+
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+        expect(cachedExercise.studentParticipations).toContain(newParticipation);
+    });
+
+    it('should propagate an already-present participation into the cached course (start navigates to the code editor, re-resolving it)', () => {
+        // Starting a programming exercise navigates to the code editor, which re-resolves this component with the
+        // participation already loaded into _studentParticipations. onNewParticipation then takes the "already present"
+        // branch, so the cached-course propagation must still run — otherwise the sidebar card stays at "Not yet started".
+        const courseStorageService = TestBed.inject(CourseStorageService);
+        const existingParticipation = { id: 778 } as StudentParticipation;
+        const cachedExercise = { id: exercise.id, studentParticipations: [] } as unknown as Exercise;
+        const cachedCourse = { id: 1, exercises: [cachedExercise] } as unknown as Course;
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
+
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [existingParticipation] } as Exercise;
+        // The participation is already resolved on this component instance before onNewParticipation fires.
+        (comp as unknown as { _studentParticipations: { set: (value: StudentParticipation[]) => void } })._studentParticipations.set([existingParticipation]);
+
+        comp.onNewParticipation(existingParticipation);
+
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+        // onNewParticipation now merges submissions into a fresh participation object (so prior attempts survive and
+        // the signal change is detected), so assert by id rather than reference identity.
+        expect(cachedExercise.studentParticipations?.some((p) => p.id === existingParticipation.id)).toBe(true);
+    });
+
+    it('should preserve prior attempts when onNewParticipation receives a payload carrying only the latest submission', () => {
+        // Regression test for #12955 / #12972 (bug 1): a practice submit emits a participation that only carries the
+        // latest submission. Replacing the stored participation wholesale dropped every prior attempt from the
+        // result-history dropdown until a page refresh. onNewParticipation must merge submissions instead.
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [] } as Exercise;
+        const existingParticipation = { id: 555, submissions: [{ id: 1 } as Submission, { id: 2 } as Submission] } as StudentParticipation;
+        comp.studentParticipations = [existingParticipation];
+
+        const incomingParticipation = { id: 555, submissions: [{ id: 3 } as Submission] } as StudentParticipation;
+        comp.onNewParticipation(incomingParticipation);
+
+        const merged = comp.studentParticipations.find((p) => p.id === 555);
+        expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2, 3]);
+    });
+
+    it('should replace a re-sent submission in place without duplicating it (onNewParticipation merge)', () => {
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [] } as Exercise;
+        const existingParticipation = { id: 555, submissions: [{ id: 1, submitted: false } as Submission, { id: 2 } as Submission] } as StudentParticipation;
+        comp.studentParticipations = [existingParticipation];
+
+        // The incoming payload re-sends submission 1 with an updated field; it must replace, not append.
+        const incomingParticipation = { id: 555, submissions: [{ id: 1, submitted: true } as Submission] } as StudentParticipation;
+        comp.onNewParticipation(incomingParticipation);
+
+        const merged = comp.studentParticipations.find((p) => p.id === 555);
+        expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2]);
+        expect(merged?.submissions?.find((s) => s.id === 1)?.submitted).toBe(true);
+    });
+
+    describe('mode of the participation named in the URL', () => {
+        const gradedParticipation = { id: 679, testRun: false } as StudentParticipation;
+        const practiceParticipation = { id: 680, testRun: true } as StudentParticipation;
+
+        /** The part of the route the component reads, so a change to the stub's shape stays type checked. */
+        type RouteWithParticipationChild = { firstChild?: { snapshot: { paramMap: ParamMap } } };
+
+        /** Puts a child route carrying `participationId` under the exercise route, as the embedded editor does. */
+        function routeToParticipation(participationId: string | undefined) {
+            (route as unknown as RouteWithParticipationChild).firstChild = participationId ? { snapshot: { paramMap: convertToParamMap({ participationId }) } } : undefined;
+        }
+
+        beforeEach(() => {
+            getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: { ...exercise, studentParticipations: [gradedParticipation, practiceParticipation] } } }));
+            mergeStudentParticipationMock.mockReturnValue([gradedParticipation, practiceParticipation]);
+            // ParticipationService is mocked for this spec, so the graded/practice split has to behave like the real one.
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((participations, testRun) =>
+                (participations ?? []).find((participation) => !!participation.testRun === testRun),
+            );
+        });
+
+        afterEach(() => {
+            routeToParticipation(undefined);
+            delete (TestBed.inject(Router) as unknown as { getCurrentNavigation?: unknown }).getCurrentNavigation;
+        });
+
+        it('selects the practice mode when the URL addresses the practice participation', async () => {
+            // Reproduces the reload after starting the practice mode: without this the mode fell back to graded and the
+            // split panel redirected the editor to the graded participation, whose repository is read-only after the
+            // due date.
+            routeToParticipation('680');
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('practice');
+        });
+
+        it('selects the practice mode before the details response arrives', async () => {
+            // The split panel routes the embedded editor on the first change detection, so a mode that only became
+            // practice once the response landed arrived after that redirect had already put the graded participation
+            // back into the URL. The locally known participations have to be enough.
+            getExerciseDetailsMock.mockReturnValue(NEVER);
+            vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([gradedParticipation, practiceParticipation]);
+            routeToParticipation('680');
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('practice');
+        });
+
+        it('selects the practice mode from the running navigation while the child route is not activated yet', async () => {
+            // The component is created during the navigation to the editor, when `router.url` still holds the URL being
+            // left. Only the navigation in flight names the participation the student is going to.
+            getExerciseDetailsMock.mockReturnValue(NEVER);
+            vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([gradedParticipation, practiceParticipation]);
+            const router = TestBed.inject(Router) as unknown as MockRouter & { getCurrentNavigation?: () => { finalUrl: { toString: () => string } } };
+            router.setUrl('/courses/1/exercises/2');
+            router.getCurrentNavigation = () => ({ finalUrl: { toString: () => '/courses/1/exercises/programming-exercises/2/code-editor/680' } });
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('practice');
+        });
+
+        it('selects the practice mode from the URL while the child route is not activated yet', async () => {
+            // Angular activates the editor's child route only after this component has initialised, so on the first
+            // pass the participation is named by the URL alone. Held before the response lands, because that is where
+            // the mode has to be settled: the split panel routes the editor on the first change detection.
+            getExerciseDetailsMock.mockReturnValue(NEVER);
+            vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([gradedParticipation, practiceParticipation]);
+            (TestBed.inject(Router) as unknown as MockRouter).setUrl('/courses/1/exercises/programming-exercises/2/code-editor/680');
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('practice');
+        });
+
+        it('keeps the graded mode when the URL addresses the graded participation', async () => {
+            routeToParticipation('679');
+
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('graded');
+        });
+
+        it('follows the routed participation on a navigation that does not reload the exercise', async () => {
+            // Switching the mode and going back changes only the child participation, so the exercise is not reloaded
+            // and the navigation is the only signal. The mode has to follow the URL both ways, or it goes on describing
+            // a participation the editor no longer shows.
+            fixture.detectChanges();
+            routeToParticipation('680');
+            comp.loadExercise();
+            expect(comp.participationMode()).toBe('practice');
+
+            routeToParticipation('679');
+            (TestBed.inject(Router) as unknown as MockRouter).setUrl('/courses/1/exercises/programming-exercises/2/code-editor/679');
+
+            expect(comp.participationMode()).toBe('graded');
+        });
+
+        it('keeps the graded mode when no participation is addressed', async () => {
+            comp.loadExercise();
+
+            expect(comp.participationMode()).toBe('graded');
+        });
+    });
+
+    it('should switch participationMode to practice for a test-run participation', () => {
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, studentParticipations: [] } as Exercise;
+        comp.studentParticipations = [];
+
+        comp.onNewParticipation({ id: 999, testRun: true } as StudentParticipation);
+
+        expect(comp.participationMode()).toBe('practice');
+    });
+
+    it('should merge websocket submission deltas instead of replacing the attempt history (subscribeForNewResults)', () => {
+        // Covers the second call site of mergeSubmissions: the participation-change websocket delivers a participation
+        // that may only carry the changed/added submission. Prior attempts must be preserved.
+        comp.exercise = { ...exercise } as Exercise;
+        const existingParticipation = { id: 555, exercise: comp.exercise, submissions: [{ id: 1 } as Submission, { id: 2 } as Submission] } as StudentParticipation;
+        comp.studentParticipations = [existingParticipation];
+
+        comp.subscribeForNewResults();
+
+        const changedParticipation = { id: 555, exercise: { id: comp.exercise!.id }, submissions: [{ id: 3 } as Submission] } as StudentParticipation;
+        participationWebsocketBehaviorSubject.next(changedParticipation);
+
+        const merged = comp.studentParticipations.find((p) => p.id === 555);
+        expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2, 3]);
+    });
+
+    it('should keep submission history while applying a live transition to finished', () => {
+        comp.exercise = { ...exercise } as Exercise;
+        const existingParticipation = {
+            id: 555,
+            exercise: comp.exercise,
+            initializationState: InitializationState.INITIALIZED,
+            submissions: [{ id: 1 } as Submission, { id: 2 } as Submission],
+        } as StudentParticipation;
+        comp.studentParticipations = [existingParticipation];
+
+        comp.subscribeForNewResults();
+
+        const changedParticipation = {
+            id: 555,
+            exercise: { id: comp.exercise!.id },
+            initializationState: InitializationState.FINISHED,
+            submissions: [{ id: 3 } as Submission],
+        } as StudentParticipation;
+        participationWebsocketBehaviorSubject.next(changedParticipation);
+
+        const merged = comp.studentParticipations.find((p) => p.id === 555);
+        expect(merged?.initializationState).toBe(InitializationState.FINISHED);
+        expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2, 3]);
     });
 });

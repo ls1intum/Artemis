@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { CourseImportStandardizedCourseCompetenciesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-course-competencies.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
@@ -23,7 +23,7 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
         StandardizedCompetencyFilterComponent,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         DocumentationButtonComponent,
         ButtonComponent,
         TranslateDirective,
@@ -33,13 +33,13 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
         ArtemisTranslatePipe,
         FontAwesomeModule,
         FormsModule,
-        NgbTooltipModule,
+        TooltipModule,
     ],
 })
 export class CourseImportStandardizedCompetenciesComponent extends CourseImportStandardizedCourseCompetenciesComponent {
     private competencyService = inject(CompetencyService);
 
-    protected importCompetencies() {
+    protected override importCompetencies() {
         super.importCompetencies(this.competencyService);
     }
 }

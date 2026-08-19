@@ -3,32 +3,25 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PaginatorState } from 'primeng/paginator';
+import { TumUiTableSortEvent } from '@tumaet/ui-angular';
 
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
-import { SortService } from 'app/foundation/service/sort.service';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
-import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('LtiConfigurationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LtiConfigurationComponent;
     let fixture: ComponentFixture<LtiConfigurationComponent>;
     let mockRouter: any;
     let mockActivatedRoute: any;
-    let mockSortService: any;
     let mockLtiConfigurationService: any;
     let mockAlertService: AlertService;
 
     beforeEach(async () => {
         mockRouter = { navigate: vi.fn() };
-        mockSortService = { sortByProperty: vi.fn() };
         mockActivatedRoute = {
             data: of({ defaultSort: 'id,desc' }),
             queryParamMap: of(
@@ -53,7 +46,6 @@ describe('LtiConfigurationComponent', () => {
             imports: [LtiConfigurationComponent],
             providers: [
                 { provide: Router, useValue: mockRouter },
-                { provide: SortService, useValue: mockSortService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: LtiConfigurationService, useValue: mockLtiConfigurationService },
                 { provide: AlertService, useValue: { error: vi.fn() } },
@@ -69,18 +61,18 @@ describe('LtiConfigurationComponent', () => {
         mockAlertService = TestBed.inject(AlertService);
     });
 
-    describe('pagination (PrimeNG paginator)', () => {
-        it('converts the 0-indexed paginator event to the 1-indexed page and navigates', () => {
+    describe('pagination (tum-ui paginator)', () => {
+        it('converts the 0-indexed paginator page to the 1-indexed page and navigates', () => {
             mockRouter.navigate.mockClear();
 
-            component.onPageChange({ page: 2 } as PaginatorState);
+            component.onPageChange(2);
 
             expect(component.page()).toBe(3);
             expect(mockRouter.navigate).toHaveBeenCalledWith(['/admin/lti-configuration'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 3 }) }));
         });
     });
 
-    describe('setActiveTab (PrimeNG tabs)', () => {
+    describe('setActiveTab (tum-ui tabs)', () => {
         it('coerces the numeric tab value to the activeTab signal', () => {
             component.setActiveTab(2);
             expect(component.activeTab()).toBe(2);
@@ -131,28 +123,35 @@ describe('LtiConfigurationComponent', () => {
         expect(component.getRedirectUri()).toContain('/api/lti/public/lti13/auth-callback');
     });
 
-    it('should sort platforms', () => {
-        const dummyPlatforms: LtiPlatformConfiguration[] = [
-            {
-                id: 1,
-                customName: 'Platform A',
-                clientId: 'platform-a',
-                authorizationUri: 'platformA.com/auth-login',
-                jwkSetUri: 'platformA.com/jwk',
-                tokenUri: 'platformA.com/token',
-            },
-            {
-                id: 2,
-                customName: 'Platform B',
-                clientId: 'platform-b',
-                authorizationUri: 'platformB.com/auth-login',
-                jwkSetUri: 'platformB.com/jwk',
-                tokenUri: 'platformB.com/token',
-            },
-        ];
-        component.platforms.set(dummyPlatforms);
-        component.sortRows();
-        expect(mockSortService.sortByProperty).toHaveBeenCalledWith(dummyPlatforms, 'id', false);
+    describe('onTableSort (tum-ui table)', () => {
+        it('maps the sort field/order onto predicate/ascending and navigates (server-side sort)', () => {
+            mockRouter.navigate.mockClear();
+
+            component.onTableSort({ field: 'customName', order: -1 } as TumUiTableSortEvent);
+
+            expect(component.predicate()).toBe('customName');
+            expect(component.ascending()).toBe(false);
+            expect(mockRouter.navigate).toHaveBeenCalledWith(
+                ['/admin/lti-configuration'],
+                expect.objectContaining({ queryParams: expect.objectContaining({ sort: 'customName,desc' }) }),
+            );
+        });
+
+        it('treats a missing order as ascending', () => {
+            component.onTableSort({ field: 'clientId' } as unknown as TumUiTableSortEvent);
+
+            expect(component.predicate()).toBe('clientId');
+            expect(component.ascending()).toBe(true);
+        });
+
+        it('ignores a sort event without a field and does not navigate', () => {
+            mockRouter.navigate.mockClear();
+
+            component.onTableSort({} as unknown as TumUiTableSortEvent);
+
+            expect(component.predicate()).toBe('id');
+            expect(mockRouter.navigate).not.toHaveBeenCalled();
+        });
     });
 
     it('should delete an LTI platform and navigate', () => {

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
@@ -16,8 +15,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('SubmissionResultStatusComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: SubmissionResultStatusComponent;
     let fixture: ComponentFixture<SubmissionResultStatusComponent>;
 
@@ -209,6 +206,42 @@ describe('SubmissionResultStatusComponent', () => {
 
             const span = fixture.debugElement.query(By.css('span[jhiTranslate]'));
             expect(span?.attributes['jhiTranslate']).toBe('artemisApp.courseOverview.exerciseList.userParticipatingShort');
+        });
+
+        it('should show the live result for a programming practice participation without any result, so build feedback is visible', async () => {
+            // Practice always happens after the due date. The live result (queued / building) must
+            // still be shown, otherwise submitting in practice mode gives no feedback until the
+            // first build result arrives.
+            fixture.componentRef.setInput('exercise', {
+                type: ExerciseType.PROGRAMMING,
+                dueDate: dayjs().subtract(1, 'hours'),
+            } as Exercise);
+            fixture.componentRef.setInput('isPractice', true);
+            fixture.componentRef.setInput('studentParticipation', {
+                initializationState: InitializationState.INITIALIZED,
+                testRun: true,
+            } as StudentParticipation);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(comp.shouldShowResult()).toBe(true);
+            expect(fixture.debugElement.query(By.css('#submission-result-graded'))).not.toBeNull();
+        });
+
+        it('should not show the live result for a graded programming participation without results after the due date', async () => {
+            fixture.componentRef.setInput('exercise', {
+                type: ExerciseType.PROGRAMMING,
+                dueDate: dayjs().subtract(1, 'hours'),
+            } as Exercise);
+            fixture.componentRef.setInput('studentParticipation', {
+                initializationState: InitializationState.INITIALIZED,
+            } as StudentParticipation);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(comp.shouldShowResult()).toBe(false);
         });
 
         it('should show the result once a practice participation with a result exists', async () => {

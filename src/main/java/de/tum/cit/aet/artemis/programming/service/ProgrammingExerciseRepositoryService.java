@@ -55,6 +55,12 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final String BUILD_GRADLE = "build.gradle";
 
+    private static final String SETTINGS_GRADLE = "settings.gradle";
+
+    private static final String MAVEN_DIR = ".mvn";
+
+    private static final String MAVEN_LOCAL_SETTINGS = "local-settings.xml";
+
     private static final String PACKAGE_NAME_FOLDER_PLACEHOLDER = "${packageNameFolder}";
 
     private static final String PACKAGE_NAME_FILE_PLACEHOLDER = "${packageNameFile}";
@@ -73,8 +79,11 @@ public class ProgrammingExerciseRepositoryService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final MavenCentralMirrorService mavenCentralMirrorService;
+
     public ProgrammingExerciseRepositoryService(GitService gitService, UserRepository userRepository, ResourceLoaderService resourceLoaderService,
-            Optional<VersionControlService> versionControlService) {
+            Optional<VersionControlService> versionControlService, MavenCentralMirrorService mavenCentralMirrorService) {
+        this.mavenCentralMirrorService = mavenCentralMirrorService;
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.resourceLoaderService = resourceLoaderService;
@@ -101,24 +110,10 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
-     * @throws IOException     If setting up the base template files fails due to file I/O.
-     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
-     */
-    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator) throws IOException, GitAPIException {
-        setupExerciseTemplate(programmingExercise, exerciseCreator, false);
-    }
-
-    /**
-     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming
-     * exercise.
-     *
-     * @param programmingExercise the programming exercise that should be set up
-     * @param exerciseCreator     the User that performed the action (used as Git commit author)
      * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
-     * @throws IOException     If setting up the base template files fails due to file I/O.
      * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
-    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws IOException, GitAPIException {
+    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws GitAPIException {
         if (programmingExercise == null) {
             throw new IllegalArgumentException("ProgrammingExercise must not be null");
         }
@@ -496,6 +491,8 @@ public class ProgrammingExerciseRepositoryService {
         final Map<String, Boolean> sectionsMap = new HashMap<>();
         // Keep or delete static code analysis configuration in the build configuration file
         sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
+        // Keep or delete the Maven Central mirror declarations, depending on whether this instance configured one
+        mavenCentralMirrorService.addTemplateSections(sectionsMap);
 
         if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);
@@ -587,13 +584,14 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     /**
-     * Fills in placeholders in the build tool project definition file based on the enabled exercise features.
+     * Fills in the optional sections of the build tool project files, based on the enabled exercise features and the
+     * instance configuration. Package-private for testing.
      *
      * @param repoLocalPath  The local path to the repository.
      * @param projectType    The exercise project type.
      * @param activeFeatures The active features in the exercise.
      */
-    private void setupBuildToolProjectFile(final Path repoLocalPath, final ProjectType projectType, final Map<String, Boolean> activeFeatures) {
+    void setupBuildToolProjectFile(final Path repoLocalPath, final ProjectType projectType, final Map<String, Boolean> activeFeatures) {
         final String projectFileFileName;
         if (projectType != null && projectType.isGradle()) {
             projectFileFileName = BUILD_GRADLE;
@@ -603,6 +601,22 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         FileUtil.replacePlaceholderSections(repoLocalPath.resolve(projectFileFileName).toAbsolutePath(), activeFeatures);
+
+        // Gradle resolves plugins through settings.gradle rather than build.gradle, so its optional sections have to be
+        // resolved as well. The file only exists for Gradle project types.
+        final Path settingsGradlePath = repoLocalPath.resolve(SETTINGS_GRADLE).toAbsolutePath();
+        if (Files.exists(settingsGradlePath)) {
+            FileUtil.replacePlaceholderSections(settingsGradlePath, activeFeatures);
+        }
+
+        // The Maven black-box template pins Maven to its own .mvn/local-settings.xml, which mirrors "*" and therefore
+        // overrides the repositories declared in the pom. Its optional sections decide whether that mirror points at the
+        // configured mirror or stays on Maven Central, so they have to be resolved too. The file only exists for the
+        // black-box project type.
+        final Path mavenLocalSettingsPath = repoLocalPath.resolve(MAVEN_DIR).resolve(MAVEN_LOCAL_SETTINGS).toAbsolutePath();
+        if (Files.exists(mavenLocalSettingsPath)) {
+            FileUtil.replacePlaceholderSections(mavenLocalSettingsPath, activeFeatures);
+        }
     }
 
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
@@ -656,17 +670,10 @@ public class ProgrammingExerciseRepositoryService {
         // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
         final boolean isMaven = isMavenProject(projectType);
 
-        final String projectFileName;
-        if (isMaven) {
-            projectFileName = POM_XML;
-        }
-        else {
-            projectFileName = BUILD_GRADLE;
-        }
-
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
-        FileUtil.replacePlaceholderSections(repoLocalPath.resolve(projectFileName).toAbsolutePath(), sectionsMap);
+        // Shared with the non-sequential path so that both resolve settings.gradle, and not just the main project file.
+        setupBuildToolProjectFile(repoLocalPath, projectType, sectionsMap);
 
         final Optional<Resource> stagePomXml = getStagePomXml(templatePath, projectTemplatePath, isMaven);
 
@@ -767,6 +774,7 @@ public class ProgrammingExerciseRepositoryService {
             case JAVA, KOTLIN -> {
                 FileUtil.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository), PACKAGE_NAME_FOLDER_PLACEHOLDER, programmingExercise.getPackageFolderName());
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
+                mavenCentralMirrorService.addUrlReplacement(replacements);
             }
             case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
             case GO, DART -> replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());

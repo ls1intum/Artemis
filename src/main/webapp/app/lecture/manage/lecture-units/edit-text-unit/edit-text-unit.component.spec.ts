@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -13,7 +12,6 @@ import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.mode
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Alert, AlertService } from 'app/foundation/service/alert.service';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,8 +24,6 @@ import { ProfileService } from '../../../../core/layouts/profiles/shared/profile
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('EditTextUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<EditTextUnitComponent>;
     let editTextUnitComponent: EditTextUnitComponent;
 
@@ -35,7 +31,7 @@ describe('EditTextUnitComponent', () => {
         global.ResizeObserver = MockResizeObserver as any;
 
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [],
             providers: [
                 MockProvider(TextUnitService),
                 MockProvider(AlertService),
@@ -106,10 +102,10 @@ describe('EditTextUnitComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(findByIdStub).toHaveBeenCalledTimes(1);
-        expect(editTextUnitComponent.formData.name).toEqual(originalTextUnit.name);
-        expect(editTextUnitComponent.formData.releaseDate).toEqual(originalTextUnit.releaseDate);
-        expect(editTextUnitComponent.formData.content).toEqual(originalTextUnit.content);
-        expect(textUnitFormComponent.formData()).toEqual(editTextUnitComponent.formData);
+        expect(editTextUnitComponent.formData().name).toEqual(originalTextUnit.name);
+        expect(editTextUnitComponent.formData().releaseDate).toEqual(originalTextUnit.releaseDate);
+        expect(editTextUnitComponent.formData().content).toEqual(originalTextUnit.content);
+        expect(textUnitFormComponent.formData()).toEqual(editTextUnitComponent.formData());
     });
 
     it('should send PUT request upon form submission and navigate', async () => {

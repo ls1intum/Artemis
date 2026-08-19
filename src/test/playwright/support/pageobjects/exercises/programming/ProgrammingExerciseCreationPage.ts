@@ -9,6 +9,11 @@ const TIMELINE_DATE_FORMAT = 'DD.MM.YYYY HH:mm';
 export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPage {
     async changeEditMode() {
         await this.page.locator('#switch-edit-mode-button').click();
+        // Switching from simple to detailed mode adds the difficulty/mode section, so the form status bar grows from
+        // four to five section circles. Wait for the fifth circle before continuing: the status-bar section circles
+        // bind their scroll target (and indexing) at render time, so acting before the detailed-mode bar has rendered
+        // would click a circle still bound to the simple-mode section at that index (e.g. Grading instead of Problem).
+        await this.page.locator('#status-bar-section-item-4').waitFor({ state: 'visible' });
     }
 
     async setShortName(shortName: string) {
@@ -51,13 +56,13 @@ export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPag
 
     /**
      * Sets the Due Date field on the unified exercise timeline (PrimeNG p-datepicker rendered inside
-     * <jhi-exercise-timeline>). The timeline assigns the inputId per visible item dynamically
+     * <jhi-timeline>). The timeline assigns the inputId per visible item dynamically
      * (e.g. datepicker-0, datepicker-1, ...), so we locate the input through its associated label
-     * and then fill it in the format expected by ExerciseTimelineComponent#handleManualInput.
+     * and then fill it in the format expected by the component
      *
      * @param date the due date to set
      */
-    async setDueDate(date: Dayjs) {
+    override async setDueDate(date: Dayjs) {
         const dueDateInput = this.page.getByLabel('Due Date', { exact: true });
         await expect(dueDateInput).toBeEnabled();
         await dueDateInput.fill(date.format(TIMELINE_DATE_FORMAT));
@@ -109,14 +114,24 @@ export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPag
         const initialPosition = await locator.boundingBox();
         await locator.click(); // scrolls to the locator if needed (e.g. if hidden by another element)
         const newPosition = await locator.boundingBox();
-        expect(initialPosition).toEqual(newPosition);
+        // The purpose of this check is that the headline is not hidden behind the (vertical) StatusBar / Navbar: if it
+        // were, clicking it would scroll it down and its vertical position would change. We therefore assert the
+        // VERTICAL position is stable. The horizontal position is intentionally not compared: clicking can trigger a
+        // benign sub-8px horizontal reflow (e.g. a focused editor/scrollbar-gutter in the section) that is irrelevant
+        // to vertical occlusion and would otherwise make this exact-boundingBox comparison flaky.
+        expect(newPosition?.y).toBeCloseTo(initialPosition?.y ?? Number.NaN, 0);
+        expect(newPosition?.height).toBeCloseTo(initialPosition?.height ?? Number.NaN, 0);
     }
 
     async checkIsHeadlineVisibleToUser(searchedHeadlineDisplayText: string, expected: boolean) {
         const headlineLocator = this.page.getByRole('heading', { name: searchedHeadlineDisplayText }).first();
 
         if (expected) {
-            await expect(headlineLocator).toBeInViewport({ ratio: 1 });
+            // ratio 0.99 (not 1): a headline whose rendered box has fractional CSS-pixel edges (e.g. a 30.234px-tall
+            // <h3>) is reported by Playwright's IntersectionObserver-based toBeInViewport at ~0.995 even when it is
+            // fully on screen — a sub-pixel rounding artifact, not a real clipping. The stricter verifyLocatorIsVisible
+            // below still guarantees the headline is fully visible and not hidden behind the sticky status bar.
+            await expect(headlineLocator).toBeInViewport({ ratio: 0.99 });
             /** additional check because {@link toBeInViewport} is too inaccurate */
             await this.verifyLocatorIsVisible(headlineLocator);
         } else {

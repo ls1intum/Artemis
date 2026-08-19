@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, Renderer2, inject, signal } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
@@ -17,6 +17,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
 import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
 import { SetupPasskeyModalComponent } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { EmbedPdfPreloadService } from 'app/core/pdf/embed-pdf-preload.service';
+import { observeShellMetrics, reattachShellMetricsObserver } from 'app/foundation/util/navbar.util';
 
 @Component({
     selector: 'jhi-app',
@@ -49,34 +51,36 @@ export class AppComponent implements OnInit, OnDestroy {
     private renderer = inject(Renderer2);
     private ltiService = inject(LtiService);
     private featureToggleService = inject(FeatureToggleService);
+    private embedPdfPreloadService = inject(EmbedPdfPreloadService);
 
-    globalSearchEnabled = false;
-    private examStartedSubscription: Subscription;
-    private testRunSubscription: Subscription;
-    private ltiSubscription: Subscription;
-    private globalSearchSubscription: Subscription;
+    readonly globalSearchEnabled = signal(false);
+    private examStartedSubscription?: Subscription;
+    private testRunSubscription?: Subscription;
+    private ltiSubscription?: Subscription;
+    private globalSearchSubscription?: Subscription;
+    private stopObservingShellMetrics?: () => void;
     /**
      * If the footer and header should be shown.
      * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.
      * The decision on whether to show the skeleton or not for a specific route is defined in shouldShowSkeleton.
      */
-    showSkeleton = true;
+    readonly showSkeleton = signal(true);
     isProduction = true;
     isTestServer = false;
-    isExamStarted = false;
-    isTestRunExam = false;
-    isShownViaLti = false;
-    usesModuleBackground = false;
-    showPageRibbon = true;
+    readonly isExamStarted = signal(false);
+    readonly isTestRunExam = signal(false);
+    readonly isShownViaLti = signal(false);
+    readonly usesModuleBackground = signal(false);
+    readonly showPageRibbon = signal(true);
 
     constructor() {
-        this.setupErrorHandling().then(undefined);
+        void this.setupErrorHandling();
     }
 
     private async setupErrorHandling() {
         const profileInfo = this.profileService.getProfileInfo();
         // sentry is only activated if it was specified in the application.yml file
-        this.sentryErrorHandler.initSentry(profileInfo);
+        void this.sentryErrorHandler.initSentry(profileInfo);
     }
 
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot): string {
@@ -100,7 +104,10 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.showPageRibbon = !this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root);
+        this.showPageRibbon.set(!this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root));
+
+        // Warm the PDFium engine in the background once the browser is idle, so the first lecture-PDF open is instant.
+        this.embedPdfPreloadService.schedulePreload();
 
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
@@ -114,34 +121,37 @@ export class AppComponent implements OnInit, OnDestroy {
                 itself.
                  */
                 const shouldShowSkeletonNow = this.shouldShowSkeleton(event.url);
-                if (!shouldShowSkeletonNow && this.showSkeleton) {
+                if (!shouldShowSkeletonNow && this.showSkeleton()) {
                     // If we already show the skeleton but do not want to show the skeleton anymore, we need to remove the background
                     this.renderer.addClass(this.document.body, 'transparent-background');
-                } else if (shouldShowSkeletonNow && !this.showSkeleton) {
+                } else if (shouldShowSkeletonNow && !this.showSkeleton()) {
                     // If we want to show the skeleton but weren't showing it previously, we need to remove the class to show the skeleton again
                     this.renderer.removeClass(this.document.body, 'transparent-background');
                 }
                 // Do now show skeleton when the url links to a problem statement which is displayed on the native clients
-                this.showSkeleton = shouldShowSkeletonNow;
+                this.showSkeleton.set(shouldShowSkeletonNow);
             }
             if (event instanceof NavigationEnd) {
+                // The navbar and footer are re-created with the skeleton, and their heights change with the
+                // breadcrumbs; the shells size their content region from both, so re-target the observer.
+                reattachShellMetricsObserver();
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
-                this.usesModuleBackground = this.getDeepestUsesModuleBackground(this.router.routerState.snapshot.root);
-                this.showPageRibbon = !this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root);
+                this.usesModuleBackground.set(this.getDeepestUsesModuleBackground(this.router.routerState.snapshot.root));
+                this.showPageRibbon.set(!this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root));
                 const showSkeletonFromRoute = this.getDeepestShowSkeleton(this.router.routerState.snapshot.root);
                 if (showSkeletonFromRoute !== undefined) {
-                    if (!showSkeletonFromRoute && this.showSkeleton) {
-                        this.showSkeleton = false;
+                    if (!showSkeletonFromRoute && this.showSkeleton()) {
+                        this.showSkeleton.set(false);
                         this.renderer.addClass(this.document.body, 'transparent-background');
-                    } else if (showSkeletonFromRoute && !this.showSkeleton) {
-                        this.showSkeleton = true;
+                    } else if (showSkeletonFromRoute && !this.showSkeleton()) {
+                        this.showSkeleton.set(true);
                         this.renderer.removeClass(this.document.body, 'transparent-background');
                     }
                 }
             }
             if (event instanceof NavigationError && event.error.status === 404) {
                 // noinspection JSIgnoredPromiseFromCall
-                this.router.navigate(['/404']);
+                void this.router.navigate(['/404']);
             }
         });
 
@@ -149,32 +159,32 @@ export class AppComponent implements OnInit, OnDestroy {
         this.isProduction = this.profileService.isProduction();
 
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
-            this.isExamStarted = isStarted;
+            this.isExamStarted.set(isStarted);
         });
 
         this.testRunSubscription = this.examParticipationService.testRunStarted$.subscribe((isStarted) => {
-            this.isTestRunExam = isStarted;
+            this.isTestRunExam.set(isStarted);
         });
 
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
-            this.isShownViaLti = isShownViaLti;
+            this.isShownViaLti.set(isShownViaLti);
         });
         this.globalSearchSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.GlobalSearch).subscribe((isActive) => {
-            this.globalSearchEnabled = isActive;
+            this.globalSearchEnabled.set(isActive);
         });
         this.themeService.initialize();
+        this.stopObservingShellMetrics = observeShellMetrics();
     }
 
     /**
      * The skeleton should not be shown for the problem statement component if it is directly accessed,
-     * for the standalone feedback component, and for the PDF viewer iframe content.
+     * nor for the standalone feedback component.
      */
     private shouldShowSkeleton(url: string): boolean {
         const isLandingPage = url === '/' || url === '';
         const isStandaloneProblemStatement = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?(\\/)?');
         const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/participations\\/\\d+\\/results\\/\\d+\\/feedback(\\/)?');
-        const isPdfViewerIframe = url.includes('/pdf-viewer-iframe');
-        return !isLandingPage && !isStandaloneProblemStatement && !isStandaloneFeedback && !isPdfViewerIframe;
+        return !isLandingPage && !isStandaloneProblemStatement && !isStandaloneFeedback;
     }
 
     private getDeepestShowSkeleton(root: ActivatedRouteSnapshot): boolean | undefined {
@@ -186,5 +196,6 @@ export class AppComponent implements OnInit, OnDestroy {
         this.testRunSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
         this.globalSearchSubscription?.unsubscribe();
+        this.stopObservingShellMetrics?.();
     }
 }

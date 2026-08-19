@@ -4,8 +4,8 @@
  * including form initialization, save, cancel, and validation.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -14,15 +14,13 @@ import { StandardizedCompetencyEditComponent } from 'app/admin/standardized-comp
 import { KnowledgeAreaDTO, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
-
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
 describe('StandardizedCompetencyEditComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let componentFixture: ComponentFixture<StandardizedCompetencyEditComponent>;
     let component: StandardizedCompetencyEditComponent;
 
@@ -62,11 +60,17 @@ describe('StandardizedCompetencyEditComponent', () => {
                     ReactiveFormsModule,
                     FaIconComponent,
                     MockComponent(ButtonComponent),
-                    MockPipe(HtmlForMarkdownPipe),
+                    MockDirective(MarkdownDirective),
+                    MockPipe(ArtemisTranslatePipe),
                     MockComponent(MarkdownEditorMonacoComponent),
                     MockComponent(TaxonomySelectComponent),
                     MockDirective(TranslateDirective),
                     MockDirective(DeleteButtonDirective),
+                    MockComponent(TumUiButtonComponent),
+                    MockComponent(TumUiButtonDirective),
+                    MockDirective(TumUiInputDirective),
+                    MockComponent(TumUiSelectComponent),
+                    MockComponent(TumUiMessageComponent),
                 ],
             },
         });

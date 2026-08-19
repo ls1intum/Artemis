@@ -8,14 +8,15 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 
 ## Tech Stack
 
-- **Server**: Spring Boot 3.5 (Java 25), MySQL, Hibernate, Hazelcast
-- **Client**: Angular 21, TypeScript, SCSS
-- **Build**: Gradle 9.3, pnpm 11 / Node 24 (pnpm version pinned via the `packageManager` field in package.json; activate with `corepack enable`)
+- **Server**: Spring Boot 4.1 (Java 25), MySQL, Hibernate, Hazelcast
+- **Client**: Angular 22, TypeScript, SCSS
+- **Build**: Gradle 9.6, pnpm 11 / Node 24 (pnpm version pinned via the `packageManager` field in package.json; activate with `corepack enable`)
 - **Testing**: JUnit 6, Vitest, Playwright
 
 ## Build & Development Commands
 
 ### Server
+
 ```bash
 ./gradlew bootRun                          # Start dev server (includes Angular build)
 ./gradlew bootRun -x webapp                # Server only (use with pnpm start)
@@ -23,9 +24,10 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 ./gradlew -Pprod -Pwar -Psbom clean bootWar # Production WAR including server + client SBOM
 ```
 
-SBOM generation (`cyclonedxBom` + `generateClientSbom`) is gated behind the `-Psbom` Gradle property. CI release-eligible jobs (pushes to `develop`/`main`/`release/*`, version tags, and published releases) set it automatically in `.github/workflows/build.yml`. Local builds and PR CI ship a WAR without the SBOM — `AdminSbomResource` returns 404 and the admin UI renders an informational banner in that case.
+SBOM generation (`cyclonedxBom` + `generateClientSbom`) is gated behind the `-Psbom` Gradle property. CI release-eligible jobs (pushes to `develop`/`main`/`release/*`, version tags, and published releases) set it automatically in `.github/workflows/ci-build.yml`. Local builds and PR CI ship a WAR without the SBOM — `AdminSbomResource` returns 404 and the admin UI renders an informational banner in that case.
 
 ### Client
+
 ```bash
 corepack enable                      # One-time: activate the pnpm version pinned in package.json
 pnpm install --frozen-lockfile       # Install dependencies (CI-style, asserts lockfile is authoritative)
@@ -37,10 +39,12 @@ pnpm run build                       # Alternative production build
 ```
 
 ### Build Output
+
 - Client assets: `build/resources/main/static`
 - Production WAR: `build/libs/Artemis-<version>.war`
 
 ### Code Quality
+
 ```bash
 ./gradlew spotlessCheck              # Check Java formatting
 ./gradlew spotlessApply              # Fix Java formatting
@@ -54,6 +58,7 @@ pnpm run prettier:write              # Fix formatting
 ```
 
 ### Testing
+
 ```bash
 # Server (requires Docker — tests run against PostgreSQL via Testcontainers by default)
 ./gradlew test -x webapp                                          # All server tests (PostgreSQL)
@@ -93,6 +98,7 @@ pnpm run vitest -- path/to/spec.ts   # Single Vitest file
 ```
 
 **Which E2E runner should I use?**
+
 - `run-e2e-tests-local-fast.sh` — single node, Angular dev server. Best for client (UI) iteration.
 - `run-e2e-tests-local-multinode-fast.sh` — multi-node, WAR run from host. Best for server iteration that needs the cluster (Hazelcast, ActiveMQ STOMP, LB).
 - `run-e2e-tests-local-multinode.sh` — full Docker image build, prod-faithful. Use this to reproduce a CI-only failure or before pushing a multi-node-sensitive change.
@@ -100,7 +106,9 @@ pnpm run vitest -- path/to/spec.ts   # Single Vitest file
 ## Project Structure
 
 ### Server (`src/main/java/de/tum/cit/aet/artemis/`)
+
 Organized by feature module:
+
 - `core/` - Configuration, security base, utilities, base entities
 - `account/` - User, authority, passkey, account REST, authentication, LDAP
 - `exercise/` - Base exercise functionality
@@ -131,6 +139,7 @@ Organized by feature module:
 - `admin/` - Admin operations: data export, vulnerability scan, cleanup, telemetry, organization management, legal documents
 
 ### Client Web App (`src/main/webapp/app/`)
+
 - `core/` - Core services (HTTP, auth, guards)
 - `shared/` - Shared components, pipes, utilities
 - `openapi/` - Generated TypeScript client code
@@ -139,20 +148,24 @@ Organized by feature module:
 - Client tests are co-located with their TypeScript components
 
 ### Tests
+
 - `src/test/java/` - JUnit server tests
 - `src/test/playwright/` - E2E tests
 
 ### Other Directories
+
 - `src/main/resources/` - Spring profiles (`config/application-*.yml`), Liquibase changelogs, static files
 - `documentation/` - Project documentation
 - `docker/` - Deployment helpers
 
 ### API Specification
+
 - Generated at runtime by springdoc: `/v3/api-docs` and `/swagger-ui`
 
 ## Coding Conventions
 
 ### Java
+
 - PascalCase for classes, camelCase for fields/methods
 - No wildcard imports (Spotless enforces)
 - Package-by-feature organization
@@ -164,38 +177,54 @@ Organized by feature module:
 - Use Java 25 features (records, sealed classes, pattern matching)
 
 ### Caching
+
 - **Do not add `@Cache` (Hibernate L2) annotations on entities or associations.** Hibernate second-level cache is disabled cluster-wide and an ArchUnit rule (`ArchitectureTest.testNoHibernateSecondLevelCacheAnnotation`) fails the build if any reappears. Reason: `@Modifying @Query` repository methods bypass L2 invalidation, and the absence of service-level `@Transactional` leaves no clean place to coordinate eviction within a REST call — both produced cross-node stale-read bugs in the multi-node cluster (issue #12574, fixed in PR #12578; further cleanup in PR #12579).
 - **For DTO / projection caching, use Spring `@Cacheable` with the `HazelcastCacheManager`** (defined in `HazelcastConfiguration.cacheManager`). Always pair `@Cacheable` with explicit eviction — `@CacheEvict` on the writer service, or a Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. See `TitleCacheEvictionService` for the canonical pattern.
 - The bar for adding a new cache: a measured performance gain that justifies the eviction-correctness work. The default answer is: do not cache.
 - Full rationale, history, and patterns: `documentation/docs/developer/guidelines/caching.mdx`.
 
 ### TypeScript/Angular
+
 - kebab-case for filenames (`course-detail.component.ts`)
 - PascalCase for classes, camelCase for members
 - Single quotes, 4-space indentation
 - Standalone components preferred
-- **Angular 21 signal-based APIs are mandatory for new code:**
-  - Use `input()` / `input.required()` instead of `@Input()`
-  - Use `output()` instead of `@Output()`
-  - Use `viewChild()` / `viewChild.required()` instead of `@ViewChild()`
-  - Use `viewChildren()` instead of `@ViewChildren()`
-  - Use `signal()`, `computed()`, and `effect()` for reactive state management
-  - Use `inject()` for dependency injection instead of constructor injection
-  - Legacy decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code
-  - In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components
-  - An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules
-  - **Prefer `computed()`/`effect()` over `ngOnChanges` for signal-based components.** Note: in Angular 21 `ngOnChanges` *does* fire for signal inputs (it is NOT dead code — that was only true in v17–18), so do not treat it as a bug or auto-convert it. But `computed` (derived state) / `effect` (side effects, used sparingly) are the idiomatic, consistent choice. `ngOnChanges` is still valid when you need `SimpleChanges.previousValue`/`isFirstChange()` or logic that must run before child init. A warn-level rule (`prefer-signal-reactivity-over-ngonchanges`) warns on `ngOnChanges` in clean-baseline Angular client files; known migration-backlog files are temporarily excluded in `eslint.config.mjs`. The goal is to remove it entirely (migrate to `computed`/`effect`); rare genuinely-unavoidable cases need a detailed comment and a justified line-level disable. `ngOnInit`/`ngOnDestroy` are unaffected by signals. See `documentation/docs/developer/guidelines/client-development.mdx`.
+- **Signal-based Angular APIs are mandatory for new code:**
+    - Use `input()` / `input.required()` instead of `@Input()`
+    - Use `output()` instead of `@Output()`
+    - Use `viewChild()` / `viewChild.required()` instead of `@ViewChild()`
+    - Use `viewChildren()` instead of `@ViewChildren()`
+    - Use `signal()`, `computed()`, and `effect()` for reactive state management
+    - Use `inject()` for dependency injection instead of constructor injection
+    - Legacy decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code
+    - In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components
+    - An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules
+    - **`ngOnChanges` is banned — use `computed()`/`effect()` instead.** An error-level rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) enforces this across `src/main/webapp/app`, `packages/tum-ui/src/lib`, and `src/test/javascript`, including specs and undecorated base classes. Angular 21 does call inherited `ngOnChanges` hooks and fires them for signal inputs, so this is a consistency ban rather than a correctness fix. A genuinely unavoidable use of `SimpleChanges.previousValue`/`isFirstChange()` or pre-child-initialization ordering needs a detailed comment and a justified line-level `eslint-disable-next-line`. `ngOnInit` and `ngOnDestroy` are unaffected. See `documentation/docs/developer/guidelines/client-development.mdx`.
 - **Angular template control flow: use `@if`, `@for`, `@switch`; never use `*ngIf`, `*ngFor`, `*ngSwitch`**
 - Avoid `null`, use `undefined` where possible
-- Avoid spread operator for objects
+- **Copy objects with `deepClone`, never with object spread, `Object.assign`, or `structuredClone`**
+    - Use `deepClone` from `app/foundation/util/deep-clone.util` (a thin wrapper over lodash `cloneDeep`) whenever you copy an entity-like object — anything that may hold a `dayjs` date, a nested object, a `Map`/`Set`, or a circular reference
+    - `structuredClone()` is the worst option: it does not preserve prototypes, so a cloned `dayjs` date comes back as a plain object without its methods
+    - Object spread (`{ ...obj }`) and `Object.assign({}, obj)` only copy one level deep, so nested objects and arrays stay shared with the original and later edits mutate both
+    - This is why signal updates need care: a signal only notifies when the reference changes, so replace the object rather than mutating it — `const updated = deepClone(current); updated.field = value; return updated;` See `AccountService.setImageUrl` for the canonical pattern
+    - Two companions live in the same file: `cloneWith(x, { a, b })` replaces `{ ...x, a, b }` in a single expression (source deep-cloned, overrides applied by reference), and `hydrate(new Course(), dto)` replaces `Object.assign(new Course(), dto)` for giving a parsed server DTO a prototype
+    - Enforced by `localRules/prefer-deep-clone` (error, production client TS; specs exempt). Importing `cloneDeep` from `lodash-es` is blocked by `no-restricted-imports` so all copying goes through the wrappers
+    - Array spread stays fine: `items.update((items) => [...items, newItem])` is the documented way to append immutably, as does object rest in destructuring (`const { id, ...rest } = post`)
+    - When you only need a signal to emit after mutating an object in place, do not copy it at all: declare the signal with `equal: () => false` and re-set the same reference (see `CourseUpdateComponent.commitCourse`). Copying detaches the nested objects children hold and can end in `NG0103`
+    - Where the state is not signal-backed, build the replacement object explicitly field by field (see `MetisService.rebuildPostReference`) rather than reaching for a shallow copy
+    - Full rationale and examples: `documentation/docs/developer/guidelines/client-development.mdx` (### Cloning objects)
 - Prefer 100% type safety
-- **UI components: Use PrimeNG instead of Bootstrap components**
-  - All new UI elements must be implemented using PrimeNG components
-  - We are migrating from Bootstrap to PrimeNG; do not introduce new Bootstrap components
-  - Existing Bootstrap usage will be migrated incrementally
-  - **`@ng-bootstrap/ng-bootstrap` is deprecated** — do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, etc. in new code. Use PrimeNG's `DialogService` (`primeng/dynamicdialog`) for modals, `p-tooltip` for tooltips, etc. ng-bootstrap is incompatible with Angular signal inputs (assigning to `modalRef.componentInstance.X` silently fails when `X` is `input()`/`input.required()`). Existing usages are being migrated.
+- **UI components: use TUM UI and Tailwind CSS**
+    - TUM UI is the target component system; use an existing `@tumaet/ui-angular` component whenever it covers the required behavior.
+    - Use Tailwind CSS v4 utilities for application layout. Do not introduce Bootstrap or ng-bootstrap in new work.
+    - If TUM UI lacks a reusable capability, add or evolve a package component around native HTML or stable Angular CDK primitives. Keep Artemis-specific composition and policy in the application.
+    - PrimeNG is a transitional fallback only when the TUM UI gap cannot reasonably be closed in the same change. Explain the contained fallback in the pull request.
+    - **Colours use semantic tokens, never primitives or Bootstrap classes**: use TUM UI component variants or `text-state-danger`/`text-state-success`/`text-state-warning`/`text-state-info` for plain markup. Never use `--p-<color>-N` primitives, `text-red-500`, `text-danger`, or the superseded arbitrary `text-(--danger)` form. Full decision rules and the Bootstrap migration reference: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling).
+    - **Never hand-write PrimeNG component root classes** (`class="p-button"`, `class="p-inputtext"`). For a contained legacy fallback, render the real PrimeNG component so its styles load deterministically; `localRules/no-primeng-component-classes` enforces this.
+    - See `documentation/docs/developer/guidelines/tum-ui-kit.mdx` for package ownership, public API, theming, stories, and integration rules.
 
 ### General
+
 - LF line endings
 - Final newlines required
 - UTF-8 encoding
@@ -208,14 +237,14 @@ Organized by feature module:
 - CI enforces coverage thresholds per module
 - Use `pnpm run test-diff` for incremental client work
 - **Client tests: Vitest**
-  - Use `vi.spyOn()`, `vi.fn()`, `vi.clearAllMocks()` instead of Jest equivalents
-  - Run Vitest: `pnpm run vitest` (watch), `pnpm run vitest:run` (single run), `pnpm run vitest:coverage`
+    - Use `vi.spyOn()`, `vi.fn()`, `vi.clearAllMocks()` instead of Jest equivalents
+    - Run Vitest: `pnpm run vitest` (watch), `pnpm run vitest:run` (single run), `pnpm run vitest:coverage`
 - Name server tests `*Test.java`; reuse module base classes when present
 - When comparing `ZonedDateTime` values in tests, use `toInstant()` for comparisons since PostgreSQL stores timestamps as UTC (timezone offset is not preserved through database round-trips)
 - **E2E tests: Use `./run-e2e-tests-local-fast.sh`** — this is the intended way to run Playwright E2E tests locally (for both developers and AI agents)
-  - The script automatically kills processes on ports 8080, 9000, and 7921 before starting
-  - Use `--filter "TestName"` to run specific tests; supports regex patterns (e.g., `--filter "Quiz|Exam"`)
-  - After the first run, reuse running services with `--skip-server --skip-client --skip-db`
+    - The script automatically kills processes on ports 8080, 9000, and 7921 before starting
+    - Use `--filter "TestName"` to run specific tests; supports regex patterns (e.g., `--filter "Quiz|Exam"`)
+    - After the first run, reuse running services with `--skip-server --skip-client --skip-db`
 - Add screenshots for UI changes in PRs
 - Verify linting before submitting: `pnpm run lint`, `./gradlew checkstyleMain -x webapp`
 

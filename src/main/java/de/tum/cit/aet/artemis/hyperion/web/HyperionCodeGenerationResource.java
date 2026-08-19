@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationExecutionService;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationJobService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -85,7 +86,7 @@ public class HyperionCodeGenerationResource {
             validateGenerationRequest(exerciseId, request);
         }
         ProgrammingExercise exercise = loadProgrammingExercise(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         if (request.checkOnly()) {
             return codeGenerationJobService.getActiveJob(user, exercise).map(job -> ResponseEntity.ok(new CodeGenerationJobStartDTO(job.jobId(), job.repositoryType())))
                     .orElseGet(() -> ResponseEntity.noContent().build());
@@ -173,8 +174,8 @@ public class HyperionCodeGenerationResource {
      * @throws BadRequestAlertException if exercise is not suitable
      */
     private void validateExerciseForGeneration(ProgrammingExercise exercise) {
-        if (exercise.isExamExercise()) {
-            log.debug("Generating code for exam exercise [{}]", exercise.getId());
+        if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
+            throw new BadRequestAlertException("Code generation is only supported for Java exercises", ENTITY_NAME, "unsupportedProgrammingLanguage");
         }
 
         if (exercise.getBuildConfig() == null) {

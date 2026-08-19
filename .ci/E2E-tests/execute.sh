@@ -1,6 +1,8 @@
 #!/bin/sh
 
 CONFIGURATION=$1
+# $2 (test framework) is part of the positional CLI contract but is currently unused in this script.
+# shellcheck disable=SC2034
 TEST_FRAMEWORK=$2
 TEST_PATHS=$3  # Optional: space-separated list of test paths to run (passed through as-is, e.g., "e2e/exam/ e2e/atlas/")
 
@@ -32,6 +34,10 @@ echo $COMPOSE_FILE
 
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
 export HOST_HOSTNAME="nginx"
+
+# The prod-profile stacks need a JWT signing key. A key committed to the repository would be one anyone can use to forge
+# a token, so it is generated per run and shared by every service that reads docker/artemis/config/playwright.env.
+export ARTEMIS_E2E_JWT_SECRET="${ARTEMIS_E2E_JWT_SECRET:-$(openssl rand -base64 64 | tr -d '\n')}"
 
 # Export test paths for docker compose to pick up
 if [ -n "$TEST_PATHS" ]; then

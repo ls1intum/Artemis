@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -25,6 +25,8 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { isAthenaAIResult } from 'app/exercise/result/result.utils';
+import dayjs from 'dayjs/esm';
 
 // Mirrors the server-side default for `artemis.athena.allowed-feedback-requests`
 export const DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT = 10;
@@ -34,6 +36,10 @@ export function countSuccessfulAthenaFeedbackRequests(participation?: StudentPar
         getAllResultsOfAllSubmissions(participation?.submissions)?.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true)
             .length ?? 0
     );
+}
+
+function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
+    return !!result && isAthenaAIResult(result) && result.successful === undefined && (!result.completionDate || dayjs().isSameOrBefore(result.completionDate));
 }
 
 @Component({
@@ -57,36 +63,59 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     protected readonly ExerciseType = ExerciseType;
 
-    athenaEnabled = false;
-    athenaFormativeFeedbackEnabled = false;
-    manualFeedbackEnabled = false;
-    requestFeedbackEnabled = false;
-    isExamExercise: boolean;
+    readonly athenaEnabled = signal(false);
+    readonly athenaFormativeFeedbackEnabled = signal(false);
+    readonly manualFeedbackEnabled = signal(false);
+    readonly requestFeedbackEnabled = signal(false);
+    readonly isExamExercise = signal<boolean>(undefined!);
     participation?: StudentParticipation;
-    hasUserAcceptedLLMUsage: boolean;
+    readonly hasUserAcceptedLLMUsage = signal(false);
     currentFeedbackRequestCount = signal(0);
     readonly feedbackRequestLimit = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
     readonly isFeedbackLimitReached = computed(() => this.currentFeedbackRequestCount() >= this.feedbackRequestLimit);
+    private readonly isFeedbackRequestPending = signal(false);
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
     hasAthenaResultForLatestSubmission = input<boolean>(false);
-    isGeneratingFeedback = input<boolean>();
+    readonly isFeedbackGenerationInProgress = this.isFeedbackRequestPending.asReadonly();
     smallButtons = input<boolean>(false);
     exercise = input.required<Exercise>();
-    generatingFeedback = output<void>();
+    readonly participationId = input<number>();
 
     private athenaResultUpdateListener?: Subscription;
     private acceptSubscription?: Subscription;
+    private exerciseDetailsSubscription?: Subscription;
+    private feedbackRequestTimeout?: ReturnType<typeof setTimeout>;
+    private hasLoadedParticipationContext = false;
+    private loadedExerciseId?: number;
+    private loadedParticipationId?: number;
+
+    constructor() {
+        effect(() => {
+            const exerciseId = this.exercise().id;
+            const participationId = this.participationId();
+            untracked(() => {
+                if (
+                    this.hasLoadedParticipationContext &&
+                    (exerciseId !== this.loadedExerciseId || participationId !== this.loadedParticipationId) &&
+                    exerciseId &&
+                    !isExamExercise(this.exercise())
+                ) {
+                    this.updateParticipation();
+                }
+            });
+        });
+    }
 
     private isAcceptedLLMSelection(selection?: LLMSelectionDecision): boolean {
         return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
     }
 
     ngOnInit() {
-        this.athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
-        this.isExamExercise = isExamExercise(this.exercise());
-        if (this.isExamExercise || !this.exercise().id) {
+        this.athenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
+        this.isExamExercise.set(isExamExercise(this.exercise()));
+        if (this.isExamExercise() || !this.exercise().id) {
             return;
         }
         this.computeFeedbackEnabledState(this.exercise());
@@ -96,29 +125,44 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     private computeFeedbackEnabledState(exercise: Exercise): void {
         const athenaFormativeEnabled = exercise.course?.athenaFormativeEnabled ?? false;
-        this.manualFeedbackEnabled = exercise.allowFeedbackRequests ?? false;
-        this.athenaFormativeFeedbackEnabled = this.athenaEnabled && athenaFormativeEnabled && !this.manualFeedbackEnabled;
-        this.requestFeedbackEnabled = this.athenaFormativeFeedbackEnabled || this.manualFeedbackEnabled;
+        const manualEnabled = exercise.allowFeedbackRequests ?? false;
+        const athenaFormativeFeedback = this.athenaEnabled() && athenaFormativeEnabled && !manualEnabled;
+        this.manualFeedbackEnabled.set(manualEnabled);
+        this.athenaFormativeFeedbackEnabled.set(athenaFormativeFeedback);
+        this.requestFeedbackEnabled.set(athenaFormativeFeedback || manualEnabled);
     }
     ngOnDestroy(): void {
         this.athenaResultUpdateListener?.unsubscribe();
         this.acceptSubscription?.unsubscribe();
+        this.exerciseDetailsSubscription?.unsubscribe();
+        clearTimeout(this.feedbackRequestTimeout);
     }
 
     private updateParticipation() {
-        if (this.exercise().id) {
-            this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
+        const exerciseId = this.exercise().id;
+        if (exerciseId) {
+            const participationId = this.participationId();
+            this.loadedExerciseId = exerciseId;
+            this.loadedParticipationId = participationId;
+            this.hasLoadedParticipationContext = true;
+            this.exerciseDetailsSubscription?.unsubscribe();
+            this.athenaResultUpdateListener?.unsubscribe();
+            this.athenaResultUpdateListener = undefined;
+            this.participation = undefined;
+            this.currentFeedbackRequestCount.set(0);
+            this.syncFeedbackRequestPendingState(undefined);
+
+            this.exerciseDetailsSubscription = this.exerciseService.getExerciseDetails(exerciseId).subscribe({
                 next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
                     const detailedExercise = exerciseResponse.body!.exercise;
                     // Re-compute with stamped course.athenaFormativeEnabled from the details response
                     this.computeFeedbackEnabledState(detailedExercise);
                     const participations = detailedExercise.studentParticipations ?? [];
-                    const practiceParticipation = this.participationService.getSpecificStudentParticipation(participations, true);
-                    const gradedParticipation = this.participationService.getSpecificStudentParticipation(participations, false);
-                    // Prefer practice participation when it exists (student is working in practice mode)
-                    this.participation = practiceParticipation ?? gradedParticipation;
+                    this.participation = this.selectParticipation(participations, participationId);
                     if (this.participation) {
                         this.currentFeedbackRequestCount.set(countSuccessfulAthenaFeedbackRequests(this.participation));
+                        const pendingAthenaResult = getAllResultsOfAllSubmissions(this.participation.submissions).find(isPendingAthenaFeedbackResult);
+                        this.syncFeedbackRequestPendingState(pendingAthenaResult);
                         this.subscribeToResultUpdates();
                     }
                 },
@@ -129,9 +173,18 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         }
     }
 
+    private selectParticipation(participations: StudentParticipation[], participationId: number | undefined): StudentParticipation | undefined {
+        if (participationId !== undefined) {
+            return participations.find((participation) => participation.id === participationId);
+        }
+        const practiceParticipation = this.participationService.getSpecificStudentParticipation(participations, true);
+        const gradedParticipation = this.participationService.getSpecificStudentParticipation(participations, false);
+        return practiceParticipation ?? gradedParticipation;
+    }
+
     setUserAcceptedLLMUsage(): void {
         const selection = this.accountService.userIdentity()?.selectedLLMUsage;
-        this.hasUserAcceptedLLMUsage = this.isAcceptedLLMSelection(selection);
+        this.hasUserAcceptedLLMUsage.set(this.isAcceptedLLMSelection(selection));
     }
 
     async showLLMSelectionModal(): Promise<void> {
@@ -159,7 +212,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(decision).subscribe(() => {
             const hasAccepted = this.isAcceptedLLMSelection(decision);
 
-            this.hasUserAcceptedLLMUsage = hasAccepted;
+            this.hasUserAcceptedLLMUsage.set(hasAccepted);
             this.accountService.setUserLLMSelectionDecision(decision);
 
             // Proceed with feedback request only when an AI option was accepted
@@ -173,7 +226,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.isFeedbackLimitReached()) {
             return;
         }
-        if (!this.hasUserAcceptedLLMUsage) {
+        if (!this.hasUserAcceptedLLMUsage()) {
             await this.showLLMSelectionModal();
             return;
         }
@@ -186,6 +239,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         }
 
         // Subscribe to result updates for this participation
+        this.athenaResultUpdateListener?.unsubscribe();
         this.athenaResultUpdateListener = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation.id, true)
             .pipe(
@@ -200,19 +254,29 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (result.completionDate && result.successful) {
             this.currentFeedbackRequestCount.update((count) => count + 1);
         }
+        this.syncFeedbackRequestPendingState(result);
+    }
+
+    private syncFeedbackRequestPendingState(result: Result | undefined): void {
+        clearTimeout(this.feedbackRequestTimeout);
+        const isPending = isPendingAthenaFeedbackResult(result);
+        this.isFeedbackRequestPending.set(isPending);
+        if (isPending && result?.completionDate) {
+            const timeout = Math.max(0, dayjs(result.completionDate).diff(dayjs(), 'milliseconds'));
+            this.feedbackRequestTimeout = setTimeout(() => this.isFeedbackRequestPending.set(false), timeout);
+        }
     }
 
     requestFeedback() {
+        const participationId = this.participationId();
         this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
             next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
                 const participations = exerciseResponse.body!.exercise.studentParticipations ?? [];
-                const practiceParticipation = this.participationService.getSpecificStudentParticipation(participations, true);
-                const gradedParticipation = this.participationService.getSpecificStudentParticipation(participations, false);
-                this.participation = practiceParticipation ?? gradedParticipation;
-                if (!this.assureConditionsSatisfied()) {
+                const participation = this.selectParticipation(participations, participationId);
+                if (!this.assureConditionsSatisfied(participation)) {
                     return;
                 }
-                this.processFeedbackRequest();
+                this.processFeedbackRequest(participation);
             },
             error: (error: HttpErrorResponse) => {
                 this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
@@ -220,11 +284,13 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         });
     }
 
-    private processFeedbackRequest() {
-        this.courseExerciseService.requestFeedback(this.exercise().id!, this.participation!.id!).subscribe({
-            next: (participation: StudentParticipation) => {
-                if (participation) {
-                    this.generatingFeedback.emit();
+    private processFeedbackRequest(participation = this.participation) {
+        this.courseExerciseService.requestFeedback(this.exercise().id!, participation!.id!).subscribe({
+            next: (updatedParticipation: StudentParticipation) => {
+                if (updatedParticipation) {
+                    if (this.participationId() === undefined || this.participationId() === participation?.id) {
+                        this.isFeedbackRequestPending.set(true);
+                    }
                     this.alertService.success('artemisApp.exercise.feedbackRequestSent');
                 }
             },
@@ -241,8 +307,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
      * 2. There is no already pending feedback request.
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
-    assureConditionsSatisfied(): boolean {
-        if (!this.participation?.id) {
+    assureConditionsSatisfied(participation = this.participation): boolean {
+        if (!participation?.id) {
             return false;
         }
         return this.exercise().type === ExerciseType.PROGRAMMING || this.assureTextModelingConditions();

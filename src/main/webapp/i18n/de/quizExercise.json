@@ -19,7 +19,13 @@
                 "modalTitle": "Quizfragen mit KI generieren",
                 "configuration": {
                     "title": "Konfiguration",
+                    "mode": "Generierungsmodus",
+                    "modeFreeTopicLabel": "Freies Thema",
+                    "modeCompetencyGraphLabel": "Aus Kompetenzen",
                     "topic": "Thema",
+                    "competencies": "Kompetenzen",
+                    "competenciesPlaceholder": "Zu prüfende Kompetenzen auswählen...",
+                    "competenciesTooltip": "Das Quiz wird anhand der ausgewählten Kompetenzen, deren Beziehungen zueinander sowie verknüpfter Vorlesungs- oder Übungsinhalte generiert. Verknüpfe Materialien mit Kompetenzen, um sie hier einzubeziehen.",
                     "optionalPrompt": "Optionaler Prompt",
                     "optionalPromptTooltip": "Füge optionale Anweisungen, Einschränkungen oder Erwartungen hinzu, um die generierten Fragen gezielt zu steuern.",
                     "language": "Sprache",
@@ -53,8 +59,9 @@
                     }
                 },
                 "errors": {
-                    "invalidConfiguration": "Bitte gib ein Thema an und wähle mindestens einen Fragetyp aus.",
+                    "invalidConfiguration": "Bitte gib ein Thema an (oder wähle Kompetenzen aus) und wähle mindestens einen Fragetyp.",
                     "generationFailed": "Quizfragen konnten nicht generiert werden. Bitte versuche es erneut.",
+                    "competencyLoadFailed": "Kurskompetenzen konnten nicht geladen werden. Bitte versuche es erneut.",
                     "refinementFailed": "Quizfragen konnten nicht verfeinert werden. Bitte versuche es erneut.",
                     "partialRefinementFailed": "{{ count }} Frage(n) konnten nicht verfeinert werden und wurden übersprungen."
                 },
@@ -63,7 +70,8 @@
                     "globalPlaceholder": "Alle Multiple-Choice Fragen in diesem Quiz präzisieren...",
                     "globalRefineFabLabel": "Alle Fragen mit KI verfeinern",
                     "changesLabel": "Vorgenommene Änderungen",
-                    "dismissChanges": "Änderungen schließen",
+                    "dismissChanges": "Schließen",
+                    "restoreChanges": "Vorherige Version wiederherstellen",
                     "defaultReasoning": "Die Frage wurde basierend auf deinen Anweisungen verfeinert.",
                     "errors": {
                         "failed": "Die Frage konnte nicht verfeinert werden. Bitte versuche es erneut."
@@ -98,6 +106,7 @@
             "endNow": {
                 "question": "Soll das Quiz <strong>{{ title }}</strong> wirklich jetzt beendet werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Dies verhindert alle weiteren Abgaben und startet die Veröffentlichung der Ergebnisse."
             },
+            "actionDisabledInGroup": "Dieses Quiz ist Teil einer Aufgabengruppe. Die Termine werden für alle Varianten gemeinsam verwaltet und können nicht einzeln geändert werden.",
             "edit": {
                 "title": "Quiz für {{ param }} bearbeiten",
                 "addQuestion": "Frage hinzufügen",
@@ -114,10 +123,12 @@
             "deleteQuestion": "Frage löschen",
             "refineQuestion": "Frage verfeinern",
             "editNotPossibleDuringQuiz": "Während des Quizzes ist eine Bearbeitung nicht möglich.",
+            "editNotPossibleStudentsStarted": "Eine Bearbeitung ist nicht möglich, da Studierende bereits an diesem Quiz teilgenommen haben.",
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
             "export": {
                 "title": "Alle Quizfragen zum Kurs {{ param }}",
                 "export": "Export",
+                "loading": "Quizfragen werden geladen…",
                 "questionTitle": "Kurzer Fragetitel",
                 "quizExerciseTitle": "Quiz Übungstitel"
             },
@@ -138,11 +149,11 @@
             "options": "Optionen",
             "explanation": "Erklärung",
             "randomizeQuestionOrder": "Fragen in zufälliger Reihenfolge anzeigen",
-            "includedInOverallScoreCourseLabelShort": "Berechnung des Kursergebnisses",
+            "includedInOverallScoreCourseLabelShort": "Bei Berechnung des Kursergebnisses einbeziehen",
             "includedInOverallScoreExamLabelShort": "Berechnung des Klausurergebnisses",
-            "includedInScoreYes": "Diese Aufgabe einbeziehen",
-            "includedInScoreBonus": "Als Bonuspunkte einbeziehen",
-            "includedInScoreNo": "Nicht einbeziehen",
+            "includedInScoreYes": "Ja",
+            "includedInScoreBonus": "Bonus",
+            "includedInScoreNo": "Nein",
             "allowedNumberOfAttempts": "Erlaubte Anzahl an Versuchen",
             "isVisibleBeforeStart": "Vor dem Start sichtbar",
             "isOpenForPractice": "Zum Üben freigegeben",
@@ -150,8 +161,11 @@
             "openForPractice": "Zum Üben Freigeben",
             "startQuiz": "Quiz starten",
             "startBatch": "Gruppe starten",
+            "endQuiz": "Beenden",
+            "batches": "Gruppen ({{ count }})",
             "showNow": "Für Studierende Anzeigen",
             "duration": "Dauer",
+            "hours": "Stunden",
             "minutes": "Minuten",
             "seconds": "Sekunden",
             "minutesShort": "min",

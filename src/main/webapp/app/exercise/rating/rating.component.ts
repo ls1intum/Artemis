@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -13,35 +13,46 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['./rating.component.scss'],
     imports: [TranslateDirective, StarRatingComponent],
 })
-export class RatingComponent implements OnInit, OnChanges {
+export class RatingComponent {
     private ratingService = inject(RatingService);
     private accountService = inject(AccountService);
 
-    public rating: number;
-    public disableRating = false;
+    public readonly rating = signal<number>(undefined!);
+    public readonly disableRating = signal(false);
     private previousResultId?: number;
 
     readonly result = input<Result>();
     participation = input.required<StudentParticipation>();
+    readonly isOwnerOfParticipation = input<boolean>();
 
-    ngOnInit(): void {
-        this.loadRating();
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['result'] && changes['result'].currentValue?.id !== this.previousResultId) {
-            this.previousResultId = changes['result'].currentValue?.id;
-            this.loadRating();
-        }
+    constructor() {
+        // Replaces both ngOnInit and ngOnChanges: load the rating on the initial binding and reload it whenever the
+        // result changes to a *different* id. The effect's first run handles the initial load (so a separate ngOnInit
+        // is no longer needed — it would only duplicate the request). previousResultId guards against reloading when
+        // the result reference changes but its id does not (the same guard the former hook applied). The reload runs
+        // untracked so participation()/account reads inside loadRating() are not themselves triggers.
+        effect(() => {
+            const result = this.result();
+            untracked(() => {
+                if (result?.id !== this.previousResultId) {
+                    this.previousResultId = result?.id;
+                    this.loadRating();
+                }
+            });
+        });
     }
 
     loadRating() {
         const result = this.result();
-        if (!result?.id || !this.participation() || !this.accountService.isOwnerOfParticipation(this.participation())) {
+        const participation = this.participation();
+        if (!result?.id || !participation) {
+            return;
+        }
+        if (!(this.isOwnerOfParticipation() ?? this.accountService.isOwnerOfParticipation(participation))) {
             return;
         }
         this.ratingService.getRating(result.id).subscribe((rating) => {
-            this.rating = rating ?? 0;
+            this.rating.set(rating ?? 0);
         });
     }
 
@@ -52,22 +63,22 @@ export class RatingComponent implements OnInit, OnChanges {
     onRate(event: { oldValue: number; newValue: number }) {
         // block rating to prevent double sending of post request
         const result = this.result();
-        if (this.disableRating || !result) {
+        if (this.disableRating() || !result) {
             return;
         }
 
-        const oldRating = this.rating;
-        this.rating = event.newValue;
+        const oldRating = this.rating();
+        this.rating.set(event.newValue);
 
-        this.disableRating = true;
+        this.disableRating.set(true);
         let observable: Observable<number>;
         // set/update feedback on the server
         if (oldRating) {
-            observable = this.ratingService.updateRating(this.rating, result.id!);
+            observable = this.ratingService.updateRating(this.rating(), result.id!);
         } else {
-            observable = this.ratingService.createRating(this.rating, result.id!);
+            observable = this.ratingService.createRating(this.rating(), result.id!);
         }
 
-        observable.subscribe((rating) => (this.rating = rating)).add(() => (this.disableRating = false));
+        observable.subscribe((rating) => this.rating.set(rating)).add(() => this.disableRating.set(false));
     }
 }

@@ -42,11 +42,20 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
             localVCServletService.authenticateAndAuthorizeGitRequest(servletRequest, RepositoryActionType.READ);
         }
         catch (LocalVCAuthException | LocalVCForbiddenException | LocalVCInternalException e) {
-            servletResponse.setStatus(localVCServletService.getHttpStatusForException(e, servletRequest.getRequestURI()));
+            int status = localVCServletService.getHttpStatusForException(e, servletRequest.getRequestURI());
+            // Parts of the git authentication handshake are expected and happen on every clone, so they must not be
+            // logged as warnings. The exception itself says whether it is such a case; matching on the message text
+            // silently missed the second one (an empty password) and made every clone look like a failure. Log every
+            // other rejection with its concrete reason, otherwise a 401/403 is returned silently and cannot be diagnosed.
+            if (!(e instanceof LocalVCAuthException authException && authException.isExpectedDuringHandshake())) {
+                log.warn("LocalVC fetch rejected for {} -> HTTP {} ({}: {})", servletRequest.getRequestURI(), status, e.getClass().getSimpleName(), e.getMessage());
+            }
+            servletResponse.setStatus(status);
             return;
         }
         catch (AuthenticationException e) {
             // intercept failed authentication to log it in the VCS access log
+            log.warn("LocalVC fetch authentication failed for {} ({}: {})", servletRequest.getRequestURI(), e.getClass().getSimpleName(), e.getMessage());
             localVCServletService.createVCSAccessLogForFailedAuthenticationAttempt(servletRequest);
             throw e;
         }

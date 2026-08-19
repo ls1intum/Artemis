@@ -1,10 +1,11 @@
-import { Component, OnDestroy, OnInit, computed, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Competency, CourseCompetencyType, compareSoftDueDate, getMastery } from 'app/atlas/shared/entities/competency.model';
 import { Subscription } from 'rxjs';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -35,9 +36,11 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
 
     isLoading = false;
     course?: Course;
-    competencies: Competency[] = [];
-    prerequisites: Competency[] = [];
-    parentParamSubscription: Subscription;
+    readonly competencies = signal<Competency[]>([]);
+    readonly prerequisites = signal<Competency[]>([]);
+    parentParamSubscription?: Subscription;
+    private tabReselectionSubscription?: Subscription;
+    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     isCollapsed = true;
     faAngleDown = faAngleDown;
@@ -60,22 +63,25 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         this.course = this.courseStorageService.getCourse(this.resolvedCourseId());
 
         this.loadData();
+        // Selecting this tab while already on it acts as a refresh
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.activatedRoute).subscribe(() => this.loadData());
     }
 
     ngOnDestroy(): void {
+        this.tabReselectionSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
     }
 
     get countCompetencies() {
-        return this.competencies.length;
+        return this.competencies().length;
     }
 
     get countMasteredCompetencies() {
-        return this.competencies.filter((competency) => getMastery(competency.userProgress?.first()) >= (competency.masteryThreshold ?? 100)).length;
+        return this.competencies().filter((competency) => getMastery(competency.userProgress?.first()) >= (competency.masteryThreshold ?? 100)).length;
     }
 
     get countPrerequisites() {
-        return this.prerequisites.length;
+        return this.prerequisites().length;
     }
 
     /**
@@ -87,13 +93,13 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         this.courseCompetencyService.getAllForCourse(this.resolvedCourseId(), false).subscribe({
             next: (courseCompetencies) => {
                 const courseCompetenciesResponse = courseCompetencies.body ?? [];
-                this.competencies = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY).sort(compareSoftDueDate);
-                this.prerequisites = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE);
+                this.competencies.set(courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY).sort(compareSoftDueDate));
+                this.prerequisites.set(courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE));
 
                 // Also update the course, so we do not need to fetch again next time
                 if (this.course) {
-                    this.course.competencies = this.competencies;
-                    this.course.prerequisites = this.prerequisites;
+                    this.course.competencies = this.competencies();
+                    this.course.prerequisites = this.prerequisites();
                 }
                 this.isLoading = false;
             },

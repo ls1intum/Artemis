@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -28,8 +27,6 @@ let examQuizExercise = { id: 43, quizStarted: true, course, quizQuestions: [ques
 const route = { params: of({ questionId: 1, exerciseId: 42 }) };
 
 describe('QuizStatisticsFooterComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizStatisticsFooterComponent;
     let fixture: ComponentFixture<QuizStatisticsFooterComponent>;
     let quizService: QuizExerciseService;
@@ -96,7 +93,7 @@ describe('QuizStatisticsFooterComponent', () => {
         expect(accountSpy).toHaveBeenCalled();
         expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
         expect(loadSpy).toHaveBeenCalledWith(quizExercise);
-        expect(comp.question).toEqual(question);
+        expect(comp.question()).toEqual(question);
         expect(updateDisplayedTimesSpy).toHaveBeenCalled();
         vi.clearAllTimers();
     });
@@ -110,9 +107,9 @@ describe('QuizStatisticsFooterComponent', () => {
 
         // check
         expect(accountSpy).toHaveBeenCalledOnce();
-        expect(comp.quizExercise).toEqual(quizExercise);
-        expect(comp.question).toEqual(question);
-        expect(comp.waitingForQuizStart).toBe(false);
+        expect(comp.quizExercise()).toEqual(quizExercise);
+        expect(comp.question()).toEqual(question);
+        expect(comp.waitingForQuizStart()).toBe(false);
     });
 
     it('should return remaining Time', () => {
@@ -130,7 +127,7 @@ describe('QuizStatisticsFooterComponent', () => {
         // setup
         it('should go to quiz-point-statistic', () => {
             // setup
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             fixture.componentRef.setInput('isQuizStatistic', true);
 
             // call
@@ -143,7 +140,7 @@ describe('QuizStatisticsFooterComponent', () => {
         it('should go to quiz-statistic', () => {
             // setup
             quizExercise.quizQuestions = [];
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             fixture.componentRef.setInput('isQuizStatistic', false);
             fixture.componentRef.setInput('isQuizPointStatistic', true);
 
@@ -156,7 +153,7 @@ describe('QuizStatisticsFooterComponent', () => {
 
         it('should go to previous statistic', () => {
             // setup
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             fixture.componentRef.setInput('isQuizStatistic', false);
             fixture.componentRef.setInput('isQuizPointStatistic', true);
 
@@ -169,8 +166,8 @@ describe('QuizStatisticsFooterComponent', () => {
 
         it('should call util previous Statistic', () => {
             // setup
-            comp.quizExercise = quizExercise;
-            comp.question = question;
+            comp.quizExercise.set(quizExercise);
+            comp.question.set(question);
             fixture.componentRef.setInput('isQuizStatistic', false);
             fixture.componentRef.setInput('isQuizPointStatistic', false);
 
@@ -186,7 +183,7 @@ describe('QuizStatisticsFooterComponent', () => {
         // setup
         it('should go to quiz-point-statistic for exam', () => {
             // setup
-            comp.quizExercise = examQuizExercise;
+            comp.quizExercise.set(examQuizExercise);
             fixture.componentRef.setInput('isQuizStatistic', true);
 
             // call
@@ -199,7 +196,7 @@ describe('QuizStatisticsFooterComponent', () => {
         it('should go to quiz-statistic for exam', () => {
             // setup
             examQuizExercise.quizQuestions = [];
-            comp.quizExercise = examQuizExercise;
+            comp.quizExercise.set(examQuizExercise);
             fixture.componentRef.setInput('isQuizStatistic', false);
             fixture.componentRef.setInput('isQuizPointStatistic', true);
 
@@ -212,7 +209,7 @@ describe('QuizStatisticsFooterComponent', () => {
 
         it('should go to previous statistic for exam', () => {
             // setup
-            comp.quizExercise = examQuizExercise;
+            comp.quizExercise.set(examQuizExercise);
             fixture.componentRef.setInput('isQuizStatistic', false);
             fixture.componentRef.setInput('isQuizPointStatistic', true);
 
@@ -225,8 +222,8 @@ describe('QuizStatisticsFooterComponent', () => {
 
         it('should call util previous Statistic for exam', () => {
             // setup
-            comp.quizExercise = examQuizExercise;
-            comp.question = question;
+            comp.quizExercise.set(examQuizExercise);
+            comp.question.set(question);
             fixture.componentRef.setInput('isQuizStatistic', false);
             fixture.componentRef.setInput('isQuizPointStatistic', false);
 
@@ -241,7 +238,7 @@ describe('QuizStatisticsFooterComponent', () => {
     describe('test next statistic', () => {
         it('should go to quiz-statistic', () => {
             // setup
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             fixture.componentRef.setInput('isQuizPointStatistic', true);
 
             // call
@@ -254,7 +251,7 @@ describe('QuizStatisticsFooterComponent', () => {
         it('should go to quiz-statistic with points', () => {
             // setup
             quizExercise.quizQuestions = [];
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             fixture.componentRef.setInput('isQuizPointStatistic', false);
             fixture.componentRef.setInput('isQuizStatistic', true);
 
@@ -267,7 +264,7 @@ describe('QuizStatisticsFooterComponent', () => {
 
         it('should go to next statistic', () => {
             // setup
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             fixture.componentRef.setInput('isQuizPointStatistic', false);
             fixture.componentRef.setInput('isQuizStatistic', true);
 
@@ -280,8 +277,8 @@ describe('QuizStatisticsFooterComponent', () => {
 
         it('should call util next Statistic', () => {
             // setup
-            comp.quizExercise = quizExercise;
-            comp.question = question;
+            comp.quizExercise.set(quizExercise);
+            comp.question.set(question);
             fixture.componentRef.setInput('isQuizPointStatistic', false);
             fixture.componentRef.setInput('isQuizStatistic', false);
 
@@ -296,7 +293,7 @@ describe('QuizStatisticsFooterComponent', () => {
     describe('test next statistic for exams', () => {
         it('should go to quiz-statistic for exam', () => {
             // setup
-            comp.quizExercise = examQuizExercise;
+            comp.quizExercise.set(examQuizExercise);
             fixture.componentRef.setInput('isQuizPointStatistic', true);
 
             // call
@@ -309,7 +306,7 @@ describe('QuizStatisticsFooterComponent', () => {
         it('should go to quiz-statistic with points for exam', () => {
             // setup
             examQuizExercise.quizQuestions = [];
-            comp.quizExercise = examQuizExercise;
+            comp.quizExercise.set(examQuizExercise);
             fixture.componentRef.setInput('isQuizPointStatistic', false);
             fixture.componentRef.setInput('isQuizStatistic', true);
 
@@ -322,7 +319,7 @@ describe('QuizStatisticsFooterComponent', () => {
 
         it('should go to next statistic for exam', () => {
             // setup
-            comp.quizExercise = examQuizExercise;
+            comp.quizExercise.set(examQuizExercise);
             fixture.componentRef.setInput('isQuizPointStatistic', false);
             fixture.componentRef.setInput('isQuizStatistic', true);
 
@@ -335,8 +332,8 @@ describe('QuizStatisticsFooterComponent', () => {
 
         it('should call util next Statistic for exam', () => {
             // setup
-            comp.quizExercise = examQuizExercise;
-            comp.question = question;
+            comp.quizExercise.set(examQuizExercise);
+            comp.question.set(question);
             fixture.componentRef.setInput('isQuizPointStatistic', false);
             fixture.componentRef.setInput('isQuizStatistic', false);
 

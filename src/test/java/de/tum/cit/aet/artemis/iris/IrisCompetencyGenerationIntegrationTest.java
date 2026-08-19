@@ -17,12 +17,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGenerationRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGenerationRequestDTO.CompetencyRecommendationDTO;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.dto.IrisCompetencyGenerationStatusDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyRecommendationDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 
 class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTest {
@@ -38,7 +39,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        course = courseUtilService.createCourse();
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         activateIrisGlobally();
         activateIrisFor(course);
     }
@@ -66,25 +67,23 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
 
         PyrisCompetencyRecommendationDTO expected = new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND);
         List<PyrisCompetencyRecommendationDTO> recommendations = List.of(expected, expected, expected);
-        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Generating Competencies", 10, PyrisStageState.DONE, null, false, null));
 
         // In the real system, this would be triggered by Pyris via a REST call to the Artemis server
         String jobId = "testJobId";
         String userLogin = TEST_PREFIX + "editor1";
         CompetencyExtractionJob job = new CompetencyExtractionJob(jobId, course.getId(), userUtilService.getUserByLogin(userLogin).getId());
-        irisCompetencyGenerationService.handleStatusUpdate(job, new PyrisCompetencyStatusUpdateDTO(stages, recommendations, null));
+        irisCompetencyGenerationService.handleStatusUpdate(job, new PyrisCompetencyStatusUpdateDTO(PyrisRunState.FINISHED, null, recommendations, null));
 
-        ArgumentCaptor<PyrisCompetencyStatusUpdateDTO> argumentCaptor = ArgumentCaptor.forClass(PyrisCompetencyStatusUpdateDTO.class);
-        verify(websocketMessagingService, timeout(200).times(3)).sendMessageToUser(eq(TEST_PREFIX + "editor1"), eq("/topic/iris/competencies/" + course.getId()),
+        ArgumentCaptor<IrisCompetencyGenerationStatusDTO> argumentCaptor = ArgumentCaptor.forClass(IrisCompetencyGenerationStatusDTO.class);
+        verify(websocketMessagingService, timeout(200).times(2)).sendMessageToUser(eq(TEST_PREFIX + "editor1"), eq("/topic/iris/competencies/" + course.getId()),
                 argumentCaptor.capture());
 
-        List<PyrisCompetencyStatusUpdateDTO> allValues = argumentCaptor.getAllValues();
-        assertThat(allValues.get(0).stages()).hasSize(2);
+        List<IrisCompetencyGenerationStatusDTO> allValues = argumentCaptor.getAllValues();
+        assertThat(allValues.get(0).runState()).isEqualTo(PyrisRunState.RUNNING);
         assertThat(allValues.get(0).result()).isNull();
-        assertThat(allValues.get(1).stages()).hasSize(2);
-        assertThat(allValues.get(1).result()).isNull();
-        assertThat(allValues.get(2).stages()).hasSize(1);
-        assertThat(allValues.get(2).result()).isEqualTo(recommendations);
+        assertThat(allValues.get(1).runState()).isEqualTo(PyrisRunState.FINISHED);
+        assertThat(allValues.get(1).result()).isEqualTo(recommendations);
+        assertThat(JsonObjectMapper.get().writeValueAsString(allValues.get(1))).doesNotContain("tokens");
     }
 
     @Test

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, effect, inject, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -35,6 +35,7 @@ import { CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/sh
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { Subscription } from 'rxjs';
 import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -61,7 +62,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
-    private changeDetector = inject(ChangeDetectorRef);
     private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     readonly CommitState = CommitState;
@@ -120,16 +120,15 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     /** END WIP */
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
-    private selectedFileValue?: string;
-    unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
-    fileBadges: { [fileName: string]: FileBadge[] };
+    private readonly selectedFileValue = signal<string | undefined>(undefined);
+    unsavedFilesValue!: { [fileName: string]: string }; // {[fileName]: fileContent}; set in constructor via initializeProperties()
+    readonly fileBadges = signal<{ [fileName: string]: FileBadge[] }>({});
     get selectedFile(): string | undefined {
-        return this.selectedFileValue;
+        return this.selectedFileValue();
     }
 
     set selectedFile(file: string | undefined) {
-        this.selectedFileValue = file;
-        this.changeDetector.markForCheck();
+        this.selectedFileValue.set(file);
     }
 
     get problemStatementIdentifier(): string {
@@ -141,11 +140,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     /** Code Editor State Variables **/
-    editorState: EditorState;
-    commitState: CommitState;
+    editorState!: EditorState; // set in constructor via initializeProperties()
+    commitState!: CommitState; // set in constructor via initializeProperties()
 
-    errorFiles: string[] = [];
-    annotations: Array<Annotation> = [];
+    readonly errorFiles = signal<string[]>([]);
+    readonly annotations = signal<Array<Annotation>>([]);
 
     private fileTreeChangeSubscription?: Subscription;
 
@@ -205,11 +204,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         this.collectFeedbackSuggestionBadges(fileBadgesByType);
         this.collectReviewThreadBadges(fileBadgesByType);
 
-        this.fileBadges = {};
+        const fileBadges: { [fileName: string]: FileBadge[] } = {};
         for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
-            this.fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
+            fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
         }
-        this.changeDetector.markForCheck();
+        this.fileBadges.set(fileBadges);
     }
 
     private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
@@ -274,7 +273,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     initializeProperties = () => {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
-        this.fileBadges = {};
+        this.fileBadges.set({});
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
     };
@@ -306,7 +305,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
             this.editorState = EditorState.CLEAN;
         }
-        this.monacoEditor()?.onFileChange(fileChange);
+        void this.monacoEditor()?.onFileChange(fileChange);
 
         this.onFileChanged.emit();
     }
@@ -390,7 +389,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         if (syncService?.isInitialized() && syncService.isFileOpen(fileName) && syncService.isFileAwaitingInitialSync(fileName)) {
             return;
         }
-        this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
+        this.unsavedFiles = cloneWith(this.unsavedFiles, { [fileName]: text });
         this.onFileChanged.emit();
     }
 
@@ -403,7 +402,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * Used by other components to display errors.
      * @param error the translation key of the error that should be displayed
      */
-    onError(error: any) {
+    onError(error: string) {
         let errorTranslationKey: string;
         const translationParams = { connectionIssue: '' };
         if (!error.includes(ConnectionError.message)) {
@@ -445,8 +444,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * @param annotations The new annotations array
      */
     onAnnotations(annotations: Array<Annotation>) {
-        this.annotations = annotations;
-        this.errorFiles = uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName));
+        this.annotations.set(annotations);
+        this.errorFiles.set(uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName)));
     }
 
     /**

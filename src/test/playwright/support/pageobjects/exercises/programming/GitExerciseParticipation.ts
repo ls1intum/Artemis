@@ -24,9 +24,19 @@ export class GitExerciseParticipation {
         await programmingExerciseOverview.getCodeButton().click();
 
         if (cloneMethod === GitCloneMethod.https) {
-            repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
+            // Force username + password into the URL userinfo deterministically. The scraped clone URL may
+            // already carry a VCS-access-token userinfo: the code button embeds `login:token@` whenever the
+            // "with token" toggle is (or was) active, and under the popover's async re-render the plain-HTTPS
+            // URL is occasionally read mid-toggle. A naive `replace(username, username:password)` would then
+            // mangle the credential into `login:password:token@`, so the password clone sends a token, which
+            // LocalVC rejects as "Invalid password". Overwriting the whole userinfo guarantees password auth.
+            const parsedUrl = new URL(repoUrl);
+            parsedUrl.username = student.username!;
+            parsedUrl.password = student.password!;
+            repoUrl = parsedUrl.toString();
         }
-        console.log(`Cloning repository from ${repoUrl}`);
+        // Mask the embedded credentials when logging the clone URL.
+        console.log(`Cloning repository from ${repoUrl.replace(/\/\/[^@/]*@/, '//<credentials>@')}`);
         const urlParts = repoUrl.split('/');
         const repoName = urlParts[urlParts.length - 1];
         let exerciseRepo;

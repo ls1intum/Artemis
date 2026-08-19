@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -20,15 +19,12 @@ import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-ac
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 describe('CreateTutorialGroupsConfigurationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CreateTutorialGroupsConfigurationComponent>;
     let component: CreateTutorialGroupsConfigurationComponent;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
@@ -40,7 +36,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(CourseManagementService),
@@ -102,6 +98,6 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups-checklist']);
         expect(updateCourseSpy).toHaveBeenCalledOnce();
-        expect(updateCourseSpy).toHaveBeenCalledWith(component.course);
+        expect(updateCourseSpy).toHaveBeenCalledWith(component.course());
     });
 });

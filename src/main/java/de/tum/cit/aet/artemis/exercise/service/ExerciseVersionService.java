@@ -9,16 +9,20 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -41,7 +45,7 @@ import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -61,7 +65,7 @@ public class ExerciseVersionService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final TextExerciseRepository textExerciseRepository;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
     private final Optional<ModelingRepositoryApi> modelingRepositoryApi;
 
@@ -77,18 +81,22 @@ public class ExerciseVersionService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
+
+    // Executor for versioning work. In production it delegates to the shared async pool so exercise updates do not
+    // block on versioning; under the test profile it is synchronous, keeping versioning-triggering tests deterministic.
+    private final Executor exerciseVersionExecutor;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
-            QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
+            QuizExerciseRepository quizExerciseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
-            ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher,
-            com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+            ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher, ObjectMapper objectMapper,
+            @Qualifier("exerciseVersionTaskExecutor") Executor exerciseVersionExecutor) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.textExerciseRepository = textExerciseRepository;
+        this.textRepositoryApi = textRepositoryApi;
         this.modelingRepositoryApi = modelingRepositoryApi;
         this.fileUploadApi = fileUploadApi;
         this.userRepository = userRepository;
@@ -97,6 +105,7 @@ public class ExerciseVersionService {
         this.exerciseReviewVersionChangeService = exerciseReviewVersionChangeService;
         this.eventPublisher = eventPublisher;
         this.objectMapper = objectMapper;
+        this.exerciseVersionExecutor = exerciseVersionExecutor;
     }
 
     /**
@@ -119,20 +128,82 @@ public class ExerciseVersionService {
      * @param targetExercise The exercise to create a version of
      */
     public void createExerciseVersion(Exercise targetExercise) {
+        // Resolve the current user on the request thread: the async executor thread has no SecurityContext.
         User user = userRepository.getUser();
         createExerciseVersion(targetExercise, user);
     }
 
     /**
-     * Creates an exercise version. This function would fetch the exercise eagerly
-     * that corresponds to its type,
-     * initialize an {@link ExerciseSnapshotDTO} and create a new
-     * {@link ExerciseVersion} to persist.
+     * Requests the (asynchronous) creation of an exercise version. This schedules the actual work on the
+     * {@code exerciseVersionExecutor} and returns immediately, so exercise updates do not block the end user while
+     * versioning executes (which may involve slower-than-usual queries and git access). Under the {@code test} profile
+     * the executor is synchronous, so versioning still completes before the calling test continues.
      *
      * @param targetExercise The exercise to create a version of
      * @param author         The user who created the version
      */
     public void createExerciseVersion(Exercise targetExercise, User author) {
+        createExerciseVersion(targetExercise, author, null, null, null);
+    }
+
+    /**
+     * Requests the (asynchronous) creation of an exercise version for a repository commit, identifying that commit.
+     * <p>
+     * The repository and the commit together are what let the resulting new commit alert be attributed to the client that made
+     * the commit, so that client can filter its own alert out instead of being warned about its own submit. Callers that do
+     * not create a commit pass nothing and no alert is ever attributed to them.
+     *
+     * @param targetExercise                  The exercise to create a version of
+     * @param author                          The user who created the version
+     * @param triggeringRepositoryType        The repository this request committed to, or null when it committed to none
+     * @param triggeringAuxiliaryRepositoryId The id of that repository when it is an auxiliary one, null otherwise
+     * @param triggeringCommitHash            The commit this request created, or null when the request created no commit
+     */
+    public void createExerciseVersion(Exercise targetExercise, User author, @Nullable RepositoryType triggeringRepositoryType, @Nullable Long triggeringAuxiliaryRepositoryId,
+            @Nullable String triggeringCommitHash) {
+        // Read on the calling thread for the same reason the author is: the client session id lives in the request, and the
+        // executor thread has no request context.
+        String clientSessionId = ExerciseEditorSyncService.getClientSessionId();
+        ExerciseEditorSyncTarget triggeringTarget = attributableTarget(triggeringRepositoryType);
+        exerciseVersionExecutor
+                .execute(() -> createExerciseVersionInternal(targetExercise, author, clientSessionId, triggeringTarget, triggeringAuxiliaryRepositoryId, triggeringCommitHash));
+    }
+
+    /**
+     * Maps a committed repository to the synchronization target an alert about it would carry, for the repositories an alert
+     * can be attributed to.
+     * <p>
+     * An auxiliary repository maps to the auxiliary target; which of the exercise's auxiliary repositories it is has to be
+     * settled separately, by the id, because one target covers all of them.
+     */
+    @Nullable
+    private static ExerciseEditorSyncTarget attributableTarget(@Nullable RepositoryType repositoryType) {
+        if (repositoryType == null) {
+            return null;
+        }
+        return switch (repositoryType) {
+            case TEMPLATE -> ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
+            case SOLUTION -> ExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
+            case TESTS -> ExerciseEditorSyncTarget.TESTS_REPOSITORY;
+            case AUXILIARY -> ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
+            // a student repository has no editor to warn and never produces a version
+            case USER -> null;
+        };
+    }
+
+    /**
+     * Creates an exercise version: fetches the exercise eagerly for its type, initializes an {@link ExerciseSnapshotDTO}
+     * and persists a new {@link ExerciseVersion}. Runs on the {@code exerciseVersionExecutor} thread.
+     *
+     * @param targetExercise                  The exercise to create a version of
+     * @param author                          The user who created the version
+     * @param clientSessionId                 the session of the client that triggered this version, or null when no request did
+     * @param triggeringTarget                the repository that client committed to, or null when it committed to none
+     * @param triggeringAuxiliaryRepositoryId the id of that repository when it is an auxiliary one, null otherwise
+     * @param triggeringCommitHash            the commit that client created, or null when it created none
+     */
+    private void createExerciseVersionInternal(Exercise targetExercise, User author, @Nullable String clientSessionId, @Nullable ExerciseEditorSyncTarget triggeringTarget,
+            @Nullable Long triggeringAuxiliaryRepositoryId, @Nullable String triggeringCommitHash) {
         if (author == null) {
             log.error("No active user during exercise version creation check");
             return;
@@ -150,7 +221,8 @@ public class ExerciseVersionService {
             ExerciseVersion exerciseVersion = new ExerciseVersion();
             exerciseVersion.setExerciseId(targetExercise.getId());
             exerciseVersion.setAuthorId(author.getId());
-            ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
+            var programmingCommitHashes = ExerciseVersionCommitHashResolver.resolveForExercise(exercise, gitService);
+            ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, programmingCommitHashes);
             // Normalize through JSON round-trip to ensure consistent null/empty list handling
             // (@JsonInclude(NON_EMPTY) causes empty lists to become null after deserialization)
             ExerciseSnapshotDTO exerciseSnapshot = objectMapper.readValue(objectMapper.writeValueAsString(rawSnapshot), ExerciseSnapshotDTO.class);
@@ -166,12 +238,12 @@ public class ExerciseVersionService {
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
             ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
             this.determineSynchronizationForActiveEditors(exercise.getId(), exerciseSnapshot, previousVersion.map(ExerciseVersion::getExerciseSnapshot).orElse(null), author,
-                    savedExerciseVersion.getId());
+                    savedExerciseVersion.getId(), clientSessionId, triggeringTarget, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
             previousVersion.ifPresent(prev -> {
                 try {
                     List<CommentThreadDTO> updatedThreads = exerciseReviewVersionChangeService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot).stream()
-                            .filter(thread -> thread.getId() != null).map(thread -> new CommentThreadDTO(thread, List.of())).collect(Collectors.toUnmodifiableList());
+                            .filter(thread -> thread.getId() != null).map(thread -> new CommentThreadDTO(thread, List.of())).toList();
                     for (CommentThreadDTO updatedThread : updatedThreads) {
                         exerciseEditorSyncService.broadcastReviewThreadUpdate(exercise.getId(), ReviewThreadSyncDTO.threadUpdated(updatedThread));
                     }
@@ -210,7 +282,7 @@ public class ExerciseVersionService {
         Exercise fetched = switch (exerciseType) {
             case PROGRAMMING -> programmingExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case QUIZ -> quizExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
-            case TEXT -> textExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
+            case TEXT -> textRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
             case MODELING -> modelingRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
             case FILE_UPLOAD -> fileUploadApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
         };
@@ -235,9 +307,16 @@ public class ExerciseVersionService {
      * @param previousSnapshot     the previous snapshot (optional)
      * @param author               the author of the new version
      * @param newExerciseVersionId the id of the new exercise version
+     * @param clientSessionId      the session of the client that triggered this version, so its own editor can filter the
+     *                                 alert out again, or null when no request triggered it
+     * @param triggeringTarget     the repository that client committed to, checked against the repository this alert is
+     *                                 about before attributing it
+     * @param triggeringCommitHash the commit that client created, used to check that the alert really is about its own
+     *                                 commit before attributing it
      */
     private void determineSynchronizationForActiveEditors(Long exerciseId, ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot, User author,
-            Long newExerciseVersionId) {
+            Long newExerciseVersionId, @Nullable String clientSessionId, @Nullable ExerciseEditorSyncTarget triggeringTarget, @Nullable Long triggeringAuxiliaryRepositoryId,
+            @Nullable String triggeringCommitHash) {
         if (previousSnapshot == null || newSnapshot == null) {
             return;
         }
@@ -246,18 +325,23 @@ public class ExerciseVersionService {
         ProgrammingExerciseSnapshotDTO previousProgrammingData = previousSnapshot.programmingData();
         ExerciseEditorSyncTarget target = null;
         Long auxiliaryRepositoryId = null;
+        // The commit the detected repository now stands at, needed to decide whose commit this alert is about
+        String changedCommitId = null;
 
         // Repository commits cannot change simultaneously because each commit triggers a separate
         // version creation. The if-else chain intentionally detects only the first changed repository.
         if (newProgrammingData != null && previousProgrammingData != null) {
             if (participationCommitChanged(previousProgrammingData.templateParticipation(), newProgrammingData.templateParticipation())) {
                 target = ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
+                changedCommitId = participationCommitId(newProgrammingData.templateParticipation());
             }
             else if (participationCommitChanged(previousProgrammingData.solutionParticipation(), newProgrammingData.solutionParticipation())) {
                 target = ExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
+                changedCommitId = participationCommitId(newProgrammingData.solutionParticipation());
             }
             else if (!Objects.equals(previousProgrammingData.testsCommitId(), newProgrammingData.testsCommitId())) {
                 target = ExerciseEditorSyncTarget.TESTS_REPOSITORY;
+                changedCommitId = newProgrammingData.testsCommitId();
             }
             else {
                 Map<Long, String> previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream()
@@ -269,6 +353,7 @@ public class ExerciseVersionService {
                     if (!Objects.equals(previousCommitId, auxiliary.commitId())) {
                         target = ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
                         auxiliaryRepositoryId = auxiliary.id();
+                        changedCommitId = auxiliary.commitId();
                         break;
                     }
                 }
@@ -282,7 +367,8 @@ public class ExerciseVersionService {
             // to refresh
             // For problem statement changes, changes are broadcasted via client-to-client
             // messages.
-            exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId);
+            exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId,
+                    sessionOwningCommit(clientSessionId, triggeringTarget, triggeringAuxiliaryRepositoryId, triggeringCommitHash, target, auxiliaryRepositoryId, changedCommitId));
         }
         if (!changedFields.isEmpty()) {
             exerciseEditorSyncService.broadcastNewExerciseVersionAlert(exerciseId, newExerciseVersionId, author, changedFields);
@@ -392,6 +478,54 @@ public class ExerciseVersionService {
      * @param newParticipation      the new participation snapshot
      * @return true if the commit id changed
      */
+    /**
+     * The session an alert may be attributed to, which is only the session whose own commit the alert describes.
+     * <p>
+     * Version jobs run asynchronously on several workers and read the repository refs when they execute, not when they were
+     * queued. So a job queued by one client can snapshot a commit another client pushed in the meantime. Attributing that
+     * alert to the queueing client would make its editor filter out a warning about somebody else's commit, and a missing
+     * warning is worse than the duplicate warning this attribution exists to remove. Whenever the identity cannot be
+     * established the alert goes out unattributed, which warns everyone, including the committer.
+     *
+     * The repository has to match as well as the commit. A commit id identifies an object, not a place: repositories of one
+     * exercise are seeded from each other, so the same commit legitimately exists in more than one of them, and an empty
+     * commit made in two of them by the same author in the same second is byte-identical and therefore has the same id.
+     * Matching on the id alone would let an alert about one repository be attributed to a client that committed to another.
+     *
+     * For an auxiliary repository the id has to match as well, because one target covers every auxiliary repository of the
+     * exercise. An auxiliary commit whose id could not be resolved stays unattributed rather than matching all of them.
+     *
+     * @param clientSessionId                 the session that queued this version, or null if no request did
+     * @param triggeringTarget                the repository that session committed to, or null if it committed to none
+     * @param triggeringAuxiliaryRepositoryId the id of that repository when it is an auxiliary one, null otherwise
+     * @param triggeringCommitHash            the commit that session created, or null if it created none
+     * @param alertedTarget                   the repository this alert is about
+     * @param alertedAuxiliaryRepositoryId    the auxiliary repository this alert is about, null for the other targets
+     * @param changedCommitId                 the commit the alerted repository now stands at
+     * @return the session to attribute the alert to, or null to attribute it to nobody
+     */
+    @Nullable
+    static String sessionOwningCommit(@Nullable String clientSessionId, @Nullable ExerciseEditorSyncTarget triggeringTarget, @Nullable Long triggeringAuxiliaryRepositoryId,
+            @Nullable String triggeringCommitHash, @Nullable ExerciseEditorSyncTarget alertedTarget, @Nullable Long alertedAuxiliaryRepositoryId,
+            @Nullable String changedCommitId) {
+        if (clientSessionId == null || triggeringTarget == null || triggeringCommitHash == null || alertedTarget == null || changedCommitId == null) {
+            return null;
+        }
+        if (triggeringTarget != alertedTarget || !triggeringCommitHash.equals(changedCommitId)) {
+            return null;
+        }
+        if (alertedTarget == ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY
+                && (triggeringAuxiliaryRepositoryId == null || !triggeringAuxiliaryRepositoryId.equals(alertedAuxiliaryRepositoryId))) {
+            return null;
+        }
+        return clientSessionId;
+    }
+
+    @Nullable
+    private static String participationCommitId(ProgrammingExerciseSnapshotDTO.@Nullable ParticipationSnapshotDTO participation) {
+        return participation == null ? null : participation.commitId();
+    }
+
     private boolean participationCommitChanged(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previousParticipation,
             ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO newParticipation) {
         if (previousParticipation == null && newParticipation == null) {

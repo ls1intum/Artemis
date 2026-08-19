@@ -4,6 +4,7 @@ import { resizeCanvas } from '../utils/resize.utils';
 import { LoadedImage } from 'app/shared-ui/image-cropper/interfaces/loaded-image.interface';
 import { CropperPosition } from 'app/shared-ui/image-cropper/interfaces/cropper-position.interface';
 import { ImageCroppedEvent } from 'app/shared-ui/image-cropper/interfaces/image-cropped-event.interface';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Injectable({ providedIn: 'root' })
 export class CropService {
@@ -11,7 +12,7 @@ export class CropService {
         const imagePosition = CropService.getImagePosition(sourceImage, loadedImage, cropper, settings);
         const width = imagePosition.x2 - imagePosition.x1;
         const height = imagePosition.y2 - imagePosition.y1;
-        const cropCanvas = document.createElement('canvas') as HTMLCanvasElement;
+        const cropCanvas = document.createElement('canvas');
         cropCanvas.width = width;
         cropCanvas.height = height;
 
@@ -37,7 +38,7 @@ export class CropService {
             width,
             height,
             imagePosition,
-            cropperPosition: { ...cropper },
+            cropperPosition: deepClone(cropper),
         };
         if (settings.containWithinAspectRatio) {
             output.offsetImagePosition = CropService.getOffsetImagePosition(sourceImage, loadedImage, cropper, settings);

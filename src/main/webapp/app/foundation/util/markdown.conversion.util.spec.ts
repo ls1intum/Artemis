@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { MarkdownitTagClass, htmlForMarkdown, markdownForHtml } from './markdown.conversion.util';
-import type { PluginSimple } from 'markdown-it';
-import MarkdownIt from 'markdown-it';
+import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
+import MarkdownIt, { type MarkdownIt as MarkdownItInstance } from 'markdown-it';
 
 describe('markdown.conversion.util', () => {
     describe('htmlForMarkdown', () => {
@@ -246,12 +246,49 @@ describe('markdown.conversion.util', () => {
                 const result = htmlForMarkdown('> [!WARNING]\n> This is a warning');
                 expect(result).toContain('markdown-alert');
             });
+
+            it('should emit the alert wrapper, default title and octicon for each alert type', () => {
+                const cases: { marker: string; type: string; title: string }[] = [
+                    { marker: 'NOTE', type: 'note', title: 'Note' },
+                    { marker: 'TIP', type: 'tip', title: 'Tip' },
+                    { marker: 'IMPORTANT', type: 'important', title: 'Important' },
+                    { marker: 'WARNING', type: 'warning', title: 'Warning' },
+                    { marker: 'CAUTION', type: 'caution', title: 'Caution' },
+                ];
+                for (const { marker, type, title } of cases) {
+                    const result = htmlForMarkdown(`> [!${marker}]\n> Body text`);
+                    expect(result).toContain(`<div class="markdown-alert markdown-alert-${type}">`);
+                    expect(result).toContain(`<p class="markdown-alert-title">`);
+                    expect(result).toContain('class="octicon');
+                    expect(result).toContain(title);
+                    // the marker line itself is stripped, the body is kept
+                    expect(result).toContain('Body text');
+                    expect(result).not.toContain(`[!${marker}]`);
+                }
+            });
+
+            it('should use a custom alert title when provided', () => {
+                const result = htmlForMarkdown('> [!NOTE] Custom heading\n> Body');
+                expect(result).toContain('<div class="markdown-alert markdown-alert-note">');
+                expect(result).toContain('Custom heading');
+            });
+
+            it('should be case-insensitive for the alert marker', () => {
+                const result = htmlForMarkdown('> [!note]\n> Body');
+                expect(result).toContain('<div class="markdown-alert markdown-alert-note">');
+            });
+
+            it('should leave a normal blockquote untouched', () => {
+                const result = htmlForMarkdown('> Just a quote');
+                expect(result).toContain('<blockquote>');
+                expect(result).not.toContain('markdown-alert');
+            });
         });
 
         describe('custom extensions', () => {
             it('should apply custom extensions', () => {
                 let extensionCalled = false;
-                const customExtension: PluginSimple = (md: MarkdownIt) => {
+                const customExtension: MarkdownItPlugin = (md) => {
                     extensionCalled = true;
                     md.core.ruler.push('test-extension', () => {});
                 };
@@ -262,11 +299,11 @@ describe('markdown.conversion.util', () => {
 
             it('should apply multiple custom extensions', () => {
                 const callOrder: number[] = [];
-                const extension1: PluginSimple = (md: MarkdownIt) => {
+                const extension1: MarkdownItPlugin = (md) => {
                     callOrder.push(1);
                     md.core.ruler.push('ext1', () => {});
                 };
-                const extension2: PluginSimple = (md: MarkdownIt) => {
+                const extension2: MarkdownItPlugin = (md) => {
                     callOrder.push(2);
                     md.core.ruler.push('ext2', () => {});
                 };
@@ -463,7 +500,7 @@ public class Test {
     });
 
     describe('MarkdownitTagClass', () => {
-        let md: MarkdownIt;
+        let md: MarkdownItInstance;
 
         beforeEach(() => {
             md = new MarkdownIt();

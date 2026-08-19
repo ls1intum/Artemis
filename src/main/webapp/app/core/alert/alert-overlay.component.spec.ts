@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
@@ -8,8 +7,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Alert Overlay Component Tests', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: AlertOverlayComponent;
     let fixture: ComponentFixture<AlertOverlayComponent>;
     let alertService: AlertService;
@@ -31,14 +28,13 @@ describe('Alert Overlay Component Tests', () => {
         vi.restoreAllMocks();
     });
 
-    it('should call alertService.get on init', () => {
-        const getStub = vi.spyOn(alertService, 'get');
+    it('should reactively expose the alerts from the alert service', () => {
+        // The overlay binds to the service signal so it re-renders under zoneless change detection.
+        expect(comp.alerts).toBe(alertService.alerts);
 
-        // WHEN
-        comp.ngOnInit();
+        alertService.addAlert({ type: AlertType.INFO, message: '123' });
 
-        // THEN
-        expect(getStub).toHaveBeenCalledOnce();
+        expect(comp.alerts()).toHaveLength(1);
     });
 
     it('should close all alerts on destroy', () => {
@@ -52,8 +48,6 @@ describe('Alert Overlay Component Tests', () => {
     });
 
     it('should call action callback if button is clicked', () => {
-        comp.ngOnInit();
-
         const callback = vi.fn();
         const alert = alertService.addAlert({
             type: AlertType.INFO,
@@ -66,7 +60,7 @@ describe('Alert Overlay Component Tests', () => {
 
         fixture.detectChanges();
 
-        const btn = fixture.debugElement.query(By.css('.btn'));
+        const btn = fixture.debugElement.query(By.css('button[pButton]'));
         expect(btn).not.toBeNull();
 
         btn.nativeElement.click();
@@ -76,8 +70,6 @@ describe('Alert Overlay Component Tests', () => {
     });
 
     it('should close the alert if the close icon is clicked', () => {
-        comp.ngOnInit();
-
         const onClose = vi.fn();
         const alert = alertService.addAlert({
             type: AlertType.INFO,
@@ -99,13 +91,13 @@ describe('Alert Overlay Component Tests', () => {
     });
 
     it('should not render the close icon if alert is not dismissible', () => {
-        comp.ngOnInit();
-
         alertService.addAlert({
             type: AlertType.INFO,
             message: '123',
             dismissible: false,
         });
+
+        fixture.detectChanges();
 
         const btn = fixture.debugElement.query(By.css('jhi-close-circle'));
         expect(btn).toBeNull();

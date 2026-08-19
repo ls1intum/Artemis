@@ -1,0 +1,30 @@
+:host {
+    position: relative;
+    border-radius: var(--tumaet-ui-radius-md);
+    text-decoration: none;
+}
+
+:host {
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background-color: transparent;
+        pointer-events: none;
+        transition: background-color 0.15s ease;
+    }
+
+    &:hover:not(:disabled)::after {
+        background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+}

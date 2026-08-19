@@ -162,6 +162,19 @@ Follow these tips to write performant tests:
 * Use the [Awaitility](https://github.com/awaitility) library for asserting async code.
 * Limit object creation in tests and the test setup.
 
+After a server test run, Artemis prints a `Test Bucket Timing Summary` for the integration-test buckets.
+Use the `Wall time` column to find the bucket that dominates the parallel run, `Class time` to see the accumulated time spent in test classes,
+and `Gap` to estimate waiting time where no class in the bucket was active.
+The slowest-class list below the table identifies candidates for local setup optimizations or for rebalancing into a compatible bucket.
+A `Test CPU Usage Summary` follows it, showing average/peak system- and JVM-wide CPU utilization and a parallelization headroom hint.
+If many cores stay idle, the run is bound by the per-bucket `@ResourceLock` (one active class per bucket) rather than by CPU.
+
+Experimental: to bound the peak number of concurrently cached Spring contexts (server starts) on machines with fewer cores, run with
+`-Dartemis.test.wave-ordering.enabled=true -Dspring.test.context.cache.maxSize=<waveSize>`.
+This groups buckets into waves of `artemis.test.wave-size` (default: available cores) via `BucketWaveClassOrderer`, so finished
+waves' contexts can be evicted before the next wave loads. Validate per target machine — JUnit has no cross-class barrier, so a
+wave boundary can occasionally reload a context.
+
 
 ## Spring Boot Server Starts and Context Configuration
 

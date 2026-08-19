@@ -21,7 +21,6 @@ import { MockProvider } from 'ng-mocks';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 /**
  * Test component that simulates an exercise creation form
@@ -83,7 +82,6 @@ class TestExerciseFormComponent {
  * 6. Saves the exercise
  */
 describe('Exercise Creation with Competency Suggestions - E2E', () => {
-    setupTestBed({ zoneless: true });
     let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
     let fixture: ComponentFixture<TestExerciseFormComponent>;
     let component: TestExerciseFormComponent;
@@ -185,6 +183,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
                 // Step 5: Trigger suggestions via component API to avoid jhi-button internals
                 component.competencySelection().suggestCompetencies();
                 vi.runAllTimers();
+                fixture.detectChanges();
 
                 // Step 6: Verify API was called with correct parameters
                 expect(httpSpy).toHaveBeenCalledWith('/api/atlas/competencies/suggest', {
@@ -204,8 +203,8 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
                 // Step 9: Select suggested competencies via component API for reliability
                 const compForSelect = component.competencySelection();
-                const linkJava = compForSelect.competencyLinks?.find((l) => l.competency?.id === 1);
-                const linkDS = compForSelect.competencyLinks?.find((l) => l.competency?.id === 2);
+                const linkJava = compForSelect.competencyLinks()?.find((l) => l.competency?.id === 1);
+                const linkDS = compForSelect.competencyLinks()?.find((l) => l.competency?.id === 2);
                 expect(linkJava).toBeTruthy();
                 expect(linkDS).toBeTruthy();
                 if (linkJava) {
@@ -253,8 +252,8 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
                 // Select both suggested and non-suggested via component API
                 const compMixed = component.competencySelection();
-                const linkTesting = compMixed.competencyLinks?.find((l) => l.competency?.id === 4);
-                const linkPatterns = compMixed.competencyLinks?.find((l) => l.competency?.id === 5);
+                const linkTesting = compMixed.competencyLinks()?.find((l) => l.competency?.id === 4);
+                const linkPatterns = compMixed.competencyLinks()?.find((l) => l.competency?.id === 5);
                 expect(linkTesting).toBeTruthy();
                 expect(linkPatterns).toBeTruthy();
                 if (linkTesting) {
@@ -358,7 +357,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             // No suggestions should be shown, but component should still function
             const competencyComponent = component.competencySelection();
             expect(competencyComponent.suggestedCompetencyIds.size).toBe(0);
-            expect(competencyComponent.isSuggesting).toBeFalsy();
+            expect(competencyComponent.isSuggesting()).toBeFalsy();
 
             // User should still be able to manually select competencies
             const checkboxes = fixture.debugElement.queryAll(By.css('input[type="checkbox"]'));

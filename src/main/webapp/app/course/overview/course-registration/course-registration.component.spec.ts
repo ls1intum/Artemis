@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseRegistrationComponent } from 'app/course/overview/course-registration/course-registration.component';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -17,8 +16,6 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('CourseRegistrationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseRegistrationComponent>;
     let component: CourseRegistrationComponent;
     let courseService: CourseManagementService;
@@ -85,7 +82,7 @@ describe('CourseRegistrationComponent', () => {
 
     it('should show registrable courses', () => {
         component.loadRegistrableCourses();
-        expect(component.coursesToSelect).toHaveLength(1);
+        expect(component.coursesToSelect()).toHaveLength(1);
         expect(findAllForRegistrationStub).toHaveBeenCalledOnce();
     });
 
@@ -93,7 +90,7 @@ describe('CourseRegistrationComponent', () => {
         component.loadRegistrableCourses();
         component.removeCourseFromList(course1.id!);
 
-        expect(component.coursesToSelect).toHaveLength(0);
+        expect(component.coursesToSelect()).toHaveLength(0);
     });
 
     it('should filter registrable courses based on search term', () => {
@@ -103,8 +100,8 @@ describe('CourseRegistrationComponent', () => {
         component.searchTermString = 'Course A';
         component.applySearch();
 
-        expect(component.filteredCoursesToSelect).toHaveLength(1);
-        expect(component.filteredCoursesToSelect[0]).toEqual(course1);
+        expect(component.filteredCoursesToSelect()).toHaveLength(1);
+        expect(component.filteredCoursesToSelect()[0]).toEqual(course1);
     });
 
     it('should sort registrable courses by title in ascending order', () => {
@@ -114,7 +111,7 @@ describe('CourseRegistrationComponent', () => {
         component.ascending = true;
         component.loadRegistrableCourses();
 
-        expect(component.filteredCoursesToSelect).toEqual([course1, course2, course3]);
+        expect(component.filteredCoursesToSelect()).toEqual([course1, course2, course3]);
     });
 
     it('should sort registrable courses by title in descending order', () => {
@@ -124,7 +121,7 @@ describe('CourseRegistrationComponent', () => {
         component.ascending = false;
         component.loadRegistrableCourses();
 
-        expect(component.filteredCoursesToSelect).toEqual([course3, course2, course1]);
+        expect(component.filteredCoursesToSelect()).toEqual([course3, course2, course1]);
     });
 
     it('should sort registrable courses by semester in ascending order', () => {
@@ -133,7 +130,7 @@ describe('CourseRegistrationComponent', () => {
         component.ascending = true;
         component.loadRegistrableCourses();
 
-        expect(component.filteredCoursesToSelect).toEqual([course1, course2, course3]);
+        expect(component.filteredCoursesToSelect()).toEqual([course1, course2, course3]);
     });
 
     it('should sort registrable courses by semester in descending order', async () => {
@@ -142,7 +139,7 @@ describe('CourseRegistrationComponent', () => {
         component.ascending = false;
         component.loadRegistrableCourses();
 
-        expect(component.filteredCoursesToSelect).toEqual([course3, course2, course1]);
+        expect(component.filteredCoursesToSelect()).toEqual([course3, course2, course1]);
     });
 
     it('should call transition and update URL with sort parameters', () => {
@@ -235,7 +232,7 @@ describe('CourseRegistrationComponent', () => {
         component.loadRegistrableCourses();
 
         // Should sort by title in ascending order (default behavior)
-        expect(component.coursesToSelect[0]).toEqual(course1);
+        expect(component.coursesToSelect()[0]).toEqual(course1);
     });
 
     it('should use defaultSort when predicate is undefined', () => {
@@ -245,7 +242,7 @@ describe('CourseRegistrationComponent', () => {
         component.loadRegistrableCourses();
 
         // Should sort by title in ascending order (default behavior)
-        expect(component.coursesToSelect[0]).toEqual(course1);
+        expect(component.coursesToSelect()[0]).toEqual(course1);
     });
 
     it('should show all courses when search term is empty', () => {
@@ -255,7 +252,7 @@ describe('CourseRegistrationComponent', () => {
         component.searchTermString = '';
         component.applySearch();
 
-        expect(component.filteredCoursesToSelect).toHaveLength(3);
+        expect(component.filteredCoursesToSelect()).toHaveLength(3);
     });
 
     it('should handle courses without title in search', () => {
@@ -266,18 +263,18 @@ describe('CourseRegistrationComponent', () => {
         component.applySearch();
 
         // course3 has no title, so should not be included
-        expect(component.filteredCoursesToSelect).toHaveLength(2);
-        expect(component.filteredCoursesToSelect).toContain(course1);
-        expect(component.filteredCoursesToSelect).toContain(course2);
+        expect(component.filteredCoursesToSelect()).toHaveLength(2);
+        expect(component.filteredCoursesToSelect()).toContain(course1);
+        expect(component.filteredCoursesToSelect()).toContain(course2);
     });
 
     it('should set loading to true at start and false after loading courses', () => {
         findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course1] })));
 
-        expect(component.loading).toBe(false);
+        expect(component.loading()).toBe(false);
         component.loadRegistrableCourses();
         // After synchronous observable completes, loading should be false
-        expect(component.loading).toBe(false);
+        expect(component.loading()).toBe(false);
     });
 
     it('should apply case-insensitive search', () => {
@@ -287,7 +284,7 @@ describe('CourseRegistrationComponent', () => {
         component.searchTermString = 'course a';
         component.applySearch();
 
-        expect(component.filteredCoursesToSelect).toHaveLength(1);
-        expect(component.filteredCoursesToSelect[0]).toEqual(course1);
+        expect(component.filteredCoursesToSelect()).toHaveLength(1);
+        expect(component.filteredCoursesToSelect()[0]).toEqual(course1);
     });
 });

@@ -11,9 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-class ConductAgreementServiceTest extends AbstractSpringIntegrationIndependentTest {
+class ConductAgreementServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "conductagreementservice";
 
@@ -35,7 +35,7 @@ class ConductAgreementServiceTest extends AbstractSpringIntegrationIndependentTe
     @Test
     void fetchConductAgreementIfCodeOfConductIsNullOrEmpty() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "student", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         course.setCourseInformationSharingMessagingCodeOfConduct(null);
         courseRepository.save(course);
         var resultIfCodeOfConductIsNull = conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
@@ -50,7 +50,7 @@ class ConductAgreementServiceTest extends AbstractSpringIntegrationIndependentTe
     @Test
     void fetchAndAgreeAndResetConductAgreement() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "student", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
         courseRepository.save(course);
         var resultBeforeAgreement = conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);

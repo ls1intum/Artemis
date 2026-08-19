@@ -3,8 +3,8 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
-import { cloneDeep } from 'lodash-es';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
@@ -24,7 +24,7 @@ export class ShortAnswerQuestionUtil {
             return true;
         }
 
-        let unusedMappings: ShortAnswerMapping[] = cloneDeep(question.correctMappings);
+        let unusedMappings: ShortAnswerMapping[] = deepClone(question.correctMappings);
         const spotsCanBeSolved: boolean[] = [];
 
         for (const spot of question.spots!) {
@@ -85,9 +85,9 @@ export class ShortAnswerQuestionUtil {
      */
     getAllSpotsForSolutions(mappings?: ShortAnswerMapping[], solution?: ShortAnswerSolution) {
         return mappings
-            ?.filter(function (mapping) {
+            ?.filter((mapping) => {
                 return this.isSameSolution(mapping.solution, solution);
-            }, this)
+            })
             .map(function (mapping) {
                 return mapping.spot!;
             });
@@ -231,7 +231,7 @@ export class ShortAnswerQuestionUtil {
     getSampleSolutions(question: ShortAnswerQuestion): ShortAnswerSolution[] {
         const sampleSolutions: ShortAnswerSolution[] = [];
         for (const spot of question.spots!) {
-            const solutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings!, spot);
+            const solutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings, spot);
             for (const mapping of question.correctMappings!) {
                 if (
                     mapping.spot!.id === spot.id &&

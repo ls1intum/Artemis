@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { combineLatest } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
@@ -6,7 +6,6 @@ import { FormsModule } from '@angular/forms';
 import { MetricsService } from './metrics.service';
 import { Metrics, NodeInfo, Thread } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JvmMemoryComponent } from './blocks/jvm-memory/jvm-memory.component';
 import { JvmThreadsComponent } from './blocks/jvm-threads/jvm-threads.component';
 import { MetricsSystemComponent } from './blocks/metrics-system/metrics-system.component';
@@ -17,8 +16,8 @@ import { MetricsCacheComponent } from './blocks/metrics-cache/metrics-cache.comp
 import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-datasource.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { SelectModule } from 'primeng/select';
-
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
 interface NodeOption {
     label: string;
     value: string;
@@ -27,10 +26,9 @@ interface NodeOption {
 @Component({
     selector: 'jhi-metrics',
     templateUrl: './metrics.component.html',
-    styleUrl: './metrics.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
-        FaIconComponent,
         JvmMemoryComponent,
         JvmThreadsComponent,
         MetricsSystemComponent,
@@ -41,7 +39,9 @@ interface NodeOption {
         MetricsDatasourceComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        SelectModule,
+        ArtemisTranslatePipe,
+        TumUiButtonComponent,
+        TumUiSelectComponent,
         FormsModule,
     ],
 })
@@ -56,6 +56,9 @@ export class MetricsComponent implements OnInit {
 
     /** Whether metrics are currently being updated */
     readonly updatingMetrics = signal(true);
+
+    /** Drives the refresh button's loading spinner while a refresh is in flight (every refresh, not just initial). */
+    readonly isRefreshing = signal(false);
 
     /** Available cluster nodes for the dropdown */
     readonly nodeOptions = signal<NodeOption[]>([]);
@@ -108,11 +111,21 @@ export class MetricsComponent implements OnInit {
         if (isInitialLoad) {
             this.updatingMetrics.set(true);
         }
+        // Distinct from updatingMetrics (which gates the initial page render): this drives the refresh button's
+        // spinner on every refresh, so a manual refresh gives loading feedback even when metrics are already shown.
+        this.isRefreshing.set(true);
         const nodeId = this.selectedNodeId !== 'all' ? this.selectedNodeId : undefined;
-        combineLatest([this.metricsService.getMetrics(nodeId), this.metricsService.threadDump()]).subscribe(([metrics, threadDump]) => {
-            this.metrics.set(metrics);
-            this.threads.set(threadDump.threads);
-            this.updatingMetrics.set(false);
+        combineLatest([this.metricsService.getMetrics(nodeId), this.metricsService.threadDump()]).subscribe({
+            next: ([metrics, threadDump]) => {
+                this.metrics.set(metrics);
+                this.threads.set(threadDump.threads);
+                this.updatingMetrics.set(false);
+                this.isRefreshing.set(false);
+            },
+            error: () => {
+                this.updatingMetrics.set(false);
+                this.isRefreshing.set(false);
+            },
         });
     }
 

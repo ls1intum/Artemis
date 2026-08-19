@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -17,7 +17,6 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, of, throwError } from 'rxjs';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -34,8 +33,6 @@ import { PdfUploadTarget } from 'app/lecture/manage/pdf-upload-target-dialog/pdf
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('Lecture', () => {
-    setupTestBed({ zoneless: true });
-
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
     let lectureComponent: LectureComponent;
     let lectureService: LectureService;
@@ -116,7 +113,7 @@ describe('Lecture', () => {
                 LectureComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockComponent(DocumentationButtonComponent),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
@@ -194,7 +191,7 @@ describe('Lecture', () => {
 
         expect(findAllSpy).toHaveBeenCalledOnce();
         expect(findAllSpy).toHaveBeenCalledWith(1);
-        expect(lectureComponent.lectures).toHaveLength(8);
+        expect(lectureComponent.lectures()).toHaveLength(8);
     });
 
     it('should delete lecture', async () => {
@@ -207,9 +204,9 @@ describe('Lecture', () => {
 
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith(pastLecture.id!);
-        expect(lectureComponent.lectures).toHaveLength(7);
-        expect(lectureComponent.lectures).not.toContain(pastLecture);
-        expect(lectureComponent.filteredLectures).toEqual(lectureComponent.lectures);
+        expect(lectureComponent.lectures()).toHaveLength(7);
+        expect(lectureComponent.lectures()).not.toContain(pastLecture);
+        expect(lectureComponent.filteredLectures()).toEqual(lectureComponent.lectures());
     });
 
     it('should import lecture', async () => {
@@ -235,7 +232,7 @@ describe('Lecture', () => {
 
         expect(importSpy).toHaveBeenCalledOnce();
         expect(importSpy).toHaveBeenCalledWith(1, 123);
-        expect(lectureComponent.lectures).toHaveLength(9);
+        expect(lectureComponent.lectures()).toHaveLength(9);
     });
 
     it('should show all lectures sorted', async () => {
@@ -245,49 +242,49 @@ describe('Lecture', () => {
         // No filters selected
         lectureComponent.toggleFilters([]);
 
-        const filteredLectures = lectureComponent.filteredLectures;
-        expect(lectureComponent.filteredLectures).toEqual(expect.arrayContaining(lectureComponent.lectures));
-        expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+        const filteredLectures = lectureComponent.filteredLectures();
+        expect(lectureComponent.filteredLectures()).toEqual(expect.arrayContaining(lectureComponent.lectures()));
+        expect(lectureComponent.filteredLectures().map((lecture) => lecture.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
 
         // Apply all filters
         lectureComponent.toggleFilters([LectureDateFilter.PAST, LectureDateFilter.CURRENT, LectureDateFilter.FUTURE, LectureDateFilter.UNSPECIFIED]);
         expect(lectureComponent.activeFilters.size).toBe(4);
-        expect(lectureComponent.filteredLectures).toEqual(expect.arrayContaining(lectureComponent.lectures));
+        expect(lectureComponent.filteredLectures()).toEqual(expect.arrayContaining(lectureComponent.lectures()));
 
         // Check that no filters is equal to all filters
-        expect(lectureComponent.filteredLectures).toEqual(filteredLectures);
+        expect(lectureComponent.filteredLectures()).toEqual(filteredLectures);
     });
 
     it('should filter for past lectures', async () => {
         lectureComponentFixture.detectChanges();
         await lectureComponentFixture.whenStable();
         lectureComponent.toggleFilters([LectureDateFilter.PAST]);
-        expect(lectureComponent.filteredLectures).toHaveLength(2);
-        expect(lectureComponent.filteredLectures).toEqual(expect.arrayContaining([pastLecture, pastLecture2]));
+        expect(lectureComponent.filteredLectures()).toHaveLength(2);
+        expect(lectureComponent.filteredLectures()).toEqual(expect.arrayContaining([pastLecture, pastLecture2]));
     });
 
     it('should filter for current lectures', async () => {
         lectureComponentFixture.detectChanges();
         await lectureComponentFixture.whenStable();
         lectureComponent.toggleFilters([LectureDateFilter.CURRENT]);
-        expect(lectureComponent.filteredLectures).toHaveLength(3);
-        expect(lectureComponent.filteredLectures).toEqual(expect.arrayContaining([currentLecture, currentLecture2, currentLecture3]));
+        expect(lectureComponent.filteredLectures()).toHaveLength(3);
+        expect(lectureComponent.filteredLectures()).toEqual(expect.arrayContaining([currentLecture, currentLecture2, currentLecture3]));
     });
 
     it('should filter for future lectures', async () => {
         lectureComponentFixture.detectChanges();
         await lectureComponentFixture.whenStable();
         lectureComponent.toggleFilters([LectureDateFilter.FUTURE]);
-        expect(lectureComponent.filteredLectures).toHaveLength(2);
-        expect(lectureComponent.filteredLectures).toEqual(expect.arrayContaining([futureLecture, futureLecture2]));
+        expect(lectureComponent.filteredLectures()).toHaveLength(2);
+        expect(lectureComponent.filteredLectures()).toEqual(expect.arrayContaining([futureLecture, futureLecture2]));
     });
 
     it('should filter for lectures without dates', async () => {
         lectureComponentFixture.detectChanges();
         await lectureComponentFixture.whenStable();
         lectureComponent.toggleFilters([LectureDateFilter.UNSPECIFIED]);
-        expect(lectureComponent.filteredLectures).toHaveLength(1);
-        expect(lectureComponent.filteredLectures).toContainEqual(unspecifiedLecture);
+        expect(lectureComponent.filteredLectures()).toHaveLength(1);
+        expect(lectureComponent.filteredLectures()).toContainEqual(unspecifiedLecture);
     });
 
     it('should return lecture id from trackId', () => {
@@ -308,7 +305,7 @@ describe('Lecture', () => {
         lectureComponent.navigateToLectureCreationPage();
 
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 'new'], {
-            state: { existingLectures: lectureComponent.lectures },
+            state: { existingLectures: lectureComponent.lectures() },
         });
     });
 
@@ -318,7 +315,7 @@ describe('Lecture', () => {
 
         lectureComponentFixture.detectChanges();
         await lectureComponentFixture.whenStable();
-        const initialLectureCount = lectureComponent.lectures.length;
+        const initialLectureCount = lectureComponent.lectures().length;
 
         // Subscribe to dialogError$ to capture the error
         let capturedError = '';
@@ -327,7 +324,7 @@ describe('Lecture', () => {
         lectureComponent.deleteLecture(pastLecture.id!);
         await lectureComponentFixture.whenStable();
 
-        expect(lectureComponent.lectures).toHaveLength(initialLectureCount);
+        expect(lectureComponent.lectures()).toHaveLength(initialLectureCount);
         expect(capturedError).toBeTruthy();
     });
 

@@ -1,9 +1,10 @@
-import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
+import { TumUiButtonDirective, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CustomPatternValidatorDirective } from 'app/foundation/validators/custom-pattern-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -15,15 +16,24 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-organization-management-update',
     templateUrl: './organization-management-update.component.html',
-    imports: [FormsModule, TranslateDirective, CustomPatternValidatorDirective, FaIconComponent, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        FormsModule,
+        TumUiButtonDirective,
+        TumUiInputDirective,
+        TumUiMessageComponent,
+        TranslateDirective,
+        CustomPatternValidatorDirective,
+        FaIconComponent,
+        AdminTitleBarTitleDirective,
+    ],
 })
 export class OrganizationManagementUpdateComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly organizationService = inject(OrganizationManagementService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     /** The organization being edited */
-    organization: Organization = new Organization();
+    readonly organization = signal<Organization>(new Organization());
     /** Whether save is in progress */
     readonly isSaving = signal(false);
 
@@ -36,13 +46,12 @@ export class OrganizationManagementUpdateComponent implements OnInit {
     ngOnInit() {
         this.isSaving.set(false);
         // create a new organization and only overwrite it if we fetch an organization to edit
-        this.organization = new Organization();
+        this.organization.set(new Organization());
         this.route.parent!.data.subscribe(({ organization }) => {
             if (organization) {
                 const organizationId = organization.body ? organization.body.id : organization.id;
                 this.organizationService.getOrganizationById(organizationId).subscribe((data) => {
-                    this.organization = data;
-                    this.changeDetectorRef.markForCheck();
+                    this.organization.set(data);
                 });
             }
         });
@@ -60,13 +69,13 @@ export class OrganizationManagementUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving.set(true);
-        if (this.organization.id) {
-            this.organizationService.update(this.organization).subscribe({
+        if (this.organization().id) {
+            this.organizationService.update(this.organization()).subscribe({
                 next: () => this.onSaveSuccess(),
                 error: () => this.onSaveError(),
             });
         } else {
-            this.organizationService.add(this.organization).subscribe({
+            this.organizationService.add(this.organization()).subscribe({
                 next: () => this.onSaveSuccess(),
                 error: () => this.onSaveError(),
             });

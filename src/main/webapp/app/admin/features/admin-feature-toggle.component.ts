@@ -1,12 +1,15 @@
-import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { faExternalLinkAlt, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiButtonComponent, TumUiMessageComponent, TumUiTagComponent, TumUiToggleSwitchComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -23,6 +26,7 @@ import {
     MODULE_FEATURE_LTI,
     MODULE_FEATURE_MODELING,
     MODULE_FEATURE_PASSKEY,
+    MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN,
     MODULE_FEATURE_PLAGIARISM,
     MODULE_FEATURE_SAML2,
     MODULE_FEATURE_SHARING,
@@ -35,6 +39,7 @@ import {
     PROFILE_LOCALCI,
     ProfileFeature,
 } from 'app/app.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type FeatureToggleInfo = {
     feature: FeatureToggle;
@@ -61,15 +66,26 @@ type ModuleFeatureInfo = {
 @Component({
     selector: 'jhi-feature-toggles',
     templateUrl: './admin-feature-toggle.component.html',
-    styleUrl: './admin-feature-toggle.component.scss',
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TooltipModule, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        TumUiToggleSwitchComponent,
+        TumUiMessageComponent,
+        FormsModule,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
+        TumUiButtonComponent,
+        TumUiTagComponent,
+        TumUiTooltipDirective,
+    ],
 })
 export class AdminFeatureToggleComponent implements OnInit {
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly profileService = inject(ProfileService);
-    private readonly translateService = inject(TranslateService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly alertService = inject(AlertService);
 
     /** Available feature toggles with their current state */
     readonly featureToggles = signal<FeatureToggleInfo[]>([]);
@@ -82,7 +98,19 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     /** Icons */
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
-    protected readonly faQuestionCircle = faQuestionCircle;
+
+    /**
+     * Tint and border for a feature card: light green when the feature is active, muted grey when it is not.
+     *
+     * The contrast comes from the active state being tinted at all — the shades this replaces (`bg-surface-50` vs
+     * `bg-surface-100`) were one step apart and indistinguishable at a glance. Red is reserved for states that need
+     * attention, so a switched-off feature stays neutral rather than reading as a failure.
+     *
+     * The success token carries its own light/dark values; the surface shades need explicit `dark:` variants.
+     */
+    protected featureCardClasses(isActive: boolean): string {
+        return isActive ? 'bg-state-success/10 border-state-success/40' : 'bg-surface-100 border-surface-300 dark:bg-surface-800 dark:border-surface-600';
+    }
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
     private readonly displayedProfiles: ProfileFeature[] = [PROFILE_LOCALCI, PROFILE_BUILDAGENT, PROFILE_JENKINS];
@@ -106,6 +134,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_LDAP,
         MODULE_FEATURE_SAML2,
         MODULE_FEATURE_PASSKEY,
+        MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN,
         MODULE_FEATURE_THEIA,
     ];
 
@@ -116,7 +145,6 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.Exports]: 'https://docs.artemis.tum.de/instructor/exports',
         [FeatureToggle.LearningPaths]: 'https://docs.artemis.tum.de/instructor/adaptive-learning',
         [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.tum.de/admin/adaptive-learning',
-        [FeatureToggle.StudentCourseAnalyticsDashboard]: 'https://docs.artemis.tum.de/instructor/analytics/learning-analytics',
         [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication#tutor-suggestions',
         [FeatureToggle.AtlasML]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
@@ -150,6 +178,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [MODULE_FEATURE_LDAP]: 'https://docs.artemis.tum.de/admin/production-setup/security#ldap-authentication',
         [MODULE_FEATURE_SAML2]: 'https://docs.artemis.tum.de/admin/saml2-login-registration',
         [MODULE_FEATURE_PASSKEY]: 'https://docs.artemis.tum.de/admin/production-setup/security#passkey-authentication',
+        [MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN]: 'https://docs.artemis.tum.de/admin/production-setup/security#passkey-authentication',
         [MODULE_FEATURE_THEIA]: 'https://docs.artemis.tum.de',
     };
 
@@ -158,14 +187,17 @@ export class AdminFeatureToggleComponent implements OnInit {
         this.featureToggleService
             .getFeatureToggles()
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((activeToggles) => {
-                this.featureToggles.set(
-                    Object.values(FeatureToggle).map((feature) => ({
-                        feature,
-                        isActive: activeToggles.includes(feature),
-                        documentationLink: this.documentationLinks[feature],
-                    })),
-                );
+            .subscribe({
+                next: (activeToggles) => {
+                    this.featureToggles.set(
+                        Object.values(FeatureToggle).map((feature) => ({
+                            feature,
+                            isActive: activeToggles.includes(feature),
+                            documentationLink: this.documentationLinks[feature],
+                        })),
+                    );
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
 
         // Load profile-based features
@@ -185,20 +217,54 @@ export class AdminFeatureToggleComponent implements OnInit {
                 documentationLink: this.moduleDocumentationLinks[feature],
             })),
         );
-
-        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-            this.changeDetectorRef.markForCheck();
-        });
     }
 
+    /** Features with an in-flight update; their switch is disabled so updates are serialized per feature. */
+    readonly pendingFeatures = signal<ReadonlySet<FeatureToggle>>(new Set());
+
     onFeatureToggle(featureInfo: FeatureToggleInfo): void {
+        const feature = featureInfo.feature;
+        // Serialize updates per feature: while a request is in flight the switch is disabled, and any stray change
+        // is ignored here. Sending only one request at a time keeps the server writes in click order (last click
+        // wins) — otherwise two successful writes could reach the server out of order and leave it on the older
+        // value, and a late failure could race the optimistic UI.
+        if (this.pendingFeatures().has(feature)) {
+            return;
+        }
         const newState = !featureInfo.isActive;
+        // Optimistically reflect the new state so the signal, the [ngModel]-bound switch, and the server request agree.
+        this.setToggleState(feature, newState);
+        this.setPending(feature, true);
         this.featureToggleService
-            .setFeatureToggleState(featureInfo.feature, newState)
+            .setFeatureToggleState(feature, newState)
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(() => {
-                this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === featureInfo.feature ? { ...toggle, isActive: newState } : toggle)));
+            .subscribe({
+                next: () => this.setPending(feature, false),
+                error: (error: HttpErrorResponse) => {
+                    // No newer request for this feature can exist (it was disabled while pending), so reverting the
+                    // optimistic change safely restores the true server state and flips the switch back; surface the
+                    // error instead of leaving the switch silently flipped.
+                    this.setToggleState(feature, !newState);
+                    this.setPending(feature, false);
+                    onError(this.alertService, error);
+                },
             });
+    }
+
+    private setToggleState(feature: FeatureToggle, isActive: boolean): void {
+        this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === feature ? cloneWith(toggle, { isActive }) : toggle)));
+    }
+
+    private setPending(feature: FeatureToggle, pending: boolean): void {
+        this.pendingFeatures.update((features) => {
+            const next = new Set(features);
+            if (pending) {
+                next.add(feature);
+            } else {
+                next.delete(feature);
+            }
+            return next;
+        });
     }
 
     /**

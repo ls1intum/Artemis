@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/submission/submission.service';
 import { TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -17,8 +16,6 @@ import dayjs from 'dayjs/esm';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 
 describe('Submission Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: SubmissionService;
     let httpMock: HttpTestingController;
     let expectedResult: any;
@@ -86,18 +83,20 @@ describe('Submission Service', () => {
         const exerciseId = 1;
 
         const returnedFromService = [submission];
-        const expected = [
-            {
-                ...submission,
-                latestResult: getLatestSubmissionResult(submission),
-            },
-        ];
+        let converted: Submission | undefined;
         service
             .getTestRunSubmissionsForExercise(exerciseId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toEqual(expected));
+            .subscribe((resp) => (converted = resp.body![0]));
         const req = httpMock.expectOne({ url: `api/exercise/exercises/${exerciseId}/test-run-submissions`, method: 'GET' });
         req.flush(returnedFromService);
+
+        // convertSubmissionFromServer returns a detached copy, so the response no longer shares its results with the
+        // fixture. Assert the converted values and that latestResult points at the copy's own last result.
+        expect(converted!.id).toBe(submission.id);
+        expect(converted!.results).toHaveLength(1);
+        expect(converted!.results![0].id).toBe(getLatestSubmissionResult(submission)!.id);
+        expect(converted!.latestResult).toBe(getLatestSubmissionResult(converted!));
     });
 
     it('should handle feedback correction round tag', () => {

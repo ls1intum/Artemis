@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,7 +14,7 @@ import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, 
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared-ui/image-cropper/component/image-cropper.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/admin/organization-management/organization.model';
@@ -25,7 +24,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { By } from '@angular/platform-browser';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
@@ -40,11 +38,9 @@ import { ProgrammingLanguage } from 'app/programming/shared/entities/programming
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FileService } from 'app/foundation/service/file.service';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('Course Management Update Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseUpdateComponent;
     let fixture: ComponentFixture<CourseUpdateComponent>;
     let courseManagementService: CourseManagementService;
@@ -88,7 +84,6 @@ describe('Course Management Update Component', () => {
         course.courseIconPath = 'api/core/files/testCourseIcon';
         course.timeZone = 'Europe/London';
         course.learningPathsEnabled = true;
-        course.studentCourseAnalyticsDashboardEnabled = false;
 
         const route = {
             data: of({ course }),
@@ -97,7 +92,7 @@ describe('Course Management Update Component', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
@@ -131,7 +126,91 @@ describe('Course Management Update Component', () => {
         (Intl as any).supportedValuesOf = undefined;
     });
 
+    describe('max points validation', () => {
+        it('should invalidate the form and block submission when max points exceed the limit', () => {
+            const profileInfo = { activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const maxPointsControl = comp.courseForm.get('maxPoints')!;
+            maxPointsControl.setValue(10000);
+            expect(maxPointsControl.hasError('max')).toBe(true);
+            expect(comp.courseForm.invalid).toBe(true);
+
+            maxPointsControl.setValue(9999);
+            expect(maxPointsControl.hasError('max')).toBe(false);
+        });
+
+        it('should reject max points below the lower bound and non-integer values', () => {
+            const profileInfo = { activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const maxPointsControl = comp.courseForm.get('maxPoints')!;
+
+            maxPointsControl.setValue(0);
+            expect(maxPointsControl.hasError('min')).toBe(true);
+
+            maxPointsControl.setValue(10.5);
+            expect(maxPointsControl.hasError('notInteger')).toBe(true);
+
+            maxPointsControl.setValue(10);
+            expect(maxPointsControl.hasError('notInteger')).toBe(false);
+            expect(maxPointsControl.hasError('min')).toBe(false);
+        });
+    });
+
     describe('ngOnInit', () => {
+        it('should load a grade-relevance opt-out (gradeRelevant=false) as an unchecked control', () => {
+            // A course that opted out of grade relevance must load unchecked, otherwise a later save would silently flip
+            // it back to grade-relevant and extend its data-retention period.
+            course.courseConfiguration = { gradeRelevant: false };
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('gradeRelevant')?.value).toBe(false);
+        });
+
+        it('should default the grade-relevance control to checked when the course has no configuration', () => {
+            course.courseConfiguration = undefined;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('gradeRelevant')?.value).toBe(true);
+        });
+
+        it('should load an active data-retention hold as a checked control', () => {
+            // A course held because of a pending objection must load checked, otherwise saving the form would silently
+            // lift the hold and expose the course to the automatic student-data reset again.
+            course.courseConfiguration = { dataRetentionHold: true };
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('dataRetentionHold')?.value).toBe(true);
+        });
+
+        it('should default the data-retention hold control to unchecked when the course has no configuration', () => {
+            course.courseConfiguration = undefined;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('dataRetentionHold')?.value).toBe(false);
+        });
+
         it('should get course, profile and fill the form', async () => {
             const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
             const getProfileStub = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
@@ -143,22 +222,13 @@ describe('Course Management Update Component', () => {
             fixture.detectChanges();
             await Promise.resolve();
             expect(comp.course).toEqual(course);
-            expect(comp.courseOrganizations).toEqual([organization]);
+            expect(comp.courseOrganizations()).toEqual([organization]);
             expect(getOrganizationsStub).toHaveBeenCalled();
             expect(getOrganizationsStub).toHaveBeenCalledWith(course.id);
             expect(getProfileStub).toHaveBeenCalled();
-            expect(comp.customizeGroupNames).toBe(true);
-            expect(comp.course.studentGroupName).toBe('artemis-dev');
-            expect(comp.course.teachingAssistantGroupName).toBe('artemis-dev');
-            expect(comp.course.editorGroupName).toBe('artemis-dev');
-            expect(comp.course.instructorGroupName).toBe('artemis-dev');
             expect(comp.courseForm.get(['id'])?.value).toBe(course.id);
             expect(comp.courseForm.get(['title'])?.value).toBe(course.title);
             expect(comp.shortName.value).toBe(course.shortName);
-            expect(comp.courseForm.get(['studentGroupName'])?.value).toBe(course.studentGroupName);
-            expect(comp.courseForm.get(['teachingAssistantGroupName'])?.value).toBe(course.teachingAssistantGroupName);
-            expect(comp.courseForm.get(['editorGroupName'])?.value).toBe(course.editorGroupName);
-            expect(comp.courseForm.get(['instructorGroupName'])?.value).toBe(course.instructorGroupName);
             expect(comp.courseForm.get(['startDate'])?.value).toBe(course.startDate);
             expect(comp.courseForm.get(['endDate'])?.value).toBe(course.endDate);
             expect(comp.courseForm.get(['semester'])?.value).toBe(course.semester);
@@ -180,7 +250,6 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
-            expect(comp.courseForm.get(['studentCourseAnalyticsDashboardEnabled'])?.value).toBe(course.studentCourseAnalyticsDashboardEnabled);
         });
     });
 
@@ -212,6 +281,8 @@ describe('Course Management Update Component', () => {
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             entity.id = 123;
+            // save() maps the data-privacy form controls into the course configuration (defaults: grade-relevant, no hold)
+            entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false };
             const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -240,13 +311,15 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith(entity.id, entity, undefined);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
         });
 
         it('should call create service on save for new entity', async () => {
             // GIVEN
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            // save() maps the data-privacy form controls into the course configuration (defaults: grade-relevant, no hold)
+            entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false };
             const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -274,7 +347,30 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
+        });
+
+        it('should map the grade-relevance form control into the course configuration on save', async () => {
+            // GIVEN
+            const entity = new Course();
+            entity.id = 123;
+            comp.course = entity;
+            const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+            comp.courseForm = new FormGroup({
+                id: new FormControl(entity.id),
+                // instructor opted out of grade relevance
+                gradeRelevant: new FormControl(false),
+            });
+
+            // WHEN
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN
+            expect(updateStub).toHaveBeenCalledOnce();
+            const savedCourse = updateStub.mock.calls[0][1];
+            expect(savedCourse.courseConfiguration?.gradeRelevant).toBe(false);
         });
 
         it('should broadcast course modification on delete', async () => {
@@ -286,7 +382,7 @@ describe('Course Management Update Component', () => {
             previousCourse.title = 'previous title';
             comp.course = previousCourse;
 
-            const updatedCourse = cloneDeep(previousCourse);
+            const updatedCourse = deepClone(previousCourse);
             updatedCourse.title = 'updated title';
             comp.courseForm = new FormGroup({
                 title: new FormControl(updatedCourse.title),
@@ -304,6 +400,109 @@ describe('Course Management Update Component', () => {
                 name: 'courseModification',
                 content: 'Changed a course',
             });
+        });
+    });
+
+    describe('save organization sync', () => {
+        const orgWithId = (id: number): Organization => {
+            const organization = new Organization();
+            organization.id = id;
+            return organization;
+        };
+
+        it('should persist added and removed organizations via the dedicated admin endpoints on save', async () => {
+            // GIVEN: admin loads a course initially assigned to organizations 1 and 2
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1), orgWithId(2)]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // change selection: keep 1, remove 2, add 3
+            comp.courseOrganizations.set([orgWithId(1), orgWithId(3)]);
+
+            const savedCourse = new Course();
+            savedCourse.id = course.id;
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: savedCourse })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+            const removeStub = vi.spyOn(organizationService, 'removeCourseFromOrganization').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+
+            // WHEN
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN
+            expect(addStub).toHaveBeenCalledExactlyOnceWith(3, course.id);
+            expect(removeStub).toHaveBeenCalledExactlyOnceWith(2, course.id);
+            expect(comp.isSaving()).toBe(false);
+        });
+
+        it('should not call any organization endpoint when the selection is unchanged', async () => {
+            // GIVEN
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1)]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            const savedCourse = new Course();
+            savedCourse.id = course.id;
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: savedCourse })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization');
+            const removeStub = vi.spyOn(organizationService, 'removeCourseFromOrganization');
+
+            // WHEN
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN
+            expect(addStub).not.toHaveBeenCalled();
+            expect(removeStub).not.toHaveBeenCalled();
+            expect(comp.isSaving()).toBe(false);
+        });
+
+        it('should only re-issue the failed organization change after a partial failure on retry', async () => {
+            // GIVEN: admin loads a course initially assigned to organizations 1 and 2
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1), orgWithId(2)]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // change selection: keep 1, remove 2, add 3
+            comp.courseOrganizations.set([orgWithId(1), orgWithId(3)]);
+
+            const savedCourse = new Course();
+            savedCourse.id = course.id;
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: savedCourse })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+            // the removal fails on the first attempt and succeeds on the retry
+            const removeStub = vi
+                .spyOn(organizationService, 'removeCourseFromOrganization')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+                .mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+
+            // WHEN: first save - the add succeeds, the remove fails
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN: both were attempted once and saving is reset
+            expect(addStub).toHaveBeenCalledExactlyOnceWith(3, course.id);
+            expect(removeStub).toHaveBeenCalledExactlyOnceWith(2, course.id);
+            expect(comp.isSaving()).toBe(false);
+
+            // WHEN: the admin saves again
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN: the already-succeeded add is not re-issued, only the failed removal is retried
+            expect(addStub).toHaveBeenCalledOnce();
+            expect(removeStub).toHaveBeenCalledTimes(2);
+            expect(comp.isSaving()).toBe(false);
         });
     });
 
@@ -481,21 +680,21 @@ describe('Course Management Update Component', () => {
                 maxComplaintTextLimit: new FormControl(2),
                 maxComplaintResponseTextLimit: new FormControl(2),
             });
-            comp.complaintsEnabled = false;
+            comp.complaintsEnabled.set(false);
             comp.changeComplaintsEnabled();
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(3);
             expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(3);
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(7);
             expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(2000);
             expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(2000);
-            expect(comp.complaintsEnabled).toBe(true);
+            expect(comp.complaintsEnabled()).toBe(true);
             comp.changeComplaintsEnabled();
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(0);
             expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(2000);
             expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(2000);
-            expect(comp.complaintsEnabled).toBe(false);
+            expect(comp.complaintsEnabled()).toBe(false);
         });
     });
 
@@ -504,13 +703,13 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 maxRequestMoreFeedbackTimeDays: new FormControl(2),
             });
-            comp.requestMoreFeedbackEnabled = false;
+            comp.requestMoreFeedbackEnabled.set(false);
             comp.changeRequestMoreFeedbackEnabled();
             expect(comp.courseForm.controls['maxRequestMoreFeedbackTimeDays'].value).toBe(7);
-            expect(comp.requestMoreFeedbackEnabled).toBe(true);
+            expect(comp.requestMoreFeedbackEnabled()).toBe(true);
             comp.changeRequestMoreFeedbackEnabled();
             expect(comp.courseForm.controls['maxRequestMoreFeedbackTimeDays'].value).toBe(0);
-            expect(comp.requestMoreFeedbackEnabled).toBe(false);
+            expect(comp.requestMoreFeedbackEnabled()).toBe(false);
         });
     });
 
@@ -538,31 +737,6 @@ describe('Course Management Update Component', () => {
             comp.changeUnenrollmentEnabled();
             expect(comp.courseForm.controls['unenrollmentEnabled'].value).toBeFalsy();
             expect(comp.course.unenrollmentEndDate).toBeUndefined();
-        });
-    });
-
-    describe('changeCustomizeGroupNames', () => {
-        it('should initialize values if enabled and reset if disabled', () => {
-            comp.course = new Course();
-            comp.courseForm = new FormGroup({
-                studentGroupName: new FormControl('noname'),
-                teachingAssistantGroupName: new FormControl('noname'),
-                editorGroupName: new FormControl('noname'),
-                instructorGroupName: new FormControl('noname'),
-            });
-            comp.customizeGroupNames = false;
-            comp.changeCustomizeGroupNames();
-            expect(comp.courseForm.controls['studentGroupName'].value).toBe('artemis-dev');
-            expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBe('artemis-dev');
-            expect(comp.courseForm.controls['editorGroupName'].value).toBe('artemis-dev');
-            expect(comp.courseForm.controls['instructorGroupName'].value).toBe('artemis-dev');
-            expect(comp.customizeGroupNames).toBe(true);
-            comp.changeCustomizeGroupNames();
-            expect(comp.courseForm.controls['studentGroupName'].value).toBeUndefined();
-            expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBeUndefined();
-            expect(comp.courseForm.controls['editorGroupName'].value).toBeUndefined();
-            expect(comp.courseForm.controls['instructorGroupName'].value).toBeUndefined();
-            expect(comp.customizeGroupNames).toBe(false);
         });
     });
 
@@ -996,15 +1170,15 @@ describe('Course Management Update Component', () => {
             organization.id = 123;
             const secondOrganization = new Organization();
             secondOrganization.id = 124;
-            comp.courseOrganizations = [organization, secondOrganization];
+            comp.courseOrganizations.set([organization, secondOrganization]);
             comp.removeOrganizationFromCourse(organization);
-            expect(comp.courseOrganizations).toEqual([secondOrganization]);
+            expect(comp.courseOrganizations()).toEqual([secondOrganization]);
         });
     });
 
     describe('deleteIcon', () => {
         it('should create the delete button when croppedImage is present', () => {
-            comp.croppedImage = 'some-image-url';
+            comp.croppedImage.set('some-image-url');
             fixture.changeDetectorRef.detectChanges();
             const deleteButton = getDeleteIconButton();
             expect(deleteButton).toBeTruthy();
@@ -1043,7 +1217,7 @@ describe('Course Management Update Component', () => {
 
     describe('editIcon', () => {
         it('should create the edit button when croppedImage is present', () => {
-            comp.croppedImage = 'some-image-url';
+            comp.croppedImage.set('some-image-url');
             fixture.changeDetectorRef.detectChanges();
             const editButton = getEditIconButton();
             expect(editButton).toBeTruthy();
@@ -1074,7 +1248,7 @@ describe('Course Management Update Component', () => {
         it('should trigger file input when no-image div is clicked', () => {
             const triggerFileInputSpy = vi.spyOn(comp, 'triggerFileInput').mockImplementation(() => {});
             fixture.detectChanges();
-            comp.croppedImage = undefined;
+            comp.croppedImage.set(undefined);
             fixture.changeDetectorRef.detectChanges();
             const noImageDiv = fixture.debugElement.nativeElement.querySelector('#no-image-placeholder');
             noImageDiv.dispatchEvent(new Event('click'));
@@ -1093,7 +1267,7 @@ describe('Course Management Update Component', () => {
             comp.courseImageUploadFile = new File([''], 'filename.png', { type: 'image/png' });
             comp.openCropper();
             expect(dialogService.open).toHaveBeenCalledWith(ImageCropperModalComponent, expect.any(Object));
-            expect(comp.croppedImage).toBe(croppedImageResult);
+            expect(comp.croppedImage()).toBe(croppedImageResult);
         });
     });
 
@@ -1129,12 +1303,13 @@ describe('Course Management Update Component', () => {
     });
 
     it('should open organizations modal', () => {
-        const mockDialogRef = {
-            onClose: of(new Organization()),
-        } as unknown as DynamicDialogRef;
-        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         comp.openOrganizationsModal();
-        expect(comp.courseOrganizations).toHaveLength(1);
+        expect(comp.orgSelectorVisible()).toBe(true);
+    });
+
+    it('should add the selected organization to the course', () => {
+        comp.onOrgSelected(new Organization());
+        expect(comp.courseOrganizations()).toHaveLength(1);
     });
 
     describe('changeCommunicationEnabled', () => {
@@ -1212,12 +1387,9 @@ describe('Course Management Update Component', () => {
     });
 });
 
-describe('Course Management Student Course Analytics Dashboard Update', () => {
-    setupTestBed({ zoneless: true });
-
+describe('Course Management Learning Paths Feature Toggle Update', () => {
     const validTimeZone = 'Europe/Berlin';
     let fixture: ComponentFixture<CourseUpdateComponent>;
-    let accountService: AccountService;
     let featureToggleService: FeatureToggleService;
     let featureToggleSpy: ReturnType<typeof vi.spyOn>;
     let profileService: ProfileService;
@@ -1226,7 +1398,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -1244,7 +1416,6 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
 
         fixture = TestBed.createComponent(CourseUpdateComponent);
         profileService = TestBed.inject(ProfileService);
-        accountService = TestBed.inject(AccountService);
         featureToggleService = TestBed.inject(FeatureToggleService);
         featureToggleSpy = vi.spyOn(featureToggleService, 'getFeatureToggleActive');
     });
@@ -1254,34 +1425,9 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         (Intl as any).supportedValuesOf = undefined;
     });
 
-    it('should hide the form field for dashboard enable toggle when user is not an admin but the feature is toggled.', () => {
-        // Simulate a user who is not an admin
-        vi.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-
-        // Simulate a feature toggle that includes only the specified feature toggles
+    it('should hide the learning paths form field when the feature is not toggled', () => {
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
-            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard) {
-                return of(true);
-            }
-            return of(false);
-        });
-
-        // Run change detection to update the view
-        fixture.changeDetectorRef.detectChanges();
-
-        // Try to find the form field in the DOM
-        const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));
-        const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
-
-        expect(featureToggleStub).toHaveBeenCalled();
-        expect(filteredFormGroups).toHaveLength(0);
-    });
-    it('should hide the form field for dashboard enable toggle when user is an admin but the feature is not toggled', () => {
-        // Simulate a user who is an admin
-        vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-
-        const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
-            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths) {
+            if (feature === FeatureToggle.LearningPaths) {
                 return of(false);
             }
             return of(true);
@@ -1297,15 +1443,12 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         expect(featureToggleStub).toHaveBeenCalled();
         expect(filteredFormGroups).toHaveLength(0);
     });
-    it('should show the form field for dashboard enable toggle when user is an admin and the feature is toggled', () => {
-        // Simulate a user who is an admin
-        vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-
+    it('should show the learning paths form field when the feature is toggled', () => {
         const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
-            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths) {
+            if (feature === FeatureToggle.LearningPaths) {
                 return of(true);
             }
             return of(false);
@@ -1319,13 +1462,11 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(filteredFormGroups).toHaveLength(2);
+        expect(filteredFormGroups).toHaveLength(1);
     });
 });
 
 describe('Course Management Update Component Create', () => {
-    setupTestBed({ zoneless: true });
-
     const validTimeZone = 'Europe/Berlin';
     let component: CourseUpdateComponent;
     let fixture: ComponentFixture<CourseUpdateComponent>;
@@ -1335,7 +1476,7 @@ describe('Course Management Update Component Create', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

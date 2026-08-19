@@ -1,9 +1,9 @@
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 
-export class IrisSession implements BaseEntity {
+export interface IrisSession extends BaseEntity {
     id: number;
     userId: number;
     messages?: IrisMessage[];

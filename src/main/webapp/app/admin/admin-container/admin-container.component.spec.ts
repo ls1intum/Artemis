@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideRouter } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -22,8 +21,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 class MockEmptyComponent {}
 
 describe('AdminContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AdminContainerComponent;
     let fixture: ComponentFixture<AdminContainerComponent>;
     let profileService: ProfileService;
@@ -131,7 +128,6 @@ describe('AdminContainerComponent', () => {
         expect(component.examEnabled()).toBe(false);
         expect(component.standardizedCompetenciesEnabled()).toBe(false);
         expect(component.passkeyEnabled()).toBe(false);
-        expect(component.passkeyRequiredForAdmin()).toBe(false);
         expect(component.isSuperAdmin()).toBe(false);
     });
 
@@ -149,15 +145,14 @@ describe('AdminContainerComponent', () => {
         expect(newComponent.examEnabled()).toBe(true);
     });
 
-    it('should detect passkey feature flags from profile info', () => {
-        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => ['passkey', 'passkey-admin'].includes(feature));
+    it('should detect passkey feature flag from profile info', () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === 'passkey');
 
         const newFixture = TestBed.createComponent(AdminContainerComponent);
         const newComponent = newFixture.componentInstance;
         newFixture.detectChanges();
 
         expect(newComponent.passkeyEnabled()).toBe(true);
-        expect(newComponent.passkeyRequiredForAdmin()).toBe(true);
     });
 
     describe('onResize', () => {

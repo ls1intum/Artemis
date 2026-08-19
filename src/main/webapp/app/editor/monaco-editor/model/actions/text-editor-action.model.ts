@@ -12,9 +12,10 @@ import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actio
 import { WritableSignal } from '@angular/core';
 import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
+/** Instantiated (subclassed) and populated after construction; the definite-assignment (!) marker below is set later. */
 export abstract class TextEditorAction implements Disposable {
     id: string;
-    label: string;
+    label!: string; // assigned in register() via translateService.instant() before the label is read
     translationKey: string;
     keybindings?: TextEditorKeybinding[];
     icon?: IconDefinition;
@@ -97,19 +98,23 @@ export abstract class TextEditorAction implements Disposable {
      * @param mapToCompletionItemFn Function that maps an item to a Monaco completion suggestion.
      * @param triggerCharacter The character that triggers the completion provider.
      * @param listIncomplete Whether the list of suggestions is incomplete. If true, Monaco will keep searching for more suggestions.
+     * @param options Optional completer behavior: require a word boundary before the trigger character and/or override the scan length used to locate it.
      */
     registerCompletionProviderForCurrentModel<ItemType>(
         editor: TextEditor,
         searchFn: (searchTerm?: string) => Promise<ItemType[]>,
-        mapToCompletionItemFn: (item: ItemType, range: TextEditorRange) => TextEditorCompletionItem,
+        mapToCompletionItemFn: (item: ItemType, range: TextEditorRange, searchTerm: string, index: number) => TextEditorCompletionItem,
         triggerCharacter?: string,
         listIncomplete?: boolean,
+        options?: { requireWordBoundaryBeforeTrigger?: boolean; scanLengthLimit?: number },
     ): Disposable {
         return editor.addCompleter({
             triggerCharacter,
             incomplete: listIncomplete ?? false,
             searchItems: searchFn,
             mapCompletionItem: mapToCompletionItemFn,
+            requireWordBoundaryBeforeTrigger: options?.requireWordBoundaryBeforeTrigger,
+            scanLengthLimit: options?.scanLengthLimit,
         });
     }
 
@@ -343,7 +348,7 @@ export abstract class TextEditorAction implements Disposable {
             artemisIntelligence.rewrite(text, variant, courseId).subscribe({
                 next: (rewriteResult) => {
                     if (rewriteResult.result) {
-                        this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), rewriteResult.result!);
+                        this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), rewriteResult.result);
                         resultSignal.set(rewriteResult);
                     }
                 },
@@ -354,5 +359,6 @@ export abstract class TextEditorAction implements Disposable {
 
 /**
  * Class representing actions for styling text, e.g. bold or italic.
+ * Instantiated (subclassed) and populated after construction, inheriting the definite-assignment (!) fields of the base class.
  */
 export abstract class TextStyleTextEditorAction extends TextEditorAction {}

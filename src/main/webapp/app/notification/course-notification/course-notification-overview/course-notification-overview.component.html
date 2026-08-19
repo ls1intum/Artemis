@@ -1,29 +1,33 @@
 <span class="course-notification-overview d-inline-block">
-    <button (click)="toggleOverlay()" class="btn btn-outline-secondary btn-sm">
+    <button (click)="toggleOverlay()" class="course-notification-overview-toggle">
         <fa-icon [icon]="faBell" />
 
-        <jhi-course-notification-bubble class="course-notification-overview-bubble" [totalAmount]="courseNotificationCount" [isSmall]="true" />
+        <jhi-course-notification-bubble class="course-notification-overview-bubble" [totalAmount]="courseNotificationCount()" [isSmall]="true" />
     </button>
 
-    <div [ngClass]="isShown ? 'is-shown' : ''" class="course-notification-overview-overlay">
+    <div [ngClass]="isShown() ? 'is-shown' : ''" class="course-notification-overview-overlay">
         <div class="course-notification-overview-triangle"></div>
 
         <div class="course-notification-overview-headline-button-wrap mb-2">
             <h4 class="course-notification-overview-overlay-headline mb-0" jhiTranslate="artemisApp.courseNotification.overview.title"></h4>
 
-            <div>
+            <div class="course-notification-overview-header-actions">
+                @if (selectableSettingPresets(); as selectableSettingPresets) {
+                    <jhi-course-notification-preset-picker
+                        [availableCourseSettingPresets]="selectableSettingPresets"
+                        [selectedCourseSettingPreset]="selectedSettingPreset()"
+                        [isSmallButton]="true"
+                        (onPresetSelected)="presetSelected($event)"
+                    />
+                }
                 <button
-                    class="btn btn-outline-secondary btn-sm"
-                    (click)="archiveClicked()"
-                    [ngbTooltip]="'artemisApp.courseNotification.overview.archiveAllTooltip' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faTrash" />
-                </button>
-                <button
-                    routerLink="settings"
-                    routerLinkActive="active"
-                    class="btn btn-outline-secondary btn-sm"
-                    [ngbTooltip]="'artemisApp.courseNotification.overview.settingsTooltip' | artemisTranslate"
+                    pButton
+                    severity="secondary"
+                    [outlined]="true"
+                    size="small"
+                    [routerLink]="['/courses', courseId(), 'settings']"
+                    [pTooltip]="'artemisApp.courseNotification.overview.settingsTooltip' | artemisTranslate"
+                    (click)="closeOverlay()"
                 >
                     <fa-icon [icon]="faCog" />
                 </button>
@@ -31,18 +35,29 @@
         </div>
 
         <div class="course-notification-overview-category-wrap pb-1">
-            @for (category of courseCategories; track category) {
-                <div (click)="selectCategory(category)" [ngClass]="isCategorySelected(category) ? 'is-selected' : ''" class="course-notification-overview-category">
-                    <span [jhiTranslate]="'artemisApp.courseNotification.category.' + category.toString().toLowerCase()"></span>
-                </div>
+            @for (category of courseCategories(); track category) {
+                @if (isCategoryVisible(category)) {
+                    <div (click)="selectCategory(category)" [ngClass]="isCategorySelected(category) ? 'is-selected' : ''" class="course-notification-overview-category">
+                        <span [jhiTranslate]="'artemisApp.courseNotification.category.' + category.toString().toLowerCase()"></span>
+                    </div>
+                }
             }
+            <button
+                id="mark-all-as-read-button"
+                pButton
+                [text]="true"
+                size="small"
+                (click)="markAllAsReadClicked()"
+                class="course-notification-overview-mark-all-as-read"
+                jhiTranslate="artemisApp.courseNotification.overview.markAllAsRead"
+            ></button>
         </div>
 
         <div #scrollContainer class="course-notification-overview-notification-container">
-            @if (!isLoading) {
-                @if (notificationsForSelectedCategory.length > 0) {
+            @if (!isLoading()) {
+                @if (notificationsForSelectedCategory().length > 0) {
                     <div>
-                        @for (notification of notificationsForSelectedCategory; track notification) {
+                        @for (notification of notificationsForSelectedCategory(); track notification) {
                             <div class="notification-animation-wrapper" animate.enter="notification-item-entering" animate.leave="notification-item-leaving">
                                 <div class="course-notification-overview-notification-wrap">
                                     <jhi-course-notification
@@ -50,6 +65,7 @@
                                         [isUnseen]="notification.status === CourseNotificationViewingStatus.UNSEEN"
                                         [isShowClose]="true"
                                         [isRedirectToUrl]="true"
+                                        [fluid]="true"
                                         (onCloseClicked)="closeClicked(notification)"
                                     />
                                 </div>

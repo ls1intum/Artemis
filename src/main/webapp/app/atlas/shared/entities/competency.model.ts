@@ -6,6 +6,7 @@ import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUni
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faBrain, faComments, faCubesStacked, faMagnifyingGlass, faPenFancy, faPlusMinus, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { StandardizedCompetency } from 'app/atlas/shared/entities/standardized-competency.model';
+import { GraphNodeDimension } from 'app/atlas/shared/dag-graph/dag-graph.model';
 
 /**
  * The available competency types (based on Bloom's Taxonomy)
@@ -44,6 +45,17 @@ export enum CourseCompetencyType {
     PREREQUISITE = 'prerequisite',
 }
 
+/** Node representation of a course competency in the relation graph. */
+export interface CourseCompetencyGraphNode {
+    id: string;
+    label?: string;
+    dimension?: GraphNodeDimension;
+    data: {
+        id: number;
+        type?: CourseCompetencyType;
+    };
+}
+
 export const DEFAULT_MASTERY_THRESHOLD = 100;
 
 export const HIGH_COMPETENCY_LINK_WEIGHT = 1;
@@ -52,6 +64,7 @@ export const LOW_COMPETENCY_LINK_WEIGHT = 0.25;
 export const LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF = 0.375; // halfway between low and medium
 export const MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = 0.75; // halfway between medium and high
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
 export abstract class BaseCompetency implements BaseEntity {
     id?: number;
     title?: string;
@@ -63,6 +76,7 @@ export interface UpdateCourseCompetencyRelationDTO {
     newRelationType: CompetencyRelationType;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
 export abstract class CourseCompetency extends BaseCompetency {
     softDueDate?: dayjs.Dayjs;
     masteryThreshold?: number;
@@ -84,12 +98,14 @@ export abstract class CourseCompetency extends BaseCompetency {
     }
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
 export class Competency extends CourseCompetency {
     constructor() {
         super(CourseCompetencyType.COMPETENCY);
     }
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
 export class CompetencyLearningObjectLink {
     competency?: CourseCompetency;
     weight: number;
@@ -100,6 +116,7 @@ export class CompetencyLearningObjectLink {
     }
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
 export class CompetencyExerciseLink extends CompetencyLearningObjectLink {
     exercise?: Exercise;
 
@@ -109,6 +126,7 @@ export class CompetencyExerciseLink extends CompetencyLearningObjectLink {
     }
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
 export class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
     lectureUnit?: LectureUnit;
 
@@ -140,12 +158,13 @@ export enum ConfidenceReason {
     MORE_HIGH_WEIGHTED_EXERCISES = 'MORE_HIGH_WEIGHTED_EXERCISES',
 }
 
-export class CompetencyProgress {
-    public progress?: number;
-    public confidence?: number;
-    public confidenceReason?: ConfidenceReason;
+export interface CompetencyProgress {
+    progress?: number;
+    confidence?: number;
+    confidenceReason?: ConfidenceReason;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
 export class CourseCompetencyProgress {
     competencyId?: number;
     numberOfStudents?: number;
@@ -153,11 +172,11 @@ export class CourseCompetencyProgress {
     averageStudentScore?: number;
 }
 
-export class CompetencyRelation implements BaseEntity {
-    public id?: number;
-    public tailCompetency?: CourseCompetency;
-    public headCompetency?: CourseCompetency;
-    public type?: CompetencyRelationType;
+export interface CompetencyRelation extends BaseEntity {
+    id?: number;
+    tailCompetency?: CourseCompetency;
+    headCompetency?: CourseCompetency;
+    type?: CompetencyRelationType;
 }
 
 export interface CourseCompetencyImportOptionsDTO {
@@ -170,7 +189,7 @@ export interface CourseCompetencyImportOptionsDTO {
     isReleaseDate?: boolean;
 }
 
-export class CompetencyRelationDTO implements BaseEntity {
+export interface CompetencyRelationDTO extends BaseEntity {
     id?: number;
     tailCompetencyId?: number;
     headCompetencyId?: number;
@@ -191,6 +210,7 @@ export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelatio
     return relation;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction. */
 export class CompetencyWithTailRelationDTO {
     competency?: CourseCompetency;
     tailRelations?: CompetencyRelationDTO[];
@@ -198,7 +218,7 @@ export class CompetencyWithTailRelationDTO {
 
 export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
     if (!competencyTaxonomy) {
-        return faQuestion as IconProp;
+        return faQuestion;
     }
 
     const icons = {
@@ -210,7 +230,7 @@ export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
         [CompetencyTaxonomy.CREATE]: faCubesStacked,
     };
 
-    return icons[competencyTaxonomy] as IconProp;
+    return icons[competencyTaxonomy];
 }
 
 /**
@@ -259,7 +279,7 @@ export function compareSoftDueDate(a: CourseCompetency, b: CourseCompetency): nu
     return 0;
 }
 
-export class CompetencyContributionCardDTO {
+export interface CompetencyContributionCardDTO {
     competencyId: number;
     title: string;
     weight: number;

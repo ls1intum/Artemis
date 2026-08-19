@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { faBan, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -35,9 +35,9 @@ export class ManageAssessmentButtonsComponent implements OnInit {
 
     readonly refresh = output<void>();
 
-    correctionRoundIndices: number[];
-    cancelConfirmationText: string;
-    newManualResultAllowed = false;
+    readonly correctionRoundIndices = signal<number[]>(undefined!);
+    cancelConfirmationText!: string; // resolved from the translation service in the constructor before the cancel action can be triggered
+    readonly newManualResultAllowed = signal(false);
     examMode = false;
 
     readonly faBan = faBan;
@@ -51,14 +51,14 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.newManualResultAllowed = areManualResultsAllowed(this.exercise());
+        this.newManualResultAllowed.set(areManualResultsAllowed(this.exercise()));
         this.examMode = !!this.exercise().exerciseGroup;
         if (isPracticeMode(this.participation()) && !this.examMode) {
             // don't allow manual results for practice mode participations
-            this.newManualResultAllowed = false;
+            this.newManualResultAllowed.set(false);
         }
         // ngFor needs an array to iterate over. This creates an array in the form of [0, 1, ...] up to the correction rounds exclusively (normally 1 or 2)
-        this.correctionRoundIndices = [...Array(this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()];
+        this.correctionRoundIndices.set([...Array(this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]);
     }
 
     getAssessmentLink(correctionRound = 0) {
@@ -100,25 +100,32 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     }
 
     /**
-     * Cancel the current assessment and reload the submissions to reflect the change.
+     * Cancels the assessment the clicked button belongs to and reloads the submissions to reflect the change. The result is passed on explicitly: a submission holds one
+     * result per correction round, and without it the server released the newest round, so cancelling correction round 1
+     * released round 2 and round 1 stayed locked (#13396).
      */
     cancelAssessment(result: Result, participation: Participation) {
+        // Take the submission from the participation, not from the result. The scores overview builds its rows from
+        // ParticipationScoreDTO (ExerciseScoresComponent#toParticipation), and those results carry no back reference to
+        // their submission, so `result.submission?.id` was always undefined here and the guard below silently swallowed
+        // every click: no request ever left the client and the lock was never released (#13396).
+        const submissionId = participation.submissions?.[0]?.id;
         const confirmCancel = window.confirm(this.cancelConfirmationText);
 
-        if (confirmCancel && result.submission?.id) {
+        if (confirmCancel && submissionId) {
             let cancelSubscription;
             switch (this.exercise().type) {
                 case ExerciseType.PROGRAMMING:
-                    cancelSubscription = this.programmingAssessmentManualResultService.cancelAssessment(result.submission.id);
+                    cancelSubscription = this.programmingAssessmentManualResultService.cancelAssessment(submissionId, result?.id);
                     break;
                 case ExerciseType.MODELING:
-                    cancelSubscription = this.modelingAssessmentService.cancelAssessment(result.submission.id);
+                    cancelSubscription = this.modelingAssessmentService.cancelAssessment(submissionId, result?.id);
                     break;
                 case ExerciseType.TEXT:
-                    cancelSubscription = this.textAssessmentService.cancelAssessment(participation.id!, result.submission.id);
+                    cancelSubscription = this.textAssessmentService.cancelAssessment(participation.id!, submissionId, result?.id);
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    cancelSubscription = this.fileUploadAssessmentService.cancelAssessment(result.submission.id);
+                    cancelSubscription = this.fileUploadAssessmentService.cancelAssessment(submissionId, result?.id);
                     break;
             }
             cancelSubscription?.subscribe(() => {

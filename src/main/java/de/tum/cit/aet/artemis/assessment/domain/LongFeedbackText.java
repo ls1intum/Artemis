@@ -18,6 +18,17 @@ public class LongFeedbackText extends DomainObject {
     @Column(name = "feedback_text", nullable = false)
     private String text;
 
+    /**
+     * The feedback this long text belongs to. A long feedback text is overflow storage for a single
+     * {@link Feedback} (1:1 via the unique index on {@code feedback_id}) and is never meaningful on its own.
+     * <p>
+     * On the database side {@code fk_long_feedback_to_feedback} is {@code ON DELETE CASCADE}: deleting a feedback
+     * row removes its long feedback text as well. This matters for the database-level cascade that deletes
+     * feedback together with a {@code programming_exercise_test_case} (see {@link Feedback#testCase}); that path
+     * bypasses JPA, so without the database cascade a long feedback text would block the feedback delete. In the
+     * normal, JPA-driven path the child is already removed via {@code cascade = ALL, orphanRemoval = true} on
+     * {@link Feedback#getLongFeedbackText()}.
+     */
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "feedback_id", nullable = false)
     @JsonIgnore

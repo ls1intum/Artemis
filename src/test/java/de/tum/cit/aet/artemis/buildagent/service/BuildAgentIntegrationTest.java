@@ -89,6 +89,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Autowired
     private BuildAgentInformationService buildAgentInformationService;
 
+    @Autowired
+    private BuildJobManagementService buildJobManagementService;
+
     @BeforeAll
     void init() {
         processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
@@ -113,19 +116,43 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             resumeBuildAgentTopic.publish(buildAgentShortName);
             await().atMost(10, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
         }
+        // Ensure no build job from a previous test is still executing on the shared executor. A straggler
+        // completing mid-test (e.g. a retry-then-succeed job) would otherwise reset shared counters such as
+        // consecutiveBuildJobFailures, causing this test's own failure counting to silently under-count.
+        await().atMost(30, TimeUnit.SECONDS).until(() -> buildJobManagementService.getRunningBuildJobIds().isEmpty());
     }
 
+    /**
+     * Resets the shared build-agent state after each test so it cannot leak into the next one. The distributed build
+     * job queue, processing-jobs map, and result queue are cleared <em>before</em> the agent is resumed (and once more
+     * afterwards), and the agent is un-paused if a test left it paused. See the inline comment for why the clear must
+     * precede the resume.
+     */
     @AfterEach
     void cleanup() {
-        // Ensure the build agent is resumed after each test to not affect subsequent tests
+        // Clear queued work BEFORE resuming the agent. If we resumed first (as the previous version did), the resume
+        // would pick up a job that a paused test had cancelled and re-queued, and re-run it. Because some tests mock the
+        // container start to sleep far longer than the build, that re-run keeps executing in the background, leaks past
+        // this test boundary, and contaminates the next test's getRunningBuildJobIds()/build job queue -> flaky tests
+        // (notably testPauseBuildAgentBehavior). This mirrors the clear-then-resume order already used in @BeforeEach.
+        buildJobQueue.clear();
+        processingJobs.clear();
+        resultQueue.clear();
+
+        // Ensure the build agent is resumed after each test to not affect subsequent tests.
         if (sharedQueueProcessingService.isPaused()) {
             resumeBuildAgentTopic.publish(buildAgentShortName);
             await().atMost(10, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
         }
-        // Clear any remaining items
+
+        // Clear once more in case the resume produced residue.
         buildJobQueue.clear();
         processingJobs.clear();
         resultQueue.clear();
+
+        // Wait for this test's own in-flight jobs to finish executing before the next test's @BeforeEach runs,
+        // for the same reason as the wait in clearQueues() above.
+        await().atMost(30, TimeUnit.SECONDS).until(() -> buildJobManagementService.getRunningBuildJobIds().isEmpty());
     }
 
     @Test

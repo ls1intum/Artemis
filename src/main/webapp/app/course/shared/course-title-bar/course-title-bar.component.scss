@@ -1,99 +1,68 @@
-@import '../course-base-container/course-variables';
+@import 'src/main/webapp/content/scss/artemis-mixins';
 
-// Must match or exceed the quiz participation bar's z-index (1030)
 #course-title-bar {
+    display: flex;
+    flex-direction: column;
+
+    // Must match or exceed the quiz participation bar's z-index (1030)
     z-index: 1030;
-}
 
-.btn-sidebar-collapse {
-    position: relative;
-    overflow: hidden;
-    display: inline-flex;
-    align-items: center;
-    justify-content: start;
-    background-color: transparent;
+    /* Grey dividers: to the sidebar on the left, to the viewport edge on the right, to the content below. */
+    margin: 0 var(--spacing-divider) var(--spacing-divider);
 
-    &:hover {
-        color: var(--primary);
+    /*
+     * The frame sits on the row rather than the bar, because a page may also project a toolbar. That renders as a
+     * second row underneath, so the bar itself is intentionally taller than `--title-bar-height` in that case while
+     * the title row keeps its exact height.
+     */
+    .course-title-bar-row {
+        @include title-bar-frame;
+        @include title-bar-size-container;
     }
 
-    &:focus {
-        border-color: transparent;
+    /*
+     * A flex item refuses to shrink below its content unless told to, and that automatic minimum is what made a
+     * crowded action row overflow the bar rather than squeeze: the pages whose controls can give way (the calendar
+     * filter and its chips) could not, because this wrapper held the row open. Both children may shrink; each decides
+     * for itself what happens then, by ellipsis, by clipping, or by collapsing a label.
+     */
+    .title-bar-actions {
+        /*
+         * `min-content` rather than 0: the controls that can give way (the calendar's filter caps its width and clips
+         * its chips) contribute nothing to it, so they still shrink, while the ones that cannot — a select button
+         * clips its options rather than narrowing — hold their size and let the title truncate instead.
+         */
+        min-width: min-content;
+
+        /*
+         * A select button has nothing left to give: squeezed below the width of its options, it clips them instead of
+         * getting narrower. Hold it at its size and let the title, which truncates cleanly, absorb the shrinking.
+         */
+        tum-ui-select-button {
+            flex: 0 0 auto;
+        }
+    }
+}
+
+/*
+ * A crowded action row squeezes the title; without this the text wraps to a second line and the bar grows past its
+ * 40px. Keep it on one line with an ellipsis instead.
+ */
+.title-bar-title {
+    min-width: 0;
+
+    > div {
+        min-width: 0;
     }
 
-    transition: border-color $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
-}
-
-.btn-sidebar-collapse::after,
-.btn-sidebar-collapse::before {
-    content: '';
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -2;
-    position: absolute;
-    transition: background-color $transition-color-length ease-in-out;
-}
-
-.btn-sidebar-collapse::after {
-    background-color: var(--link-item-bg);
-}
-
-.btn-sidebar-collapse::before {
-    opacity: 0;
-    z-index: -1;
-    background-color: var(--module-bg);
-    transition: opacity $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
-}
-
-.btn-sidebar-collapse:hover::after {
-    background-color: var(--sidebar-card-selected-bg);
-}
-
-.btn-sidebar-collapse:hover::before {
-    background-color: var(--link-item-bg);
-}
-
-.btn-sidebar-collapse:active::after {
-    background-color: var(--link-item-bg);
-}
-
-.btn-sidebar-collapse:active::before {
-    background-color: var(--sidebar-card-selected-bg);
-}
-
-.btn-sidebar-collapse.is-collapsed {
-    background-color: var(--link-item-bg);
-}
-
-.is-collapsed.btn-sidebar-collapse::before {
-    opacity: 1;
-}
-
-.btn-sidebar-collapse-chevron-start {
-    margin-right: -0.7rem;
-}
-
-.btn-sidebar-collapse-chevron {
-    transform: rotateZ(-180deg);
-    display: inline-block;
-    overflow: hidden;
-    margin-left: 0.3rem;
-    transition: transform $transition-chevron-rotate-length $transition-delay ease-in-out;
-}
-
-.is-collapsed .btn-sidebar-collapse-chevron {
-    transform: rotateZ(0deg);
-    transition: transform $transition-chevron-rotate-length $transition-delay ease-in-out;
-}
-
-@media (max-width: 768px) {
-    .is-communication-module .btn-sidebar-collapse-chevron {
-        transform: rotateZ(0deg);
+    :where(h1, h2, h3, h4, h5, h6, span, div) {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
+}
 
-    .is-collapsed.is-communication-module .btn-sidebar-collapse-chevron {
-        transform: rotateZ(-180deg);
-    }
+/* The action controls are projected from page templates, so their styling requires piercing encapsulation. */
+:host ::ng-deep {
+    @include title-bar-compact-controls;
 }

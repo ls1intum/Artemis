@@ -1,11 +1,9 @@
-import { Component, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CommonModule } from '@angular/common';
-import { DialogModule } from 'primeng/dialog';
-
+import { TumUiButtonComponent, TumUiDialogComponent, TumUiTableDirective, TumUiTagComponent } from '@tumaet/ui-angular';
 /**
  * Represents a formatted build agent for display in the health modal.
  */
@@ -55,27 +53,37 @@ type BuildAgentDetail = SimplifiedBuildAgent | LegacyBuildAgent;
 @Component({
     selector: 'jhi-health-modal',
     templateUrl: './health-modal.component.html',
-    imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe, CommonModule, DialogModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe, TumUiDialogComponent, TumUiTagComponent, TumUiTableDirective, TumUiButtonComponent],
 })
 export class HealthModalComponent {
     readonly visible = model<boolean>(false);
 
     readonly health = input<{ key: HealthKey; value: HealthDetails } | undefined>(undefined);
 
-    readableValue(value: any): string {
+    readableValue(value: unknown): string {
         if (this.health()?.key === 'diskSpace') {
             // Should display storage space in a human-readable unit
-            const val = value / 1073741824;
+            const bytes = value as number;
+            const val = bytes / 1073741824;
             if (val > 1) {
                 return `${val.toFixed(2)} GB`;
             }
-            return `${(value / 1048576).toFixed(2)} MB`;
+            return `${(bytes / 1048576).toFixed(2)} MB`;
         }
 
         if (typeof value === 'object') {
             return JSON.stringify(value);
         }
-        return String(value);
+        // primitives keep the exact String() output (e.g. 'NaN', 'Infinity', 'undefined'); narrowing positively
+        // avoids no-base-to-string (String() is only ever applied to number/boolean/bigint here).
+        if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+            return String(value);
+        }
+        if (typeof value === 'string') {
+            return value;
+        }
+        return 'undefined';
     }
 
     /**
@@ -110,7 +118,7 @@ export class HealthModalComponent {
         if (!this.isBuildAgentsArray(value, detailKey)) {
             return [];
         }
-        const agents = value as BuildAgentDetail[];
+        const agents = value;
         return agents.map((agent) => (this.isSimplifiedBuildAgent(agent) ? this.formatSimplifiedBuildAgent(agent) : this.formatLegacyBuildAgent(agent)));
     }
 
@@ -185,20 +193,15 @@ export class HealthModalComponent {
         return 'maxJobs' in agent || 'currentJobs' in agent || 'runningJobs' in agent;
     }
 
-    /**
-     * Returns a CSS class for the build agent status badge.
-     */
-    getStatusBadgeClass(status: string): string {
+    getStatusBadgeSeverity(status: string): 'success' | 'secondary' | 'warn' {
         switch (status) {
             case 'ACTIVE':
-                return 'bg-success';
-            case 'IDLE':
-                return 'bg-secondary';
+                return 'success';
             case 'PAUSED':
             case 'SELF_PAUSED':
-                return 'bg-warning';
+                return 'warn';
             default:
-                return 'bg-secondary';
+                return 'secondary';
         }
     }
 

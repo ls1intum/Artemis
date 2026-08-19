@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, computed, inject, input, output, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -15,6 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface TextUnitFormData {
     name?: string;
@@ -42,7 +43,7 @@ export type MarkdownCache = {
         ArtemisTranslatePipe,
     ],
 })
-export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
+export class TextUnitFormComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private translateService = inject(TranslateService);
     private localStorageService = inject(LocalStorageService);
@@ -59,8 +60,14 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
-    // not included in reactive form
-    content: string | undefined;
+    // not included in reactive form; backed by a signal so the [(markdown)] two-way binding re-renders under zoneless
+    private readonly _content = signal<string | undefined>(undefined);
+    get content(): string | undefined {
+        return this._content();
+    }
+    set content(content: string | undefined) {
+        this._content.set(content);
+    }
     contentLoadedFromCache = false;
     firstMarkdownChangeHappened = false;
 
@@ -76,7 +83,27 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());
 
     private markdownChanges = new Subject<string>();
-    private markdownChangesSubscription: Subscription;
+    private markdownChangesSubscription!: Subscription; // set in ngOnInit(), always before ngOnDestroy() unsubscribes
+
+    // Tracks the formData reference already applied to the form so the patching effect stays idempotent.
+    private appliedFormData?: TextUnitFormData;
+
+    constructor() {
+        // Patch the form with the provided data in edit mode (replaces ngOnChanges).
+        // Patch ONCE per distinct formData value: `form.patchValue()` synchronously emits the form's
+        // statusChanges, which is mirrored into the `statusChanges` signal via `toSignal(...)`. Under
+        // zoneless that signal write reschedules the reactive flush, which re-runs this effect, which
+        // patches again — an infinite change-detection loop that pegged the main thread and left the
+        // edit form permanently stuck behind the loading spinner. Guarding on the formData reference
+        // breaks the cycle and also avoids clobbering in-progress user edits on later flushes.
+        effect(() => {
+            const data = this.formData();
+            if (this.isEditMode() && data && data !== this.appliedFormData) {
+                this.appliedFormData = data;
+                this.setFormValues(data);
+            }
+        });
+    }
 
     get nameControl() {
         return this.form.get('name');
@@ -84,12 +111,6 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     get releaseDateControl() {
         return this.form.get('releaseDate');
-    }
-
-    ngOnChanges() {
-        if (this.isEditMode() && this.formData()) {
-            this.setFormValues(this.formData()!);
-        }
     }
 
     ngOnDestroy() {
@@ -122,7 +143,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     submitForm() {
-        const textUnitFormData: TextUnitFormData = { ...this.form.value };
+        const textUnitFormData: TextUnitFormData = deepClone(this.form.value);
         textUnitFormData.content = this.content;
         this.localStorageService.remove(this.router.url);
         this.formSubmitted.emit(textUnitFormData);

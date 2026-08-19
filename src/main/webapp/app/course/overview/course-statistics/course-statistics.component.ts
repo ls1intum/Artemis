@@ -1,10 +1,13 @@
-import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { BarChartModule, Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
+import { ChartData, ChartOptions, TooltipItem } from 'chart.js';
+import { ChartModule } from 'primeng/chart';
 import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -15,14 +18,17 @@ import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
-import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
+import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { multiSeriesToStackedBarData, singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { barChartOptions, doughnutChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ScoreType } from 'app/foundation/constants/score-type.constants';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { sortBy } from 'lodash-es';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, distinctUntilChanged, map } from 'rxjs';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -40,11 +46,12 @@ const MODELING_EXERCISE_COLOR = '#6610f2';
 const TEXT_EXERCISE_COLOR = '#B00B6B';
 const FILE_UPLOAD_EXERCISE_COLOR = '#2D9C88';
 
-interface YourOverallPointsEntry extends NgxChartsSingleSeriesDataEntry {
+interface YourOverallPointsEntry extends ChartSeriesEntry {
     color: string;
 }
 
 export class Series {
+    [extra: string]: unknown;
     name: ChartBarTitle;
     value = 0;
     absoluteValue = 0;
@@ -99,7 +106,7 @@ enum ChartBarTitle {
 @Component({
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
-    styleUrls: ['../course-overview/course-overview.scss'],
+    styleUrls: ['../course-overview/course-overview.scss', './course-statistics.component.scss'],
     imports: [
         NgbDropdown,
         NgbDropdownToggle,
@@ -107,11 +114,10 @@ enum ChartBarTitle {
         TranslateDirective,
         NgbDropdownMenu,
         DocumentationButtonComponent,
-        PieChartModule,
+        ChartModule,
         NgbTooltip,
         RouterLink,
         ExerciseScoresChartComponent,
-        BarChartModule,
         KeyValuePipe,
         ArtemisTranslatePipe,
     ],
@@ -119,6 +125,9 @@ enum ChartBarTitle {
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
     controlsRendered = new EventEmitter<void>();
     private courseStorageService = inject(CourseStorageService);
+    private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private tabReselectionSubscription?: Subscription;
     private scoresStorageService = inject(ScoresStorageService);
     private translateService = inject(TranslateService);
     private route = inject(ActivatedRoute);
@@ -128,48 +137,60 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     readonly documentationType: DocumentationType = 'StudentStatistics';
 
-    courseId: number;
-    private courseExercises: Exercise[];
+    courseId!: number; // set in ngOnInit() from route params
+    private courseExercises: Exercise[] = [];
     private paramSubscription?: Subscription;
-    private courseUpdatesSubscription: Subscription;
-    private translateSubscription: Subscription;
-    course?: Course;
-    numberOfAppliedFilters: number;
+    private courseUpdatesSubscription?: Subscription;
+    private translateSubscription?: Subscription;
+    private exercisesLoadSubscription?: Subscription;
+    private gradeSubscription?: Subscription;
+    readonly course = signal<Course | undefined>(undefined);
+    readonly numberOfAppliedFilters = signal<number>(0);
 
-    private courseExercisesNotIncludedInScore: Exercise[];
-    private courseExercisesFilteredByCategories: Exercise[];
-    currentlyHidingNotIncludedInScoreExercises: boolean;
-    filteredExerciseIDs: number[];
+    private courseExercisesNotIncludedInScore: Exercise[] = [];
+    private courseExercisesFilteredByCategories: Exercise[] = [];
+    readonly currentlyHidingNotIncludedInScoreExercises = signal<boolean>(false);
+    readonly filteredExerciseIDs = signal<number[]>([]);
 
     // Icons
     faFilter = faFilter;
 
     // overall points
-    overallPoints = 0;
+    readonly overallPoints = signal<number>(0);
     overallPointsPerExercise = new Map<ExerciseType, number>();
 
+    // overall points the student would have if the points of exercise variants were not capped at their group's maxPoints.
+    // Only relevant (and shown) when the course has exercise variant groups; see courseHasExerciseVariants.
+    readonly overallPointsTotal = signal<number>(0);
+
+    // whether the course contains exercise variant groups with a configured points cap. If so, the statistics page shows
+    // both the total (uncapped) and the credited (capped) points to make the variant capping transparent.
+    readonly courseHasExerciseVariants = computed<boolean>(() =>
+        (this.course()?.exercises ?? []).some((exercise) => exercise.exerciseVariantGroup?.id !== undefined && exercise.exerciseVariantGroup.maxPoints !== undefined),
+    );
+
     // relative score
-    totalRelativeScore = 0;
+    readonly totalRelativeScore = signal<number>(0);
     relativeScoresPerExercise = new Map<ExerciseType, number>();
 
     // max points
-    overallMaxPoints = 0;
+    readonly overallMaxPoints = signal<number>(0);
     overallMaxPointsPerExercise = new Map<ExerciseType, number>();
 
     // reachable points
-    reachablePoints = 0;
+    readonly reachablePoints = signal<number>(0);
     reachablePointsPerExercise = new Map<ExerciseType, number>();
 
     // current relative score
-    currentRelativeScore = 0;
+    readonly currentRelativeScore = signal<number>(0);
     currentRelativeScoresPerExercise = new Map<ExerciseType, number>();
 
     // presentation score
-    overallPresentationScore = 0;
+    readonly overallPresentationScore = signal<number>(0);
     presentationScoresPerExercise = new Map<ExerciseType, number>();
 
     // reachable presentation points
-    reachablePresentationPoints = 0;
+    readonly reachablePresentationPoints = signal<number>(0);
 
     doughnutChartColors: string[] = [
         PROGRAMMING_EXERCISE_COLOR,
@@ -183,8 +204,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     exerciseTitles = new Map<ExerciseType, ExerciseTitle>();
 
-    // ngx-charts
-    ngxDoughnutData: YourOverallPointsEntry[] = [];
+    // entries of the "Your overall points" doughnut chart (name is a translation key, color the slice color)
+    readonly doughnutChartEntries = signal<YourOverallPointsEntry[]>([]);
 
     // Labels for the different parts in Your overall points chart
     programmingPointLabel = 'programmingPointLabel';
@@ -204,61 +225,92 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.missingPointsLabel,
     ];
 
-    ngxDoughnutColor = {
-        name: 'Your overall points color',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [], // colors: orange, turquoise, violet, bordeaux, green, light_blue, red
-    } as Color;
-
     // flags determining for each exercise group if at least one exercise has presentation score enabled
     presentationScoreEnabled = new Map<ExerciseType, boolean>();
 
-    ngxBarColor = {
-        name: 'Score per exercise group',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.LIGHT_GREY, GraphColors.GREEN, GraphColors.LIGHT_GREY, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.RED],
-    } as Color;
-
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
-    readonly barChartTitle = ChartBarTitle;
     readonly CHART_HEIGHT = 25;
     readonly BAR_PADDING = 4;
     readonly DEFAULT_SIZE = 50; // additional space for the x-axis and its labels
 
-    // array containing every non-empty exercise group
-    ngxExerciseGroups = new Map<ExerciseType, NgxExercise[]>();
+    // map containing every non-empty exercise group (one chart per group)
+    readonly ngxExerciseGroups = signal(new Map<ExerciseType, NgxExercise[]>());
+    // working copy that is populated while grouping exercises before it is published to the signal
+    private exerciseGroupsInProgress = new Map<ExerciseType, NgxExercise[]>();
 
-    gradingScaleExists = false;
-    isBonus = false;
-    gradeDTO?: GradeDTO;
+    private readonly chartColorService = inject(ChartColorService);
+    // colors of the doughnut chart slices (depend on the displayed entries)
+    private readonly doughnutColors = this.chartColorService.resolvedColors(() => this.doughnutChartEntries().map((entry) => entry.color));
+    // segment colors of the stacked bar charts: no due date, included, not included, bonus, not graded, missed
+    private readonly barColors = this.chartColorService.resolvedColors(() => [
+        GraphColors.LIGHT_GREY,
+        GraphColors.GREEN,
+        GraphColors.LIGHT_GREY,
+        GraphColors.YELLOW,
+        GraphColors.BLUE,
+        GraphColors.RED,
+    ]);
+
+    readonly doughnutData = computed(() => singleSeriesChartData(this.doughnutChartEntries(), this.doughnutColors()));
+    readonly doughnutOptions = computed(() =>
+        doughnutChartOptions({
+            legend: false,
+            tooltip: {
+                title: (items) => this.translateService.instant(items[0]?.label ?? ''),
+                label: (item) => `${item.parsed}`,
+            },
+        }),
+    );
+
+    readonly groupChartData = computed(() => {
+        const dataPerGroup = new Map<ExerciseType, ChartData<'bar', number[], string>>();
+        for (const [exerciseType, exerciseGroup] of this.ngxExerciseGroups()) {
+            // Adapt each NgxExercise to a ChartMultiSeriesEntry: its title is optional, so fall back to an empty
+            // label (the stacked-bar adapter requires a string name); series is already structurally compatible.
+            const entries: ChartMultiSeriesEntry[] = exerciseGroup.map((ngxExercise) => ({
+                name: ngxExercise.name ?? '',
+                series: ngxExercise.series,
+            }));
+            dataPerGroup.set(exerciseType, multiSeriesToStackedBarData(entries, this.barColors()));
+        }
+        return dataPerGroup;
+    });
+    readonly groupChartOptions = computed(() => {
+        const optionsPerGroup = new Map<ExerciseType, ChartOptions<'bar'>>();
+        for (const [exerciseType, exerciseGroup] of this.ngxExerciseGroups()) {
+            optionsPerGroup.set(
+                exerciseType,
+                barChartOptions({
+                    horizontal: true,
+                    stacked: true,
+                    legend: false,
+                    xAxis: { max: exerciseGroup[0]?.xScaleMax ?? 100 },
+                    tooltip: {
+                        title: () => '',
+                        label: (item) => this.barTooltipLines(item),
+                    },
+                }),
+            );
+        }
+        return optionsPerGroup;
+    });
+
+    readonly gradingScaleExists = signal<boolean>(false);
+    readonly isBonus = signal<boolean>(false);
+    readonly gradeDTO = signal<GradeDTO | undefined>(undefined);
 
     // Icons
     faQuestionCircle = faQuestionCircle;
     faClipboard = faClipboard;
 
     // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
-    private readonly controls = viewChild.required<TemplateRef<any>>('controls');
+    private readonly controls = viewChild.required<TemplateRef<unknown>>('controls');
     // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
-        subject: new Subject<TemplateRef<any>>(),
+        subject: new Subject<TemplateRef<unknown>>(),
     };
 
     ngOnInit() {
-        // Note: due to lazy loading and router outlet, we use parent 2x here
-        this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
-        });
-
-        this.course = this.courseStorageService.getCourse(this.courseId);
-        this.onCourseLoad();
-
-        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.course = course;
-            this.onCourseLoad();
-        });
-
         // update titles based on the initial language selection
         this.updateExerciseTitles();
 
@@ -268,7 +320,87 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.groupExercisesByType(this.courseExercises);
         });
 
-        this.calculateCourseGrade();
+        // Note: due to lazy loading and router outlet, we use parent 2x here. Angular reuses this component when only
+        // the course parameter changes, so every distinct id must cancel and rebuild its course-scoped state.
+        this.paramSubscription = this.route.parent?.parent?.params
+            .pipe(
+                map((params) => parseInt(params['courseId'], 10)),
+                distinctUntilChanged(),
+            )
+            .subscribe((courseId) => this.activateCourse(courseId));
+
+        // Selecting the statistics tab while already on it acts as a refresh
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.route).subscribe(() => this.loadExercises(this.courseId));
+    }
+
+    private activateCourse(courseId: number): void {
+        this.courseUpdatesSubscription?.unsubscribe();
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.gradeSubscription?.unsubscribe();
+        this.resetCourseState();
+
+        this.courseId = courseId;
+        this.course.set(this.courseStorageService.getCourse(courseId));
+        this.onCourseLoad();
+
+        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(courseId).subscribe((course: Course) => {
+            this.course.set(course);
+            this.onCourseLoad();
+        });
+
+        // The exercises and their scores are not part of the course itself, so this tab loads them. The result arrives
+        // through the course update subscription above and through the ScoresStorageService.
+        this.loadExercises(courseId);
+    }
+
+    /**
+     * Fetches the exercises and their scores without clearing the rendered charts.
+     *
+     * Also the refresh path: selecting the statistics tab while already on it re-runs this, so newly graded work is
+     * reflected without a page reload, and the charts keep showing the previous figures until the new ones arrive.
+     *
+     * @param courseId the course to load the exercises and scores of
+     */
+    private loadExercises(courseId: number): void {
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(courseId).subscribe(() => {
+            this.calculateCourseGrade();
+        });
+    }
+
+    private resetCourseState(): void {
+        this.course.set(undefined);
+        this.courseExercises = [];
+        this.courseExercisesNotIncludedInScore = [];
+        this.courseExercisesFilteredByCategories = [];
+        this.currentlyHidingNotIncludedInScoreExercises.set(false);
+        this.filteredExerciseIDs.set([]);
+        this.numberOfAppliedFilters.set(0);
+        this.categoryFilter.filterMap.clear();
+        this.categoryFilter.setupCategoryFilter([]);
+
+        this.overallPoints.set(0);
+        this.overallPointsTotal.set(0);
+        this.totalRelativeScore.set(0);
+        this.overallMaxPoints.set(0);
+        this.reachablePoints.set(0);
+        this.currentRelativeScore.set(0);
+        this.overallPresentationScore.set(0);
+        this.reachablePresentationPoints.set(0);
+        this.overallPointsPerExercise = new Map();
+        this.relativeScoresPerExercise = new Map();
+        this.overallMaxPointsPerExercise = new Map();
+        this.reachablePointsPerExercise = new Map();
+        this.currentRelativeScoresPerExercise = new Map();
+        this.presentationScoresPerExercise = new Map();
+        this.presentationScoreEnabled = new Map();
+        this.exerciseGroupsInProgress = new Map();
+        this.ngxExerciseGroups.set(new Map());
+        this.doughnutChartEntries.set([]);
+
+        this.gradingScaleExists.set(false);
+        this.isBonus.set(false);
+        this.gradeDTO.set(undefined);
     }
 
     private updateExerciseTitles() {
@@ -289,24 +421,34 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     ngOnDestroy() {
+        this.tabReselectionSubscription?.unsubscribe();
         this.translateSubscription?.unsubscribe();
         this.courseUpdatesSubscription?.unsubscribe();
         this.paramSubscription?.unsubscribe();
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.gradeSubscription?.unsubscribe();
     }
 
     private calculateCourseGrade(): void {
-        this.gradingService.matchPercentageToGradeStep(this.totalRelativeScore, this.courseId).subscribe((gradeDTO) => {
+        this.gradeSubscription?.unsubscribe();
+        const relativeScore = this.totalRelativeScore();
+        // NaN when no total scores are stored for the course yet; asking the server to match it is meaningless
+        if (!Number.isFinite(relativeScore)) {
+            return;
+        }
+        this.gradeSubscription = this.gradingService.matchPercentageToGradeStep(relativeScore, this.courseId).subscribe((gradeDTO) => {
             if (gradeDTO) {
-                this.gradingScaleExists = true;
-                this.gradeDTO = gradeDTO;
-                this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
+                this.gradingScaleExists.set(true);
+                this.gradeDTO.set(gradeDTO);
+                this.isBonus.set(gradeDTO.gradeType === GradeType.BONUS);
             }
         });
     }
 
     private onCourseLoad(): void {
-        if (this.course?.exercises) {
-            this.courseExercises = this.course.exercises;
+        const course = this.course();
+        if (course?.exercises) {
+            this.courseExercises = course.exercises;
             this.calculateAndFilterNotIncludedInScore();
             this.calculateMaxPoints();
             this.calculateReachablePoints();
@@ -326,12 +468,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      */
     private groupExercisesByType(exercises: Exercise[]): void {
         // this reset is now necessary because of the filtering option that triggers the grouping again.
-        this.ngxExerciseGroups = new Map<ExerciseType, NgxExercise[]>();
+        this.exerciseGroupsInProgress = new Map<ExerciseType, NgxExercise[]>();
         Object.values(ExerciseType).forEach((exerciseType) => {
-            this.ngxExerciseGroups.set(exerciseType, []);
+            this.exerciseGroupsInProgress.set(exerciseType, []);
             this.presentationScoreEnabled.set(exerciseType, false);
         });
 
+        const course = this.course();
         // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
         exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || dayjs().add(5, 'year')).valueOf()]);
         exercises.forEach((exercise) => {
@@ -352,11 +495,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                         if (participation.id && results.length) {
                             const participationResult: ParticipationResultDTO | undefined = this.scoresStorageService.getStoredParticipationResult(participation.id);
                             if (participationResult?.rated) {
-                                const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, this.course);
+                                const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score, course);
                                 const cappedParticipationScore = Math.min(roundedParticipationScore, 100);
-                                const roundedParticipationPoints = roundValueSpecifiedByCourseSettings((participationResult.score! * exercise.maxPoints!) / 100, this.course);
-                                const missedScore = roundValueSpecifiedByCourseSettings(100 - cappedParticipationScore, this.course);
-                                const missedPoints = roundValueSpecifiedByCourseSettings(Math.max(exercise.maxPoints! - roundedParticipationPoints, 0), this.course);
+                                const roundedParticipationPoints = roundValueSpecifiedByCourseSettings((participationResult.score! * exercise.maxPoints!) / 100, course);
+                                const missedScore = roundValueSpecifiedByCourseSettings(100 - cappedParticipationScore, course);
+                                const missedPoints = roundValueSpecifiedByCourseSettings(Math.max(exercise.maxPoints! - roundedParticipationPoints, 0), course);
                                 // 5 = MISSED
                                 series[5].value = missedScore;
                                 series[5].absoluteValue = missedPoints;
@@ -370,7 +513,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                         } else {
                             if (
                                 participation.initializationState === InitializationState.FINISHED &&
-                                (!exercise.dueDate || participation.initializationDate?.isBefore(exercise.dueDate!))
+                                (!exercise.dueDate || participation.initializationDate?.isBefore(exercise.dueDate))
                             ) {
                                 // 4 = NOT_GRADED
                                 series[4].value = 100;
@@ -397,17 +540,18 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             }
         });
         this.pushExerciseGroupsToData();
+        this.ngxExerciseGroups.set(this.exerciseGroupsInProgress);
     }
 
     toggleNotIncludedInScoreExercises() {
-        if (this.currentlyHidingNotIncludedInScoreExercises) {
+        if (this.currentlyHidingNotIncludedInScoreExercises()) {
             this.courseExercises = this.courseExercises.concat(this.courseExercisesNotIncludedInScore);
-            this.filteredExerciseIDs = [];
+            this.filteredExerciseIDs.set([]);
         } else {
             this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotIncludedInScore.includes(exercise));
-            this.filteredExerciseIDs = this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!);
+            this.filteredExerciseIDs.set(this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!));
         }
-        this.currentlyHidingNotIncludedInScoreExercises = !this.currentlyHidingNotIncludedInScoreExercises;
+        this.currentlyHidingNotIncludedInScoreExercises.update((value) => !value);
         this.categoryFilter.setupCategoryFilter(this.courseExercises);
 
         this.groupExercisesByType(this.courseExercises);
@@ -437,9 +581,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const modelingExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.MODELING, ScoreType.ABSOLUTE_SCORE);
         const textExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.TEXT, ScoreType.ABSOLUTE_SCORE);
         const fileUploadExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.FILE_UPLOAD, ScoreType.ABSOLUTE_SCORE);
-        this.overallPoints = this.retrieveTotalScoreByScoreType(ScoreType.ABSOLUTE_SCORE);
-        const totalPresentationPoints = this.course?.presentationScore ? 0 : this.retrieveTotalScoreByScoreType(ScoreType.PRESENTATION_SCORE);
-        let totalMissedPoints = this.reachablePoints - this.overallPoints;
+        const course = this.course();
+        this.overallPoints.set(this.retrieveTotalScoreByScoreType(ScoreType.ABSOLUTE_SCORE));
+        this.overallPointsTotal.set(this.retrieveTotalScoreByScoreType(ScoreType.ABSOLUTE_SCORE_TOTAL));
+        const totalPresentationPoints = course?.presentationScore ? 0 : this.retrieveTotalScoreByScoreType(ScoreType.PRESENTATION_SCORE);
+        let totalMissedPoints = this.reachablePoints() - this.overallPoints();
         if (totalMissedPoints < 0) {
             totalMissedPoints = 0;
         }
@@ -459,19 +605,18 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.overallPointsPerExercise.set(ExerciseType.MODELING, modelingExerciseTotalScore);
         this.overallPointsPerExercise.set(ExerciseType.TEXT, textExerciseTotalScore);
         this.overallPointsPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExerciseTotalScore);
-        const ngxDoughnutDataTemp: YourOverallPointsEntry[] = [];
+        const doughnutEntriesTemp: YourOverallPointsEntry[] = [];
         scores.forEach((score, index) => {
             if (score > 0) {
-                ngxDoughnutDataTemp.push({
+                doughnutEntriesTemp.push({
                     name: 'artemisApp.courseOverview.statistics.' + this.labels[index],
-                    value: this.roundScoreSpecifiedByCourseSettings(score, this.course),
+                    value: this.roundScoreSpecifiedByCourseSettings(score, course),
                     color: this.doughnutChartColors[index],
                 });
-                this.ngxDoughnutColor.domain.push(this.doughnutChartColors[index]);
             }
         });
 
-        this.ngxDoughnutData = [...ngxDoughnutDataTemp];
+        this.doughnutChartEntries.set(doughnutEntriesTemp);
     }
 
     /**
@@ -488,7 +633,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.overallMaxPointsPerExercise.set(ExerciseType.MODELING, modelingExerciseTotalMaxPoints);
         this.overallMaxPointsPerExercise.set(ExerciseType.TEXT, textExerciseTotalMaxPoints);
         this.overallMaxPointsPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExerciseTotalMaxPoints);
-        this.overallMaxPoints = this.retrieveTotalScoreByScoreType(ScoreType.MAX_POINTS);
+        this.overallMaxPoints.set(this.retrieveTotalScoreByScoreType(ScoreType.MAX_POINTS));
     }
 
     /**
@@ -505,7 +650,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.relativeScoresPerExercise.set(ExerciseType.MODELING, modelingExerciseRelativeScore);
         this.relativeScoresPerExercise.set(ExerciseType.TEXT, textExerciseRelativeScore);
         this.relativeScoresPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExerciseRelativeScore);
-        this.totalRelativeScore = this.retrieveTotalScoreByScoreType(ScoreType.RELATIVE_SCORE);
+        this.totalRelativeScore.set(this.retrieveTotalScoreByScoreType(ScoreType.RELATIVE_SCORE));
     }
 
     /**
@@ -522,7 +667,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.reachablePointsPerExercise.set(ExerciseType.MODELING, modelingExercisesReachablePoints);
         this.reachablePointsPerExercise.set(ExerciseType.TEXT, textExercisesReachablePoints);
         this.reachablePointsPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExercisesReachablePoints);
-        this.reachablePoints = this.retrieveTotalScoreByScoreType(ScoreType.REACHABLE_POINTS);
+        this.reachablePoints.set(this.retrieveTotalScoreByScoreType(ScoreType.REACHABLE_POINTS));
     }
 
     /**
@@ -539,7 +684,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.currentRelativeScoresPerExercise.set(ExerciseType.MODELING, modelingExerciseCurrentRelativeScore);
         this.currentRelativeScoresPerExercise.set(ExerciseType.TEXT, textExerciseCurrentRelativeScore);
         this.currentRelativeScoresPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExerciseCurrentRelativeScore);
-        this.currentRelativeScore = this.retrieveTotalScoreByScoreType(ScoreType.CURRENT_RELATIVE_SCORE);
+        this.currentRelativeScore.set(this.retrieveTotalScoreByScoreType(ScoreType.CURRENT_RELATIVE_SCORE));
     }
 
     /**
@@ -555,14 +700,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.presentationScoresPerExercise.set(ExerciseType.MODELING, modelingExercisePresentationScore);
         this.presentationScoresPerExercise.set(ExerciseType.TEXT, textExercisePresentationScore);
         this.presentationScoresPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExercisePresentationScore);
-        this.overallPresentationScore = this.retrieveTotalScoreByScoreType(ScoreType.PRESENTATION_SCORE);
+        this.overallPresentationScore.set(this.retrieveTotalScoreByScoreType(ScoreType.PRESENTATION_SCORE));
     }
 
     /**
      * Retrieve the reachable presentation score for the course from the scores storage service
      */
     private calculateReachablePresentationPoints(): void {
-        this.reachablePresentationPoints = this.retrieveTotalScoreByScoreType(ScoreType.REACHABLE_PRESENTATION_POINTS);
+        this.reachablePresentationPoints.set(this.retrieveTotalScoreByScoreType(ScoreType.REACHABLE_PRESENTATION_POINTS));
     }
 
     /**
@@ -602,6 +747,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 return scores.reachablePoints;
             case ScoreType.ABSOLUTE_SCORE:
                 return scores.studentScores.absoluteScore;
+            case ScoreType.ABSOLUTE_SCORE_TOTAL:
+                return scores.studentScores.absoluteScoreTotal;
             case ScoreType.RELATIVE_SCORE:
                 return scores.studentScores.relativeScore;
             case ScoreType.CURRENT_RELATIVE_SCORE:
@@ -614,11 +761,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     calculateAndFilterNotIncludedInScore() {
-        this.currentlyHidingNotIncludedInScoreExercises = true;
+        this.currentlyHidingNotIncludedInScoreExercises.set(true);
         this.courseExercisesNotIncludedInScore = this.courseExercises.filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED);
         this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotIncludedInScore.includes(exercise));
         this.courseExercisesFilteredByCategories = this.courseExercises;
-        this.filteredExerciseIDs = this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!);
+        this.filteredExerciseIDs.set(this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!));
         this.categoryFilter.setupCategoryFilter(this.courseExercises);
         this.calculateNumberOfAppliedFilters();
     }
@@ -632,7 +779,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private pushToData(exercise: Exercise, allSeries: Series[]): void {
         const exerciseType = exercise.type!;
         const ngxExercise = new NgxExercise(exercise.title, allSeries, exerciseType);
-        this.ngxExerciseGroups.get(exerciseType)!.push(ngxExercise);
+        this.exerciseGroupsInProgress.get(exerciseType)!.push(ngxExercise);
         this.presentationScoreEnabled.set(exerciseType, (this.presentationScoreEnabled.get(exerciseType) ?? false) || (exercise.presentationScoreEnabled ?? false));
         if (exerciseType == ExerciseType.PROGRAMMING) {
             allSeries.forEach((series: Series) => {
@@ -646,7 +793,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      */
     private pushExerciseGroupsToData(): void {
         Object.values(ExerciseType).forEach((exerciseType) => {
-            const exerciseGroup = this.ngxExerciseGroups.get(exerciseType)!;
+            const exerciseGroup = this.exerciseGroupsInProgress.get(exerciseType)!;
             if (exerciseGroup.length > 0) {
                 const firstExerciseGroup = exerciseGroup[0];
                 firstExerciseGroup.absoluteScore = this.overallPointsPerExercise.get(exerciseType)!;
@@ -660,7 +807,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 firstExerciseGroup.height = this.calculateChartHeight(exerciseGroup.length);
             } else {
                 // prevent an error in html when there is no exercise of one specific type
-                this.ngxExerciseGroups.delete(exerciseType);
+                this.exerciseGroupsInProgress.delete(exerciseType);
             }
         });
     }
@@ -701,12 +848,74 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     /**
-     * Handles the event fired if the user clicks on an arbitrary bar in the vertical bar charts.
+     * Handles the event fired if the user clicks on an arbitrary bar in the stacked bar charts.
      * Delegates the user to the corresponding exercise detail page in a new tab
-     * @param event the event that is fired by ngx-charts
+     * @param event the event that is fired by p-chart
+     * @param exerciseType the exercise group whose chart was clicked
      */
-    onSelect(event: any) {
-        this.navigationUtilService.routeInNewTab(['courses', this.course!.id!, 'exercises', event.exerciseId]);
+    onSelect(event: Parameters<typeof toChartSelectEvent>[0], exerciseType: ExerciseType) {
+        const chartData = this.groupChartData().get(exerciseType);
+        if (!chartData) {
+            return;
+        }
+        const selected = toChartSelectEvent(event, chartData);
+        const exerciseId = selected?.meta?.['exerciseId'];
+        if (exerciseId === undefined) {
+            return;
+        }
+        this.navigationUtilService.routeInNewTab(['courses', this.course()!.id!, 'exercises', exerciseId]);
+    }
+
+    /**
+     * Builds the tooltip lines for one segment of a stacked bar chart, depending on the segment type
+     * and the properties of the corresponding exercise (mirrors the former ngx-charts tooltip template).
+     * @param item the hovered tooltip item provided by chart.js
+     */
+    private barTooltipLines(item: TooltipItem<'bar'>): string[] {
+        const series = item.dataset.meta?.[item.dataIndex] as Series | undefined;
+        if (!series) {
+            return [];
+        }
+        const lines: string[] = [];
+        const percentage = this.roundScoreSpecifiedByCourseSettings(series.value, this.course());
+        if ([ChartBarTitle.INCLUDED, ChartBarTitle.BONUS, ChartBarTitle.NOT_INCLUDED, ChartBarTitle.NO_DUE_DATE].includes(series.name)) {
+            let achievedLine: string;
+            if (series.isProgrammingExercise) {
+                achievedLine = this.translateService.instant('artemisApp.courseOverview.statistics.programmingExercisePassedTests', {
+                    tests: series.absoluteValue,
+                    percentage,
+                });
+            } else {
+                achievedLine = this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
+                    points: series.absoluteValue,
+                    percentage,
+                });
+            }
+            if (series.name === ChartBarTitle.BONUS) {
+                achievedLine += ' | ' + this.translateService.instant('artemisApp.courseOverview.statistics.bonusPointTooltip');
+            }
+            if (series.name === ChartBarTitle.NOT_INCLUDED) {
+                achievedLine += ' | ' + this.translateService.instant('artemisApp.courseOverview.statistics.notIncludedTooltip');
+            }
+            lines.push(achievedLine);
+        }
+        if (series.name === ChartBarTitle.MISSED) {
+            if (!series.afterDueDate && !series.notParticipated && !series.isProgrammingExercise) {
+                lines.push(this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', { points: series.absoluteValue, percentage }));
+            }
+            if (series.notParticipated) {
+                lines.push(this.translateService.instant('artemisApp.courseOverview.statistics.exerciseNotParticipated', { exercise: series.exerciseTitle }));
+            }
+            if (series.afterDueDate) {
+                lines.push(this.translateService.instant('artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate', { exercise: series.exerciseTitle }));
+            }
+            if (series.isProgrammingExercise && !series.notParticipated) {
+                lines.push(this.translateService.instant('artemisApp.courseOverview.statistics.programmingExerciseFailedTests', { tests: series.absoluteValue, percentage }));
+            }
+        } else if (series.name === ChartBarTitle.NOT_GRADED) {
+            lines.push(this.translateService.instant('artemisApp.courseOverview.statistics.exerciseNotGraded', { exercise: series.exerciseTitle }));
+        }
+        return lines;
     }
 
     /**
@@ -744,15 +953,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             const newlyFilteredIDs = this.courseExercises
                 .filter((exercise) => !this.courseExercisesFilteredByCategories.includes(exercise))
                 .map((exercise) => exercise.id!)
-                .filter((id) => !this.filteredExerciseIDs.includes(id));
-            this.filteredExerciseIDs = this.filteredExerciseIDs.concat(newlyFilteredIDs);
+                .filter((id) => !this.filteredExerciseIDs().includes(id));
+            this.filteredExerciseIDs.update((ids) => ids.concat(newlyFilteredIDs));
         } else {
-            this.filteredExerciseIDs = this.filteredExerciseIDs.filter((id) => !this.courseExercisesFilteredByCategories.find((exercise) => exercise.id === id));
+            this.filteredExerciseIDs.update((ids) => ids.filter((id) => !this.courseExercisesFilteredByCategories.find((exercise) => exercise.id === id)));
         }
     }
 
     private calculateNumberOfAppliedFilters(): void {
-        this.numberOfAppliedFilters = this.categoryFilter.numberOfActiveFilters + (this.currentlyHidingNotIncludedInScoreExercises ? 1 : 0);
+        this.numberOfAppliedFilters.set(this.categoryFilter.numberOfActiveFilters + (this.currentlyHidingNotIncludedInScoreExercises() ? 1 : 0));
     }
 
     /**

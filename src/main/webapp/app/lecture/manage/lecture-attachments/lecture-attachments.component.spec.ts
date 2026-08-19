@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -8,8 +8,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -19,15 +18,12 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of, take, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileService } from 'app/foundation/service/file.service';
 
 describe('LectureAttachmentsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: LectureAttachmentsComponent;
     let fixture: ComponentFixture<LectureAttachmentsComponent>;
     let attachmentService: AttachmentService;
@@ -47,9 +43,6 @@ describe('LectureAttachmentsComponent', () => {
             description:
                 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
             shortName: 'RCSS',
-            studentGroupName: 'artemis-dev',
-            teachingAssistantGroupName: 'tumuser',
-            instructorGroupName: 'tumuser',
             startDate: dayjs('2018-12-15T16:11:00+01:00'),
             endDate: dayjs('2019-06-15T16:11:14+02:00'),
             onlineCourse: false,
@@ -100,13 +93,11 @@ describe('LectureAttachmentsComponent', () => {
                 RouterModule,
                 ReactiveFormsModule,
                 FormsModule,
-                MockModule(OwlDateTimeModule),
-                MockModule(OwlNativeDateTimeModule),
                 LectureAttachmentsComponent,
                 FormDateTimePickerComponent,
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [
@@ -127,7 +118,7 @@ describe('LectureAttachmentsComponent', () => {
     });
 
     afterEach(() => {
-        comp.attachments = [...attachments];
+        comp.attachments.set([...attachments]);
         vi.restoreAllMocks();
     });
 
@@ -170,7 +161,7 @@ describe('LectureAttachmentsComponent', () => {
         }
         comp.attachmentToBeUpdatedOrCreated.set(attachment);
         comp.attachmentBackup = backup;
-        comp.attachments = [attachment];
+        comp.attachments.set([attachment]);
 
         // Do change
         comp.form.patchValue({
@@ -182,29 +173,30 @@ describe('LectureAttachmentsComponent', () => {
         comp.saveAttachment();
         expect(attachmentServiceUpdateStub).toHaveBeenCalledWith(1, attachment, withFile ? file : undefined, { notificationText: notification });
         expect(comp.attachmentToBeUpdatedOrCreated()).toEqual(attachment);
-        expect(comp.errorMessage).toBe(errorMessage);
+        expect(comp.errorMessage()).toBe(errorMessage);
         expect(mockFileInput.nativeElement.value).toBe('');
-        expect(comp.attachments).toEqual([backup]);
+        expect(comp.attachments()).toEqual([backup]);
         expect(comp.attachmentBackup).toBeUndefined();
         expect(comp.attachmentFile()).toBeUndefined();
 
         if (withFile) {
-            expect(comp.erroredFile).toEqual(file);
+            expect(comp.erroredFile()).toEqual(file);
         } else {
-            expect(comp.erroredFile).toBeUndefined();
+            expect(comp.erroredFile()).toBeUndefined();
         }
     });
 
     it('should update Attachment', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
-        comp.attachmentToBeUpdatedOrCreated.set({
+        const attachmentToUpdate = {
             id: 1,
             lecture: comp.lecture,
             attachmentType: AttachmentType.FILE,
             version: 1,
             uploadDate: dayjs(),
-        } as Attachment);
+        } as Attachment;
+        comp.attachmentToBeUpdatedOrCreated.set(attachmentToUpdate);
         comp.notificationText = 'wow how did i get here';
         const attachmentServiceUpdateStub = vi.spyOn(attachmentService, 'update').mockReturnValue(
             of(
@@ -222,7 +214,8 @@ describe('LectureAttachmentsComponent', () => {
         );
         comp.saveAttachment();
         expect(attachmentServiceUpdateStub).toHaveBeenCalledTimes(1);
-        expect(comp.attachments[1].version).toBe(2);
+        expect(attachmentToUpdate.version).toBe(1);
+        expect(comp.attachments()[1].version).toBe(2);
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     });
 
@@ -252,7 +245,7 @@ describe('LectureAttachmentsComponent', () => {
         comp.dialogError$.pipe(take(1)).subscribe((error) => expect(error).toBe(''));
         const attachmentServiceDeleteStub = vi.spyOn(attachmentService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
         comp.deleteAttachment(toDelete);
-        expect(comp.attachments).toHaveLength(1);
+        expect(comp.attachments()).toHaveLength(1);
         expect(attachmentServiceDeleteStub).toHaveBeenCalledWith(attachmentId);
         await fixture.whenStable();
     });
@@ -273,7 +266,7 @@ describe('LectureAttachmentsComponent', () => {
         comp.dialogError$.pipe(take(1)).subscribe((error) => expect(error).toBe(errorMessage));
         const attachmentServiceDeleteStub = vi.spyOn(attachmentService, 'delete').mockReturnValue(throwError(() => new Error(errorMessage)));
         comp.deleteAttachment(toDelete);
-        expect(comp.attachments).toHaveLength(2);
+        expect(comp.attachments()).toHaveLength(2);
         expect(attachmentServiceDeleteStub).toHaveBeenCalledWith(attachmentId);
         await fixture.whenStable();
     });
@@ -291,17 +284,20 @@ describe('LectureAttachmentsComponent', () => {
         } as Attachment;
         comp.attachmentBackup = toCancel;
         comp.cancel();
-        expect(comp.attachments[1]).toBe(toCancel);
+        expect(comp.attachments()[1]).toBe(toCancel);
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     });
 
     it('should download attachment', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
-        comp.isDownloadingAttachmentLink = undefined;
-        expect(comp.isDownloadingAttachmentLink).toBeUndefined();
-        comp.downloadAttachment('https://my/own/download/url', 'test');
-        expect(comp.isDownloadingAttachmentLink).toBeUndefined();
+        const fileService = TestBed.inject(FileService);
+        const downloadFileSpy = vi.spyOn(fileService, 'downloadFileByAttachmentName');
+        comp.isDownloadingAttachmentLink.set(undefined);
+        expect(comp.isDownloadingAttachmentLink()).toBeUndefined();
+        comp.downloadAttachment('test', 'https://my/own/download/url', 5);
+        expect(downloadFileSpy).toHaveBeenCalledWith('https://my/own/download/url', 'test', 5);
+        expect(comp.isDownloadingAttachmentLink()).toBeUndefined();
     });
 
     it('should set lecture attachment', async () => {

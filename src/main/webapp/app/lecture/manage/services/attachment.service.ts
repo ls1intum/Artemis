@@ -6,8 +6,8 @@ import { createRequestOption } from 'app/foundation/util/request.util';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
-import { cloneDeep } from 'lodash-es';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<Attachment>;
 type EntityArrayResponseType = HttpResponse<Attachment[]>;
@@ -25,7 +25,7 @@ export class AttachmentService {
      * @param file the file to save as an attachment if it was changed (optional)
      * @param req optional request parameters
      */
-    update(attachmentId: number, attachment: Attachment, file?: File, req?: any): Observable<EntityResponseType> {
+    update(attachmentId: number, attachment: Attachment, file?: File, req?: Record<string, unknown>): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.convertAttachmentDatesFromClient(attachment);
 
@@ -67,8 +67,8 @@ export class AttachmentService {
     }
 
     convertAttachmentDatesFromClient(attachment: Attachment): Attachment {
-        // Deep clone is applied to preserve all nested properties of the attachment
-        return Object.assign({}, cloneDeep(attachment), {
+        // cloneWith already deep-clones its source, which preserves all nested properties of the attachment.
+        return cloneWith(attachment, {
             releaseDate: convertDateFromClient(attachment.releaseDate),
             uploadDate: convertDateFromClient(attachment.uploadDate),
         });

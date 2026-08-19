@@ -21,6 +21,14 @@ To keep feedback cycles short, the pipeline uses a **two-phase execution model**
 mapped to the files changed in the pull request, and Phase 2 runs the remaining tests only when Phase 1 passes.
 See the [CI Pipeline](#ci-pipeline) section for details.
 
+<Callout variant={CalloutVariant.info}>
+
+    Testing Iris (the AI tutor) end to end against a **real Pyris** microservice — architecture, the mock
+    LLM, and the nightly cross-repository monitor — is covered separately in
+    [E2E Testing Iris (Real Pyris)](./e2e-testing-iris.mdx).
+
+</Callout>
+
 ## Set up Playwright locally
 
 To run the tests locally, developers need to set up Playwright on their machines.
@@ -155,11 +163,6 @@ PLAYWRIGHT_USERNAME_TEMPLATE=artemis_test_user_
 PLAYWRIGHT_PASSWORD_TEMPLATE=artemis_test_user_
 ADMIN_USERNAME=artemis_admin
 ADMIN_PASSWORD=artemis_admin
-ALLOW_GROUP_CUSTOMIZATION=true
-STUDENT_GROUP_NAME=students
-TUTOR_GROUP_NAME=tutors
-EDITOR_GROUP_NAME=editors
-INSTRUCTOR_GROUP_NAME=instructors
 BASE_URL=https://localhost
 EXERCISE_REPO_DIRECTORY=test-exercise-repos
 FAST_TEST_TIMEOUT_SECONDS=45

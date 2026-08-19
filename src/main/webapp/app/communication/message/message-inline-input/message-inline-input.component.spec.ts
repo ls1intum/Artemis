@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -25,8 +24,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('MessageInlineInputComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: MessageInlineInputComponent;
     let fixture: ComponentFixture<MessageInlineInputComponent>;
     let metisService: MetisService;
@@ -91,7 +88,7 @@ describe('MessageInlineInputComponent', () => {
             title: undefined,
         });
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledOnce();
     });
 
@@ -110,7 +107,7 @@ describe('MessageInlineInputComponent', () => {
         component.confirm();
 
         vi.advanceTimersByTime(300);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).not.toHaveBeenCalled();
     });
 
@@ -133,7 +130,7 @@ describe('MessageInlineInputComponent', () => {
             title: undefined,
         });
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onEditSpy).toHaveBeenCalledOnce();
     });
 
@@ -152,7 +149,7 @@ describe('MessageInlineInputComponent', () => {
         component.confirm();
 
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     describe('Draft functionality', () => {

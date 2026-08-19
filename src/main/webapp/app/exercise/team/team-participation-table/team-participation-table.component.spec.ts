@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -22,7 +21,6 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('TeamParticipationTableComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: TeamParticipationTableComponent;
     let fixture: ComponentFixture<TeamParticipationTableComponent>;
     let debugElement: DebugElement;
@@ -191,9 +189,22 @@ describe('TeamParticipationTableComponent', () => {
         // Make sure that all 3 exercises were received for exercise
         expect(comp.exercises()).toHaveLength(course.exercises!.length);
 
-        // Check that ngx-datatable is present
-        const datatable = debugElement.query(By.css('jhi-data-table'));
+        // Check that jhi-table-view is present
+        const datatable = debugElement.query(By.css('jhi-table-view'));
         expect(datatable).not.toBeNull();
+    });
+
+    it('should keep the initialization date column sortable via its dot-path field', () => {
+        const initDateColumn = comp.columns().find((column) => column.field === 'participation.initializationDate');
+        expect(initDateColumn).toBeDefined();
+        expect(initDateColumn!.sort).toBe(true);
+    });
+
+    it('should keep the participation id column sortable for admins', () => {
+        fixture.componentRef.setInput('isAdmin', true);
+        const participationColumn = comp.columns().find((column) => column.field === 'participation.id');
+        expect(participationColumn).toBeDefined();
+        expect(participationColumn!.sort).toBe(true);
     });
 
     it('Assessment Action "continue" is triggered', () => {

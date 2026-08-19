@@ -1,0 +1,933 @@
+name: E2E Tests
+
+on:
+  workflow_call:
+    inputs:
+      branch_name:
+        description: 'Branch under test (head ref for PRs, ref_name otherwise).'
+        required: true
+        type: string
+      commit_sha:
+        description: 'SHA under test. For PRs this is the PR head SHA.'
+        required: true
+        type: string
+      base_branch:
+        description: 'Base branch for relevant-tests computation.'
+        required: true
+        type: string
+      is_pr:
+        description: 'True when the umbrella was triggered by pull_request.'
+        required: true
+        type: boolean
+      pr_number:
+        description: 'PR number (0 when not a PR).'
+        required: false
+        type: number
+        default: 0
+    secrets:
+      ARTEMIS_ADMIN_PASSWORD:
+        required: true
+      ARTEMIS_ADMIN_USERNAME:
+        required: true
+      PLAYWRIGHT_REPORT_TOKEN:
+        required: false
+      HELIOS_REPO_SECRET:
+        required: false
+    outputs:
+      e2e_result:
+        description: 'Raw aggregated E2E test outcome (success|failure|error), for the CI Summary
+          table. This is the unexonerated signal — `failure` here includes known-flaky-only runs
+          that report-results exonerates. The caller `e2e` job conclusion is the exonerated verdict
+          (red only on a real regression). `e2e` is part of the required `all-required-ci-passed`
+          gate, so a real regression blocks merging while a known-flaky-only run stays green.'
+        value: ${{ jobs.report-results.outputs.status }}
+
+permissions: {}  # default-deny; each job grants only what it needs
+
+env:
+  # Playwright runner config + secrets shared by every E2E job. Each job sets only the
+  # fields that differ (PLAYWRIGHT_REPORT_PHASE, PLAYWRIGHT_REPORT_PR_NUMBER).
+  PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
+  PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
+  PLAYWRIGHT_REPORT_BRANCH: ${{ inputs.branch_name }}
+  PLAYWRIGHT_REPORT_COMMIT_SHA: ${{ inputs.commit_sha }}
+  PLAYWRIGHT_REPORT_TRIGGERED_BY: ${{ inputs.is_pr && 'pull_request' || 'push' }}
+  ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+  ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+  PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+  PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+  PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+  SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+  TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+  TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+  TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+
+jobs:
+  determine-tests:
+    name: Determine Relevant Tests
+    if: inputs.is_pr
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      run_all_tests: ${{ steps.determine.outputs.RUN_ALL_TESTS }}
+      relevant_tests: ${{ steps.determine.outputs.RELEVANT_TESTS }}
+      remaining_tests: ${{ steps.determine.outputs.REMAINING_TESTS }}
+      relevant_count: ${{ steps.determine.outputs.RELEVANT_COUNT }}
+      remaining_count: ${{ steps.determine.outputs.REMAINING_COUNT }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 0
+      - name: Fetch base branch
+        env:
+          BASE_BRANCH: ${{ inputs.base_branch }}
+        run: |
+          set -Eeuo pipefail
+          git fetch origin "$BASE_BRANCH:base_branch"
+      - name: Determine relevant tests
+        id: determine
+        run: .ci/E2E-tests/determine-relevant-tests.sh base_branch
+
+  run-e2e-relevant:
+    name: 'Phase 1: Relevant E2E Tests'
+    needs: determine-tests
+    if: |
+      inputs.is_pr &&
+      needs.determine-tests.result == 'success' &&
+      needs.determine-tests.outputs.run_all_tests != 'true' &&
+      needs.determine-tests.outputs.relevant_tests != ''
+    runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
+    environment: playwright-e2e-tests
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    env:
+      PLAYWRIGHT_REPORT_PHASE: phase1
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
+    outputs:
+      reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
+      tests: ${{ steps.run-tests-phase1.outcome }}
+      phase_result: ${{ steps.classify.outputs.phase_result }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
+        with:
+          workflow-run-id: ${{ github.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          test-notice: "Running Phase 1 with relevant tests: ${{ needs.determine-tests.outputs.relevant_tests }}"
+
+      - name: Record test start time
+        id: test-timer
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh start
+
+      - name: Run E2E Playwright tests (Phase 1 - Relevant Tests)
+        id: run-tests-phase1
+        # Advisory: a failed test must not fail the phase job (so ci.yml's run conclusion stays
+        # green for Helios's pre-deploy gate). The real outcome is surfaced via the `tests`
+        # output (steps.<id>.outcome = failure while .conclusion = success). Setup/teardown
+        # steps have no continue-on-error, so genuine infra failures still fail the job.
+        continue-on-error: true
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 60
+          RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright "$RELEVANT_TESTS"
+
+      - name: Calculate wall-clock duration
+        id: wall-clock
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          START: ${{ steps.test-timer.outputs.start }}
+        run: .github/scripts/wall-clock-timer.sh stop "$START"
+
+      - name: E2E Teardown
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/e2e-teardown
+        with:
+          artifact-name-suffix: Phase 1
+          require-tests: error
+
+      - name: E2E Test Report
+        id: e2e-report
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/e2e-test-report
+        with:
+          artifact-name: 'JUnit Test Results Phase 1'
+          download-path: phase1-test-results
+          check-name: 'Phase 1: E2E Test Report'
+          commit-sha: ${{ inputs.commit_sha }}
+
+      - name: Extract failed tests
+        id: failed-tests
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: .github/scripts/extract-failed-tests.sh phase1-test-results/results.xml
+
+      - name: Classify E2E failures
+        id: classify
+        if: ${{ !cancelled() }}
+        uses: actions/github-script@v9
+        env:
+          INPUT_RESULTS_FILE: phase1-test-results/results.xml
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+        with:
+          script: await require('./.github/scripts/classify-failures.js')(core)
+
+      - name: Format test results
+        id: format-results
+        if: ${{ !cancelled() }}
+        uses: actions/github-script@v9
+        env:
+          INPUT_SUMMARY: ${{ steps.e2e-report.outputs.summary }}
+          INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
+          INPUT_FAILURES: ${{ steps.failed-tests.outputs.failures }}
+          INPUT_PHASE_LABEL: Phase 1
+          INPUT_TEST_OUTCOME: ${{ steps.run-tests-phase1.outcome }}
+          INPUT_JOB_STATUS: ${{ job.status }}
+          INPUT_REPORTER_FAILED: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
+        with:
+          script: require('./.github/scripts/format-test-results.js')(core);
+
+      - name: Find E2E PR comment
+        id: find-e2e-comment
+        if: (success() || failure()) && inputs.is_pr
+        uses: ./.github/actions/find-e2e-comment
+        with:
+          pr-number: ${{ inputs.pr_number }}
+
+      - name: Post E2E comment (Phase 1)
+        if: (success() || failure()) && inputs.is_pr
+        uses: actions/github-script@v9
+        # Cosmetic PR comment; a GitHub API blip must not fail the E2E job whose
+        # actual result has already been determined.
+        continue-on-error: true
+        env:
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+          INPUT_RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
+          INPUT_REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
+          INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
+          INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
+          INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
+          INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
+          INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          INPUT_COMMENT_ID: ${{ steps.find-e2e-comment.outputs.comment-id }}
+          INPUT_STATUS_EMOJI: ${{ steps.format-results.outputs.status-emoji }}
+          INPUT_STATUS_TEXT: ${{ steps.format-results.outputs.status-text }}
+        with:
+          script: |
+            const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
+
+            const prNumber = Number(process.env.INPUT_PR_NUMBER);
+            if (!prNumber) return;
+            const existingCommentId = Number(process.env.INPUT_COMMENT_ID) || null;
+
+            const relevantTests = process.env.INPUT_RELEVANT_TESTS || '';
+            const remainingTests = process.env.INPUT_REMAINING_TESTS || '';
+            const emoji = process.env.INPUT_STATUS_EMOJI || '';
+            const status = process.env.INPUT_STATUS_TEXT || '';
+            const details = process.env.INPUT_DETAILS || '';
+            const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
+            const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
+            const infraNote = process.env.INPUT_INFRA_NOTE || '';
+
+            const failedTests = parseFailedTests('phase1-test-results/results.xml');
+            const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
+            const flakinessTable = buildFlakinessTable(flakinessResults);
+
+            let body = `## End-to-End Test Results\n\n`;
+            body += `| Phase | Status | Details |\n`;
+            body += `|-------|--------|---------|\n`;
+            body += `| **Phase 1** (Relevant) | ${emoji} ${status} | ${details} |\n`;
+            if (remainingTests) {
+              body += `<!-- PHASE2 -->| **Phase 2** (Remaining) | ⏳ Pending... | |<!-- /PHASE2 -->\n`;
+            } else {
+              body += `| **Phase 2** (Remaining) | ⏭ Skipped | No remaining tests |\n`;
+            }
+            body += failuresSection;
+            body += reporterNote;
+            body += infraNote;
+            body += flakinessTable;
+            body += `\n\n**Test Strategy:** Two-phase execution\n`;
+            body += `- **Phase 1:** \`${relevantTests}\`\n`;
+            body += `- **Phase 2:** \`${remainingTests || 'None'}\`\n`;
+            body += `<!-- OVERALL -->\n\n`;
+            body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+            if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+              body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${context.runId}-phase1)`;
+            }
+            body += `\n<!-- E2E Test Results -->`;
+
+            if (existingCommentId) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existingCommentId, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: prNumber, body,
+              });
+            }
+
+  run-e2e-remaining:
+    name: 'Phase 2: Remaining E2E Tests'
+    needs: [determine-tests, run-e2e-relevant]
+    if: |
+      always() &&
+      inputs.is_pr &&
+      needs.determine-tests.result == 'success' &&
+      needs.determine-tests.outputs.run_all_tests != 'true' &&
+      needs.determine-tests.outputs.remaining_tests != '' &&
+      ((needs.run-e2e-relevant.result == 'success' && needs.run-e2e-relevant.outputs.phase_result != 'real') || needs.run-e2e-relevant.result == 'skipped')
+    runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
+    environment: playwright-e2e-tests
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    outputs:
+      reporter_failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
+      phase2_notes: ${{ steps.update-comment.outputs.phase2_notes }}
+      tests: ${{ steps.run-tests-phase2.outcome }}
+      phase_result: ${{ steps.classify.outputs.phase_result }}
+    env:
+      PLAYWRIGHT_REPORT_PHASE: phase2
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
+        with:
+          workflow-run-id: ${{ github.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          test-notice: "Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
+
+      - name: Record test start time
+        id: test-timer
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh start
+
+      - name: Run E2E Playwright tests (Phase 2 - Remaining Tests)
+        id: run-tests-phase2
+        # Advisory: a failed test must not fail the phase job. Real outcome via the `tests` output.
+        continue-on-error: true
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 60
+          REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright "$REMAINING_TESTS"
+
+      - name: Calculate wall-clock duration
+        id: wall-clock
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          START: ${{ steps.test-timer.outputs.start }}
+        run: .github/scripts/wall-clock-timer.sh stop "$START"
+
+      - name: E2E Teardown
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/e2e-teardown
+        with:
+          artifact-name-suffix: Phase 2
+          require-tests: error
+
+      - name: E2E Test Report
+        id: e2e-report
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/e2e-test-report
+        with:
+          artifact-name: 'JUnit Test Results Phase 2'
+          download-path: phase2-test-results
+          check-name: 'Phase 2: E2E Test Report'
+          commit-sha: ${{ inputs.commit_sha }}
+
+      - name: Extract failed tests
+        id: failed-tests
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: .github/scripts/extract-failed-tests.sh phase2-test-results/results.xml
+
+      - name: Classify E2E failures
+        id: classify
+        if: ${{ !cancelled() }}
+        uses: actions/github-script@v9
+        env:
+          INPUT_RESULTS_FILE: phase2-test-results/results.xml
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+        with:
+          script: await require('./.github/scripts/classify-failures.js')(core)
+
+      - name: Format test results
+        id: format-results
+        if: ${{ !cancelled() }}
+        uses: actions/github-script@v9
+        env:
+          INPUT_SUMMARY: ${{ steps.e2e-report.outputs.summary }}
+          INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
+          INPUT_FAILURES: ${{ steps.failed-tests.outputs.failures }}
+          INPUT_PHASE_LABEL: Phase 2
+          INPUT_TEST_OUTCOME: ${{ steps.run-tests-phase2.outcome }}
+          INPUT_JOB_STATUS: ${{ job.status }}
+          INPUT_REPORTER_FAILED: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
+        with:
+          script: require('./.github/scripts/format-test-results.js')(core);
+
+      - name: Find E2E PR comment
+        id: find-e2e-comment
+        if: (success() || failure()) && inputs.is_pr
+        uses: ./.github/actions/find-e2e-comment
+        with:
+          pr-number: ${{ inputs.pr_number }}
+
+      - name: Update E2E comment (Phase 2)
+        id: update-comment
+        if: (success() || failure()) && inputs.is_pr
+        uses: actions/github-script@v9
+        # Cosmetic PR comment update; do not gate Phase 2's job result.
+        continue-on-error: true
+        env:
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+          INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
+          INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
+          INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
+          INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
+          INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          INPUT_COMMENT_ID: ${{ steps.find-e2e-comment.outputs.comment-id }}
+          INPUT_STATUS_EMOJI: ${{ steps.format-results.outputs.status-emoji }}
+          INPUT_STATUS_TEXT: ${{ steps.format-results.outputs.status-text }}
+        with:
+          script: |
+            const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
+
+            const prNumber = Number(process.env.INPUT_PR_NUMBER);
+            if (!prNumber) return;
+            const existingCommentId = Number(process.env.INPUT_COMMENT_ID) || null;
+
+            const emoji = process.env.INPUT_STATUS_EMOJI || '';
+            const status = process.env.INPUT_STATUS_TEXT || '';
+            const details = process.env.INPUT_DETAILS || '';
+            const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
+            const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
+            const infraNote = process.env.INPUT_INFRA_NOTE || '';
+
+            const phase2Row = `| **Phase 2** (Remaining) | ${emoji} ${status} | ${details} |`;
+
+            const failedTests = parseFailedTests('phase2-test-results/results.xml');
+            const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
+            const flakinessTable = buildFlakinessTable(flakinessResults);
+
+            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable);
+
+            if (existingCommentId) {
+              let body = (await github.rest.issues.getComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existingCommentId,
+              })).data.body;
+
+              // Function replacer: a `$` in a test name (via `details`) must stay literal, not be
+              // read as a `$&`/`$1` replacement pattern.
+              body = body.replace(/<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s, () => phase2Row);
+
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                const phase2ReportUrl = `${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${context.runId}-phase2`;
+                if (!body.includes(phase2ReportUrl)) {
+                  body = body.replace('\n<!-- E2E Test Results -->', ` · 📊 [Test Report Phase 2](${phase2ReportUrl})\n<!-- E2E Test Results -->`);
+                }
+              }
+
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existingCommentId, body,
+              });
+            } else {
+              let body = `## End-to-End Test Results\n\n`;
+              body += `| Phase | Status | Details |\n`;
+              body += `|-------|--------|---------|\n`;
+              body += `| **Phase 1** (Relevant) | ✅ Passed | *(completed in previous step)* |\n`;
+              body += `${phase2Row}\n`;
+              body += `<!-- OVERALL -->\n\n`;
+              body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                body += ` · 📊 [Test Report Phase 2](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${context.runId}-phase2)`;
+              }
+              body += `\n<!-- E2E Test Results -->`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: prNumber, body,
+              });
+            }
+
+  run-e2e-all-pr:
+    name: Run All E2E Tests (PR)
+    needs: determine-tests
+    if: |
+      inputs.is_pr &&
+      needs.determine-tests.result == 'success' &&
+      (needs.determine-tests.outputs.run_all_tests == 'true' ||
+       (needs.determine-tests.outputs.relevant_tests == '' && needs.determine-tests.outputs.remaining_tests == ''))
+    runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
+    environment: playwright-e2e-tests
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    outputs:
+      reporter_failed: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
+      tests: ${{ steps.run-tests-all-pr.outcome }}
+      phase_result: ${{ steps.classify.outputs.phase_result }}
+    env:
+      PLAYWRIGHT_REPORT_PHASE: all
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
+        with:
+          workflow-run-id: ${{ github.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          test-notice: 'Running all tests (infrastructure/config changes detected)'
+
+      - name: Record test start time
+        id: test-timer
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh start
+
+      - name: Run E2E Playwright tests (PostgreSQL, Local)
+        id: run-tests-all-pr
+        # Advisory: a failed test must not fail the phase job. Real outcome via the `tests` output.
+        continue-on-error: true
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 60
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright
+
+      - name: Calculate wall-clock duration
+        id: wall-clock
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          START: ${{ steps.test-timer.outputs.start }}
+        run: .github/scripts/wall-clock-timer.sh stop "$START"
+
+      - name: E2E Teardown
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/e2e-teardown
+        with:
+          require-tests: error
+
+      - name: Download all tests results
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@v8
+        with:
+          name: JUnit Test Results
+          path: all-test-results
+
+      - name: All Tests Report (PR)
+        id: test-report
+        uses: mikepenz/action-junit-report@3a81627bfac62268172037048872e8ebd4207e6d  # v6.4.1
+        if: ${{ !cancelled() }}
+        with:
+          commit: ${{ inputs.commit_sha }}
+          check_name: 'All E2E Tests Report (PR)'
+          fail_on_failure: false
+          require_tests: false
+          annotate_only: false
+          detailed_summary: true
+          include_time_in_summary: true
+          report_paths: 'all-test-results/results.xml'
+
+      - name: Extract failed tests
+        id: failed-tests
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: .github/scripts/extract-failed-tests.sh all-test-results/results.xml
+
+      - name: Classify E2E failures
+        id: classify
+        if: ${{ !cancelled() }}
+        uses: actions/github-script@v9
+        env:
+          INPUT_RESULTS_FILE: all-test-results/results.xml
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+        with:
+          script: await require('./.github/scripts/classify-failures.js')(core)
+
+      - name: Format test results
+        id: format-results
+        if: ${{ !cancelled() }}
+        uses: actions/github-script@v9
+        env:
+          INPUT_SUMMARY: ${{ steps.test-report.outputs.summary }}
+          INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
+          INPUT_FAILURES: ${{ steps.failed-tests.outputs.failures }}
+          INPUT_TEST_OUTCOME: ${{ steps.run-tests-all-pr.outcome }}
+          INPUT_JOB_STATUS: ${{ job.status }}
+          INPUT_REPORTER_FAILED: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
+        with:
+          script: require('./.github/scripts/format-test-results.js')(core);
+
+      - name: Find E2E PR comment
+        id: find-e2e-comment
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/find-e2e-comment
+        with:
+          pr-number: ${{ inputs.pr_number }}
+
+      - name: Post E2E comment (All Tests)
+        if: ${{ !cancelled() }}
+        uses: actions/github-script@v9
+        # Cosmetic PR comment; do not gate the job result on a GitHub API blip.
+        continue-on-error: true
+        env:
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+          INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
+          INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
+          INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
+          INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
+          INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          INPUT_COMMENT_ID: ${{ steps.find-e2e-comment.outputs.comment-id }}
+          INPUT_STATUS_EMOJI: ${{ steps.format-results.outputs.status-emoji }}
+          INPUT_STATUS_TEXT: ${{ steps.format-results.outputs.status-text }}
+        with:
+          script: |
+            const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
+
+            const prNumber = Number(process.env.INPUT_PR_NUMBER);
+            if (!prNumber) return;
+            const existingCommentId = Number(process.env.INPUT_COMMENT_ID) || null;
+
+            const emoji = process.env.INPUT_STATUS_EMOJI || '';
+            const status = process.env.INPUT_STATUS_TEXT || '';
+            const details = process.env.INPUT_DETAILS || '';
+            const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
+            const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
+            const infraNote = process.env.INPUT_INFRA_NOTE || '';
+
+            const failedTests = parseFailedTests('all-test-results/results.xml');
+            const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
+            const flakinessTable = buildFlakinessTable(flakinessResults);
+
+            let body = `## End-to-End Test Results\n\n`;
+            body += `| Phase | Status | Details |\n`;
+            body += `|-------|--------|---------|\n`;
+            body += `| **All Tests** | ${emoji} ${status} | ${details} |\n`;
+            body += failuresSection;
+            body += reporterNote;
+            body += infraNote;
+            body += flakinessTable;
+            body += `\n\n**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n`;
+            body += `<!-- OVERALL -->\n\n`;
+            body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+            if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+              body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${context.runId}-all)`;
+            }
+            body += `\n<!-- E2E Test Results -->`;
+
+            if (existingCommentId) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existingCommentId, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: prNumber, body,
+              });
+            }
+
+  run-e2e-all-non-pr:
+    name: Run All E2E Tests (Non-PR)
+    if: ${{ !inputs.is_pr }}
+    runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
+    environment: playwright-e2e-tests
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      tests: ${{ steps.run-tests-all-non-pr.outcome }}
+      phase_result: ${{ steps.classify.outputs.phase_result }}
+    env:
+      PLAYWRIGHT_REPORT_PHASE: all
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
+        with:
+          workflow-run-id: ${{ github.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run E2E Playwright tests (PostgreSQL, Local, Multi-Node)
+        id: run-tests-all-non-pr
+        # Advisory: a failed test must not fail the phase job. Real outcome via the `tests` output.
+        continue-on-error: true
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 75
+        run: .ci/E2E-tests/execute.sh multi-node playwright
+
+      - name: E2E Teardown
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/e2e-teardown
+        with:
+          require-tests: error
+
+      - name: Download all tests results
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@v8
+        with:
+          name: JUnit Test Results
+          path: all-test-results
+
+      - name: All Tests Report (Non-PR)
+        uses: mikepenz/action-junit-report@3a81627bfac62268172037048872e8ebd4207e6d  # v6.4.1
+        if: ${{ !cancelled() }}
+        with:
+          commit: ${{ inputs.commit_sha }}
+          check_name: 'All E2E Tests Report (Multi-Node)'
+          fail_on_failure: false
+          require_tests: false
+          annotate_only: false
+          detailed_summary: true
+          include_time_in_summary: true
+          report_paths: 'all-test-results/results.xml'
+
+      - name: Classify E2E failures
+        id: classify
+        if: ${{ !cancelled() }}
+        uses: actions/github-script@v9
+        env:
+          INPUT_RESULTS_FILE: all-test-results/results.xml
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+        with:
+          script: await require('./.github/scripts/classify-failures.js')(core)
+
+  # Aggregates the E2E outcome and is the single E2E gate. `e2e` IS part of the required
+  # `all-required-ci-passed` gate (ci.yml), so a real regression here reds the run and blocks
+  # merging — but a known-flaky-only run is exonerated and passes green, so ambient flakiness never
+  # blocks a good PR (only a genuine, reproducible regression does). The real-vs-flaky split
+  # comes from classify-failures.js via Helios. The three-state nuance (pass / exonerated / real)
+  # is surfaced in the PR comment, where per-test detail belongs. Phase test steps are
+  # continue-on-error, so a failed test never fails a phase job; the honest verdict is decided here.
+  report-results:
+    name: Report E2E Overall Status
+    needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      status: ${{ steps.overall-status.outputs.status }}
+    steps:
+      - name: Determine overall status
+        id: overall-status
+        env:
+          # Raw per-phase test outcome (steps.<id>.outcome, not job `result`: test steps are
+          # continue-on-error, so a failed test still leaves the job `success`). Empty when skipped.
+          RELEVANT_RESULT: ${{ needs.run-e2e-relevant.outputs.tests }}
+          REMAINING_RESULT: ${{ needs.run-e2e-remaining.outputs.tests }}
+          ALL_PR_RESULT: ${{ needs.run-e2e-all-pr.outputs.tests }}
+          ALL_NON_PR_RESULT: ${{ needs.run-e2e-all-non-pr.outputs.tests }}
+          # Per-phase failure classification from classify-failures.js: real | flaky | clean (empty
+          # when skipped). `real` = a non-flaky test failed; `flaky` = failures, all known-flaky.
+          RELEVANT_CLASS: ${{ needs.run-e2e-relevant.outputs.phase_result }}
+          REMAINING_CLASS: ${{ needs.run-e2e-remaining.outputs.phase_result }}
+          ALL_PR_CLASS: ${{ needs.run-e2e-all-pr.outputs.phase_result }}
+          ALL_NON_PR_CLASS: ${{ needs.run-e2e-all-non-pr.outputs.phase_result }}
+          # Job results, to catch infra failures: determine-tests/setup/teardown are NOT
+          # continue-on-error, so a broken one surfaces as job `result == failure`.
+          DETERMINE_JOB: ${{ needs.determine-tests.result }}
+          RELEVANT_JOB: ${{ needs.run-e2e-relevant.result }}
+          REMAINING_JOB: ${{ needs.run-e2e-remaining.result }}
+          ALL_PR_JOB: ${{ needs.run-e2e-all-pr.result }}
+          ALL_NON_PR_JOB: ${{ needs.run-e2e-all-non-pr.result }}
+        run: |
+          set -Eeuo pipefail
+          # `status` is the raw honest outcome (any `failure` wins; else the first `success`; else
+          # `error`). It feeds the `status` output that CI Summary renders and never hides a failure.
+          status=error
+          for r in "$ALL_NON_PR_RESULT" "$ALL_PR_RESULT" "$RELEVANT_RESULT" "$REMAINING_RESULT"; do
+            case "$r" in
+              failure) status=failure; break ;;
+              success) [ "$status" = error ] && status=success ;;
+              skipped|"") ;;
+              *)       status=error ;;
+            esac
+          done
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+          any_real=false; any_flaky=false
+          for c in "$RELEVANT_CLASS" "$REMAINING_CLASS" "$ALL_PR_CLASS" "$ALL_NON_PR_CLASS"; do
+            [ "$c" = real ] && any_real=true
+            [ "$c" = flaky ] && any_flaky=true
+          done
+          # Treat ANY needed-job result other than `success` or `skipped` as a blocking infra verdict —
+          # not just `failure`. A `cancelled` phase (e.g. Phase 2 timing out with no outputs) would
+          # otherwise leave `any_job_failed=false` and its empty test outcome would be ignored by the
+          # `status` loop above, so the required E2E run could go green without actually completing.
+          # `skipped` is the normal not-selected-path result (e.g. run-all on a phased run) and must pass;
+          # an empty/unknown result is treated as blocking (fail closed).
+          any_job_failed=false
+          for r in "$DETERMINE_JOB" "$RELEVANT_JOB" "$REMAINING_JOB" "$ALL_PR_JOB" "$ALL_NON_PR_JOB"; do
+            case "$r" in
+              success|skipped) ;;
+              *) any_job_failed=true ;;
+            esac
+          done
+
+          # The E2E verdict. `neutral` (exonerate) ONLY on positive proof of flakiness (a phase
+          # classified `flaky`, none `real`, and no job broke) — it maps to a passing (green) run.
+          # A real regression, an infra job failure, or a failure we could not classify (test step
+          # failed but produced no failure element — e.g. a global-setup crash) all become `failure`
+          # (red): the run must never go green on a failure it cannot explain. The gate step below
+          # turns `failure` into a non-zero exit; `success`/`neutral` pass. The comment renders all
+          # three states (✅ / ⚪ exonerated / ❌) so the flaky-vs-real nuance is never lost.
+          if [ "$any_real" = true ]; then
+            conclusion=failure
+            description="E2E: real (non-flaky) test failure"
+          elif [ "$status" = success ] && [ "$any_job_failed" = false ]; then
+            conclusion=success
+            description="E2E tests passed"
+          elif [ "$any_flaky" = true ] && [ "$any_job_failed" = false ] && [ "$status" != error ]; then
+            conclusion=neutral
+            description="E2E: only known-flaky tests failed (exonerated)"
+          elif [ "$any_job_failed" = true ]; then
+            conclusion=failure
+            description="E2E infrastructure failure"
+          else
+            conclusion=failure
+            description="E2E failed and could not be classified"
+          fi
+          {
+            echo "conclusion=$conclusion"
+            echo "description=$description"
+          } >> "$GITHUB_OUTPUT"
+
+      # Sparse-checkout the local composite action used by find-e2e-comment below (PR-only); the
+      # composite must be on disk before its `uses:` resolves.
+      - uses: actions/checkout@v6
+        if: always()
+        with:
+          sparse-checkout: .github/actions
+          fetch-depth: 1
+
+      - name: Find E2E PR comment
+        id: find-e2e-comment
+        if: always() && inputs.is_pr
+        uses: ./.github/actions/find-e2e-comment
+        with:
+          pr-number: ${{ inputs.pr_number }}
+
+      - name: Update E2E comment with overall status
+        if: always() && inputs.is_pr
+        uses: actions/github-script@v9
+        # Cosmetic PR comment finalisation; do not flip the aggregator job result.
+        continue-on-error: true
+        env:
+          INPUT_PHASE2_NOTES: ${{ needs.run-e2e-remaining.outputs.phase2_notes || '' }}
+          INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          INPUT_COMMENT_ID: ${{ steps.find-e2e-comment.outputs.comment-id }}
+          INPUT_CONCLUSION: ${{ steps.overall-status.outputs.conclusion }}
+          INPUT_DESCRIPTION: ${{ steps.overall-status.outputs.description }}
+          INPUT_PHASE1_RESULT: ${{ needs.run-e2e-relevant.result }}
+          INPUT_PHASE2_RESULT: ${{ needs.run-e2e-remaining.result }}
+        with:
+          script: |
+            const prNumber = Number(process.env.INPUT_PR_NUMBER);
+            if (!prNumber) return;
+            const existingCommentId = Number(process.env.INPUT_COMMENT_ID) || null;
+
+            const conclusion = process.env.INPUT_CONCLUSION;
+            const description = process.env.INPUT_DESCRIPTION;
+            // The comment carries the full three-state nuance the run conclusion can't: a known-flaky,
+            // exonerated run reds nothing (the run passes) but reads as ⚪ here, distinct from a ✅ pass.
+            const overallEmoji = conclusion === 'success' ? '✅' : conclusion === 'neutral' ? '⚪' : '❌';
+            const overallLine = `\n**Overall: ${overallEmoji} ${description}**`;
+
+            const phase1Result = process.env.INPUT_PHASE1_RESULT;
+            const phase2Result = process.env.INPUT_PHASE2_RESULT;
+            const phase2Notes = process.env.INPUT_PHASE2_NOTES || '';
+
+            if (existingCommentId) {
+              let body = (await github.rest.issues.getComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existingCommentId,
+              })).data.body;
+
+              if (body.includes('<!-- PHASE2 -->')) {
+                let phase2Reason = 'Skipped';
+                if (phase1Result === 'failure') {
+                  phase2Reason = 'Skipped (Phase 1 failed)';
+                } else if (phase2Result === 'skipped') {
+                  phase2Reason = 'Skipped (no remaining tests)';
+                }
+                body = body.replace(
+                  /<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s,
+                  `| **Phase 2** (Remaining) | ⏭ ${phase2Reason} | |`
+                );
+              }
+
+              // Function replacer: phase2Notes carries failed-test names that may contain `$`.
+              body = body.replace('<!-- OVERALL -->', () => phase2Notes + overallLine);
+
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existingCommentId, body,
+              });
+            } else {
+              let body = `## End-to-End Test Results\n\n`;
+              body += `**Overall: ${overallEmoji} ${description}**\n\n`;
+              body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${context.runId}-phase1)`;
+              }
+              body += `\n<!-- E2E Test Results -->`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: prNumber, body,
+              });
+            }
+
+      # Fail the job (reds the run) on a real/infra/unclassified verdict; pass on success or an
+      # exonerated flaky-only run. Runs last, after the PR comment finalises, and always. Fail-safe:
+      # any verdict other than success/neutral — including an empty one — reds the run.
+      - name: Gate the run (and the required merge check) on the E2E verdict
+        if: always()
+        env:
+          CONCLUSION: ${{ steps.overall-status.outputs.conclusion }}
+          DESCRIPTION: ${{ steps.overall-status.outputs.description }}
+        run: |
+          set -Eeuo pipefail
+          if [ "$CONCLUSION" = success ] || [ "$CONCLUSION" = neutral ]; then
+            echo "E2E verdict: ${DESCRIPTION:-passed} — not a real regression, run stays green."
+            exit 0
+          fi
+          echo "::error title=E2E real failure::${DESCRIPTION:-E2E failed}. E2E is part of the required all-required-ci-passed gate, so a real (non-flaky) regression blocks merging; see the E2E PR comment for the per-test breakdown and Helios flakiness scores. A known-flaky-only run would have been exonerated and stayed green."
+          exit 1

@@ -25,7 +25,7 @@ import { Conversation, ConversationDTO } from 'app/communication/shared/entities
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { Faq } from 'app/communication/shared/entities/faq.model';
-import { ForwardedMessage, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
+import { ForwardedMessage, ForwardedMessageDTO, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
@@ -36,11 +36,11 @@ import { User } from 'app/account/user/user.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, take, tap, throwError } from 'rxjs';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -61,22 +61,22 @@ export class MetisService implements OnDestroy {
 
     private currentPostContextFilter: PostContextFilter = {};
     private currentConversation?: ConversationDTO = undefined;
-    private user: User;
-    private pageType: PageType;
-    private courseId: number;
+    private user!: User; // set in constructor from accountService.identity()
+    private pageType!: PageType; // set via setPageType() before use
+    private courseId!: number; // set in setCourse() before any read
     private cachedPosts: Post[] = [];
-    private cachedTotalNumberOfPosts: number;
+    private cachedTotalNumberOfPosts = 0;
     private subscriptionChannel?: string;
-    private courseWideTopicSubscription: Subscription;
-    private activeConversationSubscription: Subscription;
+    private courseWideTopicSubscription?: Subscription;
+    private activeConversationSubscription?: Subscription;
     private subscriptionChannelSubscription?: Subscription;
 
-    private course: Course;
+    private course!: Course; // set in setCourse() before any read
     // Expose FAQs as observable so consumers react once async loading finishes (setupMetis fetches from REST)
     private faqs$: BehaviorSubject<Faq[]> = new BehaviorSubject<Faq[]>([]);
 
     constructor() {
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User | undefined) => {
             this.user = user!;
 
             const conversationTopic = `/topic/user/${this.user.id}/notifications/conversations`;
@@ -269,7 +269,7 @@ export class MetisService implements OnDestroy {
                         const post = this.cachedPosts[indexOfCachedPost];
                         // Always create new array+post to make sure Angular detects changes
                         const answers = [...(post.answers ?? []), createdAnswerPost];
-                        this.cachedPosts[indexOfCachedPost] = { ...post, answers: answers };
+                        this.cachedPosts[indexOfCachedPost] = cloneWith(post, { answers: answers });
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
@@ -323,7 +323,7 @@ export class MetisService implements OnDestroy {
                 if (indexOfCachedPost > -1) {
                     const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === updatedAnswerPost.id) ?? -1;
                     if (indexOfAnswer > -1) {
-                        updatedAnswerPost.post = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
+                        updatedAnswerPost.post = cloneWith(this.cachedPosts[indexOfCachedPost], { answers: [], reactions: [] });
                         updatedAnswerPost.authorRole = this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer].authorRole;
                         this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer] = updatedAnswerPost;
                         this.posts$.next(this.cachedPosts);
@@ -396,27 +396,33 @@ export class MetisService implements OnDestroy {
     }
 
     /**
+     * Approves an Iris-generated answer post (optionally with edited content). The websocket update
+     * triggered server-side will refresh cached posts so no manual cache mutation is needed here.
+     */
+    verifyAnswerPost(answerPost: AnswerPost, content?: string): Observable<AnswerPost> {
+        return this.answerPostService.verify(this.courseId, answerPost.id!, content).pipe(map((res) => res.body!));
+    }
+
+    /**
      * deletes an answer post by invoking the post service
      * @param {AnswerPost} answerPost to be deleted
      */
-    deleteAnswerPost(answerPost: AnswerPost): void {
-        this.answerPostService
-            .delete(this.courseId, answerPost)
-            .pipe(
-                tap(() => {
-                    const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
-                    if (indexOfCachedPost > -1) {
-                        // Delete the answer if it still exists (might already be deleted due to WebSocket message)
-                        const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === answerPost.id) ?? -1;
-                        if (indexOfAnswer > -1) {
-                            this.cachedPosts[indexOfCachedPost].answers?.splice(indexOfAnswer, 1);
-                            this.posts$.next(this.cachedPosts);
-                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
-                        }
+    deleteAnswerPost(answerPost: AnswerPost): Observable<void> {
+        return this.answerPostService.delete(this.courseId, answerPost).pipe(
+            map(() => undefined),
+            tap(() => {
+                const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
+                if (indexOfCachedPost > -1) {
+                    // Delete the answer if it still exists (might already be deleted due to WebSocket message)
+                    const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === answerPost.id) ?? -1;
+                    if (indexOfAnswer > -1) {
+                        this.cachedPosts[indexOfCachedPost].answers?.splice(indexOfAnswer, 1);
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
-                }),
-            )
-            .subscribe();
+                }
+            }),
+        );
     }
 
     /**
@@ -435,9 +441,9 @@ export class MetisService implements OnDestroy {
                     // Only add reaction if not already there (can happen due to WebSocket update)
                     if (indexOfReaction === -1) {
                         cachedPost.reactions = cachedPost.reactions ?? [];
-                        cachedPost.reactions!.push(createdReaction);
+                        cachedPost.reactions.push(createdReaction);
                         // Need to create a new message object since Angular doesn't detect changes otherwise
-                        this.cachedPosts[indexToUpdate] = { ...cachedPost };
+                        this.cachedPosts[indexToUpdate] = Post.withSameValues(cachedPost);
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
@@ -462,7 +468,7 @@ export class MetisService implements OnDestroy {
                     if (indexOfReaction > -1) {
                         cachedPost.reactions!.splice(indexOfReaction, 1);
                         // Need to create a new message object since Angular doesn't detect changes otherwise
-                        this.cachedPosts[indexToUpdate] = { ...cachedPost };
+                        this.cachedPosts[indexToUpdate] = Post.withSameValues(cachedPost);
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
@@ -510,7 +516,7 @@ export class MetisService implements OnDestroy {
         if (conversation) {
             emptyPost.conversation = conversation;
         } else if (plagiarismCase) {
-            emptyPost.plagiarismCase = { id: plagiarismCase.id } as PlagiarismCase;
+            emptyPost.plagiarismCase = { id: plagiarismCase.id };
         }
         return emptyPost;
     }
@@ -551,11 +557,11 @@ export class MetisService implements OnDestroy {
     }
 
     /**
-     * returns the router link required for navigating to the dashboard
-     * @return {string} router link of the dashboard
+     * returns the router link required for navigating to Iris for a general course channel
+     * @return {string} router link of the Iris page
      */
     getLinkForGeneral(): string {
-        return `/courses/${this.getCourse().id}/dashboard`;
+        return `/courses/${this.getCourse().id}/iris`;
     }
 
     /**
@@ -653,7 +659,7 @@ export class MetisService implements OnDestroy {
     }
 
     public savePost(post: Posting) {
-        this.setIsSavedAndStatusOfPost(post, true, post.savedPostStatus as SavedPostStatus);
+        this.setIsSavedAndStatusOfPost(post, true, post.savedPostStatus);
         this.savedPostService.savePost(post).subscribe({
             next: () => {},
         });
@@ -661,7 +667,7 @@ export class MetisService implements OnDestroy {
     }
 
     public removeSavedPost(post: Posting) {
-        this.setIsSavedAndStatusOfPost(post, false, post.savedPostStatus as SavedPostStatus);
+        this.setIsSavedAndStatusOfPost(post, false, post.savedPostStatus);
         this.savedPostService.removeSavedPost(post).subscribe({
             next: () => {},
         });
@@ -704,13 +710,13 @@ export class MetisService implements OnDestroy {
         if (post instanceof AnswerPost) {
             const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.post!.id);
             const indexOfAnswer = this.cachedPosts[indexToUpdate].answers?.findIndex((answer) => answer.id === post.id) ?? -1;
-            const postCopy = cloneDeep(this.cachedPosts[indexToUpdate].answers![indexOfAnswer]);
+            const postCopy = deepClone(this.cachedPosts[indexToUpdate].answers![indexOfAnswer]);
             postCopy.isSaved = isSaved;
             postCopy.savedPostStatus = status;
             this.cachedPosts[indexToUpdate].answers![indexOfAnswer] = postCopy;
         } else {
             const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
-            const postCopy = cloneDeep(this.cachedPosts[indexToUpdate]);
+            const postCopy = deepClone(this.cachedPosts[indexToUpdate]);
             postCopy.isSaved = isSaved;
             postCopy.savedPostStatus = status;
             this.cachedPosts[indexToUpdate] = postCopy;
@@ -764,7 +770,7 @@ export class MetisService implements OnDestroy {
                 if (this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length == 1 && postDTO.post.author?.id !== this.user.id) {
                     setTimeout(() => {
                         // We add a small timeout to avoid concurrency issues
-                        this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter!.conversationIds![0]).subscribe();
+                        this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationIds![0]).subscribe();
                     }, 1000);
                 }
 
@@ -951,12 +957,20 @@ export class MetisService implements OnDestroy {
 
                 // Map original posts to ForwardedMessage instances referencing the newly created post
                 const forwardedMessages: ForwardedMessage[] = originalPosts.map(
-                    (post) => new ForwardedMessage(undefined, post.id, sourceType, { id: createdPostBody.id } as Post, undefined, newContent || ''),
+                    (post) => new ForwardedMessage(undefined, post.id, sourceType, { id: createdPostBody.id }, undefined, newContent || ''),
                 );
 
                 // Send a creation request for each ForwardedMessage
                 const createForwardedMessageObservables = forwardedMessages.map((message) =>
-                    this.forwardedMessageService.createForwardedMessage(message).pipe(map((res: HttpResponse<ForwardedMessage>) => res.body!)),
+                    this.forwardedMessageService.createForwardedMessage(message).pipe(
+                        // Return the locally-built ForwardedMessage entity (which carries `destinationPost`, used by the
+                        // cache-marking logic below) updated with the server-assigned id, rather than casting the response
+                        // DTO — which only exposes `destinationPostId` — to the entity type.
+                        map((res: HttpResponse<ForwardedMessageDTO>) => {
+                            message.id = res.body?.id;
+                            return message;
+                        }),
+                    ),
                 );
 
                 return forkJoin(createForwardedMessageObservables).pipe(
@@ -973,7 +987,7 @@ export class MetisService implements OnDestroy {
                                 const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
                                 if (postIndex > -1) {
                                     const post = this.cachedPosts[postIndex];
-                                    this.cachedPosts[postIndex] = { ...post, hasForwardedMessages: true };
+                                    this.cachedPosts[postIndex] = cloneWith(post, { hasForwardedMessages: true });
                                 }
                             });
 

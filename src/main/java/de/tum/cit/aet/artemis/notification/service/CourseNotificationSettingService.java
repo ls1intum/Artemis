@@ -242,7 +242,7 @@ public class CourseNotificationSettingService {
      * @return Filtered list of users who have enabled notifications for the specified channel
      */
     protected List<User> filterRecipientsBy(CourseNotification notification, List<User> recipients, NotificationChannelOption filterFor) {
-        return recipients.stream().filter((recipient) -> {
+        return recipients.stream().filter(recipient -> {
             // Note: We run a single query per user, however, this query is cached, so this should not cause performance issues.
             var preset = userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(recipient.getId(), notification.courseId);
 
@@ -262,7 +262,9 @@ public class CourseNotificationSettingService {
                     case WEBAPP -> UserCourseNotificationSettingSpecification::isWebapp;
                     case PUSH -> UserCourseNotificationSettingSpecification::isPush;
                     case EMAIL -> UserCourseNotificationSettingSpecification::isEmail;
-                }).orElse(false);
+                    // Custom presets created before a notification type was introduced have no specification row for it.
+                    // Fall back to the default preset value instead of silently disabling delivery for those users.
+                }).orElseGet(() -> this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(1, notification.getClass(), filterFor));
             }
             else {
                 return this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(preset.getSettingPreset(), notification.getClass(), filterFor);

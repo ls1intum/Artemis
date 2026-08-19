@@ -1250,7 +1250,7 @@ public class CourseStudentDataExportService {
             int count = gradeCountMap.getOrDefault(gradeName, 0);
             double percentage = totalStudents > 0 ? (double) count / totalStudents * 100.0 : 0.0;
             lines.add(String.join(",", "GRADE", escapeCSV(gradeName), String.valueOf(step.getLowerBoundPercentage()), String.valueOf(step.getUpperBoundPercentage()),
-                    String.valueOf(step.getIsPassingGrade()), String.valueOf(count), String.format("%.1f", percentage)));
+                    String.valueOf(step.getIsPassingGrade()), String.valueOf(count), "%.1f".formatted(percentage)));
         }
     }
 
@@ -1275,7 +1275,7 @@ public class CourseStudentDataExportService {
             String intervalName = lowerBound + "-" + upperBound + "%";
             double percentage = totalStudents > 0 ? (double) intervalCounts[i] / totalStudents * 100.0 : 0.0;
             lines.add(String.join(",", "INTERVAL", intervalName, String.valueOf(lowerBound), String.valueOf(upperBound), "", String.valueOf(intervalCounts[i]),
-                    String.format("%.1f", percentage)));
+                    "%.1f".formatted(percentage)));
         }
     }
 
@@ -1314,7 +1314,7 @@ public class CourseStudentDataExportService {
      * @return formatted string like "42 (84.0%)"
      */
     private String formatCountWithPercentage(int count, int total) {
-        String percentage = total > 0 ? String.format("%.1f", (double) count / total * 100.0) : "0.0";
+        String percentage = total > 0 ? "%.1f".formatted((double) count / total * 100.0) : "0.0";
         return count + " (" + percentage + "%)";
     }
 

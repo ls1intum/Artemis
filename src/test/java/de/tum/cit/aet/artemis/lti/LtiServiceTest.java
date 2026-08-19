@@ -9,8 +9,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
@@ -19,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseCookie;
@@ -30,10 +29,14 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
+import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
@@ -49,6 +52,12 @@ class LtiServiceTest {
     private UserTestRepository userRepository;
 
     @Mock
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
+    @Mock
+    private AuthorityService authorityService;
+
+    @Mock
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     @Mock
@@ -62,18 +71,15 @@ class LtiServiceTest {
 
     private User user;
 
-    private final String courseStudentGroupName = "courseStudentGroupName";
-
     private AutoCloseable closeable;
 
     @BeforeEach
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, artemisAuthenticationProvider, jwtCookieService);
+        ltiService = new LtiService(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService);
         Course course = new Course();
         course.setId(100L);
-        course.setStudentGroupName(courseStudentGroupName);
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setCourse(course);
         exercise = new TextExercise();
@@ -81,7 +87,7 @@ class LtiServiceTest {
         user = new User();
         user.setLogin("login");
         user.setPassword("password");
-        user.setGroups(new HashSet<>(Collections.singleton(LtiService.LTI_GROUP_NAME)));
+        user.setLtiCreated(true);
     }
 
     @AfterEach
@@ -89,7 +95,7 @@ class LtiServiceTest {
         if (closeable != null) {
             closeable.close();
         }
-        reset(userCreationService, userRepository, artemisAuthenticationProvider, jwtCookieService);
+        reset(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService);
     }
 
     @Test
@@ -134,13 +140,19 @@ class LtiServiceTest {
 
     @Test
     void successFullAuthentication() {
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        when(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(any(), any(), any())).thenReturn(false);
+        when(userRepository.findOneWithAuthoritiesByLogin(user.getLogin())).thenReturn(Optional.of(user));
+        when(authorityService.buildAuthorities(user)).thenReturn(new HashSet<>());
 
         ltiService.onSuccessfulLtiAuthentication(user, exercise);
 
-        assertThat(user.getGroups()).contains(courseStudentGroupName);
-        assertThat(user.getGroups()).contains(LtiService.LTI_GROUP_NAME);
-
+        ArgumentCaptor<UserCourseRole> ucrCaptor = ArgumentCaptor.forClass(UserCourseRole.class);
+        verify(userCourseRoleTestRepository).save(ucrCaptor.capture());
+        UserCourseRole savedUcr = ucrCaptor.getValue();
+        assertThat(savedUcr.getUser()).isEqualTo(user);
+        assertThat(savedUcr.getCourse()).isEqualTo(course);
+        assertThat(savedUcr.getRole()).isEqualTo(CourseRole.STUDENT);
         verify(userCreationService).saveUser(user);
     }
 
@@ -163,7 +175,7 @@ class LtiServiceTest {
         user.setEmail("useremail@tum.de");
         when(userRepository.getUser()).thenReturn(user);
         when(userRepository.findOneByLogin("username")).thenReturn(Optional.empty());
-        when(userCreationService.createUser(any(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(user);
+        when(userCreationService.createUser(any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(user);
 
         ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
@@ -184,7 +196,7 @@ class LtiServiceTest {
         SecurityContextHolder.getContext().setAuthentication(null);
 
         when(userRepository.findOneByLogin("username")).thenReturn(Optional.empty());
-        when(userCreationService.createUser(any(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(user);
+        when(userCreationService.createUser(any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(user);
 
         ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
@@ -214,12 +226,14 @@ class LtiServiceTest {
 
     @Test
     void isLtiCreatedUser() {
+        user.setLtiCreated(true);
+
         assertThat(ltiService.isLtiCreatedUser(user)).isTrue();
     }
 
     @Test
     void isNotLtiCreatedUser() {
-        user.setGroups(new HashSet<>(Arrays.asList("students", "editors")));
+        user.setLtiCreated(false);
 
         assertThat(ltiService.isLtiCreatedUser(user)).isFalse();
     }

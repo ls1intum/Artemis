@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit, effect, inject, input, model, output, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -20,7 +20,7 @@ import { getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
-import { CommitState, EditorState, FileSubmission, GitConflictState } from '../model/code-editor.model';
+import { CommitState, EditorState, FileSubmission, FileSubmissionError, GitConflictState } from '../model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from 'app/programming/shared/code-editor/actions/refresh-modal/code-editor-confirm-refresh-modal.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/code-editor/actions/conflict-modal/code-editor-resolve-conflict-modal.component';
 
@@ -39,7 +39,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     private readonly submissionService = inject(CodeEditorSubmissionService);
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
-    private readonly ngZone = inject(NgZone);
 
     CommitState = CommitState;
     EditorState = EditorState;
@@ -69,12 +68,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     readonly repositoryLink = signal<string[]>([]);
     readonly isInCourseManagement = signal<boolean>(false);
 
-    conflictStateSubscription: Subscription;
-    submissionSubscription: Subscription;
-    routeParamsSubscription: Subscription;
+    conflictStateSubscription?: Subscription;
+    submissionSubscription?: Subscription;
+    routeParamsSubscription?: Subscription;
 
     autoSaveTimer = 0;
-    autoSaveInterval: number;
+    autoSaveInterval?: number;
 
     private refreshModalRef?: DynamicDialogRef;
     private conflictModalRef?: DynamicDialogRef;
@@ -147,17 +146,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             .subscribe();
 
         if (!this.disableAutoSave()) {
-            // Tick outside the Angular zone to avoid waking change detection every interval;
-            // re-enter only on the rare save tick.
-            this.ngZone.runOutsideAngular(() => {
-                this.autoSaveInterval = window.setInterval(() => {
-                    this.autoSaveTimer++;
-                    if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
-                        this.autoSaveTimer = 0;
-                        this.ngZone.run(() => this.onSave());
-                    }
-                }, AUTOSAVE_CHECK_INTERVAL);
-            });
+            this.autoSaveInterval = window.setInterval(() => {
+                this.autoSaveTimer++;
+                if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
+                    this.autoSaveTimer = 0;
+                    this.onSave();
+                }
+            }, AUTOSAVE_CHECK_INTERVAL);
         }
     }
 
@@ -223,14 +218,16 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             .subscribe();
     }
 
-    saveChangedFiles(andCommit = false): Observable<any> {
+    saveChangedFiles(andCommit = false): Observable<FileSubmission | FileSubmissionError | undefined> {
         const unsavedFilesValue = this.unsavedFiles();
         if (!_isEmpty(unsavedFilesValue)) {
             this.editorState.set(EditorState.SAVING);
             const unsavedFiles = Object.entries(unsavedFilesValue).map(([fileName, fileContent]) => ({ fileName, fileContent }));
             return this.repositoryFileService.updateFiles(unsavedFiles, andCommit).pipe(
-                tap((fileSubmission: FileSubmission) => {
-                    this.onSavedFiles.emit(fileSubmission);
+                tap((fileSubmission: FileSubmission | FileSubmissionError) => {
+                    if (!('error' in fileSubmission)) {
+                        this.onSavedFiles.emit(fileSubmission);
+                    }
                 }),
                 catchError((error: Error) => {
                     this.editorState.set(EditorState.UNSAVED_CHANGES);

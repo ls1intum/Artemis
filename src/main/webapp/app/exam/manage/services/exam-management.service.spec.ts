@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamManagementService, ExamRegistrationResultDTO } from 'app/exam/manage/services/exam-management.service';
 import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
@@ -11,10 +11,13 @@ import dayjs from 'dayjs/esm';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
+import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -24,12 +27,11 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('Exam Management Service Tests', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExamManagementService;
     let httpMock: HttpTestingController;
 
@@ -52,6 +54,7 @@ describe('Exam Management Service Tests', () => {
                 ExamManagementService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
         });
 
@@ -101,16 +104,18 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expectedDto = ExamManagementService.convertExamToImportDTO({ id: 1 } as Exam, course.id!);
+        const importId = 'import-1';
 
-        // WHEN
-        service.import(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
+        // WHEN: the response carries the full ExamImportResultDTO so the progress dialog can show the outcome
+        service.import(course.id!, mockExam, importId).subscribe((res) => expect(res.body).toEqual({ exam: mockExam }));
 
-        // THEN
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exam-import` });
+        // THEN (the importId is a query param, so match on the path and assert the param separately)
+        const req = httpMock.expectOne((request) => request.method === 'POST' && request.url === `${service.resourceUrl}/${course.id!}/exam-import`);
         expect(req.request.body).toEqual(expectedDto);
+        expect(req.request.params.get('importId')).toBe(importId);
 
         // CLEANUP
-        req.flush(mockExam);
+        req.flush({ exam: mockExam });
         await Promise.resolve();
     });
 
@@ -118,17 +123,34 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockExerciseGroup = [{ id: 2 } as ExerciseGroup];
+        const importId = 'import-2';
 
-        // WHEN
-        service.importExerciseGroup(course.id!, mockExam.id!, mockExerciseGroup).subscribe((res) => expect(res.body).toEqual(mockExerciseGroup));
+        // WHEN: the response carries the full ExerciseGroupImportResultDTO
+        service.importExerciseGroup(course.id!, mockExam.id!, mockExerciseGroup, importId).subscribe((res) => expect(res.body).toEqual({ exerciseGroups: mockExerciseGroup }));
 
-        // THEN
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/import-exercise-group` });
+        // THEN (the importId is a query param, so match on the path and assert the param separately)
+        const req = httpMock.expectOne(
+            (request) => request.method === 'POST' && request.url === `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/import-exercise-group`,
+        );
         expect(req.request.body).toEqual(mockExerciseGroup);
+        expect(req.request.params.get('importId')).toBe(importId);
 
         // CLEANUP
-        req.flush(mockExerciseGroup);
+        req.flush({ exerciseGroups: mockExerciseGroup });
         await Promise.resolve();
+    });
+
+    it('should subscribe to import progress on the user-specific websocket channel', () => {
+        // GIVEN
+        const websocketService = TestBed.inject(WebsocketService);
+        const subscribeSpy = vi.spyOn(websocketService, 'subscribe');
+        const importId = 'import-3';
+
+        // WHEN
+        service.subscribeToImportProgress(importId);
+
+        // THEN
+        expect(subscribeSpy).toHaveBeenCalledWith(`/user/topic/exam-import/${importId}`);
     });
 
     it('should find an exam with exercises and without course id', async () => {
@@ -320,23 +342,6 @@ describe('Exam Management Service Tests', () => {
         await Promise.resolve();
     });
 
-    it('should add student to exam', async () => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockStudentLogin = 'studentLogin';
-
-        // WHEN
-        service.addStudentToExam(course.id!, mockExam.id!, mockStudentLogin).subscribe((res) => expect(res.body).toBeNull());
-
-        // THEN
-        const req = httpMock.expectOne({
-            method: 'POST',
-            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/students/${mockStudentLogin}`,
-        });
-        req.flush(null);
-        await Promise.resolve();
-    });
-
     it('should add students to exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
@@ -344,13 +349,13 @@ describe('Exam Management Service Tests', () => {
             { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1', email: '' },
             { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2', email: '' },
         ];
-        const expected: StudentDTO[] = [
-            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1', email: '' },
-            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2', email: '' },
-        ];
+        const expectedResponse: ExamRegistrationResultDTO = {
+            notFoundStudents: [],
+            rejectedStaffUsers: [],
+        };
 
         // WHEN
-        service.addStudentsToExam(course.id!, mockExam.id!, mockStudents).subscribe((res) => expect(res.body).toEqual(mockStudents));
+        service.addStudentsToExam(course.id!, mockExam.id!, mockStudents).subscribe((res) => expect(res.body).toEqual(expectedResponse));
 
         // THEN
         const req = httpMock.expectOne({
@@ -360,7 +365,7 @@ describe('Exam Management Service Tests', () => {
         expect(req.request.body).toEqual(mockStudents);
 
         // CLEAN
-        req.flush(expected);
+        req.flush(expectedResponse);
         await Promise.resolve();
     });
 
@@ -445,16 +450,17 @@ describe('Exam Management Service Tests', () => {
     it('should create test run', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockStudentExam: StudentExam = { exam: mockExam, numberOfExamSessions: 0 };
-        const expected: StudentExam = { exam: { id: 1 }, numberOfExamSessions: 0 };
+        const testRunConfiguration: CreateTestRunDTO = { examId: mockExam.id!, exerciseIds: [11, 12], workingTime: 600 };
+        const expected: StudentExamDTO = { id: 2, workingTime: 600, testRun: true, user: { id: 42 } };
         // WHEN
-        service.createTestRun(course.id!, mockExam.id!, mockStudentExam).subscribe((res) => expect(res.body).toEqual(mockStudentExam));
+        service.createTestRun(course.id!, mockExam.id!, testRunConfiguration).subscribe((res) => expect(res.body).toEqual(expected));
 
         // THEN
         const req = httpMock.expectOne({
             method: 'POST',
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/test-runs`,
         });
+        expect(req.request.body).toEqual(testRunConfiguration);
         req.flush(expected);
         await Promise.resolve();
     });
@@ -479,8 +485,8 @@ describe('Exam Management Service Tests', () => {
     it('should find all test runs for exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 2, numberOfExamSessions: 0 }];
-        const expected: StudentExam[] = [{ exam: mockExam, id: 2, numberOfExamSessions: 0 }];
+        const mockStudentExams: StudentExamDTO[] = [{ id: 2, testRun: true, user: { id: 42 } }];
+        const expected: StudentExamDTO[] = [{ id: 2, testRun: true, user: { id: 42 } }];
         // WHEN
         service.findAllTestRunsForExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockStudentExams));
 
@@ -568,18 +574,22 @@ describe('Exam Management Service Tests', () => {
     it('should update order', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockExerciseGroups: ExerciseGroup[] = [{ exam: mockExam, id: 1 }];
-        const expected: ExerciseGroup[] = [{ exam: mockExam, id: 1 }];
+        const mockExerciseGroups: ExerciseGroup[] = [
+            { exam: mockExam, id: 2 },
+            { exam: mockExam, id: 1 },
+        ];
 
         // WHEN
-        service.updateOrder(course.id!, mockExam.id!, mockExerciseGroups).subscribe((res) => expect(res.body).toEqual(mockExerciseGroups));
+        service.updateOrder(course.id!, mockExam.id!, mockExerciseGroups).subscribe((res) => expect(res.ok).toBe(true));
 
         // THEN
         const req = httpMock.expectOne({
             method: 'PUT',
             url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/exercise-groups-order`,
         });
-        req.flush(expected);
+        // Only the ordered group ids are sent, not the full exercise groups; the response carries no body.
+        expect(req.request.body).toEqual([2, 1]);
+        req.flush(null);
         await Promise.resolve();
     });
 
@@ -617,6 +627,32 @@ describe('Exam Management Service Tests', () => {
         });
         req.flush(mockResponse);
         await Promise.resolve();
+    });
+
+    it('should reconnect the last result of a locked submission as latestResult', async () => {
+        // GIVEN: the server's wire shape for a locked submission carries its result(s) as a plain list (the DTO the
+        // assessment-locks table reads); the client is expected to derive latestResult from it via reconnectSubmissions.
+        const mockExam: Exam = { id: 1 };
+        const lockedResult = { id: 99, score: 42, completionDate: undefined } as Result;
+        const mockResponse = [{ id: 7, submissionExerciseType: 'text', results: [lockedResult] } as TextSubmission];
+
+        // WHEN
+        let received: TextSubmission[] | undefined;
+        service.findAllLockedSubmissionsOfExam(course.id!, mockExam.id!).subscribe((res) => (received = res.body as TextSubmission[]));
+
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/locked-submissions`,
+        });
+        req.flush(mockResponse);
+        await Promise.resolve();
+
+        // THEN: reconnectSubmissions must have turned the last (and only) result into latestResult, with the
+        // back-reference to its submission restored, exactly as the assessment-locks component relies on.
+        expect(received).toBeDefined();
+        expect(received![0].latestResult?.id).toBe(lockedResult.id);
+        expect(received![0].latestResult?.score).toBe(lockedResult.score);
+        expect(received![0].latestResult?.submission).toBe(received![0]);
     });
 
     it('should download the exam from archive', async () => {

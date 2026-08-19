@@ -7,7 +7,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -95,7 +94,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 LEFT JOIN p.submissions submission
             WHERE submission.submissionDate >= :startDate
                 AND submission.submissionDate <= :endDate
-                AND p.student.login NOT LIKE '%test%'
+                AND p.student.isTestUser = FALSE
                 AND (submission.participation.exercise.exerciseGroup IS NOT NULL
                     OR EXISTS (SELECT c FROM Course c WHERE submission.participation.exercise.course.testCourse = FALSE)
                 )
@@ -124,7 +123,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 JOIN StudentParticipation p ON p.id = s.participation.id
                 JOIN p.student student
             WHERE s.submissionDate BETWEEN :nowMinus30Days AND :now
-                AND LOWER(student.login) NOT LIKE '%test%'
+                AND student.isTestUser = FALSE
             """)
     ActiveUserWindowCountsDTO countActiveUsersByWindows(@Param("now") ZonedDateTime now, @Param("nowMinus1Day") ZonedDateTime nowMinus1Day,
             @Param("nowMinus7Days") ZonedDateTime nowMinus7Days, @Param("nowMinus14Days") ZonedDateTime nowMinus14Days, @Param("nowMinus30Days") ZonedDateTime nowMinus30Days);
@@ -138,7 +137,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 LEFT JOIN p.submissions submission
             WHERE submission.submissionDate >= :startDate
                 AND submission.submissionDate <= :endDate
-                AND p.student.login NOT LIKE '%test%'
+                AND p.student.isTestUser = FALSE
                 AND p.exercise.id IN :exerciseIds
             ORDER BY submission.submissionDate ASC
             """)
@@ -154,7 +153,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 LEFT JOIN p.submissions submission
             WHERE submission.submissionDate >= :startDate
                 AND submission.submissionDate <= :endDate
-                AND p.student.login NOT LIKE '%test%'
+                AND p.student.isTestUser = FALSE
             AND p.exercise.id = :exerciseId
             ORDER BY submission.submissionDate ASC
             """)
@@ -221,7 +220,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             FROM User u
                 LEFT JOIN PersistentAuditEvent p ON u.login = p.principal
             WHERE p.auditEventType = 'AUTHENTICATION_SUCCESS'
-                AND u.login NOT LIKE '%test%'
+                AND u.isTestUser = FALSE
                 AND p.auditEventDate >= :startDate AND p.auditEventDate <= :endDate
             ORDER BY p.auditEventDate ASC
             """)
@@ -320,7 +319,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 AND (
                     r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                ) AND r.assessor.login NOT LIKE '%test%'
+                ) AND r.assessor.isTestUser = FALSE
                 AND (
                     r.submission.participation.exercise.exerciseGroup IS NOT NULL
                     OR EXISTS (SELECT c FROM Course c WHERE r.submission.participation.exercise.course.testCourse = FALSE)
@@ -339,8 +338,9 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 AND (
                     r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                ) AND r.assessor.login NOT LIKE '%test%'
-                AND r.submission.participation.exercise.id IN :exerciseIds
+                ) AND r.assessor.isTestUser = FALSE
+                AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             """)
     List<StatisticsEntry> getActiveTutorsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
@@ -356,8 +356,9 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 AND (
                     r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
                     OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                ) AND r.assessor.login NOT LIKE '%test%'
-                AND r.submission.participation.exercise.id = :exerciseId
+                ) AND r.assessor.isTestUser = FALSE
+                AND r.exerciseId = :exerciseId
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             """)
     List<StatisticsEntry> getActiveTutorsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
@@ -384,7 +385,8 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.submission.participation.exercise.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -398,7 +400,8 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.submission.participation.exercise.id = :exerciseId
+                AND r.exerciseId = :exerciseId
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -426,7 +429,8 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.submission.participation.exercise.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -440,7 +444,8 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             FROM Result r
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
-                AND r.submission.participation.exercise.id = :exerciseId
+                AND r.exerciseId = :exerciseId
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             GROUP BY r.completionDate
             ORDER BY r.completionDate
             """)
@@ -704,7 +709,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
         String username = userStatisticEntry.getUsername();
         // if this index is not yet existing in users
         // if the value of the map for this index does not contain this username
-        users.computeIfAbsent(index, k -> new HashSet<>(Collections.singletonList(username))).add(username);
+        users.computeIfAbsent(index, k -> new HashSet<>(List.of(username))).add(username);
     }
 
     /**

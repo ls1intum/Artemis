@@ -23,7 +23,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     readonly exerciseProjectKey = input<string>();
     readonly isRepositoryView = input(false);
 
-    private commitsInfoSubscription: Subscription;
+    private commitsInfoSubscription?: Subscription;
     protected readonly isGroupsExpanded = signal(true);
 
     private readonly fetchedCommits = signal<CommitInfo[] | undefined>(undefined);

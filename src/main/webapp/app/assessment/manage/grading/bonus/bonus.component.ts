@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -25,6 +25,8 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -95,13 +97,13 @@ export class BonusComponent implements OnInit {
         },
     ];
 
-    sourceGradingScales: GradingScale[] = [];
+    readonly sourceGradingScales = signal<GradingScale[]>([]);
 
-    bonusToGradeStepsDTO: GradeStepsDTO;
+    readonly bonusToGradeStepsDTO = signal<GradeStepsDTO | undefined>(undefined);
 
-    isLoading = false;
-    private courseId: number;
-    private examId: number;
+    readonly isLoading = signal(false);
+    private courseId!: number; // set in ngOnInit() from route params
+    private examId!: number; // set in ngOnInit() from route params
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -109,11 +111,28 @@ export class BonusComponent implements OnInit {
     currentBonusStrategyOption?: BonusStrategyOption;
     currentBonusStrategyDiscreteness?: BonusStrategyDiscreteness;
 
-    examples: BonusExample[] = [];
+    readonly examples = signal<BonusExample[]>([]);
     dynamicExample = new BonusExample(0, 0);
 
-    bonus = new Bonus();
-    hasBonusStrategyWeightMismatch = false;
+    /**
+     * Backing signal for {@link bonus}. The template binds `[(ngModel)]="bonus.sourceGradingScale"` (a deep two-way
+     * target), so {@link bonus} is exposed as a getter/setter facade over this signal rather than a bare signal: the
+     * template keeps writing `bonus.…` while reads stay reactive. Deep mutations (e.g. `this.bonus.id = …`) must be
+     * followed by {@link commitBonus} so dependent template bindings re-render under zoneless.
+     */
+    private readonly _bonus = signal<Bonus>(new Bonus(), { equal: () => false });
+    get bonus(): Bonus {
+        return this._bonus();
+    }
+    set bonus(value: Bonus) {
+        this._bonus.set(value);
+    }
+    /** Rebuilds the bonus signal reference after an in-place mutation so dependent template bindings re-render under zoneless. */
+    private commitBonus(): void {
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits.
+        this._bonus.set(this._bonus());
+    }
+    readonly hasBonusStrategyWeightMismatch = signal(false);
 
     private state: SearchTermPageableSearch = {
         page: 1,
@@ -124,7 +143,7 @@ export class BonusComponent implements OnInit {
     };
 
     ngOnInit(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         const paramMap = this.route.snapshot.paramMap;
         this.courseId = Number(paramMap.get('courseId'));
@@ -144,13 +163,22 @@ export class BonusComponent implements OnInit {
             ),
             this.gradingService.findWithBonusGradeTypeForInstructor(this.state).pipe(
                 tap((gradingScalesDto) => {
-                    this.sourceGradingScales = gradingScalesDto.body?.resultsOnPage.map((dto) => toEntity(dto)) ?? [];
+                    this.sourceGradingScales.set(
+                        gradingScalesDto.body?.resultsOnPage.map((dto) => {
+                            const scale = toEntity(dto);
+                            // The search response carries the owning course/exam only as a flat title/maxPoints pair inside
+                            // gradeSteps; reconstruct a minimal course so the dropdown label and the bonus example calculation
+                            // can read them.
+                            scale.course = hydrate(new Course(), { title: dto.gradeSteps.title, maxPoints: dto.gradeSteps.maxPoints });
+                            return scale;
+                        }) ?? [],
+                    );
                 }),
             ),
             this.gradingService.findGradeSteps(this.courseId, this.examId).pipe(
                 tap((gradeSteps) => {
                     if (gradeSteps) {
-                        this.bonusToGradeStepsDTO = gradeSteps;
+                        this.bonusToGradeStepsDTO.set(gradeSteps);
                         this.gradingService.sortGradeSteps(gradeSteps.gradeSteps);
                         this.gradingService.setGradePoints(gradeSteps.gradeSteps, gradeSteps.maxPoints!);
                     } else {
@@ -166,7 +194,7 @@ export class BonusComponent implements OnInit {
         ])
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe(() => {
@@ -175,29 +203,30 @@ export class BonusComponent implements OnInit {
     }
 
     private navigateToExam() {
-        this.router.navigate(['course-management', this.courseId, 'exams', this.examId]);
+        void this.router.navigate(['course-management', this.courseId, 'exams', this.examId]);
     }
 
     private setSourceGradingScale() {
         if (this.bonus.sourceGradingScale) {
-            const sourceGradingScale = this.sourceGradingScales.find((gradingScale) => gradingScale.id === this.bonus.sourceGradingScale!.id);
+            const sourceGradingScale = this.sourceGradingScales().find((gradingScale) => gradingScale.id === this.bonus.sourceGradingScale!.id);
             if (!sourceGradingScale) {
                 throw new Error(`sourceGradingScale not found for id: ${this.bonus.sourceGradingScale.id}`);
             }
             sourceGradingScale.course = this.bonus.sourceGradingScale.course;
             sourceGradingScale.exam = this.bonus.sourceGradingScale.exam;
             this.bonus.sourceGradingScale = sourceGradingScale;
+            this.commitBonus();
             this.onBonusSourceChange(this.bonus.sourceGradingScale);
         }
     }
 
     generateExamples() {
         if (this.bonus.sourceGradingScale && this.bonus.bonusStrategy) {
-            this.hasBonusStrategyWeightMismatch = this.checkBonusStrategyWeightMismatch(this.bonus.bonusStrategy, this.bonus.weight!, this.bonusToGradeStepsDTO.gradeSteps);
-            this.examples = !this.hasBonusStrategyWeightMismatch ? this.bonusService.generateBonusExamples(this.bonus, this.bonusToGradeStepsDTO) : [];
+            this.hasBonusStrategyWeightMismatch.set(this.checkBonusStrategyWeightMismatch(this.bonus.bonusStrategy, this.bonus.weight!, this.bonusToGradeStepsDTO()!.gradeSteps));
+            this.examples.set(!this.hasBonusStrategyWeightMismatch() ? this.bonusService.generateBonusExamples(this.bonus, this.bonusToGradeStepsDTO()!) : []);
         } else {
-            this.hasBonusStrategyWeightMismatch = false;
-            this.examples = [];
+            this.hasBonusStrategyWeightMismatch.set(false);
+            this.examples.set([]);
         }
     }
 
@@ -246,11 +275,14 @@ export class BonusComponent implements OnInit {
 
     onBonusStrategyInputChange() {
         this.bonus.bonusStrategy = this.convertFromInputsToBonusStrategy(this.currentBonusStrategyOption, this.currentBonusStrategyDiscreteness);
+        this.commitBonus();
         this.generateExamples();
         this.refreshDynamicExample();
     }
 
     onWeightChange() {
+        // The mode-picker two-way binding mutated bonus.weight in place; commit a fresh reference so dependent template bindings re-render under zoneless.
+        this.commitBonus();
         this.generateExamples();
         this.refreshDynamicExample();
     }
@@ -276,7 +308,7 @@ export class BonusComponent implements OnInit {
     }
 
     save(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const saveObservable = this.bonus.id
             ? this.bonusService.updateBonus(this.courseId, this.examId, this.bonus)
             : this.bonusService.createBonusForExam(this.courseId, this.examId, this.bonus);
@@ -284,22 +316,25 @@ export class BonusComponent implements OnInit {
         saveObservable
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
-            .subscribe((bonusResponse) => (this.bonus.id = bonusResponse.body?.id));
+            .subscribe((bonusResponse) => {
+                this.bonus.id = bonusResponse.body?.id;
+                this.commitBonus();
+            });
     }
 
     delete() {
         if (!this.bonus.id) {
             return;
         }
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.bonusService
             .deleteBonus(this.courseId, this.examId, this.bonus.id)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
@@ -347,7 +382,7 @@ export class BonusComponent implements OnInit {
     }
 
     calculateDynamicExample() {
-        this.bonusService.calculateFinalGrade(this.dynamicExample, this.bonus, this.bonusToGradeStepsDTO);
+        this.bonusService.calculateFinalGrade(this.dynamicExample, this.bonus, this.bonusToGradeStepsDTO()!);
     }
 
     private refreshDynamicExample() {
@@ -359,6 +394,8 @@ export class BonusComponent implements OnInit {
     }
 
     onBonusSourceChange(gradingScale: GradingScale) {
+        // The select's two-way binding mutated bonus.sourceGradingScale in place; commit a fresh reference so the dependent table re-renders under zoneless.
+        this.commitBonus();
         this.setBonusSourcePoints(gradingScale);
         this.generateExamples();
         this.refreshDynamicExample();
@@ -373,6 +410,6 @@ export class BonusComponent implements OnInit {
     }
 
     maxPossibleGrade() {
-        return this.gradingService.maxGrade(this.bonusToGradeStepsDTO.gradeSteps);
+        return this.gradingService.maxGrade(this.bonusToGradeStepsDTO()!.gradeSteps);
     }
 }

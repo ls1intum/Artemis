@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
@@ -20,8 +20,16 @@ export class ApollonDiagramCreateFormComponent implements OnInit, AfterViewInit 
     private apollonDiagramService = inject(ApollonDiagramService);
     private alertService = inject(AlertService);
 
-    apollonDiagram: ApollonDiagram;
-    isSaving: boolean;
+    // Backed by a signal so the template stays reactive under zoneless change detection, while the
+    // getter/setter facade keeps the [(ngModel)]="apollonDiagram.title|diagramType" deep two-way bindings working.
+    private readonly _apollonDiagram = signal<ApollonDiagram>(undefined!);
+    get apollonDiagram(): ApollonDiagram {
+        return this._apollonDiagram();
+    }
+    set apollonDiagram(value: ApollonDiagram) {
+        this._apollonDiagram.set(value);
+    }
+    readonly isSaving = signal(false);
     readonly titleInput = viewChild.required<ElementRef>('titleInput');
 
     // Icons
@@ -42,11 +50,11 @@ export class ApollonDiagramCreateFormComponent implements OnInit, AfterViewInit 
      * Saves the diagram
      */
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         this.apollonDiagramService.create(this.apollonDiagram, this.apollonDiagram.courseId!).subscribe({
             next: ({ body }) => {
                 if (body) {
-                    this.isSaving = false;
+                    this.isSaving.set(false);
                     this.dialogRef.close(body);
                 }
             },

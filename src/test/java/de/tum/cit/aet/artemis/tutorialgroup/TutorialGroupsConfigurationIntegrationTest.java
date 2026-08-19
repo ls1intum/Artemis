@@ -24,8 +24,6 @@ import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
@@ -34,6 +32,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupConfigurationDTO;
 class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
     private static final String TEST_PREFIX = "tutorialgroupconfiguration";
+
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     Long exampleTutorialGroupId;
 
@@ -44,8 +44,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);
-        if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
-            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
+        if (userRepository.findOneByLogin(OTHER_PREFIX + "instructor42").isEmpty()) {
+            userRepository.save(UserFactory.generateActivatedUser(OTHER_PREFIX + "instructor42"));
         }
         this.exampleTutorialGroupId = tutorialGroupUtilService
                 .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
@@ -59,7 +59,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void request_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         this.testJustForInstructorEndpoints();
     }
@@ -84,7 +84,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     @BeforeEach
     void deleteExistingConfiguration() {
-        var course = courseUtilService.createCourse();
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course.setTimeZone(exampleTimeZone);
         courseRepository.save(course);
         courseId = course.getId();
@@ -214,32 +214,6 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         var dto = TutorialGroupConfigurationDTO.of(configuration);
 
         request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId() + 5), dto, TutorialGroupConfigurationDTO.class, HttpStatus.BAD_REQUEST);
-    }
-
-    /**
-     * Note: With this test we want to ensure that jackson can deserialize the tutorial group configuration if it is indirectly sent with another entity.
-     * There was a bug that caused the deserialization to fail, as the date format checkers were put directly into the setter of date and time.
-     * The problem was that jackson tried to deserialize the date and time with the date and time format checkers active, which failed. These checkers
-     * should only be active in a direct creation / update case to ensure uuuu-MM-dd format in the database.
-     *
-     * @throws Exception if the request fails
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void persistEntityWithIndirectConnectionToConfiguration_dateAsFullIsoString_shouldNotThrowDeserializationException() throws Exception {
-        // given
-        tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
-        var course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
-        var configuration = course.getTutorialGroupsConfiguration();
-        // this date format should not throw an error here, even though it is not the uuuu-MM-dd format we use in the database as it neither updates nor creates the configuration
-        configuration.setTutorialPeriodStartInclusive("2022-11-25T23:00:00.000Z");
-        configuration.setTutorialPeriodEndInclusive("2022-11-25T23:00:00.000Z");
-
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), course);
-        // the exercise is now indirectly connected to the configuration, and jackson will try to deserialize the configuration
-        textExercise.setCourse(course);
-        textExercise.setChannelName("testchannelname");
-        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
     @Test

@@ -3,7 +3,7 @@ import { Commands } from '../../support/commands';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, users } from '../../support/users';
-import { generateUUID } from '../../support/utils';
+import { addE2EInitScript, generateUUID, readResponseJson } from '../../support/utils';
 import cAllSuccessfulSubmission from '../../fixtures/exercise/programming/c/all_successful/submission.json';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -19,7 +19,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { GitCloneMethod } from '../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { SshEncryptionAlgorithm } from '../../support/pageobjects/exercises/programming/GitClient';
 import { SEED_COURSES } from '../../support/seedData';
-import { BUILD_RESULT_TIMEOUT } from '../../support/timeouts';
+import { BUILD_RESULT_TIMEOUT, RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -240,7 +240,10 @@ test.describe('Exam participation', () => {
 
             await page.reload();
 
-            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
+            // First assertion after the reload absorbs the full client re-bootstrap: the summary view lazy-loads its
+            // chunks and Playwright disables the HTTP cache per context, so the default 10s expect timeout is not
+            // enough under parallel CI load. checkExamTitle renders in the same pass and keeps the default.
+            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!, RELOAD_RENDER_TIMEOUT);
             await examParticipation.checkExamTitle(examTitle);
 
             await login(instructor);
@@ -348,7 +351,7 @@ test.describe('Exam participation', () => {
                 let participationId: number | undefined;
                 if (participationResponse) {
                     try {
-                        const data = await participationResponse.json();
+                        const data = await readResponseJson(participationResponse);
                         participationId = data.id ?? data[0]?.id;
                     } catch {
                         /* response might not be JSON */
@@ -407,6 +410,7 @@ test.describe('Exam participation', () => {
             for (const student of [studentOne, studentTwo]) {
                 const studentContext = await browser.newContext();
                 const studentPage = await studentContext.newPage();
+                await addE2EInitScript(studentPage);
                 studentPages.push(studentPage);
 
                 await Commands.login(studentPage, student);
@@ -445,6 +449,7 @@ test.describe('Exam participation', () => {
             for (const student of students) {
                 const studentContext = await browser.newContext();
                 const studentPage = await studentContext.newPage();
+                await addE2EInitScript(studentPage);
                 studentPages.push(studentPage);
 
                 await Commands.login(studentPage, student);
@@ -484,6 +489,7 @@ test.describe('Exam participation', () => {
                 for (const student of students) {
                     const studentContext = await browser.newContext();
                     const studentPage = await studentContext.newPage();
+                    await addE2EInitScript(studentPage);
                     studentPages.push(studentPage);
 
                     await Commands.login(studentPage, student);

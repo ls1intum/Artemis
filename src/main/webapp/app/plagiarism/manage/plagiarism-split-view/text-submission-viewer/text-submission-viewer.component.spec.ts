@@ -1,6 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -24,8 +22,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { PlagiarismFileElement } from '../../../shared/entities/PlagiarismFileElement';
 
 describe('Text Submission Viewer Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: TextSubmissionViewerComponent;
     let fixture: ComponentFixture<TextSubmissionViewerComponent>;
     let repositoryService: CodeEditorRepositoryFileService;
@@ -75,33 +71,33 @@ describe('Text Submission Viewer Component', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
         vi.spyOn(textSubmissionService, 'getTextSubmission').mockReturnValue(of({ text: 'Test' }));
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
         expect(textSubmissionService.getTextSubmission).toHaveBeenCalledWith(2);
-        expect(comp.isProgrammingExercise).toBe(false);
+        expect(comp.isProgrammingExercise()).toBe(false);
     });
 
     it('fetches a programming submission', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
         vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
-        expect(comp.isProgrammingExercise).toBe(true);
-        expect(comp.cannotLoadFiles).toBe(false);
+        expect(comp.isProgrammingExercise()).toBe(true);
+        expect(comp.cannotLoadFiles()).toBe(false);
     });
 
     it('does not fetch a programming submission', () => {
         vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
         fixture.componentRef.setInput('hideContent', true);
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).not.toHaveBeenCalled();
     });
@@ -110,12 +106,12 @@ describe('Text Submission Viewer Component', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
         vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(throwError(() => {}));
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
-        expect(comp.cannotLoadFiles).toBe(true);
+        expect(comp.cannotLoadFiles()).toBe(true);
     });
 
     it('sorts and filters the files when fetching a programming submission', () => {
@@ -136,12 +132,12 @@ describe('Text Submission Viewer Component', () => {
 
         vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of(filesUnordered));
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
-        expect(comp.isProgrammingExercise).toBe(true);
+        expect(comp.isProgrammingExercise()).toBe(true);
 
         // files with matches first, then the ones without match; each section ordered lexicographically
         const expectedFiles = [
@@ -150,7 +146,7 @@ describe('Text Submission Viewer Component', () => {
             { file: 'b_file', hasMatch: false },
             { file: 'z', hasMatch: false },
         ];
-        expect(comp.files).toEqual(expectedFiles);
+        expect(comp.files()).toEqual(expectedFiles);
     });
 
     it('filters files of type FILE', () => {
@@ -158,6 +154,17 @@ describe('Text Submission Viewer Component', () => {
 
         expect(filtered).toHaveLength(4);
         expect(filtered).not.toContain('src/');
+    });
+
+    it('falls back to the exercise id when downloading a file without an exercise short name', () => {
+        const downloadFileSpy = vi.spyOn(repositoryService, 'downloadFile');
+        fixture.componentRef.setInput('exercise', { id: 234, type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1, studentLogin: 'student' } as PlagiarismSubmission);
+        comp.currentFile.set('Main.java');
+
+        comp.downloadCurrentFile();
+
+        expect(downloadFileSpy).toHaveBeenCalledWith('Main.java', '234_student_Main.java');
     });
 
     it('handles file selection', async () => {
@@ -175,8 +182,8 @@ describe('Text Submission Viewer Component', () => {
 
         const expectedDomain: DomainChange = [DomainType.PARTICIPATION, { id: submissionId }];
         expect(repositoryService.getFileForPlagiarismView).toHaveBeenCalledWith(fileName, expectedDomain);
-        expect(comp.currentFile).toEqual(fileName);
-        expect(comp.fileContent).toBe('if(current&gt;max)');
+        expect(comp.currentFile()).toEqual(fileName);
+        expect(comp.fileContent()).toBe('if(current&gt;max)');
     });
 
     it('handles binary file selection', () => {
@@ -189,7 +196,7 @@ describe('Text Submission Viewer Component', () => {
         comp.handleFileSelect(fileName);
 
         expect(repositoryService.getFileForPlagiarismView).not.toHaveBeenCalled();
-        expect(comp.currentFile).toEqual(fileName);
+        expect(comp.currentFile()).toEqual(fileName);
     });
 
     it('should insert exact match tokens', () => {

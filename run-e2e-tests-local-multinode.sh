@@ -117,7 +117,11 @@ fi
 export HOST_HOSTNAME="nginx"
 export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
 export ARTEMIS_ADMIN_USERNAME="${ARTEMIS_ADMIN_USERNAME:-artemis_admin}"
-export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-artemis_admin}"
+# Matches docker/artemis/config/prod-multinode.env: the prod profile rejects the published `artemis_admin` password.
+export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-local-e2e-admin-not-a-deployment-credential}"
+# The prod-profile stacks need a JWT signing key. A key committed to the repository would be one anyone can use to forge
+# a token, so it is generated per run and shared by every service that reads docker/artemis/config/playwright.env.
+export ARTEMIS_E2E_JWT_SECRET="${ARTEMIS_E2E_JWT_SECRET:-$(openssl rand -base64 64 | tr -d '\n')}"
 export TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-360}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"
 export TEST_WORKER_PROCESSES="${TEST_WORKER_PROCESSES:-4}"
@@ -287,24 +291,28 @@ rm -rf "$REPORT_DIR"/monocart-report*/
 # With a --filter argument we need to override the default playwright command the
 # artemis-playwright container would run. Mirror the pattern used by
 # .ci/E2E-tests/execute-locally.sh.
-OVERRIDE_ARGS=""
+OVERRIDE_ARGS=()
 if [ -n "$TEST_FILTER" ]; then
     cat > docker/playwright-local-override.yml << EOF
 # AUTO-GENERATED — DO NOT COMMIT
 services:
     artemis-playwright:
+        # Both installs are required: specs load src/main/webapp models, which resolve their own dependencies from the
+        # repository root upwards, so a Playwright-only install leaves them unresolvable and collection finds no tests.
         command: >
             sh -c '
-            cd /app/artemis/src/test/playwright &&
+            cd /app/artemis &&
             chmod 777 /root &&
-            rm -f test-reports/results*.xml &&
             corepack enable &&
+            pnpm install --frozen-lockfile &&
+            cd /app/artemis/src/test/playwright &&
+            rm -f test-reports/results*.xml &&
             pnpm install --frozen-lockfile &&
             pnpm run playwright:setup &&
             PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml pnpm exec playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
             '
 EOF
-    OVERRIDE_ARGS="-f docker/playwright-local-override.yml"
+    OVERRIDE_ARGS=(-f docker/playwright-local-override.yml)
 fi
 
 cleanup() {
@@ -315,9 +323,9 @@ trap cleanup EXIT
 TEST_START=$(date +%s)
 set +e
 if [ "$DEBUG" = true ]; then
-    docker compose "${COMPOSE_ARGS[@]}" $OVERRIDE_ARGS up --exit-code-from artemis-playwright artemis-playwright
+    docker compose "${COMPOSE_ARGS[@]}" "${OVERRIDE_ARGS[@]}" up --exit-code-from artemis-playwright artemis-playwright
 else
-    docker compose "${COMPOSE_ARGS[@]}" $OVERRIDE_ARGS up --attach artemis-playwright --exit-code-from artemis-playwright artemis-playwright
+    docker compose "${COMPOSE_ARGS[@]}" "${OVERRIDE_ARGS[@]}" up --attach artemis-playwright --exit-code-from artemis-playwright artemis-playwright
 fi
 TEST_EXIT=$?
 set -e

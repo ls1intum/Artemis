@@ -5,7 +5,7 @@
     <div class="ml-4 mt-3 mb-4">
         <table class="table table-borderless mx-auto d-block">
             <tbody>
-                @if (isTestExam) {
+                @if (isTestExam()) {
                     <tr>
                         <th>{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</th>
                         <td>
@@ -37,15 +37,15 @@
                         <td>{{ exam().title }}</td>
                     </tr>
                 }
-                @if (exam() && !isTestExam && exam().startDate) {
-                    @if (isExamOverMultipleDays) {
+                @if (exam() && !isTestExam() && exam().startDate) {
+                    @if (isExamOverMultipleDays()) {
                         <tr>
                             <th>{{ 'artemisApp.exam.time' | artemisTranslate }}:</th>
                             <td>
                                 {{ exam().startDate | artemisDate: 'long-date' }} {{ exam().startDate | artemisDate: 'time' }} &nbsp;-&nbsp;{{
-                                    examEndDate | artemisDate: 'long-date'
+                                    examEndDate() | artemisDate: 'long-date'
                                 }}
-                                {{ examEndDate | artemisDate: 'time' }}
+                                {{ examEndDate() | artemisDate: 'time' }}
                             </td>
                         </tr>
                     } @else {
@@ -55,7 +55,7 @@
                         </tr>
                         <tr class="mb-2">
                             <th>{{ 'artemisApp.exam.workingTime' | artemisTranslate }}:</th>
-                            <td>{{ exam().startDate | artemisDate: 'time' }} - {{ examEndDate | artemisDate: 'time' }}</td>
+                            <td>{{ exam().startDate | artemisDate: 'time' }} - {{ examEndDate() | artemisDate: 'time' }}</td>
                         </tr>
                     }
                     @if (exam().endDate && studentExam()?.workingTime) {
@@ -105,10 +105,10 @@
                     </tr>
                 }
                 <!-- For test exams, the currentDate (analogous to the real exam) and the workingTime should be displayed -->
-                @if (exam() && isTestExam) {
+                @if (exam() && isTestExam()) {
                     <tr>
                         <th>{{ 'artemisApp.exam.date' | artemisTranslate }}:</th>
-                        <td>{{ currentDate! | artemisDate: 'long-date' }}</td>
+                        <td>{{ currentDate()! | artemisDate: 'long-date' }}</td>
                     </tr>
                     @if (exam()?.workingTime) {
                         <tr>

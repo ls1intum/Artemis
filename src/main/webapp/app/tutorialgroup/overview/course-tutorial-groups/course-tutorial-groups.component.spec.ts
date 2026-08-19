@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component';
@@ -16,21 +15,21 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
+import { CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 
 interface TutorialGroupApiServiceMock {
     getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
 }
 
 describe('CourseTutorialGroupsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseTutorialGroupsComponent>;
     let component: CourseTutorialGroupsComponent;
 
@@ -52,7 +51,7 @@ describe('CourseTutorialGroupsComponent', () => {
 
     beforeEach(async () => {
         tutorialGroupApiServiceMock = {
-            getTutorialGroupsForCourse: vi.fn(),
+            getTutorialGroupsForCourse: vi.fn().mockReturnValue(of([])),
         };
         await TestBed.configureTestingModule({
             imports: [CourseTutorialGroupsComponent, MockSidebarComponent, MockDirective(TranslateDirective)],
@@ -62,7 +61,7 @@ describe('CourseTutorialGroupsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 MockProvider(CourseStorageService),
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiServiceMock },
                 MockProvider(LectureService),
                 MockProvider(CourseOverviewService),
                 MockProvider(SessionStorageService),
@@ -80,6 +79,7 @@ describe('CourseTutorialGroupsComponent', () => {
         courseOverviewService = TestBed.inject(CourseOverviewService);
         courseStorageService = TestBed.inject(CourseStorageService);
         lectureService = TestBed.inject(LectureService);
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
         sessionStorageService = TestBed.inject(SessionStorageService);
         router = TestBed.inject(Router);
     });
@@ -90,6 +90,52 @@ describe('CourseTutorialGroupsComponent', () => {
 
     it('should initialize', () => {
         expect(component).not.toBeNull();
+    });
+
+    describe('sidebar toggle sync', () => {
+        beforeEach(() => {
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [], lectures: [] });
+            // The cached course is empty, and the sidebar is now rebuilt for an empty result too, so these mappers are
+            // reached here. MockProvider returns undefined from them; the real ones return an empty array.
+            vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
+            vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+        });
+
+        it('should sync the collapse state and a working toggle into an activated tutorial group detail', () => {
+            let receivedCollapsed: boolean | undefined;
+            let receivedToggle: (() => void) | undefined;
+            const setSidebarToggle = vi.fn((collapsed: boolean, toggle: () => void) => {
+                receivedCollapsed = collapsed;
+                receivedToggle = toggle;
+            });
+            const detail = Object.assign(Object.create(CourseTutorialGroupDetailContainerComponent.prototype), { setSidebarToggle });
+
+            component.onSubRouteActivate(detail);
+            fixture.detectChanges();
+
+            expect(receivedCollapsed).toBe(component.isCollapsed());
+            const collapsedBeforeToggle = component.isCollapsed();
+            receivedToggle?.();
+            expect(component.isCollapsed()).toBe(!collapsedBeforeToggle);
+        });
+
+        it('should sync the collapse state and a working toggle into an activated tutorial lecture detail', () => {
+            let receivedCollapsed: boolean | undefined;
+            let receivedToggle: (() => void) | undefined;
+            const setSidebarToggle = vi.fn((collapsed: boolean, toggle: () => void) => {
+                receivedCollapsed = collapsed;
+                receivedToggle = toggle;
+            });
+            const detail = Object.assign(Object.create(CourseLectureDetailsComponent.prototype), { setSidebarToggle });
+
+            component.onSubRouteActivate(detail);
+            fixture.detectChanges();
+
+            expect(receivedCollapsed).toBe(component.isCollapsed());
+            const collapsedBeforeToggle = component.isCollapsed();
+            receivedToggle?.();
+            expect(component.isCollapsed()).toBe(!collapsedBeforeToggle);
+        });
     });
 
     it('should use cached groups and lectures if available to compute correct sidebar data', async () => {
@@ -106,8 +152,8 @@ describe('CourseTutorialGroupsComponent', () => {
         vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
         vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
-        const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse');
-        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId');
+        const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of([]));
+        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -148,9 +194,7 @@ describe('CourseTutorialGroupsComponent', () => {
         vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
         vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
-        const tutorialGroupFetchSpy = vi
-            .spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse')
-            .mockReturnValue(of(new HttpResponse({ body: [tutorialGroup1, tutorialGroup2] })));
+        const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of([tutorialGroup1, tutorialGroup2]));
 
         const tutorialLectureFetchSpy = vi
             .spyOn(lectureService, 'findAllTutorialLecturesByCourseId')
@@ -182,6 +226,68 @@ describe('CourseTutorialGroupsComponent', () => {
         expect(component.sidebarData()).toEqual(expectedSidebarData);
     });
 
+    it('should enrich the cached course with the fetched groups and lectures', async () => {
+        const cachedCourse = { id: 1, lectures: undefined, tutorialGroups: undefined };
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
+        vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of(new HttpResponse({ body: [tutorialGroup1] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [tutorialLecture1] })));
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+    });
+
+    it('should clear the sidebar when a refresh returns no groups and no lectures', async () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [tutorialGroup1], lectures: [tutorialLecture1] });
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([getSidebarCardElementForTutorialGroup(tutorialGroup1)]);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([getSidebarCardElementForTutorialLecture(tutorialLecture1)]);
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
+        vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.sidebarData()?.ungroupedData).toHaveLength(2);
+
+        // The group and the lecture are gone on the server; the refresh legitimately returns nothing. Keeping the old
+        // cards would leave the student clicking entries that no longer exist.
+        vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.mocked(courseOverviewService.mapTutorialGroupsToSidebarCardElements).mockReturnValue([]);
+        vi.mocked(courseOverviewService.mapLecturesToSidebarCardElements).mockReturnValue([]);
+
+        component.tutorialGroups.set([]);
+        component.tutorialLectures.set([]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.sidebarData()?.ungroupedData).toHaveLength(0);
+    });
+
+    it('should drop deleted tutorial lectures from the stored course, so reopening the tab cannot resurrect them', async () => {
+        const nonTutorialLecture = { id: 99, isTutorialLecture: false } as Lecture;
+        const cachedCourse = { id: 1, tutorialGroups: [], lectures: [tutorialLecture1, nonTutorialLecture] };
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+        // The tutorial lecture was deleted on the server, so the refresh legitimately returns nothing
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        (component as any).loadAndSetTutorialLectures(1);
+        await fixture.whenStable();
+
+        expect(updateCourseSpy).toHaveBeenCalled();
+        // Merging by id could not express the deletion: nothing in the empty response matched, so the deleted lecture
+        // stayed cached and came straight back the next time the tab read it
+        expect(cachedCourse.lectures).toEqual([nonTutorialLecture]);
+    });
+
     it('should navigate to previously selected route', () => {
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [tutorialGroup1], lectures: [tutorialLecture1, tutorialLecture2] });
         vi.spyOn(sessionStorageService, 'retrieve').mockReturnValue('tutorial-lectures/7');
@@ -204,11 +310,11 @@ describe('CourseTutorialGroupsComponent', () => {
     });
 
     it('should toggle isCollapsed', () => {
-        const initialCollapseState = component.isCollapsed;
+        const initialCollapseState = component.isCollapsed();
         vi.spyOn(courseOverviewService, 'setSidebarCollapseState');
         component.toggleSidebar();
-        expect(component.isCollapsed).toBe(!initialCollapseState);
-        expect(courseOverviewService.setSidebarCollapseState).toHaveBeenCalledWith('tutorialGroup', component.isCollapsed);
+        expect(component.isCollapsed()).toBe(!initialCollapseState);
+        expect(courseOverviewService.setSidebarCollapseState).toHaveBeenCalledWith('tutorialGroup', component.isCollapsed());
     });
 });
 
@@ -264,9 +370,12 @@ function getSidebarCardElementForTutorialGroup(tutorialGroup: TutorialGroup): Si
 
 @Component({ selector: 'jhi-sidebar', template: '' })
 class MockSidebarComponent {
-    itemSelected = input<any>();
-    courseId = input<any>();
-    sidebarData = input<any>();
-    collapseState = input<any>();
-    sidebarItemAlwaysShow = input<any>();
+    itemSelected = input<boolean>();
+    courseId = input<number>();
+    sidebarData = input<SidebarData>();
+    collapseState = input<CollapseState>();
+    sidebarItemAlwaysShow = input<SidebarItemShowAlways>();
+    pageTitle = input<string>();
+    showSidebarToggle = input<boolean>();
+    isSidebarCollapsed = input<boolean>();
 }

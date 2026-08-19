@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { faBoxArchive, faBoxOpen, faEllipsisVertical, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
@@ -23,6 +23,7 @@ import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
 } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-conversation-options',
@@ -44,15 +45,15 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     hide$ = new Subject<boolean>();
     mute$ = new Subject<boolean>();
 
-    course: Course;
+    course!: Course; // set in ngOnInit() from metisService.getCourse()
 
     readonly conversation = input.required<ConversationDTO>();
 
     readonly onUpdateSidebar = output<void>();
 
-    conversationAsChannel?: ChannelDTO;
-    channelSubTypeReferenceTranslationKey?: string;
-    channelSubTypeReferenceRouterLink?: string;
+    readonly conversationAsChannel = signal<ChannelDTO | undefined>(undefined);
+    readonly channelSubTypeReferenceTranslationKey = signal<string | undefined>(undefined);
+    readonly channelSubTypeReferenceRouterLink = signal<string | undefined>(undefined);
 
     faEllipsisVertical = faEllipsisVertical;
     faHeartSolid = faHearthSolid;
@@ -72,9 +73,10 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
         this.updateConversationIsFavorite();
         this.updateConversationIsHidden();
         this.updateConversationIsMuted();
-        this.conversationAsChannel = getAsChannelDTO(this.conversation());
-        this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.conversationAsChannel?.subType);
-        this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.conversationAsChannel);
+        const conversationAsChannel = getAsChannelDTO(this.conversation());
+        this.conversationAsChannel.set(conversationAsChannel);
+        this.channelSubTypeReferenceTranslationKey.set(getChannelSubTypeReferenceTranslationKey(conversationAsChannel?.subType));
+        this.channelSubTypeReferenceRouterLink.set(this.metisService.getLinkForChannelSubType(conversationAsChannel));
     }
 
     onArchiveClicked(event: MouseEvent) {
@@ -120,14 +122,16 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
 
     openConversationDetailDialog(event: MouseEvent) {
         event.stopPropagation();
-        const ref = this.dialogService.open(ConversationDetailDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: {
-                course: this.course,
-                activeConversation: this.conversation(),
-                selectedTab: ConversationDetailTabs.SETTINGS,
-            },
-        });
+        const ref = this.dialogService.open(
+            ConversationDetailDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                data: {
+                    course: this.course,
+                    activeConversation: this.conversation(),
+                    selectedTab: ConversationDetailTabs.SETTINGS,
+                },
+            }),
+        );
         ref?.onClose
             .pipe(
                 filter((result) => !!result),

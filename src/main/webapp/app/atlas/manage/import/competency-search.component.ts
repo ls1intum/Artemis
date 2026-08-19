@@ -1,4 +1,4 @@
-import { Component, model } from '@angular/core';
+import { Component, model, signal } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { getSemesters } from 'app/foundation/util/semester-utils';
@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-competency-search',
@@ -17,7 +18,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 export class CompetencySearchComponent {
     search = model.required<CourseCompetencyFilter>();
 
-    advancedSearchEnabled = false;
+    readonly advancedSearchEnabled = signal(false);
 
     protected readonly faChevronDown = faChevronDown;
     protected readonly faChevronUp = faChevronUp;
@@ -29,7 +30,7 @@ export class CompetencySearchComponent {
      * Toggles advanced search (expands component to show more search fields)
      */
     toggleAdvancedSearch() {
-        this.advancedSearchEnabled = !this.advancedSearchEnabled;
+        this.advancedSearchEnabled.update((enabled) => !enabled);
     }
 
     /**
@@ -48,7 +49,7 @@ export class CompetencySearchComponent {
      * Update a single field on the search model. Used by template event bindings.
      */
     updateSearchField(field: 'title' | 'description' | 'courseTitle' | 'semester', value: string) {
-        this.search.update((s) => ({ ...s, [field]: value }) as CourseCompetencyFilter);
+        this.search.update((s) => cloneWith(s, { [field]: value }));
     }
 
     /**
@@ -56,8 +57,8 @@ export class CompetencySearchComponent {
      * Triggered every time the user manually presses Enter or the search button
      */
     performSearch() {
-        if (this.advancedSearchEnabled) {
-            this.search.update((s) => ({ ...s }));
+        if (this.advancedSearchEnabled()) {
+            this.search.update((s) => deepClone(s));
         } else {
             //only search with competency title if advancedSearch is disabled
             this.search.set({

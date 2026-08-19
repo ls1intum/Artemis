@@ -10,8 +10,6 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { toUpdateProgrammingExerciseDTO } from 'app/programming/manage/services/update-programming-exercise-dto.model';
 import { toProgrammingExerciseTimelineUpdateDTO } from 'app/programming/manage/services/programming-exercise-timeline-update-dto.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
@@ -23,6 +21,7 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -68,7 +67,7 @@ export class ProgrammingExerciseService {
     automaticSetup(programmingExercise: ProgrammingExercise, emptyRepositories = false): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
         const params = new HttpParams().set('emptyRepositories', String(emptyRepositories));
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
@@ -107,9 +106,7 @@ export class ProgrammingExerciseService {
         return this.http
             .get<PlagiarismResultDTO>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
-                params: {
-                    ...options?.toParams(),
-                },
+                params: deepClone(options?.toParams()),
             })
             .pipe(map((response: HttpResponse<PlagiarismResultDTO>) => response.body!));
     }
@@ -123,9 +120,7 @@ export class ProgrammingExerciseService {
         return this.http.get(`${this.resourceUrl}/${exerciseId}/check-plagiarism-jplag-report`, {
             observe: 'response',
             responseType: 'blob',
-            params: {
-                ...options?.toParams(),
-            },
+            params: deepClone(options?.toParams()),
         });
     }
 
@@ -156,7 +151,7 @@ export class ProgrammingExerciseService {
         const options = createRequestOption(importOptions);
         const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
 
-        exercise.categories = ExerciseService.stringifyExerciseCategories(exercise);
+        ExerciseService.stringifyExerciseCategories(exercise);
         return this.http
             .post<ProgrammingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
@@ -170,7 +165,7 @@ export class ProgrammingExerciseService {
      * @param programmingExercise which should be updated
      * @param req optional request options
      */
-    update(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
+    update(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
@@ -183,7 +178,7 @@ export class ProgrammingExerciseService {
      * @param programmingExercise to update
      * @param req optional request options
      */
-    updateTimeline(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
+    updateTimeline(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toProgrammingExerciseTimelineUpdateDTO(programmingExercise);
         return this.http
@@ -203,7 +198,7 @@ export class ProgrammingExerciseService {
      * @param problemStatement the new problem statement
      * @param req optional request options
      */
-    updateProblemStatement(programmingExerciseId: number, problemStatement: string | undefined, req?: any) {
+    updateProblemStatement(programmingExerciseId: number, problemStatement: string | undefined, req?: Parameters<typeof createRequestOption>[0]) {
         const options = createRequestOption(req);
         // Send a single space for empty problem statements to avoid Spring Boot empty body rejection
         // The server will trim it and convert to null
@@ -332,6 +327,7 @@ export class ProgrammingExerciseService {
         if (results && results.length > 0) {
             return results.last();
         }
+        return undefined;
     }
 
     /**
@@ -364,7 +360,7 @@ export class ProgrammingExerciseService {
      * Receives all programming exercises for the particular query
      * @param req optional request options
      */
-    query(req?: any): Observable<EntityArrayResponseType> {
+    query(req?: Parameters<typeof createRequestOption>[0]): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<ProgrammingExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
@@ -392,17 +388,16 @@ export class ProgrammingExerciseService {
      * @param exercise for which the data should be converted
      */
     convertDataFromClient(exercise: ProgrammingExercise) {
-        const copy = {
-            ...ExerciseService.convertExerciseDatesFromClient(exercise),
+        const copy = cloneWith(ExerciseService.convertExerciseDatesFromClient(exercise), {
             buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(exercise.buildAndTestStudentSubmissionsAfterDueDate),
-        };
+        });
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
-            copy.templateParticipation = _omit(copy.templateParticipation, ['exercise', 'results']) as TemplateProgrammingExerciseParticipation;
+            copy.templateParticipation = _omit(copy.templateParticipation, ['exercise', 'results']);
         }
         if (copy.solutionParticipation) {
-            copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']) as SolutionProgrammingExerciseParticipation;
+            copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']);
         }
 
         return copy as ProgrammingExercise;
@@ -487,7 +482,7 @@ export class ProgrammingExerciseService {
      * @param programmingExercise that should be updated of type {ProgrammingExercise}
      * @param req optional request options
      */
-    reevaluateAndUpdate(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
+    reevaluateAndUpdate(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
@@ -517,8 +512,8 @@ export class ProgrammingExerciseService {
      * Gets all files from the last solution participation repository
      */
     getSolutionRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/solution-files-content?omitBinaries=true`).pipe(
-            map((res: HttpResponse<any>) => {
+        return this.http.get<Record<string, string>>(`${this.resourceUrl}/${exerciseId}/solution-files-content?omitBinaries=true`).pipe(
+            map((res: Record<string, string>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
                 return res && new Map(Object.entries(res));
@@ -530,8 +525,8 @@ export class ProgrammingExerciseService {
      * Gets all files from the last commit in the template participation repository
      */
     getTemplateRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/template-files-content?omitBinaries=true`).pipe(
-            map((res: HttpResponse<any>) => {
+        return this.http.get<Record<string, string>>(`${this.resourceUrl}/${exerciseId}/template-files-content?omitBinaries=true`).pipe(
+            map((res: Record<string, string>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
                 return res && new Map(Object.entries(res));
@@ -547,7 +542,7 @@ export class ProgrammingExerciseService {
     importFromFile(exercise: ProgrammingExercise, courseId: number): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(exercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
         const formData = new FormData();
         formData.append('file', exercise.zipFileForImport!);
         const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
@@ -565,5 +560,52 @@ export class ProgrammingExerciseService {
                 checkoutSolution: checkoutSolution,
             },
         });
+    }
+
+    /**
+     * Obtains the repository-scoped VCS access token of the current (staff) user for a repository of a programming exercise. Returns 404 if none exists yet.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @param repositoryType the repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY or USER for a student assignment repository)
+     * @param auxiliaryRepositoryId the id of the auxiliary repository (only relevant for AUXILIARY)
+     * @param participationId the id of the student participation (only relevant for USER)
+     */
+    getRepositoryVcsAccessToken(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number, participationId?: number): Observable<HttpResponse<string>> {
+        return this.http.get<string>('api/programming/repository-vcs-access-token', {
+            observe: 'response',
+            params: this.repositoryVcsAccessTokenParams(exerciseId, repositoryType, auxiliaryRepositoryId, participationId),
+            responseType: 'text' as 'json',
+        });
+    }
+
+    /**
+     * Obtains, creating it if necessary, the repository-scoped VCS access token of the current (staff) user for a repository of a programming exercise.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @param repositoryType the repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY or USER for a student assignment repository)
+     * @param auxiliaryRepositoryId the id of the auxiliary repository (only relevant for AUXILIARY)
+     * @param participationId the id of the student participation (only relevant for USER)
+     */
+    createRepositoryVcsAccessToken(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number, participationId?: number): Observable<HttpResponse<string>> {
+        return this.http.put<string>('api/programming/repository-vcs-access-token', null, {
+            observe: 'response',
+            params: this.repositoryVcsAccessTokenParams(exerciseId, repositoryType, auxiliaryRepositoryId, participationId),
+            responseType: 'text' as 'json',
+        });
+    }
+
+    /**
+     * Builds the query parameters shared by the GET and PUT repository-vcs-access-token endpoints, adding the auxiliary repository id (for AUXILIARY) and the participation id (for a
+     * USER/student repository) only when they are provided.
+     */
+    private repositoryVcsAccessTokenParams(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number, participationId?: number): HttpParams {
+        let params = new HttpParams().set('exerciseId', exerciseId).set('repositoryType', repositoryType);
+        if (auxiliaryRepositoryId !== undefined) {
+            params = params.set('auxiliaryRepositoryId', auxiliaryRepositoryId);
+        }
+        if (participationId !== undefined) {
+            params = params.set('participationId', participationId);
+        }
+        return params;
     }
 }

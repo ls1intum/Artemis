@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
@@ -9,7 +8,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
 
 describe('ConnectionWarning', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<JhiConnectionWarningComponent>;
     let component: JhiConnectionWarningComponent;
     let subject: BehaviorSubject<ConnectionState>;
@@ -44,7 +42,7 @@ describe('ConnectionWarning', () => {
     it('should show the indicator and popover on dropped connection', () => {
         fixture.detectChanges();
 
-        expect(component.disconnected).toBe(false);
+        expect(component.disconnected()).toBe(false);
         expect(component.popover.isOpen()).toBe(false);
 
         const warningDiv = fixture.debugElement.query(By.css('.connection-warning'));
@@ -54,7 +52,7 @@ describe('ConnectionWarning', () => {
         subject.next(new ConnectionState(false, true));
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.disconnected).toBe(true);
+        expect(component.disconnected()).toBe(true);
         expect(warningDiv.classes['disconnected']).toBe(true);
 
         vi.advanceTimersByTime(300);
@@ -64,7 +62,7 @@ describe('ConnectionWarning', () => {
         fixture.changeDetectorRef.detectChanges();
 
         vi.advanceTimersByTime(100);
-        expect(component.disconnected).toBe(false);
+        expect(component.disconnected()).toBe(false);
         expect(component.popover.isOpen()).toBe(false);
         expect(warningDiv.classes['disconnected']).not.toBeTruthy();
     });

@@ -12,7 +12,7 @@
     </h4>
     @if (!showResult()) {
         <div>
-            @for (textPart of textParts; track textPart; let i = $index) {
+            @for (textPart of textParts(); track textPart; let i = $index) {
                 <div class="short-answer-question-display">
                     @for (element of textPart; track element; let j = $index) {
                         <div class="short-answer-question-display__element">
@@ -43,7 +43,7 @@
     }
     @if (showResult()) {
         <div>
-            @for (textPart of textParts; track textPart) {
+            @for (textPart of textParts(); track textPart) {
                 <div class="short-answer-question-display">
                     @for (element of textPart; track element) {
                         <div class="short-answer-question-display__element">
@@ -79,7 +79,7 @@
     @if (shortAnswerQuestion().hint || (shortAnswerQuestion().explanation && showResult())) {
         <div class="hint">
             <ng-template #renderedHint>
-                <div [innerHTML]="renderedQuestion.hint"></div>
+                <div [innerHTML]="renderedQuestion().hint"></div>
             </ng-template>
             @if (shortAnswerQuestion().hint) {
                 <span class="label label-info" [ngbPopover]="renderedHint" placement="right auto" triggers="mouseenter:mouseleave">
@@ -89,7 +89,7 @@
             }
             <br />
             <ng-template #renderedExplanation>
-                <div [innerHTML]="renderedQuestion.explanation"></div>
+                <div [innerHTML]="renderedQuestion().explanation"></div>
             </ng-template>
             @if (shortAnswerQuestion().explanation && showResult()) {
                 <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave">

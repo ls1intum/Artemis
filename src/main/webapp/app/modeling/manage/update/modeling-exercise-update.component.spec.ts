@@ -2,7 +2,6 @@
  * Vitest tests for ModelingExerciseUpdateComponent.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -17,7 +16,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -36,6 +35,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockStubComponent } from 'test/helpers/stubs/exercise/exercise-group-timeline-lock-stub.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
@@ -43,7 +43,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -116,8 +116,6 @@ class StubMarkdownEditorMonacoComponent {
 }
 
 describe('ModelingExerciseUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ModelingExerciseUpdateComponent;
     let fixture: ComponentFixture<ModelingExerciseUpdateComponent>;
     let service: ModelingExerciseService;
@@ -151,12 +149,12 @@ describe('ModelingExerciseUpdateComponent', () => {
         const modelingExercise = createModelingExercise(course);
         modelingExercise.id = 123;
 
-        routeData$ = new BehaviorSubject({ modelingExercise });
+        routeData$ = new BehaviorSubject<Data>({ modelingExercise });
         routeUrl$ = new BehaviorSubject([{ path: 'new' }] as UrlSegment[]);
-        routeParams$ = new BehaviorSubject({ courseId: 1 });
+        routeParams$ = new BehaviorSubject<Params>({ courseId: 1 });
 
         await TestBed.configureTestingModule({
-            imports: [ModelingExerciseUpdateComponent, TranslateModule.forRoot()],
+            imports: [ModelingExerciseUpdateComponent],
             providers: [
                 LocalStorageService,
                 SessionStorageService,
@@ -224,6 +222,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTranslateService(),
             ],
         })
             .overrideComponent(ModelingExerciseUpdateComponent, {
@@ -243,13 +242,14 @@ describe('ModelingExerciseUpdateComponent', () => {
                         MockComponent(DocumentationButtonComponent),
                         MockComponent(FormStatusBarComponent),
                         MockComponent(FormFooterComponent),
-                        MockComponent(CategorySelectorComponent),
+                        MockComponent(CategorySelectorPrimengComponent),
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
                         ModelingExerciseTimelineComponent,
                         StubMarkdownEditorMonacoComponent,
                         StubModelingEditorComponent,
+                        ExerciseGroupTimelineLockStubComponent,
                     ],
                 },
             })
@@ -298,7 +298,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(expect.objectContaining({ channelName: 'test' }));
                 expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
         });
 
@@ -330,7 +330,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(expect.objectContaining({ id: 123 }), {});
                 expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
 
             it('should show backend error alert and reset saving state on save error', async () => {
@@ -348,7 +348,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 await fixture.whenStable();
 
                 expect(alertSpy).toHaveBeenCalledWith('modelingExercise.update.error', 'modelingExercise.update.error.message', { exerciseId: 123 });
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
 
             it('should show generic error alert when save error has no backend title', async () => {
@@ -359,7 +359,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 await fixture.whenStable();
 
                 expect(alertSpy).toHaveBeenCalledWith('error.http.400');
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
         });
     });
@@ -389,13 +389,13 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseIdImportingCourse);
-            expect(comp.existingCategories).toEqual(categories);
+            expect(comp.existingCategories()).toEqual(categories);
         });
 
         it('should load exercise categories', async () => {
@@ -437,13 +437,13 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseId);
-            expect(comp.existingCategories).toEqual(categories);
+            expect(comp.existingCategories()).toEqual(categories);
         });
     });
 
@@ -468,8 +468,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.modelingExercise.course).toBeUndefined();
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
@@ -499,8 +499,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
@@ -549,12 +549,12 @@ describe('ModelingExerciseUpdateComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        comp.exerciseCategories = [];
+        comp.exerciseCategories.set([]);
         const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
         comp.updateCategories(newCategories);
 
         expect(comp.modelingExercise.categories).toEqual(newCategories);
-        expect(comp.exerciseCategories).toEqual(newCategories);
+        expect(comp.exerciseCategories()).toEqual(newCategories);
     });
 
     it('should properly clean up subscriptions on destroy', async () => {

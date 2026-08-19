@@ -4,6 +4,7 @@ import { ExifTransform } from '../interfaces/exif-transform.interface';
 import { getTransformationsFromExifData, supportsAutomaticRotation } from '../utils/exif.utils';
 import { LoadedImage } from 'app/shared-ui/image-cropper/interfaces/loaded-image.interface';
 import { Dimensions } from 'app/shared-ui/image-cropper/interfaces/dimensions.interface';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 interface LoadImageBase64 {
     originalImage: HTMLImageElement;
@@ -17,8 +18,10 @@ export class LoadImageService {
     loadImageFile(file: File, cropperSettings: CropperSettings): Promise<LoadedImage> {
         return new Promise((resolve, reject) => {
             const fileReader = new FileReader();
-            fileReader.onload = (event: any) => {
-                this.loadImage(event.target.result, file.type, cropperSettings).then(resolve).catch(reject);
+            fileReader.onload = (event: ProgressEvent<FileReader>) => {
+                this.loadImage(event.target?.result as string, file.type, cropperSettings)
+                    .then(resolve)
+                    .catch(reject);
             };
             fileReader.readAsDataURL(file);
         });
@@ -45,7 +48,7 @@ export class LoadImageService {
                 canvas.width = img.width;
                 canvas.height = img.height;
                 context.drawImage(img, 0, 0);
-                this.loadBase64Image(canvas.toDataURL(), cropperSettings).then(resolve);
+                void this.loadBase64Image(canvas.toDataURL(), cropperSettings).then(resolve);
             };
             img.crossOrigin = 'anonymous';
             img.src = url;
@@ -96,12 +99,12 @@ export class LoadImageService {
                 original: {
                     base64: loadedImage.original.base64,
                     image: loadedImage.original.image,
-                    size: { ...originalSize },
+                    size: deepClone(originalSize),
                 },
                 transformed: {
                     base64: loadedImage.original.base64,
                     image: loadedImage.original.image,
-                    size: { ...originalSize },
+                    size: deepClone(originalSize),
                 },
                 exifTransform: loadedImage.exifTransform,
             };
@@ -121,7 +124,7 @@ export class LoadImageService {
             original: {
                 base64: loadedImage.original.base64,
                 image: loadedImage.original.image,
-                size: { ...originalSize },
+                size: deepClone(originalSize),
             },
             transformed: {
                 base64: transformedBase64,

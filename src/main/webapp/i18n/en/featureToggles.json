@@ -112,6 +112,10 @@
                 "passkey": {
                     "name": "Passkey Authentication",
                     "description": "Enables passwordless authentication using FIDO2/WebAuthn passkeys for enhanced security."
+                },
+                "passkey-admin": {
+                    "name": "Passkey Required for Admin Features",
+                    "description": "When enabled, administrators must authenticate with a passkey to access admin features. Requires Passkey Authentication to be active."
                 }
             },
             "toggles": {
@@ -144,11 +148,6 @@
                     "name": "Competency Import",
                     "description": "Allows instructors to import competencies from standardized frameworks (e.g., curricula, qualification profiles) and link them to course competencies for better alignment with educational standards.",
                     "disableWarning": "Instructors will not be able to import or link standardized competencies to their courses."
-                },
-                "StudentCourseAnalyticsDashboard": {
-                    "name": "Analytics Dashboard",
-                    "description": "Provides students with a personal dashboard showing learning progress, performance metrics, exercise statistics, and competency mastery - when enabled by course instructors.",
-                    "disableWarning": "Students will not have access to their personal analytics dashboard, even if instructors enable it for their course."
                 },
                 "TutorSuggestions": {
                     "name": "AI Tutor Suggestions",

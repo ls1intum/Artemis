@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid/code-editor-grid.component';
-import { Interactable } from '@interactjs/core/Interactable';
 import { InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 
@@ -12,8 +10,6 @@ const instructionsWindowName = 'Instructions';
 const buildOutputWindowName = 'BuildOutput';
 
 describe('CodeEditorGridComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CodeEditorGridComponent;
     let fixture: ComponentFixture<CodeEditorGridComponent>;
 
@@ -46,13 +42,10 @@ describe('CodeEditorGridComponent', () => {
 
             expect(draggableIconForWindow).not.toBeNull();
 
-            const resizable = () => {};
-            const windowInteractable: Interactable = { target: '.resizable-' + windowName.toLowerCase(), resizable } as Interactable;
-
             const blur = () => {};
             const pointerEvent: PointerEvent = { type: 'click', target: { blur } as unknown as HTMLElement } as unknown as PointerEvent;
 
-            const windowCollapseEvent: InteractableEvent = { event: pointerEvent, horizontal: true, interactable: windowInteractable };
+            const windowCollapseEvent: InteractableEvent = { event: pointerEvent, horizontal: true };
 
             expectWindowToBeCollapsed(windowName, false);
 
@@ -70,18 +63,18 @@ describe('CodeEditorGridComponent', () => {
         };
 
         const expectAllWindowsToNotBeCollapsed = () => {
-            expect(comp.fileBrowserIsCollapsed).toBe(false);
-            expect(comp.rightPanelIsCollapsed).toBe(false);
-            expect(comp.buildOutputIsCollapsed).toBe(false);
+            expect(comp.fileBrowserIsCollapsed()).toBe(false);
+            expect(comp.rightPanelIsCollapsed()).toBe(false);
+            expect(comp.buildOutputIsCollapsed()).toBe(false);
         };
 
         const expectWindowToBeCollapsed = (windowName: string, collapsed: boolean) => {
             switch (windowName) {
                 case fileBrowserWindowName: {
                     if (collapsed) {
-                        expect(comp.fileBrowserIsCollapsed).toBe(true);
-                        expect(comp.rightPanelIsCollapsed).toBe(false);
-                        expect(comp.buildOutputIsCollapsed).toBe(false);
+                        expect(comp.fileBrowserIsCollapsed()).toBe(true);
+                        expect(comp.rightPanelIsCollapsed()).toBe(false);
+                        expect(comp.buildOutputIsCollapsed()).toBe(false);
                     } else {
                         expectAllWindowsToNotBeCollapsed();
                     }
@@ -89,9 +82,9 @@ describe('CodeEditorGridComponent', () => {
                 }
                 case instructionsWindowName: {
                     if (collapsed) {
-                        expect(comp.fileBrowserIsCollapsed).toBe(false);
-                        expect(comp.rightPanelIsCollapsed).toBe(true);
-                        expect(comp.buildOutputIsCollapsed).toBe(false);
+                        expect(comp.fileBrowserIsCollapsed()).toBe(false);
+                        expect(comp.rightPanelIsCollapsed()).toBe(true);
+                        expect(comp.buildOutputIsCollapsed()).toBe(false);
                     } else {
                         expectAllWindowsToNotBeCollapsed();
                     }
@@ -99,9 +92,9 @@ describe('CodeEditorGridComponent', () => {
                 }
                 case buildOutputWindowName: {
                     if (collapsed) {
-                        expect(comp.fileBrowserIsCollapsed).toBe(false);
-                        expect(comp.rightPanelIsCollapsed).toBe(false);
-                        expect(comp.buildOutputIsCollapsed).toBe(true);
+                        expect(comp.fileBrowserIsCollapsed()).toBe(false);
+                        expect(comp.rightPanelIsCollapsed()).toBe(false);
+                        expect(comp.buildOutputIsCollapsed()).toBe(true);
                     } else {
                         expectAllWindowsToNotBeCollapsed();
                     }

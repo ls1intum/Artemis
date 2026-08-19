@@ -8,19 +8,32 @@
         </button>
     </div>
 }
-@if (allowDrop) {
+@if (allowDrop()) {
     <div class="alert alert-info">
         <fa-icon [icon]="faInfoCircle" />
-        <span jhiTranslate="artemisApp.exercise.dragDropInstruction"></span>
+        <span [jhiTranslate]="selectable() ? 'artemisApp.exercise.applyInstructionHint' : 'artemisApp.exercise.dragDropInstruction'"></span>
     </div>
 }
-@for (criterion of criteria(); track criterion; let criterionIndex = $index) {
+@for (criterion of sortedCriteria(); track criterionIndex; let criterionIndex = $index) {
     <div>
         <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
-            @for (instruction of criterion!.structuredGradingInstructions; track instruction; let instructionIndex = $index) {
+            <ng-container expandableSectionHeaderActions>
+                @if (selectable()) {
+                    <tum-ui-tag
+                        severity="secondary"
+                        styleClass="font-normal!"
+                        [value]="
+                            'artemisApp.assessmentInstructions.appliedCount'
+                                | artemisTranslate: { applied: appliedCountPerCriterion()[criterionIndex], total: criterion.instructions.length }
+                        "
+                    />
+                }
+            </ng-container>
+            @for (instruction of criterion.instructions; track instruction; let instructionIndex = $index) {
+                <!-- draggable is bound as a property: as an interpolated attribute the string "false" would still be draggable. -->
                 <div
                     class="rounded"
-                    draggable="{{ allowDrop }}"
+                    [draggable]="isDraggable(instruction)"
                     (dragstart)="disableDrag()"
                     (dragstart)="drag($event, instruction)"
                     id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
@@ -30,15 +43,30 @@
                         <tbody>
                             <tr>
                                 <td [innerHTML]="setScore(instruction.credits)" class="td-score"></td>
-                                <td [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
-                                <td [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown" [ngbTooltip]="setTooltip(instruction)"></td>
+                                <td [jhiMarkdown]="instruction!.gradingScale!"></td>
+                                <td [jhiMarkdown]="instruction!.instructionDescription!" [ngbTooltip]="setTooltip(instruction)"></td>
                                 <td class="td-usage-count">
-                                    @if (instruction!.usageCount && instruction!.usageCount !== 0) {
-                                        <span>{{ instruction.usageCount }}</span>
+                                    @if (selectable()) {
+                                        <span
+                                            [ngbTooltip]="
+                                                isLockedByReferencedFeedback(instruction) ? ('artemisApp.exercise.instructionAppliedToReferencedElement' | artemisTranslate) : ''
+                                            "
+                                        >
+                                            <tum-ui-checkbox
+                                                [checked]="isApplied(instruction)"
+                                                [disabled]="isLockedByReferencedFeedback(instruction)"
+                                                [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"
+                                                (click)="toggleApplied($event, instruction)"
+                                            />
+                                        </span>
                                     } @else {
-                                        &#8734;
+                                        @if (instruction!.usageCount && instruction!.usageCount !== 0) {
+                                            <span>{{ instruction.usageCount }}</span>
+                                        } @else {
+                                            &#8734;
+                                        }
+                                        <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
                                     }
-                                    <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
                                 </td>
                             </tr>
                         </tbody>

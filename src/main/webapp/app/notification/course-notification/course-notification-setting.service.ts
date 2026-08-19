@@ -7,6 +7,7 @@ import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
 import { AccountService } from 'app/core/auth/account.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Service for managing course notification settings.
@@ -92,7 +93,7 @@ export class CourseNotificationSettingService implements OnDestroy {
             )
             .subscribe();
 
-        return subject.asObservable().pipe(map((value) => value as CourseNotificationSettingInfo | undefined));
+        return subject.asObservable().pipe(map((value) => value));
     }
 
     /**
@@ -111,7 +112,7 @@ export class CourseNotificationSettingService implements OnDestroy {
             if (copyPreset) {
                 currentValue.notificationTypeChannels = copyPreset.presetMap;
             }
-            const updatedValue = { ...currentValue, selectedPreset: presetTypeId };
+            const updatedValue = cloneWith(currentValue, { selectedPreset: presetTypeId });
             subject.next(updatedValue);
         }
 
@@ -143,7 +144,7 @@ export class CourseNotificationSettingService implements OnDestroy {
             } else {
                 currentValue.notificationTypeChannels[notificationSettingSpecification.identifier] = notificationSettingSpecification.channelSetting;
             }
-            const updatedValue = { ...currentValue, selectedPreset: 0 };
+            const updatedValue = cloneWith(currentValue, { selectedPreset: 0 });
             subject.next(updatedValue);
         }
 

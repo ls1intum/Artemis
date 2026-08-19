@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusTy
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationPageableDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.repository.CourseNotificationParameterRepository;
 import de.tum.cit.aet.artemis.notification.repository.CourseNotificationRepository;
 
@@ -87,7 +88,8 @@ public class CourseNotificationService {
                 continue;
             }
             var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel);
-            service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), filteredRecipients);
+            var recipientDTOs = filteredRecipients.stream().map(CourseNotificationRecipientDTO::from).toList();
+            service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), recipientDTOs);
 
             // We keep track of the notified users so that we only create notification status entries for them
             setOfNotifiedUsers.addAll(filteredRecipients);
@@ -119,19 +121,18 @@ public class CourseNotificationService {
             + "+ (#pageable != null ? (#pageable.isPaged() ? #pageable.pageNumber : 'unpaged') : 'null') + '_' "
             + "+ (#pageable != null ? (#pageable.isPaged() ? #pageable.pageSize : 'unpaged') : 'null')", unless = "#result.totalElements() == 0")
     public CourseNotificationPageableDTO<CourseNotificationDTO> getCourseNotifications(Pageable pageable, long courseId, long userId) {
-        var courseNotificationsEntityPage = courseNotificationRepository.findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(userId, courseId, pageable);
+        var courseNotificationPage = courseNotificationRepository.findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(userId, courseId, pageable);
 
-        return CourseNotificationPageableDTO.from(courseNotificationsEntityPage.map((courseNotificationEntityDTO) -> {
-            var courseNotificationEntity = courseNotificationEntityDTO.notification();
-            var classType = courseNotificationRegistryService.getNotificationClass(courseNotificationEntity.getType());
+        return CourseNotificationPageableDTO.from(courseNotificationPage.map((courseNotificationDTO) -> {
+            var classType = courseNotificationRegistryService.getNotificationClass(courseNotificationDTO.notificationType());
 
             try {
-                var parameters = courseNotificationParameterRepository.findByCourseNotificationIdEquals(courseNotificationEntity.getId());
+                var parameters = courseNotificationParameterRepository.findByCourseNotificationIdEquals(courseNotificationDTO.notificationId());
 
-                CourseNotification courseNotification = classType.getDeclaredConstructor(Long.class, Long.class, ZonedDateTime.class, Map.class).newInstance(
-                        courseNotificationEntity.getId(), courseNotificationEntity.getCourse().getId(), courseNotificationEntity.getCreationDate(), parametersToMap(parameters));
+                CourseNotification courseNotification = classType.getDeclaredConstructor(Long.class, Long.class, ZonedDateTime.class, Map.class)
+                        .newInstance(courseNotificationDTO.notificationId(), courseNotificationDTO.courseId(), courseNotificationDTO.creationDate(), parametersToMap(parameters));
 
-                return convertToCourseNotificationDTO(courseNotification, courseNotificationEntityDTO.status().getStatus());
+                return convertToCourseNotificationDTO(courseNotification, courseNotificationDTO.status());
             }
             catch (InstantiationException | IllegalAccessException | IllegalArgumentException | ExceptionInInitializerError | InvocationTargetException | SecurityException
                     | NoSuchMethodException e) {

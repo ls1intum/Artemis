@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormBuilder } from '@angular/forms';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -19,8 +18,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MODULE_FEATURE_SAML2 } from 'app/app.constants';
 
 describe('SettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: SettingsComponent;
     let accountService: AccountService;
 
@@ -262,7 +259,7 @@ describe('SettingsComponent', () => {
         });
 
         it('should set isRegistrationEnabled to false when profile has registrationEnabled false', () => {
-            expect(compDisabled.isRegistrationEnabled).toBe(false);
+            expect(compDisabled.isRegistrationEnabled()).toBe(false);
         });
     });
 
@@ -284,7 +281,7 @@ describe('SettingsComponent', () => {
 
         it('should use email pattern validation when configured', () => {
             expect(compWithPattern.allowedEmailPattern).toBe('^.*@university\\.edu$');
-            expect(compWithPattern.allowedEmailPatternReadable).toBe('@university.edu');
+            expect(compWithPattern.allowedEmailPatternReadable()).toBe('@university.edu');
 
             // Email that matches pattern should be valid
             compWithPattern.settingsForm.patchValue({ email: 'test@university.edu' });
@@ -310,7 +307,7 @@ describe('SettingsComponent', () => {
         });
 
         it('should default isRegistrationEnabled to false when profile has registrationEnabled undefined', () => {
-            expect(compUndefined.isRegistrationEnabled).toBe(false);
+            expect(compUndefined.isRegistrationEnabled()).toBe(false);
         });
     });
 
@@ -328,7 +325,7 @@ describe('SettingsComponent', () => {
         });
 
         it('should set isSaml2Active to true', () => {
-            expect(compSaml2.isSaml2Active).toBe(true);
+            expect(compSaml2.isSaml2Active()).toBe(true);
         });
 
         it('should disable firstName, lastName and email form controls after loading user', async () => {

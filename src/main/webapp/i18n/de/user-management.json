@@ -91,6 +91,8 @@
             "registrationNumber": "Matrikelnummer",
             "activated": "Aktiv",
             "deactivated": "Deaktiviert",
+            "isTestUser": "Testkonto",
+            "isTestUserTooltip": "Markiert dieses Konto als Test- oder QA-Konto. Testkonten werden aus allen Nutzungsstatistiken ausgeschlossen (z. B. den Admin-Diagrammen und der Zahl aktiver Nutzer:innen). Dieses Kennzeichen wird explizit verwaltet und ist unabhängig vom Login.",
             "globalRoles": "Globale Rollen",
             "roles": {
                 "superAdmin": "Super-Administrator:in",
@@ -103,6 +105,7 @@
             "langKey": "Sprache",
             "internal": "Intern",
             "passwordTooltip": "Du kannst diese Einstellung nur für neue Nutzer:innen ändern. Bitte beachte, dass du nur Passwörter für interne Nutzer:innen setzen oder ändern kannst.",
+            "revokeCredentials": "Passkeys, SSH-Schlüssel und VCS-Zugriffstoken widerrufen",
             "createdBy": "Erstellt von",
             "createdDate": "Erstellt am",
             "lastModifiedBy": "Bearbeitet von",

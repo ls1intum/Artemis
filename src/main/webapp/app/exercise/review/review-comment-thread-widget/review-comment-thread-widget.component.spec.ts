@@ -2,17 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { ConfirmationService } from 'primeng/api';
+import { Confirmation, ConfirmationService } from 'primeng/api';
 import { signal } from '@angular/core';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ReviewCommentThreadWidgetComponent>;
     let comp: ReviewCommentThreadWidgetComponent;
     let reviewCommentService: any;
@@ -63,8 +60,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should delete comment when deletion is confirmed', () => {
         let acceptCallback: (() => void) | undefined;
-        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
-            acceptCallback = confirmation.accept;
+        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
+            acceptCallback = confirmation.accept as (() => void) | undefined;
             return confirmationService;
         });
 
@@ -78,8 +75,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should not delete comment when deletion is dismissed', () => {
         let rejectCallback: (() => void) | undefined;
-        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { reject?: () => void }) => {
-            rejectCallback = confirmation.reject;
+        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
+            rejectCallback = confirmation.reject as (() => void) | undefined;
             return confirmationService;
         });
 
@@ -285,8 +282,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         const nonUserComment = {
             content: {
                 contentType: CommentContentType.CONSISTENCY_CHECK,
-                severity: ConsistencyIssue.SeverityEnum.High,
-                category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                severity: 'HIGH',
+                category: 'METHOD_PARAMETER_MISMATCH',
                 text: 'msg',
             },
         } as any;
@@ -306,8 +303,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
                     createdDate: '2024-01-01T00:00:00Z',
                     content: {
                         contentType: CommentContentType.CONSISTENCY_CHECK,
-                        severity: ConsistencyIssue.SeverityEnum.High,
-                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        severity: 'HIGH',
+                        category: 'METHOD_PARAMETER_MISMATCH',
                         text: 'issue',
                     },
                 },
@@ -342,8 +339,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             type: CommentType.CONSISTENCY_CHECK,
             content: {
                 contentType: CommentContentType.CONSISTENCY_CHECK,
-                severity: ConsistencyIssue.SeverityEnum.Low,
-                category: ConsistencyIssue.CategoryEnum.IdentifierNamingInconsistency,
+                severity: 'LOW',
+                category: 'IDENTIFIER_NAMING_INCONSISTENCY',
                 text: 'system note',
             },
         } as any;
@@ -371,8 +368,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
                     createdDate: '2024-01-01T00:00:00Z',
                     content: {
                         contentType: CommentContentType.CONSISTENCY_CHECK,
-                        severity: ConsistencyIssue.SeverityEnum.High,
-                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        severity: 'HIGH',
+                        category: 'METHOD_PARAMETER_MISMATCH',
                         text: 'issue',
                         suggestedFix,
                     },
@@ -396,8 +393,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
                     createdDate: '2024-01-01T00:00:00Z',
                     content: {
                         contentType: CommentContentType.CONSISTENCY_CHECK,
-                        severity: ConsistencyIssue.SeverityEnum.High,
-                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        severity: 'HIGH',
+                        category: 'METHOD_PARAMETER_MISMATCH',
                         text: 'issue',
                         suggestedFix: {
                             startLine: 5,
@@ -433,8 +430,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
                     createdDate: '2024-01-01T00:00:00Z',
                     content: {
                         contentType: CommentContentType.CONSISTENCY_CHECK,
-                        severity: ConsistencyIssue.SeverityEnum.High,
-                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        severity: 'HIGH',
+                        category: 'METHOD_PARAMETER_MISMATCH',
                         text: 'issue',
                         suggestedFix: {
                             startLine: 5,
@@ -469,8 +466,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
                     createdDate: '2024-01-01T00:00:00Z',
                     content: {
                         contentType: CommentContentType.CONSISTENCY_CHECK,
-                        severity: ConsistencyIssue.SeverityEnum.High,
-                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        severity: 'HIGH',
+                        category: 'METHOD_PARAMETER_MISMATCH',
                         text: 'issue',
                         suggestedFix,
                     },

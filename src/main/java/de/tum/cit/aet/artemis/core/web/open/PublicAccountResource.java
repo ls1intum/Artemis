@@ -29,9 +29,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountService;
+import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -50,6 +52,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
 /**
@@ -62,6 +65,12 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 public class PublicAccountResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicAccountResource.class);
+
+    /**
+     * Upper bound for the identifier accepted by {@link #getLoginOptions}. A login is at most {@link Constants#USERNAME_MAX_LENGTH} characters and an email address at most 100,
+     * so this is a generous outer bound that no legitimate identifier reaches. It exists to keep an unauthenticated caller from sending an arbitrarily long string.
+     */
+    private static final int MAX_LOGIN_IDENTIFIER_LENGTH = 255;
 
     @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
     private Optional<Pattern> allowedEmailPattern;
@@ -84,14 +93,17 @@ public class PublicAccountResource {
 
     private final TokenProvider tokenProvider;
 
+    private final LoginOptionsService loginOptionsService;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
-            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider) {
+            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
         this.userRepository = userRepository;
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.tokenProvider = tokenProvider;
+        this.loginOptionsService = loginOptionsService;
     }
 
     /**
@@ -125,7 +137,7 @@ public class PublicAccountResource {
         }
 
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
-        mailService.sendActivationEmail(user);
+        mailService.sendActivationEmail(MailRecipientDTO.from(user));
         return ResponseEntity.created(new URI("/api/register/" + user.getId())).build();
     }
 
@@ -178,7 +190,7 @@ public class PublicAccountResource {
 
         Optional<String> loginOptional = SecurityUtils.getCurrentUserLogin();
         if (loginOptional.isPresent()) {
-            userOptional = userRepository.findOneWithGroupsAndAuthoritiesByLogin(loginOptional.get());
+            userOptional = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(loginOptional.get());
         }
 
         if (userOptional.isEmpty()) {
@@ -216,6 +228,28 @@ public class PublicAccountResource {
         userDTO.setLoggedInWithPasskey(isLoggedInWithPasskey);
         userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);
         return userDTO;
+    }
+
+    /**
+     * {@code GET /login-options} : determine the login options for a given username or email.
+     * <p>
+     * This endpoint is public and is used during the first step of the identifier-first login flow
+     * to determine if the user should enter their local password or redirect to an external identity provider.
+     *
+     * @param usernameOrEmail the login or email address entered by the user
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the {@link LoginOptionsDTO}
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the identifier is longer than {@link #MAX_LOGIN_IDENTIFIER_LENGTH} characters
+     */
+    @GetMapping("login-options")
+    @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.AUTHENTICATION)
+    public ResponseEntity<LoginOptionsDTO> getLoginOptions(@RequestParam("usernameOrEmail") String usernameOrEmail) {
+        // checked here rather than with @Size, because this class is not annotated with @Validated and constraints on method parameters are only enforced when it is
+        if (usernameOrEmail != null && usernameOrEmail.length() > MAX_LOGIN_IDENTIFIER_LENGTH) {
+            throw new BadRequestAlertException("The provided username or email is too long", "Account", "usernameOrEmailTooLong");
+        }
+        LoginOptionsDTO loginOptions = loginOptionsService.getLoginOptions(usernameOrEmail);
+        return ResponseEntity.ok(loginOptions);
     }
 
     /**
@@ -258,7 +292,7 @@ public class PublicAccountResource {
             }
             var internalUser = internalUsers.getFirst();
             if (userService.prepareUserForPasswordReset(internalUser)) {
-                mailService.sendPasswordResetMail(internalUsers.getFirst());
+                mailService.sendPasswordResetMail(MailRecipientDTO.from(internalUser));
             }
         }
         else {
@@ -289,7 +323,7 @@ public class PublicAccountResource {
         if (StringUtils.isEmpty(keyAndPassword.getKey()) || keyAndPassword.getKey().length() < 10) {
             throw new AccessForbiddenException("Invalid key for password reset");
         }
-        Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());
+        Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey(), keyAndPassword.revokeCredentialsOrAll());
 
         if (user.isEmpty()) {
             throw new AccessForbiddenException("No user was found for this reset key");

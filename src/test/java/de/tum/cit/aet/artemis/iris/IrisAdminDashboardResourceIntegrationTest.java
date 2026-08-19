@@ -1,0 +1,116 @@
+package de.tum.cit.aet.artemis.iris;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+
+class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationTest {
+
+    private static final String TEST_PREFIX = "irisadmindashboard";
+
+    private static final String BASE_URL = "/api/iris/admin/dashboard/";
+
+    @Autowired
+    private IrisAdminDashboardRepository dashboardRepository;
+
+    @Autowired
+    private IrisChatSessionRepository irisChatSessionRepository;
+
+    @Autowired
+    private IrisMessageService irisMessageService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @BeforeEach
+    void initTestCase() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getOverview_asAdmin_succeeds() throws Exception {
+        request.get(BASE_URL + "overview?from=2026-05-26T00:00:00Z&to=2026-05-27T00:00:00Z", HttpStatus.OK, Object.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getOverview_asStudent_forbidden() throws Exception {
+        request.get(BASE_URL + "overview?from=2026-05-26T00:00:00Z&to=2026-05-27T00:00:00Z", HttpStatus.FORBIDDEN, Object.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getOverview_invalidWindow_badRequest() throws Exception {
+        request.get(BASE_URL + "overview?from=2026-05-27T00:00:00Z&to=2026-05-26T00:00:00Z", HttpStatus.BAD_REQUEST, Object.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getConfig_asAdmin_succeeds() throws Exception {
+        request.get(BASE_URL + "config", HttpStatus.OK, Object.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getTimeSeries_asAdmin_succeeds() throws Exception {
+        request.get(BASE_URL + "time-series?from=2026-05-26T00:00:00Z&to=2026-05-27T00:00:00Z&span=DAY&metric=SESSIONS", HttpStatus.OK, Object.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getBreakdown_asAdmin_succeeds() throws Exception {
+        request.get(BASE_URL + "breakdown?from=2026-05-26T00:00:00Z&to=2026-05-27T00:00:00Z&dimension=MODEL", HttpStatus.OK, Object.class);
+    }
+
+    /**
+     * A CTXSWAP marker is a system-generated context-switch marker, not an assistant answer. A user message whose only
+     * follow-up is a CTXSWAP marker must still be reported as unanswered by the admin no-response query.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void findUserMessages_userFollowedOnlyByCtxSwapMarker_notCountedAsAnswered() {
+        Course course = courseUtilService.createCourse();
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        IrisChatSession session = irisChatSessionRepository.save(new IrisChatSession(course, user));
+
+        IrisMessage userMessage = new IrisMessage();
+        userMessage.addContent(new IrisTextMessageContent("How does this work?"));
+        IrisMessage savedUserMessage = irisMessageService.saveMessage(userMessage, session, IrisMessageSender.USER);
+
+        IrisMessage marker = new IrisMessage();
+        marker.addContent(new IrisTextMessageContent("Lecture 1"));
+        irisMessageService.saveMessage(marker, session, IrisMessageSender.CTXSWAP);
+
+        Instant from = Instant.now().minus(Duration.ofHours(1));
+        Instant to = Instant.now().plus(Duration.ofHours(1));
+        List<Object[]> rows = dashboardRepository.findUserMessagesWithNextMessageFullRange(from, to);
+
+        List<Object[]> userRows = rows.stream().filter(row -> ((Number) row[0]).longValue() == savedUserMessage.getId()).toList();
+        assertThat(userRows).hasSize(1);
+        Object[] row = userRows.getFirst();
+        // nextSender (index 3) skips the CTXSWAP marker, so there is no following non-marker message.
+        assertThat(row[3]).isNull();
+        // hasAssistantResponse (index 6) must be 0: the CTXSWAP marker is not an assistant response.
+        assertThat(((Number) row[6]).intValue()).isEqualTo(0);
+    }
+}

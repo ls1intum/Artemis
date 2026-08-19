@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -28,7 +29,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
@@ -114,7 +114,7 @@ public abstract class PostingService {
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
         preparePostForBroadcast(updatedPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(updatedPost, MetisCrudAction.UPDATE, course.getId(), null);
     }
 
     /**
@@ -126,18 +126,30 @@ public abstract class PostingService {
      * the same JSON cycle that fires Jackson's {@code DeserializerCache} race during integration
      * test deserialization (see {@code JacksonDeserializerInitializationConfig}).
      *
-     * @param postDTO    object including the affected post as well as the action
+     * @param post       the affected post
+     * @param action     the action performed on the post
      * @param courseId   the id of the course the posting belongs to
-     * @param recipients the recipients for this broadcast, can be null
+     * @param recipients the recipients for this broadcast, can be null. Note: this set is ignored when the post carries a pending Iris reply
+     *                       ({@link #hasPendingIrisReply}); in that case recipients are re-resolved via {@link #getNotificationRecipients}
+     *                       because per-user delivery needs each recipient's course role to choose the tutor vs. student payload.
      */
     @SuppressWarnings("deprecation")
-    public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
-        Post post = postDTO.post();
+    public void broadcastForPost(Post post, MetisCrudAction action, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
+        // A pending (unverified) Iris reply must never reach students. Clients replace their whole cached
+        // post — including its answers — on every UPDATE frame, so a single shared payload cannot serve
+        // students and tutors at once: re-broadcasting an unrelated change (a reaction, an edit, another
+        // reply) would otherwise push the pending reply out on the course-wide topic students subscribe to.
+        // When the post carries a pending Iris reply we therefore deliver per-user instead.
+        Conversation postConversation = post.getConversation();
+        if (postConversation != null && hasPendingIrisReply(post)) {
+            broadcastPostWithPendingIrisReply(post, action, postConversation);
+            return;
+        }
+
         // Build the cycle-free wire payload before adjusting entity state — PostResponseDTO.from
         // walks the entity exactly once.
-        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(post, postDTO.action());
+        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(post, action);
 
-        Conversation postConversation = post.getConversation();
         if (postConversation != null) {
             String coursePathSuffix = "courses/" + courseId;
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
@@ -158,6 +170,59 @@ public abstract class PostingService {
             websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
             websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
         }
+    }
+
+    /**
+     * @return {@code true} if the post carries at least one unverified Iris reply that students must not see
+     */
+    private boolean hasPendingIrisReply(Post post) {
+        return post.getAnswers() != null && post.getAnswers().stream().anyMatch(AnswerPost::isUnverifiedIrisReply);
+    }
+
+    /**
+     * Central visibility rule for pending (unverified) Iris replies: students must never see them. Strips every
+     * unverified Iris reply from the in-memory answers of the given posts unless the requesting user is at least a
+     * tutor in the course. Callers must apply this before projecting posts to a REST/websocket response on any
+     * lookup path that a student can reach (paginated messages, source posts, saved posts, forwarded messages, ...).
+     *
+     * @param posts    the posts whose answers are filtered in place
+     * @param courseId the course used for the tutor role check
+     */
+    public void hidePendingIrisRepliesFromStudents(Collection<Post> posts, Long courseId) {
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId)) {
+            return;
+        }
+        posts.forEach(post -> {
+            if (post.getAnswers() != null) {
+                post.getAnswers().removeIf(AnswerPost::isUnverifiedIrisReply);
+            }
+        });
+    }
+
+    /**
+     * Broadcasts a post that carries at least one unverified Iris reply. The full post (pending reply
+     * included) goes to tutors so the review controls stay live, while everyone else receives a copy
+     * with the pending Iris replies stripped. Both payloads are addressed to each recipient's personal
+     * topic — never the shared course-wide topic — because students subscribe to it as well and a client
+     * replaces its whole cached post on every UPDATE, which would otherwise expose the pending reply.
+     *
+     * @param post         the post to broadcast; its answers are mutated in place to build the student payload
+     * @param action       the CRUD action this broadcast describes
+     * @param conversation the conversation the post belongs to
+     */
+    @SuppressWarnings("deprecation")
+    private void broadcastPostWithPendingIrisReply(Post post, MetisCrudAction action, Conversation conversation) {
+        // Tutor payload first, while the pending reply is still attached.
+        PostBroadcastDTO tutorPayload = PostBroadcastDTO.from(post, action);
+        // Then strip the pending replies and re-project for everyone else.
+        post.getAnswers().removeIf(AnswerPost::isUnverifiedIrisReply);
+        PostBroadcastDTO studentPayload = PostBroadcastDTO.from(post, action);
+
+        // Resolve recipients together with their course role — a caller-supplied set need not carry the tutor flag.
+        getNotificationRecipients(conversation).forEach(recipient -> {
+            PostBroadcastDTO payload = recipient.isAtLeastTutorInCourse() ? tutorPayload : studentPayload;
+            websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", payload);
+        });
     }
 
     /**
@@ -182,11 +247,10 @@ public abstract class PostingService {
     protected Stream<ConversationNotificationRecipientSummary> getNotificationRecipients(Conversation conversation) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             Course course = conversation.getCourse();
-            return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
-                    course.getEditorGroupName(), course.getInstructorGroupName()).stream();
+            return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getId()).stream();
         }
 
-        return conversationParticipantRepository.findConversationParticipantsWithUserGroupsByConversationId(conversation.getId()).stream()
+        return conversationParticipantRepository.findConversationParticipantsWithUserCourseRolesByConversationId(conversation.getId()).stream()
                 .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),
                         participant.getIsHidden() != null && participant.getIsHidden(),
                         authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));
@@ -213,6 +277,24 @@ public abstract class PostingService {
 
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
             throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
+        }
+    }
+
+    /**
+     * Ensures that the given conversation belongs to the course identified by the (authoritative) path {@code courseId}.
+     * <p>
+     * The course context comes from the URL path and is used for authorization, while the target conversation is resolved
+     * from the request body / loaded entity. If the two diverge, a user authorized for one course could read or write in a
+     * conversation of another course (cross-course injection / broken access control). Reject such inconsistent requests.
+     *
+     * @param conversation the conversation the posting targets
+     * @param courseId     the id of the course taken from the API path
+     * @throws BadRequestAlertException if the conversation does not belong to the given course
+     */
+    protected void ensureConversationBelongsToCourseElseThrow(Conversation conversation, Long courseId) {
+        // Conversation#course is eagerly fetched, so this is a no-DB-cost id comparison
+        if (!Objects.equals(conversation.getCourse().getId(), courseId)) {
+            throw new BadRequestAlertException("The conversation does not belong to the specified course", getEntityName(), "conversationCourseMismatch");
         }
     }
 
@@ -316,7 +398,10 @@ public abstract class PostingService {
             matches.put(userLogin, fullName);
         }
 
-        Set<User> mentionedUsers = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(matches.keySet());
+        // Pre-load course roles for all mentioned users so the per-user isAtLeastStudentInCourse check below - and the
+        // isAtLeastTeachingAssistantInCourse check that SingleUserNotificationService later runs on this same set of
+        // users - resolve in memory instead of one EXISTS query per mentioned user.
+        Set<User> mentionedUsers = userRepository.findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(matches.keySet());
 
         if (mentionedUsers.size() != matches.size()) {
             throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");

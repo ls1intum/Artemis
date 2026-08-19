@@ -5,13 +5,14 @@ import { map } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Injectable({
     providedIn: 'root',
 })
 export class TutorialGroupCourseAndGroupService {
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
 
@@ -23,10 +24,9 @@ export class TutorialGroupCourseAndGroupService {
     toggleCancellationStatusOfSession(sessionId: number) {
         this.tutorialGroup.update((tutorialGroup) => {
             if (!tutorialGroup) return tutorialGroup;
-            return {
-                ...tutorialGroup,
-                sessions: tutorialGroup.sessions.map((session) => (session.id !== sessionId ? session : { ...session, isCancelled: !session.isCancelled })),
-            };
+            return cloneWith(tutorialGroup, {
+                sessions: tutorialGroup.sessions.map((session) => (session.id !== sessionId ? session : cloneWith(session, { isCancelled: !session.isCancelled }))),
+            });
         });
     }
 
@@ -48,10 +48,7 @@ export class TutorialGroupCourseAndGroupService {
                 sessions.splice(insertIndex, 0, sessionToInsert);
             }
 
-            return {
-                ...tutorialGroup,
-                sessions,
-            };
+            return cloneWith(tutorialGroup, { sessions });
         });
     }
 

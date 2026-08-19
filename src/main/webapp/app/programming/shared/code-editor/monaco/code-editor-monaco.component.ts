@@ -1,11 +1,11 @@
 import {
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
-    NgZone,
+    Injector,
     OnDestroy,
     ViewContainerRef,
     ViewEncapsulation,
+    afterNextRender,
     computed,
     effect,
     inject,
@@ -17,6 +17,7 @@ import {
     viewChild,
     viewChildren,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -46,6 +47,8 @@ import {
 } from 'app/exercise/review/review-comment-utils';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { parseJson } from 'app/foundation/util/json.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -77,9 +80,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private readonly repositoryFileService = inject(CodeEditorRepositoryFileService);
     private readonly fileService = inject(CodeEditorFileService);
     private readonly localStorageService = inject(LocalStorageService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly fileTypeService = inject(FileTypeService);
-    private readonly ngZone = inject(NgZone);
+    private readonly injector = inject(Injector);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
@@ -146,14 +148,13 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     );
 
     private attachLineAndReferenceToFeedback(feedback: Feedback): FeedbackWithLineAndReference {
-        return { ...feedback, line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' };
+        return cloneWith(feedback, { line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' });
     }
 
     annotationsArray: Array<Annotation> = [];
     private addFeedbackKeydownListener?: Disposable;
     private renderScheduled = false;
     private renderFocusLine?: number;
-    private renderAnimationFrameId?: number;
     private reviewRenderScheduled = false;
     private reviewRenderAnimationFrameId?: number;
     private pendingReviewRenderFile?: string;
@@ -320,9 +321,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         this.fileSyncReadySubscription?.unsubscribe();
         this.fileSyncStateReplacedSubscription?.unsubscribe();
         this.revokeImagePreview();
-        if (this.renderAnimationFrameId !== undefined) {
-            window.cancelAnimationFrame(this.renderAnimationFrameId);
-        }
         if (this.reviewRenderAnimationFrameId !== undefined) {
             window.cancelAnimationFrame(this.reviewRenderAnimationFrameId);
         }
@@ -350,16 +348,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                     );
                 } catch (error) {
                     loadingError = true;
-                    if (error.message === ConnectionError.message) {
-                        this.onError.emit('loadingFailed' + error.message);
+                    const message = error instanceof Error || error instanceof HttpErrorResponse ? error.message : String(error);
+                    if (message === ConnectionError.message) {
+                        this.onError.emit('loadingFailed' + message);
                     } else {
                         this.onError.emit('loadingFailed');
                     }
                 }
-                this.fileSession.set({
-                    ...this.fileSession(),
-                    [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } },
-                });
+                this.fileSession.set(
+                    cloneWith(this.fileSession(), { [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } } }),
+                );
             }
 
             // File fetch is async; if the user switched files while it was in flight, ignore the result
@@ -402,8 +400,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 return;
             }
             this.imagePreviewError.set(true);
-            if (error.message === ConnectionError.message) {
-                this.onError.emit('loadingFailed' + error.message);
+            const message = error instanceof Error || error instanceof HttpErrorResponse ? error.message : String(error);
+            if (message === ConnectionError.message) {
+                this.onError.emit('loadingFailed' + message);
             } else {
                 this.onError.emit('loadingFailed');
             }
@@ -433,15 +432,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             const previousScrollTop = this.fileSession()[fileName].scrollTop;
 
             if (previousText !== text) {
-                this.fileSession.set({
-                    ...this.fileSession(),
-                    [fileName]: {
-                        code: text,
-                        loadingError: false,
-                        scrollTop: previousScrollTop,
-                        cursor: fileName === this.selectedFile() ? this.editor().getPosition() : this.fileSession()[fileName].cursor,
-                    },
-                });
+                this.fileSession.set(
+                    cloneWith(this.fileSession(), {
+                        [fileName]: {
+                            code: text,
+                            loadingError: false,
+                            scrollTop: previousScrollTop,
+                            cursor: fileName === this.selectedFile() ? this.editor().getPosition() : this.fileSession()[fileName].cursor,
+                        },
+                    }),
+                );
 
                 if (!this.shouldSuppressDirtySignal(fileName)) {
                     this.onFileContentChange.emit({ fileName, text });
@@ -503,7 +503,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      */
     private setupAddFeedbackShortcut(): void {
         this.disposeAddFeedbackShortcut();
-        this.addFeedbackKeydownListener = this.editor().onKeyDown((event: any) => {
+        this.addFeedbackKeydownListener = this.editor().onKeyDown((event) => {
             const browserEvent = event?.browserEvent as KeyboardEvent | undefined;
             const code = browserEvent?.code;
             const key = browserEvent?.key;
@@ -618,29 +618,30 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             return;
         }
         this.renderScheduled = true;
-        this.renderAnimationFrameId = this.ngZone.runOutsideAngular(() =>
-            requestAnimationFrame(() => {
+        // Run after the next render so the inline feedback nodes (driven by the feedback signals) exist in the DOM.
+        // Invariant: every caller must first write a notifying feedback signal (newFeedbackLines/feedbackInternal/
+        // feedbackSuggestionsInternal) so a render is actually pending; otherwise renderScheduled would latch.
+        afterNextRender(
+            () => {
                 this.renderScheduled = false;
-                this.ngZone.run(() => {
-                    this.changeDetectorRef.detectChanges();
-                    this.editor().disposeWidgetsByPrefix('feedback-');
-                    for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
-                        this.addLineWidgetWithFeedback(feedback);
-                    }
+                this.editor().disposeWidgetsByPrefix('feedback-');
+                for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
+                    this.addLineWidgetWithFeedback(feedback);
+                }
 
-                    // New, unsaved feedback has no associated object yet.
-                    for (const line of this.newFeedbackLines()) {
-                        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
-                        this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
-                    }
+                // New, unsaved feedback has no associated object yet.
+                for (const line of this.newFeedbackLines()) {
+                    const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+                    this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
+                }
 
-                    const focusLine = this.renderFocusLine;
-                    this.renderFocusLine = undefined;
-                    if (focusLine !== undefined) {
-                        this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
-                    }
-                });
-            }),
+                const focusLine = this.renderFocusLine;
+                this.renderFocusLine = undefined;
+                if (focusLine !== undefined) {
+                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
+                }
+            },
+            { injector: this.injector },
         );
     }
 
@@ -652,14 +653,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             return;
         }
         this.reviewRenderScheduled = true;
-        this.reviewRenderAnimationFrameId = this.ngZone.runOutsideAngular(() =>
-            requestAnimationFrame(() => {
-                this.reviewRenderScheduled = false;
-                this.ngZone.run(() => {
-                    this.getReviewCommentManager().renderWidgets();
-                });
-            }),
-        );
+        this.reviewRenderAnimationFrameId = requestAnimationFrame(() => {
+            this.reviewRenderScheduled = false;
+            this.getReviewCommentManager().renderWidgets();
+        });
     }
 
     public scheduleReviewCommentRenderForSelectedFile(): void {
@@ -770,13 +767,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         const fileSession = this.fileSession();
         const fileState = fileSession[filePath];
         if (fileState && fileState.code !== syncedContent) {
-            this.fileSession.set({
-                ...fileSession,
-                [filePath]: {
-                    ...fileState,
-                    code: syncedContent,
-                },
-            });
+            this.fileSession.set(cloneWith(fileSession, { [filePath]: cloneWith(fileState, { code: syncedContent }) }));
         }
         this.onFileContentChange.emit({ fileName: filePath, text: syncedContent });
     }
@@ -973,7 +964,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && fileChange.fileType === FileType.FILE) {
-            this.fileSession.set({ ...this.fileSession(), [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, scrollTop: 0, loadingError: false } });
+            this.fileSession.set(cloneWith(this.fileSession(), { [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, scrollTop: 0, loadingError: false } }));
         }
         this.setBuildAnnotations(this.annotationsArray);
     }
@@ -988,10 +979,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
         this.localStorageService.store(
             'annotations-' + this.sessionId(),
-            JSON.stringify({
-                ...toKeep,
-                ...toUpdate,
-            }),
+            // toUpdate is built fresh by fromPairs above, so nothing else aliases it and it can be applied as overrides.
+            JSON.stringify(cloneWith(toKeep, toUpdate)),
         );
     }
 
@@ -999,7 +988,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Loads annotations from local storage
      */
     loadAnnotations() {
-        return JSON.parse(this.localStorageService.retrieve<string>('annotations-' + this.sessionId()) || '{}');
+        return parseJson<{ [hash: string]: Annotation }>(this.localStorageService.retrieve<string>('annotations-' + this.sessionId()) || '{}');
     }
 
     setBuildAnnotations(buildAnnotations: Annotation[]): void {
@@ -1008,7 +997,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             this.annotationsArray = buildAnnotations.map((a) => {
                 const hash = a.fileName + a.row + a.column + a.text;
                 if (sessionAnnotations[hash] == undefined || sessionAnnotations[hash].timestamp < a.timestamp) {
-                    return { ...a, hash };
+                    return cloneWith(a, { hash });
                 } else {
                     return sessionAnnotations[hash];
                 }

@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
@@ -50,7 +51,6 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -104,12 +104,14 @@ public class ProgrammingExerciseUpdateResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
+
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository,
-            CompetencyExerciseLinkService competencyExerciseLinkService) {
+            CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseVariantGroupService exerciseVariantGroupService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -126,6 +128,7 @@ public class ProgrammingExerciseUpdateResource {
         this.exerciseVersionService = exerciseVersionService;
         this.participationRepository = participationRepository;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
     /**
@@ -215,7 +218,7 @@ public class ProgrammingExerciseUpdateResource {
         programmingExerciseValidationService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
 
         // Fetch course from database to make sure client didn't change groups
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
@@ -320,7 +323,8 @@ public class ProgrammingExerciseUpdateResource {
 
     /**
      * Updates the existing ProgrammingExercise entity with values from the DTO.
-     * This includes updating competency links using the proper mechanism.
+     * This includes updating competency links using the proper mechanism and restoring the timeline of an owning
+     * variant group, so every caller persists a member with the group's dates.
      *
      * @param dto      the DTO containing updated values
      * @param exercise the existing exercise entity to update
@@ -336,8 +340,13 @@ public class ProgrammingExerciseUpdateResource {
         exercise.validateTitle();
         exercise.setShortName(dto.shortName());
 
-        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
-        exercise.setProblemStatement(newProblemStatement);
+        // The problem statement is owned by the collaborative (Yjs) editor and its dedicated PATCH endpoint, not by this metadata
+        // update. A blank or absent value here means the editor has not finished its initial sync yet (e.g. the user saved a
+        // category change on a slow connection before the statement loaded), so we keep the persisted statement instead of wiping
+        // it. See issue #13046.
+        if (dto.problemStatement() != null && !dto.problemStatement().isBlank()) {
+            exercise.setProblemStatement(dto.problemStatement());
+        }
 
         exercise.setChannelName(dto.channelName());
         exercise.setCategories(dto.categories());
@@ -409,6 +418,11 @@ public class ProgrammingExerciseUpdateResource {
         // Update competency links using the proper mechanism
         competencyExerciseLinkService.updateCompetencyLinks(dto, exercise);
 
+        // A variant group owns its members' shared dates, so pin those back to the group. The build-and-test date stays
+        // per exercise and is only re-derived from the shared due date. The dedicated timeline endpoint rejects group
+        // members outright instead.
+        exerciseVariantGroupService.applyOwningGroupTimeline(exercise);
+
         return exercise;
     }
 
@@ -427,18 +441,10 @@ public class ProgrammingExerciseUpdateResource {
             buildConfig.setSequentialTestRuns(dto.sequentialTestRuns());
         }
         // Note: branch is preserved from original (immutable during update)
-        if (dto.buildPlanConfiguration() != null && BuildPlanPhasesDTO.isInPhasesFormatOrNull(dto.buildPlanConfiguration())) {
+        if (dto.buildPlanConfiguration() != null) {
             buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
-            buildConfig.setBuildScript(null);
         }
-        else {
-            if (dto.buildPlanConfiguration() != null) {
-                buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
-            }
-            if (dto.buildScript() != null) {
-                buildConfig.setBuildScript(dto.buildScript());
-            }
-        }
+        buildConfig.setBuildScript(null);
         buildConfig.setCheckoutSolutionRepository(dto.checkoutSolutionRepository());
         buildConfig.setTestCheckoutPath(dto.testCheckoutPath());
         buildConfig.setAssignmentCheckoutPath(dto.assignmentCheckoutPath());
@@ -511,7 +517,7 @@ public class ProgrammingExerciseUpdateResource {
         }
 
         // Fetch course from database to make sure client didn't change groups
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 

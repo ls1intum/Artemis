@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
 import { instructor } from '../../support/users';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, readResponseJson } from '../../support/utils';
 
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
@@ -35,7 +35,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         await lectureCreation.setStartDate(lectureData.startDate);
         await lectureCreation.setEndDate(lectureData.endDate);
         const lectureResponse = await lectureCreation.save();
-        const lecture: Lecture = (lastCreatedLecture = await lectureResponse.json());
+        const lecture: Lecture = (lastCreatedLecture = await readResponseJson(lectureResponse));
         expect(lectureResponse.status()).toBe(201);
         await expect(page).toHaveURL(`/course-management/${course.id}/lectures/${lecture.id}/edit`);
         // Wait for the form to hydrate from the server before typing again.
@@ -49,7 +49,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         const adjustedDescription = description! + 'change to enable save button again';
         await lectureCreation.typeDescription(adjustedDescription);
         const lectureResponseFromEdit = await lectureCreation.save();
-        const lectureFromEdit: Lecture = await lectureResponseFromEdit.json();
+        const lectureFromEdit: Lecture = await readResponseJson(lectureResponseFromEdit);
         expect(lectureResponseFromEdit.status()).toBe(200);
         await page.waitForURL(`**/${course.id}/lectures/${lectureFromEdit.id}`);
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseLearnerProfileComponent } from 'app/account/user/settings/learner-profile/course-learner-profile/course-learner-profile.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -16,8 +15,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseLearnerProfileComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseLearnerProfileComponent>;
     let component: CourseLearnerProfileComponent;
     let selector: HTMLSelectElement;
@@ -131,7 +128,7 @@ describe('CourseLearnerProfileComponent', () => {
         // Set up component state
         component.courseLearnerProfiles.set([...profiles]);
         component.activeCourseId = courseId;
-        component.disabled = false;
+        component.disabled.set(false);
 
         // Set the profile values in the component's signals
         component.aimForGradeOrBonus.set(newProfile.aimForGradeOrBonus);
@@ -185,7 +182,7 @@ describe('CourseLearnerProfileComponent', () => {
         it('should not update profile when activeCourseId is null', async () => {
             // Arrange
             component.activeCourseId = null;
-            component.disabled = false;
+            component.disabled.set(false);
 
             // Act
             await component.onToggleChange();
@@ -198,7 +195,7 @@ describe('CourseLearnerProfileComponent', () => {
         it('should not update profile when course profile is not found', async () => {
             // Arrange
             component.activeCourseId = 999; // Non-existent course ID
-            component.disabled = false;
+            component.disabled.set(false);
 
             // Act
             await component.onToggleChange();
@@ -214,7 +211,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
             component.activeCourseId = courseId;
-            component.disabled = false;
+            component.disabled.set(false);
 
             // Set invalid values (outside valid range)
             component.aimForGradeOrBonus.set(-1);
@@ -255,7 +252,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
             component.activeCourseId = courseId;
-            component.disabled = false;
+            component.disabled.set(false);
 
             const httpError = new HttpErrorResponse({
                 error: { title: 'Server Error' },
@@ -283,7 +280,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
             component.activeCourseId = courseId;
-            component.disabled = false;
+            component.disabled.set(false);
 
             const httpError = new HttpErrorResponse({
                 error: { title: 'Server Error' },
@@ -312,7 +309,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
             component.activeCourseId = courseId;
-            component.disabled = false;
+            component.disabled.set(false);
 
             const httpError = new HttpErrorResponse({
                 status: 500,
@@ -348,7 +345,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
             component.activeCourseId = courseId;
-            component.disabled = false;
+            component.disabled.set(false);
 
             // Act - Call onToggleChange which will trigger handleError
             await component.onToggleChange();
@@ -375,7 +372,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
             component.activeCourseId = courseId;
-            component.disabled = false;
+            component.disabled.set(false);
 
             // Act - Call onToggleChange which will trigger handleError
             await component.onToggleChange();
@@ -399,7 +396,7 @@ describe('CourseLearnerProfileComponent', () => {
             const courseId = profiles[courseIndex].courseId;
             component.courseLearnerProfiles.set([...profiles]);
             component.activeCourseId = courseId;
-            component.disabled = false;
+            component.disabled.set(false);
 
             // Act - Call onToggleChange which will trigger handleError
             await component.onToggleChange();
@@ -424,7 +421,7 @@ describe('CourseLearnerProfileComponent', () => {
 
             // Assert
             expect(component.activeCourseId).toBeNull();
-            expect(component.disabled).toBeTruthy();
+            expect(component.disabled()).toBeTruthy();
         });
 
         it('should load profile when course is selected', () => {
@@ -438,7 +435,7 @@ describe('CourseLearnerProfileComponent', () => {
 
             // Assert
             expect(component.activeCourseId).toBe(courseId);
-            expect(component.disabled).toBeFalsy();
+            expect(component.disabled()).toBeFalsy();
             expect(component.aimForGradeOrBonus()).toBe(clp1.aimForGradeOrBonus);
             expect(component.timeInvestment()).toBe(clp1.timeInvestment);
             expect(component.repetitionIntensity()).toBe(clp1.repetitionIntensity);

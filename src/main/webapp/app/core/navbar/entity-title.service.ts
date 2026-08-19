@@ -14,6 +14,7 @@ export enum EntityType {
     ORGANIZATION = 'ORGANIZATION',
     EXAM = 'EXAM',
     TUTORIAL_GROUP = 'TUTORIAL_GROUP',
+    EXERCISE_VARIANT_GROUP = 'EXERCISE_VARIANT_GROUP',
 }
 
 const FETCH_FALLBACK_TIMEOUT = 3000;
@@ -79,7 +80,7 @@ export class EntityTitleService implements OnDestroy {
         // We want to be very defensive here, therefore we wrap everything in a try/catch and return EMPTY if an error occurs
         try {
             if (!type || !ids?.length || ids.some((id) => !id && id !== 0)) {
-                captureException(new Error(`Supplied invalid parameters to getTitle() of EntityTitleService: Type=${type}, ids=${ids}`));
+                captureException(new Error(`Supplied invalid parameters to getTitle() of EntityTitleService: Type=${type}, ids=${String(ids)}`));
                 return EMPTY;
             }
 
@@ -109,7 +110,7 @@ export class EntityTitleService implements OnDestroy {
         // We want to be very defensive here, therefore we wrap everything in a try/catch
         try {
             if (!ids?.length || ids.some((id) => !id && id !== 0) || !title) {
-                captureException(new Error(`Supplied invalid parameters to setTitle() of EntityTitleService: Type=${type}, ids=${ids}, title=${title}`));
+                captureException(new Error(`Supplied invalid parameters to setTitle() of EntityTitleService: Type=${type}, ids=${String(ids)}, title=${title}`));
                 return;
             }
 
@@ -119,7 +120,7 @@ export class EntityTitleService implements OnDestroy {
                 subject: new ReplaySubject<string>(1),
             }));
 
-            subject.next(title!);
+            subject.next(title);
 
             if (timeout) {
                 clearTimeout(timeout);
@@ -146,6 +147,9 @@ export class EntityTitleService implements OnDestroy {
      * @param ids the ids that identify the entity. Mostly one ID, for exercise hints provide the exercise id as second item in the array.
      */
     private fetchTitle(type: EntityType, ids: number[]): void {
+        if (type === EntityType.EXERCISE_VARIANT_GROUP) {
+            return;
+        }
         let resourceUrl = 'api/';
         switch (type) {
             case EntityType.COURSE:

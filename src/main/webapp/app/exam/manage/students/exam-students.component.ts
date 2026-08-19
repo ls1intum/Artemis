@@ -26,7 +26,7 @@ import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-
 import { StudentsExportDialogComponent } from 'app/exam/manage/students/export-users/students-export-dialog.component';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ExamStudentsMenuButtonComponent } from 'app/exam/manage/students/exam-students-menu-button/exam-students-menu-button.component';
 import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
@@ -41,7 +41,7 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
-import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
+import { TestExamWorkingTimeComponent } from 'app/exam/overview/test-exam-working-time/test-exam-working-time.component';
 import { Tag } from 'primeng/tag';
 import { Popover } from 'primeng/popover';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
@@ -52,6 +52,7 @@ import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } f
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 interface MenuCommandEvent {
@@ -152,30 +153,39 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
     readonly isLoading = signal(true);
 
-    readonly searchUsersForExamFn = computed((): ((term: string, page: number, size: number) => Observable<UserSearchResult>) => {
+    readonly searchUsersForExamFn = (term: string, page: number, size: number): Observable<UserSearchResult> => {
         const courseId = this.courseId();
         const examId = this.exam().id;
-        return (term: string, page: number, size: number) => {
-            if (!examId) return of({ content: [], totalElements: 0 });
-            return this.examManagementService.searchUsersForExamRegistration(courseId, examId, term, page, size);
-        };
-    });
+        if (!examId) return of({ content: [], totalElements: 0 });
+        return this.examManagementService.searchUsersForExamRegistration(courseId, examId, term, page, size);
+    };
 
-    readonly registerUsersForExamFn = computed((): ((users: UserForRegistration[]) => Observable<void>) => {
+    readonly registerUsersForExamFn = (users: UserForRegistration[]): Observable<void> => {
         const courseId = this.courseId();
         const examId = this.exam().id;
-        return (users: UserForRegistration[]) => {
-            if (!examId) return of(void 0);
-            const dtos: ExamUserDTO[] = users.map((u) => ({
-                login: u.login,
-                firstName: '',
-                lastName: '',
-                registrationNumber: u.registrationNumber ?? '',
-                email: u.email ?? '',
-            }));
-            return this.examManagementService.addStudentsToExam(courseId, examId, dtos).pipe(map(() => void 0));
-        };
-    });
+        if (!examId) return of(void 0);
+        const dtos: ExamUserDTO[] = users.map((u) => ({
+            login: u.login,
+            firstName: '',
+            lastName: '',
+            registrationNumber: u.registrationNumber ?? '',
+            email: u.email ?? '',
+        }));
+        return this.examManagementService.addStudentsToExam(courseId, examId, dtos).pipe(
+            tap((res) => {
+                const { notFoundStudents, rejectedStaffUsers } = res.body ?? {};
+                if (notFoundStudents?.length) {
+                    const logins = notFoundStudents.map((u) => u.login).join(', ');
+                    this.alertService.error('artemisApp.examManagement.examStudents.addDialog.notFoundStudents', { logins });
+                }
+                if (rejectedStaffUsers?.length) {
+                    const logins = rejectedStaffUsers.map((u) => u.login).join(', ');
+                    this.alertService.error('artemisApp.examManagement.examStudents.addDialog.rejectedStaffUsers', { logins });
+                }
+            }),
+            map(() => undefined),
+        );
+    };
 
     readonly activeFilter = signal('All');
     readonly examStudentFilterGroups = computed<FilterGroup[]>(() => {
@@ -195,6 +205,9 @@ export class ExamStudentsComponent implements OnDestroy {
     });
     private requestId = 0;
     private lastLazyEvent: TableLazyLoadEvent | undefined;
+    // True while a lazy load was recorded but skipped because the exam id was not yet available. It lets the
+    // examData$ tap replay exactly that one skipped load and nothing more (issue #13063).
+    private lazyEventPending = false;
 
     private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
     private examData$ = new Subject<Exam>();
@@ -335,6 +348,16 @@ export class ExamStudentsComponent implements OnDestroy {
                     this.exam.set(exam);
                     this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
                     this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
+                    // The paginated table fires its initial lazy load before the exam id is available, so
+                    // loadExamStudents early-returns (leaving isLoading=true and totalExamStudents=0). Replay that one
+                    // skipped load now that the exam has resolved, otherwise the "Generate student exams" button stays
+                    // disabled even though students are registered (issue #13063). Guarded by lazyEventPending so later
+                    // exam re-emissions (reloadStudentsView / websocket-driven fetchExamData) do not trigger a second,
+                    // redundant page load — the table's own reset() already reloads on those paths. This replay is
+                    // fire-and-forget and intentionally independent of the switchMap below (which only refreshes stats).
+                    if (this.lastLazyEvent && this.lazyEventPending) {
+                        this.loadExamStudents(this.lastLazyEvent);
+                    }
                 }),
                 switchMap((exam: Exam) => {
                     const courseId = this.courseId();
@@ -364,9 +387,13 @@ export class ExamStudentsComponent implements OnDestroy {
                 this.setExercisePreparationStatus(exercisePreparationStatus);
             });
 
-        effect(() => {
-            this.fetchExamData();
-        });
+        // Bridge the route data into the exam-data pipeline whenever it changes. Replaces an effect() whose only job
+        // was to call fetchExamData() when routeData() changed (an effect() misuse — using an effect to push a signal
+        // value into a Subject). fetchExamData() stays a method because it is also invoked imperatively elsewhere
+        // (setExercisePreparationStatus).
+        toObservable(this.routeData)
+            .pipe(takeUntilDestroyed())
+            .subscribe(() => this.fetchExamData());
 
         effect((onCleanup) => {
             const examId = this.exam().id;
@@ -409,15 +436,16 @@ export class ExamStudentsComponent implements OnDestroy {
         this.lastLazyEvent = event;
         const examId = this.exam().id;
         if (!examId) {
+            // The table fired its lazy load before the exam id was available; remember that we owe a load so the
+            // examData$ tap can replay it once the exam resolves (issue #13063).
+            this.lazyEventPending = true;
             return;
         }
+        this.lazyEventPending = false;
 
         const currentRequestId = ++this.requestId;
         const query = buildDbQueryFromLazyEvent(event);
-        const search: ExamStudentSearch = {
-            ...query,
-            filterProp: this.activeFilter() !== 'All' ? this.activeFilter() : undefined,
-        };
+        const search: ExamStudentSearch = cloneWith(query, { filterProp: this.activeFilter() !== 'All' ? this.activeFilter() : undefined });
         this.isLoading.set(true);
         this.examManagementService.findExamStudentsPaged(this.courseId(), examId, search).subscribe({
             next: (result) => {
@@ -495,7 +523,7 @@ export class ExamStudentsComponent implements OnDestroy {
         if (!this.hasExamStarted() || !exam?.id) {
             return;
         }
-        this.router.navigate(['/course-management', this.courseId(), 'exams', exam.id, 'students', 'verify-attendance']);
+        void this.router.navigate(['/course-management', this.courseId(), 'exams', exam.id, 'students', 'verify-attendance']);
     }
 
     private openIndividualExamsStatusPopover(event?: Event, defer = false) {
@@ -745,7 +773,7 @@ export class ExamStudentsComponent implements OnDestroy {
         this.exercisePreparationPercentage.set(newStatus.overall ? Math.round((processedExams / newStatus.overall) * 100) : 100);
 
         if (exPrepRunning && processedExams) {
-            const passedSeconds = dayjs().diff(newStatus!.startedAt!, 's');
+            const passedSeconds = dayjs().diff(newStatus.startedAt, 's');
             const remainingSeconds = (passedSeconds / processedExams) * remainingExams;
 
             const h = Math.floor(remainingSeconds / 60 / 60);

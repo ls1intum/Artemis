@@ -4,6 +4,9 @@ on:
   pull_request_target:
     types: [closed]
 
+permissions:
+  contents: read
+
 jobs:
   # If a PR is closed the docker image should be deleted to save space
   purge-image:
@@ -11,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete image
-        uses: bots-house/ghcr-delete-image-action@v1.1.0
+        uses: bots-house/ghcr-delete-image-action@3827559c68cb4dcdf54d813ea9853be6d468d3a4  # v1.1.0
         with:
           owner: ${{ github.repository_owner }}
           name: artemis

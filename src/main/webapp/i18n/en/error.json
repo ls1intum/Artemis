@@ -10,6 +10,8 @@
             "409": "There was a conflict while processing your request.",
             "500": "Internal server error."
         },
+        "assessmentNotPossibleExamRunning": "Assessment is not possible yet: you can start once the exam has ended for all students on {{ date }}.",
+        "assessmentNotPossibleTestsPending": "Assessment is not possible yet: the tests still have to run once more on the final submissions. You can start assessing on {{ date }}.",
         "cannotDeleteYourself": "You cannot delete your own account!",
         "fileUploadSavingError": "Error! The upload failed. Make sure you are connected to the Internet!",
         "concurrencyFailure": "Another user modified this data at the same time as you. Your changes were rejected.",
@@ -106,6 +108,8 @@
         "courseTitleTooLong": "The course title is too long (max. 255 characters). Please choose a shorter title.",
         "courseIdUndefined": "The course ID is undefined. Please make sure the course exists.",
         "notAllowedInExam": "This operation is not allowed in an exam.",
+        "quizNotIndividual": "Only individual-mode quizzes can be added to an exercise group.",
+        "timelineManagedByVariantGroup": "This exercise belongs to a variant group, which manages the shared timeline. Please change the dates on the variant group instead.",
         "profilePictureFilesizeTooBig": "The file size of your image is too big, please upload a smaller one.",
         "profilePictureFileFormatNotSupported": "The file format is not supported, please make sure to upload a .png or .jpg file.",
         "envVariablesTooLong": "The environment variables are too long. Please make sure that each key or value does not exceed 1000 characters.",
@@ -272,7 +276,10 @@
         "examWorkingTimeTooHigh": "The working time is too long. The maximum is 43200 minutes (30 days). Please adjust the start and/or end of working time.",
         "examGracePeriodTooHigh": "The grace period is too long. Please enter a value between 0 and 3600 seconds.",
         "examMaxPointsTooHigh": "The maximum points value is too high. Please enter a value between 1 and 9999.",
+        "examMaxPointsWholeNumber": "The maximum points value must be a whole number.",
+        "examTitleTooLong": "The exam title is too long. Please enter at most 255 characters.",
         "examNumberOfExercisesTooHigh": "The number of exercises is too high. Please enter a value between 1 and 100.",
+        "examTextTooLong": "An exam text is too long. Please enter at most 10,000 characters.",
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts.",
             "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."

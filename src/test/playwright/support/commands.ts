@@ -1,5 +1,5 @@
 import { UserCredentials } from './users';
-import { Locator, Page, expect } from '@playwright/test';
+import { Locator, Page, errors, expect } from '@playwright/test';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 import { BUILD_FINISH_TIMEOUT, POLLING_INTERVAL } from './timeouts';
@@ -49,19 +49,37 @@ export class Commands {
         expect(response!.status()).toBe(200);
 
         // The previous user's JWT cookie has been cleared and a new one set for `username`.
-        // Verify by re-reading: the cookie jar must contain exactly one jwt that is non-empty.
-        // We do not look up the cookie by value (we only have the token after auth) — finding any
-        // jwt cookie after clearCookies + this auth POST is sufficient.
-        await expect
-            .poll(
-                async () =>
-                    page
-                        .context()
-                        .cookies()
-                        .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt')?.value),
-                { timeout: 10000 },
-            )
-            .toBeTruthy();
+        // Verify by re-reading: the cookie jar must contain a jwt that is non-empty. We do not look
+        // up the cookie by value (we only have the token after auth) — finding any jwt cookie after
+        // clearCookies + this auth POST is sufficient.
+        //
+        // Under heavy parallel multi-node load — and especially right after Playwright recycles a
+        // crashed worker process — the Set-Cookie from the auth POST has occasionally not landed in
+        // the page context's cookie jar within the poll window even though the POST returned 200.
+        // Re-issue the (idempotent) auth POST and re-check rather than failing outright; the retry
+        // re-sends the cookie and recovers the rare jar-propagation race. The final attempt rethrows
+        // so a genuine auth failure still surfaces with the original assertion error.
+        const jwtCookieValue = () =>
+            page
+                .context()
+                .cookies()
+                .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt')?.value);
+        for (let cookieAttempt = 0; ; cookieAttempt++) {
+            const isLastAttempt = cookieAttempt === 2;
+            try {
+                await expect.poll(jwtCookieValue, { timeout: isLastAttempt ? 10000 : 5000 }).toBeTruthy();
+                break;
+            } catch (error) {
+                if (isLastAttempt) {
+                    throw error;
+                }
+                const retryResponse = await page.request.post(`api/core/public/authenticate`, {
+                    data: { username, password, rememberMe: true },
+                    failOnStatusCode: false,
+                });
+                expect(retryResponse.status()).toBe(200);
+            }
+        }
 
         if (url) {
             // page.goto triggers a full document navigation, which re-bootstraps Angular and the
@@ -87,6 +105,23 @@ export class Commands {
             }
         }
     };
+
+    /**
+     * Whether the page currently sits on the route that was asked for.
+     * <p>
+     * Only the path is compared. A reload re-bootstraps the app, and several pages rewrite their own query
+     * parameters afterwards, so requiring the full URL to match would report a failed restore for a page that
+     * did come back correctly. The path is what distinguishes the requested route from the `/courses`
+     * fallback, from an authentication redirect, and from anywhere else the router may land.
+     *
+     * @param requestedUrl the url the caller asked for, absolute or relative
+     * @param currentUrl   the url the page is on now
+     */
+    static isOnRequestedRoute(requestedUrl: string, currentUrl: string): boolean {
+        const withoutTrailingSlash = (path: string) => (path.length > 1 ? path.replace(/\/$/, '') : path);
+        const requestedAbsolute = requestedUrl.startsWith('http') ? new URL(requestedUrl) : new URL(requestedUrl, currentUrl);
+        return withoutTrailingSlash(requestedAbsolute.pathname) === withoutTrailingSlash(new URL(currentUrl).pathname);
+    }
 
     /**
      * Detects the specific lazy-chunk-load fallback where Angular routes the page to a bare
@@ -248,8 +283,107 @@ export class Commands {
         await attachedWithin(30_000);
     };
 
+    /**
+     * How long a restored route gets to prove it stayed off the `/courses` fallback.
+     * <p>
+     * Short on purpose: this only covers the router resolving the lazy route it was just sent to, and
+     * the common case — the navigation landed where it was asked to — returns immediately.
+     */
+    private static readonly ROUTE_RESTORE_TIMEOUT = 15_000;
+
+    /**
+     * How long the page has to stay on a route before it counts as restored.
+     * <p>
+     * The drift this whole mechanism guards against happens *after* the document has loaded: the router
+     * resolves the lazy route, the chunk fails, and only then does the URL change to `/courses`. Reading the
+     * URL once therefore reports success for a page that is about to leave the route again.
+     * <p>
+     * Kept short because a healthy reload pays it too, and because the fallback redirect follows the load
+     * closely rather than arbitrarily later.
+     */
+    private static readonly ROUTE_SETTLE_TIMEOUT = 1_000;
+
+    /**
+     * Whether the page is on the requested route and is still on it {@link ROUTE_SETTLE_TIMEOUT} later.
+     * <p>
+     * `waitForURL` resolves the moment its predicate holds, so it cannot express "and keeps holding". Waiting
+     * for the opposite does: a redirect away resolves the wait, and nothing happening times out. Playwright
+     * reports the router's same-document navigation, so the fallback redirect is observed rather than missed.
+     *
+     * @param page        the page to observe
+     * @param expectedUrl the url the caller asked for
+     */
+    private static holdsRequestedRoute = async (page: Page, expectedUrl: string): Promise<boolean> => {
+        if (!Commands.isOnRequestedRoute(expectedUrl, page.url())) {
+            return false;
+        }
+        try {
+            await page.waitForURL((url) => !Commands.isOnRequestedRoute(expectedUrl, url.toString()), { timeout: Commands.ROUTE_SETTLE_TIMEOUT });
+            return false;
+        } catch (error) {
+            // Only the timeout means the route held. Anything else — a closed page above all — is not a
+            // restored route, and reporting one would send the caller back to polling for content it can
+            // never see.
+            return error instanceof errors.TimeoutError;
+        }
+    };
+
+    /**
+     * Re-navigates to {@link expectedUrl} if the page has landed on the bare `/courses` fallback instead,
+     * and reports whether the page is on the expected route afterwards.
+     * <p>
+     * A reload re-bootstraps the SPA from scratch. When a lazy route chunk fails to resolve — a known
+     * symptom under heavy parallel CI load — the router falls back to `/courses`, and nothing ever
+     * navigates back. Any assertion about route-specific content then waits for an element that cannot
+     * exist, and every further reload re-loads the fallback, so a retry loop makes it worse rather than
+     * better. Restoring the route explicitly turns that dead end into one more attempt.
+     * <p>
+     * The document being loaded is not the readiness signal to wait for: `load` fires once the shell and
+     * its resources have arrived, while the router may still be resolving the lazy route — and it lands
+     * back on the fallback when that resolution fails again. The URL is what separates a restored route
+     * from a page that merely finished loading, so that is what this waits on, and it has to still be the
+     * requested one a moment later rather than only at the instant it is read.
+     */
+    static restoreRouteIfDrifted = async (page: Page, expectedUrl: string): Promise<boolean> => {
+        if (await Commands.holdsRequestedRoute(page, expectedUrl)) {
+            return true;
+        }
+        // Deliberately not "anything that is not the fallback": an authentication redirect, or any other route
+        // the app decides on, would otherwise be reported as a successful restore, and the caller would keep
+        // polling for route-specific content that cannot appear there.
+        await page.goto(expectedUrl);
+        await page.waitForLoadState('load');
+        const arrived = await page
+            .waitForURL((url) => Commands.isOnRequestedRoute(expectedUrl, url.toString()), { timeout: Commands.ROUTE_RESTORE_TIMEOUT })
+            .then(() => true)
+            .catch(() => false);
+        // Arriving is not the same as staying: the re-navigation can hit the same lazy-chunk failure and drop
+        // back to the fallback, which is precisely the case the caller needs reported as a failed restore.
+        return arrived && (await Commands.holdsRequestedRoute(page, expectedUrl));
+    };
+
+    /**
+     * Reloads the page, then restores the route if the reload drifted to the `/courses` fallback.
+     * Returns whether the page ended up on the expected route.
+     * <p>
+     * Pass {@link expectedUrl} when reloading in a loop: the URL the loop started on is the one to
+     * return to, whereas the URL immediately before a later reload may already be the fallback.
+     * Defaults to the current URL, which is what a single reload wants.
+     *
+     * @see restoreRouteIfDrifted for why the fallback is a dead end without this.
+     */
+    static reloadAndRestoreRoute = async (page: Page, expectedUrl?: string): Promise<boolean> => {
+        const targetUrl = expectedUrl ?? page.url();
+        await page.reload();
+        return Commands.restoreRouteIfDrifted(page, targetUrl);
+    };
+
     static reloadUntilFound = async (page: Page, locator: Locator, interval = 10000, timeout = 60000) => {
         const startTime = Date.now();
+        // The route this loop is polling on. Every reload returns here, so a drift to the /courses
+        // fallback costs one attempt instead of the whole timeout budget.
+        const requestedUrl = page.url();
+        let failedRouteRestores = 0;
 
         while (Date.now() - startTime < timeout) {
             try {
@@ -266,20 +400,31 @@ export class Commands {
                     throw new Error(`Page was closed while waiting for element matching "${locator}"`);
                 }
                 try {
-                    await page.reload();
+                    if (!(await Commands.reloadAndRestoreRoute(page, requestedUrl))) {
+                        failedRouteRestores++;
+                    }
                 } catch (reloadError) {
-                    throw new Error(`Failed to reload page while waiting for element: ${reloadError}`, { cause: reloadError });
+                    throw new Error(`Failed to reload or restore the page while waiting for element: ${reloadError}`, { cause: reloadError });
                 }
             }
         }
 
-        throw new Error(`Timed out finding an element matching the "${locator}" locator (URL: ${page.url()})`);
+        // Name both routes and any failed restores: a final URL that is not the requested one, or a
+        // restore that never stuck, is the signal that the SPA could not load this route at all — which
+        // is otherwise indistinguishable from an element that simply never appeared.
+        const restoreNote = failedRouteRestores > 0 ? `, route restore failed ${failedRouteRestores} time(s)` : '';
+        throw new Error(`Timed out finding an element matching the "${locator}" locator (requested URL: ${requestedUrl}, final URL: ${page.url()}${restoreNote})`);
     };
 
     static reloadUntilTextFound = async (page: Page, locator: Locator, expectedText: string | RegExp, interval = 5000, timeout = 60000) => {
         const startTime = Date.now();
         let lastSeenText: string | null = null;
         const matches = (text: string | null): boolean => text != null && (expectedText instanceof RegExp ? expectedText.test(text) : text.includes(expectedText));
+        // The route this loop is polling on, for the same reason as in reloadUntilFound: a reload that drifts to the
+        // /courses fallback is a dead end, because every later reload then reloads the fallback and the text being
+        // waited for lives on a route the page is no longer on.
+        const requestedUrl = page.url();
+        let failedRouteRestores = 0;
 
         while (Date.now() - startTime < timeout) {
             try {
@@ -298,13 +443,18 @@ export class Commands {
             }
 
             try {
-                await page.reload();
+                if (!(await Commands.reloadAndRestoreRoute(page, requestedUrl))) {
+                    failedRouteRestores++;
+                }
             } catch (reloadError) {
-                throw new Error(`Failed to reload page while waiting for text "${expectedText}": ${reloadError}`, { cause: reloadError });
+                throw new Error(`Failed to reload or restore the page while waiting for text "${expectedText}": ${reloadError}`, { cause: reloadError });
             }
         }
 
-        throw new Error(`Timed out waiting for text "${expectedText}" in locator "${locator}" (URL: ${page.url()}). Last seen text: "${lastSeenText}"`);
+        const restoreNote = failedRouteRestores > 0 ? `, route restore failed ${failedRouteRestores} time(s)` : '';
+        throw new Error(
+            `Timed out waiting for text "${expectedText}" in locator "${locator}" (requested URL: ${requestedUrl}, final URL: ${page.url()}${restoreNote}). Last seen text: "${lastSeenText}"`,
+        );
     };
 
     /**

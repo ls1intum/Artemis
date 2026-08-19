@@ -13,6 +13,7 @@ import { LearningPathsAnalyticsComponent } from 'app/atlas/manage/learning-paths
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
 import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-learning-path-instructor-page',
@@ -37,14 +38,16 @@ export class LearningPathInstructorPageComponent {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            untracked(() => this.loadCourse(courseId));
+            void untracked(() => this.loadCourse(courseId));
         });
     }
 
     private async loadCourse(courseId: number): Promise<void> {
         try {
             this.isLoading.set(true);
-            const courseBody = await lastValueFrom(this.courseManagementService.findOneForDashboard(courseId));
+            // Only the course record is read here, so the plain course endpoint is enough; the dashboard variant would
+            // additionally load the instructor's exercises, participations and results for nothing.
+            const courseBody = await lastValueFrom(this.courseManagementService.find(courseId));
             this.course.set(courseBody.body!);
         } catch (error) {
             onError(this.alertService, error);
@@ -57,7 +60,7 @@ export class LearningPathInstructorPageComponent {
         try {
             this.isLoading.set(true);
             await this.learningPathApiService.enableLearningPaths(this.courseId());
-            this.course.update((course) => ({ ...course!, learningPathsEnabled: true }));
+            this.course.update((course) => cloneWith(course!, { learningPathsEnabled: true }));
         } catch (error) {
             onError(this.alertService, error);
         } finally {

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ParamMap, Router, RouterModule, convertToParamMap } from '@angular/router';
@@ -30,6 +29,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { DialogService } from 'primeng/dynamicdialog';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
@@ -38,7 +38,8 @@ import { ExampleSubmission } from 'app/assessment/shared/entities/example-submis
 import dayjs from 'dayjs/esm';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { UMLDiagramType } from '@tumaet/apollon';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
+import { ApollonEditor, UMLDiagramType } from '@tumaet/apollon';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -47,8 +48,6 @@ import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-a
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 describe('ModelingAssessmentEditorComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ModelingAssessmentEditorComponent;
     let fixture: ComponentFixture<ModelingAssessmentEditorComponent>;
     let service: ModelingAssessmentService;
@@ -64,6 +63,9 @@ describe('ModelingAssessmentEditorComponent', () => {
     let paramMapSubject: BehaviorSubject<ParamMap>;
 
     beforeEach(() => {
+        // jsdom's ApollonEditor fires modelChange with empty assessments on every model update under
+        // signal-driven rendering, which would wipe the parent's referencedFeedback mid-test.
+        vi.spyOn(ApollonEditor.prototype, 'subscribeToModelChange').mockReturnValue(undefined as any);
         paramMapSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
             imports: [
@@ -98,6 +100,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(TextAssessmentAnalytics),
+                MockProvider(DialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -179,17 +182,17 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.ngOnInit();
             await fixture.whenStable();
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
-            expect(component.isLoading).toBe(false);
-            expect(component.complaint).toMatchObject({
+            expect(component.isLoading()).toBe(false);
+            expect(component.complaint()).toMatchObject({
                 id: complaintDTO.id,
                 complaintText: complaintDTO.complaintText,
-                result: component.result,
+                result: component.result(),
             });
             modelingSubmissionSpy.mockRestore();
             // called twice, since the feedback is additionally verified during the component initialization
             expect(handleFeedbackSpy).toHaveBeenCalledTimes(2);
             expect(verifyFeedbackSpy).toHaveBeenCalledOnce();
-            expect(component.assessmentsAreValid).toBe(true);
+            expect(component.assessmentsAreValid()).toBe(true);
         });
 
         it('wrongly call ngOnInit and throw exception', async () => {
@@ -201,6 +204,44 @@ describe('ModelingAssessmentEditorComponent', () => {
             await fixture.whenStable();
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             modelingSubmissionSpy.mockRestore();
+        });
+
+        it('should explain the wait on the page when the exam is not over yet, instead of claiming the submission was not found', async () => {
+            const alertService = TestBed.inject(AlertService);
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const response = new HttpErrorResponse({
+                status: 403,
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+            });
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(throwError(() => response));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(component.assessmentNotPossibleYet()).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
+            expect(component.submission()).toBeUndefined();
+            // the explanation stays on the page instead of fading with a toast and leaving the misleading state behind
+            expect(errorSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear the explanation when the next submission is loaded into the reused component', async () => {
+            const response = new HttpErrorResponse({
+                status: 403,
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+            });
+            vi.spyOn(modelingSubmissionService, 'getSubmission')
+                .mockReturnValueOnce(throwError(() => response))
+                .mockReturnValue(of(getSubmissionWithData()));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+            expect(component.assessmentNotPossibleYet()).toBeDefined();
+
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            expect(component.assessmentNotPossibleYet()).toBeUndefined();
+            expect(component.submission()).toBeDefined();
         });
         it('call ngOnInit with submissionId set to new', async () => {
             paramMapSubject.next(
@@ -230,8 +271,8 @@ describe('ModelingAssessmentEditorComponent', () => {
             await fixture.whenStable();
 
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
-            expect(component.submission).toBe(mockSubmission);
-            expect(component.assessmentsAreValid).toBe(false);
+            expect(component.submission()).toBe(mockSubmission);
+            expect(component.assessmentsAreValid()).toBe(false);
         });
     });
 
@@ -240,25 +281,25 @@ describe('ModelingAssessmentEditorComponent', () => {
             const course = new Course();
             component.ngOnInit();
             await fixture.whenStable();
-            component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-            component.modelingExercise.isAtLeastInstructor = true;
+            component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined));
+            component.modelingExercise()!.isAtLeastInstructor = true;
             expect(component.canOverride).toBe(true);
         });
 
         it('tests the method with tutor rights and as assessor', async () => {
             const course = new Course();
-            component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-            component.modelingExercise.isAtLeastInstructor = false;
-            component.isAssessor = true;
-            component.complaint = new Complaint();
-            component.complaint.id = 0;
-            component.complaint.complaintText = 'complaint';
+            component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined));
+            component.modelingExercise()!.isAtLeastInstructor = false;
+            component.isAssessor.set(true);
+            component.complaint.set(new Complaint());
+            component.complaint().id = 0;
+            component.complaint().complaintText = 'complaint';
             component.ngOnInit();
             await fixture.whenStable();
             mockAuth.isAtLeastInstructorInCourse(course);
             component['checkPermissions']();
             fixture.changeDetectorRef.detectChanges();
-            expect(component.modelingExercise.isAtLeastInstructor).toBe(false);
+            expect(component.modelingExercise()!.isAtLeastInstructor).toBe(false);
             expect(component.canOverride).toBe(false);
         });
     });
@@ -266,28 +307,28 @@ describe('ModelingAssessmentEditorComponent', () => {
     describe('save and submit', () => {
         beforeEach(() => {
             const course = new Course();
-            component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-            component.modelingExercise.assessmentDueDate = dayjs().subtract(2, 'days');
-            component.modelingExercise.maxPoints = 10;
+            component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined));
+            component.modelingExercise()!.assessmentDueDate = dayjs().subtract(2, 'days');
+            component.modelingExercise()!.maxPoints = 10;
 
             const feedback = createTestFeedback();
-            component.unreferencedFeedback = [feedback];
+            component.unreferencedFeedback.set([feedback]);
 
-            component.result = {
+            component.result.set({
                 id: 2374,
                 score: 8,
                 rated: true,
                 hasComplaint: false,
-            } as unknown as Result;
+            } as unknown as Result);
 
-            component.submission = {
+            component.submission.set({
                 id: 1,
                 submitted: true,
                 type: 'MANUAL',
                 text: 'Test\n\nTest\n\nTest',
-            } as unknown as ModelingSubmission;
-            component.submission.results = [component.result];
-            getLatestSubmissionResult(component.submission)!.feedbacks = [
+            } as unknown as ModelingSubmission);
+            component.submission()!.results = [component.result()!];
+            getLatestSubmissionResult(component.submission())!.feedbacks = [
                 {
                     id: 2,
                     detailText: 'Feedback',
@@ -297,7 +338,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         });
 
         it('should save assessment', async () => {
-            const saveAssessmentSpy = vi.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)!));
+            const saveAssessmentSpy = vi.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission())!));
 
             component.ngOnInit();
             await fixture.whenStable();
@@ -306,7 +347,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         });
 
         it('should try to submit assessment', async () => {
-            vi.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission)!));
+            vi.spyOn(service, 'saveAssessment').mockReturnValue(of(getLatestSubmissionResult(component.submission())!));
             vi.spyOn(window, 'confirm').mockReturnValue(false);
 
             component.ngOnInit();
@@ -315,16 +356,16 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.onSubmitAssessment();
 
             expect(window.confirm).toHaveBeenCalledOnce();
-            expect(component.highlightMissingFeedback).toBe(true);
+            expect(component.highlightMissingFeedback()).toBe(true);
 
-            component.modelingExercise!.isAtLeastInstructor = true;
+            component.modelingExercise()!.isAtLeastInstructor = true;
             expect(component.canOverride).toBe(true);
         });
 
         it('should allow overriding directly after submitting', async () => {
             vi.spyOn(window, 'confirm').mockReturnValue(false);
 
-            component.modelingExercise!.isAtLeastInstructor = true;
+            component.modelingExercise()!.isAtLeastInstructor = true;
             component.ngOnInit();
             await fixture.whenStable();
 
@@ -333,26 +374,64 @@ describe('ModelingAssessmentEditorComponent', () => {
         });
 
         it('should not invalidate assessment after saving', async () => {
-            component.submission = getSubmissionWithData();
-            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(component.submission));
+            component.submission.set(getSubmissionWithData());
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(component.submission()!));
 
             component.ngOnInit();
             await fixture.whenStable();
             component.onSaveAssessment();
-            expect(component.assessmentsAreValid).toBe(true);
+            expect(component.assessmentsAreValid()).toBe(true);
         });
 
         it('should submit the assessment', async () => {
-            const submitMock = vi.spyOn(service, 'saveAssessment').mockReturnValue(of(component.result!));
+            const submitMock = vi.spyOn(service, 'saveAssessment').mockReturnValue(of(component.result()!));
             vi.spyOn(window, 'confirm').mockReturnValue(true);
 
             component.validateFeedback();
-            expect(component.assessmentsAreValid).toBe(true);
+            expect(component.assessmentsAreValid()).toBe(true);
 
             component.onSubmitAssessment();
             await fixture.whenStable();
 
             expect(submitMock).toHaveBeenCalledOnce();
+        });
+
+        describe('when the exam is not over yet', () => {
+            // The exam can re-close while tutors are already correcting, e.g. when an instructor grants a student more
+            // working time. The server then rejects the write and says when assessment is possible; without this the
+            // tutor would only see a generic "could not save" or an untranslated key.
+            const notPossibleYetResponse = () =>
+                new HttpErrorResponse({
+                    status: 403,
+                    error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+                });
+
+            it('should explain when assessment is possible instead of reporting a failed save', async () => {
+                const alertService = TestBed.inject(AlertService);
+                const errorSpy = vi.spyOn(alertService, 'error');
+                vi.spyOn(service, 'saveAssessment').mockReturnValue(throwError(() => notPossibleYetResponse()));
+
+                component.ngOnInit();
+                await fixture.whenStable();
+                component.onSaveAssessment();
+
+                expect(errorSpy).toHaveBeenCalledExactlyOnceWith(`error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, expect.anything());
+                expect(errorSpy).not.toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.saveFailed');
+            });
+
+            it('should explain when assessment is possible instead of reporting a failed submit', async () => {
+                const alertService = TestBed.inject(AlertService);
+                const errorSpy = vi.spyOn(alertService, 'error');
+                vi.spyOn(service, 'saveAssessment').mockReturnValue(throwError(() => notPossibleYetResponse()));
+                vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+                component.validateFeedback();
+                component.onSubmitAssessment();
+                await fixture.whenStable();
+
+                expect(errorSpy).toHaveBeenCalledExactlyOnceWith(`error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, expect.anything());
+                expect(errorSpy).not.toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.submitFailed');
+            });
         });
     });
 
@@ -371,12 +450,12 @@ describe('ModelingAssessmentEditorComponent', () => {
         complaintResponse.id = 1;
         complaintResponse.responseText = 'response';
 
-        component.submission = {
+        component.submission.set({
             id: 1,
             submitted: true,
             type: 'MANUAL',
             text: 'Test\n\nTest\n\nTest',
-        } as unknown as ModelingSubmission;
+        } as unknown as ModelingSubmission);
 
         const changedResult = {
             id: 2374,
@@ -417,7 +496,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         const alertService = TestBed.inject(AlertService);
         const errorSpy = vi.spyOn(alertService, 'error');
-        const validateSpy = vi.spyOn(component, 'validateFeedback').mockImplementation(() => (component.assessmentsAreValid = true));
+        const validateSpy = vi.spyOn(component, 'validateFeedback').mockImplementation(() => component.assessmentsAreValid.set(true));
 
         component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
 
@@ -425,7 +504,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(serviceSpy).toHaveBeenCalledOnce();
         if (!errorKeyFromServer) {
             expect(errorSpy).not.toHaveBeenCalled();
-            expect(component.result).toEqual(changedResult);
+            expect(component.result()).toEqual(changedResult);
         } else if (errorKeyFromServer === 'complaintLock') {
             expect(errorSpy).toHaveBeenCalledOnce();
             expect(errorSpy).toHaveBeenCalledWith(errorMessage, errorParams);
@@ -441,12 +520,12 @@ describe('ModelingAssessmentEditorComponent', () => {
     it('should cancel the current assessment', async () => {
         const windowSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
-        component.submission = {
+        component.submission.set({
             id: 2,
             submitted: true,
             type: 'MANUAL',
             text: 'Test\n\nTest\n\nTest',
-        } as unknown as ModelingSubmission;
+        } as unknown as ModelingSubmission);
 
         const serviceSpy = vi.spyOn(service, 'cancelAssessment').mockReturnValue(of());
 
@@ -475,21 +554,21 @@ describe('ModelingAssessmentEditorComponent', () => {
         await fixture.whenStable();
 
         const course = new Course();
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        component.modelingExercise.maxPoints = 5;
-        component.modelingExercise.bonusPoints = 5;
+        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined));
+        component.modelingExercise()!.maxPoints = 5;
+        component.modelingExercise()!.bonusPoints = 5;
         const handleFeedbackSpy = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
         component.onFeedbackChanged(feedbacks);
         expect(component.referencedFeedback).toHaveLength(1);
-        expect(component.totalScore).toBe(3);
+        expect(component.totalScore()).toBe(3);
         expect(handleFeedbackSpy).toHaveBeenCalled();
     });
 
     describe('test assessNext', () => {
         it('should navigate to the next submission', async () => {
             const course = new Course();
-            component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-            component.modelingExercise.id = 1;
+            component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined));
+            component.modelingExercise()!.id = 1;
 
             const routerSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
             const modelingSubmission: ModelingSubmission = { id: 1 };
@@ -500,12 +579,12 @@ describe('ModelingAssessmentEditorComponent', () => {
             const correctionRound = 1;
             const courseId = 1;
             const exerciseId = 1;
-            component.correctionRound = correctionRound;
+            component.correctionRound.set(correctionRound);
             component.courseId = courseId;
-            component.modelingExercise = { id: exerciseId } as Exercise;
+            component.modelingExercise.set({ id: exerciseId } as Exercise);
             component.exerciseId = exerciseId;
             const url = ['/course-management', courseId.toString(), 'modeling-exercises', exerciseId.toString(), 'submissions', modelingSubmission.id!.toString(), 'assessment'];
-            const queryParams = { queryParams: { 'correction-round': correctionRound } };
+            const queryParams = { queryParams: { 'correction-round': correctionRound }, queryParamsHandling: 'merge' };
 
             await fixture.whenStable();
             component.assessNext();
@@ -517,22 +596,22 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         it('no submission left', () => {
             const course = new Course();
-            component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-            component.modelingExercise.id = 1;
+            component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined));
+            component.modelingExercise()!.id = 1;
             const routerSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
             vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
             component.ngOnInit();
 
             component.assessNext();
 
-            expect(component.submission).toBeUndefined();
+            expect(component.submission()).toBeUndefined();
             expect(routerSpy).toHaveBeenCalledTimes(0);
         });
 
         it('throw error while assessNext', async () => {
             const course = new Course();
-            component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-            component.modelingExercise.id = 1;
+            component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined));
+            component.modelingExercise()!.id = 1;
 
             const response = new HttpErrorResponse({ status: 403 });
             const serviceSpy = vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(throwError(() => response));
@@ -546,21 +625,21 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     it('should invoke import example submission', () => {
         const course = new Course();
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        component.modelingExercise.id = 1;
-        component.submission = {
+        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined));
+        component.modelingExercise()!.id = 1;
+        component.submission.set({
             id: 2,
             submitted: true,
             type: 'MANUAL',
             text: 'Test\n\nTest\n\nTest',
-        } as ModelingSubmission;
+        } as ModelingSubmission);
 
         const importSpy = vi.spyOn(exampleSubmissionService, 'import').mockReturnValue(of(new HttpResponse({ body: new ExampleSubmission() })));
 
         component.useStudentSubmissionAsExampleSubmission();
 
         expect(importSpy).toHaveBeenCalledOnce();
-        expect(importSpy).toHaveBeenCalledWith(component.submission.id, component.modelingExercise!.id);
+        expect(importSpy).toHaveBeenCalledWith(component.submission()!.id, component.modelingExercise()!.id);
     });
 
     it('should display error when complaint resolved but assessment invalid', () => {
@@ -574,7 +653,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const errorSpy = vi.spyOn(alertService, 'error');
 
-        const validateSpy = vi.spyOn(component, 'validateFeedback').mockImplementation(() => (component.assessmentsAreValid = false));
+        const validateSpy = vi.spyOn(component, 'validateFeedback').mockImplementation(() => component.assessmentsAreValid.set(false));
 
         component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
         expect(validateSpy).toHaveBeenCalledOnce();
@@ -585,21 +664,21 @@ describe('ModelingAssessmentEditorComponent', () => {
     });
 
     it('should report feedback suggestions not enabled', () => {
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
         component.ngOnInit();
         expect(component.isFeedbackSuggestionsEnabled).toBe(false);
     });
 
     it('should report feedback suggestions enabled', () => {
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-        component.modelingExercise.feedbackSuggestionModule = 'module_text_llm';
+        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
+        component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
         component.ngOnInit();
         expect(component.isFeedbackSuggestionsEnabled).toBe(true);
     });
 
     it('should return unreferenced feedback only', () => {
-        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-        component.modelingExercise.feedbackSuggestionModule = 'module_text_llm';
+        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
+        component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
         component.ngOnInit();
 
         const unreferencedFeedback = createTestFeedback();

@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -21,11 +20,10 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TableLazyLoadEvent } from 'primeng/table';
+import { TumUiTableQueryEvent } from '@tumaet/ui-angular';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 
 describe('OrganizationManagementDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: OrganizationManagementDetailComponent;
     let fixture: ComponentFixture<OrganizationManagementDetailComponent>;
     let organizationService: OrganizationManagementService;
@@ -83,7 +81,7 @@ describe('OrganizationManagementDetailComponent', () => {
         component.organizationId.set(5);
         vi.spyOn(organizationService, 'getOrganizationUsers').mockReturnValue(of({ content: [user1], totalElements: 1 }));
 
-        const event: TableLazyLoadEvent = { first: 0, rows: 50 };
+        const event: TumUiTableQueryEvent = { pageIndex: 0, pageSize: 50 };
         component.loadUsers(event);
 
         expect(organizationService.getOrganizationUsers).toHaveBeenCalledOnce();
@@ -100,7 +98,7 @@ describe('OrganizationManagementDetailComponent', () => {
         component.organizationId.set(5);
         vi.spyOn(organizationService, 'getOrganizationCourses').mockReturnValue(of({ content: [course1], totalElements: 1 }));
 
-        const event: TableLazyLoadEvent = { first: 0, rows: 50 };
+        const event: TumUiTableQueryEvent = { pageIndex: 0, pageSize: 50 };
         component.loadCourses(event);
 
         expect(organizationService.getOrganizationCourses).toHaveBeenCalledOnce();
@@ -113,7 +111,7 @@ describe('OrganizationManagementDetailComponent', () => {
         component.organizationId.set(5);
         vi.spyOn(organizationService, 'getOrganizationUsers').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
-        const event: TableLazyLoadEvent = { first: 0, rows: 50 };
+        const event: TumUiTableQueryEvent = { pageIndex: 0, pageSize: 50 };
         component.loadUsers(event);
 
         expect(component.users()).toHaveLength(0);
@@ -125,7 +123,7 @@ describe('OrganizationManagementDetailComponent', () => {
         component.organizationId.set(5);
         vi.spyOn(organizationService, 'getOrganizationCourses').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
-        const event: TableLazyLoadEvent = { first: 0, rows: 50 };
+        const event: TumUiTableQueryEvent = { pageIndex: 0, pageSize: 50 };
         component.loadCourses(event);
 
         expect(component.courses()).toHaveLength(0);
@@ -143,7 +141,7 @@ describe('OrganizationManagementDetailComponent', () => {
         vi.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(of({} as any));
         const loadUsersSpy = vi.spyOn(component, 'loadUsers');
 
-        const event: TableLazyLoadEvent = { first: 0, rows: 50 };
+        const event: TumUiTableQueryEvent = { pageIndex: 0, pageSize: 50 };
         // Simulate a prior lazy load so lastUsersLoadEvent is set
         vi.spyOn(organizationService, 'getOrganizationUsers').mockReturnValue(of({ content: [user1], totalElements: 1 }));
         component.loadUsers(event);
@@ -197,13 +195,85 @@ describe('OrganizationManagementDetailComponent', () => {
 
     it('should not load users when organizationId is not set', () => {
         const spy = vi.spyOn(organizationService, 'getOrganizationUsers');
-        component.loadUsers({ first: 0, rows: 50 });
+        component.loadUsers({ pageIndex: 0, pageSize: 50 });
         expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not load courses when organizationId is not set', () => {
         const spy = vi.spyOn(organizationService, 'getOrganizationCourses');
-        component.loadCourses({ first: 0, rows: 50 });
+        component.loadCourses({ pageIndex: 0, pageSize: 50 });
+        expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should delegate to searchUsersForOrganizationRegistration via searchFn when organizationId is set', () => {
+        component.organizationId.set(5);
+        vi.spyOn(organizationService, 'searchUsersForOrganizationRegistration').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+        component.searchFn('alice', 0, 10);
+
+        expect(organizationService.searchUsersForOrganizationRegistration).toHaveBeenCalledWith(5, 'alice', 0, 10);
+    });
+
+    it('should return empty result from searchFn without calling the service when organizationId is not set', () => {
+        const spy = vi.spyOn(organizationService, 'searchUsersForOrganizationRegistration');
+
+        let result: { content: UserForRegistration[]; totalElements: number } | undefined;
+        component.searchFn('alice', 0, 10).subscribe((r) => {
+            result = r;
+        });
+
+        expect(spy).not.toHaveBeenCalled();
+        expect(result).toEqual({ content: [], totalElements: 0 });
+    });
+
+    it('should call addUsersToOrganization with all logins via registerFn', () => {
+        component.organizationId.set(5);
+        vi.spyOn(organizationService, 'addUsersToOrganization').mockReturnValue(of({} as any));
+
+        const users: UserForRegistration[] = [
+            { id: 1, login: 'user1', name: 'User One', isRegistered: false },
+            { id: 2, login: 'user2', name: 'User Two', isRegistered: false },
+        ];
+        component.registerFn(users).subscribe();
+
+        expect(organizationService.addUsersToOrganization).toHaveBeenCalledOnce();
+        expect(organizationService.addUsersToOrganization).toHaveBeenCalledWith(5, ['user1', 'user2']);
+    });
+
+    it('should not call addUsersToOrganization via registerFn when users list is empty', () => {
+        component.organizationId.set(5);
+        const spy = vi.spyOn(organizationService, 'addUsersToOrganization');
+
+        component.registerFn([]).subscribe();
+
+        expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should not call addUsersToOrganization via registerFn when organizationId is not set', () => {
+        const spy = vi.spyOn(organizationService, 'addUsersToOrganization');
+        const users: UserForRegistration[] = [{ id: 1, login: 'user1', name: 'User One', isRegistered: false }];
+
+        component.registerFn(users).subscribe();
+
+        expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should reload users after successful registration via onUsersRegistered', () => {
+        component.organizationId.set(5);
+        vi.spyOn(organizationService, 'getOrganizationUsers').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+        const event: TumUiTableQueryEvent = { pageIndex: 0, pageSize: 50 };
+        component.loadUsers(event);
+
+        const loadUsersSpy = vi.spyOn(component, 'loadUsers');
+        component.onUsersRegistered();
+
+        expect(loadUsersSpy).toHaveBeenCalledWith(event);
+    });
+
+    it('should not reload users in onUsersRegistered when no prior load event exists', () => {
+        const spy = vi.spyOn(component, 'loadUsers');
+        component.onUsersRegistered();
         expect(spy).not.toHaveBeenCalled();
     });
 });

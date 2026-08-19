@@ -1,26 +1,23 @@
-<div class="row d-flex justify-content-center mb-1">
-    <div #containerRef class="col-md-8 col-11 align-items-center px-0">
-        <h6 class="text-center" jhiTranslate="artemisApp.examScores.exerciseGroupTitle" [translateValues]="{ groupTitle: this.averageScores().title }"></h6>
-        <ngx-charts-bar-horizontal
-            [roundEdges]="false"
-            [view]="[containerRef.offsetWidth, 100]"
-            [results]="ngxData"
-            [scheme]="ngxColor"
-            [xAxis]="true"
-            [yAxis]="true"
-            [xScaleMax]="xScaleMax"
-            [xAxisTickFormatting]="xAxisTickFormatting"
-            (select)="onSelect($event)"
-        >
-            <ng-template #tooltipTemplate let-model="model">
-                <b>{{ model.name }}</b>
-                <br />
-                <span>
-                    {{ 'artemisApp.examScores.averagePointsTooltip' | artemisTranslate }}: {{ this.lookupAbsoluteValue(model.name) }} ({{
-                        roundAndPerformLocalConversion(model.value)
-                    }}%)
-                </span>
-            </ng-template>
-        </ngx-charts-bar-horizontal>
+<div class="flex justify-center">
+    <div class="w-full max-w-4xl">
+        <h5
+            class="mb-2 text-center text-base font-semibold"
+            jhiTranslate="artemisApp.examScores.exerciseGroupTitle"
+            [translateValues]="{ groupTitle: this.averageScores().title }"
+        ></h5>
+        <!-- Flex (not a plain block) so `p-chart` stretches to the explicit height: with `maintainAspectRatio: false`
+             Chart.js sizes the canvas from its parent, and a block parent leaves the canvas at its 150px default,
+             which overflowed the box and covered the next chart's title. The height grows with the bar count so
+             every bar keeps a readable label. -->
+        <div class="flex" [style.height.px]="chartHeight()">
+            <p-chart
+                class="w-full"
+                type="bar"
+                [data]="chartData()"
+                [options]="chartOptions()"
+                (onDataSelect)="onSelect($event)"
+                [ariaLabel]="'artemisApp.examScores.exerciseGroupTitle' | artemisTranslate: { groupTitle: averageScores().title }"
+            />
+        </div>
     </div>
 </div>

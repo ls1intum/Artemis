@@ -3,7 +3,6 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { of } from 'rxjs';
 import { SpanType } from 'app/exercise/shared/entities/statistics.model';
@@ -16,11 +15,8 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('ExerciseStatisticsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseStatisticsComponent>;
     let component: ExerciseStatisticsComponent;
     let service: StatisticsService;
@@ -61,7 +57,6 @@ describe('ExerciseStatisticsComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ exerciseId: 123 }) },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                provideNoopAnimationsForTests(),
             ],
         })
             .overrideTemplate(ExerciseStatisticsComponent, '<button id="option3" (click)="onTabChanged(SpanType.MONTH)"></button>')
@@ -85,9 +80,9 @@ describe('ExerciseStatisticsComponent', () => {
         expect(component).not.toBeNull();
         expect(statisticsSpy).toHaveBeenCalledTimes(1);
         expect(exerciseSpy).toHaveBeenCalledTimes(1);
-        expect(component.exerciseStatistics.participationsInPercent).toBe(100);
-        expect(component.exerciseStatistics.resolvedPostsInPercent).toBe(50);
-        expect(component.exerciseStatistics.absoluteAveragePoints).toBe(5);
+        expect(component.exerciseStatistics()?.participationsInPercent).toBe(100);
+        expect(component.exerciseStatistics()?.resolvedPostsInPercent).toBe(50);
+        expect(component.exerciseStatistics()?.absoluteAveragePoints).toBe(5);
     });
 
     it('should trigger when tab changed', () => {
@@ -98,11 +93,11 @@ describe('ExerciseStatisticsComponent', () => {
         button.click();
 
         expect(tabSpy).toHaveBeenCalledTimes(1);
-        expect(component.currentSpan).toBe(SpanType.MONTH);
+        expect(component.currentSpan()).toBe(SpanType.MONTH);
         expect(statisticsSpy).toHaveBeenCalledTimes(1);
         expect(exerciseSpy).toHaveBeenCalledTimes(1);
-        expect(component.exerciseStatistics.participationsInPercent).toBe(100);
-        expect(component.exerciseStatistics.resolvedPostsInPercent).toBe(50);
-        expect(component.exerciseStatistics.absoluteAveragePoints).toBe(5);
+        expect(component.exerciseStatistics()?.participationsInPercent).toBe(100);
+        expect(component.exerciseStatistics()?.resolvedPostsInPercent).toBe(50);
+        expect(component.exerciseStatistics()?.absoluteAveragePoints).toBe(5);
     });
 });

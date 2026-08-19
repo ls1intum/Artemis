@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnInit, inject, input, model, signal, viewChild } from '@angular/core';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
@@ -42,6 +43,7 @@ import { FileService } from 'app/foundation/service/file.service';
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private examParticipationService = inject(ExamParticipationService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
     private fileService = inject(FileService);
@@ -55,10 +57,10 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     exercise = input.required<FileUploadExercise>();
     readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
 
-    submittedFileName: string;
-    submittedFileExtension: string;
-    participation: StudentParticipation;
-    result: Result;
+    readonly submittedFileName = signal<string | undefined>(undefined);
+    readonly submittedFileExtension = signal<string | undefined>(undefined);
+    participation?: StudentParticipation;
+    result?: Result;
     submissionFile?: File;
 
     readonly ButtonType = ButtonType;
@@ -84,7 +86,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      */
     updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
         this.problemStatementHtml.set(newProblemStatementHtml);
-        this.changeDetectorReference.detectChanges();
     }
 
     /**
@@ -92,9 +93,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      * Here the file selected with the -browse- button is handled.
      * @param event {object} Event object which contains the uploaded file
      */
-    setFileSubmissionForExercise(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
+    setFileSubmissionForExercise(event: Event): void {
+        const fileList = (event.target as HTMLInputElement).files;
+        if (fileList && fileList.length) {
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.exercise().filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
@@ -104,6 +105,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
             } else {
                 this.submissionFile = submissionFile;
                 this.studentSubmission().isSynced = false;
+                // isSynced is mutated in place; notify sync-state-dependent UI (exam navigation sidebar, exercise
+                // overview, save button) so it re-evaluates under zoneless change detection.
+                this.examParticipationService.notifySubmissionSyncStateChanged();
             }
         }
     }
@@ -145,10 +149,11 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if ((this.studentSubmission().isSynced && this.studentSubmission().filePath) || (this.examTimeline() && this.studentSubmission().filePath)) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
-            const filePath = this.studentSubmission()!.filePath!.split('/');
-            this.submittedFileName = filePath.last()!;
-            const fileName = this.submittedFileName.split('.');
-            this.submittedFileExtension = fileName.last()!;
+            const filePath = this.studentSubmission().filePath!.split('/');
+            const submittedFileName = filePath.last()!;
+            this.submittedFileName.set(submittedFileName);
+            const fileName = submittedFileName.split('.');
+            this.submittedFileExtension.set(fileName.last());
         }
     }
 
@@ -160,13 +165,14 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if (!this.submissionFile) {
             return;
         }
-        this.fileUploadSubmissionService.update(this.studentSubmission() as FileUploadSubmission, this.exercise().id!, this.submissionFile).subscribe({
+        this.fileUploadSubmissionService.update(this.studentSubmission(), this.exercise().id!, this.submissionFile).subscribe({
             next: (res) => {
                 const submissionFromServer = res.body!;
                 this.studentSubmission().filePath = submissionFromServer.filePath;
                 this.studentSubmission().filePathUrl = addPublicFilePrefix(submissionFromServer.filePath);
                 this.studentSubmission().isSynced = true;
                 this.studentSubmission().submitted = true;
+                this.examParticipationService.notifySubmissionSyncStateChanged();
                 this.updateViewFromSubmission();
             },
             error: () => this.onError(),

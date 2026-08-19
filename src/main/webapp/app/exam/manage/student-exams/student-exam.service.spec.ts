@@ -8,10 +8,7 @@ import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('Student Exam Service', () => {
-    setupTestBed({ zoneless: true });
-
     let httpClient: any;
     let httpClientPutSpy: any;
     let service: StudentExamService;
@@ -92,42 +89,5 @@ describe('Student Exam Service', () => {
         expect(patchSpy).toHaveBeenCalledWith(`api/exam/courses/1/exams/2/student-exams/3/working-time`, 10, { observe: 'response' });
         expect(returnedExam).toBe(updateResponse);
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(payloadExam?.exam?.course ? 2 : 0);
-    });
-
-    it('should fetch and process exams correctly on findAllForExam', () => {
-        const payload = [
-            {
-                exam: {
-                    course: {
-                        id: 1,
-                    },
-                },
-            },
-            {
-                exam: {
-                    course: {
-                        id: 1,
-                    },
-                },
-            },
-            {
-                exam: {
-                    course: undefined,
-                },
-            },
-            {
-                exam: undefined,
-            },
-        ] as StudentExam[];
-        const response = new HttpResponse<StudentExam[]>({ body: payload });
-        const getSpy = vi.spyOn(httpClient, 'get').mockReturnValue(of(response));
-
-        let returnedExams;
-        service.findAllForExam(1, 2).subscribe((result) => (returnedExams = result));
-
-        expect(getSpy).toHaveBeenCalledOnce();
-        expect(getSpy).toHaveBeenCalledWith(`api/exam/courses/1/exams/2/student-exams`, { observe: 'response' });
-        expect(returnedExams).toBe(response);
-        expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(2);
     });
 });

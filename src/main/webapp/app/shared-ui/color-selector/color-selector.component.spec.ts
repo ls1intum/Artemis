@@ -1,11 +1,9 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 describe('ColorSelectorComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ColorSelectorComponent;
     let fixture: ComponentFixture<ColorSelectorComponent>;
 
@@ -21,7 +19,7 @@ describe('ColorSelectorComponent', () => {
     it('should set the correct coordinates on init', () => {
         component.ngOnInit();
 
-        expect(component.colorSelectorPosition).toEqual({ left: 0, top: 0 });
+        expect(component.colorSelectorPosition()).toEqual({ left: 0, top: 0 });
     });
 
     it('should register click event listener on init', () => {
@@ -36,7 +34,7 @@ describe('ColorSelectorComponent', () => {
     it('should stop event propagation on openSelector', () => {
         const event = { stopPropagation: vi.fn(), target: { closest: vi.fn() } };
         const eventStopPropagationSpy = vi.spyOn(event, 'stopPropagation');
-        component.colorSelectorPosition = { left: 0, top: 0 };
+        component.colorSelectorPosition.set({ left: 0, top: 0 });
         component.openColorSelector(event as unknown as MouseEvent, 0, 0);
 
         expect(eventStopPropagationSpy).toHaveBeenCalledOnce();
@@ -52,17 +50,17 @@ describe('ColorSelectorComponent', () => {
 
         component.openColorSelector(event, 10, 7);
 
-        expect(component.colorSelectorPosition).toEqual({ left: 0, top: 10 });
-        expect(component.height).toBe(7);
-        expect(component.showColorSelector).toBeTruthy();
+        expect(component.colorSelectorPosition()).toEqual({ left: 0, top: 10 });
+        expect(component.height()).toBe(7);
+        expect(component.showColorSelector()).toBeTruthy();
 
-        component.showColorSelector = false;
+        component.showColorSelector.set(false);
 
         component.openColorSelector(event);
 
-        expect(component.colorSelectorPosition).toEqual({ left: 0, top: 65 });
-        expect(component.height).toBe(7);
-        expect(component.showColorSelector).toBeTruthy();
+        expect(component.colorSelectorPosition()).toEqual({ left: 0, top: 65 });
+        expect(component.height()).toBe(7);
+        expect(component.showColorSelector()).toBeTruthy();
     });
 
     it('should set the tag colors correctly', () => {
@@ -88,25 +86,25 @@ describe('ColorSelectorComponent', () => {
         ];
 
         DEFAULT_COLORS.forEach((color) => {
-            component.showColorSelector = true;
+            component.showColorSelector.set(true);
             component.selectColorForTag(color);
-            expect(component.showColorSelector).toBeFalsy();
+            expect(component.showColorSelector()).toBeFalsy();
             expect(emitMock).toHaveBeenCalledWith(color);
         });
     });
 
     it('should cancel the color selector correctly', () => {
-        component.showColorSelector = true;
+        component.showColorSelector.set(true);
         component.cancelColorSelector();
 
-        expect(component.showColorSelector).toBeFalsy();
+        expect(component.showColorSelector()).toBeFalsy();
     });
 
     describe('should handle close actions properly', () => {
         beforeEach(() => {
             // Make sure that the event Listener is registered
             component.ngOnInit();
-            component.showColorSelector = true;
+            component.showColorSelector.set(true);
         });
 
         it('and close when clicked outside', () => {
@@ -114,11 +112,11 @@ describe('ColorSelectorComponent', () => {
             const clickEvent = new Event('click');
             document.dispatchEvent(clickEvent);
 
-            expect(component.showColorSelector).toBeFalsy();
+            expect(component.showColorSelector()).toBeFalsy();
         });
 
         it('and stay open when clicked inside but not clicking a color', () => {
-            expect(component.showColorSelector).toBeTruthy();
+            expect(component.showColorSelector()).toBeTruthy();
 
             const insideDummyElement = document.createElement('div');
             fixture.nativeElement.appendChild(insideDummyElement);
@@ -126,7 +124,7 @@ describe('ColorSelectorComponent', () => {
             const clickEvent = new MouseEvent('click', { bubbles: true });
             insideDummyElement.dispatchEvent(clickEvent);
 
-            expect(component.showColorSelector).toBeTruthy();
+            expect(component.showColorSelector()).toBeTruthy();
         });
     });
 });

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MockComponent } from 'ng-mocks';
@@ -65,8 +64,6 @@ type MonacoInternals = Omit<
 const internals = (c: CodeEditorMonacoComponent): MonacoInternals => c as unknown as MonacoInternals;
 
 describe('CodeEditorMonacoComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let originalResizeObserver: typeof ResizeObserver | undefined;
 
     let comp: CodeEditorMonacoComponent;
@@ -271,18 +268,13 @@ describe('CodeEditorMonacoComponent', () => {
         expect(disposeFeedbackShortcutStub).toHaveBeenCalled();
     });
 
-    it('should clear feedback widgets before re-adding them', () => {
+    it('should clear feedback widgets before re-adding them', async () => {
         const disposeWidgetsByPrefixSpy = vi.spyOn(comp.editor(), 'disposeWidgetsByPrefix').mockImplementation(() => {});
-        const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
-            cb(0);
-            return 1 as any;
-        });
 
         internals(comp).renderFeedbackWidgets();
+        await fixture.whenStable();
 
         expect(disposeWidgetsByPrefixSpy).toHaveBeenCalledWith('feedback-');
-
-        rafSpy.mockRestore();
     });
 
     it.each([

@@ -2,83 +2,46 @@
 id: artemis-intelligence
 title: Artemis Intelligence
 sidebar_label: Artemis Intelligence
-description: End-to-end view of Artemis' AI-enabled subsystems, their readiness, and how to activate them.
+description: Maintained map of Artemis AI-enabled subsystems and their integration boundaries.
 ---
-
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
-import Callout from "../../src/components/Callout/Callout";
 
 # Artemis Intelligence
 
-Artemis Intelligence is the collection of AI-assisted capabilities layered on top of Artemis. It blends in-process modules (Hyperion, Atlas, Communication) with external EduTelligence services (Iris, Athena, AtlasML) and a forthcoming AI gateway (Logos) that will unify routing, metering, and privacy controls.
+Artemis Intelligence is the set of AI-assisted capabilities implemented in Artemis and the integration contracts through which Artemis uses external EduTelligence services. This page identifies ownership and boundaries; the [developer AI pipeline catalog](../developer/ai-pipelines) records the Artemis control plane in more detail.
 
-![Artemis Intelligence subsystem map](/img/artemis-intelligence.svg)
+## Ecosystem map
 
-*Figure 1 - Artemis Intelligence subsystems and data flows (updated Dec 1, 2025).*
+| Component                      | Ownership and role                                                                                                                        | Artemis boundary                                                                                                                                                                                                                     | Learn more                                                                                                                                                                                                                                                                    |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hyperion                       | Artemis-native AI-assisted authoring for programming exercises, FAQs, problem statements, checklists, quizzes, and staged code generation | Runs through Artemis services and Spring AI. Enablement and model-provider settings are Artemis configuration.                                                                                                                       | [Hyperion setup](./hyperion), [consistency-check architecture](../developer/hyperion/consistency-check), [Spring AI development](../developer/spring-ai)                                                                                                                      |
+| Atlas agents and orchestration | Artemis-native companion agents, competency orchestration, and tool callbacks                                                             | Artemis owns the course, competency, authorization, persistence, and tool contracts. Artemis Atlas configuration gates these paths; competency orchestration additionally requires the Atlas agent feature.                          | [Developer AI pipeline catalog](../developer/ai-pipelines#atlas-agents-competency-orchestration-and-atlasml)                                                                                                                                                                  |
+| Artemis Global Search          | Artemis-native keyword and semantic search across Artemis entities                                                                        | Artemis owns its Weaviate schemas, indexing/query flow, and authorization filters. It is independent of Iris RAG and lecture-answer retrieval.                                                                                       | [Global Search & Weaviate setup](./global-search-weaviate), [developer Weaviate setup](../developer/weaviate-setup)                                                                                                                                                           |
+| Iris / Pyris                   | External EduTelligence virtual-tutor service                                                                                              | Artemis creates typed requests and tracked jobs, receives authenticated callbacks, and delivers applicable results over WebSockets. Iris owns tutoring, ingestion, retrieval, and answer-pipeline internals.                         | [Artemis integration catalog](../developer/ai-pipelines#iris-and-pyris), [Iris pipeline system](https://ls1intum.github.io/edutelligence/iris/docs/developer/pipeline-system), [Iris RAG pipeline](https://ls1intum.github.io/edutelligence/iris/docs/developer/rag-pipeline) |
+| Athena                         | External EduTelligence assessment service                                                                                                 | Artemis selects/configures modules, forwards feedback and submission data, schedules applicable due-date work, and offers an authenticated repository-data boundary for authorized programming modules.                              | [Artemis integration catalog](../developer/ai-pipelines#athena), [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/)                                                                                                        |
+| AtlasML                        | Optional external EduTelligence ML service                                                                                                | Artemis has an optional, configuration-gated REST integration for competency-related calls and notifications. Selected user-facing paths additionally require the AtlasML feature. Artemis remains the owner of its competency data. | [Artemis integration catalog](../developer/ai-pipelines#atlas-agents-competency-orchestration-and-atlasml), [AtlasML pipelines](https://ls1intum.github.io/edutelligence/atlas/dev/code-reference/ml-pipelines)                                                               |
+| Memiris                        | Memory subsystem used through Iris                                                                                                        | Artemis exposes a feature-gated, authenticated management boundary for memory data and deletion. Memory creation, retrieval, relationships, and sleep processing remain owned by Iris and Memiris.                                   | [Artemis integration catalog](../developer/ai-pipelines#memiris-management-through-iris), [Iris pipeline system](https://ls1intum.github.io/edutelligence/iris/docs/developer/pipeline-system)                                                                                |
+| Logos                          | External model gateway/orchestrator                                                                                                       | Logos is service-side infrastructure used only when a consumer is configured for it; this catalog makes no claim that Artemis integrates with Logos.                                                                                 | [Logos source documentation](https://github.com/ls1intum/edutelligence/tree/main/logos)                                                                                                                                                                                       |
+| Weaviate                       | Shared vector infrastructure                                                                                                              | Artemis Global Search and Iris can use one Weaviate instance with distinct collection namespaces. Their schemas and retrieval flows remain separate.                                                                                 | [Global Search & Weaviate setup](./global-search-weaviate)                                                                                                                                                                                                                    |
 
-## What lives where
+## Ownership and operational scope
 
-| Subsystem | Scope & runtime | Current state (Dec 1, 2025) |
-| --- | --- | --- |
-| Hyperion | Spring AI inside Artemis server, AI-assisted programming exercise authoring | **Live** — configurable via Spring AI; see [Hyperion Setup](/admin/hyperion) |
-| Atlas | Spring AI inside Artemis server, competency-based learning (learner profiles, recommendations) | **Live (server)** — Spring AI wired for Atlas agents; AtlasML will be connected soon |
-| Communication | Artemis server, orchestrates FAQ rewrite/consistency pipeline | **Live** — orchestration in Artemis; execution still hits Pyris; target is to migrate it to Spring AI |
-| Iris (Pyris) | EduTelligence intelligent tutoring service (Python/FastAPI) | **Live** — production service powering tutor chat; runs in edutelligence/iris (aka Pyris) |
-| Athena | EduTelligence feedback service (Python/FastAPI) | **Live** — production service powering AI feedback generation |
-| AtlasML | EduTelligence competency graph | **Available service; not yet connected from Artemis** — Atlas Java module has REST client and feature flag but awaits activation/config |
-| Logos | AI gateway for routing, metering, privacy tiers | **Implemented (edutelligence/logos) but not integrated with Artemis yet** |
+The table deliberately separates **Artemis-native capabilities** from **external service integration contracts**:
 
-## Activation: Artemis-side Spring AI modules (Hyperion & Atlas)
+- **Artemis-native:** Hyperion, Atlas agents/orchestration, and Artemis Global Search. Artemis owns their application-level workflows, authorization, and persisted Artemis data.
+- **External services:** Iris/Pyris and Athena execute their own service pipelines. Artemis owns request construction, authenticated boundaries, callback handling, and client delivery where applicable.
+- **Optional integration:** AtlasML is not a prerequisite for the Artemis Atlas module. Its client boundary is available only when Artemis configuration enables it; selected user-facing operations also require the AtlasML feature.
+- **Shared infrastructure:** A shared Weaviate instance does not merge Artemis Global Search with Iris RAG. Keep their collection namespaces separate when sharing an instance.
 
-1. **Enable module features**
-   - Hyperion: `artemis.hyperion.enabled=true` (defaults to `false`).
-   - Atlas: `artemis.atlas.enabled=true` (defaults to `true` in `application-core.yml`).
-   Both flags participate in `SpringAIAutoConfigurationFilter`, so at least one must be true for Spring AI autoconfiguration to load.
+## Configuration versus implementation constraints
 
-2. **Choose exactly one Spring AI provider** (OpenAI or Azure OpenAI are pre-bundled). Example (OpenAI-compatible):
+Feature flags and properties control whether Artemis loads or invokes these capabilities. They are not evidence of a particular deployment, model provider, endpoint, credential, capacity, or rollout state. For example, Hyperion and Atlas model access is configured through Artemis and Spring AI, while per-request AI-selection information can be forwarded at supported Iris boundaries.
 
-```yaml
-spring:
-  ai:
-    azure:
-      openai:
-        open-ai-api-key: <openai-api-key> # sets endpoint to https://api.openai.com/v1
-        chat:
-          options:
-            deployment-name: gpt-5-mini
-            temperature: 1.0
-```
+Conversely, source-level implementation choices such as Artemis Global Search schemas, callback routes, job tracking, and feature gates are part of the integration contract. Consult the [developer AI pipeline catalog](../developer/ai-pipelines) before changing an Artemis-side boundary, and use the linked service documentation for service-owned implementation details.
 
-<Callout variant={CalloutVariant.info}>
-    For local testing with LM Studio or Ollama, follow the [Spring AI Development Guide](/developer/spring-ai).
-</Callout>
+## Related documentation
 
-## EduTelligence services
-
-- **Iris (Chat Service)** — primary chat orchestrator, handles retrieval-augmented prompts and session memory.
-- **Athena (Feedback Service)** — generates exercise feedback.
-- **AtlasML (Competency Service)** — suggests and manages competency graphs. Use `atlas.atlasml.base-url` to point Artemis to the deployed AtlasML instance.
-
-When these services are reachable, Artemis calls them via the AI Service interfaces shown in the diagram. Add the EduTelligence health endpoints to monitoring so failures short-circuit rather than degrade user flows.
-
-## Logos (AI gateway) — what to expect
-
-- Unified routing for AI services such as LLMs, reranking, and Speech-To-Text. Provider-agnostic, supports local and private-cloud LLMs.
-- Metering and billing hooks for Artemis. Request IDs passed through Spring AI.
-- Privacy tiers enforced per course/tenant (local-only, private-cloud, or disabled).
-- Central policy plane for rate limits, redaction, and prompt logging reused by Iris/Athena/Hyperion/Atlas.
-- Acts purely as a proxy: Spring AI (Artemis) and EduTelligence services keep their clients; only the configured endpoint/credentials switch from the upstream model provider to Logos.
-
-## Operational notes you actually need
-
-- Feature flags: `artemis.hyperion.enabled` (default false) and `artemis.atlas.enabled` (default true). If both are false, `SpringAIAutoConfigurationFilter` blocks all Spring AI autoconfig.
-- AtlasML wiring exists in Java (`AtlasMLService`, feature flag `Feature.AtlasML`) but needs a live base URL plus feature flag to be actionable.
-
-
-## EduTelligence setup references
-
-- Suite overview and service setup: [EduTelligence README](https://github.com/ls1intum/edutelligence#readme)
-- Iris/Pyris service setup: [edutelligence/iris](https://github.com/ls1intum/edutelligence/tree/main/iris)
-- Athena service setup: [edutelligence/athena](https://github.com/ls1intum/edutelligence/tree/main/athena)
-- Logos gateway: [edutelligence/logos](https://github.com/ls1intum/edutelligence/tree/main/logos)
-
+- [Setup of extension services](./extensions-setup)
+- [Hyperion setup](./hyperion)
+- [Global Search & Weaviate setup](./global-search-weaviate)
+- [Iris student documentation](../student/learning-content/iris)
+- [Developer AI pipeline catalog](../developer/ai-pipelines)

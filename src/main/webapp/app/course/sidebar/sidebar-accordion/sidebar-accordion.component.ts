@@ -1,9 +1,11 @@
 import { Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
-import { Params } from '@angular/router';
+import { Params, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { CheckboxModule } from 'primeng/checkbox';
 import { SidebarCardDirective } from '../directive/sidebar-card.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -13,17 +15,25 @@ import { WeekGroup, WeekGroupingUtil } from 'app/foundation/util/week-grouping.u
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { Subject, takeUntil } from 'rxjs';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+
+// CollapseState is an intersection with Record<...> group unions, so an empty seed cannot be expressed as a type
+// annotation or `satisfies`; the working copy is populated before use. Assert through a named variable so the ban on
+// object-literal assertions is respected.
+const emptyCollapseState: Record<string, boolean> = {};
+const EMPTY_COLLAPSE_STATE = emptyCollapseState as CollapseState;
 
 @Component({
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
     styleUrls: ['./sidebar-accordion.component.scss'],
-    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
+    imports: [FaIconComponent, NgbCollapse, NgClass, FormsModule, CheckboxModule, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnInit, OnDestroy {
     protected readonly Object = Object;
     private metisConversationService = inject(MetisConversationService);
     private localStorageService = inject(LocalStorageService);
+    private router = inject(Router);
     private ngUnsubscribe = new Subject<void>();
 
     readonly onUpdateSidebar = output<void>();
@@ -42,11 +52,11 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
 
     /** Working copy of the collapse state. Seeded by reference from the {@link collapseState} input so in-place
      *  property mutations remain visible to the parent, but can be replaced when a stored state is restored. */
-    readonly collapseStateInternal = signal<CollapseState>({} as CollapseState);
+    readonly collapseStateInternal = signal<CollapseState>(EMPTY_COLLAPSE_STATE);
 
     readonly faChevronRight = faChevronRight;
     readonly faFile = faFile;
-    totalUnreadMessagesPerGroup: { [key: string]: number } = {};
+    readonly totalUnreadMessagesPerGroup = signal<{ [key: string]: number }>({});
 
     constructor() {
         // Seed the working collapse state from the input.
@@ -101,7 +111,7 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     }
 
     expandAll() {
-        const collapseState = { ...this.collapseStateInternal() };
+        const collapseState = deepClone(this.collapseStateInternal());
         Object.keys(collapseState).forEach((key) => {
             collapseState[key] = false;
         });
@@ -114,12 +124,14 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
         if (routeParams) {
             const routeParamKey = Object.keys(routeParams)[0];
             if (routeParams[routeParamKey] && groupedData) {
-                const groupWithSelectedItem = Object.entries(groupedData).find((groupedItem) =>
-                    groupedItem[1].entityData.some((entityItem: SidebarCardElement) => entityItem.id === Number(routeParams[routeParamKey])),
-                );
+                const selectedId = Number(routeParams[routeParamKey]);
+                // A variant group is a single top-level card whose members live in groupedItems, so the selected id
+                // may match either the card itself or one of its nested variants (direct URL / refresh case).
+                const matchesSelectedId = (item: SidebarCardElement): boolean => item.id === selectedId || !!item.groupedItems?.some((variant) => variant.id === selectedId);
+                const groupWithSelectedItem = Object.entries(groupedData).find((groupedItem) => groupedItem[1].entityData.some(matchesSelectedId));
                 if (groupWithSelectedItem) {
                     const groupName = groupWithSelectedItem[0];
-                    this.collapseStateInternal.set({ ...this.collapseStateInternal(), [groupName]: false });
+                    this.collapseStateInternal.set(cloneWith(this.collapseStateInternal(), { [groupName]: false }));
                 }
             }
         }
@@ -132,24 +144,39 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     calculateUnreadMessagesOfGroup(): void {
         const groupedData = this.groupedData();
         if (!groupedData) {
-            this.totalUnreadMessagesPerGroup = {};
+            this.totalUnreadMessagesPerGroup.set({});
             return;
         }
 
+        const unreadMessagesPerGroup: { [key: string]: number } = {};
         Object.keys(groupedData).forEach((groupKey) => {
-            this.totalUnreadMessagesPerGroup[groupKey] = groupedData[groupKey].entityData
+            unreadMessagesPerGroup[groupKey] = groupedData[groupKey].entityData
                 .filter((item: SidebarCardElement) => this.shouldCountUnreadMessages(item))
                 .reduce((sum, item) => sum + (item.conversation?.unreadMessagesCount || 0), 0);
         });
+        this.totalUnreadMessagesPerGroup.set(unreadMessagesPerGroup);
     }
 
     toggleGroupCategoryCollapse(groupCategoryKey: string) {
-        const collapseState = { ...this.collapseStateInternal(), [groupCategoryKey]: !this.collapseStateInternal()[groupCategoryKey] };
+        const collapseState = cloneWith(this.collapseStateInternal(), { [groupCategoryKey]: !this.collapseStateInternal()[groupCategoryKey] });
         this.collapseStateInternal.set(collapseState);
         this.localStorageService.store<CollapseState>('sidebar.accordion.collapseState.' + this.storageId() + '.byCourse.' + this.courseId(), collapseState);
     }
 
     getGroupedByWeek(groupKey: string): WeekGroup[] {
         return WeekGroupingUtil.getGroupedByWeek(this.groupedData()[groupKey].entityData, this.storageId(), groupKey, this.searchValue());
+    }
+
+    onGroupVariantSelected(group: SidebarCardElement, variant: SidebarCardElement, checked: boolean): void {
+        group.groupedItems?.forEach((item) => (item.selected = false));
+        variant.selected = checked;
+    }
+
+    onGroupClicked(event: MouseEvent, group: SidebarCardElement): void {
+        const target = event.target as HTMLElement;
+        if (!group.routerLink || target.closest('.sidebar-group-variant') || target.closest('.sidebar-group-header')) {
+            return;
+        }
+        void this.router.navigateByUrl(group.routerLink);
     }
 }

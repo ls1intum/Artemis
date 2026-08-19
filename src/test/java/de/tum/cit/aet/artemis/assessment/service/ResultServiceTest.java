@@ -98,13 +98,13 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     @BeforeEach
     void reset() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         this.programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
         this.programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
         participationUtilService.addSubmission(this.programmingExerciseStudentParticipation, new ProgrammingSubmission());
 
-        ProgrammingExercise examProgrammingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        ProgrammingExercise examProgrammingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         this.examStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(examProgrammingExercise, TEST_PREFIX + "student1");
         participationUtilService.addSubmission(examStudentParticipation, new ProgrammingSubmission());
     }
@@ -375,7 +375,12 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         result = resultRepository.save(result);
         Long resultId = result.getId();
 
-        complaintUtilService.addComplaintToSubmission(result.getSubmission(), TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
+        // Re-fetch the submission with its results eagerly: result.getSubmission() is detached here (open-in-view is
+        // off and this test is not @Transactional), so addComplaintToSubmission -> getLatestResult() would lazily
+        // initialize Submission.results without an open session and throw a LazyInitializationException. Whether the
+        // merged submission's results bag is still initialized at this point varies, which made the test flaky.
+        Submission submission = submissionTestRepository.findByIdWithResultsElseThrow(result.getSubmission().getId());
+        complaintUtilService.addComplaintToSubmission(submission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
 
         assertThat(complaintRepository.findByResultId(resultId)).isPresent();
 

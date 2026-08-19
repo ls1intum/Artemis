@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -17,9 +17,10 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Message } from 'primeng/message';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -32,12 +33,12 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         FaIconComponent,
         NgbTooltip,
         SubmissionPolicyUpdateComponent,
-        NgbAlert,
         ProgrammingExerciseUpdateTimelineComponent,
         GradingInstructionsDetailsComponent,
         PresentationScoreComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
+        Message,
     ],
 })
 export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {
@@ -53,6 +54,10 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     importOptions = input.required<ImportOptions>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
+    /** When true the timeline dates are governed by the exercise's variant group (see {@link ExerciseTimelineComponent}). */
+    lockedToGroup = input<boolean>(false);
+    /** Emitted when the user clicks the locked timeline so the host can open the group-edit dialog. */
+    lockedClick = output<void>();
 
     submissionPolicyUpdateComponent = viewChild(SubmissionPolicyUpdateComponent);
     lifecycleComponent = viewChild(ProgrammingExerciseUpdateTimelineComponent);
@@ -62,13 +67,13 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
 
     formValidSignal = signal<boolean>(false);
 
-    formValid: boolean;
-    formEmpty: boolean;
+    formValid!: boolean; // assigned in calculateFormStatus(); left unset so parent's `?? false` / `=== false` reads can distinguish "not yet computed"
+    formEmpty!: boolean; // assigned in calculateFormStatus() (see formValid)
     formValidChanges = new Subject<boolean>();
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
-    editPolicyUrl: string;
+    readonly editPolicyUrl = signal<string | undefined>(undefined);
 
     ngAfterViewInit() {
         this.inputFieldSubscriptions.push(this.maxScoreField()?.valueChanges?.subscribe(() => this.calculateFormStatus()));
@@ -86,11 +91,16 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     }
 
     calculateFormStatus() {
+        const programmingExercise = this.programmingExercise();
+        const maxScoreMissingAndOptional =
+            programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED &&
+            (programmingExercise.maxPoints === undefined || programmingExercise.maxPoints === null);
+        const maxScoreValidOrOptional = this.maxScoreField()?.valid || maxScoreMissingAndOptional;
         // Bonus points are only entered (and the field only rendered) when the exercise is INCLUDED_COMPLETELY,
         // so its validity must not block the form in the other modes (the field is hidden via [hidden]).
-        const bonusPointsValidOrHidden = this.bonusPointsField()?.valid || this.programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
-        const maxPenaltyValidOrDisabled = this.maxPenaltyField()?.valid || !this.programmingExercise().staticCodeAnalysisEnabled;
-        const scoreFieldsValid = this.maxScoreField()?.valid && bonusPointsValidOrHidden && maxPenaltyValidOrDisabled;
+        const bonusPointsValidOrHidden = this.bonusPointsField()?.valid || programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
+        const maxPenaltyValidOrDisabled = this.maxPenaltyField()?.valid || !programmingExercise.staticCodeAnalysisEnabled;
+        const scoreFieldsValid = maxScoreValidOrOptional && bonusPointsValidOrHidden && maxPenaltyValidOrDisabled;
         const dependentComponentsValid = !this.submissionPolicyUpdateComponent()?.invalid && this.lifecycleComponent()?.formValid;
         const newFormValidValue = Boolean(scoreFieldsValid && dependentComponentsValid);
 
@@ -98,6 +108,20 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
         this.formValid = newFormValidValue;
         this.formEmpty = this.lifecycleComponent()?.formEmpty ?? false;
         this.formValidChanges.next(this.formValid);
+    }
+
+    onIncludedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore): void {
+        const programmingExercise = this.programmingExercise();
+        programmingExercise.includedInOverallScore = includedInOverallScore;
+        if (includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+            programmingExercise.maxPoints = 0;
+        } else if (!programmingExercise.maxPoints) {
+            programmingExercise.maxPoints = 1;
+        }
+        if (includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            programmingExercise.bonusPoints = 0;
+        }
+        this.calculateFormStatus();
     }
 
     getGradingSummary() {
@@ -153,14 +177,14 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
         return summary.map((s) => this.replacePlaceholders(s, replacements)).join(' ');
     }
 
-    replacePlaceholders(stringWithPlaceholders: string, replacements: any) {
+    replacePlaceholders(stringWithPlaceholders: string, replacements: Record<string, string | number | undefined>) {
         return stringWithPlaceholders.replace(/{(\w+)}/g, (placeholderWithDelimiters, placeholderWithoutDelimiters) =>
             this.replacePlaceholder(placeholderWithDelimiters, placeholderWithoutDelimiters, replacements),
         );
     }
 
-    replacePlaceholder(placeholderWithDelimiters: string, placeholderWithoutDelimiters: any, replacements: any) {
-        return Object.prototype.hasOwnProperty.call(replacements, placeholderWithoutDelimiters) ? replacements[placeholderWithoutDelimiters] : placeholderWithDelimiters;
+    replacePlaceholder(placeholderWithDelimiters: string, placeholderWithoutDelimiters: string, replacements: Record<string, string | number | undefined>) {
+        return Object.prototype.hasOwnProperty.call(replacements, placeholderWithoutDelimiters) ? String(replacements[placeholderWithoutDelimiters]) : placeholderWithDelimiters;
     }
 
     private setEditPolicyPageLink(): void {
@@ -174,6 +198,6 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
             'grading',
             'submission-policy',
         ];
-        this.editPolicyUrl = linkParts.join('/');
+        this.editPolicyUrl.set(linkParts.join('/'));
     }
 } /* istanbul ignore next */

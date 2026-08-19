@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { EntityArrayResponseType as ExerciseEntityArrayResponseType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -8,18 +8,27 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { RouterLink } from '@angular/router';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiTableDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-
 /**
  * Admin component for viewing upcoming exams and exercises across all courses.
  */
 @Component({
     selector: 'jhi-upcoming-exams-and-exercises',
     templateUrl: './upcoming-exams-and-exercises.component.html',
-    styles: ['.table {table-layout: fixed}'],
-    imports: [TranslateDirective, RouterLink, ArtemisDatePipe, FaIconComponent, TooltipModule, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        ArtemisDatePipe,
+        FaIconComponent,
+        TumUiTooltipDirective,
+        ArtemisTranslatePipe,
+        AdminTitleBarTitleDirective,
+        TumUiTableDirective,
+        TumUiTagComponent,
+    ],
 })
 export class UpcomingExamsAndExercisesComponent implements OnInit {
     private readonly exerciseService = inject(ExerciseService);
@@ -45,13 +54,5 @@ export class UpcomingExamsAndExercisesComponent implements OnInit {
         this.examManagementService.findAllCurrentAndUpcomingExams().subscribe((res: HttpResponse<Exam[]>) => {
             this.upcomingExams.set(res.body ?? []);
         });
-    }
-
-    trackByExercise(_index: number, item: Exercise) {
-        return `${item.course?.id}_${item.id}`;
-    }
-
-    trackByExam(_index: number, item: Exam) {
-        return `${item.course?.id}_${item.id}`;
     }
 }

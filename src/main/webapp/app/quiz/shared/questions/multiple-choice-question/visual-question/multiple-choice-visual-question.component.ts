@@ -9,7 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { cloneDeep } from 'lodash-es';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-multiple-choice-visual-question',
@@ -22,7 +22,7 @@ export class MultipleChoiceVisualQuestionComponent {
     question = input.required<MultipleChoiceQuestion>();
     reEvaluationInProgress = input<boolean>(false);
 
-    backupQuestion: MultipleChoiceQuestion;
+    backupQuestion!: MultipleChoiceQuestion; // set by the constructor effect from the required question() input before any user interaction
 
     questionChanged = output();
 
@@ -40,7 +40,7 @@ export class MultipleChoiceVisualQuestionComponent {
 
     constructor() {
         effect(() => {
-            this.backupQuestion = cloneDeep(this.question());
+            this.backupQuestion = deepClone(this.question());
         });
     }
 
@@ -79,7 +79,7 @@ export class MultipleChoiceVisualQuestionComponent {
     }
 
     resetAnswer(index: number) {
-        this.question().answerOptions![index] = cloneDeep(this.backupQuestion.answerOptions![index]);
+        this.question().answerOptions![index] = deepClone(this.backupQuestion.answerOptions![index]);
 
         this.questionChanged.emit();
     }

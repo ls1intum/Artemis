@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -16,12 +16,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
+import { IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -41,7 +42,8 @@ export type CompetencyRecommendation = {
 };
 
 type CompetencyGenerationStatusUpdate = {
-    stages: IrisStageDTO[];
+    runState: IrisRunState;
+    error?: IrisStatusError;
     result?: CompetencyRecommendation[];
 };
 
@@ -73,8 +75,8 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
 
     readonly courseDescriptionForm = viewChild.required(CourseDescriptionFormComponent);
 
-    courseId: number;
-    isLoading = false;
+    courseId!: number; // set in ngOnInit() from the route params
+    readonly isLoading = signal(false);
     submitted = false;
     form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });
 
@@ -106,7 +108,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      * @param courseDescription
      */
     getCompetencyRecommendations(courseDescription: string) {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.getCurrentCompetencies().subscribe((currentCompetencies) => {
             this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencies).subscribe({
                 next: () => {
@@ -118,26 +120,26 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
                                     this.addCompetencyToForm(competency);
                                 }
                             }
-                            if (update.stages.every((stage) => stage.state === IrisStageStateDTO.DONE)) {
+                            if (update.runState === IrisRunState.FINISHED) {
                                 this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });
-                            } else if (update.stages.some((stage) => stage.state === IrisStageStateDTO.ERROR)) {
+                            } else if (update.runState === IrisRunState.FAILED) {
                                 this.alertService.warning('artemisApp.competency.generate.courseDescription.warning');
                             }
-                            if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
+                            if (update.runState !== IrisRunState.RUNNING) {
                                 this.websocketSubscription?.unsubscribe();
-                                this.isLoading = false;
+                                this.isLoading.set(false);
                             }
                         },
                         error: (res: HttpErrorResponse) => {
                             onError(this.alertService, res);
                             this.websocketSubscription?.unsubscribe();
-                            this.isLoading = false;
+                            this.isLoading.set(false);
                         },
                     });
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 },
             });
         });
@@ -205,7 +207,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      * Cancels the parsing and navigates back
      */
     onCancel() {
-        this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
 
     /**
@@ -235,11 +237,11 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      * Saves the competency recommendations as competencies and navigates back
      */
     save() {
-        const competenciesToSave = this.competencies.getRawValue().map((c) => Object.assign(new Competency(), c.competency));
+        const competenciesToSave = this.competencies.getRawValue().map((c) => hydrate(new Competency(), c.competency));
         this.competencyService.createBulk(competenciesToSave, this.courseId).subscribe({
             next: () => {
                 this.submitted = true;
-                this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -269,7 +271,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      * Only allow to leave page after submitting or if no pending changes exist
      */
     canDeactivate(): boolean {
-        return this.submitted || (!this.isLoading && this.competencies.length === 0);
+        return this.submitted || (!this.isLoading() && this.competencies.length === 0);
     }
 
     get canDeactivateWarning(): string {

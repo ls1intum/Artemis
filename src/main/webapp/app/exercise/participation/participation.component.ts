@@ -16,7 +16,6 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { User } from 'app/account/user/user.model';
-import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -46,6 +45,7 @@ import { FilterDropdownComponent } from 'app/exercise/shared/filter-dropdown/fil
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export enum FilterProp {
     ALL = 'All',
@@ -126,11 +126,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return !!(ex?.course && ex?.isAtLeastTutor && (this.gradeStepsDTO()?.presentationsNumber ?? 0) > 0 && ex?.presentationScoreEnabled === true);
     });
 
-    readonly scoresRoute = computed<any[]>(() => {
+    readonly scoresRoute = computed<(string | number | undefined)[]>(() => {
         const ex = this.exercise();
         if (!ex) return [];
         const exam = ex.exerciseGroup?.exam;
-        const base: any[] = ['/course-management'];
+        const base: (string | number | undefined)[] = ['/course-management'];
         if (exam) {
             base.push(exam.course!.id, 'exams', exam.id, 'exercise-groups', ex.exerciseGroup!.id);
         } else {
@@ -159,8 +159,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private lastLazyEvent: TableLazyLoadEvent | undefined;
     private currentLoadRequestId = 0;
     // private exerciseSubmissionState: ExerciseSubmissionState = {};
-    private paramSub: Subscription;
-    private gradeStepsDTOSub: Subscription;
+    private paramSub?: Subscription;
+    private gradeStepsDTOSub?: Subscription;
     private websocketSubscriptions: Subscription[] = [];
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -372,10 +372,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
         const requestId = ++this.currentLoadRequestId;
         const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
-        const search: ParticipationSearch = {
-            ...base,
-            filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
-        };
+        const search: ParticipationSearch = cloneWith(base, { filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined });
 
         this.participationService.searchParticipations(ex.id, search).subscribe({
             next: (result) => {
@@ -421,10 +418,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         p.buildPlanId = dto.buildPlanId;
         p.repositoryUri = dto.repositoryUri;
         if (dto.studentId !== undefined || dto.studentLogin !== undefined) {
-            p.student = { id: dto.studentId, login: dto.studentLogin } as User;
+            const student: Partial<User> = { id: dto.studentId, login: dto.studentLogin };
+            p.student = student as User;
         }
         if (dto.teamId !== undefined) {
-            p.team = { id: dto.teamId } as Team;
+            p.team = { id: dto.teamId };
         }
         if (dto.lastResultIsManual !== undefined) {
             const result = new Result();

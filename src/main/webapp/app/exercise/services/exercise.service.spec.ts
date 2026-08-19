@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -29,10 +28,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 
 describe('Exercise Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExerciseService;
     let httpMock: HttpTestingController;
     let artemisMarkdown: ArtemisMarkdownService;
@@ -95,6 +93,23 @@ describe('Exercise Service', () => {
 
     afterEach(() => {
         httpMock.verify();
+    });
+
+    it('should fetch only the exercise title projection for selection lists', () => {
+        const titles: ExerciseTitle[] = [
+            { id: 1, title: 'Text title', type: ExerciseType.TEXT },
+            { id: 2, title: 'Programming title', type: ExerciseType.PROGRAMMING },
+        ];
+        let received: ExerciseTitle[] | undefined;
+
+        service.getTitlesForCourse(7).subscribe((response) => (received = response));
+        const request = httpMock.expectOne({ method: 'GET', url: 'api/exercise/courses/7/exercise-titles' });
+        expect(request.request.params.keys()).toEqual([]);
+        expect(request.request.body).toBeNull();
+        request.flush(titles);
+
+        expect(received).toEqual(titles);
+        expect(received?.map(({ id, title, type }) => ({ id, title, type }))).toEqual(titles);
     });
 
     it('should validate equal dates', () => {
@@ -420,6 +435,29 @@ describe('Exercise Service', () => {
 
         expect(converted.releaseDate).toBe(releaseDate.toJSON());
         expect(converted.startDate).toBeUndefined();
+    });
+
+    it('should convert category strings from server into real ExerciseCategory instances', () => {
+        const categories = [JSON.stringify({ color: '#6ae8ac', category: 'category1' }), JSON.stringify({ color: '#123456', category: 'category2' })];
+
+        const result = service.convertExerciseCategoriesAsStringFromServer(categories);
+
+        expect(result).toHaveLength(2);
+        // Must be real instances (not plain parsed objects), so the class methods are available.
+        expect(result[0]).toBeInstanceOf(ExerciseCategory);
+        expect(result[0].category).toBe('category1');
+        expect(result[0].color).toBe('#6ae8ac');
+        expect(result[0].equals(new ExerciseCategory('category1', '#6ae8ac'))).toBe(true);
+        expect(result[1].category).toBe('category2');
+    });
+
+    it('should skip malformed category strings instead of throwing', () => {
+        const categories = [JSON.stringify({ color: '#6ae8ac', category: 'category1' }), '{ not valid json', JSON.stringify({ color: '#123456', category: 'category2' })];
+
+        const result = service.convertExerciseCategoriesAsStringFromServer(categories);
+
+        expect(result).toHaveLength(2);
+        expect(result.map((c) => c.category)).toEqual(['category1', 'category2']);
     });
 
     it('should get exercise details', () => {

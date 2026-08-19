@@ -33,6 +33,8 @@ public final class Constants {
 
     public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
 
+    public static final int MAX_PACKAGE_NAME_LENGTH = 100;
+
     /**
      * The default REST/URL-path prefix for accessing file uploads.
      * Don't use this constant elsewhere than in the Presentation-Layer to reduce
@@ -85,11 +87,31 @@ public final class Constants {
 
     public static final int PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = 36;
 
+    // Must be consistent with the exam.title varchar(255) database column.
+    public static final int EXAM_TITLE_MAX_LENGTH = 255;
+
+    // Upper bound for configurable max-points values in a course or exam grading configuration (int database columns).
+    // Keep in sync with MAX_GRADING_POINTS in input.constants.ts.
+    public static final int MAX_GRADING_POINTS = 9999;
+
+    // Upper bound for the course presentation score. Must stay <= 127 because course.presentation_score is a tinyint column.
+    // Keep in sync with MAX_PRESENTATION_SCORE in input.constants.ts.
+    public static final int MAX_PRESENTATION_SCORE = 100;
+
+    // Upper bound for the number of graded presentations in a course. A domain limit, not a database constraint.
+    // Keep in sync with MAX_PRESENTATION_COUNT in input.constants.ts.
+    public static final int MAX_PRESENTATION_COUNT = 100;
+
     public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
 
-    public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_\\-\\s]*");
+    // Allowed characters for exercise titles: Unicode letters (\p{L}, e.g. umlauts like "Lärche"), combining marks
+    // (\p{M}, for decomposed accented characters), numbers (\p{N}), underscore, hyphen and whitespace. Titles are
+    // display-only and never used to derive VCS/CI artifacts (those come from the ASCII-validated short name), so
+    // allowing international letters here is safe. Previously this was ASCII-only, which rejected legitimate titles such
+    // as "Lärche" on edit while create/import accepted them.
+    public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[\\p{L}\\p{M}\\p{N}_\\-\\s]*");
 
     public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
 
@@ -132,6 +154,9 @@ public final class Constants {
     public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
+
+    // Note: Must be consistent with EXAM_TEXT_MAX_LENGTH in input.constants.ts
+    public static final int EXAM_TEXT_MAX_LENGTH = 10_000; // Applies to the exam start/end and confirmation start/end texts
 
     /**
      * Maximum length in the database for the feedback detail text.
@@ -225,6 +250,26 @@ public final class Constants {
     public static final String RE_EVALUATE_RESULTS = "RE_EVALUATE_RESULTS";
 
     public static final String RESET_GRADING = "RESET_GRADING";
+
+    /**
+     * Audit event: a user changed their own password from inside their account.
+     */
+    public static final String CHANGE_OWN_PASSWORD = "CHANGE_OWN_PASSWORD";
+
+    /**
+     * Audit event: a user completed a password reset from an emailed link.
+     */
+    public static final String COMPLETE_PASSWORD_RESET = "COMPLETE_PASSWORD_RESET";
+
+    /**
+     * Audit event: an administrator replaced a user's password through the user management form.
+     */
+    public static final String ADMIN_CHANGE_USER_PASSWORD = "ADMIN_CHANGE_USER_PASSWORD";
+
+    /**
+     * Audit event: a user revoked their own passkeys, SSH keys or VCS access tokens without changing their password.
+     */
+    public static final String REVOKE_OWN_CREDENTIALS = "REVOKE_OWN_CREDENTIALS";
 
     public static final String TRIGGER_INSTRUCTOR_BUILD = "TRIGGER_INSTRUCTOR_BUILD";
 
@@ -553,6 +598,11 @@ public final class Constants {
      * The name of the property used to enable or disable SAML2-based single sign-on.
      */
     public static final String SAML2_ENABLED_PROPERTY_NAME = "artemis.user-management.saml2.enabled";
+
+    /**
+     * The name of the property used to enable or disable OIDC-based single sign-on.
+     */
+    public static final String OIDC_ENABLED_PROPERTY_NAME = "artemis.user-management.oidc.enabled";
 
     /**
      * The name of the property used to enable or disable Theia functionality.

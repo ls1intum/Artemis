@@ -22,7 +22,6 @@ import { CourseCompetencyService } from 'app/atlas/shared/services/course-compet
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ScienceService } from 'app/foundation/science/science.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 class MockActivatedRoute {
     parent: any;
@@ -42,7 +41,6 @@ const mockActivatedRoute = new MockActivatedRoute({
     }),
 });
 describe('CourseCompetencies', () => {
-    setupTestBed({ zoneless: true });
     let courseCompetenciesComponentFixture: ComponentFixture<CourseCompetenciesComponent>;
     let courseCompetenciesComponent: CourseCompetenciesComponent;
     let courseCompetencyService: CourseCompetencyService;
@@ -113,12 +111,12 @@ describe('CourseCompetencies', () => {
                 }),
             ),
         );
-        vi.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({ studentCourseAnalyticsDashboardEnabled: true } as any);
+        vi.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({} as any);
 
         courseCompetenciesComponent.isCollapsed = false;
         courseCompetenciesComponentFixture.detectChanges();
 
         expect(getAllCourseCompetenciesForCourseSpy).toHaveBeenCalledOnce();
-        expect(courseCompetenciesComponent.competencies).toHaveLength(2);
+        expect(courseCompetenciesComponent.competencies()).toHaveLength(2);
     });
 });

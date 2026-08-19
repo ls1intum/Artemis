@@ -34,8 +34,8 @@ import { captureException } from '@sentry/angular';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 vi.mock('@sentry/angular', () => ({
@@ -43,8 +43,6 @@ vi.mock('@sentry/angular', () => ({
 }));
 
 describe('QuizExamSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as ImageComponent));
 
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
@@ -101,11 +99,11 @@ describe('QuizExamSubmissionComponent', () => {
 
         expect(fixture).toBeDefined();
         expect(quizServiceSpy).toHaveBeenCalledOnce();
-        expect(component.selectedAnswerOptions.has(1)).toBe(true);
-        expect(component.selectedAnswerOptions.size).toBe(1);
-        expect(component.dragAndDropMappings.has(2)).toBe(true);
-        expect(component.dragAndDropMappings.size).toBe(1);
-        expect(component.shortAnswerSubmittedTexts.size).toBe(0);
+        expect(component.selectedAnswerOptions().has(1)).toBe(true);
+        expect(component.selectedAnswerOptions().size).toBe(1);
+        expect(component.dragAndDropMappings().has(2)).toBe(true);
+        expect(component.dragAndDropMappings().size).toBe(1);
+        expect(component.shortAnswerSubmittedTexts().size).toBe(0);
     });
 
     it('should update view from submission and fill the dictionary accordingly when submitted answer', () => {
@@ -131,9 +129,9 @@ describe('QuizExamSubmissionComponent', () => {
         component.updateViewFromSubmission();
         fixture.detectChanges();
 
-        expect(JSON.stringify(component.selectedAnswerOptions.get(1))).toEqual(JSON.stringify([multipleChoiceSelectedOptions]));
-        expect(JSON.stringify(component.dragAndDropMappings.get(2))).toEqual(JSON.stringify([dragAndDropMapping]));
-        expect(component.shortAnswerSubmittedTexts.size).toBe(0);
+        expect(JSON.stringify(component.selectedAnswerOptions().get(1))).toEqual(JSON.stringify([multipleChoiceSelectedOptions]));
+        expect(JSON.stringify(component.dragAndDropMappings().get(2))).toEqual(JSON.stringify([dragAndDropMapping]));
+        expect(component.shortAnswerSubmittedTexts().size).toBe(0);
 
         /**
          * Test the return value of the getSubmission and getExercise
@@ -159,13 +157,13 @@ describe('QuizExamSubmissionComponent', () => {
         component.updateViewFromSubmission();
         fixture.detectChanges();
 
-        expect(JSON.stringify(component.selectedAnswerOptions.get(1))).toEqual(JSON.stringify([]));
-        expect(component.selectedAnswerOptions.has(1)).toBe(true);
-        expect(JSON.stringify(component.dragAndDropMappings.get(2))).toEqual(JSON.stringify([]));
-        expect(component.dragAndDropMappings.has(2)).toBe(true);
+        expect(JSON.stringify(component.selectedAnswerOptions().get(1))).toEqual(JSON.stringify([]));
+        expect(component.selectedAnswerOptions().has(1)).toBe(true);
+        expect(JSON.stringify(component.dragAndDropMappings().get(2))).toEqual(JSON.stringify([]));
+        expect(component.dragAndDropMappings().has(2)).toBe(true);
 
-        expect(component.shortAnswerSubmittedTexts.size).toBe(1);
-        expect(component.shortAnswerSubmittedTexts.has(3)).toBe(true);
+        expect(component.shortAnswerSubmittedTexts().size).toBe(1);
+        expect(component.shortAnswerSubmittedTexts().has(3)).toBe(true);
     });
 
     it('should trigger navigation towards the corrensponding question of the quiz', () => {
@@ -240,15 +238,15 @@ describe('QuizExamSubmissionComponent', () => {
 
         const multipleChoiceSelectedOptions = new AnswerOption();
         multipleChoiceSelectedOptions.id = 1;
-        component.selectedAnswerOptions.set(1, [multipleChoiceSelectedOptions]);
+        component.selectedAnswerOptions.update((map) => new Map(map).set(1, [multipleChoiceSelectedOptions]));
 
         const dragAndDropMapping = new DragAndDropMapping(new DragItem(), new DropLocation());
         dragAndDropMapping.id = 2;
-        component.dragAndDropMappings.set(2, [dragAndDropMapping]);
+        component.dragAndDropMappings.update((map) => new Map(map).set(2, [dragAndDropMapping]));
 
         const shortAnswerSubmittedText = new ShortAnswerSubmittedText();
         shortAnswerSubmittedText.id = 3;
-        component.shortAnswerSubmittedTexts.set(3, [shortAnswerSubmittedText]);
+        component.shortAnswerSubmittedTexts.update((map) => new Map(map).set(3, [shortAnswerSubmittedText]));
 
         const multipleChoiceSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
         multipleChoiceSubmittedAnswer.quizQuestion = multipleChoiceQuestion;
@@ -285,9 +283,9 @@ describe('QuizExamSubmissionComponent', () => {
         component.setSubmissionVersion(submissionVersion);
         fixture.detectChanges();
         expect(component.submissionVersion).toEqual(submissionVersion);
-        expect(component.selectedAnswerOptions.size).toBe(0);
-        expect(component.dragAndDropMappings.size).toBe(1);
-        expect(component.shortAnswerSubmittedTexts.size).toBe(0);
+        expect(component.selectedAnswerOptions().size).toBe(0);
+        expect(component.dragAndDropMappings().size).toBe(1);
+        expect(component.shortAnswerSubmittedTexts().size).toBe(0);
     });
 
     it('should call triggerSave if save exercise button is clicked', () => {
@@ -306,5 +304,20 @@ describe('QuizExamSubmissionComponent', () => {
         const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
         saveButton.triggerEventHandler('save', null);
         expect(saveExerciseSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should notify the sync-state version whenever it marks the submission unsaved', () => {
+        // `isSynced` is mutated in place, so under zoneless change detection the exam navigation sidebar and
+        // exercise overview only re-evaluate their saved/unsaved icons if this notification fires. Without it a
+        // student editing this exercise type during an exam sees no unsaved-changes indicator.
+        fixture.componentRef.setInput('studentSubmission', quizSubmission);
+        fixture.componentRef.setInput('quizConfiguration', { quizQuestions: [multipleChoiceQuestion] } as QuizConfiguration);
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
+
+        component.onSelectionChanged();
+
+        expect(component.studentSubmission().isSynced).toBe(false);
+        expect(notify).toHaveBeenCalledTimes(1);
     });
 });

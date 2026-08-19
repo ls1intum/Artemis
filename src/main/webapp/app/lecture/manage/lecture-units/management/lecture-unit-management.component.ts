@@ -30,6 +30,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-lecture-unit-management',
@@ -235,9 +236,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     isViewButtonAvailable(lectureUnit: LectureUnit): boolean {
-        switch (lectureUnit!.type) {
+        switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT_VIDEO: {
-                const attachmentVideoUnit = <AttachmentVideoUnit>lectureUnit;
+                const attachmentVideoUnit = lectureUnit as AttachmentVideoUnit;
                 return attachmentVideoUnit.attachment?.link?.endsWith('.pdf') ?? false;
             }
             default:
@@ -263,7 +264,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.EXERCISE:
-                return (<ExerciseUnit>lectureUnit)?.exercise?.releaseDate || undefined;
+                return (lectureUnit as ExerciseUnit)?.exercise?.releaseDate || undefined;
             default:
                 return lectureUnit.releaseDate || undefined;
         }
@@ -272,7 +273,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getAttachmentVersion(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT_VIDEO:
-                return (<AttachmentVideoUnit>lectureUnit)?.attachment?.version || undefined;
+                return (lectureUnit as AttachmentVideoUnit)?.attachment?.version || undefined;
             default:
                 return undefined;
         }
@@ -331,7 +332,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         const topic = `/topic/lectures/${lectureId}/unit-processing-state`;
         this.processingStateSubscription = this.websocketService.subscribe<LectureUnitCombinedStatus>(topic).subscribe((status: LectureUnitCombinedStatus) => {
             this.processingStatus.update((current) => {
-                const updated = Object.assign({}, current);
+                const updated = deepClone(current);
                 updated[status.lectureUnitId] = {
                     lectureUnitId: status.lectureUnitId,
                     phase: status.processingPhase,
@@ -342,7 +343,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return updated;
             });
             this.transcriptionStatus.update((current) => {
-                const updated = Object.assign({}, current);
+                const updated = deepClone(current);
                 if (status.transcriptionStatus) {
                     updated[status.lectureUnitId] = status.transcriptionStatus;
                 } else {
@@ -444,7 +445,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         // Row 1: Release date badge (always)
         // Row 2: Transcription + Processing badges side by side (for attachment video units)
         if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-            const hasSecondRow = this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit) || this.hasProcessingBadge(<AttachmentVideoUnit>lectureUnit);
+            const hasSecondRow = this.hasTranscriptionBadge(lectureUnit) || this.hasProcessingBadge(lectureUnit);
             return hasSecondRow ? '-40px' : '-18px';
         }
         return '-18px';
@@ -457,7 +458,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         if (lectureUnit.type !== LectureUnitType.ATTACHMENT_VIDEO) {
             return null;
         }
-        const hasSecondRow = this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit) || this.hasProcessingBadge(<AttachmentVideoUnit>lectureUnit);
+        const hasSecondRow = this.hasTranscriptionBadge(lectureUnit) || this.hasProcessingBadge(lectureUnit);
         return hasSecondRow ? '67px' : '45px';
     }
 
@@ -470,24 +471,25 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: true }));
+        this.isRetryingProcessing.update((current) => cloneWith(current, { [lectureUnit.id!]: true }));
         this.lectureUnitService.retryProcessing(this.resolvedLectureId, lectureUnit.id).subscribe({
             next: (status) => {
                 this.alertService.success('artemisApp.lectureUnit.processingRetryStarted');
                 // Update status from the returned value
-                this.processingStatus.update((current) => ({
-                    ...current,
-                    [status.lectureUnitId]: {
-                        lectureUnitId: status.lectureUnitId,
-                        phase: status.processingPhase,
-                        retryCount: status.retryCount,
-                        startedAt: status.startedAt,
-                        errorKey: status.processingErrorKey,
-                    },
-                }));
+                this.processingStatus.update((current) =>
+                    cloneWith(current, {
+                        [status.lectureUnitId]: {
+                            lectureUnitId: status.lectureUnitId,
+                            phase: status.processingPhase,
+                            retryCount: status.retryCount,
+                            startedAt: status.startedAt,
+                            errorKey: status.processingErrorKey,
+                        },
+                    }),
+                );
                 // Update transcription status - clear old entry if null (e.g., transcription deleted during retry)
                 this.transcriptionStatus.update((current) => {
-                    const updated = { ...current };
+                    const updated = deepClone(current);
                     if (status.transcriptionStatus) {
                         updated[status.lectureUnitId] = status.transcriptionStatus;
                     } else {
@@ -495,11 +497,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     }
                     return updated;
                 });
-                this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: false }));
+                this.isRetryingProcessing.update((current) => cloneWith(current, { [lectureUnit.id!]: false }));
             },
             error: (errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);
-                this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: false }));
+                this.isRetryingProcessing.update((current) => cloneWith(current, { [lectureUnit.id!]: false }));
             },
         });
     }
@@ -536,7 +538,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     // Navigate to edit page for the last created unit
                     const lectureValue = this.lecture();
                     if (lastCreatedUnit?.id && lectureValue?.course?.id) {
-                        this.router.navigate([
+                        void this.router.navigate([
                             '/course-management',
                             lectureValue.course.id,
                             'lectures',

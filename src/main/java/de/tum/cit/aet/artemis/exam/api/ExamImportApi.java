@@ -26,13 +26,16 @@ public class ExamImportApi extends AbstractExamApi {
 
     /**
      * Imports an exam with all its exercises to the target course.
+     * <p>
+     * The import is resilient and skips exercises that cannot be imported; the skipped exercise titles are logged by
+     * {@link ExamImportService#importExamWithExercises} and are not propagated through this thin forwarding API. Call the
+     * service directly if you need the skipped-exercise titles.
      *
      * @param examToCopy     the exam to copy
      * @param targetCourseId the ID of the target course
-     * @return the imported exam
      * @throws IOException if an error occurs during import
      */
-    public Exam importExamWithExercises(Exam examToCopy, long targetCourseId) throws IOException {
-        return examImportService.importExamWithExercises(examToCopy, targetCourseId);
+    public void importExamWithExercises(Exam examToCopy, long targetCourseId) throws IOException {
+        examImportService.importExamWithExercises(examToCopy, targetCourseId);
     }
 }

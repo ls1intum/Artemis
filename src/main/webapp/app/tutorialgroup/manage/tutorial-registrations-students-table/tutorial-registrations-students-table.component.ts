@@ -2,7 +2,8 @@ import { Component, computed, input } from '@angular/core';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface TutorialRegistrationsStudentsTableRemoveActionColumnInfo {
     headerStringKey: string;
@@ -21,6 +22,6 @@ export class TutorialRegistrationsStudentsTableComponent {
     studentsWithCompleteProfilePictureUrl = computed(() => this.computeStudentsWithCompleteProfilePictureUrl());
 
     private computeStudentsWithCompleteProfilePictureUrl(): TutorialGroupStudent[] {
-        return this.students().map((student) => ({ ...student, profilePictureUrl: addPublicFilePrefix(student.profilePictureUrl) }));
+        return this.students().map((student) => cloneWith(student, { profilePictureUrl: addPublicFilePrefix(student.profilePictureUrl) }));
     }
 }

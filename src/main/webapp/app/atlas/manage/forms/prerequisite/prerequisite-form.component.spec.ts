@@ -22,14 +22,11 @@ import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.serv
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('PrerequisiteFormComponent', () => {
-    setupTestBed({ zoneless: true });
     let prerequisiteFormComponentFixture: ComponentFixture<PrerequisiteFormComponent>;
     let prerequisiteFormComponent: PrerequisiteFormComponent;
 
@@ -45,7 +42,7 @@ describe('PrerequisiteFormComponent', () => {
         courseCompetencyServiceMock.getCourseCompetencyTitles.mockReturnValue(of(new HttpResponse({ body: [] })));
 
         TestBed.configureTestingModule({
-            imports: [CompetencyFormComponent, ReactiveFormsModule, NgbDropdownModule, OwlNativeDateTimeModule],
+            imports: [CompetencyFormComponent, ReactiveFormsModule, NgbDropdownModule],
             providers: [
                 { provide: PrerequisiteService, useValue: prerequisiteServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -158,7 +155,7 @@ describe('PrerequisiteFormComponent', () => {
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies).toEqual([
+        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies()).toEqual([
             'artemisApp.courseCompetency.taxonomies.REMEMBER',
             'artemisApp.courseCompetency.taxonomies.UNDERSTAND',
         ]);
@@ -175,7 +172,7 @@ describe('PrerequisiteFormComponent', () => {
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies).toEqual([
+        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies()).toEqual([
             'artemisApp.courseCompetency.taxonomies.REMEMBER',
             'artemisApp.courseCompetency.taxonomies.UNDERSTAND',
         ]);
