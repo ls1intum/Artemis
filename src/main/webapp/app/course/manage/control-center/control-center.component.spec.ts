@@ -58,7 +58,7 @@ describe('ControlCenterComponent', () => {
     it('should display the iris enabled component with correct inputs', () => {
         const irisEnabledComponent = fixture.debugElement.query(By.directive(IrisEnabledComponent));
         expect(irisEnabledComponent).toBeTruthy();
-        expect(irisEnabledComponent.componentInstance.course).toEqual(course);
+        expect(irisEnabledComponent.componentInstance.course()).toEqual(course);
     });
 
     it('should display the iris logo', () => {

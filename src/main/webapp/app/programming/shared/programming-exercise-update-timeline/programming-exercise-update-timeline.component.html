@@ -100,7 +100,8 @@
                         type="checkbox"
                         class="form-check-input"
                         name="setTestCaseVisibilityToAfterDueDate"
-                        [(ngModel)]="setTestCaseVisibilityToAfterDueDate"
+                        [ngModel]="setTestCaseVisibilityToAfterDueDate()"
+                        (click)="onSetTestCaseVisibilityClick($event)"
                         id="setTestCaseVisibilityToAfterDueDate-checkbox"
                     />
                     <label
@@ -181,7 +182,7 @@
     @if (timelineItems().length > 0) {
         <div class="section">
             <h6 jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel"></h6>
-            <jhi-exercise-timeline
+            <jhi-timeline
                 [timelineItems]="timelineItems()"
                 [lockedToGroup]="lockedToGroup()"
                 (lockedClick)="lockedClick.emit()"
@@ -190,3 +191,4 @@
         </div>
     }
 </div>
+<p-confirmDialog />

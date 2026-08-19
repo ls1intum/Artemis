@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "atlasOrchestrator": {
+            "button": "Suggest competencies",
             "tooltip": "Run the Atlas competency orchestrator on this exercise",
             "error": "Atlas orchestrator run failed. Please try again later.",
             "partial": "Atlas orchestrator run failed midway — review the partial actions in the dialog and revert any that are incorrect.",

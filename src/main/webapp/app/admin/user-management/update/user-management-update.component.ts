@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -29,7 +30,9 @@ import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-f
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AccountService } from 'app/core/auth/account.service';
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -64,6 +67,8 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly fb = inject(FormBuilder);
     private readonly accountService = inject(AccountService);
+    private readonly credentialRevocationConfirmationService = inject(CredentialRevocationConfirmationService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
@@ -93,6 +98,9 @@ export class UserManagementUpdateComponent implements OnInit {
 
     /** Whether a random password should be generated (new users) or the old password kept (existing users). */
     readonly useRandomPassword = signal(true);
+
+    /** Whether an administrator explicitly chose to revoke the existing user's other credentials with a password change. */
+    readonly revokeCredentials = signal(false);
 
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
@@ -148,7 +156,7 @@ export class UserManagementUpdateComponent implements OnInit {
                 this.oldLogin = this.user().login;
                 this.organizationService.getOrganizationsByUser(this.user().id!).subscribe((organizations) => {
                     // Rebuild the user reference so the async organization update renders under zoneless.
-                    this.user.update((currentUser) => ({ ...currentUser, organizations }));
+                    this.user.update((currentUser) => cloneWith(currentUser, { organizations }));
                 });
             }
         });
@@ -181,12 +189,32 @@ export class UserManagementUpdateComponent implements OnInit {
      * Saves the user (creates new or updates existing).
      * Shows a warning for Jenkins users when login changes.
      */
-    save(): void {
-        this.isSaving.set(true);
+    async save(): Promise<void> {
         // temporarily store the user organizations because they are not part of the edit form
         const userOrganizations = this.user().organizations;
         const updatedUser: User = this.editForm.getRawValue();
         updatedUser.organizations = userOrganizations;
+        if (updatedUser.id) {
+            updatedUser.revokeCredentials = !!updatedUser.password && this.revokeCredentials();
+        }
+
+        // Deactivating an active account also revokes every credential, in UserCreationService.updateUser and regardless
+        // of the checkbox, so clearing "Activated" and saving deletes all passkeys, keys and tokens too. Confirming only
+        // the checkbox left that path silent, which is the more surprising of the two: the administrator was not asked
+        // about credentials at all.
+        const deactivating = this.user().id !== undefined && this.user().activated && !updatedUser.activated;
+
+        // Confirmed before saving, and before the spinner starts, because this deletes another person's authenticators
+        // and keys irreversibly. An administrator has no way to notice a mistyped click here the way the owner would, so
+        // this is the site that most needs the question asked. A save that revokes nothing is not interrupted.
+        if (updatedUser.revokeCredentials || deactivating) {
+            const confirmed = await this.credentialRevocationConfirmationService.confirm({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        this.isSaving.set(true);
         this.user.set(updatedUser);
         if (updatedUser.id) {
             this.userService.update(updatedUser).subscribe({
@@ -214,6 +242,14 @@ export class UserManagementUpdateComponent implements OnInit {
     shouldRandomizePassword(useRandomPassword: boolean) {
         this.useRandomPassword.set(useRandomPassword);
         this.user().password = useRandomPassword ? undefined : '';
+        // Clears the typed value as well, not just the model: save() submits editForm.getRawValue(), so a
+        // password typed before toggling back would otherwise still be sent — silently changing the password
+        // while revokeCredentials is reset to false, i.e. a real credential change that leaves the user's
+        // other credentials intact.
+        this.updatePasswordValidators(true);
+        if (useRandomPassword) {
+            this.revokeCredentials.set(false);
+        }
     }
 
     /**
@@ -229,7 +265,7 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     onOrgSelected(organization: Organization) {
         // Rebuild the user reference (new organizations array) so the dialog result renders under zoneless.
-        this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }));
+        this.user.update((currentUser) => cloneWith(currentUser, { organizations: [...(currentUser.organizations ?? []), organization] }));
     }
 
     /**
@@ -238,7 +274,38 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     removeOrganizationFromUser(organization: Organization) {
         // Rebuild the user reference (new organizations array) so the updated list renders under zoneless.
-        this.user.update((currentUser) => ({ ...currentUser, organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }));
+        this.user.update((currentUser) =>
+            cloneWith(currentUser, { organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }),
+        );
+    }
+
+    /**
+     * Recomputes the password validators from the current state, and clears the value when a password no longer
+     * applies.
+     * <p>
+     * Owned here rather than by a template `[required]` binding because the password input is rendered inside
+     * both `@if (internal)` and `@if (!useRandomPassword())`. Whenever either turns off, the input and any
+     * validator directive on it are destroyed while a rule left composed on the control keeps the form invalid —
+     * with no field on screen for the administrator to fix, so Save stays disabled for good. Driving it from
+     * state instead covers every route out of manual-password mode: toggling back to keeping the password, and
+     * switching a new user to external.
+     *
+     * @param clearTypedValue whether to discard a password already typed, used when the mode itself changed
+     */
+    private updatePasswordValidators(clearTypedValue = false) {
+        const passwordControl = this.editForm?.get('password');
+        if (!passwordControl) {
+            return;
+        }
+        const lengthRules = [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)];
+        const passwordApplies = !!this.editForm.get('internal')?.value && !this.useRandomPassword();
+        passwordControl.setValidators(passwordApplies ? [Validators.required, ...lengthRules] : lengthRules);
+        if (clearTypedValue || !passwordApplies) {
+            // reset() re-runs the validators just set.
+            passwordControl.reset('');
+        } else {
+            passwordControl.updateValueAndValidity();
+        }
     }
 
     private initializeForm() {
@@ -265,6 +332,13 @@ export class UserManagementUpdateComponent implements OnInit {
         } else {
             this.editForm.get('internal')?.enable(); // New users can either be internal or external
         }
+        // Recompute whenever `internal` changes: unchecking it hides the whole password section without going
+        // through shouldRandomizePassword(), which would otherwise leave a required rule stranded on a hidden
+        // control. initializeForm() returns early when the form already exists, so this subscribes once.
+        this.editForm
+            .get('internal')
+            ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => this.updatePasswordValidators());
         this.editForm.patchValue(this.user());
     }
 

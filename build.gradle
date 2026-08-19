@@ -6,7 +6,20 @@ buildscript {
     // This is a build-time-only dependency (client code generation), not shipped in the WAR.
     configurations.classpath {
         resolutionStrategy {
-            force "com.github.jknack:handlebars:4.5.3"
+            force "com.github.jknack:handlebars:4.5.4"
+            // Force the patched Apache HttpComponents onto the build-script / plugin classpath too. The
+            // org.owasp.dependencycheck and org.springframework.boot plugins drag in httpclient5 5.6.1 /
+            // httpcore5 5.4.2 / httpcore5-h2 5.4, which the GitHub dependency graph reports and Dependabot flags
+            // (GHSA-hjcp-jmpx-g3qm, GHSA-hf6x-8p5f-cgmf, GHSA-v3jc-474w-2wm6) even though the shipped WAR only ever
+            // contains the patched versions pinned in the dependencies block below. Build-time only, not shipped.
+            // Same reasoning as the jackson-bom enforcedPlatform further down. Note the two trains are versioned
+            // independently and must not be collapsed onto one number: client5 tracks 5.6.x and core5 tracks 5.4.x,
+            // because httpclient5-parent:5.6.3 itself declares <httpcore.version>5.4.3</httpcore.version>. Keep each
+            // force equal to that module's project-level pin in the dependencies block below.
+            force "org.apache.httpcomponents.client5:httpclient5:5.6.3"
+            force "org.apache.httpcomponents.client5:httpclient5-cache:5.6.3"
+            force "org.apache.httpcomponents.core5:httpcore5:5.4.3"
+            force "org.apache.httpcomponents.core5:httpcore5-h2:5.4.3"
         }
     }
     // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
@@ -80,7 +93,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.9"
+version = "10.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -107,6 +120,7 @@ ext.tumUiRuntimeSources = fileTree("packages/tum-ui/src") {
 apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
 apply from: "gradle/sbom.gradle"
+apply from: "gradle/dependency-families.gradle"
 
 if (project.hasProperty("prod")) {
     apply from: "gradle/profile_prod.gradle"
@@ -179,7 +193,7 @@ ext["tomcat.version"] = "11.0.22"
 // earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
 dependencyManagement {
     imports {
-        mavenBom "tools.jackson:jackson-bom:3.1.5"
+        mavenBom "tools.jackson:jackson-bom:3.1.6"
         mavenBom "com.fasterxml.jackson:jackson-bom:2.22.1"
     }
 }
@@ -279,15 +293,19 @@ dependencies {
     // Required by Sharing Platform
     implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
     // Required by Spring cloud.
-    // Pinned below the vulnerable range: not vulnerable to CVE-2026-40542 / GHSA-v468-qcjx-r72w (vulnerable range >= 5.6-alpha1, < 5.6.1).
-    // The CVE affects the SCRAM-SHA-256 authentication scheme that was first introduced in 5.6; that code path does not
-    // exist in 5.5.x, and Artemis does not use SCRAM-SHA-256 anywhere. A transitive request for httpclient5:5.6 from
-    // io.weaviate:client6 (and httpclient5:5.5.2 from httpclient5-cache via the Spring BOM / Shibboleth) is resolved
-    // down to 5.5.1 by this explicit pin.
-    // We cannot upgrade to 5.6.1 (the patched release) because it breaks Hazelcast cluster formation; the bump was
-    // reverted in PR #12652.
-    implementation "org.apache.httpcomponents.client5:httpclient5:5.5.1"
-    implementation "org.apache.httpcomponents.core5:httpcore5:5.3.6"
+    // The client5 and core5 trains must be bumped together: httpclient5 5.6.x declares httpcore5 5.4.x. PR #12652 moved
+    // httpclient5 to 5.6.1 while leaving httpcore5 on 5.3.6 and had to be reverted because Hazelcast cluster formation
+    // broke on that mismatched pair. Keeping both explicit pins in sync avoids a repeat.
+    // 5.6.3 / 5.4.3 close GHSA (httpclient5) connection leak on Content-Encoding decode error leading to pool
+    // exhaustion, (httpcore5) HTTP/1 header parsing memory exhaustion, and (httpcore5-h2) HPackDecoder unlimited
+    // header list size before SETTINGS ACK. httpcore5-h2 is declared explicitly so the transitive request from
+    // httpclient5 cannot resolve down to a vulnerable 5.3.x via another consumer.
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.6.3"
+    // httpclient5-cache reaches the runtime classpath transitively (webauthn4j, helios-status-spring-starter) and
+    // would otherwise sit at 5.6.1 while httpclient5 is 5.6.3. Pinned so the whole family stays on one version.
+    implementation "org.apache.httpcomponents.client5:httpclient5-cache:5.6.3"
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.4.3"
+    implementation "org.apache.httpcomponents.core5:httpcore5-h2:5.4.3"
 
     implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
     implementation "org.glassfish.jersey.core:jersey-common:4.0.2"
@@ -335,6 +353,10 @@ dependencies {
 
     // Sentry depends on this
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.26.1"
+    // Declared explicitly so the direct version wins over the log4j-bom version managed by the Spring Boot BOM, which
+    // still sits in the range vulnerable to the improper encoding of non-finite floating-point values during
+    // MapMessage JSON serialization (fixed in 2.25.5). Keep in sync with log4j-to-slf4j above.
+    implementation "org.apache.logging.log4j:log4j-api:2.26.1"
 
     // Used for LTI (e.g. Moodle --> Artemis)
     implementation("uk.ac.ox.ctl:spring-security-lti13:0.3.5") {
@@ -373,11 +395,11 @@ dependencies {
     implementation "ch.qos.logback:logback-classic"
     implementation "ch.qos.logback:logback-core"
 
-    implementation "org.jsoup:jsoup:1.22.2"
+    implementation "org.jsoup:jsoup:1.23.1"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
-    implementation "commons-codec:commons-codec:1.22.0"
+    implementation "commons-codec:commons-codec:1.22.1"
 
-    implementation "com.vdurmont:semver4j:3.1.0"
+    implementation "org.semver4j:semver4j:6.0.0"
 
     implementation "com.github.docker-java:docker-java-core:${docker_java_version}"
     // Note: we explicitly use docker-java-transport-zerodep, because docker-java-transport-httpclient5 uses an outdated http5 version which is not compatible with Spring Boot >= 3.4.0
@@ -437,9 +459,8 @@ dependencies {
 
     // Required for several dependencies
     implementation "org.apache.commons:commons-text:${commons_text_version}"
-    implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "org.apache.commons:commons-lang3:${commons_lang3_version}"
-    implementation "org.apache.commons:commons-collections4:4.5.0"
+    implementation "org.apache.commons:commons-collections4:4.6.0"
     // Declared explicitly because production code imports org.apache.commons.io.* directly (FileUtil, FileService, FilenameUtils, …).
     // It was previously only present transitively, which is fragile: a transitive provider can drop or relocate the package on a
     // version bump (e.g. the OpenSAML/Velocity upgrade removed org.apache.velocity.shaded.commons.io). Enforced by ArchitectureTest.testNoShadedDependencies.
@@ -488,7 +509,7 @@ dependencies {
     // passkey functionality to simplify login — Spring Security versions managed by the Spring Boot BOM.
     implementation "org.springframework.security:spring-security-webauthn"
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.31.8.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.31.9.RELEASE"
 
     implementation "org.springframework.security:spring-security-messaging"
     implementation "org.springframework.security:spring-security-ldap"
@@ -496,7 +517,7 @@ dependencies {
     implementation "com.nimbusds:nimbus-jose-jwt:10.9.1"
 
     // Nullable annotations for improved static analysis
-    implementation "org.jspecify:jspecify:1.0.0"
+    implementation "org.jspecify:jspecify:1.0.1"
 
     // Helios push-based status updates
     implementation "de.tum.cit.aet:helios-status-spring-starter:${helios_status_version}"
@@ -536,14 +557,14 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
     // required by sshd-git; pinned to a patched release addressing GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.84"
-    implementation "org.bouncycastle:bcprov-jdk18on:1.84"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.85"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.85"
     // pulled transitively by sshd-git; pin to patched version
-    implementation "org.bouncycastle:bcpg-jdk18on:1.84"
+    implementation "org.bouncycastle:bcpg-jdk18on:1.85"
 
     // required for database connections
     implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
-    implementation "org.postgresql:postgresql:42.7.12"
+    implementation "org.postgresql:postgresql:42.7.13"
 
     // Required by JPlag
     implementation "com.ibm.icu:icu4j-charset:78.3"
@@ -552,14 +573,13 @@ dependencies {
 
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.maven:maven-model:4.0.0-rc-5"
-    implementation "org.apache.pdfbox:pdfbox:3.0.7"
+    implementation "org.apache.pdfbox:pdfbox:3.0.8"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.commonmark:commonmark:0.29.0"
-    implementation "org.commonmark:commonmark-ext-gfm-tables:0.29.0"
-    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.29.0"
+    implementation "org.commonmark:commonmark:0.30.0"
+    implementation "org.commonmark:commonmark-ext-gfm-tables:0.30.0"
+    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.30.0"
 
     implementation "commons-fileupload:commons-fileupload:1.6.0"
-    implementation "net.lingala.zip4j:zip4j:2.11.6"
 
     // explicitly only use this at runtime (required by liquibase, because developers should prefer org.apache.commons:csv
     runtimeOnly "com.opencsv:opencsv:5.12.0"
@@ -570,7 +590,7 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
     // needed for OpenAPI generation (v3 required for Spring Boot 4)
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
@@ -616,7 +636,7 @@ dependencies {
     }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.184"
+    testImplementation "io.github.classgraph:classgraph:4.8.192"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:9.6.1"
@@ -624,8 +644,8 @@ dependencies {
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
-    testImplementation "com.icegreen:greenmail-junit5:2.1.9"
-    testImplementation "com.tngtech.archunit:archunit:1.4.2"
+    testImplementation "com.icegreen:greenmail-junit5:2.1.12"
+    testImplementation "com.tngtech.archunit:archunit:1.5.0"
 
     // we only need the database present at runtime
     runtimeOnly "com.h2database:h2:2.4.240"
@@ -653,7 +673,7 @@ dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}"
         // BOM uses 3-part versions (e.g. 18.1.0); POSTGRES_VERSION from .env may be 2-part (e.g. 18.1)
-        def pgVersion = findProperty('postgres_version') ?: '18.1'
+        def pgVersion = findProperty('postgres_version') ?: '18.4'
         def bomVersion = pgVersion.count('.') < 2 ? "${pgVersion}.0" : pgVersion
         mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:${bomVersion}"
         mavenBom "org.testcontainers:testcontainers-bom:${testcontainers_version}"
@@ -677,7 +697,7 @@ configurations.matching { it.name != 'mockitoAgent' }.configureEach {
         // GHSA-rcgg-9c38-7xpx (unbounded memory allocation in W3C Baggage propagation).
         if (details.requested.group == "io.opentelemetry") {
             details.useVersion("${opentelemetry_version}")
-            details.because("Patched OpenTelemetry release; pre-${opentelemetry_version} contains GHSA-rcgg-9c38-7xpx.")
+            details.because("Patched OpenTelemetry release; releases before 1.62.0 contain GHSA-rcgg-9c38-7xpx.")
         }
     }
 }

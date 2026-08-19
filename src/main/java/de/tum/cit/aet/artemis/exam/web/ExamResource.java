@@ -99,6 +99,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForImportListDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForQuestionPoolDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamIdAndTitleDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
@@ -609,8 +610,7 @@ public class ExamResource {
 
     /**
      * Checks that the visible/start/end-dates are present and in the correct order.
-     * For real exams: visibleDate < startDate < endDate
-     * For test exams: visibleDate <= startDate < endDate
+     * visibleDate < startDate < endDate
      *
      * @param exam the exam to be checked
      */
@@ -619,15 +619,8 @@ public class ExamResource {
             throw new BadRequestAlertException("An exam has to have times when it becomes visible, starts, and ends as well as a working time.", ENTITY_NAME, "examTimes");
         }
 
-        if (exam.isTestExam()) {
-            if (!(exam.getVisibleDate().isBefore(exam.getStartDate()) || exam.getVisibleDate().isEqual(exam.getStartDate())) || !exam.getStartDate().isBefore(exam.getEndDate())) {
-                throw new BadRequestAlertException("For test exams, the visible date has to be before or equal to the start date and the start date has to be before the end date",
-                        ENTITY_NAME, "examTimes");
-            }
-        }
-        else if (!exam.getVisibleDate().isBefore(exam.getStartDate()) || !exam.getStartDate().isBefore(exam.getEndDate())) {
-            throw new BadRequestAlertException("For real exams, the visible date has to be before the start date and the start date has to be before the end date", ENTITY_NAME,
-                    "examTimes");
+        if (!exam.getVisibleDate().isBefore(exam.getStartDate()) || !exam.getStartDate().isBefore(exam.getEndDate())) {
+            throw new BadRequestAlertException("The visible date has to be before the start date and the start date has to be before the end date", ENTITY_NAME, "examTimes");
         }
 
         if (exam.getExampleSolutionPublicationDate() != null && exam.getExampleSolutionPublicationDate().isBefore(exam.getEndDate())) {
@@ -1287,6 +1280,23 @@ public class ExamResource {
         StudentExam exam = examAccessService.getOrCreateStudentExamElseThrow(courseId, examId);
         exam.getUser().setVisibleRegistrationNumber();
         return ResponseEntity.ok(StudentExamForConductionDTO.of(exam));
+    }
+
+    /**
+     * GET /courses/{courseId}/exams-for-overview : Get the exams of a course that are visible to the requesting user.
+     * <p>
+     * Projected to what the sidebar renders. The visibility rules are unchanged: an exam is returned once its visible
+     * date has passed and the user is registered for it, is at least a tutor in the course, or it is a test exam.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the exams visible to the user as body
+     */
+    @GetMapping("courses/{courseId}/exams-for-overview")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<ExamForOverviewDTO>> getExamsForCourseOverview(@PathVariable long courseId) {
+        log.debug("REST request to get the exams of course {} for the course overview", courseId);
+        User user = userRepository.getUser();
+        return ResponseEntity.ok(examRepository.findAllForOverviewByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now()));
     }
 
     /**

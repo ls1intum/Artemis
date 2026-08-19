@@ -37,6 +37,7 @@
         },
         "courseOverview": {
             "noCourseIcon": "Kein Kurs Icon verfügbar",
+            "exerciseLoadFailed": "Die Übungen konnten nicht geladen werden. Bitte versuche es erneut.",
             "showMore": "Mehr anzeigen",
             "showLess": "Weniger anzeigen",
             "general": {
@@ -280,6 +281,7 @@
             },
             "lectureDetails": {
                 "description": "Beschreibung",
+                "lectureContent": "Vorlesungsinhalt",
                 "lectureUnits": "Vorlesungsinhalte",
                 "attachments": "Anhänge",
                 "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",

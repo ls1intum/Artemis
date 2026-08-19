@@ -8,6 +8,53 @@
 
 @plugin 'tailwindcss-primeui';
 
+/*
+ * Width of the grey dividers between the app shell's regions (sidebar / title bar / content / footer). Under the
+ * `--spacing-*` namespace so it is usable both as Tailwind utilities (`pr-divider`, `ms-divider`) and, because this
+ * `@theme` block is not `inline`, as `var(--spacing-divider)` from SCSS (see the `shell-content-height` mixin).
+ */
+@theme {
+    --spacing-divider: 6px;
+}
+
+/*
+ * The remaining shell metrics. They live here, next to the divider, because they are theme-independent: the per-theme
+ * SCSS files carry colours, and a metric placed there would have to be repeated in both to be emitted for both themes.
+ *
+ * `--navbar-height` and `--footer-height` are fallbacks for the first paint; `observeShellMetrics()` keeps them in
+ * sync with the rendered elements from then on. `--header-height` is deliberately not among them — exam mode owns that
+ * variable for the exam navigation bar.
+ *
+ * The title bar renders `--title-bar-content-height` of content plus `--title-bar-padding-block` above and below,
+ * i.e. `--title-bar-height` in total, identically across the student overview, course management and admin shells.
+ */
+:root {
+    --title-bar-height: 40px;
+    --title-bar-content-height: 28px;
+    --title-bar-padding-block: 6px;
+    --navbar-height: 68px;
+    --footer-height: 32px;
+
+    /*
+     * Title row of a detail page's header card (exercise, lecture). Held constant so both pages' headers are exactly
+     * as tall: the exercise page fills this row with its action buttons, the lecture page only with its title.
+     */
+    --detail-header-title-row-height: 36px;
+
+    /*
+     * Navigation sidebar of the student overview, course management and administration shells. One token because the
+     * three must match, and they previously repeated the value in two stylesheets.
+     *
+     * The open width is the narrowest that still shows every item label in full in both English and German. An item
+     * spends 44px of it on chrome (8px padding, the 20px fixed-width icon, 8px to the label, 8px padding), leaving
+     * 120px for the label itself — against a measured boundary of 99px, so wide-glyph labels such as
+     * "Benachrichtigung", which needs more room than the longer but narrower "LTI Konfiguration", still fit. Keep it
+     * in step with MAX_SIDEBAR_ITEM_LABEL_LENGTH, which caps how long a new label may be.
+     */
+    --sidebar-nav-width: 164px;
+    --sidebar-nav-width-collapsed: 64px;
+}
+
 @theme inline {
     --color-state-danger: var(--danger);
     --color-state-success: var(--success);
@@ -24,6 +71,8 @@
 @source './app/iris/manage/settings';
 @source './app/editor/markdown-editor';
 @source './app/shared-ui/date-time-picker';
+/* The exam-scores page still carries legacy Bootstrap markup, but its layout and chart spacing are Tailwind. */
+@source './app/exam/manage/exam-scores';
 
 /* Only the second-correction button: its host alignment utilities must not depend on an unrelated module
    happening to use the same classes. Bootstrap's .float-end in this folder keeps winning through !important. */
@@ -44,6 +93,7 @@
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/account/user/settings/user-settings-container/user-settings-container.component.html';
+@source './app/exercise/unreferenced-feedback';
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';
