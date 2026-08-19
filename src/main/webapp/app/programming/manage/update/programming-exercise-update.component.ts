@@ -236,13 +236,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     readonly courseId = signal<number>(undefined!);
 
     rerenderSubject = new Subject<void>();
+    // Created once rather than per `asObservable()` call, because getProgrammingExerciseCreationConfig() hands this to
+    // the child components on every change-detection pass and a new wrapper each pass is a new input identity.
+    private readonly rerenderObservable = this.rerenderSubject.asObservable();
     // This is used to revert the select if the user cancels to override the new selected programming language.
     private selectedProgrammingLanguageValue!: ProgrammingLanguage; // set in ngOnInit() from the loaded exercise before the selectedProgrammingLanguage getter is read
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue?: ProjectType;
 
-    // Left undefined until categories load; code distinguishes undefined ("not yet loaded") from an empty array.
-    exerciseCategories?: ExerciseCategory[];
+    // Initialised here rather than left undefined, because getProgrammingExerciseCreationConfig() must hand the child
+    // components a stable array identity. See the comment on that getter.
+    exerciseCategories: ExerciseCategory[] = [];
     existingCategories: ExerciseCategory[] = [];
 
     formStatusSections = signal<FormSectionStatus[]>([]);
@@ -744,10 +748,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
             this.existingCategories = existingCategories;
         });
-
-        if (this.exerciseCategories === undefined) {
-            this.exerciseCategories = [];
-        }
     }
 
     /**
@@ -756,7 +756,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * so both references must point to the same object for changes to propagate correctly.
      */
     private ensureExerciseCategoriesReference() {
-        this.exerciseCategories = this.programmingExercise.categories ?? this.exerciseCategories ?? [];
+        this.exerciseCategories = this.programmingExercise.categories ?? this.exerciseCategories;
         this.programmingExercise.categories = this.exerciseCategories;
     }
 
@@ -1677,9 +1677,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.updateRepositoryName = this.updateRepositoryName;
         config.updateCheckoutDirectory = this.updateCheckoutDirectory;
         config.refreshAuxiliaryRepositoryChecks = this.refreshAuxiliaryRepositoryChecks;
-        // The config requires a non-optional array; `?? []` mirrors the defensive default already applied in
-        // validateExerciseCategories. The previous `Object.assign` typing hid the mismatch.
-        config.exerciseCategories = this.exerciseCategories ?? [];
+        // Assigned directly, never with a `?? []` fallback: this getter runs on every change-detection pass, so a
+        // fallback would hand the category selector a new array identity each pass. On a creation page, where the
+        // categories start out empty, that re-seeds the selector on every pass, which re-dirties this component and
+        // loops. A production build has no dev-mode guard to break that loop, so the page stops responding entirely.
+        // The field is initialised at its declaration, which is what makes the direct assignment safe.
+        config.exerciseCategories = this.exerciseCategories;
         config.existingCategories = this.existingCategories;
         config.updateCategories = this.categoriesChanged;
         config.modePickerOptions = this.modePickerOptions;
@@ -1700,7 +1703,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.problemStatementLoaded = this.problemStatementLoaded;
         config.templateParticipationResultLoaded = this.templateParticipationResultLoaded;
         config.hasUnsavedChanges = this.hasUnsavedChanges;
-        config.rerenderSubject = this.rerenderSubject.asObservable();
+        config.rerenderSubject = this.rerenderObservable;
         config.validIdeSelection = this.validIdeSelection;
         config.validOnlineIdeSelection = this.validOnlineIdeSelection;
         config.inProductionEnvironment = this.inProductionEnvironment;
