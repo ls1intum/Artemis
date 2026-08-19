@@ -75,6 +75,9 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
 
     private static final String INPUT_ARCHIVE_FILE = "/var/tmp/artemis-localci-input.tar";
 
+    /** The directory the build script runs in; result paths are relative to it. Mirrors KubernetesBuildJobFactory. */
+    private static final String TESTING_DIRECTORY_PATH = "/var/tmp/testing-dir";
+
     private static final List<String> TERMINAL_IMAGE_PULL_FAILURES = List.of("ErrImagePull", "ImagePullBackOff", "InvalidImageName");
 
     private static final List<String> TERMINAL_START_FAILURES = Stream
@@ -290,10 +293,20 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
     }
 
     static String resultCollectionCommand(List<String> resultPaths) {
-        StringBuilder command = new StringBuilder("set -eu; shopt -s globstar nullglob; rm -rf /var/tmp/results; mkdir -p /var/tmp/results;");
+        // Expand the globs from the directory the build script ran in, not from the helper's own working directory.
+        // KubernetesBuildJobFactory starts the builder with `cd /var/tmp/testing-dir`, so the standard result paths
+        // ("test-reports/*.xml", "**/target/surefire-reports/*.xml", ...) are written relative to that directory.
+        // Expanding them one level up matched nothing, and because a miss is not an error the helper still exited 0 with
+        // an empty archive: every build reported no test feedback rather than failing visibly. This also matches the
+        // Docker runner, whose mv runs in the build working directory.
+        StringBuilder command = new StringBuilder("set -eu; shopt -s globstar nullglob; rm -rf /var/tmp/results; mkdir -p /var/tmp/results; cd ").append(TESTING_DIRECTORY_PATH)
+                .append(";");
         for (String resultPath : resultPaths) {
             validateResultPath(resultPath);
-            command.append(" for source in ").append(resultPath).append("; do [ -e \"$source\" ] && mv -- \"$source\" /var/tmp/results/ || true; done;");
+            // `continue` rather than `|| true`: nullglob already makes a non-matching pattern iterate zero times, so the
+            // only thing `|| true` still hid was a genuine mv failure. Overlapping patterns stay safe because each glob
+            // is expanded when its own loop starts, by which point an earlier loop has already moved those files away.
+            command.append(" for source in ").append(resultPath).append("; do [ -e \"$source\" ] || continue; mv -- \"$source\" /var/tmp/results/; done;");
         }
         command.append(" tar -cpf - -C /var/tmp results");
         return command.toString();

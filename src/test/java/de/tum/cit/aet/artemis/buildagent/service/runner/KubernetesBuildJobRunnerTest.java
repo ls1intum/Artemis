@@ -179,6 +179,12 @@ class KubernetesBuildJobRunnerTest {
         String command = KubernetesBuildJobRunner.resultCollectionCommand(List.of("results/**/*.xml", "reports/*.sarif"));
 
         assertThat(command).contains("shopt -s globstar nullglob", "for source in results/**/*.xml", "for source in reports/*.sarif", "tar -cpf - -C /var/tmp results");
+        // The build script runs in the testing directory, so the globs have to be expanded there rather than one level
+        // up in the workspace: expanding them in /var/tmp matched nothing and still exited 0, producing an empty archive
+        assertThat(command).contains("cd /var/tmp/testing-dir");
+        assertThat(command.indexOf("cd /var/tmp/testing-dir")).isLessThan(command.indexOf("for source in"));
+        // A miss is skipped, but a real mv failure must not be swallowed
+        assertThat(command).contains("|| continue").doesNotContain("|| true");
         assertThatThrownBy(() -> KubernetesBuildJobRunner.resultCollectionCommand(List.of("results/../../secret"))).isInstanceOf(LocalCIException.class);
         assertThatThrownBy(() -> KubernetesBuildJobRunner.resultCollectionCommand(List.of("results/$(command)"))).isInstanceOf(LocalCIException.class);
         assertThatThrownBy(() -> KubernetesBuildJobRunner.resultCollectionCommand(List.of(""))).isInstanceOf(LocalCIException.class);
