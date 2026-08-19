@@ -5,7 +5,10 @@
             <input id="presentation-assessment-title" tumUiInput class="w-full" type="text" formControlName="title" />
             @if (editForm.controls.title.invalid && editForm.controls.title.touched) {
                 <tum-ui-message severity="error" data-testid="presentation-title-error">
-                    <span jhiTranslate="entity.validation.required"></span>
+                    <span
+                        [jhiTranslate]="editForm.controls.title.hasError('maxlength') ? 'entity.validation.maxlength' : 'entity.validation.required'"
+                        [translateValues]="{ max: titleMaxLength }"
+                    ></span>
                 </tum-ui-message>
             }
         </div>
@@ -62,6 +65,11 @@
         <div class="col-span-full flex min-w-0 flex-col gap-2">
             <label for="presentation-assessment-description" jhiTranslate="artemisApp.presentationAssessment.description"></label>
             <textarea id="presentation-assessment-description" tumUiTextarea class="min-h-28 w-full resize-y" rows="4" formControlName="description"></textarea>
+            @if (editForm.controls.description.invalid && editForm.controls.description.touched) {
+                <tum-ui-message severity="error" data-testid="presentation-description-error">
+                    <span jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: descriptionMaxLength }"></span>
+                </tum-ui-message>
+            }
         </div>
     </div>
 
@@ -82,7 +90,7 @@
                 removeUserQuestionKey="artemisApp.presentationAssessment.students.removeQuestion"
             >
                 <span>
-                    <span>{{ studentSectionTitle() }} - </span>
+                    <span>{{ studentSectionTitle() || ('artemisApp.presentationAssessment.students.newPresentation' | artemisTranslate) }} - </span>
                     @if (filteredAssignedStudentsSize() < assignedStudents().length) {
                         <span>{{ filteredAssignedStudentsSize() }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"></span> </span>
                     }

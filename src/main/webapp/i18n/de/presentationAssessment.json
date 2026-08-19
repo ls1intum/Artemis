@@ -26,6 +26,7 @@
                 "typeNameToConfirm": "Bitte gib den Titel der Präsentationsbewertung zur Bestätigung ein."
             },
             "students": {
+                "newPresentation": "Neue Präsentation",
                 "removeQuestion": "Soll der Benutzer mit Login <strong>{{ title }}</strong> wirklich aus dieser Präsentation entfernt werden?"
             }
         }

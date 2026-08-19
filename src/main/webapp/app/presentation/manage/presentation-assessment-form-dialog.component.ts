@@ -18,6 +18,9 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { TumUiButtonComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
+const TITLE_MAX_LENGTH = 255;
+const DESCRIPTION_MAX_LENGTH = 1000;
+
 const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     const maxPoints = parseNumber(control.get('maxPoints')?.value);
     const resultPoints = parseNumber(control.get('resultPoints')?.value);
@@ -87,6 +90,8 @@ export class PresentationAssessmentFormDialogComponent {
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
     protected readonly studentsCourseGroup = CourseRoleSlug.STUDENTS;
+    protected readonly titleMaxLength = TITLE_MAX_LENGTH;
+    protected readonly descriptionMaxLength = DESCRIPTION_MAX_LENGTH;
 
     readonly assignedStudents = signal<User[]>([]);
     readonly filteredAssignedStudentsSize = signal(0);
@@ -110,8 +115,8 @@ export class PresentationAssessmentFormDialogComponent {
 
     editForm = this.formBuilder.group(
         {
-            title: ['', [Validators.required, Validators.maxLength(255)]],
-            description: ['', [Validators.maxLength(1000)]],
+            title: ['', [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)]],
+            description: ['', [Validators.maxLength(DESCRIPTION_MAX_LENGTH)]],
             maxPoints: [0 as number | string | undefined, [numberRequired, numberMin(0.01)]],
             resultPoints: [undefined as number | string | undefined, [optionalNumber, numberMin(0)]],
             presentationDate: [undefined as dayjs.Dayjs | undefined],
@@ -120,7 +125,7 @@ export class PresentationAssessmentFormDialogComponent {
     );
 
     readonly currentTitle = signal('');
-    readonly studentSectionTitle = computed(() => this.currentTitle().trim() || this.presentationAssessment()?.title?.trim() || 'New presentation');
+    readonly studentSectionTitle = computed(() => this.currentTitle().trim() || this.presentationAssessment()?.title?.trim());
 
     constructor() {
         this.editForm.controls.title.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((title) => this.currentTitle.set(title ?? ''));

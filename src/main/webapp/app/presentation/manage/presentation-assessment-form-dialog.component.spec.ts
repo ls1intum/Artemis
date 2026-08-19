@@ -103,6 +103,19 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         expect(savedSpy).not.toHaveBeenCalled();
     });
 
+    it('should reject overly long title and description', () => {
+        const savedSpy = vi.fn();
+        component.saved.subscribe(savedSpy);
+        component.editForm.controls.title.setValue('a'.repeat(256));
+        component.editForm.controls.description.setValue('a'.repeat(1001));
+
+        component.save();
+
+        expect(component.editForm.controls.title.hasError('maxlength')).toBe(true);
+        expect(component.editForm.controls.description.hasError('maxlength')).toBe(true);
+        expect(savedSpy).not.toHaveBeenCalled();
+    });
+
     it('should save decimal comma result points as number', () => {
         const savedSpy = vi.fn();
         component.saved.subscribe(savedSpy);
