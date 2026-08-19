@@ -39,6 +39,7 @@ import {
     PROFILE_LOCALCI,
     ProfileFeature,
 } from 'app/app.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type FeatureToggleInfo = {
     feature: FeatureToggle;
@@ -97,6 +98,19 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     /** Icons */
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
+
+    /**
+     * Tint and border for a feature card: light green when the feature is active, muted grey when it is not.
+     *
+     * The contrast comes from the active state being tinted at all — the shades this replaces (`bg-surface-50` vs
+     * `bg-surface-100`) were one step apart and indistinguishable at a glance. Red is reserved for states that need
+     * attention, so a switched-off feature stays neutral rather than reading as a failure.
+     *
+     * The success token carries its own light/dark values; the surface shades need explicit `dark:` variants.
+     */
+    protected featureCardClasses(isActive: boolean): string {
+        return isActive ? 'bg-state-success/10 border-state-success/40' : 'bg-surface-100 border-surface-300 dark:bg-surface-800 dark:border-surface-600';
+    }
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
     private readonly displayedProfiles: ProfileFeature[] = [PROFILE_LOCALCI, PROFILE_BUILDAGENT, PROFILE_JENKINS];
@@ -238,7 +252,7 @@ export class AdminFeatureToggleComponent implements OnInit {
     }
 
     private setToggleState(feature: FeatureToggle, isActive: boolean): void {
-        this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === feature ? { ...toggle, isActive } : toggle)));
+        this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === feature ? cloneWith(toggle, { isActive }) : toggle)));
     }
 
     private setPending(feature: FeatureToggle, pending: boolean): void {

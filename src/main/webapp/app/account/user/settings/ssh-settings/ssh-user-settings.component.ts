@@ -14,6 +14,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { DocumentationLinkComponent } from 'app/shared-ui/components/documentation-link/documentation-link.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-account-information',
@@ -83,12 +84,7 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
             .pipe(
                 tap((publicKeys: UserSshPublicKey[]) => {
                     this.sshUserSettingsService.sshKeys = publicKeys;
-                    this.sshPublicKeys.set(
-                        publicKeys.map((key) => ({
-                            ...key,
-                            hasExpired: key.expiryDate && dayjs().isAfter(dayjs(key.expiryDate)),
-                        })),
-                    );
+                    this.sshPublicKeys.set(publicKeys.map((key) => cloneWith(key, { hasExpired: key.expiryDate && dayjs().isAfter(dayjs(key.expiryDate)) })));
                     this.keyCount.set(publicKeys.length);
                     this.isLoading.set(false);
                 }),

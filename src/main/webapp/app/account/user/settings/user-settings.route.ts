@@ -49,6 +49,16 @@ export const routes: Routes = [
                 canActivate: [scienceSettingsGuard],
             },
             {
+                path: 'credentials',
+                loadComponent: () =>
+                    import('app/account/user/settings/credential-revocation-settings/credential-revocation-settings.component').then(
+                        (m) => m.CredentialRevocationSettingsComponent,
+                    ),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.credentialRevocation.title',
+                },
+            },
+            {
                 path: 'ssh',
                 loadComponent: () => import('app/account/user/settings/ssh-settings/ssh-user-settings.component').then((m) => m.SshUserSettingsComponent),
                 data: {
