@@ -19,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
@@ -77,15 +76,13 @@ class LoginOptionsServiceTest {
     @Test
     void testGetLoginOptions_InternalUserInDb_ByLogin_ReturnsPassword() {
         String login = "internal_user";
-        User mockUser = mock(User.class);
-        when(mockUser.isInternal()).thenReturn(true);
-        when(userRepository.findOneByLogin(login)).thenReturn(Optional.of(mockUser));
+        when(userRepository.isInternalUserByLogin(login)).thenReturn(Optional.of(true));
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
         assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.PASSWORD);
         assertThat(result.idpName()).isNull();
-        verify(userRepository).findOneByLogin(login);
+        verify(userRepository).isInternalUserByLogin(login);
         verifyNoInteractions(ldapUserService);
     }
 
@@ -95,15 +92,13 @@ class LoginOptionsServiceTest {
     @Test
     void testGetLoginOptions_InternalUserInDb_ByEmail_ReturnsPassword() {
         String email = "internal_user@artemis.local";
-        User mockUser = mock(User.class);
-        when(mockUser.isInternal()).thenReturn(true);
-        when(userRepository.findOneByEmailIgnoreCase(email)).thenReturn(Optional.of(mockUser));
+        when(userRepository.isInternalUserByEmailIgnoreCase(email)).thenReturn(Optional.of(true));
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(email);
 
         assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.PASSWORD);
         assertThat(result.idpName()).isNull();
-        verify(userRepository).findOneByEmailIgnoreCase(email);
+        verify(userRepository).isInternalUserByEmailIgnoreCase(email);
         verifyNoInteractions(ldapUserService);
     }
 
@@ -113,9 +108,7 @@ class LoginOptionsServiceTest {
     @Test
     void testGetLoginOptions_ExternalUserInDb_OidcEnabled_ReturnsOidc() {
         String login = "external_user";
-        User mockUser = mock(User.class);
-        when(mockUser.isInternal()).thenReturn(false);
-        when(userRepository.findOneByLogin(login)).thenReturn(Optional.of(mockUser));
+        when(userRepository.isInternalUserByLogin(login)).thenReturn(Optional.of(false));
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
@@ -132,9 +125,7 @@ class LoginOptionsServiceTest {
         ReflectionTestUtils.setField(loginOptionsService, "samlEnabled", true);
 
         String login = "external_user";
-        User mockUser = mock(User.class);
-        when(mockUser.isInternal()).thenReturn(false);
-        when(userRepository.findOneByLogin(login)).thenReturn(Optional.of(mockUser));
+        when(userRepository.isInternalUserByLogin(login)).thenReturn(Optional.of(false));
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
@@ -151,9 +142,7 @@ class LoginOptionsServiceTest {
         ReflectionTestUtils.setField(loginOptionsService, "samlEnabled", false);
 
         String login = "external_user";
-        User mockUser = mock(User.class);
-        when(mockUser.isInternal()).thenReturn(false);
-        when(userRepository.findOneByLogin(login)).thenReturn(Optional.of(mockUser));
+        when(userRepository.isInternalUserByLogin(login)).thenReturn(Optional.of(false));
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
@@ -167,7 +156,7 @@ class LoginOptionsServiceTest {
     @Test
     void testGetLoginOptions_UserNotInDb_FoundInLdap_ByLogin_ReturnsOidc() {
         String login = "new_student";
-        when(userRepository.findOneByLogin(login)).thenReturn(Optional.empty());
+        when(userRepository.isInternalUserByLogin(login)).thenReturn(Optional.empty());
 
         LdapUserDto mockLdapUser = mock(LdapUserDto.class);
         when(ldapUserService.findByLogin(login)).thenReturn(Optional.of(mockLdapUser));
@@ -176,7 +165,7 @@ class LoginOptionsServiceTest {
 
         assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.OIDC);
         assertThat(result.idpName()).isEqualTo(OIDC_LABEL);
-        verify(userRepository).findOneByLogin(login);
+        verify(userRepository).isInternalUserByLogin(login);
         verify(ldapUserService).findByLogin(login);
     }
 
@@ -186,7 +175,7 @@ class LoginOptionsServiceTest {
     @Test
     void testGetLoginOptions_UserNotInDb_FoundInLdap_ByEmail_ReturnsOidc() {
         String email = "new_student@tum.de";
-        when(userRepository.findOneByEmailIgnoreCase(email)).thenReturn(Optional.empty());
+        when(userRepository.isInternalUserByEmailIgnoreCase(email)).thenReturn(Optional.empty());
 
         LdapUserDto mockLdapUser = mock(LdapUserDto.class);
         when(ldapUserService.findByAnyEmail(email)).thenReturn(Optional.of(mockLdapUser));
@@ -195,7 +184,7 @@ class LoginOptionsServiceTest {
 
         assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.OIDC);
         assertThat(result.idpName()).isEqualTo(OIDC_LABEL);
-        verify(userRepository).findOneByEmailIgnoreCase(email);
+        verify(userRepository).isInternalUserByEmailIgnoreCase(email);
         verify(ldapUserService).findByAnyEmail(email);
     }
 
@@ -205,7 +194,7 @@ class LoginOptionsServiceTest {
     @Test
     void testGetLoginOptions_UserNotInDb_AndNotInLdap_ReturnsPassword() {
         String login = "unknown_user";
-        when(userRepository.findOneByLogin(login)).thenReturn(Optional.empty());
+        when(userRepository.isInternalUserByLogin(login)).thenReturn(Optional.empty());
         when(ldapUserService.findByLogin(login)).thenReturn(Optional.empty());
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
@@ -224,7 +213,7 @@ class LoginOptionsServiceTest {
         ReflectionTestUtils.setField(loginOptionsService, "oidcDisplayName", OIDC_LABEL);
 
         String login = "new_student";
-        when(userRepository.findOneByLogin(login)).thenReturn(Optional.empty());
+        when(userRepository.isInternalUserByLogin(login)).thenReturn(Optional.empty());
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
@@ -243,7 +232,7 @@ class LoginOptionsServiceTest {
         ReflectionTestUtils.setField(loginOptionsService, "samlEnabled", false);
 
         String login = "new_student";
-        when(userRepository.findOneByLogin(login)).thenReturn(Optional.empty());
+        when(userRepository.isInternalUserByLogin(login)).thenReturn(Optional.empty());
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
@@ -260,9 +249,7 @@ class LoginOptionsServiceTest {
         ReflectionTestUtils.setField(loginOptionsService, "oidcEnabled", true);
         ReflectionTestUtils.setField(loginOptionsService, "samlEnabled", true);
 
-        User externalUser = new User();
-        externalUser.setInternal(false);
-        when(userRepository.findOneByLogin(anyString())).thenReturn(Optional.of(externalUser));
+        when(userRepository.isInternalUserByLogin(anyString())).thenReturn(Optional.of(false));
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions("externalUser");
 

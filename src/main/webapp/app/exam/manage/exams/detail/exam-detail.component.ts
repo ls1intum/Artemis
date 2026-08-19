@@ -26,6 +26,7 @@ import { ExamChecklistComponent } from '../exam-checklist-component/exam-checkli
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -231,8 +232,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     return {};
                 }
 
-                return {
-                    ...this.getExistingSummaryEntries(),
+                return cloneWith(this.getExistingSummaryEntries(), {
                     'artemisApp.examManagement.delete.summary.numberBuilds': summary.numberOfBuilds,
                     'artemisApp.examManagement.delete.summary.numberRegisteredStudents': summary.numberRegisteredStudents,
                     'artemisApp.examManagement.delete.summary.numberNotStartedExams': summary.numberNotStartedExams,
@@ -240,7 +240,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     'artemisApp.examManagement.delete.summary.numberSubmittedExams': summary.numberSubmittedExams,
                     'artemisApp.examManagement.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
                     'artemisApp.examManagement.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
-                };
+                });
             }),
         );
     }

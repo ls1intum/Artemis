@@ -277,9 +277,6 @@
             "solutionResult": "Solution Result",
             "structureTestOracle": "Update Structure Test Oracle",
             "structureTestOracleWarning": "This action extracts all structural tests from the test repository and saves them in the test.json file. ATTENTION: All uncommitted changes from the online editor will be lost!",
-            "atlasOrchestrator": {
-                "button": "Suggest competencies"
-            },
             "checkPlagiarism": "Plagiarism",
             "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
             "repositoryFilesError": "Repository files could not be retrieved.",
@@ -690,7 +687,9 @@
                 "includeTestsIntoExampleSolution": "Include tests in example solution",
                 "includeTestsIntoExampleSolutionTooltip": "In addition to the example solution, the automatic tests can be published. Only available if an example solution publication date is configured.",
                 "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set test case visibility to After Release Date of Results",
-                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results will be displayed after the Release Date of Results."
+                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results will be displayed after the Release Date of Results.",
+                "warningLeakFeedbackHeader": "Warning: Potential feedback leak",
+                "warningLeakFeedback": "By unchecking this option, test case results and feedback may become visible to students during the exam. Are you sure you want to proceed?"
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",

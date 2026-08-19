@@ -261,6 +261,26 @@ public final class Constants {
 
     public static final String RESET_GRADING = "RESET_GRADING";
 
+    /**
+     * Audit event: a user changed their own password from inside their account.
+     */
+    public static final String CHANGE_OWN_PASSWORD = "CHANGE_OWN_PASSWORD";
+
+    /**
+     * Audit event: a user completed a password reset from an emailed link.
+     */
+    public static final String COMPLETE_PASSWORD_RESET = "COMPLETE_PASSWORD_RESET";
+
+    /**
+     * Audit event: an administrator replaced a user's password through the user management form.
+     */
+    public static final String ADMIN_CHANGE_USER_PASSWORD = "ADMIN_CHANGE_USER_PASSWORD";
+
+    /**
+     * Audit event: a user revoked their own passkeys, SSH keys or VCS access tokens without changing their password.
+     */
+    public static final String REVOKE_OWN_CREDENTIALS = "REVOKE_OWN_CREDENTIALS";
+
     public static final String TRIGGER_INSTRUCTOR_BUILD = "TRIGGER_INSTRUCTOR_BUILD";
 
     public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";

@@ -225,7 +225,9 @@ public class ConversationService {
         Stream<ConversationSummary> conversationSummaries = conversationsOfUser.stream()
                 .map(conversation -> new ConversationSummary(conversation, userConversationInfos.get(conversation.getId()), generalConversationInfos.get(conversation.getId())));
 
-        return conversationSummaries.map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
+        List<ConversationDTO> conversationDTOs = conversationSummaries.map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
+        conversationDTOService.fillSubTypeReferenceDates(conversationDTOs);
+        return conversationDTOs;
     }
 
     /**
@@ -393,6 +395,8 @@ public class ConversationService {
         }
         else {
             dto = conversationDTOService.convertToDTO(conversation, user);
+            // Without these the updated channel would replace the sidebar's copy and silently lose its current marker
+            conversationDTOService.fillSubTypeReferenceDates(List.of(dto));
         }
 
         var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
@@ -498,7 +502,9 @@ public class ConversationService {
         ZonedDateTime now = ZonedDateTime.now();
         var userId = requestingUser.getId();
         List<Long> conversationIds = conversationParticipantRepository.findConversationIdsByUserIdAndCourseId(userId, courseId);
-        conversationParticipantRepository.updateMultipleLastReadAsync(userId, conversationIds, now);
+        if (!conversationIds.isEmpty()) {
+            conversationParticipantRepository.updateMultipleLastReadAsync(userId, conversationIds, now);
+        }
 
         log.debug("Marking all conversations with existing participants as read took {} ms", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();

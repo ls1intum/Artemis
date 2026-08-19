@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
@@ -54,6 +54,10 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
 
     ngUnsubscribe = new Subject<void>();
 
+    // Bound once. `loadAll.bind(this)` in the template minted a new function on every change-detection pass, which
+    // changed the tables' `[loadAll]` input every pass for the same reason the lists above did.
+    readonly reloadFreePeriods = () => this.loadAll();
+
     ngOnInit(): void {
         this.loadAll();
     }
@@ -64,9 +68,13 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
         this.dialogErrorSource.unsubscribe();
     }
 
-    get freeDays(): TutorialGroupFreePeriod[] {
-        return this.tutorialGroupFreePeriods().filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod));
-    }
+    // The three lists below are computed rather than getters. The template reads each one twice - once in its `@if`
+    // and once as the table's `[tutorialGroupFreePeriods]` input - so a getter returned a freshly filtered array on
+    // every read, changing the child's input on every change-detection pass and defeating its OnPush check.
+    readonly freeDays = computed(() =>
+        this.tutorialGroupFreePeriods().filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod)),
+    );
+
     public static isFreeDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
         const startIsMidnight: boolean = tutorialGroupFreePeriod.start!.hour() === 0 && tutorialGroupFreePeriod.start!.minute() === 0;
         const endIsMidnight: boolean = tutorialGroupFreePeriod.end!.hour() === 23 && tutorialGroupFreePeriod.end!.minute() === 59;
@@ -74,17 +82,17 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
         return tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end, 'day') && startIsMidnight && endIsMidnight;
     }
 
-    get freePeriods(): TutorialGroupFreePeriod[] {
-        return this.tutorialGroupFreePeriods().filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tutorialGroupFreePeriod));
-    }
+    readonly freePeriods = computed(() =>
+        this.tutorialGroupFreePeriods().filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriod(tutorialGroupFreePeriod)),
+    );
 
     public static isFreePeriod(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
         return !tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end, 'day');
     }
 
-    get freePeriodsWithinDay(): TutorialGroupFreePeriod[] {
-        return this.tutorialGroupFreePeriods().filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tutorialGroupFreePeriod));
-    }
+    readonly freePeriodsWithinDay = computed(() =>
+        this.tutorialGroupFreePeriods().filter((tutorialGroupFreePeriod) => TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(tutorialGroupFreePeriod)),
+    );
 
     public static isFreePeriodWithinDay(tutorialGroupFreePeriod: TutorialGroupFreePeriod) {
         return tutorialGroupFreePeriod.start!.date() === tutorialGroupFreePeriod.end!.date() && !TutorialGroupFreePeriodsManagementComponent.isFreeDay(tutorialGroupFreePeriod);
@@ -109,8 +117,11 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
             .subscribe({
                 next: (tutorialGroupsConfigurationResult) => {
                     if (tutorialGroupsConfigurationResult.body) {
-                        this.tutorialGroupsConfiguration.set(tutorialGroupsConfigurationEntityFromDto(tutorialGroupsConfigurationResult.body));
-                        const freePeriods = this.tutorialGroupsConfiguration().tutorialGroupFreePeriods;
+                        const configuration = tutorialGroupsConfigurationEntityFromDto(tutorialGroupsConfigurationResult.body);
+                        this.tutorialGroupsConfiguration.set(configuration);
+                        // the parent route resolves the course once, so the overview would keep showing the free periods from before this page
+                        this.course().tutorialGroupsConfiguration = configuration;
+                        const freePeriods = configuration.tutorialGroupFreePeriods;
                         if (freePeriods) {
                             this.tutorialGroupFreePeriods.set(this.sortService.sortByProperty(freePeriods, 'start', false));
                         } else {
