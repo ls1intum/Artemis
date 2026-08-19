@@ -174,8 +174,21 @@ public class HadesService implements StatelessCIService {
         cloneMetadata.put("HADES_ASSIGNMENT_PASSWORD", password);
 
         cloneMetadata.put("HADES_ASSIGNMENT_URL", buildTriggerRequestDTO.exerciseRepository().url());
-        cloneMetadata.put("HADES_ASSIGNMENT_PATH", assignmentPath);
+        // Honor the configured assignment checkout path so the clone step and the build script reference the same directory.
+        String assignmentCheckoutPath = buildTriggerRequestDTO.exerciseRepository().cloneLocation();
+        cloneMetadata.put("HADES_ASSIGNMENT_PATH", assignmentCheckoutPath == null || assignmentCheckoutPath.isBlank() ? assignmentPath : "./" + assignmentCheckoutPath);
         cloneMetadata.put("HADES_ASSIGNMENT_ORDER", assignmentOrder);
+
+        // Forward-compatible: the hades clone container ignores unknown env vars, and will pin the clone to the given commit once
+        // it supports these variables. Empty/blank hashes are omitted, which keeps the current "clone HEAD" behavior.
+        String assignmentCommitHash = buildTriggerRequestDTO.exerciseRepository().commitHash();
+        if (assignmentCommitHash != null && !assignmentCommitHash.isBlank()) {
+            cloneMetadata.put("HADES_ASSIGNMENT_COMMIT", assignmentCommitHash);
+        }
+        String testCommitHash = buildTriggerRequestDTO.testRepository().commitHash();
+        if (testCommitHash != null && !testCommitHash.isBlank()) {
+            cloneMetadata.put("HADES_TEST_COMMIT", testCommitHash);
+        }
 
         steps.add(new HadesBuildStepDTO(1, "Clone", cloneImage, volumeMounts, workingDir, cloneMetadata, "", false));
 
@@ -193,11 +206,9 @@ public class HadesService implements StatelessCIService {
         // guess as a fallback); this class only needs a last-resort default in case that's ever missing entirely.
         parseResultMetadata.put("INGEST_DIR", buildTriggerRequestDTO.additionalProperties().getOrDefault("resultIngestDirectory", ingestDir));
 
-        String assignmentCommitHash = buildTriggerRequestDTO.exerciseRepository().commitHash();
         if (assignmentCommitHash != null && !assignmentCommitHash.isBlank()) {
             parseResultMetadata.put("ASSIGNMENT_REPO_COMMIT_HASH", assignmentCommitHash);
         }
-        String testCommitHash = buildTriggerRequestDTO.testRepository().commitHash();
         if (testCommitHash != null && !testCommitHash.isBlank()) {
             parseResultMetadata.put("TESTS_REPO_COMMIT_HASH", testCommitHash);
         }
