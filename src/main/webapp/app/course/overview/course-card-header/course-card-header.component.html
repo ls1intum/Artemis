@@ -2,7 +2,7 @@
     id="course-{{ courseId() }}-header"
     class="course-card-header text-white"
     [ngClass]="{ 'rounded-bottom-4': archiveMode(), 'archive-mode-card': archiveMode(), 'dual-zone-card': showArchiveManagementAction() }"
-    [ngStyle]="{ '--background-color-for-hover': color() }"
+    [ngStyle]="{ '--background-color-for-hover': color(), '--title-color': titleColor() }"
 >
     <ng-template #courseIdentity>
         <div class="position-relative">
@@ -18,22 +18,18 @@
             }
         </div>
         <div class="course-title-container text-center px-2">
-            <h5 class="card-title" [ngStyle]="{ color: titleColor() }">
+            <h5 class="card-title">
                 {{ courseTitle() }}
             </h5>
         </div>
     </ng-template>
 
     @if (showArchiveManagementAction()) {
-        <div class="flex h-full" [ngStyle]="{ color: titleColor() }">
-            <a class="archive-card-zone archive-course-zone flex items-center px-2" [ngStyle]="{ color: titleColor() }" [routerLink]="['/courses', courseId()]">
+        <div class="flex h-full">
+            <a class="archive-card-zone archive-course-zone flex items-center px-2" [routerLink]="['/courses', courseId()]">
                 <ng-container *ngTemplateOutlet="courseIdentity" />
             </a>
-            <a
-                class="archive-card-zone archive-management-zone flex flex-col items-center justify-center gap-1 px-2"
-                [ngStyle]="{ color: titleColor() }"
-                [routerLink]="['/course-management', courseId()]"
-            >
+            <a class="archive-card-zone archive-management-zone flex flex-col items-center justify-center gap-1 px-2" [routerLink]="['/course-management', courseId()]">
                 <fa-icon [icon]="faWrench" />
                 <span class="text-sm" jhiTranslate="artemisApp.course.archive.manage"></span>
             </a>
