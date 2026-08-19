@@ -38,13 +38,15 @@ import { onError } from 'app/foundation/util/global.utils';
 import { parseJson } from 'app/foundation/util/json.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
-import { cloneDeep, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
-import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -70,6 +72,7 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedbac
         ArtemisTranslatePipe,
         ModelingExerciseTimelineComponent,
         ExerciseFeedbackSuggestionOptionsComponent,
+        ExerciseGroupTimelineLockComponent,
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
@@ -84,7 +87,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
-    timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false });
+    timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
@@ -176,7 +179,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 this.exampleSolution.set(importDiagram(parseJson(this.modelingExercise.exampleSolutionModel)));
             }
 
-            this.backupExercise = cloneDeep(this.modelingExercise);
+            this.backupExercise = deepClone(this.modelingExercise);
         });
 
         this.activatedRoute.url

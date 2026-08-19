@@ -1,9 +1,9 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
-import { cloneDeep } from 'lodash-es';
 import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-suspicious-sessions-overview',
@@ -31,7 +31,7 @@ export class SuspiciousSessionsOverviewComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.suspiciousSessions.set(cloneDeep(history.state.suspiciousSessions));
+        this.suspiciousSessions.set(deepClone(history.state.suspiciousSessions));
         this.ipSubnet.set(history.state.ipSubnet);
     }
 }

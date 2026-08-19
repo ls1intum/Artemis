@@ -105,6 +105,7 @@
             "langKey": "Sprache",
             "internal": "Intern",
             "passwordTooltip": "Du kannst diese Einstellung nur für neue Nutzer:innen ändern. Bitte beachte, dass du nur Passwörter für interne Nutzer:innen setzen oder ändern kannst.",
+            "revokeCredentials": "Passkeys, SSH-Schlüssel und VCS-Zugriffstoken widerrufen",
             "createdBy": "Erstellt von",
             "createdDate": "Erstellt am",
             "lastModifiedBy": "Bearbeitet von",

@@ -268,7 +268,13 @@ describe('Example Modeling Submission Component', () => {
         // THEN
         expect(comp.assessmentsAreValid()).toBe(true);
         expect(assessExampleSubmissionSpy).toHaveBeenCalledOnce();
-        expect(assessExampleSubmissionSpy).toHaveBeenCalledWith(exampleSubmission, exerciseId);
+        // checkAssessment sends a detached copy carrying the new result, so the component's own example submission is
+        // no longer mutated as a side effect.
+        const [sentExampleSubmission, sentExerciseId] = assessExampleSubmissionSpy.mock.calls[0];
+        expect(sentExerciseId).toBe(exerciseId);
+        expect(sentExampleSubmission.submission!.id).toBe(exampleSubmission.submission!.id);
+        expect(sentExampleSubmission.submission!.latestResult).toBeDefined();
+        expect(exampleSubmission.submission!.latestResult).toBeUndefined();
     });
 
     it('should check invalid assessment', () => {
@@ -605,5 +611,39 @@ describe('Example Modeling Submission Component', () => {
         expect(comp.totalScore()).toBe(0);
         expect(comp.assessmentsAreValid()).toBe(true);
         expect(comp.invalidError).toBeUndefined();
+    });
+
+    it('should respect structured grading instruction usageCount when scoring', () => {
+        const limitedInstruction = { id: 1, credits: 5, usageCount: 1 };
+        const first = {
+            ...mockFeedbackWithReference,
+            credits: 5,
+            gradingInstruction: limitedInstruction,
+        } as Feedback;
+        const second = {
+            ...mockFeedbackWithoutReference,
+            credits: 5,
+            gradingInstruction: limitedInstruction,
+        } as Feedback;
+
+        comp.exercise.set({ ...exercise, maxPoints: 30 });
+        comp.referencedFeedback.set([first]);
+        comp.unreferencedFeedback.set([second]);
+
+        // Raw sum would be 10; usageCount 1 means only the first application counts.
+        comp.checkScoreBoundaries();
+
+        expect(comp.assessmentsAreValid()).toBe(true);
+        expect(comp.totalScore()).toBe(5);
+    });
+
+    it('should cap the total score at the exercise maximum', () => {
+        comp.exercise.set({ ...exercise, maxPoints: 10, bonusPoints: 0 });
+        comp.referencedFeedback.set([{ ...mockFeedbackWithReference, credits: 8 } as Feedback]);
+        comp.unreferencedFeedback.set([{ ...mockFeedbackWithoutReference, credits: 5 } as Feedback]);
+
+        comp.checkScoreBoundaries();
+
+        expect(comp.totalScore()).toBe(10);
     });
 });
