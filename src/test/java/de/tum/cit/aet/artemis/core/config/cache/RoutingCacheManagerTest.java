@@ -53,9 +53,4 @@ class RoutingCacheManagerTest {
         assertThat(names).contains("courseTitle", "exerciseTitle").containsAll(BlobCacheConfiguration.BLOB_CACHE_NAMES);
         assertThat(names).as("a stable order keeps the admin cache overview from reshuffling").isSorted();
     }
-
-    @Test
-    void shouldExposeTheDistributedManagerForKeyLevelAccess() {
-        assertThat(routingCacheManager.getDistributedCacheManager()).isSameAs(distributedCacheManager);
-    }
 }

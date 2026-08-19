@@ -51,11 +51,4 @@ public class RoutingCacheManager implements CacheManager {
     private CacheManager managerFor(String name) {
         return BlobCacheConfiguration.BLOB_CACHE_NAMES.contains(name) ? blobCacheManager : distributedCacheManager;
     }
-
-    /**
-     * @return the manager backing all caches that are shared across nodes
-     */
-    public CacheManager getDistributedCacheManager() {
-        return distributedCacheManager;
-    }
 }
