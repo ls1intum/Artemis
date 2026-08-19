@@ -22,7 +22,7 @@ export class TumUiTooltipDirective implements OnDestroy {
     private readonly overlayService = inject(TumUiOverlayService);
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
-    readonly content = input.required<string>({ alias: 'tumUiTooltip' });
+    readonly content = input<string | undefined>(undefined, { alias: 'tumUiTooltip' });
     readonly placement = input<TumUiOverlayPlacement>('top', { alias: 'tumUiTooltipPlacement' });
     readonly showDelayMs = input(150, { transform: numberAttribute });
     readonly hideDelayMs = input(100, { transform: numberAttribute });

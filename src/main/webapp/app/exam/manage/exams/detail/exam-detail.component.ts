@@ -4,6 +4,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -26,6 +27,7 @@ import { ExamChecklistComponent } from '../exam-checklist-component/exam-checkli
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -40,6 +42,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         ExamChecklistComponent,
         DetailOverviewListComponent,
         FeatureOverlayComponent,
+        ExamModeBadgeComponent,
     ],
     providers: [ArtemisDurationFromSecondsPipe],
 })
@@ -53,6 +56,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private gradingService = inject(GradingService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
+
+    protected readonly isRealExam = isRealExam;
 
     readonly exam = signal<Exam>(undefined!);
     formattedStartText?: SafeHtml;
@@ -207,7 +212,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         });
 
         const numberOfExerciseGroups = this.exam().exerciseGroups?.length ?? 0;
-        const isTestExam = this.exam().testExam ?? false;
+        const isTestExam = !isRealExam(this.exam());
         const isTestCourse = this.exam().course?.testCourse ?? false;
 
         return {

@@ -13,7 +13,6 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -32,6 +31,7 @@ import { signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('ExerciseHeaderComponent', () => {
     let fixture: ComponentFixture<ExerciseHeaderComponent>;

@@ -27,6 +27,7 @@ import { ConfirmationService } from 'primeng/api';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
@@ -182,7 +183,7 @@ describe('ExamStudentsComponent', () => {
 
         it('isTestExam should be true when exam.testExam is set', () => {
             fixture.detectChanges();
-            component.exam.set({ ...examWithCourse, testExam: true });
+            component.exam.set({ ...examWithCourse, examMode: ExamMode.TEST });
             expect(component.isTestExam()).toBe(true);
         });
 

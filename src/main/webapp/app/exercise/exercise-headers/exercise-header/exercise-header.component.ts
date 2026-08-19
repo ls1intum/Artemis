@@ -3,7 +3,6 @@ import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/ex
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseHeadersInformationComponent, QuizLiveHeaderInfo } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ExerciseHeaderActionsComponent } from 'app/exercise/exercise-headers/exercise-header-actions/exercise-header-actions.component';
@@ -12,6 +11,7 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 @Component({
     selector: 'jhi-exercise-header',

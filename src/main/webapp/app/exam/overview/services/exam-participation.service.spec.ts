@@ -319,7 +319,9 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
+            .subscribe(() => {
+                expect(service.testStudentExams()).toEqual(returnedFromService);
+            });
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
@@ -339,11 +341,12 @@ describe('ExamParticipationService', () => {
         req.flush(null);
         expect(received).toBeNull();
     });
-    it('should fetch sidebar data successfully', async () => {
-        const returnedFromService = [studentExam];
-        service.getRealExamSidebarData(1).subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
+    it('should fetch real exam sidebar data successfully', async () => {
+        const returnedFromService = [{ id: 1, title: 'Exam 1' } as Exam];
+        service.getRealExamSidebarData(1).subscribe((resp: Exam[]) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe('api/exam/courses/1/real-exams-sidebar-data');
         req.flush(returnedFromService);
     });
 

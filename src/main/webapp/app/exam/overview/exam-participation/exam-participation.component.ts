@@ -1,16 +1,17 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, signal, viewChildren } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, inject, signal, viewChildren } from '@angular/core';
 import { CdkScrollable } from '@angular/cdk/scrolling';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam, testExamSimulationEndDate } from 'app/exam/overview/exam.utils';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
+import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, map, switchMap, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
@@ -23,7 +24,7 @@ import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundat
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { TestRunRibbonComponent } from '../../manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationCoverComponent } from '../exam-cover/exam-participation-cover.component';
-import { AsyncPipe, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ExamBarComponent } from '../exam-bar/exam-bar.component';
 import { ExamNavigationSidebarComponent } from '../exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { QuizExamSubmissionComponent } from '../exercises/quiz/quiz-exam-submission.component';
@@ -50,6 +51,8 @@ import {
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
+import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -62,7 +65,9 @@ import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.compone
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { Message } from 'primeng/message';
 import { ButtonDirective } from 'primeng/button';
-import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { TumUiMessageComponent } from '@tumaet/ui-angular';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -87,13 +92,13 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         FaIconComponent,
         ExamResultSummaryComponent,
         RouterLink,
-        AsyncPipe,
         ArtemisTranslatePipe,
         ArtemisDatePipe,
         ExamExerciseOverviewPageComponent,
         CourseSidebarToggleButtonComponent,
         Message,
         ButtonDirective,
+        TumUiMessageComponent,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -113,6 +118,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
+    private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
 
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
@@ -183,17 +189,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly sidebarData = signal<SidebarData>(undefined!);
     readonly sidebarExercises = signal<SidebarCardElement[]>([]);
 
-    isProgrammingExercise() {
-        return !this.activeExamPage().isOverviewPage && this.activeExamPage().exercise!.type === ExerciseType.PROGRAMMING;
-    }
-
-    isProgrammingExerciseWithCodeEditor(): boolean {
-        return this.isProgrammingExercise() && (this.activeExamPage().exercise as ProgrammingExercise).allowOnlineEditor === true;
-    }
-
-    isProgrammingExerciseWithOfflineIDE(): boolean {
-        return this.isProgrammingExercise() && (this.activeExamPage().exercise as ProgrammingExercise).allowOfflineIde === true;
-    }
+    readonly isProgrammingExercise = computed(() => !this.activeExamPage().isOverviewPage && this.activeExamPage().exercise!.type === ExerciseType.PROGRAMMING);
 
     readonly examStartConfirmed = signal(false);
 
@@ -212,8 +208,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private readonly wallClockVersion = signal(0);
     readonly isAtLeastTutor = signal<boolean | undefined>(undefined);
     readonly isAtLeastInstructor = signal<boolean | undefined>(undefined);
+    readonly noStudentExamMessageKey = signal('artemisApp.examParticipation.noStudentExam');
 
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject<GenerateParticipationStatus>('success');
+    protected readonly participationGenerationStatus = toSignal(this.generateParticipationStatus, { initialValue: 'success' });
 
     constructor() {
         // show only one synchronization error every 5s
@@ -253,7 +251,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         studentExam.exam!.course = new Course();
                         studentExam.exam!.course.id = this.courseId();
                         this.exam.set(studentExam.exam!);
-                        this.testExam.set(this.exam().testExam!);
+                        this.testExam.set(!isRealExam(this.exam()));
                         this.loadingExam.set(false);
                     },
                     error: () => {
@@ -263,14 +261,27 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             } else if (this.testExam() && this.studentExamId()) {
                 this.loadTestExamStudentExamForSummary();
             } else {
-                this.examLoadSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
-                    next: (studentExam) => {
-                        this.handleStudentExam(studentExam);
-                    },
-                    error: () => {
-                        this.handleNoStudentExam();
-                    },
-                });
+                this.examLoadSubscription = this.courseOverviewTabDataService
+                    .loadExamsIfNeeded(this.courseId())
+                    .pipe(
+                        catchError(() => of(undefined)),
+                        switchMap((exams) => {
+                            const exam = exams?.find((e) => e.id === this.examId());
+                            if (this.shouldSkipTestExamAttemptRequest(exam)) {
+                                this.loadingExam.set(false);
+                                return EMPTY;
+                            }
+                            return this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId());
+                        }),
+                    )
+                    .subscribe({
+                        next: (studentExam) => {
+                            this.handleStudentExam(studentExam);
+                        },
+                        error: () => {
+                            this.handleNoStudentExam();
+                        },
+                    });
             }
         });
 
@@ -278,6 +289,32 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected.set(status.connected);
         });
+    }
+
+    private shouldSkipTestExamAttemptRequest(exam?: ExamForOverview): boolean {
+        if (isRealExam(exam)) {
+            return false;
+        }
+
+        this.testExam.set(true);
+        const now = this.serverDateService.now();
+        if (exam?.endDate && dayjs(exam.endDate).isBefore(now)) {
+            this.noStudentExamMessageKey.set('artemisApp.examParticipation.testExamConcluded');
+            return true;
+        }
+
+        const simulationEndDate = testExamSimulationEndDate(exam);
+        if (exam?.examMode !== ExamMode.TEST_WITH_SIMULATION || !simulationEndDate || !now.isBefore(simulationEndDate)) {
+            return false;
+        }
+
+        const hasSubmittedAttempt = this.examParticipationService.testStudentExams().some((studentExam) => studentExam.exam?.id === exam.id && studentExam.submitted);
+        if (hasSubmittedAttempt) {
+            this.noStudentExamMessageKey.set('artemisApp.examParticipation.testExamAttemptUsedPracticeOpens');
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -429,6 +466,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return this.translateService.instant('artemisApp.examParticipation.pendingChanges');
     }
 
+    readonly connectionStatusTranslationKey = computed(() => {
+        if (!this.connected()) {
+            return 'artemisApp.examParticipation.disconnected';
+        }
+        return this.isProgrammingExercise() ? 'artemisApp.examParticipation.ideConnected' : 'artemisApp.examParticipation.connected';
+    });
+
     get activePageIndex(): number {
         if (!this.activeExamPage() || this.activeExamPage().isOverviewPage) {
             return -1;
@@ -460,6 +504,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (studentExam) {
             // Keep working time
             studentExam.workingTime = this.studentExam()?.workingTime ?? studentExam.workingTime;
+            studentExam.exam = cloneWith(this.exam(), studentExam.exam ?? {});
             this.studentExam.set(studentExam);
             // no need to change the whole page layout for test runs
             if (this.testRunId()) {
@@ -471,9 +516,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             if (!!this.testRunId() || this.testExam()) {
                 const testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
                 this.testStartTime.set(testStartTime);
-                this.initIndividualEndDates(testStartTime);
+                const adjustedTestStartTime = this.isSimulationAttempt(testStartTime) ? this.exam().startDate! : testStartTime;
+                this.initIndividualEndDates(adjustedTestStartTime);
             } else {
-                this.individualStudentEndDate.set(dayjs(this.exam().startDate).add(this.studentExam().workingTime!, 'seconds'));
+                this.initIndividualEndDates(this.exam().startDate!);
             }
             // initializes array which manages submission component and exam overview initialization
             this.pageComponentVisited.set(new Array(studentExam.exercises!.length).fill(false));
@@ -621,7 +667,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (this.testExam()) {
                         this.examParticipationService.resetExamLayout();
                         void this.router.navigate(['courses', this.courseId(), 'exams', this.examId(), 'test-exam', this.studentExam().id]);
-                        this.examParticipationService.setShouldUpdateTestExams(true);
                     }
 
                     this.examSummaryButtonTimer = setInterval(() => {
@@ -693,7 +738,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     toggleHandInEarly() {
         // no need to fetch attendance check status from the server if it is a test exam or an exam without attendance check or when clicking continue
-        if (this.exam().testExam || !this.exam().examWithAttendanceCheck || this.handInEarly()) {
+        if (!isRealExam(this.exam()) || !this.exam().examWithAttendanceCheck || this.handInEarly()) {
             this.handleHandInEarly();
         } else {
             this.examManagementService.isAttendanceChecked(this.courseId(), this.examId()).subscribe((res) => {
@@ -732,16 +777,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             return false;
         }
         let individualStudentEndDate;
-        if (this.exam().testExam) {
+        if (!isRealExam(this.exam())) {
             if (!this.studentExam().submitted && this.studentExam().started && this.studentExam().startedDate) {
-                individualStudentEndDate = dayjs(this.studentExam().startedDate).add(this.studentExam().workingTime!, 'seconds');
+                const startedDate = dayjs(this.studentExam().startedDate);
+                const relevantStartDate = this.isSimulationAttempt(startedDate) ? dayjs(this.exam().startDate) : startedDate;
+                individualStudentEndDate = relevantStartDate.add(this.studentExam().workingTime ?? 0, 'seconds');
             } else {
                 return false;
             }
         } else {
-            individualStudentEndDate = dayjs(this.exam().startDate).add(this.studentExam().workingTime!, 'seconds');
+            individualStudentEndDate = dayjs(this.exam().startDate).add(this.studentExam().workingTime ?? 0, 'seconds');
         }
-        return individualStudentEndDate.add(this.exam().gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam().submitted;
+        return individualStudentEndDate.add(this.exam().gracePeriod ?? 0, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam().submitted;
     }
 
     /**
@@ -845,8 +892,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
         this.studentExam.set(studentExam);
         this.exam.set(studentExam.exam!);
-        this.testExam.set(this.exam().testExam!);
-        if (!this.exam().testExam) {
+        this.testExam.set(!isRealExam(this.exam()));
+        if (isRealExam(this.exam())) {
             this.initIndividualEndDates(this.exam().startDate!);
         }
 
@@ -892,6 +939,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     handleNoStudentExam() {
         const course = this.courseStorageService.getCourse(this.courseId());
+        const exam = course?.exams?.find((courseExam) => courseExam.id === this.examId());
+        this.noStudentExamMessageKey.set(isRealExam(exam) ? 'artemisApp.examParticipation.noStudentExam' : 'artemisApp.examParticipation.noFurtherAttempts');
         if (!course) {
             this.courseService.find(this.courseId()).subscribe((courseResponse) => {
                 this.isAtLeastTutor.set(courseResponse.body?.isAtLeastTutor);
@@ -909,8 +958,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param startDate the start date of the exam
      */
     initIndividualEndDates(startDate: dayjs.Dayjs) {
-        this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime!, 'seconds'));
-        this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
+        this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime ?? 0, 'seconds'));
+        this.individualStudentEndDateWithGracePeriod.set(
+            this.individualStudentEndDate()
+                .clone()
+                .add(this.exam().gracePeriod ?? 0, 'seconds'),
+        );
 
         this.subscribeToWorkingTimeUpdates(startDate);
     }
@@ -1237,6 +1290,21 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // show only one error for 5s - see constructor
             this.synchronizationAlert.next();
         }
+    }
+
+    private isSimulationAttempt(customStartDate: dayjs.Dayjs): boolean {
+        const exam = this.exam();
+        const studentExam = this.studentExam();
+        const actualExam = exam ?? studentExam.exam;
+        if (!actualExam || actualExam.examMode !== ExamMode.TEST_WITH_SIMULATION || studentExam.testRun) {
+            return false;
+        }
+        const startedDate = customStartDate ?? studentExam.startedDate;
+        if (!startedDate) {
+            return false;
+        }
+        const simulationEndDate = testExamSimulationEndDate(actualExam);
+        return !!simulationEndDate && startedDate.isBefore(simulationEndDate);
     }
 
     /**

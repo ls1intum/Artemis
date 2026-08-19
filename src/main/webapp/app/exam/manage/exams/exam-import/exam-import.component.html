@@ -55,12 +55,7 @@
                                 <ngb-highlight [result]="exam.course!.title" [term]="searchTerm" />
                             </td>
                             <td class="text-break col-2">
-                                @if (!exam.testExam) {
-                                    <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
-                                }
-                                @if (exam.testExam) {
-                                    <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
-                                }
+                                <jhi-exam-mode-badge [exam]="exam" />
                             </td>
                             <td class="col-1">
                                 @if (!subsequentExerciseGroupSelection()) {

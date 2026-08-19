@@ -3,6 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -10,7 +11,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { StudentExamDTO, StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { toSubmitStudentExamDTO } from 'app/exam/overview/services/submit-student-exam-dto.mapper';
 import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -19,7 +20,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -41,8 +42,22 @@ export class ExamParticipationService {
 
     private examEndViewSubject = new BehaviorSubject<boolean>(false);
     endViewDisplayed$ = this.examEndViewSubject.asObservable();
-    private shouldUpdateTestExams = new BehaviorSubject<boolean>(false);
-    shouldUpdateTestExamsObservable = this.shouldUpdateTestExams.asObservable();
+
+    readonly testStudentExams = signal<StudentExamOrDTO[]>([]);
+
+    constructor() {
+        this.currentlyLoadedStudentExam.pipe(filter((studentExam) => !!studentExam?.submitted && !!studentExam.exam && !isRealExam(studentExam.exam))).subscribe((latestExam) => {
+            this.testStudentExams.update((studentExams) => {
+                const index = studentExams.findIndex((se) => se?.id === latestExam?.id);
+                if (index !== -1) {
+                    const updated = [...studentExams];
+                    updated[index] = latestExam;
+                    return updated;
+                }
+                return [...studentExams, latestExam];
+            });
+        });
+    }
 
     // Version counter bumped whenever a submission's `isSynced` flag is mutated in place (on an answer/model/text
     // change, or when a save succeeds/fails). Submissions are plain mutable objects, so under zoneless change
@@ -206,16 +221,16 @@ export class ExamParticipationService {
     }
 
     /**
-     * Loads {@link StudentExamDTO} objects linked to a test exam per user and per course from server
+     * Loads {@link StudentExamDTO} objects linked to a test exam per user and per course from server and stores them in the service.
      * @param courseId the id of the course we are interested
-     * @returns a List of all StudentExams without Exercises per User and Course. Each includes a nested `exam`
-     * (id, title, testExam, workingTime, course{id, groupNames}) but no `user`, `exercises`, or `examSessions`.
      */
-    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExamDTO[]> {
+    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<void> {
         const url = `api/exam/courses/${courseId}/test-exams-per-user`;
-        return this.httpClient
-            .get<StudentExamDTO[]>(url, { observe: 'response' })
-            .pipe(map((studentExam: HttpResponse<StudentExamDTO[]>) => this.processListOfStudentExamsFromServer(studentExam)));
+        return this.httpClient.get<StudentExamDTO[]>(url, { observe: 'response' }).pipe(
+            map((studentExam: HttpResponse<StudentExamDTO[]>) => this.processListOfStudentExamsFromServer(studentExam)),
+            tap((studentExams) => this.testStudentExams.set(studentExams)),
+            map(() => {}),
+        );
     }
 
     /**
@@ -444,9 +459,6 @@ export class ExamParticipationService {
 
     setEndView(isEndView: boolean) {
         this.examEndViewSubject.next(isEndView);
-    }
-    setShouldUpdateTestExams(shouldUpdate: boolean) {
-        this.shouldUpdateTestExams.next(shouldUpdate);
     }
 
     setExamLayout(isExamStarted: boolean = true, isTestRun: boolean = false) {

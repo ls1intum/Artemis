@@ -38,6 +38,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { By } from '@angular/platform-browser';
 import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -70,6 +71,7 @@ describe('ExamUpdateComponent', () => {
         beforeEach(() => {
             examWithoutExercises = new Exam();
             examWithoutExercises.id = 1;
+            examWithoutExercises.examMode = ExamMode.REAL;
             course = new Course();
             course.id = 1;
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -143,7 +145,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.course).toEqual(course);
             expect(component.exam.gracePeriod).toBe(180);
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
-            expect(component.exam.testExam).toBe(false);
+            expect(component.exam.examMode).toBe(ExamMode.REAL);
             expect(component.exam.workingTime).toBe(0);
         });
 
@@ -248,7 +250,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should show channel name input for test exams', async () => {
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.channelName = 'test-exam';
             component.ngOnInit();
             await Promise.resolve();
@@ -344,7 +346,7 @@ describe('ExamUpdateComponent', () => {
         it('should calculate the working time for real exams correctly', () => {
             fixture.detectChanges();
 
-            examWithoutExercises.testExam = false;
+            examWithoutExercises.examMode = ExamMode.REAL;
 
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
@@ -371,7 +373,7 @@ describe('ExamUpdateComponent', () => {
 
         it('should not calculate the working time for test exams', () => {
             fixture.detectChanges();
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(12, 'hours');
@@ -398,7 +400,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the working time for test exams correctly', () => {
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.workingTime = undefined;
             fixture.changeDetectorRef.detectChanges();
             expect(component.validateWorkingTime).toBe(false);
@@ -423,7 +425,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the working time for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
+            examWithoutExercises.examMode = ExamMode.REAL;
 
             examWithoutExercises.workingTime = undefined;
             examWithoutExercises.startDate = undefined;
@@ -517,7 +519,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should correctly validate the number of correction rounds in a test Exams', () => {
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
             fixture.changeDetectorRef.detectChanges();
 
@@ -529,7 +531,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should correctly validate the number of correction rounds in a realExam', () => {
-            examWithoutExercises.testExam = false;
+            examWithoutExercises.examMode = ExamMode.REAL;
 
             examWithoutExercises.numberOfCorrectionRoundsInExam = undefined;
             fixture.changeDetectorRef.detectChanges();
@@ -635,7 +637,7 @@ describe('ExamUpdateComponent', () => {
             fixture.detectChanges();
 
             // Set up exam as a test exam with a long exam window
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(35, 'days'); // Long exam window
 
@@ -897,7 +899,7 @@ describe('ExamUpdateComponent', () => {
         const examForImport = new Exam();
         examForImport.id = 3;
         examForImport.title = 'RealExam for Testing';
-        examForImport.testExam = false;
+        examForImport.examMode = ExamMode.REAL;
         examForImport.examiner = 'Bruegge';
         examForImport.moduleNumber = 'IN0006';
         examForImport.courseName = 'Artemis';
@@ -986,7 +988,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam).not.toBeNull();
             expect(component.exam.id).toBeUndefined();
             expect(component.exam.title).toBe('RealExam for Testing');
-            expect(component.exam.testExam).toBe(false);
+            expect(component.exam.examMode).toBe(ExamMode.REAL);
             expect(component.exam.examiner).toBe('Bruegge');
             expect(component.exam.moduleNumber).toBe('IN0006');
             expect(component.exam.courseName).toBe('Artemis');

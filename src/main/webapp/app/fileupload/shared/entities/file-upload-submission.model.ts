@@ -1,4 +1,6 @@
-import { Submission, SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';

@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
@@ -133,6 +134,35 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testStartExercisesWithTextExercise() throws Exception {
+        // creating exercise
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        exerciseGroup.addExercise(textExercise);
+        exerciseGroupRepository.save(exerciseGroup);
+        textExercise = exerciseRepository.save(textExercise);
+
+        createStudentExams(textExercise);
+
+        List<Participation> studentParticipations = invokePrepareExerciseStart();
+
+        for (Participation participation : studentParticipations) {
+            assertThat(participation.getExercise()).isEqualTo(textExercise);
+            assertThat(participation.getExercise().getCourseViaExerciseGroupOrCourseMember()).isNotNull();
+            assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam.getExerciseGroups().getFirst());
+            assertThat(participation.getSubmissions()).hasSize(1);
+            var textSubmission = (TextSubmission) participation.getSubmissions().iterator().next();
+            assertThat(textSubmission.getText()).isNull();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testStartExercisesForSimulationExamWithTextExercise() throws Exception {
+        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(5));
+        examRepository.save(exam);
+
         // creating exercise
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 

@@ -302,7 +302,7 @@ public class ExamResource {
 
         // Fetch the original exam from the database (this is the managed entity)
         Exam originalExam = examRepository.findByIdElseThrow(examUpdateDTO.id());
-        var originalExamDuration = originalExam.getDuration();
+        var originalExamDuration = originalExam.getExamMode().isReal() ? originalExam.getDuration() : originalExam.getWorkingTime();
         ZonedDateTime originalVisibleDate = originalExam.getVisibleDate();
         ZonedDateTime originalStartDate = originalExam.getStartDate();
         ZonedDateTime originalEndDate = originalExam.getEndDate();
@@ -310,7 +310,7 @@ public class ExamResource {
         ZonedDateTime originalLatestEndDate = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(originalExam)).orElse(null);
 
         // The Exam Mode cannot be changed after creation -> Compare request with version in the database
-        if (examUpdateDTO.testExam() != originalExam.isTestExam()) {
+        if (examUpdateDTO.examMode() != originalExam.getExamMode()) {
             throw new ConflictException("The Exam Mode cannot be changed after creation", ENTITY_NAME, "examModeMismatch");
         }
 
@@ -341,7 +341,8 @@ public class ExamResource {
         boolean gracePeriodChanged = !Objects.equals(originalGracePeriod, savedExam.getGracePeriod());
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
-        int workingTimeChange = savedExam.getDuration() - originalExamDuration;
+        int savedExamDuration = savedExam.getExamMode().isReal() ? savedExam.getDuration() : savedExam.getWorkingTime();
+        int workingTimeChange = savedExamDuration - originalExamDuration;
         if (workingTimeChange != 0) {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
@@ -358,7 +359,7 @@ public class ExamResource {
                     && now.isAfter(originalStartDate.minusMinutes(EXAM_START_WAIT_TIME_MINUTES)) && now.isBefore(savedExam.getEndDate());
             // Test exams have no instructor-controlled pre-start countdown and their clients do not subscribe to these
             // updates, so skip them to avoid persisting unused events.
-            if ((startDateChanged || endDateChanged) && withinConductionWindow && !savedExam.isTestExam()) {
+            if ((startDateChanged || endDateChanged) && withinConductionWindow && savedExam.getExamMode().isReal()) {
                 Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
                 examService.sendScheduleUpdateToStudentExams(examWithStudentExams);
             }
@@ -408,17 +409,20 @@ public class ExamResource {
         // NOTE: We have to get exercise groups as `scheduleModelingExercises` needs them.
         // We also need all student exams for updateStudentExamsAndRescheduleExercises.
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        var originalExamDuration = exam.getDuration();
+        int originalExamDuration = exam.getExamMode().isReal() ? exam.getDuration() : exam.getWorkingTime();
         final ZonedDateTime originalLatestExamEndDateWithGrace = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(exam)).orElse(null);
 
         // 1. Update the end date & working time of the exam
-        exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
+        if (exam.getExamMode().isReal()) {
+            exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
+        }
         exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
         // The submission overview must never become visible while a student is still writing, so validate against the
         // PROJECTED latest individual end date: step 2 rescales the existing individual extensions by the same duration
         // change, so checking only the new nominal end date would miss an extended student crossing the publication
         // date. Safe to validate after mutating: the exam is detached here, and throwing skips the save below.
         checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(exam, originalExamDuration);
+        checkExamForWorkingTimeConflictsElseThrow(exam);
         examRepository.save(exam);
 
         // 2. Re-calculate the working times of all student exams
@@ -571,7 +575,7 @@ public class ExamResource {
     private void checkExamNumericFieldLimitsElseThrow(Exam exam) {
         // Max working time: 30 days = 2592000 seconds
         final int maxWorkingTimeSeconds = 2_592_000;
-        final int workingTimeToCheck = exam.isTestExam() ? exam.getWorkingTime() : exam.getDuration();
+        final int workingTimeToCheck = exam.getExamMode().isReal() ? exam.getDuration() : exam.getWorkingTime();
         if (workingTimeToCheck > maxWorkingTimeSeconds) {
             throw new BadRequestAlertException("The working time is too long. Maximum allowed is 30 days (43200 minutes).", ENTITY_NAME, "examWorkingTimeTooHigh");
         }
@@ -635,7 +639,7 @@ public class ExamResource {
      * @param originalExamDuration the exam duration in seconds before this update
      */
     private void checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(Exam exam, int originalExamDuration) {
-        if (exam.getId() == null || exam.getExamSummaryPublicationDate() == null || exam.isTestExam()) {
+        if (exam.getId() == null || exam.getExamSummaryPublicationDate() == null || !exam.getExamMode().isReal()) {
             return;
         }
         ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDateAfterDurationChange(exam, originalExamDuration);
@@ -654,7 +658,7 @@ public class ExamResource {
     private void checkExamForWorkingTimeConflictsElseThrow(Exam exam) {
         var examDuration = exam.getDuration();
 
-        if (exam.isTestExam()) {
+        if (!exam.getExamMode().isReal()) {
             if (exam.getWorkingTime() > examDuration || exam.getWorkingTime() < 1) {
                 throw new BadRequestAlertException("For TestExams, the working time must be at least 1 and at most the duration of the working window.", ENTITY_NAME, "examTimes");
             }
@@ -678,11 +682,11 @@ public class ExamResource {
             throw new BadRequestAlertException("An exam cannot have negative points.", ENTITY_NAME, "negativePoints");
         }
 
-        if (exam.isTestExam() && exam.getNumberOfCorrectionRoundsInExam() != 0) {
+        if (!exam.getExamMode().isReal() && exam.getNumberOfCorrectionRoundsInExam() != 0) {
             throw new BadRequestAlertException("A testExam has to have 0 correction rounds", ENTITY_NAME, "correctionRoundViolation");
         }
 
-        if (!exam.isTestExam() && (exam.getNumberOfCorrectionRoundsInExam() <= 0 || exam.getNumberOfCorrectionRoundsInExam() > 2)) {
+        if (exam.getExamMode().isReal() && (exam.getNumberOfCorrectionRoundsInExam() <= 0 || exam.getNumberOfCorrectionRoundsInExam() > 2)) {
             throw new BadRequestAlertException("A realExam has to have either 1 or 2 correction rounds", ENTITY_NAME, "correctionRoundViolation");
         }
     }
@@ -693,7 +697,7 @@ public class ExamResource {
      * @param exam the exam to be checked
      */
     private void checkExamAttendanceCheckSettings(Exam exam) {
-        if (exam.isTestExam() && exam.isExamWithAttendanceCheck()) {
+        if (!exam.getExamMode().isReal() && exam.isExamWithAttendanceCheck()) {
             throw new BadRequestAlertException("A test exam cannot have attendance check turned on", ENTITY_NAME, "attendanceCheckViolation");
         }
     }
@@ -1074,7 +1078,7 @@ public class ExamResource {
     private Exam checkAccessForStudentExamGenerationAndLogAuditEvent(Long courseId, Long examId, String auditEventAction) {
         final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
-        if (exam.isTestExam()) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Generate student exams is only allowed for real exams", ENTITY_NAME, "generateStudentExamsOnlyForRealExams");
         }
 
@@ -1130,7 +1134,7 @@ public class ExamResource {
                     "evaluateQuizExercisesTooEarly");
         }
         var exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        if (exam.isTestExam()) {
+        if (!exam.getExamMode().isReal()) {
             throw new BadRequestAlertException("Evaluate quiz exercises is only allowed for real exams", ENTITY_NAME, "evaluateQuizExercisesOnlyForRealExams");
         }
 
@@ -1178,7 +1182,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (exam.isTestExam()) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Registration of course students is only allowed for real exams", ENTITY_NAME, "AddCourseStudentsOnlyForRealExams");
         }
 
@@ -1212,7 +1216,7 @@ public class ExamResource {
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        if (exam.isTestExam()) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Deletion of users is only allowed for real exams", ENTITY_NAME, "unregisterStudentsOnlyForRealExams");
         }
 
@@ -1240,7 +1244,7 @@ public class ExamResource {
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        if (exam.isTestExam()) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Deregister students is only allowed for real exams", ENTITY_NAME, "unregisterAllOnlyForRealExams");
         }
 

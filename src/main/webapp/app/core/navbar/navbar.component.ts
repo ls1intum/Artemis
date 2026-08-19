@@ -43,6 +43,7 @@ import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRout
 import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSignal';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 @Component({
     selector: 'jhi-navbar',
@@ -863,7 +864,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (
             this.studentExam?.exam &&
             this.studentExam.exam.id === this.examId &&
-            !this.studentExam.exam.testExam &&
+            this.studentExam.exam.examMode === ExamMode.REAL &&
             !this.studentExam.testRun &&
             this.studentExam.exam.startDate &&
             this.studentExam.exam.endDate &&

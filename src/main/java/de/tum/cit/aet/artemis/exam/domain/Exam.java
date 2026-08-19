@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -43,8 +45,13 @@ public class Exam extends DomainObject {
     private String title;
 
     /**
-     * This boolean indicates whether it is a real exam (false) or test exam (true)
+     * This enum indicates the type of the exam
      */
+    @Column(name = "exam_mode", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ExamMode examMode = ExamMode.REAL;
+
+    @Deprecated(forRemoval = true)
     @Column(name = "test_exam")
     private boolean testExam;
 
@@ -186,12 +193,13 @@ public class Exam extends DomainObject {
         this.title = title.strip();
     }
 
-    public boolean isTestExam() {
-        return testExam;
+    public ExamMode getExamMode() {
+        return examMode;
     }
 
-    public void setTestExam(boolean testExam) {
-        this.testExam = testExam;
+    public void setExamMode(ExamMode examMode) {
+        this.examMode = examMode == null ? ExamMode.REAL : examMode;
+        this.testExam = this.examMode != ExamMode.REAL;
     }
 
     public boolean isExamWithAttendanceCheck() {
@@ -508,7 +516,7 @@ public class Exam extends DomainObject {
     @JsonIgnore
     public boolean isExamSummaryPublished() {
         // test exams are self-service practice with no shift concern; their summary is always available
-        if (isTestExam() || examSummaryPublicationDate == null) {
+        if (!examMode.isReal() || examSummaryPublicationDate == null) {
             return true;
         }
         return examSummaryPublicationDate.isBefore(ZonedDateTime.now()) || resultsPublished();
@@ -522,6 +530,23 @@ public class Exam extends DomainObject {
     @JsonIgnore
     public boolean isAfterLatestStudentExamEnd() {
         return ZonedDateTime.now().isAfter(getStartDate().plusSeconds(getStudentExams().stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0)));
+    }
+
+    /**
+     * Checks whether the current exam should behave like a test exam. This means it is repeatable.
+     * Student exams and exercises are prepared when the user starts the exam.
+     *
+     * @param now the current time
+     * @return true if is a test exam or a test exam with simulation and the simulation is over
+     */
+    @JsonIgnore
+    public boolean isTestOrPractice(ZonedDateTime now) {
+        return examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SIMULATION && !now.isBefore(getSimulationEndDate());
+    }
+
+    @JsonIgnore
+    public ZonedDateTime getSimulationEndDate() {
+        return startDate.plusSeconds(workingTime);
     }
 
     @JsonIgnore

@@ -127,7 +127,7 @@ public class ExamLiveEventsService {
         // client on its correct startedDate-based fallback. A real exam a student is conducting always has both dates
         // set; the null checks are defensive and the client treats the dates as optional accordingly.
         var exam = studentExam.getExam();
-        if (!exam.isTestExam()) {
+        if (exam.getExamMode().isReal()) {
             if (exam.getStartDate() != null) {
                 event.setNewStartDate(exam.getStartDate().toInstant());
             }

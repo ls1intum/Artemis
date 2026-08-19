@@ -31,6 +31,7 @@ import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-regist
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
 import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
@@ -544,7 +545,7 @@ export class ExamManagementService {
     public static convertExamToImportDTO(exam: Exam, courseId: number): ExamImportDTO {
         return {
             title: exam.title,
-            testExam: exam.testExam ?? false,
+            examMode: exam.examMode ?? ExamMode.REAL,
             examWithAttendanceCheck: exam.examWithAttendanceCheck ?? false,
             visibleDate: convertDateFromClient(exam.visibleDate),
             startDate: convertDateFromClient(exam.startDate),
@@ -695,7 +696,7 @@ interface ExerciseGroupImportDTO {
 
 interface ExamImportDTO {
     title?: string;
-    testExam: boolean;
+    examMode: ExamMode;
     examWithAttendanceCheck: boolean;
     visibleDate?: string;
     startDate?: string;

@@ -119,7 +119,7 @@ public class ExamSubmissionService {
 
         Optional<StudentExam> optionalStudentExam;
         // Since multiple student exams for a test exam might exist, find the latest unsubmitted student exam based on the created date
-        if (exam.isTestExam()) {
+        if (!exam.getExamMode().isReal()) {
             optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()
                     .max(Comparator.comparing(StudentExam::getCreatedDate));
         }
@@ -167,7 +167,7 @@ public class ExamSubmissionService {
      */
     public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         // Return immediately if it is not an exam submission or if it is a programming exercise or if it is a test exam exercise
-        if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise || exercise.getExam().isTestExam()) {
+        if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise || !exercise.getExam().getExamMode().isReal()) {
             return submission;
         }
 
@@ -193,7 +193,7 @@ public class ExamSubmissionService {
         if (studentExam.getWorkingTime() != null && studentExam.getWorkingTime() > 0) {
             calculatedEndDate = withGracePeriod ? studentExam.getIndividualEndDateWithGracePeriod() : studentExam.getIndividualEndDate();
         }
-        return exam.getStartDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());
+        return calculatedEndDate != null && exam.getStartDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());
     }
 
     /**

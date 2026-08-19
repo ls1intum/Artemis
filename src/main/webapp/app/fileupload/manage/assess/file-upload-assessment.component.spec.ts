@@ -28,7 +28,7 @@ import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-resp
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { SubmissionExerciseType, SubmissionType, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { Course } from 'app/course/shared/entities/course.model';
 
 import { AccountService } from 'app/core/auth/account.service';
@@ -45,6 +45,8 @@ import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedbac
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('FileUploadAssessmentComponent', () => {
     let component: FileUploadAssessmentComponent;

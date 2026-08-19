@@ -11,6 +11,7 @@ import { SavedPostStatus } from 'app/communication/shared/entities/posting.model
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
@@ -79,9 +80,6 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
  * lectures) and the lighter `LectureForOverview` projection satisfy it, so the sidebar mapping works with either.
  */
 export type SidebarLecture = Pick<Lecture, 'id' | 'title' | 'startDate' | 'endDate' | 'isTutorialLecture'>;
-
-/** The exam fields the sidebar renders; see {@link SidebarLecture}. */
-export type SidebarExam = Pick<Exam, 'id' | 'title' | 'moduleNumber' | 'startDate' | 'workingTime' | 'examMaxPoints' | 'testExam'>;
 
 @Injectable({
     providedIn: 'root',
@@ -458,14 +456,6 @@ export class CourseOverviewService {
         return tutorialGroups.map((tutorialGroup) => this.mapTutorialGroupToSidebarCardElement(tutorialGroup));
     }
 
-    mapExercisesToSidebarCardElements(exercises: Exercise[]) {
-        return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
-    }
-
-    mapExamsToSidebarCardElements(exams: Exam[], studentExams?: StudentExam[]) {
-        return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams?.[index]));
-    }
-
     /**
      * Maps an array of conversations to their respective sidebar card representations.
      * This is used to display conversation cards (channels, group chats, etc.) in the sidebar.
@@ -475,13 +465,6 @@ export class CourseOverviewService {
      */
     mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
         return conversations.map((conversation) => this.mapConversationToSidebarCardElement(conversation));
-    }
-
-    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExamOrDTO[], indices?: number[]) {
-        if (attempts && indices) {
-            return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
-        }
-        return undefined;
     }
 
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {
@@ -576,20 +559,20 @@ export class CourseOverviewService {
         };
     }
 
-    mapExamToSidebarCardElement(exam: Exam, studentExam?: StudentExam, numberOfAttempts?: number): SidebarCardElement {
+    mapExamToSidebarCardElement(exam: Exam, options?: { studentExam?: StudentExam; numberOfAttempts?: number; workingTime?: number }): SidebarCardElement {
         return {
             title: exam.title ?? '',
             id: exam.id ?? '',
             icon: faGraduationCap,
             subtitleLeft: exam.moduleNumber ?? '',
             startDateWithTime: exam.startDate,
-            workingTime: exam.workingTime,
-            studentExam: studentExam,
+            workingTime: options?.workingTime ?? exam.workingTime,
+            studentExam: options?.studentExam,
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',
             isAttempt: false,
-            testExam: exam.testExam,
-            attempts: numberOfAttempts ?? 0,
+            testExam: !isRealExam(exam),
+            attempts: options?.numberOfAttempts ?? 0,
         };
     }
 
@@ -696,7 +679,7 @@ export class CourseOverviewService {
 
     calculateUsedWorkingTime(studentExam: StudentExamOrDTO): number {
         let usedWorkingTime = 0;
-        if (studentExam.exam!.testExam && studentExam.started && studentExam.submitted && studentExam.workingTime && studentExam.startedDate && studentExam.submissionDate) {
+        if (!isRealExam(studentExam.exam) && studentExam.started && studentExam.submitted && studentExam.workingTime && studentExam.startedDate && studentExam.submissionDate) {
             const regularExamDuration = studentExam.workingTime;
             // As students may submit during the grace period, the workingTime is limited to the regular exam duration
             usedWorkingTime = Math.min(regularExamDuration, dayjs(studentExam.submissionDate).diff(dayjs(studentExam.startedDate), 'seconds'));

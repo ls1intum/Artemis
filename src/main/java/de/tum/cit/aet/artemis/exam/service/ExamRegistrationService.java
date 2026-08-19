@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -125,7 +126,7 @@ public class ExamRegistrationService {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
-        if (exam.isTestExam()) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
@@ -275,7 +276,7 @@ public class ExamRegistrationService {
     public void checkRegistrationOrRegisterStudentToTestExam(Course course, long examId, User currentUser) {
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (!exam.isTestExam()) {
+        if (exam.getExamMode().isReal()) {
             throw new BadRequestAlertException("Self-Registration is only allowed for test exams", "ExamRegistrationService", "SelfRegistrationOnlyForRealExams");
         }
 
@@ -314,9 +315,10 @@ public class ExamRegistrationService {
 
         examUserService.deleteAvailableExamUserImages(registeredExamUser);
 
-        // The student exam might already be generated, then we need to delete it
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), IS_TEST_RUN);
-        optionalStudentExam.ifPresent(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
+        // The student exam(s) might already be generated, then we need to delete them.
+        // In test exams with simulation, a student can have multiple attempts, so we must handle a list.
+        List<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), IS_TEST_RUN);
+        studentExams.forEach(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
         User currentUser = userRepository.getUserWithAuthorities();

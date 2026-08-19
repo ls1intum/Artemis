@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
@@ -1387,7 +1388,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             ZonedDateTime now = ZonedDateTime.now();
             exam.setStartDate(now.plusHours(1));
             exam.setEndDate(now.plusHours(2));
-            exam.setTestExam(true);
+            exam.setExamMode(ExamMode.TEST);
             examRepository.save(exam);
 
             // Create an instructor exam test run, including its participation and repository.

@@ -47,6 +47,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -91,6 +92,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly profileService = inject(ProfileService);
     private readonly calendarService = inject(CalendarService);
+
+    protected readonly isRealExam = isRealExam;
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Text';

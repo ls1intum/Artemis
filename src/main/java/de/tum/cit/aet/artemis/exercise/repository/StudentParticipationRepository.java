@@ -446,13 +446,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-            WHERE p.initializationDate = (
-                SELECT MAX(p2.initializationDate)
-                FROM StudentParticipation p2
-                    LEFT JOIN p2.submissions s2
-                WHERE p2.exercise.id = :exerciseId
-                    AND p2.student.login = :username
-            )
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.login = :username
+                AND p.initializationDate = (
+                    SELECT MAX(p2.initializationDate)
+                    FROM StudentParticipation p2
+                    WHERE p2.exercise.id = :exerciseId
+                        AND p2.student.login = :username
+                )
             """)
     Optional<StudentParticipation> findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
@@ -1083,7 +1084,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH r.assessor
             WHERE p.testRun = FALSE
                 AND se.id IN :studentExamId
-                AND e.testExam = TRUE
+                AND e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
             """)
     List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultAndAssessorIgnoreTestRuns(
@@ -1098,7 +1099,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     LEFT JOIN FETCH s.results r
                 WHERE p.testRun = FALSE
                     AND se.id IN :studentExamId
-                    AND e.testExam = TRUE
+                    AND e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                     AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
             """)
     List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(@Param("studentExamId") long studentExamId);
@@ -1292,7 +1293,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
         }
 
-        if (studentExam.isTestExam()) {
+        if (!studentExam.getExamMode().isReal()) {
             if (withAssessor) {
                 return findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultAndAssessorIgnoreTestRuns(studentExam.getId());
             }

@@ -34,15 +34,7 @@
                             <a [routerLink]="['/course-management', exam.course?.id, 'exams', exam.id]">{{ exam.title }}</a>
                         </td>
                         <td>
-                            @if (exam.testExam) {
-                                <tum-ui-tag severity="info" data-testid="exam-mode-tag">
-                                    <span jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
-                                </tum-ui-tag>
-                            } @else {
-                                <tum-ui-tag severity="success" data-testid="exam-mode-tag">
-                                    <span jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
-                                </tum-ui-tag>
-                            }
+                            <jhi-exam-mode-badge [exam]="exam" />
                         </td>
                         @if (exam.course; as course) {
                             <td>

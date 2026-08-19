@@ -8,7 +8,7 @@ import { createRequestOption } from 'app/foundation/util/request.util';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { SubmissionType, getAllResultsOfAllSubmissions, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getAllResultsOfAllSubmissions, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/foundation/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -19,6 +19,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AccountService } from 'app/core/auth/account.service';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.

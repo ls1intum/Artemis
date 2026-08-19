@@ -16,6 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 let fixture: ComponentFixture<ExamStartInformationComponent>;
 let component: ExamStartInformationComponent;
@@ -30,14 +31,14 @@ let exam = {
     title: 'Test Exam',
     startDate,
     endDate,
-    testExam: false,
+    examMode: ExamMode.REAL,
 } as Exam;
 
 let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
 describe('ExamStartInformationComponent', () => {
     beforeEach(() => {
-        exam = { id: 1, title: 'ExamForTesting', examMaxPoints: 10, startDate, endDate, testExam: false } as Exam;
+        exam = { id: 1, title: 'ExamForTesting', examMaxPoints: 10, startDate, endDate, examMode: ExamMode.REAL } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
@@ -143,7 +144,7 @@ describe('ExamStartInformationComponent', () => {
 
     it('should initialize start date of the test exam correctly', () => {
         const examStartDate = dayjs('2022-02-06 02:00:00');
-        const testExam = { ...exam, testExam: true } as Exam;
+        const testExam = { ...exam, examMode: ExamMode.TEST } as Exam;
         fixture.componentRef.setInput('exam', testExam);
         fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
@@ -152,7 +153,7 @@ describe('ExamStartInformationComponent', () => {
 
     it('should initialize end date of the test exam correctly', () => {
         const examEndDate = dayjs('2022-02-06 02:00:00').add(1, 'hours');
-        const testExam = { ...exam, testExam: true } as Exam;
+        const testExam = { ...exam, examMode: ExamMode.TEST } as Exam;
         fixture.componentRef.setInput('exam', testExam);
         fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();

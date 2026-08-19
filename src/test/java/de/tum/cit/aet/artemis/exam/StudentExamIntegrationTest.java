@@ -80,6 +80,7 @@ import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -507,6 +508,53 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testStartExercises_testExamWithSimulation_noDuplicateParticipations() throws Exception {
+        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
+        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
+        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation.setWorkingTime(3600);
+        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
+        testExamWithSimulation.setExamMaxPoints(19);
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        // Register student to exam
+        var examUser = new de.tum.cit.aet.artemis.exam.domain.ExamUser();
+        examUser.setUser(student1);
+        examUser.setExam(testExamWithSimulation);
+        examUserRepository.save(examUser);
+
+        // Generate student exams
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/generate-missing-student-exams", null, HttpStatus.OK,
+                null);
+
+        // Start exercises for the simulation exam for the first time
+        int firstGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
+        assertThat(firstGenerated).isEqualTo(testExamWithSimulation.getExerciseGroups().size());
+
+        var studentExam = studentExamRepository.findByExamIdAndUserId(testExamWithSimulation.getId(), student1.getId()).orElseThrow();
+        var studentExamWithParticipations = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+        assertThat(studentExamWithParticipations.getStudentParticipations()).hasSize(testExamWithSimulation.getExerciseGroups().size());
+
+        Long participationId = studentExamWithParticipations.getStudentParticipations().get(0).getId();
+        Optional<Boolean> submitted = studentExamRepository.isSubmitted(participationId);
+        assertThat(submitted).isPresent();
+
+        // Start exercises for the simulation exam a second time, this should reuse participations
+        int secondGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
+        assertThat(secondGenerated).isZero();
+
+        // Verify that the participations were not lost
+        var studentExamWithParticipationsAfterSecondRun = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+        assertThat(studentExamWithParticipationsAfterSecondRun.getStudentParticipations()).hasSize(testExamWithSimulation.getExerciseGroups().size());
+
+        Optional<Boolean> submittedAfterSecondRun = studentExamRepository.isSubmitted(participationId);
+        assertThat(submittedAfterSecondRun).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStudentExamForConduction() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
 
@@ -550,7 +598,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         var exam = examUtilService.addExam(course1, examVisibleDate, examStartDate, examEndDate);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
-        exam.setTestExam(true);
+        exam.setExamMode(ExamMode.TEST);
         var examUser5 = new ExamUser();
         examUser5.setExam(exam);
         examUser5.setUser(student1);
@@ -574,6 +622,71 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // TODO: test the conduction / submission of the test exams, in particular that the summary includes all submissions
 
         deleteExamWithInstructor(testExam1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetStudentExamForConduction_preparedSimulationExam_noDuplicateParticipations() throws Exception {
+        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
+        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
+        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        // Start date in the past, but working time long enough so we are still in simulation phase for generation
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation.setWorkingTime(3600);
+        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
+        testExamWithSimulation.setExamMaxPoints(19);
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        // Register student to exam
+        var examUser = new ExamUser();
+        examUser.setUser(student1);
+        examUser.setExam(testExamWithSimulation);
+        examUserRepository.save(examUser);
+
+        // Generate student exams
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/generate-missing-student-exams", null, HttpStatus.OK,
+                null);
+
+        // Prepare the simulation exam (this creates participations)
+        int generated = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
+        assertThat(generated).isEqualTo(testExamWithSimulation.getExerciseGroups().size());
+
+        // Fast-forward time to cross into practice phase (now >= simulationEndDate)
+        testExamWithSimulation.setWorkingTime(60); // 1 minute working time -> simulation ended 9 mins ago
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        var studentExam = studentExamRepository.findByExamIdAndUserId(testExamWithSimulation.getId(), student1.getId()).orElseThrow();
+
+        // Switch to student user
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        final HttpHeaders headers = getHttpHeadersForExamSession();
+
+        // Cross into practice: conduction is called
+        var response = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class, headers);
+
+        // Assert that the student exam is started and we don't have duplicate participations (1 per exercise)
+        assertThat(response.isStarted()).isTrue();
+        for (var exercise : response.getExercises()) {
+            assertThat(exercise.getStudentParticipations()).as(exercise.getClass().getName() + " should have 1 participation").hasSize(1);
+            var participation = exercise.getStudentParticipations().iterator().next();
+            if (!(exercise instanceof de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise)) {
+                assertThat(participation.getSubmissions()).as(exercise.getClass().getName() + " should have 1 submission").hasSize(1);
+                var submission = participation.getSubmissions().iterator().next();
+                assertThat(participation.getParticipant()).isEqualTo(student1);
+                assertThat(submission.isSubmitted()).isFalse();
+                assertThat(submission.getResults()).as(exercise.getClass().getName() + " should have no results").isNullOrEmpty();
+            }
+            assertThat(exercise.getGradingCriteria()).isNullOrEmpty();
+            assertThat(exercise.getGradingInstructions()).isNullOrEmpty();
+        }
+
+        // Validate in DB
+        var studentExamWithParticipations = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+        assertThat(studentExamWithParticipations.getStudentParticipations()).hasSize(testExamWithSimulation.getExerciseGroups().size());
+
+        deleteExamWithInstructor(testExamWithSimulation);
     }
 
     private void assertParticipationAndSubmissions(StudentExam response, User user) {
@@ -712,7 +825,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
 
-        exam2.setTestExam(isTestExam);
+        exam2.setExamMode(isTestExam ? ExamMode.TEST : ExamMode.REAL);
         exam2 = examRepository.save(exam2);
 
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
@@ -3675,7 +3788,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(dtoForTestExam2.exam().id()).isEqualTo(testExam2.getId());
         assertThat(studentExamListReceived).allSatisfy(dto -> {
             assertThat(dto.exam()).isNotNull();
-            assertThat(dto.exam().testExam()).isTrue();
+            assertThat(!dto.exam().examMode().isReal()).isTrue();
             assertThat(dto.exam().course()).isNotNull();
             assertThat(dto.exam().course().id()).isEqualTo(course1.getId());
             // user is intentionally omitted from this endpoint's response (see StudentExamDTO#withExam)
@@ -3859,6 +3972,130 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     .setInitializationDate(ZonedDateTime.ofInstant(studentParticipation.getInitializationDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
             assertThat(studentParticipation.getInitializationDate()).isCloseTo(studentExamForConduction.getStartedDate(), within(1, ChronoUnit.SECONDS));
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testConductionOfTestExam_secondAttemptReusesExercises() throws Exception {
+        Exam testExamWithExercises = examUtilService.addTestExam(course1);
+        testExamWithExercises = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithExercises, false, true);
+        testExamWithExercises.setExamMaxPoints(19);
+        testExamWithExercises.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithExercises.setStartDate(ZonedDateTime.now().minusMinutes(30));
+        testExamWithExercises.setWorkingTime(6000);
+        var examUser = new ExamUser();
+        examUser.setExam(testExamWithExercises);
+        examUser.setUser(student1);
+        examUserRepository.save(examUser);
+        testExamWithExercises.addExamUser(examUser);
+        testExamWithExercises = examRepository.save(testExamWithExercises);
+
+        StudentExam studentExam1 = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/own-student-exam", HttpStatus.OK,
+                StudentExam.class);
+        studentExam1 = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/student-exams/" + studentExam1.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class);
+
+        // Explicitly restore the user to fix the test security context because the previous call mutated it
+        // when startExercises -> setUpExerciseParticipationsAndSubmissions invoked SecurityUtils.setAuthorizationObject()
+        userUtilService.changeUser("studexamstudent1");
+
+        var body = objectMapper.createObjectNode();
+        body.put("id", studentExam1.getId());
+        body.set("exercises", objectMapper.createArrayNode());
+
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/student-exams/submit", body, HttpStatus.OK);
+
+        StudentExam studentExam2 = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/own-student-exam", HttpStatus.OK,
+                StudentExam.class);
+        assertThat(studentExam2.getId()).isNotEqualTo(studentExam1.getId());
+        studentExam2 = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/student-exams/" + studentExam2.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class);
+
+        assertThat(studentExam2.getExercises()).hasSize(3);
+        long participationsCount = studentExam2.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).count();
+        assertThat(participationsCount).isEqualTo(3);
+
+        var p1Ids = studentExam1.getExercises().stream().flatMap(e -> e.getStudentParticipations().stream())
+                .map(de.tum.cit.aet.artemis.exercise.domain.participation.Participation::getId).toList();
+        var p2Ids = studentExam2.getExercises().stream().flatMap(e -> e.getStudentParticipations().stream())
+                .map(de.tum.cit.aet.artemis.exercise.domain.participation.Participation::getId).toList();
+        assertThat(p1Ids).doesNotContainAnyElementsOf(p2Ids);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testConductionOfTestExamWithSimulationUsesFixedSimulationEndDate() throws Exception {
+        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
+        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
+        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        testExamWithSimulation.setExamMaxPoints(19);
+        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation.setWorkingTime(3600);
+        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        // Register student to exam
+        var examUser = new ExamUser();
+        examUser.setUser(student1);
+        examUser.setExam(testExamWithSimulation);
+        examUserRepository.save(examUser);
+        testExamWithSimulation.addExamUser(examUser);
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        // Add pre-generated student exam for the active simulation phase
+        examUtilService.addStudentExamForTestExam(testExamWithSimulation, student1);
+
+        StudentExam studentExamForStart = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/own-student-exam", HttpStatus.OK,
+                StudentExam.class);
+
+        StudentExam studentExamForConduction = request.get(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class);
+
+        assertThat(studentExamForConduction.getWorkingTime()).isEqualTo(testExamWithSimulation.getWorkingTime());
+        assertThat(studentExamForConduction.getIndividualEndDate()).isCloseTo(testExamWithSimulation.getStartDate().plusSeconds(testExamWithSimulation.getWorkingTime()),
+                within(10, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testConductionOfTestExamWithSimulationPracticeAttemptBoundary() {
+        Exam testExamWithSimulation = new Exam();
+        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        ZonedDateTime startDate = ZonedDateTime.now().minusMinutes(10);
+        testExamWithSimulation.setStartDate(startDate);
+        int workingTime = 3600;
+        testExamWithSimulation.setWorkingTime(workingTime);
+
+        // Simulation end date is startDate + workingTime
+        ZonedDateTime simulationEndDate = testExamWithSimulation.getSimulationEndDate();
+
+        // 1. Started exactly at simulationEndDate
+        StudentExam studentExamAtBoundary = new StudentExam();
+        studentExamAtBoundary.setExam(testExamWithSimulation);
+        studentExamAtBoundary.setWorkingTime(workingTime);
+        studentExamAtBoundary.setStartedAndStartDate(simulationEndDate);
+
+        assertThat(studentExamAtBoundary.getIndividualEndDate()).isEqualTo(simulationEndDate.plusSeconds(workingTime));
+
+        // 2. Started strictly after simulationEndDate
+        StudentExam studentExamAfterBoundary = new StudentExam();
+        studentExamAfterBoundary.setExam(testExamWithSimulation);
+        studentExamAfterBoundary.setWorkingTime(workingTime);
+        ZonedDateTime afterSimulationEndDate = simulationEndDate.plusSeconds(1);
+        studentExamAfterBoundary.setStartedAndStartDate(afterSimulationEndDate);
+
+        assertThat(studentExamAfterBoundary.getIndividualEndDate()).isEqualTo(afterSimulationEndDate.plusSeconds(workingTime));
+
+        // 3. Started strictly before simulationEndDate
+        StudentExam studentExamBeforeBoundary = new StudentExam();
+        studentExamBeforeBoundary.setExam(testExamWithSimulation);
+        studentExamBeforeBoundary.setWorkingTime(workingTime);
+        ZonedDateTime beforeSimulationEndDate = simulationEndDate.minusSeconds(1);
+        studentExamBeforeBoundary.setStartedAndStartDate(beforeSimulationEndDate);
+
+        assertThat(studentExamBeforeBoundary.getIndividualEndDate()).isEqualTo(startDate.plusSeconds(workingTime));
     }
 
     @Test

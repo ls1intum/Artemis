@@ -86,8 +86,8 @@ public class StudentExam extends AbstractAuditingEntity {
     }
 
     @JsonIgnore
-    public boolean isTestExam() {
-        return exam.isTestExam();
+    public ExamMode getExamMode() {
+        return exam.getExamMode();
     }
 
     public void setTestRun(boolean testRun) {
@@ -208,7 +208,7 @@ public class StudentExam extends AbstractAuditingEntity {
         if (Boolean.TRUE.equals(testRun)) {
             return false;
         }
-        if (this.getExam().isTestExam() && !Boolean.TRUE.equals(this.started) && this.startedDate == null) {
+        if (!this.getExam().getExamMode().isReal() && !Boolean.TRUE.equals(this.started) && this.startedDate == null) {
             return false;
         }
         return ZonedDateTime.now().isAfter(getIndividualEndDate());
@@ -232,7 +232,7 @@ public class StudentExam extends AbstractAuditingEntity {
      */
     @JsonIgnore
     public ZonedDateTime getIndividualEndDate() {
-        if (exam.isTestExam()) {
+        if (isTestStudentExam()) {
             if (this.startedDate == null) {
                 return null;
             }
@@ -249,13 +249,19 @@ public class StudentExam extends AbstractAuditingEntity {
     @JsonIgnore
     public ZonedDateTime getIndividualEndDateWithGracePeriod() {
         int gracePeriodInSeconds = Objects.requireNonNullElse(exam.getGracePeriod(), 0);
-        if (exam.isTestExam()) {
+        if (isTestStudentExam()) {
             if (this.startedDate == null) {
                 return null;
             }
             return this.startedDate.plusSeconds(workingTime + gracePeriodInSeconds);
         }
         return exam.getStartDate().plusSeconds(workingTime + gracePeriodInSeconds);
+    }
+
+    @JsonIgnore
+    private boolean isTestStudentExam() {
+        return exam.getExamMode() == ExamMode.TEST
+                || exam.getExamMode() == ExamMode.TEST_WITH_SIMULATION && startedDate != null && !startedDate.isBefore(exam.getSimulationEndDate());
     }
 
     /**
@@ -267,7 +273,7 @@ public class StudentExam extends AbstractAuditingEntity {
      */
     @JsonIgnore
     public boolean areResultsPublishedYet() {
-        if (this.exam.isTestExam()) {
+        if (!this.exam.getExamMode().isReal()) {
             return (this.submitted != null && this.submitted);
         }
         else {

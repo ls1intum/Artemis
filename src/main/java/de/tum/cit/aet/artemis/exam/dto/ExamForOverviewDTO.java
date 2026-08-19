@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
+
 /**
  * An exam as the course overview sidebar needs it: enough to title, date, sort, group and link to it.
  * <p>
@@ -18,9 +20,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param endDate       when the exam ends
  * @param workingTime   the working time in seconds, shown on the card
  * @param examMaxPoints the attainable points, shown on the card
- * @param testExam      whether this is a test exam, which the sidebar groups separately and allows attempts for
+ * @param examMode      the mode of the exam (REAL, TEST, or TEST_WITH_SIMULATION)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamForOverviewDTO(long id, String title, String moduleNumber, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, int workingTime,
-        Integer examMaxPoints, boolean testExam) {
+        Integer examMaxPoints, ExamMode examMode) {
 }

@@ -712,7 +712,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(participation.exercise().examId()).as("exam id is exposed so the client can resolve the exam").isNotNull();
         assertThat(participation.exercise().exerciseGroup()).as("the nested exam shape is exposed so the client can detect exam mode").isNotNull();
         assertThat(participation.exercise().exerciseGroup().exam()).as("the nested exam reference is exposed").isNotNull();
-        assertThat(participation.exercise().exerciseGroup().exam().testExam()).as("test-exam flag is exposed for the text editor").isTrue();
+        assertThat(participation.exercise().exerciseGroup().exam().examMode()).as("exam mode is exposed for the text editor")
+                .isEqualTo(de.tum.cit.aet.artemis.exam.domain.ExamMode.TEST);
     }
 
     @Test
