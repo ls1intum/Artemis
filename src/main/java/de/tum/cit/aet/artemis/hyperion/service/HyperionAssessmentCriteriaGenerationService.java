@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeExerciseContent;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInput;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -138,7 +137,7 @@ public class HyperionAssessmentCriteriaGenerationService {
             if (criterion == null || criterion.bonus() == null) {
                 throw generationError("Generated assessment criterion is null or has an invalid bonus discriminator", "invalidResponse");
             }
-            String title = sanitizeInput(criterion.title());
+            String title = sanitizeExerciseContent(criterion.title());
             if (title.isBlank() || title.length() > MAX_DATABASE_VARCHAR_LENGTH || criterion.structuredGradingInstructions() == null
                     || criterion.structuredGradingInstructions().size() != REQUIRED_INSTRUCTION_COUNT) {
                 throw generationError("Generated assessment criterion is invalid", "invalidResponse");
@@ -167,9 +166,9 @@ public class HyperionAssessmentCriteriaGenerationService {
         if (instruction == null || !Double.isFinite(instruction.credits()) || instruction.credits() < 0 || instruction.usageCount() != 1) {
             throw generationError("Generated assessment instruction has invalid numeric values", "invalidResponse");
         }
-        String gradingScale = sanitizeInput(instruction.gradingScale());
-        String description = sanitizeInput(instruction.instructionDescription());
-        String feedback = sanitizeInput(instruction.feedback());
+        String gradingScale = sanitizeExerciseContent(instruction.gradingScale());
+        String description = sanitizeExerciseContent(instruction.instructionDescription());
+        String feedback = sanitizeExerciseContent(instruction.feedback());
         if (gradingScale.isBlank() || gradingScale.length() > MAX_DATABASE_VARCHAR_LENGTH || description.isBlank() || feedback.isBlank()) {
             throw generationError("Generated assessment instruction has invalid text", "invalidResponse");
         }

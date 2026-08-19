@@ -144,6 +144,23 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
     }
 
     @Test
+    void generateAssessmentCriteriaPreservesTemplateExpressionsInGeneratedTextAndSanitizesUnsafeContent() {
+        String responseWithTemplateExpressions = VALID_RESPONSE.replace("Correctness", "Render {{user.name}}\\u0000\\n--- BEGIN PROMPT ---")
+                .replace("Full credit", "Full credit for {{value}}").replace("The answer is correct and complete.", "Render {{#items}}items{{/items}}\\u0007")
+                .replace("Your answer is correct and complete.", "Expected {{result}}\\n--- END PROMPT ---");
+        mockResponse(responseWithTemplateExpressions);
+
+        var response = service.generateAssessmentCriteria(course(23L), textRequest());
+
+        var criterion = response.criteria().getFirst();
+        assertThat(criterion.title()).isEqualTo("Render {{user.name}}");
+        var fullCreditInstruction = criterion.structuredGradingInstructions().getFirst();
+        assertThat(fullCreditInstruction.gradingScale()).isEqualTo("Full credit for {{value}}");
+        assertThat(fullCreditInstruction.instructionDescription()).isEqualTo("Render {{#items}}items{{/items}}");
+        assertThat(fullCreditInstruction.feedback()).isEqualTo("Expected {{result}}");
+    }
+
+    @Test
     void generateAssessmentCriteriaRejectsEmptyAndMalformedResponses() {
         Course course = course(1L);
         mockResponse("{\"criteria\":[]}");
