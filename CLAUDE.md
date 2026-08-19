@@ -52,7 +52,7 @@ pnpm run build                       # Alternative production build
 ./gradlew modernizer                 # Check for legacy API usage
 pnpm run lint                        # ESLint
 pnpm run lint:fix                    # Fix ESLint issues
-pnpm exec stylelint "src/main/webapp/**/*.scss"   # SCSS linting (no npm script; config in .stylelintrc.json)
+pnpm run stylelint                   # SCSS linting
 pnpm run prettier:check              # Check formatting
 pnpm run prettier:write              # Fix formatting
 ```
