@@ -15,6 +15,7 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
@@ -45,6 +46,9 @@ class CourseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
+    @Autowired
+    private CourseTestRepository courseRepository;
+
     private Course course;
 
     static boolean isWeaviateEnabled() {
@@ -73,8 +77,9 @@ class CourseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalC
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
         assertCourseExistsInWeaviate(weaviateService, course);
 
-        // Update the course title
+        // Update the course title. Persist it, since the dispatcher re-derives the entity from the database at dispatch time
         course.setTitle("Updated Course Title");
+        courseRepository.save(course);
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
@@ -89,6 +94,7 @@ class CourseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalC
     void testUpsertCourse_storesShortNameAndDescription() throws Exception {
         course.setShortName("TST");
         course.setDescription("A test course description");
+        courseRepository.save(course);
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
