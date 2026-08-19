@@ -11,6 +11,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -71,7 +73,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("<h1>Hello</h1>");
         assertThat(result.html()).contains("<strong>bold</strong>");
         assertThat(result.html()).contains("artemis-problem-statement");
-        assertThat(result.rendererVersion()).isEqualTo("1.1.0");
+        assertThat(result.rendererVersion()).isEqualTo("1.2.0");
         assertThat(result.contentHash()).isNotBlank();
         assertThat(result.interactiveScript()).isNotNull();
     }
@@ -137,6 +139,50 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("artemis-task-fail");
         assertThat(result.html()).contains("data-feedback");
         assertThat(result.html()).contains("Array index out of bounds");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldEmitOneFeedbackEntryPerTestWhenATaskRepeatsAReference() throws Exception {
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testSort", false, "Array index out of bounds", 0.0));
+        String repeated = String.join(",", Collections.nCopies(500, "<testid>1</testid>"));
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort Method](" + repeated + ")", testResults, null, "en", false, true, null, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // The dialog shows one row per test however often the task names it, so a repeated reference used to add
+        // nothing but bytes: with the longest message the request DTO permits, this shape produced a response
+        // thousands of times the size of the request.
+        assertThat(StringUtils.countOccurrencesOf(result.html(), "Array index out of bounds")).isEqualTo(1);
+        assertThat(result.html()).contains("data-feedback");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldLeaveUnclosedDiagramMarkersAsWritten() throws Exception {
+        // No `@enduml` follows, so nothing is a diagram and every marker stays in the prose. Asserted because the
+        // scan that establishes this used to run once per marker over the whole remaining input.
+        String markdown = "@startuml\n".repeat(2000);
+        var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("artemis-diagram");
+        assertThat(result.html()).contains("@startuml");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldStillRenderADiagramThatFollowsAnUnclosedMarker() throws Exception {
+        // The scan stops at the first opening marker without a closing one. This pins that a diagram *before* such a
+        // marker is still rendered, and that the trailing text is preserved.
+        var body = new ProblemStatementRenderRequestDTO("@startuml\nAlice -> Bob\n@enduml\n\ntrailing @startuml never closed", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-diagram");
+        assertThat(result.html()).contains("trailing");
+        assertThat(result.html()).contains("never closed");
     }
 
     @Test
@@ -1214,7 +1260,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result1 = request.postWithResponseBody(POST_URL, body1, RenderedProblemStatementDTO.class, HttpStatus.OK);
         RenderedProblemStatementDTO result2 = request.postWithResponseBody(POST_URL, body2, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result1.rendererVersion()).isEqualTo("1.1.0");
+        assertThat(result1.rendererVersion()).isEqualTo("1.2.0");
         assertThat(result2.rendererVersion()).isEqualTo(result1.rendererVersion());
     }
 
@@ -1226,7 +1272,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         // f0d658433ea3ce51e37b7e76c21dc7739d18dd56c168ecb1cc35dcd40cc00634 is the content hash this exact request
-        // produced under renderer version "1.0.0" (captured before the bump to "1.1.0" that added this test). The
+        // produced under renderer version "1.0.0" (captured before the bump to "1.1.0" that added this test, and
+        // still distinct under "1.2.0", which deduplicated the feedback entries). The
         // renderer version is folded into the content hash precisely so that a stale client-cached rendering does
         // not survive a semantic change to the renderer; this pins that a version bump actually changes the hash
         // for byte-for-byte identical input, rather than only changing the reported version string. If this

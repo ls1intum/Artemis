@@ -26,8 +26,16 @@ public final class PlantUmlTaskColorResolver {
     /** Captures a single test identifier inside {@code testsColor(...)}. */
     private static final String TESTS_COLOR_INNER = "(\\s*[^()\\s]+(?:\\([^()]*\\))?)";
 
-    /** {@code <color:testsColor(testName)>text</color>}. Group 1: test identifier, Group 2: inner text. */
-    private static final Pattern TESTS_COLOR_TAG_PATTERN = Pattern.compile("<color:testsColor\\(" + TESTS_COLOR_INNER + "\\)>(.*?)</color>");
+    /**
+     * {@code <color:testsColor(testName)>text</color>}. Group 1: test identifier, Group 2: inner text.
+     * <p>
+     * The inner text is bounded rather than open-ended. Unbounded, an opening tag without a closing one made the
+     * matcher scan the whole remaining source for every such tag, which is quadratic: 4500 unclosed tags within the
+     * request limit cost a second of CPU. The bound cannot change the outcome for anything renderable, because
+     * {@code PlantUmlService} rejects a diagram longer than 10 000 characters outright. {@code .} still excludes line
+     * terminators, exactly as before, so a tag left open at the end of a line is unaffected either way.
+     */
+    private static final Pattern TESTS_COLOR_TAG_PATTERN = Pattern.compile("<color:testsColor\\(" + TESTS_COLOR_INNER + "\\)>(.{0,10000}?)</color>");
 
     /** {@code #testsColor(testName)}. Group 1: test identifier. */
     private static final Pattern TESTS_COLOR_ARROW_PATTERN = Pattern.compile("#testsColor\\(" + TESTS_COLOR_INNER + "\\)");

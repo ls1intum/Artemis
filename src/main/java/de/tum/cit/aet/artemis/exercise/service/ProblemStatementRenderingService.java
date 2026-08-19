@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -94,7 +95,7 @@ public class ProblemStatementRenderingService {
      * sanitization/escaping. The value itself does not need to follow strict semver; any distinct string is
      * enough to invalidate the cache.
      */
-    private static final String RENDERER_VERSION = "1.1.0";
+    private static final String RENDERER_VERSION = "1.2.0";
 
     /**
      * KaTeX is served from the client's own copy, the one declared in {@code package.json} and copied out of
@@ -131,7 +132,9 @@ public class ProblemStatementRenderingService {
 
     /** Fenced code blocks ({@code ```...```}) and inline code ({@code `...`}). */
 
-    private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([\\s\\S]*?)@enduml");
+    private static final String PLANTUML_START = "@startuml";
+
+    private static final String PLANTUML_END = "@enduml";
 
     /**
      * Matches the task syntax: {@code [task][Task Name](testId1,testId2,...)}.
@@ -309,17 +312,33 @@ public class ProblemStatementRenderingService {
 
     private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode,
             boolean allTestsPassed) {
-        Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
         int diagramIndex = 0;
+        int copiedUpTo = 0;
 
-        while (matcher.find()) {
+        while (true) {
+            int start = markdown.indexOf(PLANTUML_START, copiedUpTo);
+            if (start < 0) {
+                break;
+            }
+            int endMarker = markdown.indexOf(PLANTUML_END, start + PLANTUML_START.length());
+            if (endMarker < 0) {
+                // No closing marker after this opening one, so no complete diagram can follow it either. Leaving the
+                // rest untouched is what the previous regex produced as well, but it reached that answer by scanning
+                // to the end of the input once per opening marker: 9000 unclosed `@startuml` lines within the
+                // 100 000-character request limit cost 2.4 seconds of CPU. This scan is linear.
+                break;
+            }
+            int end = endMarker + PLANTUML_END.length();
+            sb.append(markdown, copiedUpTo, start);
+            copiedUpTo = end;
+
             if (diagramIndex >= MAX_PLANTUML_DIAGRAMS) {
-                matcher.appendReplacement(sb, Matcher.quoteReplacement("<div class=\"alert alert-warning\">Diagram limit exceeded</div>"));
+                sb.append("<div class=\"alert alert-warning\">Diagram limit exceeded</div>");
                 continue;
             }
 
-            String fullMatch = matcher.group(0);
+            String fullMatch = markdown.substring(start, end);
             String diagramId = "uml-" + diagramIndex;
             // The raw request flag, not the derived one: the resolver applies the identical predicate to the same
             // testResults, which keeps its documented contract true for every caller.
@@ -342,13 +361,11 @@ public class ProblemStatementRenderingService {
             }
             inlineSvgs.add(inlineSvg);
 
-            String replacement = "<div class=\"artemis-diagram\" data-diagram-id=\"" + diagramId + "\">" + SVG_PLACEHOLDER_PREFIX + diagramIndex + SVG_PLACEHOLDER_SUFFIX
-                    + "</div>";
-
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+            sb.append("<div class=\"artemis-diagram\" data-diagram-id=\"").append(diagramId).append("\">").append(SVG_PLACEHOLDER_PREFIX).append(diagramIndex)
+                    .append(SVG_PLACEHOLDER_SUFFIX).append("</div>");
             diagramIndex++;
         }
-        matcher.appendTail(sb);
+        sb.append(markdown, copiedUpTo, markdown.length());
         return sb.toString();
     }
 
@@ -450,7 +467,11 @@ public class ProblemStatementRenderingService {
 
     private String buildFeedbackJson(List<Long> testIds, Map<Long, TestFeedbackInputDTO> testResults) {
         List<Map<String, Object>> feedbackList = new ArrayList<>();
-        for (Long testId : testIds) {
+        // One entry per test, not per occurrence. A task may name the same test any number of times, and the feedback
+        // dialog shows one row per test either way, so a repeated id added nothing but bytes: with the 5000-character
+        // message the DTO permits, `[task][T](T,T,T,...)` turned a 16 KB request into a 39 MB response. Deduplicated
+        // through a LinkedHashSet so the surviving entries keep the order they were authored in.
+        for (Long testId : new LinkedHashSet<>(testIds)) {
             TestFeedbackInputDTO detail = testResults.get(testId);
             if (detail != null) {
                 Map<String, Object> entry = new LinkedHashMap<>();
