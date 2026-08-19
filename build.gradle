@@ -7,6 +7,19 @@ buildscript {
     configurations.classpath {
         resolutionStrategy {
             force "com.github.jknack:handlebars:4.5.4"
+            // Force the patched Apache HttpComponents onto the build-script / plugin classpath too. The
+            // org.owasp.dependencycheck and org.springframework.boot plugins drag in httpclient5 5.6.1 /
+            // httpcore5 5.4.2 / httpcore5-h2 5.4, which the GitHub dependency graph reports and Dependabot flags
+            // (GHSA-hjcp-jmpx-g3qm, GHSA-hf6x-8p5f-cgmf, GHSA-v3jc-474w-2wm6) even though the shipped WAR only ever
+            // contains the patched versions pinned in the dependencies block below. Build-time only, not shipped.
+            // Same reasoning as the jackson-bom enforcedPlatform further down. Note the two trains are versioned
+            // independently and must not be collapsed onto one number: client5 tracks 5.6.x and core5 tracks 5.4.x,
+            // because httpclient5-parent:5.6.3 itself declares <httpcore.version>5.4.3</httpcore.version>. Keep each
+            // force equal to that module's project-level pin in the dependencies block below.
+            force "org.apache.httpcomponents.client5:httpclient5:5.6.3"
+            force "org.apache.httpcomponents.client5:httpclient5-cache:5.6.3"
+            force "org.apache.httpcomponents.core5:httpcore5:5.4.3"
+            force "org.apache.httpcomponents.core5:httpcore5-h2:5.4.3"
         }
     }
     // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
@@ -107,6 +120,7 @@ ext.tumUiRuntimeSources = fileTree("packages/tum-ui/src") {
 apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
 apply from: "gradle/sbom.gradle"
+apply from: "gradle/dependency-families.gradle"
 
 if (project.hasProperty("prod")) {
     apply from: "gradle/profile_prod.gradle"
