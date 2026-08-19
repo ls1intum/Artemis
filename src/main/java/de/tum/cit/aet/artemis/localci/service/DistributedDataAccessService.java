@@ -200,7 +200,7 @@ public class DistributedDataAccessService {
     /**
      * This method is used to get a List containing all build agent information. This should be used for reading/iterating over the map.
      * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedBuildAgentInformation()} instead.
-     * On core nodes (data members), this filters out disconnected build agents using Hazelcast's client tracking.
+     * On core nodes, this filters out build agents whose node is no longer connected.
      * <p>
      * Important: The returned BuildAgentInformation objects are enriched with the CURRENT processing jobs
      * from the distributed processing jobs map. This ensures the runningBuildJobs list and numberOfCurrentBuildJobs
@@ -215,17 +215,57 @@ public class DistributedDataAccessService {
         // Get current processing jobs to enrich agent information with accurate running jobs data
         List<BuildJobQueueItem> currentProcessingJobs = getProcessingJobs();
 
-        // Get connected client names from Hazelcast (only available on core nodes)
-        Set<String> connectedClients = distributedDataProvider.getConnectedClientNames();
+        // The identifiers of the clients and of the cluster members the provider currently sees. Only core nodes can
+        // answer the first one.
+        Set<String> connectedClientIdentifiers = distributedDataProvider.getConnectedClientNames();
+        Set<String> liveNodeIdentifiers = distributedDataProvider.getClusterMemberAddresses();
 
         // Enrich and filter agents
         return allAgents.stream()
                 // Guard against null entries from distributed map
                 .filter(agent -> agent != null && agent.buildAgent() != null)
                 // Filter to only connected agents if we can determine connectivity
-                .filter(agent -> connectedClients.isEmpty() || connectedClients.contains(agent.buildAgent().name()))
+                .filter(agent -> isConnected(agent, connectedClientIdentifiers, liveNodeIdentifiers))
                 // Enrich with current processing jobs for accurate runningBuildJobs data
                 .map(agent -> enrichWithCurrentProcessingJobs(agent, currentProcessingJobs)).toList();
+    }
+
+    /**
+     * Decides whether a build agent entry belongs to a node the provider still sees.
+     *
+     * <p>
+     * A build agent can reach the cluster in three ways, and each shows up in a different place:
+     * <ul>
+     * <li><strong>A Hazelcast client</strong> (a node with only the {@code buildagent} profile) appears in the connected
+     * client list under the build agent short name, because that is what the Hazelcast client instance is named after.
+     * It is never a cluster member.</li>
+     * <li><strong>A Hazelcast cluster member that also runs a build agent</strong> (a node with {@code core} and
+     * {@code buildagent}, which is the standard Artemis topology) appears in neither: it is not a client, and the
+     * client list does not contain its short name. Its stored member address is in the member list instead. Matching
+     * only the client list hid this agent completely, so a node that was actively running builds looked absent and its
+     * capacity was missing from every capacity calculation.</li>
+     * <li><strong>Redis</strong> has no member/client distinction. It reports {@code spring.data.redis.client-name},
+     * which is the node identity and therefore exactly what the agent stored as its {@code memberAddress}; its short
+     * name never appears.</li>
+     * </ul>
+     * Accepting any of the three avoids asking the provider which shape it uses, which is the backend-specific knowledge
+     * this abstraction exists to keep out of the call sites.
+     *
+     * @param agent                      the stored build agent entry
+     * @param connectedClientIdentifiers the client identifiers the provider reports, empty if it cannot tell
+     * @param liveNodeIdentifiers        the identifiers of the nodes the provider reports as alive
+     * @return true if the agent should be shown
+     */
+    private static boolean isConnected(BuildAgentInformation agent, Set<String> connectedClientIdentifiers, Set<String> liveNodeIdentifiers) {
+        // An empty client list means connectivity could not be determined (a build agent asking, or a failed lookup).
+        // Showing every agent is the safe answer there: hiding them all would make a healthy cluster look like it has no
+        // build capacity at all.
+        if (connectedClientIdentifiers.isEmpty()) {
+            return true;
+        }
+        String name = agent.buildAgent().name();
+        String memberAddress = agent.buildAgent().memberAddress();
+        return connectedClientIdentifiers.contains(name) || connectedClientIdentifiers.contains(memberAddress) || liveNodeIdentifiers.contains(memberAddress);
     }
 
     /**

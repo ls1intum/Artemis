@@ -29,13 +29,13 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /**
- * A distributed implementation of {@link PublicKeyCredentialRequestOptionsRepository} using Hazelcast
+ * A distributed implementation of {@link PublicKeyCredentialRequestOptionsRepository} using the distributed data provider
  * to store and synchronize WebAuthn authentication request options across multiple nodes.
  *
  * <p>
  * Instead of relying on HTTP sessions (which are not available under {@code SessionCreationPolicy.STATELESS}),
  * this implementation uses a random challenge lookup ID stored in a cookie ({@value WEBAUTHN_CHALLENGE_COOKIE_NAME}) as the
- * key for looking up challenge options in a distributed Hazelcast map. This ensures that the challenge
+ * key for looking up challenge options in a distributed map. This ensures that the challenge
  * correlation between the options request ({@code POST /webauthn/authenticate/options}) and the
  * authentication request ({@code POST /login/webauthn}) works reliably across multiple nodes,
  * and also supports conditional mediation (passkey autofill) where the pending credential request
@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
  * </p>
  *
  * <p>
- * The repository stores options in Hazelcast with a time-to-live of 5 minutes to accommodate
+ * The repository stores options in the distributed map with a time-to-live of 5 minutes to accommodate
  * conditional mediation scenarios where users may not interact immediately.
  * </p>
  *
@@ -54,13 +54,13 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public class HazelcastPublicKeyCredentialRequestOptionsRepository implements PublicKeyCredentialRequestOptionsRepository {
+public class DistributedPublicKeyCredentialRequestOptionsRepository implements PublicKeyCredentialRequestOptionsRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(HazelcastPublicKeyCredentialRequestOptionsRepository.class);
+    private static final Logger log = LoggerFactory.getLogger(DistributedPublicKeyCredentialRequestOptionsRepository.class);
 
     private static final String DEVELOPMENT_PROFILE = "dev";
 
-    /** Hazelcast map name for storing credential request options */
+    /** Name of the distributed map storing credential request options */
     private static final String MAP_NAME = "public-key-credentials-request-options-map";
 
     /** Time-to-live in seconds: 5 minutes to support conditional mediation (passkey autofill) */
@@ -72,13 +72,13 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
     private DistributedMap<String, PublicKeyCredentialRequestOptions> authOptionsMap;
 
-    public HazelcastPublicKeyCredentialRequestOptionsRepository(DistributedDataProvider distributedDataProvider, Environment environment) {
+    public DistributedPublicKeyCredentialRequestOptionsRepository(DistributedDataProvider distributedDataProvider, Environment environment) {
         this.distributedDataProvider = distributedDataProvider;
         this.environment = environment;
     }
 
     /**
-     * Initializes the Hazelcast map configuration after dependency injection.
+     * Initializes the distributed map after dependency injection.
      * EventListener cannot be used here, as the bean is lazy.
      *
      * @see <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
@@ -89,13 +89,13 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
     }
 
     /**
-     * Saves the given {@link PublicKeyCredentialRequestOptions} in the Hazelcast distributed map
+     * Saves the given {@link PublicKeyCredentialRequestOptions} in the distributed map
      * and sets a cookie with the challenge lookup ID.
      *
      * <p>
      * When {@code options} is not {@code null}, a new random challenge lookup ID is generated, stored as the
-     * Hazelcast map key, and set as a cookie on the response. When {@code options} is {@code null}
-     * (cleanup after authentication), the existing challenge lookup ID is read from the cookie, the Hazelcast
+     * map key, and set as a cookie on the response. When {@code options} is {@code null}
+     * (cleanup after authentication), the existing challenge lookup ID is read from the cookie, the distributed
      * entry is removed, and the cookie is deleted.
      * </p>
      *
@@ -110,13 +110,13 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
             String challengeLookupId = UUID.randomUUID().toString();
             authOptionsMap.put(challengeLookupId, options);
             response.addHeader(HttpHeaders.SET_COOKIE, buildChallengeCookie(challengeLookupId, AUTH_OPTIONS_TIME_TO_LIVE_SECONDS).toString());
-            log.debug("Saved PublicKeyCredentialRequestOptions to Hazelcast with challengeLookupId: {}", challengeLookupId);
+            log.debug("Saved PublicKeyCredentialRequestOptions to the distributed map with challengeLookupId: {}", challengeLookupId);
         }
         else {
             // clear old challenge
             Cookie existingCookie = WebUtils.getCookie(request, WEBAUTHN_CHALLENGE_COOKIE_NAME);
             if (existingCookie != null) {
-                log.debug("Removing PublicKeyCredentialRequestOptions from Hazelcast for challengeLookupId: {}", existingCookie.getValue());
+                log.debug("Removing PublicKeyCredentialRequestOptions from the distributed map for challengeLookupId: {}", existingCookie.getValue());
                 authOptionsMap.remove(existingCookie.getValue());
             }
             response.addHeader(HttpHeaders.SET_COOKIE, buildChallengeCookie("", 0).toString());
@@ -124,12 +124,12 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
     }
 
     /**
-     * Loads the previously saved {@link PublicKeyCredentialRequestOptions} from the Hazelcast map
+     * Loads the previously saved {@link PublicKeyCredentialRequestOptions} from the distributed map
      * using the challenge lookup ID from the {@value WEBAUTHN_CHALLENGE_COOKIE_NAME} cookie.
      *
      * @param request the HTTP request (used to extract the challenge lookup ID cookie)
      * @return the stored {@link PublicKeyCredentialRequestOptions}, or {@code null} if the cookie
-     *         is missing or no matching entry exists in Hazelcast
+     *         is missing or no matching entry exists in the distributed map
      */
     @Override
     public PublicKeyCredentialRequestOptions load(HttpServletRequest request) {
@@ -141,10 +141,10 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
         PublicKeyCredentialRequestOptions options = authOptionsMap.get(cookie.getValue());
         if (options != null) {
-            log.debug("Loaded PublicKeyCredentialRequestOptions from Hazelcast for challengeLookupId: {}", cookie.getValue());
+            log.debug("Loaded PublicKeyCredentialRequestOptions from the distributed map for challengeLookupId: {}", cookie.getValue());
         }
         else {
-            log.warn("No PublicKeyCredentialRequestOptions found in Hazelcast for challengeLookupId: {}. The entry may have expired.", cookie.getValue());
+            log.warn("No PublicKeyCredentialRequestOptions found in the distributed map for challengeLookupId: {}. The entry may have expired.", cookie.getValue());
         }
         return options;
     }

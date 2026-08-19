@@ -13,9 +13,9 @@ import org.springframework.stereotype.Component;
 import com.hazelcast.client.impl.clientside.HazelcastClientProxy;
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.cit.aet.artemis.core.config.CoreOrHazelcastBuildAgent;
+import de.tum.cit.aet.artemis.core.config.HazelcastDistributedDataCondition;
 
-@Conditional(CoreOrHazelcastBuildAgent.class)
+@Conditional(HazelcastDistributedDataCondition.class)
 @Component
 @Lazy(false)
 public class HazelcastHealthIndicator implements HealthIndicator {

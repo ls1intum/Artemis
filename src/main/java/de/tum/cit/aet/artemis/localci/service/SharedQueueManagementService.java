@@ -501,6 +501,12 @@ public class SharedQueueManagementService {
      * @param removedAgent the build agent information that was removed
      */
     private void handleOrphanedJobsForRemovedAgent(BuildAgentInformation removedAgent) {
+        if (removedAgent.buildAgent() == null) {
+            // An entry without agent details carries no name to match processing jobs against, so there is nothing to
+            // re-queue. Dereferencing it would abort the listener and leave the capacity update half done.
+            log.warn("Removed build agent entry has no agent details, skipping orphaned job handling");
+            return;
+        }
         String agentName = removedAgent.buildAgent().name();
         log.info("Checking for orphaned jobs from removed build agent: {}", agentName);
 

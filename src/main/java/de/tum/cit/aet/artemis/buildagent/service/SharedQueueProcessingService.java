@@ -259,7 +259,7 @@ public class SharedQueueProcessingService {
         distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
             if (!isInitialConnection) {
                 // This is a reconnection - reset the initialized flag so listeners are re-registered
-                log.info("Hazelcast client reconnected to cluster. Re-initializing SharedQueueProcessingService listeners.");
+                log.info("Reconnected to the distributed data provider. Re-initializing SharedQueueProcessingService listeners.");
                 initialized.set(false);
                 // Also cancel existing scheduled future if it's still running, as a new one will be created
                 cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
@@ -282,7 +282,8 @@ public class SharedQueueProcessingService {
         // If already connected, tryInitialize was called by the listener above.
         // If not connected yet, schedule periodic retries as a fallback.
         if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
-            log.info("Hazelcast client not yet connected to cluster. Scheduling periodic initialization retries every {} seconds.", CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
+            log.info("Not connected to the distributed data provider yet. Scheduling periodic initialization retries every {} seconds.",
+                    CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
 
             connectionRetryFuture = taskScheduler.scheduleAtFixedRate(() -> {
                 if (tryInitialize()) {
@@ -310,7 +311,7 @@ public class SharedQueueProcessingService {
         }
 
         if (!distributedDataAccessService.isConnectedToCluster()) {
-            log.debug("Cannot initialize SharedQueueProcessingService: not connected to Hazelcast cluster yet");
+            log.debug("Cannot initialize SharedQueueProcessingService: not connected to the distributed data provider yet");
             return false;
         }
 
@@ -322,7 +323,7 @@ public class SharedQueueProcessingService {
             // Cancel existing scheduled task if present (for idempotency on partial failure retry)
             cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
 
-            log.info("Adding item listener to Hazelcast distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
+            log.info("Adding item listener to the distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
             this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
 
             /*
@@ -424,7 +425,7 @@ public class SharedQueueProcessingService {
     public void updateBuildAgentInformation() {
         // Skip if not connected to cluster (happens when build agent starts before core nodes)
         if (!distributedDataAccessService.isConnectedToCluster()) {
-            log.debug("Not connected to Hazelcast cluster yet. Skipping build agent information update.");
+            log.debug("Not connected to the distributed data provider yet. Skipping build agent information update.");
             return;
         }
 
@@ -584,7 +585,7 @@ public class SharedQueueProcessingService {
     private void checkAvailabilityAndProcessNextBuild() {
         // Skip if not connected to cluster (happens when build agent starts before core nodes)
         if (!distributedDataAccessService.isConnectedToCluster()) {
-            log.debug("Not connected to Hazelcast cluster yet. Skipping build job processing.");
+            log.debug("Not connected to the distributed data provider yet. Skipping build job processing.");
             return;
         }
 

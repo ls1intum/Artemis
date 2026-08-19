@@ -51,10 +51,23 @@ public class LocalDataProviderService implements DistributedDataProvider {
         return (DistributedQueue<T>) queues.computeIfAbsent(name, n -> new LocalQueue<>(new ConcurrentLinkedQueue<T>(), n));
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Requesting the same name once as a plain and once as a priority queue is rejected rather than silently answered
+     * with whichever kind was created first. That is the same failure the Hazelcast backend guards against: a caller
+     * that believes it holds a priority queue but is handed a FIFO one dispatches in the wrong order without any signal.
+     */
     @Override
     public <T extends Comparable<T>> DistributedQueue<T> getPriorityQueue(String name) {
         // noinspection unchecked
-        return (DistributedQueue<T>) queues.computeIfAbsent(name, n -> new LocalQueue<>(new PriorityQueue<T>(), n, Comparator.<T>naturalOrder()));
+        DistributedQueue<T> queue = (DistributedQueue<T>) queues.computeIfAbsent(name, n -> new LocalQueue<>(new PriorityQueue<T>(), n, Comparator.<T>naturalOrder()));
+        if (!(queue instanceof LocalQueue<T> localQueue) || !localQueue.isOrdered()) {
+            throw new UnsupportedOperationException(
+                    "Queue '" + name + "' was already created as a plain FIFO queue, so it cannot be handed out as a priority queue. Use one kind per queue name.");
+        }
+        return queue;
     }
 
     @Override

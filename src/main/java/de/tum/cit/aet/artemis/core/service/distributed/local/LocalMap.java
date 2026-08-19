@@ -111,7 +111,12 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         purgeExpiredEntries();
         Map<K, V> result = new HashMap<>();
         for (K key : keys) {
-            result.put(key, get(key));
+            V value = get(key);
+            // Absent keys are left out rather than mapped to null, matching Hazelcast's IMap.getAll and Redisson's
+            // RMap.getAll. Mapping them to null would make result.size() and containsKey() disagree between backends.
+            if (value != null) {
+                result.put(key, value);
+            }
         }
         return result;
     }

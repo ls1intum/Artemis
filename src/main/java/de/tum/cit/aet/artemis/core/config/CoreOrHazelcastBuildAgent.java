@@ -11,6 +11,15 @@ import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
+/**
+ * Matches on core nodes, and on build agents that reach the core cluster through Hazelcast.
+ *
+ * <p>
+ * Used for Eureka service discovery, which every core node needs regardless of which distributed data provider is
+ * configured, while a Redis build agent does not register at all (see {@link RedisBuildAgentDiscoveryEnvironmentPostProcessor}).
+ * For the Hazelcast beans themselves use {@link HazelcastDistributedDataCondition}: those must not load when another
+ * provider is selected, otherwise a Redis deployment still runs a second distributed system.
+ */
 public class CoreOrHazelcastBuildAgent implements Condition {
 
     @Override

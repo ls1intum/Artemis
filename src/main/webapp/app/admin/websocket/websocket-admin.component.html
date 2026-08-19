@@ -58,7 +58,14 @@
                         <td>{{ node.instanceId || node.host }}</td>
                         <td class="font-mono">{{ node.memberId }}</td>
                         <td>{{ node.host }}</td>
-                        <td>{{ node.port }}</td>
+                        <!-- Not every distributed data provider identifies a node by an endpoint: the Redis provider uses a client name and reports no port. -->
+                        <td>
+                            @if (node.port) {
+                                {{ node.port }}
+                            } @else {
+                                <span class="text-muted-color">—</span>
+                            }
+                        </td>
                         <td>
                             <tum-ui-tag class="whitespace-nowrap" severity="info" [value]="'artemisApp.websocketAdmin.coreNode' | artemisTranslate" data-testid="node-type-tag" />
                         </td>

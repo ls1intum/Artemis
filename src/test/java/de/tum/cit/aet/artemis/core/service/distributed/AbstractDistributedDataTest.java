@@ -16,13 +16,17 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.cache.Cache;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.core.config.cache.DistributedDataCache;
+import de.tum.cit.aet.artemis.core.config.cache.DistributedDataCacheManager;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
@@ -322,6 +326,89 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
         assertThat(allValues.get("key3")).isEqualTo("value3");
 
         map.clear();
+    }
+
+    @Test
+    void testGetAllOmitsAbsentKeys() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getMap("getAllAbsentKeyTest");
+        map.put("present", "value");
+
+        // An absent key must be left out rather than mapped to null: a caller iterating the result would otherwise see a
+        // null value on one backend and no entry at all on another.
+        var values = map.getAll(Set.of("present", "absent"));
+        assertThat(values).containsExactly(Map.entry("present", "value"));
+
+        map.clear();
+    }
+
+    @Test
+    void testSpringCacheStoresReadsAndEvicts() {
+        Cache cache = springCacheManager().getCache("springCacheRoundTripTest");
+        assertThat(cache).isNotNull();
+        assertThat(cache.get("missing")).as("a key that was never written must read as absent").isNull();
+
+        cache.put("key", "value");
+        assertThat(cache.get("key").get()).isEqualTo("value");
+        assertThat(cache.get("key", String.class)).isEqualTo("value");
+
+        assertThat(cache.putIfAbsent("key", "other").get()).as("putIfAbsent must not overwrite and must report the existing value").isEqualTo("value");
+        assertThat(cache.get("key").get()).isEqualTo("value");
+
+        assertThat(cache.evictIfPresent("key")).isTrue();
+        assertThat(cache.get("key")).isNull();
+        assertThat(cache.evictIfPresent("key")).as("evicting an absent key must report that nothing was removed").isFalse();
+    }
+
+    @Test
+    void testSpringCacheValueLoaderRunsOnceAndIsThenServedFromTheCache() {
+        // The loader path is what @Cacheable(sync = true) uses. It has to hold the map's per-key lock so that a slow
+        // loader runs once for the cluster rather than once per node, which means a backend whose lock is not reentrant
+        // for the same thread would deadlock here rather than fail an assertion.
+        Cache cache = springCacheManager().getCache("springCacheValueLoaderTest");
+        AtomicInteger loaderInvocations = new AtomicInteger();
+
+        assertThat(cache.get("key", () -> {
+            loaderInvocations.incrementAndGet();
+            return "loaded";
+        })).isEqualTo("loaded");
+        assertThat(cache.get("key", () -> {
+            loaderInvocations.incrementAndGet();
+            return "recomputed";
+        })).as("a cached value must be returned without running the loader again").isEqualTo("loaded");
+        assertThat(loaderInvocations.get()).isEqualTo(1);
+
+        cache.clear();
+    }
+
+    @Test
+    void testSpringCacheStoresNullValues() {
+        // Several @Cacheable methods have no "unless = #result == null" guard and rely on a cached null, while the
+        // backends reject a null value outright. A cached null must therefore read back as a present, null-valued entry.
+        Cache cache = springCacheManager().getCache("springCacheNullValueTest");
+        cache.put("nullKey", null);
+
+        assertThat(cache.get("nullKey")).as("a cached null must be a present entry, not a miss").isNotNull();
+        assertThat(cache.get("nullKey").get()).isNull();
+
+        cache.clear();
+    }
+
+    @Test
+    void testSpringCacheEnumeratesKeysForPrefixInvalidation() {
+        // The course notification caches are invalidated by key prefix, which needs the keys the cache currently holds.
+        Cache cache = springCacheManager().getCache("springCacheKeyEnumerationTest");
+        cache.put("user_1_course_2_page0", "cached");
+        cache.put("user_1_course_2_page1", "cached");
+        cache.put("user_9_course_2_page0", "cached");
+
+        assertThat(cache).isInstanceOf(DistributedDataCache.class);
+        assertThat(((DistributedDataCache) cache).cacheKeys()).containsExactlyInAnyOrder("user_1_course_2_page0", "user_1_course_2_page1", "user_9_course_2_page0");
+
+        cache.clear();
+    }
+
+    private DistributedDataCacheManager springCacheManager() {
+        return new DistributedDataCacheManager(getDistributedDataProvider(), Map.of());
     }
 
     @Test

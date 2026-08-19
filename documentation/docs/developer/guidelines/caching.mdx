@@ -11,9 +11,9 @@ This page documents the project policy for caching in Artemis: what is allowed, 
 
 ## Overview
 
-Artemis runs in a multi-node Hazelcast cluster (3 production nodes behind nginx with round-robin load balancing and no sticky sessions), serving thousands of concurrent users. The two caching layers in use are:
+Artemis runs in a multi-node cluster (3 production nodes behind nginx with round-robin load balancing and no sticky sessions), serving thousands of concurrent users. The two caching layers in use are:
 
-* **Spring `@Cacheable`** with the `HazelcastCacheManager` bean defined in `HazelcastConfiguration.cacheManager`. **Allowed**, but only with explicit eviction logic.
+* **Spring `@Cacheable`**, resolved against the `RoutingCacheManager` in `CacheManagerConfiguration`. **Allowed**, but only with explicit eviction logic. Caches whose values are large blobs are per-node; all others are shared across nodes through the distributed data provider, so they work on Hazelcast and on Redis alike. See [Distributed Data](/developer/guidelines/distributed-data) for the split and for why no code may name a backend.
 * **Hibernate L2 (second-level) entity cache.** **Disabled cluster-wide.** No `@Cache` annotation on any entity or association.
 
 The default answer when you think you need a cache is: do not add one. Ask whether the problem can be solved by a fetch join, an `@EntityGraph`, a DTO projection, or an index — those address the root cause; caches paper over it and introduce coherence problems.
@@ -34,9 +34,9 @@ Open Session In View is disabled (see `application.yml`). Each repository call g
 
 Many repositories update columns via JPQL or native SQL (`@Modifying @Query`). These bulk DML statements bypass Hibernate's cache-invalidation hooks entirely. Both `NONSTRICT_READ_WRITE` and `READ_WRITE` strategies leak stale entries until the region timeout. There is no cache concurrency strategy that closes this gap; the only complete fix is "no cache".
 
-### 4. Multi-node Hazelcast cluster, no sticky sessions
+### 4. Multi-node cluster, no sticky sessions
 
-Cross-node cache invalidation propagates asynchronously through Hazelcast. Under load the staleness window is observable as user-visible bugs: a writer commits on node A while a reader on node B serves a still-cached, stale value. With round-robin load balancing the next request from the same user often hits a different node, so the inconsistency appears intermittent and is hard to reproduce in single-node testing.
+Cross-node cache invalidation propagates asynchronously through the distributed store. Under load the staleness window is observable as user-visible bugs: a writer commits on node A while a reader on node B serves a still-cached, stale value. With round-robin load balancing the next request from the same user often hits a different node, so the inconsistency appears intermittent and is hard to reproduce in single-node testing.
 
 ## What went wrong before
 
@@ -64,7 +64,7 @@ Both attempts (Lecture, Result.feedbacks) showed no measured production regressi
 
 ## What replaces L2: Spring `@Cacheable`
 
-Spring's caching abstraction backed by `HazelcastCacheManager` is permitted for DTOs and computed values that are read-heavy with low write throughput. Representative existing caches (not exhaustive — check `@Cacheable`/`@CacheConfig` references in the codebase for the current set):
+Spring's caching abstraction backed by the distributed data provider is permitted for DTOs and computed values that are read-heavy with low write throughput. Representative existing caches (not exhaustive — check `@Cacheable`/`@CacheConfig` references in the codebase for the current set):
 
 * Title caches: `courseTitle`, `exerciseTitle`, `lectureTitle`, `examTitle`, `tutorialGroupTitle`, `competencyTitle`, `diagramTitle`, `organizationTitle`. Used by breadcrumbs / navigation and called many times per page render.
 * `files` — file content cache for static assets served by `FileService.getFileForPath`.

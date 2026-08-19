@@ -175,6 +175,13 @@ public class LocalQueue<T> implements DistributedQueue<T> {
         return name;
     }
 
+    /**
+     * @return true if this queue dequeues by the items' natural ordering rather than in insertion order
+     */
+    boolean isOrdered() {
+        return ordering != null;
+    }
+
     @Override
     public boolean isEmpty() {
         lock.lock();

@@ -38,6 +38,7 @@ const sidebars: SidebarsConfig = {
                         'guidelines/server-tests',
                         'guidelines/database',
                         'guidelines/caching',
+                        'guidelines/distributed-data',
                         'guidelines/performance',
                         'guidelines/criteria-builder',
                     ],

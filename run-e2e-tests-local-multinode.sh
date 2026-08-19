@@ -13,7 +13,8 @@ set -e
 #   - Postgres
 #   - JHipster Registry (Eureka) for Hazelcast member discovery
 #   - ActiveMQ broker for STOMP relay
-#   - 3 Artemis nodes (node-1 / node-2 / node-3), forming a real Hazelcast cluster
+#   - Redis, only with --middleware redis
+#   - 3 Artemis nodes (node-1 / node-2 / node-3) sharing all cross-node state
 #   - nginx load balancer (round-robin) in front of the nodes
 #   - Playwright runs in a container inside the same docker network
 #
@@ -23,13 +24,17 @@ set -e
 #   ./run-e2e-tests-local-multinode.sh [options]
 #
 # Options:
-#   --stop              Tear down the full multi-node stack and exit
-#   --filter <pattern>  Run only tests matching the pattern (e.g., "Quiz")
-#   --skip-build        Do not rebuild the Artemis WAR or Docker image
-#                         (reuse build/libs/*.war + the cached node images)
-#   --skip-up           Reuse already-running containers; only re-run Playwright
-#   --debug             Show all docker-compose output instead of only Playwright
-#   --help              Show this help message
+#   --stop                 Tear down the full multi-node stack and exit
+#   --filter <pattern>     Run only tests matching the pattern (e.g., "Quiz")
+#   --middleware <name>    Distributed data backend: hazelcast (default) or redis.
+#                            Both are driven through the DistributedDataProvider
+#                            abstraction, so the same tests must pass on either.
+#                            With redis no Hazelcast instance is created at all.
+#   --skip-build           Do not rebuild the Artemis WAR or Docker image
+#                            (reuse build/libs/*.war + the cached node images)
+#   --skip-up              Reuse already-running containers; only re-run Playwright
+#   --debug                Show all docker-compose output instead of only Playwright
+#   --help                 Show this help message
 # =============================================================================
 
 # Colors
@@ -44,6 +49,9 @@ SKIP_BUILD=false
 SKIP_UP=false
 DEBUG=false
 TEST_FILTER=""
+# Hazelcast stays the default: it is what production runs today. Redis is the supported alternative and has to pass the
+# same suite, which is the whole point of the DistributedDataProvider abstraction.
+MIDDLEWARE="hazelcast"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -51,6 +59,18 @@ while [[ $# -gt 0 ]]; do
         --skip-build) SKIP_BUILD=true; shift ;;
         --skip-up) SKIP_UP=true; shift ;;
         --debug) DEBUG=true; shift ;;
+        --middleware)
+            if [[ -z "$2" ]]; then
+                echo -e "${RED}ERROR: --middleware requires an argument (hazelcast or redis)${NC}"
+                exit 1
+            fi
+            MIDDLEWARE="$(echo "$2" | tr '[:upper:]' '[:lower:]')"
+            if [[ "$MIDDLEWARE" != "hazelcast" && "$MIDDLEWARE" != "redis" ]]; then
+                echo -e "${RED}ERROR: unknown middleware '$2'. Supported: hazelcast, redis${NC}"
+                exit 1
+            fi
+            shift 2
+            ;;
         --filter)
             if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
                 echo -e "${RED}ERROR: --filter requires a non-empty pattern argument${NC}"
@@ -61,7 +81,7 @@ while [[ $# -gt 0 ]]; do
             TEST_FILTER="$2"
             shift 2
             ;;
-        --help) head -35 "$0" | tail -31; exit 0 ;;
+        --help) head -40 "$0" | tail -36; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
@@ -69,15 +89,20 @@ done
 cd "$(dirname "$0")"
 LOCAL_DIR=".e2e-local-multinode"
 COMPOSE_FILE="docker/playwright-E2E-tests-multi-node.yml"
+# Always merged in so that `--stop` tears the Redis container down as well, whichever middleware the run used. Compose
+# only starts the services named on `up`, so defining `redis` here does not start it for a Hazelcast run.
+REDIS_COMPOSE_FILE="docker/redis.yml"
 REPORT_DIR="src/test/playwright/test-reports"
 # Compose override generated at runtime for ARM64 hosts so that build agents
 # inside the Artemis node containers pull arm64 exercise images (see below).
 ARCH_OVERRIDE="docker/playwright-multinode-arch-override.yml"
+# Compose override generated at runtime that points the three nodes at the selected middleware.
+MIDDLEWARE_OVERRIDE="docker/playwright-multinode-middleware-override.yml"
 
 # COMPOSE_ARGS is the common set of `-f`/`--env-file` arguments passed to every
 # `docker compose` invocation; we append the arch override to it when ARM64 is
 # detected. Using an array keeps multi-`-f` ordering right without quoting bugs.
-COMPOSE_ARGS=(--env-file .env -f "$COMPOSE_FILE")
+COMPOSE_ARGS=(--env-file .env -f "$COMPOSE_FILE" -f "$REDIS_COMPOSE_FILE")
 
 mkdir -p "$LOCAL_DIR"
 
@@ -86,9 +111,9 @@ mkdir -p "$LOCAL_DIR"
 # =============================================================================
 if [ "$STOP" = true ]; then
     echo -e "${BLUE}Stopping multi-node E2E stack...${NC}"
-    docker compose --env-file .env -f "$COMPOSE_FILE" down -v 2>/dev/null || true
+    docker compose --env-file .env -f "$COMPOSE_FILE" -f "$REDIS_COMPOSE_FILE" down -v 2>/dev/null || true
     docker volume rm artemis-postgres-data artemis-data 2>/dev/null || true
-    rm -f docker/playwright-local-override.yml "$ARCH_OVERRIDE"
+    rm -f docker/playwright-local-override.yml "$ARCH_OVERRIDE" "$MIDDLEWARE_OVERRIDE"
     rm -rf "$LOCAL_DIR"
     echo -e "${GREEN}Multi-node stack stopped.${NC}"
     exit 0
@@ -166,6 +191,73 @@ EOF
     COMPOSE_ARGS+=(-f "$ARCH_OVERRIDE")
 fi
 
+# =============================================================================
+# Middleware selection
+# =============================================================================
+# The distributed data backend is chosen by a single Artemis property. Everything else about the stack is identical, so
+# a Redis run and a Hazelcast run differ only in this override plus, for Redis, one extra container.
+echo ""
+echo -e "${BLUE}Distributed data middleware: ${MIDDLEWARE}${NC}"
+
+# ClusterFormation.spec.ts reads this to decide which node-identity shape it may assert: Hazelcast publishes
+# `[host]:port`, the Redis provider publishes a client name without a port.
+export DISTRIBUTED_DATA_PROVIDER="$MIDDLEWARE"
+
+MIDDLEWARE_SERVICES=()
+if [ "$MIDDLEWARE" = "redis" ]; then
+    MIDDLEWARE_SERVICES=(redis)
+    cat > "$MIDDLEWARE_OVERRIDE" << 'EOF'
+# AUTO-GENERATED by run-e2e-tests-local-multinode.sh (--middleware redis). Do not commit.
+# Points every node at the Redis container and gives each one a distinct Redis client name: that name is the node
+# identity the Redis provider reports, so two nodes sharing it would look like a single node to the build agent cleanup.
+services:
+    artemis-app-node-1:
+        depends_on:
+            redis:
+                condition: service_healthy
+        env_file:
+            - ./artemis/config/middleware-redis.env
+        environment:
+            SPRING_DATA_REDIS_HOST: 'artemis-redis'
+            SPRING_DATA_REDIS_CLIENTNAME: 'artemis-node-1'
+    artemis-app-node-2:
+        depends_on:
+            redis:
+                condition: service_healthy
+        env_file:
+            - ./artemis/config/middleware-redis.env
+        environment:
+            SPRING_DATA_REDIS_HOST: 'artemis-redis'
+            SPRING_DATA_REDIS_CLIENTNAME: 'artemis-node-2'
+    artemis-app-node-3:
+        depends_on:
+            redis:
+                condition: service_healthy
+        env_file:
+            - ./artemis/config/middleware-redis.env
+        environment:
+            SPRING_DATA_REDIS_HOST: 'artemis-redis'
+            SPRING_DATA_REDIS_CLIENTNAME: 'artemis-node-3'
+EOF
+else
+    cat > "$MIDDLEWARE_OVERRIDE" << 'EOF'
+# AUTO-GENERATED by run-e2e-tests-local-multinode.sh (--middleware hazelcast). Do not commit.
+# Hazelcast is the default even without this file; stating it explicitly keeps a stale
+# artemis.continuous-integration.data-store in a deployment's own config from deciding the backend behind your back.
+services:
+    artemis-app-node-1:
+        env_file:
+            - ./artemis/config/middleware-hazelcast.env
+    artemis-app-node-2:
+        env_file:
+            - ./artemis/config/middleware-hazelcast.env
+    artemis-app-node-3:
+        env_file:
+            - ./artemis/config/middleware-hazelcast.env
+EOF
+fi
+COMPOSE_ARGS+=(-f "$MIDDLEWARE_OVERRIDE")
+
 echo -e "${GREEN}Prerequisites OK${NC}"
 
 # =============================================================================
@@ -210,7 +302,7 @@ if [ "$SKIP_UP" = false ]; then
     echo -e "${BLUE}Step 3: Starting multi-node stack (postgres + registry + broker + 3 Artemis nodes + nginx)...${NC}"
     # Start everything except the playwright container; we run it separately so we can capture logs.
     docker compose "${COMPOSE_ARGS[@]}" up -d \
-        postgres jhipster-registry activemq-broker \
+        postgres jhipster-registry activemq-broker "${MIDDLEWARE_SERVICES[@]}" \
         artemis-app-node-1 artemis-app-node-2 artemis-app-node-3 \
         nginx
 
@@ -244,21 +336,42 @@ if [ "$SKIP_UP" = false ]; then
         echo "  ${ELAPSED}s — $HEALTHY/3 healthy"
     done
 
-    # Additional Hazelcast-cluster sanity check: every node should see 3 members.
-    # Hazelcast's actual log line is multi-line; we grep for a pattern that handles
-    # both `Members {size:N, ver:X}` and `Members [N] { ... }` formats across versions.
     echo ""
-    echo "Verifying Hazelcast cluster size (each node should report 3 members)..."
-    for n in 1 2 3; do
-        # `|| true` guards against set -e terminating the script when the log
-        # pattern is absent (e.g., Hazelcast log format changes or a log
-        # truncation race). A "?" is an informational display value, not an
-        # error condition.
-        SIZE=$(docker logs "artemis-app-node-$n" 2>&1 \
-            | grep -oE "Members (\{size:[0-9]+|\[[0-9]+\])" \
-            | tail -1 | grep -oE "[0-9]+" | tail -1 || true)
-        echo "  node-$n: cluster size = ${SIZE:-?}"
-    done
+    if [ "$MIDDLEWARE" = "hazelcast" ]; then
+        # Additional Hazelcast-cluster sanity check: every node should see 3 members.
+        # Hazelcast's actual log line is multi-line; we grep for a pattern that handles
+        # both `Members {size:N, ver:X}` and `Members [N] { ... }` formats across versions.
+        echo "Verifying Hazelcast cluster size (each node should report 3 members)..."
+        for n in 1 2 3; do
+            # `|| true` guards against set -e terminating the script when the log
+            # pattern is absent (e.g., Hazelcast log format changes or a log
+            # truncation race). A "?" is an informational display value, not an
+            # error condition.
+            SIZE=$(docker logs "artemis-app-node-$n" 2>&1 \
+                | grep -oE "Members (\{size:[0-9]+|\[[0-9]+\])" \
+                | tail -1 | grep -oE "[0-9]+" | tail -1 || true)
+            echo "  node-$n: cluster size = ${SIZE:-?}"
+        done
+    else
+        # Redis has no cluster membership of its own, so there is no member count to check. What matters instead is that
+        # no node fell back to Hazelcast: the Hazelcast startup banner in a node log would mean the provider property did
+        # not reach that node and the run is silently testing the wrong backend.
+        echo "Verifying that no node started Hazelcast..."
+        for n in 1 2 3; do
+            if docker logs "artemis-app-node-$n" 2>&1 | grep -qE "Members \{size:|Hazelcast Platform"; then
+                echo -e "  ${RED}node-$n: started Hazelcast although Redis was selected${NC}"
+            else
+                echo "  node-$n: no Hazelcast instance"
+            fi
+        done
+        echo "Verifying that Artemis state reached Redis..."
+        KEY_COUNT=$(docker exec artemis-redis redis-cli dbsize 2>/dev/null | tr -dc '0-9' || true)
+        if [ -n "$KEY_COUNT" ] && [ "$KEY_COUNT" -gt 0 ]; then
+            echo "  redis: ${KEY_COUNT} keys"
+        else
+            echo -e "  ${RED}redis: no keys — the nodes are not using Redis${NC}"
+        fi
+    fi
 
     # nginx upstream DNS is resolved once at nginx startup. When we bring the
     # stack up, nginx can start before the Artemis node containers have been
@@ -405,7 +518,7 @@ fi
 
 echo ""
 echo -e "${BLUE}Stack is still running. Quick re-run (reuse everything):${NC}"
-echo "  ./run-e2e-tests-local-multinode.sh --skip-build --skip-up [--filter \"Quiz\"]"
+echo "  ./run-e2e-tests-local-multinode.sh --middleware ${MIDDLEWARE} --skip-build --skip-up [--filter \"Quiz\"]"
 echo ""
 echo -e "${BLUE}To stop the multi-node stack:${NC}"
 echo "  ./run-e2e-tests-local-multinode.sh --stop"

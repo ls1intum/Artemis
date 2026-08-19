@@ -183,9 +183,9 @@ public class ArtemisMetricsEndpoint {
     /**
      * Collects metrics for all Hazelcast IMaps used as distributed state.
      * <p>
-     * This includes Spring {@code @Cacheable} caches backed by
-     * {@link com.hazelcast.spring.cache.HazelcastCacheManager} as well as application-level
-     * IMaps (rate-limit buckets, atlas session state, course notification cache, etc.).
+     * This includes the Spring {@code @Cacheable} caches, which the distributed data provider backs with IMaps on this
+     * provider, as well as application-level IMaps (rate-limit buckets, atlas session state, course notification cache,
+     * etc.).
      * Hibernate L2 cache is disabled cluster-wide, so there are no JCache / ICache regions
      * to read — see {@code documentation/docs/developer/guidelines/caching.mdx}.
      * <p>

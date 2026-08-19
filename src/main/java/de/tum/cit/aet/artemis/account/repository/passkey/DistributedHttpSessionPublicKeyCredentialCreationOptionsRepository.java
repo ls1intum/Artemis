@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /**
- * A distributed implementation of {@link PublicKeyCredentialCreationOptionsRepository} using Hazelcast
+ * A distributed implementation of {@link PublicKeyCredentialCreationOptionsRepository} using the distributed data provider
  * to store and synchronize WebAuthn credential creation options across nodes in a clustered deployment.
  *
  * <p>
@@ -42,12 +42,12 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository implements PublicKeyCredentialCreationOptionsRepository {
+public class DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository implements PublicKeyCredentialCreationOptionsRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository.class);
+    private static final Logger log = LoggerFactory.getLogger(DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository.class);
 
     /** Default attribute name for storing creation options in session (not used for loading) */
-    static final String DEFAULT_ATTR_NAME = HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository.class.getName().concat("ATTR_NAME");
+    static final String DEFAULT_ATTR_NAME = DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository.class.getName().concat("ATTR_NAME");
 
     private final String attrName = DEFAULT_ATTR_NAME;
 
@@ -66,7 +66,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
      *
      * @param distributedDataProvider the distributed data provider
      */
-    public HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository(DistributedDataProvider distributedDataProvider) {
+    public DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository(DistributedDataProvider distributedDataProvider) {
         this.distributedDataProvider = distributedDataProvider;
     }
 
@@ -87,7 +87,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
      * Saves the {@link PublicKeyCredentialCreationOptions} both in the HTTP session and the distributed map.
      *
      * <p>
-     * The HTTP session is used locally, while the Hazelcast map ensures distributed availability.
+     * The HTTP session is used locally, while the distributed map ensures availability on every node.
      * The user ID (from {@code request.getRemoteUser()}) is used as the key instead of the session ID,
      * due to inconsistencies in session ID handling during WebAuthn flows.
      * </p>
@@ -120,7 +120,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
     }
 
     /**
-     * Loads the previously saved {@link PublicKeyCredentialCreationOptions} from the Hazelcast map
+     * Loads the previously saved {@link PublicKeyCredentialCreationOptions} from the distributed map
      * using the authenticated user ID.
      *
      * @param request the HTTP request, used to extract the user ID

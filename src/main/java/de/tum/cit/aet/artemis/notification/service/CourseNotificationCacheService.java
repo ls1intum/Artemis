@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.Cache;
@@ -16,6 +17,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.config.cache.KeyEnumerableCache;
 
 /**
  * Service for managing course notification caches.
@@ -100,21 +102,38 @@ public class CourseNotificationCacheService {
             log.warn("Cannot invalidate entries of cache '{}' with prefix '{}': the cache is not configured", cacheName, keyPrefix);
             return;
         }
-        // Spring's Cache API cannot enumerate keys, so the prefix scan has to reach the store that backs this cache.
-        // It must be *this* cache's store and not the configured distributed data provider: @Cacheable resolves against
-        // the primary RoutingCacheManager, which serves every non-blob cache from the Hazelcast-backed manager on core
-        // nodes regardless of which provider is configured. Scanning the provider's map would therefore be a no-op under
-        // the Redis and Local providers and leave users looking at stale notifications.
-        if (!(cache.getNativeCache() instanceof Map<?, ?> nativeCache)) {
+        // Spring's Cache API cannot enumerate keys, so the prefix scan has to go through the cache that @Cacheable
+        // actually writes to. Reading the distributed data provider's map directly instead would be a silent no-op:
+        // @Cacheable resolves against the primary cache manager, and only that manager knows which store serves this
+        // cache name. Getting that wrong once already left users looking at stale notifications.
+        Set<Object> cacheKeys = cacheKeys(cache);
+        if (cacheKeys == null) {
             log.warn("Cannot invalidate entries of cache '{}' by key prefix: its backing store does not expose its keys", cacheName);
             return;
         }
-        // Copy first: the keys are removed while iterating, and the backing store may be a concurrently modified distributed map.
-        for (Object cacheKey : new HashSet<>(nativeCache.keySet())) {
+        for (Object cacheKey : cacheKeys) {
             if (cacheKey != null && cacheKey.toString().startsWith(keyPrefix)) {
                 evict(cache, cacheKey);
             }
         }
+    }
+
+    /**
+     * Reads the keys a cache currently holds, as a snapshot that is safe to iterate while entries are evicted.
+     *
+     * @param cache the cache to read
+     * @return the keys, or {@code null} if this cache's store cannot enumerate them
+     */
+    @Nullable
+    private Set<Object> cacheKeys(Cache cache) {
+        if (cache instanceof KeyEnumerableCache keyEnumerableCache) {
+            return keyEnumerableCache.cacheKeys();
+        }
+        // Fallback for stores that expose a plain map, such as the Caffeine and concurrent-map based caches.
+        if (cache.getNativeCache() instanceof Map<?, ?> nativeCache) {
+            return new HashSet<>(nativeCache.keySet());
+        }
+        return null;
     }
 
     /**

@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
  * The digest covers the previous calendar day (UTC midnight to midnight) and is sent
  * each morning. Guards prevent execution in dev, test-server, and scheduling-inactive profiles.
  * <p>
- * In a multi-node cluster a Hazelcast lock plus a per-window {@code containsKey} marker keep this to a
+ * In a multi-node cluster a distributed lock plus a per-window {@code containsKey} marker keep this to a
  * single send under normal operation. Delivery is nonetheless <em>at-least-once</em>: if the lock holder
  * crashes after sending but before recording the marker, a node still waiting on the lock can resend; and
  * because the distributed lock is AP rather than a CP fenced lock, a network split-brain can also duplicate.
@@ -43,6 +43,11 @@ public class IrisUsageDigestScheduleService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisUsageDigestScheduleService.class);
 
+    /**
+     * How long a "digest already sent" marker is kept. It only has to outlive the daily window it guards.
+     */
+    private static final Duration DIGEST_MARKER_TIME_TO_LIVE = Duration.ofDays(3);
+
     private final ProfileService profileService;
 
     private final IrisDashboardProperties properties;
@@ -54,12 +59,6 @@ public class IrisUsageDigestScheduleService {
     private final DistributedDataProvider distributedDataProvider;
 
     private final boolean isTestServer;
-
-    @Nullable
-    /**
-     * How long a "digest already sent" marker is kept. It only has to outlive the daily window it guards.
-     */
-    private static final Duration DIGEST_MARKER_TIME_TO_LIVE = Duration.ofDays(3);
 
     @Nullable
     private DistributedMap<String, Instant> scheduleStateMap;
@@ -97,7 +96,7 @@ public class IrisUsageDigestScheduleService {
      * Skips execution when scheduling is inactive, the dev profile is active, the instance
      * is a test server, the digest feature is disabled, or the email service cannot send.
      * <p>
-     * Uses Hazelcast distributed locking to ensure only one node in the cluster sends the digest.
+     * Uses a distributed lock to ensure only one node in the cluster sends the digest.
      */
     @Scheduled(cron = "${artemis.iris.dashboard.digest.cron:0 0 7 * * *}", zone = "UTC")
     public void sendDailyDigest() {
