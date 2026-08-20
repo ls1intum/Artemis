@@ -148,6 +148,7 @@ describe('CodeButtonComponent', () => {
 
         expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Token);
         expect(component.useToken()).toBe(true);
+        expect(localStorageMock.store).toHaveBeenCalledWith('code-button-state', RepositoryAuthenticationMethod.Token);
     });
 
     it('should preserve SSH preference from local storage', async () => {
