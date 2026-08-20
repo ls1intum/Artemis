@@ -64,4 +64,11 @@ export interface Publication {
     /** Label shown for `url` entries, for example "hdl.handle.net/10125/79439". */
     urlLabel?: string;
     topics: ResearchTopic[];
+    /**
+     * Accepted but not yet published: the venue has not taken place, or its proceedings are not out.
+     *
+     * Rendered as a "to appear" marker so the list never presents a forthcoming paper as a citable
+     * publication. Drop the flag once the proceedings exist.
+     */
+    forthcoming?: boolean;
 }

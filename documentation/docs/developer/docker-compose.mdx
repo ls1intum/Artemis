@@ -49,7 +49,7 @@ import dockerStructure from './assets/artemis-docker-file-structure.drawio.png';
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-    `docker-compose.yml` mirrors the production setup, so it needs a signing key and an admin password of your own before it starts. See [Other Docker Compose Setups](#other-docker-compose-setups) below. If you would rather not configure anything, `docker compose -f docker/artemis-dev-postgres.yml up` starts as it is.
+    `docker-compose.yml` mirrors the production setup, so it needs a signing key and an admin password of your own before it starts. See [Other Docker Compose Setups](#other-docker-compose-setups) below. If you would rather not configure anything, `docker compose --env-file .env -f docker/artemis-dev-postgres.yml up` starts as it is.
 </Callout>
 
 ---
@@ -144,17 +144,17 @@ When running Artemis from IntelliJ or via `./gradlew bootRun`, start only the in
 
 ```bash
 # Email testing only
-docker compose -f docker/mailpit.yml up
+docker compose --env-file .env -f docker/mailpit.yml up
 
 # SAML2 testing only
-docker compose -f docker/saml-test.yml up
+docker compose --env-file .env -f docker/saml-test.yml up
 
 # Both services
-docker compose -f docker/local-development.yml up
+docker compose --env-file .env -f docker/local-development.yml up
 
 # Or selectively from the combined file
-docker compose -f docker/local-development.yml up mailpit
-docker compose -f docker/local-development.yml up keycloak
+docker compose --env-file .env -f docker/local-development.yml up mailpit
+docker compose --env-file .env -f docker/local-development.yml up keycloak
 ```
 
 Then configure Artemis to connect to these services via `application-local.yml`. See the dedicated setup guides for detailed instructions:
@@ -204,7 +204,7 @@ Container and volume names are prepended with `artemis-` in order to not interfe
 ## Get a Shell into the Containers
 
 <Callout variant={CalloutVariant.info}>
-    To keep the documentation short, we will use the standard form of `docker compose COMMAND` from this point on. You can use the following commands also with the `-f docker/<setup to be launched>.yml` argument pointing to a specific setup.
+    To keep the documentation short, we will use the short form of `docker compose COMMAND` from this point on. In practice, prefix each of them with `--env-file .env -f docker/<setup to be launched>.yml` from the repository root, so that Compose finds the image versions and the right setup.
 </Callout>
 
 - **app container:**

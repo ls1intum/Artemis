@@ -165,6 +165,17 @@
     white-space: nowrap;
 }
 
+.forthcomingTag {
+    padding: 0.1rem 0.55rem;
+    border: 1px solid var(--ifm-color-warning-dark);
+    border-radius: 2rem;
+    color: var(--ifm-color-warning-contrast-foreground);
+    background: var(--ifm-color-warning-contrast-background);
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 .note {
     margin-top: 3rem;
     padding: 1.15rem 1.25rem;

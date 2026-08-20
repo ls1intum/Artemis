@@ -149,12 +149,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
                     </button>
                     <a class="hero-action hero-action-secondary" href="https://docs.artemis.tum.de" target="_blank" rel="noopener">
                         {{ 'landing.hero.actions.documentation' | artemisTranslate }}
+                        <span class="visually-hidden">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
                     </a>
                     <a class="hero-action hero-action-secondary" href="https://docs.artemis.tum.de/about" target="_blank" rel="noopener">
                         {{ 'landing.hero.actions.about' | artemisTranslate }}
+                        <span class="visually-hidden">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
                     </a>
                     <a class="hero-action hero-action-secondary" href="https://github.com/ls1intum/Artemis" target="_blank" rel="noopener">
                         {{ 'landing.hero.actions.github' | artemisTranslate }}
+                        <span class="visually-hidden">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
                     </a>
                 </div>
             </div>

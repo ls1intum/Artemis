@@ -38,13 +38,18 @@ async function render<T extends LandingSection>(component: new () => T): Promise
     return fixture;
 }
 
-/** Every landing link that leaves the application must open safely in a new tab. */
+/**
+ * Every landing link that leaves the application must open safely in a new tab, and must say so to
+ * assistive technology. The visually hidden hint is easy to forget on a new call to action, so it is
+ * asserted here for every outbound link rather than spot-checked.
+ */
 function expectSafeExternalLinks(anchors: HTMLAnchorElement[]): void {
     expect(anchors.length).toBeGreaterThan(0);
     for (const anchor of anchors) {
         expect(anchor.getAttribute('href')).toMatch(/^https:\/\//);
         expect(anchor.getAttribute('target')).toBe('_blank');
         expect(anchor.getAttribute('rel')).toContain('noopener');
+        expect(anchor.querySelector('.visually-hidden')?.textContent).toContain('landing.opensInNewTab');
     }
 }
 
@@ -162,13 +167,7 @@ describe('Landing informational sections', () => {
         it('should open every card in a new tab without leaking the referrer window', async () => {
             const fixture = await render(LandingTrustComponent);
 
-            const cards: HTMLAnchorElement[] = Array.from(fixture.nativeElement.querySelectorAll('a.trust-card'));
-            for (const card of cards) {
-                expect(card.getAttribute('href')).toMatch(/^https:\/\//);
-                expect(card.getAttribute('target')).toBe('_blank');
-                expect(card.getAttribute('rel')).toContain('noopener');
-                expect(card.querySelector('.visually-hidden')).not.toBeNull();
-            }
+            expectSafeExternalLinks(Array.from(fixture.nativeElement.querySelectorAll('a.trust-card')));
         });
     });
 
@@ -194,6 +193,12 @@ describe('Landing informational sections', () => {
 
             const cards = fixture.nativeElement.querySelectorAll('a.community-card');
             expect(cards).toHaveLength(COMMUNITY_LINKS.length);
+        });
+
+        it('should open every card in a new tab and announce that', async () => {
+            const fixture = await render(LandingCommunityComponent);
+
+            expectSafeExternalLinks(Array.from(fixture.nativeElement.querySelectorAll('a.community-card')));
         });
 
         it('should link to the repository and the contribution guide', async () => {

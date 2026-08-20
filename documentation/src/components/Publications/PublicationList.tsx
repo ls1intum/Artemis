@@ -24,6 +24,7 @@ function PublicationEntry({ publication, headingLevel }: { publication: Publicat
                 {publication.details ? `, ${publication.details}` : ''}
             </p>
             <div className={styles.publicationMeta}>
+                {publication.forthcoming && <span className={styles.forthcomingTag}>To appear</span>}
                 {reference && (
                     <a href={reference.href} target="_blank" rel="noopener noreferrer">
                         {reference.label}
