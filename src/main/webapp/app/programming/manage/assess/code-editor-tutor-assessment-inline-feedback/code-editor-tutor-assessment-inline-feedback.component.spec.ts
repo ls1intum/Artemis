@@ -89,7 +89,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         confirmIcon.triggerEventHandler('confirmEvent', true);
 
         expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
-        expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.oldFeedback());
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.feedback());
     });
 
     it('should delete the original feedback after editing points and comment', () => {
@@ -105,6 +105,8 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         fixture.detectChanges();
         comp.editFeedback(codeLine);
 
+        // Textarea mutates the list item in place before a point edit detaches currentFeedback.
+        comp.currentFeedback().detailText = 'edited before points';
         comp['stepCredits'](0.5);
         comp.currentFeedback().detailText = 'new comment';
 
@@ -114,8 +116,10 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
         expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
         const emitted = onDeleteFeedbackSpy.mock.calls[0][0] as Feedback;
+        expect(emitted).toBe(original);
         expect(Feedback.areIdentical(emitted, original)).toBe(true);
         expect(Feedback.areIdentical(comp.currentFeedback(), original)).toBe(false);
+        expect(Feedback.areIdentical(comp.oldFeedback(), original)).toBe(false);
     });
 
     it('should show delete control in view mode without opening the editor', () => {
@@ -247,6 +251,22 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
         expect(comp.displayTitle()).toBe('Player');
         expect(fixture.debugElement.query(By.css('.inline-feedback__title'))?.nativeElement.textContent).toBe('Player');
+    });
+
+    it('should refresh the title after an in-place instruction link or unlink', () => {
+        const instruction = { id: 7, credits: 1, gradingScale: 'good', instructionDescription: 'desc', feedback: 'inst', usageCount: 0 };
+        const feedback = { type: FeedbackType.MANUAL, detailText: 'Ok' } as Feedback;
+        fixture.componentRef.setInput('gradingCriteria', [{ id: 1, title: 'Player', structuredGradingInstructions: [instruction] }]);
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.detectChanges();
+
+        expect(comp.displayTitle()).toBeUndefined();
+
+        feedback.gradingInstruction = instruction;
+        expect(comp.displayTitle()).toBe('Player');
+
+        feedback.gradingInstruction = undefined;
+        expect(comp.displayTitle()).toBeUndefined();
     });
 
     it('should step the points in half-point increments while editing', () => {

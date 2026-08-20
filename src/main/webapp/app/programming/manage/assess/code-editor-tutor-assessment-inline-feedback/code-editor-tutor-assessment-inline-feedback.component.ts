@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, inject, input, linkedSignal, output, viewChild } from '@angular/core';
+import { Component, ElementRef, inject, input, linkedSignal, output, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -106,7 +106,11 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     readonly oldFeedback = linkedSignal<Feedback>(() => deepClone(this.feedback() ?? new Feedback()));
 
-    readonly displayTitle = computed(() => {
+    /**
+     * Criterion title for instruction-linked feedback, else suggestion title. Method (not computed): drop/unlink
+     * mutate {@link currentFeedback}.gradingInstruction in place without a new signal identity.
+     */
+    protected displayTitle(): string | undefined {
         const feedback = this.currentFeedback();
         const criterionTitle = this.structuredGradingCriterionService.findCriterionTitle(this.gradingCriteria(), feedback.gradingInstruction?.id);
         if (criterionTitle) {
@@ -116,8 +120,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
             return Feedback.getDisplayTitle(feedback);
         }
         return undefined;
-    });
-
+    }
     /**
      * Updates the current feedback and sets props and emits the feedback to parent component
      */
@@ -195,11 +198,12 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     /**
      * Deletes feedback after confirmation and emits to parent component.
-     * Existing cards: parent removes via {@link Feedback.areIdentical} against the list copy. Point/comment edits
-     * live on a detached clone in {@link currentFeedback} — emit the pre-edit {@link oldFeedback} snapshot.
+     * Existing cards: Monaco removes via {@link Feedback.areIdentical} against the list item. The textarea can mutate
+     * that object in place before a point edit detaches {@link currentFeedback}, so emit the bound {@link feedback}
+     * input (the list item) — not {@link oldFeedback}, whose detailText may already be stale.
      */
     deleteFeedback() {
-        this.onDeleteFeedback.emit(this.feedback() ? this.oldFeedback() : this.currentFeedback());
+        this.onDeleteFeedback.emit(this.feedback() ?? this.currentFeedback());
     }
 
     /**
