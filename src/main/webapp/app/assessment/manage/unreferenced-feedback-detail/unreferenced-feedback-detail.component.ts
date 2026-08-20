@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, model, output } from '@angular/core';
+import { Component, OnInit, computed, inject, input, model, output, signal } from '@angular/core';
 import { faCheck, faExclamation, faExclamationTriangle, faMinus, faPlus, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -84,7 +84,18 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     readonly ButtonSize = ButtonSize;
     readonly CREDITS_STEP = CREDITS_STEP;
 
-    /** Whether this feedback awards, deducts or changes nothing — the card's left accent stripe follows it. */
+    /**
+     * Parent matches feedback by reference, so edits mutate in place and {@link feedback} may not notify.
+     * Bumping this re-runs credit-dependent template bindings.
+     */
+    private readonly creditsEpoch = signal(0);
+
+    /** Card accent stripe: follows credits; reads {@link creditsEpoch} so in-place edits still refresh. */
+    protected cardTone(): FeedbackTone {
+        this.creditsEpoch();
+        return this.toneForCredits(this.feedback().credits);
+    }
+
     protected toneForCredits(credits: number | undefined): FeedbackTone {
         const value = credits ?? 0;
         if (value > 0) {
@@ -155,6 +166,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
         }
         Feedback.updateFeedbackTypeOnChange(feedback);
         this.feedback.set(feedback);
+        this.creditsEpoch.update((epoch) => epoch + 1);
         this.onFeedbackChange.emit(feedback);
     }
 

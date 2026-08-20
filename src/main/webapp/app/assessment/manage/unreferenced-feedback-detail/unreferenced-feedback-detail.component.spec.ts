@@ -8,6 +8,8 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('Unreferenced Feedback Detail Component', () => {
     let comp: UnreferencedFeedbackDetailComponent;
@@ -17,7 +19,12 @@ describe('Unreferenced Feedback Detail Component', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            providers: [MockProvider(StructuredGradingCriterionService), MockProvider(FeedbackService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                MockProvider(StructuredGradingCriterionService),
+                MockProvider(FeedbackService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -141,19 +148,25 @@ describe('Unreferenced Feedback Detail Component', () => {
         } as Feedback;
         fixture.componentRef.setInput('feedback', originalFeedback);
         fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
         const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+        fixture.detectChanges();
 
-        expect(comp.toneForCredits(comp.feedback().credits)).toBe('positive');
+        const card = () => fixture.nativeElement.querySelector('tum-ui-card') as HTMLElement;
+        expect(card().getAttribute('data-tone')).toBe('positive');
 
         comp.stepCredits(-comp.CREDITS_STEP);
+        fixture.detectChanges();
         expect(comp.feedback()).toBe(originalFeedback);
         expect(comp.feedback().credits).toBe(0);
-        expect(comp.toneForCredits(comp.feedback().credits)).toBe('neutral');
+        expect(card().getAttribute('data-tone')).toBe('neutral');
         expect(emitSpy).toHaveBeenCalledWith(originalFeedback);
 
         comp.stepCredits(-comp.CREDITS_STEP);
+        fixture.detectChanges();
         expect(comp.feedback().credits).toBe(-0.5);
-        expect(comp.toneForCredits(comp.feedback().credits)).toBe('negative');
+        expect(card().getAttribute('data-tone')).toBe('negative');
     });
 
     it('should normalize typed credits before emitting feedback', () => {

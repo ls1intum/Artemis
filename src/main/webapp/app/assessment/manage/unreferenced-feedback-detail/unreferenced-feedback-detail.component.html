@@ -3,7 +3,7 @@
     (dragover)="$event.preventDefault()"
     class="unreferenced-feedback-detail relative w-full min-w-0 overflow-hidden rounded-[1.25rem] border border-[var(--border-color)]"
     [class.is-suggestion]="isSuggestion()"
-    [attr.data-tone]="toneForCredits(feedback().credits)"
+    [attr.data-tone]="cardTone()"
 >
     <div class="feedback-card flex w-full min-w-0 flex-col gap-3 [overflow-wrap:anywhere]">
         @if (isSuggestion() || Feedback.isFeedbackSuggestion(feedback())) {
