@@ -111,7 +111,8 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
         this.activatedRoute.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ exercise }) => {
             this.initEditingState(exercise);
             this.programmingExercise.set(exercise);
-            this.captureBaseline();
+            // safe to read the fields here: this runs synchronously right after they were initialized from the exercise
+            this.persistedSnapshot.set(this.snapshot());
             this.seedDefaultsFromTemplate(exercise);
             this.loadParticipationsWithResults(exercise);
         });
@@ -259,18 +260,12 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     }
 
     /**
-     * Serializes one specific combination of editable values, so that a baseline can be built from values other than the
-     * ones currently in the fields.
+     * Serializes one specific combination of editable values. An asynchronous callback has to build its baseline through
+     * this method and name the values it actually persisted: taking {@link snapshot} there would claim every field the
+     * instructor edited while the request was running, and those edits would then be discarded without a warning.
      */
     private snapshotOf(phases: BuildPhase[], dockerImage: string, timeout: number, dockerFlags: string | undefined): string {
         return JSON.stringify({ phases, dockerImage, timeout, dockerFlags });
-    }
-
-    /**
-     * Records the current editable state as the persisted baseline, marking the editor clean.
-     */
-    private captureBaseline(): void {
-        this.persistedSnapshot.set(this.snapshot());
     }
 
     /**
