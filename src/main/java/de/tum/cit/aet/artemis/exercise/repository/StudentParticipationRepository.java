@@ -1518,6 +1518,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * - Error categories: Filters feedback based on error categories, which can be "Student Error", "Ares Error", or "AST Error".
      * <br>
      * Grouping is done by feedback detail text, test case name and error category. The occurrence count is filtered using the HAVING clause.
+     * <br>
+     * The projected detail text follows the legacy preview contract of {@code Feedback#setDetailText}: messages longer than
+     * {@code FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH} are cut to {@code FEEDBACK_PREVIEW_TEXT_MAX_LENGTH} (294 characters plus the
+     * {@code " [...]"} marker) — the unpaged grouped-analysis path would otherwise hold every distinct full message (up to 20k
+     * characters) in memory. Searching and grouping still operate on the full deduplicated message.
      *
      * @param exerciseId            The ID of the exercise for which feedback details should be retrieved.
      * @param searchTerm            The search term used for filtering the feedback detail text (optional).
@@ -1536,7 +1541,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LISTAGG(CAST(-(f.id.resultId * de.tum.cit.aet.artemis.core.config.Constants.SYNTHETIC_FEEDBACK_ID_FACTOR + f.id.seq) AS string), ',') WITHIN GROUP (ORDER BY f.id.resultId),
                 COUNT(f.id.resultId),
                 0,
-                COALESCE(MIN(m.text), ''),
+                COALESCE(MIN(CASE
+                    WHEN LENGTH(m.text) > de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH
+                    THEN CONCAT(SUBSTRING(m.text, 1, 294), ' [...]')
+                    ELSE m.text
+                END), ''),
                 tc.testName,
                 COALESCE((
                     SELECT MAX(t.taskName)

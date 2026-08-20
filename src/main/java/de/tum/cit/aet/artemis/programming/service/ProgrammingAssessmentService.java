@@ -53,17 +53,21 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     private final ScaFeedbackRepository scaFeedbackRepository;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, Optional<ExamDateApi> examDateApi, UserRepository userRepository, Optional<LtiApi> ltiApi,
             SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService, Optional<AthenaFeedbackApi> athenaFeedbackApi,
-            TestCasePointsService testCasePointsService, TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
+            TestCasePointsService testCasePointsService, TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
                 submissionRepository, examDateApi, userRepository, ltiApi, singleUserNotificationService, resultWebsocketService);
         this.athenaFeedbackApi = athenaFeedbackApi;
         this.testCasePointsService = testCasePointsService;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     @Override
@@ -134,8 +138,15 @@ public class ProgrammingAssessmentService extends AssessmentService {
         newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(newManualResult.getId());
 
         if (submit) {
-            return submitManualAssessment(newManualResult, submission, participation, exercise);
+            Result submittedResult = submitManualAssessment(newManualResult, submission, participation, exercise);
+            // the automatic test-case and SCA feedback lives in JSON-ignored typed collections - attach the
+            // synthesized legacy views (after all persistence) so the client's result keeps the automatic
+            // feedback after submitting; idempotent when the websocket broadcast already attached them
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(submittedResult, exercise, false);
+            return submittedResult;
         }
+        // same for the draft-save response
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(newManualResult, exercise, false);
         return newManualResult;
     }
 
