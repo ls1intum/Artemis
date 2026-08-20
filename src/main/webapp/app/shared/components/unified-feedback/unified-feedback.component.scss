@@ -1,27 +1,8 @@
 .unified-feedback {
     border-radius: calc(var(--bs-border-radius) * 1.5);
-    border-left: 4px solid;
     margin-bottom: 0.5rem;
     background-color: var(--card-bg);
-    border-top: 1px solid color-mix(in srgb, var(--bs-border-color) 60%, transparent);
-    border-right: 1px solid color-mix(in srgb, var(--bs-border-color) 60%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--bs-border-color) 60%, transparent);
-
-    &.alert-success {
-        border-left-color: var(--bs-success);
-    }
-
-    &.alert-danger {
-        border-left-color: var(--bs-danger);
-    }
-
-    &.alert-secondary {
-        border-left-color: var(--bs-secondary);
-    }
-
-    &.alert-primary {
-        border-left-color: var(--bs-primary);
-    }
+    border: 1px solid color-mix(in srgb, var(--bs-border-color) 60%, transparent);
 }
 
 .unified-feedback-content {

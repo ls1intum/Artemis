@@ -3,6 +3,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-unreferenced-feedback-detail',
@@ -32,9 +33,10 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     public async loadLongFeedback() {
         const feedback = this.feedback();
         if (feedback.id && feedback.hasLongFeedbackText) {
-            feedback.detailText = await this.feedbackService.getLongFeedbackText(feedback.id);
-            this.feedback.set(feedback);
-            this.onFeedbackChange.emit(feedback);
+            const detailText = await this.feedbackService.getLongFeedbackText(feedback.id);
+            const updatedFeedback = cloneWith(feedback, { detailText });
+            this.feedback.set(updatedFeedback);
+            this.onFeedbackChange.emit(updatedFeedback);
         }
     }
 

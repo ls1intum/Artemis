@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, effect, inject, input, model, output, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiTooltipDirective } from '@tumaet/ui-angular';
@@ -45,13 +45,40 @@ interface FeedbackTypeConfig {
 export class UnifiedFeedbackComponent {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private localeConversionService = inject(LocaleConversionService);
+    private destroyRef = inject(DestroyRef);
 
     constructor() {
-        effect(() => {
+        // afterRenderEffect (not effect): the textarea DOM read/write here must happen after the view -
+        // and its viewChild query - is guaranteed to be resolved, which a plain effect() does not promise
+        // on its first flush. A brand-new feedback item (e.g. an AI suggestion appended to the list) mounts
+        // with feedbackDetail already populated, so that first flush is exactly when this matters.
+        afterRenderEffect(() => {
             this.feedbackDetail();
             if (this.editable()) {
                 this.autogrowDetailTextarea();
             }
+        });
+
+        // Re-measuring only on feedbackDetail changes misses the case where the textarea's own available
+        // width shrinks later (e.g. a modeling exercise's Apollon diagram finishes laying out after an AI
+        // feedback suggestion already landed) - the text then wraps into more lines than the height that was
+        // computed at mount time, with nothing left to trigger a re-measure. Watch width specifically (not
+        // the observed box as a whole) so our own height writes below don't retrigger this callback.
+        afterNextRender(() => {
+            const textarea = this.detailTextarea()?.nativeElement;
+            if (!textarea) {
+                return;
+            }
+            let lastWidth = textarea.clientWidth;
+            const resizeObserver = new ResizeObserver((entries) => {
+                const width = entries[0]?.contentRect.width ?? 0;
+                if (width !== lastWidth) {
+                    lastWidth = width;
+                    this.autogrowDetailTextarea();
+                }
+            });
+            resizeObserver.observe(textarea);
+            this.destroyRef.onDestroy(() => resizeObserver.disconnect());
         });
     }
 
