@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lti;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.mock;
@@ -236,5 +237,58 @@ class LtiServiceTest {
         user.setLtiCreated(false);
 
         assertThat(ltiService.isLtiCreatedUser(user)).isFalse();
+    }
+
+    @Test
+    void authenticateLtiUser_newUser_withNullNames_createsUserWithLoginFallback() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        onlineCourseConfiguration.setRequireExistingUser(false);
+        when(userRepository.findOneByLogin("edx_janedoe")).thenReturn(Optional.empty());
+        when(userRepository.findOneByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.empty());
+        when(artemisAuthenticationProvider.getUsernameForEmail("jane@example.com")).thenReturn(Optional.empty());
+
+        ltiService.authenticateLtiUser("jane@example.com", "edx_janedoe", null, null, onlineCourseConfiguration.isRequireExistingUser());
+
+        // The user must be created with the login as a fallback display name so JGit's PersonIdent
+        // does not throw "Name of PersonIdent must not be null" on the next commit.
+        ArgumentCaptor<String> firstNameCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> lastNameCaptor = ArgumentCaptor.forClass(String.class);
+        verify(userCreationService).createUser(eq("edx_janedoe"), any(), firstNameCaptor.capture(), lastNameCaptor.capture(), eq("jane@example.com"), any(), any(), any(), anyBoolean());
+        assertThat(firstNameCaptor.getValue()).isEqualTo("edx_janedoe");
+        assertThat(lastNameCaptor.getValue()).isEmpty();
+    }
+
+    @Test
+    void authenticateLtiUser_newUser_withBlankNames_createsUserWithLoginFallback() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        onlineCourseConfiguration.setRequireExistingUser(false);
+        when(userRepository.findOneByLogin("edx_janedoe")).thenReturn(Optional.empty());
+        when(userRepository.findOneByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.empty());
+        when(artemisAuthenticationProvider.getUsernameForEmail("jane@example.com")).thenReturn(Optional.empty());
+
+        ltiService.authenticateLtiUser("jane@example.com", "edx_janedoe", "   ", "  ", onlineCourseConfiguration.isRequireExistingUser());
+
+        ArgumentCaptor<String> firstNameCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> lastNameCaptor = ArgumentCaptor.forClass(String.class);
+        verify(userCreationService).createUser(eq("edx_janedoe"), any(), firstNameCaptor.capture(), lastNameCaptor.capture(), eq("jane@example.com"), any(), any(), any(), anyBoolean());
+        assertThat(firstNameCaptor.getValue()).isEqualTo("edx_janedoe");
+        assertThat(lastNameCaptor.getValue()).isEmpty();
+    }
+
+    @Test
+    void authenticateLtiUser_newUser_withNames_keepsProvidedNames() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        onlineCourseConfiguration.setRequireExistingUser(false);
+        when(userRepository.findOneByLogin("edx_janedoe")).thenReturn(Optional.empty());
+        when(userRepository.findOneByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.empty());
+        when(artemisAuthenticationProvider.getUsernameForEmail("jane@example.com")).thenReturn(Optional.empty());
+
+        ltiService.authenticateLtiUser("jane@example.com", "edx_janedoe", "Jane", "Doe", onlineCourseConfiguration.isRequireExistingUser());
+
+        ArgumentCaptor<String> firstNameCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> lastNameCaptor = ArgumentCaptor.forClass(String.class);
+        verify(userCreationService).createUser(eq("edx_janedoe"), any(), firstNameCaptor.capture(), lastNameCaptor.capture(), eq("jane@example.com"), any(), any(), any(), anyBoolean());
+        assertThat(firstNameCaptor.getValue()).isEqualTo("Jane");
+        assertThat(lastNameCaptor.getValue()).isEqualTo("Doe");
     }
 }
