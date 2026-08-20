@@ -581,7 +581,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     updateProactiveStruggleEnabled(value: boolean): void {
         const currentSettings = this.settings();
         if (currentSettings) {
-            this.settings.set({ ...currentSettings, proactiveStruggleEnabled: value });
+            this.settings.set(cloneWith(currentSettings, { proactiveStruggleEnabled: value }));
         }
     }
 
