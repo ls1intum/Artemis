@@ -183,10 +183,10 @@ jobs:
           # describes exactly the bytes that ship. `-j` flattens the paths to bare filenames, and
           # `unzip` exits 11 when nothing matches, so tolerate that and report it ourselves below.
           unzip -o -j /tmp/release/Artemis.war 'WEB-INF/classes/sbom/*.json' -d /tmp/sbom || true
-          # Fallback for a jar-style layout, where the classpath root is the archive root. Only tried
+          # Fallback for a Spring Boot jar layout, should `-Pwar` above ever become `-Pjar`. Only tried
           # when the WAR layout yielded nothing, so the normal path stays free of `unzip` cautions.
           if [ ! -f /tmp/sbom/server-sbom.json ] && [ ! -f /tmp/sbom/client-sbom.json ]; then
-            unzip -o -j /tmp/release/Artemis.war 'sbom/*.json' -d /tmp/sbom || true
+            unzip -o -j /tmp/release/Artemis.war 'BOOT-INF/classes/sbom/*.json' -d /tmp/sbom || true
           fi
 
           missing=()
@@ -208,21 +208,32 @@ jobs:
           cd /tmp/release
           sha256sum Artemis.war artemis-server-sbom.cdx.json artemis-client-sbom.cdx.json > SHA256SUMS
           cat SHA256SUMS
+      # The WAR goes up FIRST, on its own. `upload-release` runs on `release: published`, so the
+      # release is already public by the time this job starts; if provenance or SBOM work fails
+      # afterwards, the release still carries the artifact people came for. Uploading everything at
+      # the end would mean a Sigstore outage leaves a published release with no WAR at all.
+      - name: Upload the WAR to the GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: gh release upload "$RELEASE_TAG" /tmp/release/Artemis.war --clobber --repo "${GITHUB_REPOSITORY}"
+
       - name: Attest build provenance
-        # Produces a signed, Sigstore-backed SLSA provenance statement binding the WAR digest to
-        # this workflow run. Consumers verify it with:
-        #   gh attestation verify Artemis.war --repo ls1intum/Artemis
+        # Signed, Sigstore-backed SLSA provenance binding every release asset to this workflow run.
+        # `subject-checksums` reads the SHA256SUMS file generated above, so the SBOMs and the sums
+        # file are attested too rather than only the WAR. Consumers verify with:
+        #   gh attestation verify <asset> --repo ls1intum/Artemis
         uses: actions/attest-build-provenance@v4
         with:
-          subject-path: /tmp/release/Artemis.war
-      - name: Upload to the GitHub release
+          subject-checksums: /tmp/release/SHA256SUMS
+
+      - name: Upload the derived release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           set -Eeuo pipefail
           gh release upload "$RELEASE_TAG" \
-            /tmp/release/Artemis.war \
             /tmp/release/artemis-server-sbom.cdx.json \
             /tmp/release/artemis-client-sbom.cdx.json \
             /tmp/release/SHA256SUMS \
@@ -361,10 +372,14 @@ jobs:
   #
   # Both are keyless: the signing identity is this workflow, proven through the GitHub OIDC token,
   # so there is no private key to store or rotate.
-  sign-release-image:
+  sign-mainline-image:
     name: Sign and Attest Docker Image
     needs: docker-release
-    if: ${{ !inputs.is_pr }}
+    # Covers releases AND `develop`/`main`/`release/*` pushes, because test servers and staging pull
+    # those images too and they deserve the same verifiability. Gated on `is_release_build` rather
+    # than `!is_pr` so merge-queue and `workflow_dispatch` images do not each get a public Rekor
+    # transparency-log entry for an image nobody deploys.
+    if: ${{ inputs.is_release_build }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -388,9 +403,14 @@ jobs:
           IMAGE_TAG: ${{ needs.docker-release.outputs.image_tag }}
         run: |
           set -Eeuo pipefail
-          digest="$(docker buildx imagetools inspect "ghcr.io/ls1intum/artemis:${IMAGE_TAG}" --format '{{ .Manifest.Digest }}')"
+          # Checked with `if !` rather than a bare assignment: under `set -e` a failing inspect would
+          # abort the step before the error message below could explain what went wrong.
+          if ! digest="$(docker buildx imagetools inspect "ghcr.io/ls1intum/artemis:${IMAGE_TAG}" --format '{{ .Manifest.Digest }}')"; then
+            echo "::error::Could not inspect ghcr.io/ls1intum/artemis:${IMAGE_TAG}. Did the docker-release job push it?"
+            exit 1
+          fi
           if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
-            echo "::error::Could not resolve a digest for ghcr.io/ls1intum/artemis:${IMAGE_TAG} (got '${digest}')."
+            echo "::error::Unexpected digest for ghcr.io/ls1intum/artemis:${IMAGE_TAG} (got '${digest}')."
             exit 1
           fi
           echo "digest=${digest}" >> "$GITHUB_OUTPUT"
@@ -404,9 +424,12 @@ jobs:
           push-to-registry: true
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v4.1.2
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6  # v4.1.2
 
       - name: Sign image
         env:
           DIGEST: ${{ steps.digest.outputs.digest }}
-        run: cosign sign --yes "ghcr.io/ls1intum/artemis@${DIGEST}"
+        # `--recursive` also signs the per-platform manifests behind the index. Admission controllers
+        # verify whatever digest the pull resolved to, which for a node-level pull is the
+        # per-architecture manifest, and an index-only signature would not apply to it.
+        run: cosign sign --yes --recursive "ghcr.io/ls1intum/artemis@${DIGEST}"

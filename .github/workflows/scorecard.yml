@@ -26,6 +26,10 @@ permissions: {}
 jobs:
   analysis:
     name: Scorecard analysis
+    # Forks get their own `develop` pushes, where `publish_results` cannot exchange an OIDC token and
+    # there is no code-scanning target for the SARIF, so without this guard fork owners collect
+    # recurring red runs for a workflow that cannot work there.
+    if: github.repository_owner == 'ls1intum'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -39,7 +43,7 @@ jobs:
           persist-credentials: false
 
       - name: Run analysis
-        uses: ossf/scorecard-action@v2.4.4
+        uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc  # v2.4.4
         with:
           results_file: results.sarif
           results_format: sarif

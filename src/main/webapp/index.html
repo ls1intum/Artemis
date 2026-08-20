@@ -13,7 +13,11 @@
         <meta name="theme-color" content="#000000" />
         <meta name="color-scheme" content="light dark" />
         <!-- Social preview metadata. index.html is served for every route, so no per-page og:url or
-             canonical link is set here; a single hard-coded value would be wrong on every subroute. -->
+             canonical link is set here; a single hard-coded value would be wrong on every subroute.
+             The absolute image URLs and the JSON-LD `url` below name the TUM instance, because this
+             file ships unchanged in the WAR that every institution deploys and there is nowhere to
+             template them per deployment. Self-hosted instances that care about their own link
+             previews should override these tags when serving index.html. -->
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Artemis" />
         <meta property="og:title" content="Artemis: Interactive Learning with Individual Feedback" />
@@ -55,7 +59,6 @@
                 "name": "Artemis",
                 "applicationCategory": "EducationalApplication",
                 "url": "https://artemis.tum.de",
-                "logo": "https://artemis.tum.de/public/images/logo.svg",
                 "image": "https://artemis.tum.de/logo/android-chrome-512x512.png",
                 "description": "Artemis is an open-source platform for interactive learning with individual feedback.",
                 "license": "https://github.com/ls1intum/Artemis/blob/develop/LICENSE",

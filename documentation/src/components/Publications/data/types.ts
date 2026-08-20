@@ -42,7 +42,13 @@ export const researchTopicOrder: ResearchTopic[] = [
  * from structured metadata instead of being maintained by hand.
  */
 export interface Publication {
-    /** Stable identifier, used as a React key and as a link anchor. */
+    /**
+     * Stable identifier, used as the React key.
+     *
+     * Deliberately not rendered as a DOM `id`: the themed view shows a publication once per matching
+     * theme, so a bare `id` would produce duplicates. A per-publication anchor needs a group-scoped
+     * prefix.
+     */
     id: string;
     title: string;
     authors: string;
