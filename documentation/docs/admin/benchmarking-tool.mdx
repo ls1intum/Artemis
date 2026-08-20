@@ -56,14 +56,20 @@ commits for the programming exercise, and submits the exam.
 
 ### The ladder
 
-| # | Students | Mode | IDE | Purpose |
-| --- | --- | --- | --- | --- |
-| S0 | 10 | `CREATE_COURSE_AND_EXAM` | `OFFLINE` | Smoke test. Proves the wiring, the users, and the build agents work before anything larger is attempted. |
-| S1 | 100 | `CREATE_COURSE_AND_EXAM` | `OFFLINE` | Baseline. Every later run is compared against these percentiles. |
-| S2 | 500 | `CREATE_COURSE_AND_EXAM` | `OFFLINE` | First point where queueing usually becomes visible. |
-| S3 | 1000 | `CREATE_COURSE_AND_EXAM` | `OFFLINE` | Realistic large course. |
-| S4 | 2000 | `CREATE_COURSE_AND_EXAM` | `OFFLINE` | The size Artemis is publicly described as handling. This is the run that substantiates that claim. |
-| S5 | 3000+ | `CREATE_COURSE_AND_EXAM` | `OFFLINE` | Only if S4 stays comfortable. Finds the actual limit rather than confirming a target. |
+| # | Students | Mode | Purpose |
+| --- | --- | --- | --- |
+| S0 | 10 | `CREATE_COURSE_AND_EXAM` | Smoke test. Proves the wiring, the users, and the build agents work before anything larger is attempted. |
+| S1 | 100 | `CREATE_COURSE_AND_EXAM` | Baseline. Every later run is compared against these percentiles. |
+| S2 | 500 | `CREATE_COURSE_AND_EXAM` | First point where queueing usually becomes visible. |
+| S3 | 1000 | `CREATE_COURSE_AND_EXAM` | Realistic large course. |
+| S4 | 2000 | `CREATE_COURSE_AND_EXAM` | The size Artemis is publicly described as handling. This is the run that substantiates that claim. |
+| S5 | 3000+ | `CREATE_COURSE_AND_EXAM` | Only if S4 stays comfortable. Finds the actual limit rather than confirming a target. |
+
+Hold the repository access mix fixed across the whole ladder. The tool draws it per student from four
+percentages that must add up to 100 (online IDE, password, participation token, and SSH), so record
+all four alongside the result. Note that SSH clones bypass any rate limiting a reverse proxy applies
+to git over HTTP, which makes an all-SSH mix a poor choice for a first run against an unfamiliar
+deployment.
 
 ### Two variations at the target size
 
@@ -72,7 +78,7 @@ ladder alone cannot distinguish:
 
 | Variation | Change | What it isolates |
 | --- | --- | --- |
-| Online editor | `IDE = ONLINE` | Moves programming traffic off git clone and push and onto the REST and WebSocket path, separating version control cost from application cost. |
+| Online editor | Online IDE share set to 100% | Moves programming traffic off git clone and push and onto the REST and WebSocket path, separating version control cost from application cost. |
 | No programming exercise | Exam with only modeling, quiz, and text | Removes the build agents and the git server from the picture, so the remaining latency is attributable to Artemis and the database. |
 
 Keep everything else identical between a run and its variation, or the comparison is worthless.
