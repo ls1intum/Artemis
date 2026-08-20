@@ -19,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.localci.service.BuildPhaseEvaluationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.BuildTriggerRequestDTO;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,6 +58,9 @@ class HadesTriggerServiceTest {
 
     @Mock
     private BuildScriptProviderService buildScriptProviderService;
+
+    @Mock
+    private ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
 
     @InjectMocks
     private HadesTriggerService hadesTriggerService;
@@ -349,6 +354,21 @@ class HadesTriggerServiceTest {
 
             verify(hadesService).build(captor.capture());
             assertThat(captor.getValue().dockerImage()).isNull();
+        }
+
+        @Test
+        void triggerBuild_withTimeoutAndDockerFlags_carriesThemInBuildTriggerRequest() throws ContinuousIntegrationException {
+            buildConfig.setTimeoutSeconds(600);
+            var dockerFlags = new DockerFlagsDTO("none", java.util.Map.of("FOO", "bar"), 2, 2048, 4096);
+            when(programmingExerciseBuildConfigService.parseDockerFlags(buildConfig)).thenReturn(dockerFlags);
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().timeoutSeconds()).isEqualTo(600);
+            assertThat(captor.getValue().dockerFlags()).isSameAs(dockerFlags);
         }
     }
 

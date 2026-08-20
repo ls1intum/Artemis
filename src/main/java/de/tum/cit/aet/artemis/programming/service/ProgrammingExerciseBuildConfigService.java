@@ -124,12 +124,13 @@ public class ProgrammingExerciseBuildConfigService {
     /**
      * Parses the JSON string representing Docker flags into DockerFlagsDTO. (see {@link DockerFlagsDTO})
      *
+     * @param buildConfig the build configuration holding the Docker flags JSON string
      * @return the parsed docker flags object
      * @throws IllegalArgumentException if the JSON string is invalid
      * @throws ResponseStatusException  if the network is not allowed
      */
     @Nullable
-    DockerFlagsDTO parseDockerFlags(ProgrammingExerciseBuildConfig buildConfig) {
+    public DockerFlagsDTO parseDockerFlags(ProgrammingExerciseBuildConfig buildConfig) {
         if (StringUtils.isBlank(buildConfig.getDockerFlags())) {
             return null;
         }
