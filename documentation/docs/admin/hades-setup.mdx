@@ -58,3 +58,14 @@ In addition, you have to start Artemis with the profiles `hades` and `localvc` s
 ```
 
 Please read the [Server Setup](/developer/setup#server-setup) guide for more details.
+
+---
+
+## Known limitations
+
+The Hades integration is still under active development. The following capabilities are not yet available and are tracked upstream:
+
+- **Maven blackbox exercises are not supported.** Blackbox exercises emit their results as `customFeedbacks/*.json`, which the Hades result parser does not ingest yet (it reads only JUnit `*.xml`), so no results would be reported. `MAVEN_BLACKBOX` is therefore not offered for Hades exercises. Tracked in [hades-artemis-result-parser#6](https://github.com/Hades-Scheduler/hades-artemis-result-parser/issues/6).
+- **Build timeout and Docker resource limits are not enforced.** The custom build-plan editor shows timeout, environment variable, network, and CPU/memory/swap fields, but Hades currently only honors the custom Docker image; the other settings are not applied. Tracked in [hades#500](https://github.com/Hades-Scheduler/hades/issues/500).
+- **Commit pinning requires an up-to-date clone container.** Artemis sends the exact assignment and test commit hashes to the clone step, but the container only checks them out with [git-container#26](https://github.com/Hades-Scheduler/git-container/pull/26); with an older image the build runs against the branch HEAD.
+- **Result ingestion scans a broad directory.** Because result paths are depth-agnostic, the parser is pointed at the working directory root and matches any `*.xml`; a single malformed XML fails the whole result submission. Tracked in [hades-artemis-result-parser#7](https://github.com/Hades-Scheduler/hades-artemis-result-parser/issues/7).
