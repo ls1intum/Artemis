@@ -1,4 +1,5 @@
 import { Component, DestroyRef, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import DOMPurify from 'dompurify';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { EMPTY, Observable, Subject, Subscription, catchError, filter, map, of, switchMap } from 'rxjs';
@@ -409,6 +410,18 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
      *
      * The server prepends the stylesheet and the KaTeX link to the fragment inside the body, so both head and body
      * must be searched. Querying the head alone would silently drop all CSS.
+     *
+     * The fragment is sanitized here even though the server already sanitized it, because the server's jsoup safelist
+     * does not cover all of it: PlantUML diagrams and alert icons are injected *after* that safelist, since it strips
+     * SVG, and are guarded only by `SvgSanitizer`, which denies known-dangerous constructs rather than allowing known-
+     * safe ones. This pass puts every byte that reaches the DOM through one allowlist, which is what the legacy
+     * pipeline did in the browser before this renderer existed. The application CSP is no backstop: it carries
+     * `unsafe-inline`.
+     *
+     * Only the fragment goes through it. The stylesheets are classpath resources plus the configured server URL, none
+     * of it derived from the statement, and DOMPurify would strip the KaTeX `<link>` because no sanitizer allows a
+     * stylesheet reference by default. Default configuration otherwise: it preserves the whole server vocabulary
+     * (task spans, inline SVG, `data-*`, alerts, tables, code blocks), which the specs pin against the corpus.
      */
     private extractRenderableHtml(document_: string): { html: string; tasks: SsrTask[] } {
         const parsed = new DOMParser().parseFromString(document_, 'text/html');
@@ -427,7 +440,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             authoredCount: Number(element.getAttribute('data-authored-count') ?? '0'),
             notExecutedCount: Number(element.getAttribute('data-not-executed-count') ?? '0'),
         }));
-        return { html: styles + (fragment?.outerHTML ?? ''), tasks };
+        return { html: styles + (fragment ? DOMPurify.sanitize(fragment.outerHTML) : ''), tasks };
     }
 
     /**

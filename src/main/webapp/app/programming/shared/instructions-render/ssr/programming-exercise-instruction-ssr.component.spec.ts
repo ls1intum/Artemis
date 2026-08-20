@@ -117,6 +117,56 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         fixture.detectChanges();
     };
 
+    describe('client-side sanitization', () => {
+        // The server sanitizes too, but not all of its output passes that safelist: diagrams and alert icons are
+        // injected after it, guarded only by a denylist. These pin the second pass, which the legacy pipeline had.
+        const renderedWith = (body: string) => ({
+            html: `<!DOCTYPE html><html><head><style>.artemis-task{color:red}</style></head><body><div class="artemis-problem-statement">${body}</div></body></html>`,
+            contentHash: body,
+            rendererVersion: '1.3.0',
+        });
+
+        it.each([
+            { case: 'an event handler on an injected svg', body: '<svg onload="window.__x=1"><text>x</text></svg>', gone: 'onload' },
+            { case: 'an error handler on an image', body: '<img src="q" onerror="window.__x=1">', gone: 'onerror' },
+            { case: 'an inline event handler on a span', body: '<span onmouseover="window.__x=1">hover</span>', gone: 'onmouseover' },
+        ])('removes $case before the markup reaches the DOM', ({ body, gone }) => {
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.detectChanges();
+            flushRender(renderedWith(body));
+
+            expect(comp.renderedHtml()).not.toContain(gone);
+            expect(contentShadowRoot().querySelector('[' + gone + ']')).toBeNull();
+        });
+
+        it('keeps the whole server vocabulary, so the pass cannot quietly empty the statement', () => {
+            const body =
+                taskSpan('A', '1') +
+                '<svg viewBox="0 0 10 10"><text>diagram</text></svg>' +
+                '<div class="markdown-alert markdown-alert-note"><p class="markdown-alert-title">Note</p><p>body</p></div>' +
+                '<table><tbody><tr><td>cell</td></tr></tbody></table>' +
+                '<pre><code class="language-java">int x;</code></pre>' +
+                '<a href="https://example.org">link</a><img src="https://example.org/i.png">' +
+                '<span class="katex-formula" data-formula="x^2" data-display-mode="false"></span>';
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.detectChanges();
+            flushRender(renderedWith(body));
+
+            const root = contentShadowRoot();
+            expect(root.querySelectorAll('.artemis-task')).toHaveLength(1);
+            expect(root.querySelector('.artemis-task')?.getAttribute('data-test-ids')).toBe('1');
+            expect(root.querySelector('svg')).toBeTruthy();
+            expect(root.querySelector('.markdown-alert')).toBeTruthy();
+            expect(root.querySelector('table td')?.textContent).toBe('cell');
+            expect(root.querySelector('pre code')?.className).toContain('language-java');
+            expect(root.querySelector('a')?.getAttribute('href')).toBe('https://example.org');
+            expect(root.querySelector('img')?.getAttribute('src')).toBe('https://example.org/i.png');
+            expect(root.querySelector('.katex-formula')?.getAttribute('data-formula')).toBe('x^2');
+            // The task metadata is read from the parsed document, so it has to survive the pass as well.
+            expect(comp.tasks()).toHaveLength(1);
+        });
+    });
+
     it('strips scripts from the rendered html and hands it to the shadow-DOM content child', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
