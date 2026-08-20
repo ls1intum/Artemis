@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.BuildPhaseEvaluationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.BuildTriggerRequestDTO;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.RepositoryDTO;
@@ -61,6 +63,8 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
     private final BuildScriptProviderService buildScriptProviderService;
 
+    private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
+
     private static final String HADES_WORKING_DIRECTORY = "/shared";
 
     private static final String DEFAULT_INGEST_DIRECTORY = HADES_WORKING_DIRECTORY + "/build/test-results/test";
@@ -68,13 +72,15 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
     private static final String DEFAULT_ASSIGNMENT_CHECKOUT_PATH = "assignment";
 
     public HadesTriggerService(HadesService hadesService, BuildPhaseEvaluationService buildPhaseEvaluationService, BuildPhasesTemplateService buildPhasesTemplateService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, GitService gitService, BuildScriptProviderService buildScriptProviderService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, GitService gitService, BuildScriptProviderService buildScriptProviderService,
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService) {
         this.hadesService = hadesService;
         this.buildPhaseEvaluationService = buildPhaseEvaluationService;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.gitService = gitService;
         this.buildScriptProviderService = buildScriptProviderService;
+        this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
     }
 
     @Override
@@ -134,9 +140,15 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
             additionalProperties.put("resultIngestDirectory", resolveResultIngestDirectory(activePhases, buildConfig, projectType));
 
+            // Resolve the per-build timeout and Docker resource limits/network/env configured on the exercise. parseDockerFlags also
+            // validates the network against the allowlist, so we reuse it here to keep the same guardrails as LocalCI.
+            DockerFlagsDTO dockerFlags = programmingExerciseBuildConfigService.parseDockerFlags(buildConfig);
+            int timeoutSeconds = buildConfig.getTimeoutSeconds();
+
             // Create the build trigger request DTO
             BuildTriggerRequestDTO buildTriggerRequest = new BuildTriggerRequestDTO(exerciseID, participationID, exerciseRepository, testRepository, auxiliaryRepository,
-                    buildScript, scriptType, participation.getProgrammingExercise().getProgrammingLanguage().toString(), additionalProperties, dockerImage);
+                    buildScript, scriptType, participation.getProgrammingExercise().getProgrammingLanguage().toString(), additionalProperties, dockerImage, timeoutSeconds,
+                    dockerFlags);
 
             // Delegate to Hades service
             hadesService.build(buildTriggerRequest);

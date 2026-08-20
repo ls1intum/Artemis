@@ -28,6 +28,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService.BuildStatus;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -251,7 +252,7 @@ class HadesServiceTest {
     @Test
     void build_withoutCommitHashes_omitsCommitHashesFromCloneStep() throws ContinuousIntegrationException {
         var dto = new BuildTriggerRequestDTO(1L, 2L, new RepositoryDTO("http://example.com/exercise.git", "", null, null),
-                new RepositoryDTO("http://example.com/test.git", "", null, null), List.of(), "mvn test", ScriptType.SHELL, "JAVA", Map.of(), null);
+                new RepositoryDTO("http://example.com/test.git", "", null, null), List.of(), "mvn test", ScriptType.SHELL, "JAVA", Map.of(), null, null, null);
         var expectedUuid = UUID.randomUUID();
         @SuppressWarnings("unchecked")
         ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
@@ -286,7 +287,7 @@ class HadesServiceTest {
     @Test
     void build_withCloneLocations_usesConfiguredCheckoutPaths() throws ContinuousIntegrationException {
         var dto = new BuildTriggerRequestDTO(1L, 2L, new RepositoryDTO("http://example.com/exercise.git", "abc123", "custom-assignment", null),
-                new RepositoryDTO("http://example.com/test.git", "def456", "custom-tests", null), List.of(), "mvn test", ScriptType.SHELL, "JAVA", Map.of(), null);
+                new RepositoryDTO("http://example.com/test.git", "def456", "custom-tests", null), List.of(), "mvn test", ScriptType.SHELL, "JAVA", Map.of(), null, null, null);
         var expectedUuid = UUID.randomUUID();
         @SuppressWarnings("unchecked")
         ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
@@ -301,12 +302,73 @@ class HadesServiceTest {
         assertThat(cloneStep.metadata()).containsEntry("HADES_ASSIGNMENT_PATH", "./custom-assignment").containsEntry("HADES_TEST_PATH", "./custom-tests");
     }
 
+    @Test
+    void build_withDockerFlagsAndTimeout_mapsResourceLimitsOntoExecuteStepAndJobTimeout() throws ContinuousIntegrationException {
+        var dockerFlags = new DockerFlagsDTO("none", Map.of("FOO", "bar"), 2, 2048, 4096);
+        var dto = buildTriggerRequest(Map.of(), null, 600, dockerFlags);
+        var expectedUuid = UUID.randomUUID();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(HadesBuildResponseDTO.class)))
+                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
+
+        hadesService.build(dto);
+
+        var job = requestCaptor.getValue().getBody();
+        var executeStep = job.steps().stream().filter(step -> "Execute".equals(step.name())).findFirst().orElseThrow();
+        assertThat(executeStep.cpuLimit()).isEqualTo(2);
+        assertThat(executeStep.memoryLimit()).isEqualTo("2048M");
+        assertThat(executeStep.memorySwap()).isEqualTo("4096M");
+        assertThat(executeStep.network()).isEqualTo("none");
+        assertThat(executeStep.pidsLimit()).isNull();
+        assertThat(executeStep.metadata()).containsEntry("FOO", "bar");
+        assertThat(job.timeoutSeconds()).isEqualTo(600L);
+
+        // resource limits and network are applied to the Execute step only, never to the Clone step
+        var cloneStep = job.steps().stream().filter(step -> "Clone".equals(step.name())).findFirst().orElseThrow();
+        assertThat(cloneStep.cpuLimit()).isNull();
+        assertThat(cloneStep.memoryLimit()).isNull();
+        assertThat(cloneStep.memorySwap()).isNull();
+        assertThat(cloneStep.network()).isNull();
+        assertThat(cloneStep.pidsLimit()).isNull();
+    }
+
+    @Test
+    void build_withoutDockerFlagsOrTimeout_leavesResourceFieldsAndJobTimeoutNull() throws ContinuousIntegrationException {
+        var dto = buildTriggerRequest(Map.of(), null, 0, null);
+        var expectedUuid = UUID.randomUUID();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(HadesBuildResponseDTO.class)))
+                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
+
+        hadesService.build(dto);
+
+        var job = requestCaptor.getValue().getBody();
+        var executeStep = job.steps().stream().filter(step -> "Execute".equals(step.name())).findFirst().orElseThrow();
+        assertThat(executeStep.cpuLimit()).isNull();
+        assertThat(executeStep.memoryLimit()).isNull();
+        assertThat(executeStep.memorySwap()).isNull();
+        assertThat(executeStep.network()).isNull();
+        assertThat(executeStep.pidsLimit()).isNull();
+        assertThat(job.timeoutSeconds()).isNull();
+    }
+
     private BuildTriggerRequestDTO buildTriggerRequest(Map<String, String> additionalProperties) {
         return buildTriggerRequest(additionalProperties, null);
     }
 
     private BuildTriggerRequestDTO buildTriggerRequest(Map<String, String> additionalProperties, String dockerImage) {
+        return buildTriggerRequest(additionalProperties, dockerImage, null, null);
+    }
+
+    private BuildTriggerRequestDTO buildTriggerRequest(Map<String, String> additionalProperties, String dockerImage, Integer timeoutSeconds, DockerFlagsDTO dockerFlags) {
         return new BuildTriggerRequestDTO(1L, 2L, new RepositoryDTO("http://example.com/exercise.git", "abc123", null, null),
-                new RepositoryDTO("http://example.com/test.git", "def456", null, null), List.of(), "mvn test", ScriptType.SHELL, "JAVA", additionalProperties, dockerImage);
+                new RepositoryDTO("http://example.com/test.git", "def456", null, null), List.of(), "mvn test", ScriptType.SHELL, "JAVA", additionalProperties, dockerImage,
+                timeoutSeconds, dockerFlags);
     }
 }

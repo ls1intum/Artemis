@@ -25,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService;
@@ -203,7 +204,19 @@ public class HadesService implements StatelessCIService {
                 : programmingLanguageConfiguration.getImage(ProgrammingLanguage.valueOf(buildTriggerRequestDTO.programmingLanguage()), projectType);
         var script = buildTriggerRequestDTO.buildScript();
         var executeMetadata = new HashMap<String, String>();
-        steps.add(new HadesBuildStepDTO(2, "Execute", image, volumeMounts, workingDir, executeMetadata, script, true));
+
+        // Map the exercise's Docker resource limits, network, and env onto the Execute step only. The clone and parse result steps run
+        // trusted Artemis images and must not inherit exercise-configured limits. Hades receives step metadata entries as env vars, so
+        // the env map is merged into the Execute step metadata. pids_limit stays null: Artemis has no per-exercise value for it.
+        DockerFlagsDTO dockerFlags = buildTriggerRequestDTO.dockerFlags();
+        Integer cpuLimit = dockerFlags != null && dockerFlags.cpuCount() > 0 ? dockerFlags.cpuCount() : null;
+        String memoryLimit = dockerFlags != null && dockerFlags.memory() > 0 ? dockerFlags.memory() + "M" : null;
+        String memorySwap = dockerFlags != null && dockerFlags.memorySwap() > 0 ? dockerFlags.memorySwap() + "M" : null;
+        String network = dockerFlags != null && StringUtils.hasText(dockerFlags.network()) ? dockerFlags.network() : null;
+        if (dockerFlags != null && dockerFlags.env() != null && !dockerFlags.env().isEmpty()) {
+            executeMetadata.putAll(dockerFlags.env());
+        }
+        steps.add(new HadesBuildStepDTO(2, "Execute", image, volumeMounts, workingDir, executeMetadata, script, true, cpuLimit, memoryLimit, network, memorySwap, null));
 
         // Create Parse Result Step
         var parseResultMetadata = new HashMap<String, String>();
@@ -222,7 +235,9 @@ public class HadesService implements StatelessCIService {
 
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();
-        return new HadesBuildJobDTO(buildTriggerRequestDTO.participationId().toString(), metadata, timestamp, 1, steps, logsCallbackUrl);
+        Integer timeoutSeconds = buildTriggerRequestDTO.timeoutSeconds();
+        Long jobTimeoutSeconds = timeoutSeconds != null && timeoutSeconds > 0 ? (long) timeoutSeconds : null;
+        return new HadesBuildJobDTO(buildTriggerRequestDTO.participationId().toString(), metadata, timestamp, 1, steps, logsCallbackUrl, jobTimeoutSeconds);
     }
 
     private HttpHeaders createAuthHeaders() {
