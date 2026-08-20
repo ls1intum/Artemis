@@ -8,7 +8,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { CourseOperationProgressDTO } from 'app/course/shared/entities/course-operation-progress.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
-import { toCourseCreateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { CourseUpdateDTO, courseFromUpdateDTO, toCourseCreateDTO } from 'app/course/shared/entities/course-update-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -34,9 +34,10 @@ export class CourseAdminService {
             formData.append('file', courseImage, 'placeholderName.png');
         }
 
-        return this.http
-            .post<Course>(this.resourceUrl, formData, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.courseManagementService.processCourseEntityResponseType(res)));
+        return this.http.post<CourseUpdateDTO>(this.resourceUrl, formData, { observe: 'response' }).pipe(
+            map((res: HttpResponse<CourseUpdateDTO>): EntityResponseType => res.clone({ body: res.body ? courseFromUpdateDTO(res.body) : null })),
+            map((res: EntityResponseType) => this.courseManagementService.processCourseEntityResponseType(res)),
+        );
     }
 
     /**

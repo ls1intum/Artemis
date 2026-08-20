@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -41,34 +43,36 @@ public record CourseUpdateDTO(
         @NotNull Long id,
 
         // Basic info
-        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Size(max = 2000) String description, String semester,
+        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Nullable @Size(max = 2000) String description, @Nullable String semester,
 
         // Dates
-        ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate,
+        @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable ZonedDateTime enrollmentStartDate, @Nullable ZonedDateTime enrollmentEndDate,
+        @Nullable ZonedDateTime unenrollmentEndDate,
 
         // Configuration flags
-        boolean testCourse, Boolean onlineCourse, Language language, ProgrammingLanguage defaultProgrammingLanguage,
+        boolean testCourse, @Nullable Boolean onlineCourse, @Nullable Language language, @Nullable ProgrammingLanguage defaultProgrammingLanguage,
 
         // Complaint settings
-        Integer maxComplaints, Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit,
+        @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit,
         int maxComplaintResponseTextLimit,
 
         // UI settings
-        String color, String courseIcon, Boolean enrollmentEnabled, @Size(max = 2000) String enrollmentConfirmationMessage, boolean unenrollmentEnabled,
-        String courseInformationSharingMessagingCodeOfConduct,
+        @Nullable String color, @Nullable String courseIcon, @Nullable Boolean enrollmentEnabled, @Nullable @Size(max = 2000) String enrollmentConfirmationMessage,
+        boolean unenrollmentEnabled, @Nullable String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        boolean learningPathsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
-        @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean restrictedAthenaModulesAccess,
-        String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
+        boolean learningPathsEnabled, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Nullable @Min(0) @Max(5) Integer accuracyOfScores,
+        boolean restrictedAthenaModulesAccess, @Nullable String timeZone, @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+        boolean onboardingDone,
 
         // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
         // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
-        Boolean gradeRelevant,
+        @Nullable Boolean gradeRelevant,
 
         // Data-privacy / retention: whether a pending objection or legal proceeding suspends the cleanup for this course.
         // Boxed so an omitted value fails safe to keeping an existing hold rather than silently lifting it.
-        Boolean dataRetentionHold) {
+        @Nullable Boolean dataRetentionHold) {
 
     /**
      * Applies the DTO values to an existing Course entity.

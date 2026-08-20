@@ -1,6 +1,7 @@
-import { convertDateFromClient } from 'app/foundation/util/date.utils';
+import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { Course, CourseInformationSharingConfiguration, Language } from './course.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 /**
  * DTO for creating a new course.
@@ -167,6 +168,24 @@ export interface CourseUpdateDTO {
 
     // Data-privacy / retention: whether a pending objection or legal proceeding suspends the cleanup for this course
     dataRetentionHold: boolean;
+}
+
+/**
+ * Builds the component-facing Course model from the course create/update transport DTO.
+ *
+ * @param dto the course DTO returned by the server
+ * @returns a hydrated Course with reconstructed retention configuration and dates
+ */
+export function courseFromUpdateDTO(dto: CourseUpdateDTO): Course {
+    const { gradeRelevant, dataRetentionHold, ...courseData } = dto;
+    const course: Course = hydrate(new Course(), courseData);
+    course.startDate = convertDateStringFromServer(dto.startDate);
+    course.endDate = convertDateStringFromServer(dto.endDate);
+    course.enrollmentStartDate = convertDateStringFromServer(dto.enrollmentStartDate);
+    course.enrollmentEndDate = convertDateStringFromServer(dto.enrollmentEndDate);
+    course.unenrollmentEndDate = convertDateStringFromServer(dto.unenrollmentEndDate);
+    course.courseConfiguration = { gradeRelevant, dataRetentionHold };
+    return course;
 }
 
 /**

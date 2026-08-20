@@ -12,13 +12,15 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { provideHttpClient } from '@angular/common/http';
+import { CourseUpdateDTO, toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('Course Admin Service', () => {
     let courseAdminService: CourseAdminService;
     let httpMock: HttpTestingController;
     const resourceUrl = 'api/admin/courses';
     let course: Course;
-    let returnedFromService: any;
+    let returnedFromService: CourseUpdateDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -35,7 +37,7 @@ describe('Course Admin Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
 
         ({ course } = createSampleCourse());
-        returnedFromService = { ...course } as Course;
+        returnedFromService = toCourseUpdateDTO(course);
     });
 
     afterEach(() => {
@@ -47,9 +49,18 @@ describe('Course Admin Service', () => {
         delete course.id;
 
         courseAdminService
-            .create({ ...course })
+            .create(deepClone(course))
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({ ...course, id: 1234 }));
+            .subscribe((res) => {
+                expect(res.body).toBeInstanceOf(Course);
+                expect(res.body?.id).toBe(returnedFromService.id);
+                expect(res.body?.title).toBe(returnedFromService.title);
+                expect(res.body?.startDate?.toJSON()).toBe(returnedFromService.startDate);
+                expect(res.body?.courseConfiguration).toEqual({
+                    gradeRelevant: returnedFromService.gradeRelevant,
+                    dataRetentionHold: returnedFromService.dataRetentionHold,
+                });
+            });
 
         const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
         req.flush(returnedFromService);
