@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -466,7 +467,7 @@ public class SharedQueueManagementService {
             // any orphaned jobs that were assigned to it. These jobs remain in the processingJobs
             // map but will never complete since the agent is gone.
             if (event.oldValue() != null) {
-                handleOrphanedJobsForRemovedAgent(event.oldValue());
+                requeueOrphanedJobsOf(event.oldValue());
             }
         }
 
@@ -500,14 +501,26 @@ public class SharedQueueManagementService {
      *
      * @param removedAgent the build agent information that was removed
      */
-    private void handleOrphanedJobsForRemovedAgent(BuildAgentInformation removedAgent) {
+    private void requeueOrphanedJobsOf(BuildAgentInformation removedAgent) {
         if (removedAgent.buildAgent() == null) {
             // An entry without agent details carries no name to match processing jobs against, so there is nothing to
             // re-queue. Dereferencing it would abort the listener and leave the capacity update half done.
             log.warn("Removed build agent entry has no agent details, skipping orphaned job handling");
             return;
         }
-        String agentName = removedAgent.buildAgent().name();
+        requeueOrphanedJobsOf(removedAgent.buildAgent().name());
+    }
+
+    /**
+     * Re-queues every processing job still assigned to the named agent.
+     *
+     * <p>
+     * Safe to call more than once and from more than one node: each job is taken out of the processing map with an
+     * atomic remove, and only the caller that actually removed it re-queues it.
+     *
+     * @param agentName the build agent whose jobs have to be handed to somebody else
+     */
+    private void requeueOrphanedJobsOf(String agentName) {
         log.info("Checking for orphaned jobs from removed build agent: {}", agentName);
 
         // Find all processing jobs assigned to the removed agent
@@ -552,6 +565,58 @@ public class SharedQueueManagementService {
                 log.error("Failed to handle orphaned job {} from agent {}: {}", job.id(), agentName, e.getMessage(), e);
             }
         }
+    }
+
+    /**
+     * How long a job may sit in the processing map with a vanished agent before the sweep below takes it over. Long
+     * enough that a job assigned in the moment the sweep runs is never mistaken for an orphan, short enough that a
+     * student is not left waiting for the {@code LocalCIMissingJobService} window.
+     */
+    private static final Duration ORPHANED_JOB_GRACE_PERIOD = Duration.ofMinutes(1);
+
+    /**
+     * Re-queues processing jobs whose build agent is gone but whose removal never reached this node.
+     *
+     * <p>
+     * Removing the agent entry normally raises a map removal event and {@link #requeueOrphanedJobsOf(String)} runs from
+     * the listener. That event is best effort: the Redis provider publishes it on a non-durable topic after the removal
+     * and cannot resend it, so a publish failure or a moment without a subscriber loses it. The jobs then stay in the
+     * processing map forever, and because {@code LocalCIMissingJobService} reads that same map to decide whether a job
+     * is still building, its retry never fires either - the build silently never comes back.
+     *
+     * <p>
+     * This sweep closes that hole from the other side: it compares the processing map against the agents that actually
+     * exist and hands over whatever is left behind. It shares the atomic-remove path with the listener, so the two
+     * cannot re-queue the same job twice.
+     */
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.requeue-orphaned-jobs-interval-seconds:120}", initialDelayString = "${artemis.continuous-integration.requeue-orphaned-jobs-delay-seconds:120}", timeUnit = TimeUnit.SECONDS)
+    public void requeueJobsOfVanishedAgents() {
+        if (!distributedDataAccessService.isConnectedToCluster()) {
+            return;
+        }
+        Set<String> knownAgents = distributedDataAccessService.getBuildAgentInformation().stream().map(BuildAgentInformation::buildAgent).filter(Objects::nonNull)
+                .map(BuildAgentDTO::name).filter(Objects::nonNull).collect(Collectors.toSet());
+
+        ZonedDateTime assignedBefore = ZonedDateTime.now().minus(ORPHANED_JOB_GRACE_PERIOD);
+        Set<String> vanishedAgents = distributedDataAccessService.getProcessingJobs().stream().filter(job -> startedBefore(job, assignedBefore)).map(BuildJobQueueItem::buildAgent)
+                .filter(Objects::nonNull).map(BuildAgentDTO::name).filter(name -> StringUtils.isNotBlank(name) && !knownAgents.contains(name)).collect(Collectors.toSet());
+
+        if (vanishedAgents.isEmpty()) {
+            return;
+        }
+        log.warn("Found processing jobs assigned to {} build agent(s) that no longer exist: {}. Their removal event never arrived; re-queuing their jobs.", vanishedAgents.size(),
+                vanishedAgents);
+        vanishedAgents.forEach(this::requeueOrphanedJobsOf);
+    }
+
+    /**
+     * @param job      a job currently in the processing map
+     * @param deadline the moment a job has to have started before to be considered for take-over
+     * @return whether the job started early enough that a missing agent means the agent is gone rather than not yet registered
+     */
+    private static boolean startedBefore(BuildJobQueueItem job, ZonedDateTime deadline) {
+        ZonedDateTime buildStartDate = job.jobTimingInfo() != null ? job.jobTimingInfo().buildStartDate() : null;
+        return buildStartDate == null || buildStartDate.isBefore(deadline);
     }
 
     private void updateBuildAgentCapacity() {

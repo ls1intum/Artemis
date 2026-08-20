@@ -1,11 +1,12 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import org.redisson.codec.SerializationCodec;
 import org.redisson.spring.starter.RedissonAutoConfigurationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+
+import de.tum.cit.aet.artemis.core.service.distributed.redisson.BackwardCompatibleSerializationCodec;
 
 /**
  * Makes Redis serialize values the same way Hazelcast does.
@@ -34,9 +35,15 @@ import org.springframework.context.annotation.Lazy;
  * queue benchmark). Correctness across backends is worth more here than the encoding difference.
  *
  * <p>
- * Note for operators: switching the codec makes values written by an earlier codec unreadable. All of this state is
- * ephemeral cluster state that a node rewrites after a restart, so no migration is needed, but do not expect a rolling
- * restart to keep reading the old entries.
+ * Upgrades stay non-destructive: {@link BackwardCompatibleSerializationCodec} writes Java serialization but still reads
+ * Kryo, so a node coming up on this release understands the queued build jobs, processing jobs and scheduling messages
+ * an older node left in Redis. The formats are told apart by the value itself, so nothing has to be configured or
+ * remembered, and each entry moves to the new format the first time any node rewrites it.
+ *
+ * <p>
+ * Note for operators: only that direction works. An older node cannot read what this codec writes, so roll a
+ * Redis-backed deployment forward rather than back, and expect a mixed-version window in which the nodes still on the
+ * old release ignore the new nodes' entries.
  */
 @Lazy
 @Configuration
@@ -44,10 +51,10 @@ import org.springframework.context.annotation.Lazy;
 public class RedissonCodecConfiguration {
 
     /**
-     * @return a customizer that switches the Redisson client to JDK serialization
+     * @return a customizer that makes the Redisson client write JDK serialization and read both it and Kryo
      */
     @Bean
     public RedissonAutoConfigurationCustomizer artemisRedissonSerializationCodecCustomizer() {
-        return config -> config.setCodec(new SerializationCodec());
+        return config -> config.setCodec(new BackwardCompatibleSerializationCodec());
     }
 }

@@ -223,8 +223,16 @@ test.describe('Distributed state coherence', { tag: '@multi-node' }, () => {
 });
 
 /**
- * Opens a request context bound to one specific node and logs the given user in on it, so that later requests carry
- * that node's session. Each node is addressed directly rather than through the load balancer.
+ * Opens a request context bound to one specific node, authenticated as the given user. Each node is addressed
+ * directly rather than through the load balancer.
+ *
+ * <p>
+ * The token is carried as a bearer header rather than left to the cookie jar. Artemis marks its JWT cookie `Secure`,
+ * and a jar only keeps a `Secure` cookie over plain HTTP for `localhost`. The host-JVM runner reaches nodes on
+ * `http://localhost:<port>` and would get away with it, but the Docker runner addresses them by container hostname,
+ * where the cookie is dropped and every authenticated request comes back 401. Logging in through a throwaway context
+ * keeps the jar empty afterwards, which matters because the server rejects a request carrying both a cookie and a
+ * bearer token.
  *
  * @param apiRequest  the Playwright request factory
  * @param nodeUrl     the base URL of the node to talk to
@@ -232,12 +240,29 @@ test.describe('Distributed state coherence', { tag: '@multi-node' }, () => {
  * @return a request context whose requests all go to that node
  */
 async function contextFor(apiRequest: APIRequest, nodeUrl: string, credentials: { username: string; password: string }): Promise<APIRequestContext> {
-    const context = await apiRequest.newContext({ baseURL: nodeUrl, ignoreHTTPSErrors: true });
-    const response = await context.post('api/core/public/authenticate', {
-        data: { username: credentials.username, password: credentials.password, rememberMe: true },
-    });
-    expect(response.status(), `login of ${credentials.username} on ${nodeUrl}`).toBe(200);
-    return context;
+    const loginContext = await apiRequest.newContext({ baseURL: nodeUrl, ignoreHTTPSErrors: true });
+    try {
+        const response = await loginContext.post('api/core/public/authenticate', {
+            data: { username: credentials.username, password: credentials.password, rememberMe: true },
+        });
+        expect(response.status(), `login of ${credentials.username} on ${nodeUrl}`).toBe(200);
+        const token = jwtFrom(response.headersArray());
+        expect(token, `login of ${credentials.username} on ${nodeUrl} should hand out a token`).toBeDefined();
+        return await apiRequest.newContext({ baseURL: nodeUrl, ignoreHTTPSErrors: true, extraHTTPHeaders: { Authorization: `Bearer ${token}` } });
+    } finally {
+        await loginContext.dispose();
+    }
+}
+
+/**
+ * @param headers the response headers of a successful authentication
+ * @return the JWT the server handed out, read straight off the Set-Cookie header rather than out of the cookie jar
+ */
+function jwtFrom(headers: { name: string; value: string }[]): string | undefined {
+    return headers
+        .filter((header) => header.name.toLowerCase() === 'set-cookie')
+        .map((header) => /(?:^|[;,\s])jwt=([^;]+)/.exec(header.value)?.[1])
+        .find((token) => token !== undefined);
 }
 
 /**
