@@ -128,7 +128,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         when(azureOpenAiChatModel.getDefaultOptions()).thenReturn(ToolCallingChatOptions.builder().build());
         when(azureOpenAiChatModel.getOptions()).thenReturn(ToolCallingChatOptions.builder().build());
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 2, 1);
-        course = courseUtilService.addEmptyCourse();
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         sourceQuiz = createMcSaQuiz(course);
         toolTranscript.clear();
     }

@@ -194,7 +194,8 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
                 // The planner writes its statement against the SOURCE context, so any <testid> markers it copied
                 // reference the source's test case ids — remap them to the variant's test cases (matched by test
                 // name, both sides straight from the import) like the import flow itself does.
-                Map<String, Long> variantTestIdByName = imported.getTestCases().stream()
+                // `imported` comes back detached from findForCreationById, whose graph excludes testCases.
+                Map<String, Long> variantTestIdByName = programmingExerciseTestCaseRepository.findByExerciseId(imported.getId()).stream()
                         .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getId, (first, second) -> first));
                 Map<Long, Long> newTestCaseIdByOldId = original.getTestCases().stream().filter(testCase -> variantTestIdByName.containsKey(testCase.getTestName()))
                         .collect(Collectors.toMap(ProgrammingExerciseTestCase::getId, testCase -> variantTestIdByName.get(testCase.getTestName()), (first, second) -> first));
