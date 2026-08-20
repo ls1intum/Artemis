@@ -11,9 +11,9 @@ import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 # Try Artemis
 
 The fastest way to judge Artemis is to use it. The setup below includes the
-[integrated code lifecycle](/instructor/integrations/integrated-code-lifecycle), so **programming
-exercises work**: Artemis hosts the git repositories itself and runs the tests in Docker containers.
-That is the part of Artemis worth looking at first.
+[integrated code lifecycle](/instructor/integrations/integrated-code-lifecycle), so it covers
+**programming exercises**: Artemis hosts the git repositories itself and runs the tests in Docker
+containers on a build agent. That is the part of Artemis worth looking at first.
 
 ## Run it locally with Docker
 
@@ -57,10 +57,10 @@ docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.
 The first start creates the database schema, so give it a moment. Once Artemis reports itself started,
 you have a complete instance:
 
-- **Programming exercises.** Create one, let Artemis generate the template, solution, and test
-  repositories, participate as a student, push a commit, and watch the build agent run the tests and
-  return structured feedback. Static code analysis, submission policies, and manual code review in the
-  online editor all work.
+- **Programming exercises.** Create one and Artemis provisions the template, solution, and test
+  repositories on its own git server. Students participate, push commits, and the build agent runs the
+  tests in a container and reports feedback. The online code editor, manual code review, and
+  submission policies are all part of this setup.
 - **Every other exercise type.** Quiz, text, modeling, and file upload, with manual assessment against
   structured grading criteria.
 - **Exams.** Including exercise variants per student and instructor test runs.
@@ -70,8 +70,11 @@ The setup starts one build agent with four concurrent build slots, which is enou
 feedback loop behaves. Production deployments scale this out horizontally.
 
 <Callout variant={CalloutVariant.info}>
-    Build agents pull a language-specific Docker image the first time an exercise of that language is
-    built, so the very first programming submission takes noticeably longer than the ones after it.
+    The build agent pulls a language-specific Docker image the first time an exercise of that language
+    is built, so the very first build takes noticeably longer than the ones after it, and it needs
+    working network access to the image registry. If a build does not appear, look at **Server
+    Administration → Build Agents** and the build queue: the agent has to be listed and reachable, and
+    it needs access to the Docker socket that the Compose file mounts for it.
 </Callout>
 
 ## What it deliberately leaves out

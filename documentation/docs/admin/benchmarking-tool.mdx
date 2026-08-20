@@ -44,6 +44,54 @@ the release changes:
 The most informative result is not the largest number the setup survived, but the point at which a
 percentile started to degrade and which resource caused it.
 
+## Benchmark scenarios
+
+A single large number answers almost nothing. What an operator needs to know is **where the response
+time starts to degrade and which resource caused it**, so the runs below form a ladder: each one keeps
+the exam shape fixed and changes only the number of simulated students.
+
+The tool's exam contains four exercises (one programming, one modeling, one quiz, one text), and each
+simulated student logs in, fetches and starts the exam, submits each exercise several times, pushes
+commits for the programming exercise, and submits the exam.
+
+### The ladder
+
+| # | Students | Mode | IDE | Purpose |
+| --- | --- | --- | --- | --- |
+| S0 | 10 | `CREATE_COURSE_AND_EXAM` | `OFFLINE` | Smoke test. Proves the wiring, the users, and the build agents work before anything larger is attempted. |
+| S1 | 100 | `CREATE_COURSE_AND_EXAM` | `OFFLINE` | Baseline. Every later run is compared against these percentiles. |
+| S2 | 500 | `CREATE_COURSE_AND_EXAM` | `OFFLINE` | First point where queueing usually becomes visible. |
+| S3 | 1000 | `CREATE_COURSE_AND_EXAM` | `OFFLINE` | Realistic large course. |
+| S4 | 2000 | `CREATE_COURSE_AND_EXAM` | `OFFLINE` | The size Artemis is publicly described as handling. This is the run that substantiates that claim. |
+| S5 | 3000+ | `CREATE_COURSE_AND_EXAM` | `OFFLINE` | Only if S4 stays comfortable. Finds the actual limit rather than confirming a target. |
+
+### Two variations at the target size
+
+Run these at whichever of S3 or S4 turned out to be the interesting one. They separate causes that the
+ladder alone cannot distinguish:
+
+| Variation | Change | What it isolates |
+| --- | --- | --- |
+| Online editor | `IDE = ONLINE` | Moves programming traffic off git clone and push and onto the REST and WebSocket path, separating version control cost from application cost. |
+| No programming exercise | Exam with only modeling, quiz, and text | Removes the build agents and the git server from the picture, so the remaining latency is attributable to Artemis and the database. |
+
+Keep everything else identical between a run and its variation, or the comparison is worthless.
+
+### Reading a run
+
+Compare the per-action figures the tool reports (authentication, get and start student exam, submit
+exercise, submit exam, clone, push) across the ladder rather than the totals. The action that degrades
+first names the bottleneck:
+
+- **Clone and push degrade first**: the git server or its storage.
+- **Submit exercise degrades first**: Artemis or the database.
+- **Authentication degrades first**: the identity provider, or connection pool exhaustion.
+- **Builds per minute plateaus while push stays flat**: build agent capacity. That is expected, and is a
+  capacity-planning input rather than a defect.
+
+Enable the tool's Prometheus integration for these runs. Without it a result describes symptoms; with it
+the same result names the saturated resource.
+
 ## Publishing a result
 
 Scale claims about Artemis should be traceable to a run described this way. If you have run a

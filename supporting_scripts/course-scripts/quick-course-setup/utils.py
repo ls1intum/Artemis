@@ -14,6 +14,26 @@ def login_as_admin(session: requests.Session) -> None:
     """Authenticate as an admin using the provided session."""
     authenticate_user(ADMIN_USER, ADMIN_PASSWORD, session)
 
+def get_active_profiles(session: requests.Session) -> List[str]:
+    """Return the Spring profiles the target server runs with.
+
+    Used to adapt payloads to the continuous integration system in use: an Artemis server running
+    LocalCI configures builds through the build plan, whereas a Jenkins-backed server takes a build
+    script. Sending the wrong one is rejected, so the caller has to know which it is talking to.
+    """
+    url: str = SERVER_URL.removesuffix("/api") + "/management/info"
+    try:
+        response: requests.Response = session.get(url, timeout=30)
+        response.raise_for_status()
+        return list(response.json().get("activeProfiles") or [])
+    except (requests.RequestException, ValueError) as error:
+        logging.warning(f"Could not read the active profiles from {url}: {error}")
+        return []
+
+def is_local_ci(session: requests.Session) -> bool:
+    """Whether the target server runs the integrated continuous integration (LocalCI)."""
+    return "localci" in get_active_profiles(session)
+
 def add_user_to_course(session: requests.Session, course_id: int, user_group: str, user_name: str) -> None:
     """Add a user to a specified course and group."""
     url: str = f"{SERVER_URL}/core/courses/{course_id}/{user_group}/{user_name}"
