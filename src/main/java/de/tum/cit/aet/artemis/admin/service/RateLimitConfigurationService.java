@@ -45,6 +45,7 @@ public class RateLimitConfigurationService {
         return switch (type) {
             case ACCOUNT_MANAGEMENT -> properties.getAccountManagementRequestsPerMinute() != null ? properties.getAccountManagementRequestsPerMinute() : type.getDefaultRpm();
             case AUTHENTICATION -> properties.getAuthenticationRequestsPerMinute() != null ? properties.getAuthenticationRequestsPerMinute() : type.getDefaultRpm();
+            case LOGIN_OPTIONS -> properties.getLoginOptionsRequestsPerMinute() != null ? properties.getLoginOptionsRequestsPerMinute() : type.getDefaultRpm();
             case PROBLEM_STATEMENT_RENDERING ->
                 properties.getProblemStatementRenderingRequestsPerMinute() != null ? properties.getProblemStatementRenderingRequestsPerMinute() : type.getDefaultRpm();
             case AI_SEARCH_PIPELINE -> properties.getAiSearchPipelineRequestsPerMinute() != null ? properties.getAiSearchPipelineRequestsPerMinute() : type.getDefaultRpm();

@@ -13,8 +13,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO.LoginMethod;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
-import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 /**
@@ -28,8 +26,6 @@ public class LoginOptionsService {
 
     private final UserRepository userRepository;
 
-    private final Optional<LdapUserService> ldapUserService;
-
     @Value("${artemis.user-management.oidc.enabled:false}")
     private boolean oidcEnabled;
 
@@ -42,9 +38,8 @@ public class LoginOptionsService {
     @Value("${info.saml2.buttonLabel:TUM Login}")
     private String samlDisplayName;
 
-    public LoginOptionsService(UserRepository userRepository, Optional<LdapUserService> ldapUserService) {
+    public LoginOptionsService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.ldapUserService = ldapUserService;
     }
 
     /**
@@ -61,30 +56,17 @@ public class LoginOptionsService {
         boolean isEmail = SecurityUtils.isEmail(sanitizedInput);
         // only project the internal flag instead of loading the whole user entity: empty means the user is not in the database
         Optional<Boolean> internalFlag = isEmail ? userRepository.isInternalUserByEmailIgnoreCase(sanitizedInput) : userRepository.isInternalUserByLogin(sanitizedInput);
-        if (internalFlag.isPresent()) {
-            if (internalFlag.get()) {
-                return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
-            }
-            else {
-                return getExternalUser();
-            }
+        // An internal account is the only kind that authenticates against a password stored in Artemis, so it is the only case that
+        // needs the password form. Everything else - an externally managed account, and an identifier this instance has never seen -
+        // is sent to the external provider, which is also where a first-time user gets provisioned.
+        //
+        // The two are answered identically on purpose. This endpoint is unauthenticated, so its answer must be derivable from what the
+        // caller already knows; it deliberately does not consult the configured directory, which would both make the response depend on
+        // whether the identifier exists there and let an unauthenticated caller drive queries against it.
+        if (internalFlag.isPresent() && internalFlag.get()) {
+            return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
         }
-        if (ldapUserService.isPresent()) {
-            Optional<LdapUserDto> ldapUser = isEmail ? ldapUserService.get().findByAnyEmail(sanitizedInput) : ldapUserService.get().findByLogin(sanitizedInput);
-            // if user has a university account
-            if (ldapUser.isPresent()) {
-                return getExternalUser();
-            }
-            // if not: this is an internal user
-            else {
-                return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
-            }
-        }
-        // If user is new and ldap is disabled - provide the SSO authentication option
-        if (oidcEnabled || samlEnabled) {
-            return getExternalUser();
-        }
-        return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
+        return getExternalUser();
     }
 
     /**

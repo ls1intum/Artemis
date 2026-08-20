@@ -150,6 +150,7 @@ public class PublicAccountResource {
      */
     @GetMapping("activate")
     @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> activateAccount(@RequestParam("key") String key) {
         if (accountService.isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
@@ -242,7 +243,7 @@ public class PublicAccountResource {
      */
     @GetMapping("login-options")
     @EnforceNothing
-    @LimitRequestsPerMinute(type = RateLimitType.AUTHENTICATION)
+    @LimitRequestsPerMinute(type = RateLimitType.LOGIN_OPTIONS)
     public ResponseEntity<LoginOptionsDTO> getLoginOptions(@RequestParam("usernameOrEmail") String usernameOrEmail) {
         // checked here rather than with @Size, because this class is not annotated with @Validated and constraints on method parameters are only enforced when it is
         if (usernameOrEmail != null && usernameOrEmail.length() > MAX_LOGIN_IDENTIFIER_LENGTH) {
