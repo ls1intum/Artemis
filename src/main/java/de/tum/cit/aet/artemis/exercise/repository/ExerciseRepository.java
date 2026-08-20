@@ -806,6 +806,38 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     }
 
     /**
+     * Finds all Athena-schedulable exercises (i.e. exercise types for which due-date-triggered Athena scheduling is wired,
+     * see {@code AthenaScheduleService}) belonging to the given course, either directly or via an exam, with a due date
+     * after the given date. Used to refresh Athena due-date scheduling for every exercise of a course after its
+     * course-level Athena grading feedback flag changes, regardless of whether the flag is currently enabled or disabled.
+     *
+     * @param courseId the id of the course
+     * @param dueDate  filter by due date
+     * @return Set of Exercises
+     */
+    @Query("""
+            SELECT e
+            FROM Exercise e
+            LEFT JOIN e.course c
+            LEFT JOIN e.exerciseGroup eg
+            LEFT JOIN eg.exam exam
+            WHERE e.dueDate > :dueDate
+                AND TYPE (e) IN (TextExercise, ProgrammingExercise)
+                AND (c.id = :courseId OR exam.course.id = :courseId)
+            """)
+    Set<Exercise> findAllAthenaSchedulableExercisesWithFutureDueDateByCourseId(@Param("courseId") long courseId, @Param("dueDate") ZonedDateTime dueDate);
+
+    /**
+     * Find all Athena-schedulable exercises of a course (direct or via an exam) with a due date in the future.
+     *
+     * @param courseId the id of the course
+     * @return Set of Exercises
+     */
+    default Set<Exercise> findAllAthenaSchedulableExercisesWithFutureDueDateByCourseId(long courseId) {
+        return findAllAthenaSchedulableExercisesWithFutureDueDateByCourseId(courseId, ZonedDateTime.now());
+    }
+
+    /**
      * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}
      *
      * @param examId the id of the exam for which we want to get all exercises with potential plagiarism
