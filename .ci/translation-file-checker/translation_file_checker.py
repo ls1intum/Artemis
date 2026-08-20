@@ -15,6 +15,7 @@ class Config:
     are_files: bool
     german_translations: Path
     english_translations: Path
+    ignored_prefixes: list[str]
 
 
 @dataclass
@@ -63,10 +64,16 @@ def main(argv: list[str] | None = None) -> int:
     config = _config_from_args(argv)
 
     if config.are_files:
-        diff = _compare_files(config.german_translations, config.english_translations)
+        diff = _compare_files(
+            config.german_translations,
+            config.english_translations,
+            config.ignored_prefixes,
+        )
     else:
         diff = _compare_directories(
-            config.german_translations, config.english_translations
+            config.german_translations,
+            config.english_translations,
+            config.ignored_prefixes,
         )
 
     if len(diff) > 0:
@@ -103,6 +110,7 @@ def _config_from_args(argv: list[str]) -> Config:
         are_files=are_files,
         german_translations=german_translations,
         english_translations=english_translations,
+        ignored_prefixes=args.ignore_prefix,
     )
 
 
@@ -121,11 +129,19 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         required=True,
         help="Directory containing the English translation files.",
     )
+    parser.add_argument(
+        "--ignore-prefix",
+        action="append",
+        default=[],
+        help="Translation-key prefix intentionally provided by only one locale.",
+    )
 
     return parser
 
 
-def _compare_directories(german_dir: Path, english_dir: Path) -> Diff:
+def _compare_directories(
+    german_dir: Path, english_dir: Path, ignored_prefixes: list[str]
+) -> Diff:
     def json_files(directory: Path) -> set[Path]:
         return {
             file
@@ -145,7 +161,10 @@ def _compare_directories(german_dir: Path, english_dir: Path) -> Diff:
 
     return reduce(
         lambda d1, d2: d1 + d2,
-        (_compare_files(german, english) for german, english in file_pairs),
+        (
+            _compare_files(german, english, ignored_prefixes)
+            for german, english in file_pairs
+        ),
     )
 
 
@@ -170,9 +189,15 @@ def _find_file_pairs(
     return list(v for v in pairs.values() if v[0] is not None and v[1] is not None)
 
 
-def _compare_files(german: Path, english: Path) -> Diff:
-    german_keys = _flat_json_keys(german)
-    english_keys = _flat_json_keys(english)
+def _compare_files(
+    german: Path, english: Path, ignored_prefixes: list[str]
+) -> Diff:
+    german_keys = _without_ignored_prefixes(
+        _flat_json_keys(german), ignored_prefixes
+    )
+    english_keys = _without_ignored_prefixes(
+        _flat_json_keys(english), ignored_prefixes
+    )
 
     return Diff(
         all_german_keys=list(german_keys),
@@ -180,6 +205,19 @@ def _compare_files(german: Path, english: Path) -> Diff:
         all_english_keys=list(english_keys),
         only_english=english_keys - german_keys,
     )
+
+
+def _without_ignored_prefixes(
+    keys: set[str], ignored_prefixes: list[str]
+) -> set[str]:
+    return {
+        key
+        for key in keys
+        if not any(
+            key == prefix or key.startswith(f"{prefix}.")
+            for prefix in ignored_prefixes
+        )
+    }
 
 
 def _flat_json_keys(json_file: Path) -> set[str]:

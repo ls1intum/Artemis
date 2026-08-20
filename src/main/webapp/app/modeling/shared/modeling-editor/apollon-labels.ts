@@ -23,8 +23,9 @@ function hasString(tree: Record<string, unknown>, key: string): boolean {
  *
  * Only locales that actually differ from Apollon carry keys: `DEFAULT_LABELS` is
  * already English, so `i18n/en` deliberately defines none and every English string
- * comes from the library. Mirroring them here would be 266 duplicates to keep in
- * sync with every Apollon release.
+ * comes from the library. The translation consistency check explicitly exempts this
+ * namespace; mirroring it would create hundreds of duplicates to synchronize with
+ * every Apollon release.
  */
 export function createApollonLabels(translator: ApollonLabelTranslator): Partial<ApollonLabels> {
     const translationTree = translator.instant(APOLLON_TRANSLATION_PREFIX);
