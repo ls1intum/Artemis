@@ -84,6 +84,13 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     readonly ButtonSize = ButtonSize;
     readonly CREDITS_STEP = CREDITS_STEP;
 
+    /** Stable per-card id so repeated unreferenced cards do not share the same control ids. */
+    private static nextInstanceId = 0;
+    private readonly instanceId = UnreferencedFeedbackDetailComponent.nextInstanceId++;
+    protected readonly pointsInputId = `feedback-points-${this.instanceId}`;
+    protected readonly headerInputId = `feedback-header-${this.instanceId}`;
+    protected readonly textareaId = `feedback-textarea-${this.instanceId}`;
+
     /**
      * Parent matches feedback by reference, so edits mutate in place and {@link feedback} may not notify.
      * Bumping this re-runs credit-dependent template bindings.

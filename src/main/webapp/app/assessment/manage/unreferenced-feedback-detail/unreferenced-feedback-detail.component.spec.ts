@@ -180,4 +180,23 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(comp.feedback().credits).toBe(0.5);
         expect(emitSpy).toHaveBeenCalledWith(originalFeedback);
     });
+
+    it('should give each card unique control ids linked to Title and Feedback labels', () => {
+        fixture.componentRef.setInput('feedback', { detailText: 'note', credits: 1 } as Feedback);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
+        fixture.detectChanges();
+
+        const header = fixture.nativeElement.querySelector(`#${comp.headerInputId}`) as HTMLInputElement;
+        const textarea = fixture.nativeElement.querySelector(`#${comp.textareaId}`) as HTMLTextAreaElement;
+        const points = fixture.nativeElement.querySelector(`#${comp.pointsInputId}`) as HTMLInputElement;
+        expect(header).not.toBeNull();
+        expect(textarea).not.toBeNull();
+        expect(points).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(`label[for="${comp.headerInputId}"]`)).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(`label[for="${comp.textareaId}"]`)).not.toBeNull();
+        expect(comp.headerInputId).not.toBe(comp.textareaId);
+        expect(comp.pointsInputId).not.toBe(comp.textareaId);
+    });
 });

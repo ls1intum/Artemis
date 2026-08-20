@@ -29,7 +29,7 @@
                         </button>
                     </tum-ui-input-group-addon>
                     <input
-                        id="feedback-points"
+                        [id]="pointsInputId"
                         tumUiInput
                         class="feedback-card__points-input w-18 rounded-none text-center font-semibold"
                         type="number"
@@ -84,16 +84,21 @@
 
         @if (showHeaderSection()) {
             <div class="flex min-w-0 flex-col gap-1">
-                <span class="text-muted-color text-[0.6875rem] font-bold tracking-[0.05em] uppercase" jhiTranslate="artemisApp.assessment.detail.feedbackHeader"></span>
                 @if (headerReadOnly()) {
+                    <span class="text-muted-color text-[0.6875rem] font-bold tracking-[0.05em] uppercase" jhiTranslate="artemisApp.assessment.detail.feedbackHeader"></span>
                     @if (displayTitle(); as title) {
                         <p class="m-0 min-w-0 text-sm font-semibold whitespace-pre-wrap">{{ title }}</p>
                     }
                 } @else {
+                    <label
+                        class="text-muted-color text-[0.6875rem] font-bold tracking-[0.05em] uppercase"
+                        [attr.for]="headerInputId"
+                        jhiTranslate="artemisApp.assessment.detail.feedbackHeader"
+                    ></label>
                     <input
-                        id="feedback-header"
+                        [id]="headerInputId"
                         tumUiInput
-                        class="box-border w-full max-w-full"
+                        class="feedback-card__header-input box-border w-full max-w-full"
                         type="text"
                         [ngModel]="displayTitle() ?? ''"
                         (ngModelChange)="updateHeaderTitle($event)"
@@ -115,14 +120,18 @@
         }
 
         <div class="flex min-w-0 flex-col gap-1">
-            <span class="text-muted-color text-[0.6875rem] font-bold tracking-[0.05em] uppercase" jhiTranslate="artemisApp.assessment.detail.feedback"></span>
+            <label
+                class="text-muted-color text-[0.6875rem] font-bold tracking-[0.05em] uppercase"
+                [attr.for]="textareaId"
+                jhiTranslate="artemisApp.assessment.detail.feedback"
+            ></label>
             @if (feedback().gradingInstruction?.feedback; as instructionFeedback) {
                 <p class="m-0 min-w-0 whitespace-pre-wrap">{{ instructionFeedback }}</p>
             }
             <textarea
-                id="feedback-textarea"
+                [id]="textareaId"
                 tumUiTextarea
-                class="box-border w-full max-w-full resize-none"
+                class="feedback-card__textarea box-border w-full max-w-full resize-none"
                 rows="2"
                 [(ngModel)]="feedback().detailText"
                 (ngModelChange)="emitChanges()"
