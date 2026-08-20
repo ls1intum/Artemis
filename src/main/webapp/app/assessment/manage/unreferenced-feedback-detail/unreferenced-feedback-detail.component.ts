@@ -117,11 +117,14 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     /**
      * Points of a feedback linked to a grading instruction are owned by that instruction and cannot be edited, so
      * such a feedback (and any read-only card) shows the points as a static pill instead of the editable stepper.
+     * Plain method: instruction drops mutate {@link feedback} in place without a new signal identity.
      */
-    readonly pointsDisabled = computed(() => !!this.feedback().gradingInstruction || this.readOnly());
+    protected pointsDisabled(): boolean {
+        return !!this.feedback().gradingInstruction || this.readOnly();
+    }
 
     /** Optional header for manual feedback; AI suggestion title from {@link Feedback.text}. Hidden when linked to an instruction. */
-    readonly showHeaderSection = computed(() => {
+    protected showHeaderSection(): boolean {
         const feedback = this.feedback();
         if (feedback.gradingInstruction) {
             return false;
@@ -130,12 +133,13 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
             return !!Feedback.getDisplayTitle(feedback);
         }
         return true;
-    });
+    }
 
     readonly headerReadOnly = computed(() => this.readOnly() || this.isSuggestion());
 
-    readonly displayTitle = computed(() => Feedback.getDisplayTitle(this.feedback()));
-
+    protected displayTitle(): string | undefined {
+        return Feedback.getDisplayTitle(this.feedback());
+    }
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
