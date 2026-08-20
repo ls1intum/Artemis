@@ -402,6 +402,58 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         assertAllCredentialsRevoked();
     }
 
+    /**
+     * Deactivation cuts off every form of access, so the log has to say who did it and to whom. Asserted for both routes
+     * that write the flag, because they are separate code paths: the dedicated endpoint calls deactivateUser, while the
+     * admin edit form writes it inside updateUser.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deactivatingAUserIsRecordedInTheAuditLog() {
+        persistenceAuditEventRepository.deleteAll();
+
+        userCreationService.deactivateUser(user);
+
+        assertAccountStateAudited(Constants.DEACTIVATE_USER);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deactivatingAUserThroughTheAdminUpdateIsRecordedInTheAuditLog() {
+        persistenceAuditEventRepository.deleteAll();
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setActivated(false);
+        update.setPassword(null);
+        userCreationService.updateUser(userWithAuthorities, update);
+
+        assertAccountStateAudited(Constants.DEACTIVATE_USER);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void activatingAUserIsRecordedInTheAuditLog() {
+        userCreationService.deactivateUser(user);
+        persistenceAuditEventRepository.deleteAll();
+
+        userCreationService.activateUser(reloadUser());
+
+        assertAccountStateAudited(Constants.ACTIVATE_USER);
+    }
+
+    /**
+     * Read through AuditEventService rather than the repository, because it loads {@code data} through an entity graph
+     * while findAll() leaves that collection lazy and unreadable outside a session.
+     */
+    private void assertAccountStateAudited(String expectedType) {
+        assertThat(auditEventService.findAll(Pageable.unpaged())).anySatisfy(event -> {
+            assertThat(event.getType()).isEqualTo(expectedType);
+            assertThat(event.getPrincipal()).as("the administrator who performed it, not the affected account").isEqualTo("admin");
+            assertThat(event.getData()).containsEntry("user", user.getLogin());
+        });
+    }
+
     @Test
     void softDeletingAUserRevokesEverything() {
         // The pre-existing cleanup here deleted the SSH keys but left the personal VCS access token behind, so a
