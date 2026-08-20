@@ -249,7 +249,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         } as Feedback);
         fixture.detectChanges();
 
-        expect(comp.displayTitle()).toBe('Player');
+        expect(comp['displayTitle']()).toBe('Player');
         expect(fixture.debugElement.query(By.css('.inline-feedback__title'))?.nativeElement.textContent).toBe('Player');
     });
 
@@ -260,13 +260,13 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         fixture.componentRef.setInput('feedback', feedback);
         fixture.detectChanges();
 
-        expect(comp.displayTitle()).toBeUndefined();
+        expect(comp['displayTitle']()).toBeUndefined();
 
         feedback.gradingInstruction = instruction;
-        expect(comp.displayTitle()).toBe('Player');
+        expect(comp['displayTitle']()).toBe('Player');
 
         feedback.gradingInstruction = undefined;
-        expect(comp.displayTitle()).toBeUndefined();
+        expect(comp['displayTitle']()).toBeUndefined();
     });
 
     it('should step the points in half-point increments while editing', () => {
