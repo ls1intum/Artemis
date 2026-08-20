@@ -57,9 +57,14 @@ export abstract class BaseApiHttpService {
     ): Promise<T> {
         try {
             const response = await lastValueFrom(
+                // The option keys are listed explicitly rather than spread: HttpRequest treats an explicitly
+                // undefined option exactly like an absent one, and this keeps the literal types Angular's request
+                // overloads select on.
                 this.httpClient.request(method, `${this.baseUrl}/${url}`, {
                     observe: 'body',
-                    ...options,
+                    body: options?.body,
+                    headers: options?.headers,
+                    params: options?.params,
                     responseType: options?.responseType ?? 'json',
                 }),
             );
@@ -144,7 +149,7 @@ export abstract class BaseApiHttpService {
             responseType?: 'json' | 'text';
         },
     ): Promise<T> {
-        return await this.request<T>(HttpMethod.Post, url, { body: body, ...options });
+        return await this.request<T>(HttpMethod.Post, url, { body, headers: options?.headers, params: options?.params, responseType: options?.responseType });
     }
 
     /**
@@ -205,7 +210,7 @@ export abstract class BaseApiHttpService {
             responseType?: 'json' | 'text';
         },
     ): Promise<T> {
-        return await this.request<T>(HttpMethod.Patch, url, { body: body, ...options });
+        return await this.request<T>(HttpMethod.Patch, url, { body, headers: options?.headers, params: options?.params, responseType: options?.responseType });
     }
 
     /**
@@ -236,6 +241,6 @@ export abstract class BaseApiHttpService {
             responseType?: 'json' | 'text';
         },
     ): Promise<T> {
-        return await this.request<T>(HttpMethod.Put, url, { body: body, ...options });
+        return await this.request<T>(HttpMethod.Put, url, { body, headers: options?.headers, params: options?.params, responseType: options?.responseType });
     }
 }

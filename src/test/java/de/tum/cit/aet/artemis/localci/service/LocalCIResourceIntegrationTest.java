@@ -407,6 +407,52 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetFinishedBuildJobsForCourse_excludesQueuedAndRunningJobs() throws Exception {
+        buildJobRepository.save(finishedJob1);
+
+        // A job that is still running must never show up in the finished-jobs list, not even when a filter is applied. The previous implementation only excluded
+        // QUEUED/BUILDING on the unfiltered code path, so applying any filter (here: the course) leaked unfinished jobs into the result.
+        BuildJob runningJob = buildJobRepository.save(buildJobForStatus(BuildStatus.BUILDING, "running-job"));
+        BuildJob queuedJob = buildJobRepository.save(buildJobForStatus(BuildStatus.QUEUED, "queued-job"));
+
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+        var result = request.getList("/api/localci/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
+                pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
+
+        assertThat(result).extracting(FinishedBuildJobDTO::id).containsExactly(finishedJob1.getBuildJobId()).doesNotContain(runningJob.getBuildJobId(), queuedJob.getBuildJobId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetFinishedBuildJobs_filtersByBuildAgentAddress() throws Exception {
+        buildJobRepository.save(finishedJob1);
+
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+
+        LinkedMultiValueMap<String, String> matching = pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable");
+        matching.add("buildAgentAddress", finishedJob1.getBuildAgentAddress());
+        var matched = request.getList("/api/core/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, matching);
+        assertThat(matched).extracting(FinishedBuildJobDTO::id).contains(finishedJob1.getBuildJobId());
+
+        LinkedMultiValueMap<String, String> nonMatching = pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable");
+        nonMatching.add("buildAgentAddress", "no-such-agent:0000");
+        var unmatched = request.getList("/api/core/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, nonMatching);
+        assertThat(unmatched).isEmpty();
+    }
+
+    /**
+     * Builds an unfinished build job for the course under test, so that the finished-jobs filtering can be asserted against it.
+     */
+    private BuildJob buildJobForStatus(BuildStatus status, String buildJobId) {
+        JobTimingInfo timingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), null, null, 0);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
+        RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
+        var queueItem = new BuildJobQueueItem(buildJobId, "job-" + buildJobId, buildAgent, 1, course.getId(), 1, 1, 1, status, repositoryInfo, timingInfo, buildConfig, null);
+        return new BuildJob(queueItem, status, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildAgents_instructorAccessForbidden() throws Exception {
         request.get("/api/core/admin/build-agents", HttpStatus.FORBIDDEN, List.class);
     }

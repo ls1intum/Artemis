@@ -141,7 +141,7 @@ describe('ExerciseHeaderComponent', () => {
 
             const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
             expect(feedbackButton).not.toBeNull();
-            expect(feedbackButton.componentInstance.isSubmitted).toBe(true);
+            expect(feedbackButton.componentInstance.isSubmitted()).toBe(true);
         });
 
         it.each([false, true])('should disable the feedback button for an unsubmitted submission with hasResult=%s', (hasResult) => {
@@ -149,7 +149,7 @@ describe('ExerciseHeaderComponent', () => {
 
             const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
             expect(feedbackButton).not.toBeNull();
-            expect(feedbackButton.componentInstance.isSubmitted).toBe(false);
+            expect(feedbackButton.componentInstance.isSubmitted()).toBe(false);
         });
 
         it('should pass the active participation to the feedback button', () => {
@@ -171,15 +171,15 @@ describe('ExerciseHeaderComponent', () => {
             fixture.detectChanges();
 
             let feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
-            expect(feedbackButton.componentInstance.participationId).toBe(gradedParticipation.id);
-            expect(feedbackButton.componentInstance.isSubmitted).toBe(true);
+            expect(feedbackButton.componentInstance.participationId()).toBe(gradedParticipation.id);
+            expect(feedbackButton.componentInstance.isSubmitted()).toBe(true);
 
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
             feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
-            expect(feedbackButton.componentInstance.participationId).toBe(practiceParticipation.id);
-            expect(feedbackButton.componentInstance.isSubmitted).toBe(false);
+            expect(feedbackButton.componentInstance.participationId()).toBe(practiceParticipation.id);
+            expect(feedbackButton.componentInstance.isSubmitted()).toBe(false);
         });
 
         it('should hide the feedback button when the exercise has not been started', () => {
