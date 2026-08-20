@@ -136,6 +136,32 @@ describe('CodeButtonComponent', () => {
         expect(component.versionControlUrl).toBe(info.versionControlUrl);
         expect(getCachedSshKeysSpy).toHaveBeenCalled();
     });
+    
+    it('should default to token authentication when password was stored in local storage', async () => {
+        localStorageState = RepositoryAuthenticationMethod.Password;
+        fixture.componentRef.setInput('participations', [participation]);
+        await component.ngOnInit();
+        fixture.detectChanges();
+
+        component.onClick();
+        fixture.detectChanges();
+
+        expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Token);
+        expect(component.useToken()).toBe(true);
+    });
+
+    it('should preserve SSH preference from local storage', async () => {
+        localStorageState = RepositoryAuthenticationMethod.SSH;
+        fixture.componentRef.setInput('participations', [participation]);
+        await component.ngOnInit();
+        fixture.detectChanges();
+
+        component.onClick();
+        fixture.detectChanges();
+
+        expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.SSH);
+        expect(component.useSsh()).toBe(true);
+    });
 
     it('should not load participation vcsAccessToken when it already exists in participation', async () => {
         participation.vcsAccessToken = 'vcpat-1234';
@@ -220,7 +246,6 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should load the repository-scoped token via the exerciseId input when no exercise object is provided', async () => {
-            // The exercise detail view only knows the exercise id, not the full exercise object.
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
             await component.ngOnInit();
@@ -243,8 +268,6 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should reload a fresh token when the component is reused for a different base repository', async () => {
-            // The repository view reuses one code-button instance across base repositories (only the route params change). A token minted for the previous repository must not be
-            // reused for the next one, because repository tokens are scoped to one exact repository URI.
             localStorageState = RepositoryAuthenticationMethod.Token;
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
@@ -256,7 +279,6 @@ describe('CodeButtonComponent', () => {
             expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(repoToken);
 
-            // Navigate to the solution repository of the same exercise: same component instance, only the repository type and URI change.
             const solutionToken = 'vcpat-SolutionSolutionSolutionSolutionSolutio123';
             getRepoTokenSpy.mockReturnValue(of(new HttpResponse({ body: solutionToken })));
             fixture.componentRef.setInput('repositoryType', 'SOLUTION');
@@ -266,10 +288,8 @@ describe('CodeButtonComponent', () => {
             component.onClick();
             fixture.detectChanges();
 
-            // A fresh token request is made for the new repository and the stale template token is replaced.
             expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(solutionToken);
-            // The embedded clone URL must use the new repository's token, never the stale template one.
             const cloneUrl = component.getHttpOrSshRepositoryUri(false, true, true);
             expect(cloneUrl).toContain(`:${solutionToken}@`);
             expect(cloneUrl).not.toContain(repoToken);
@@ -314,8 +334,6 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should keep the copy button enabled for SSH when the repository token resolves after the dialog opened', async () => {
-            // Reproduces the production ordering that synchronous of() mocks hide: the token HTTP response arrives only
-            // after onClick already set the SSH copy state. The async response must not clobber it back to disabled.
             const tokenSubject = new Subject<HttpResponse<string>>();
             getRepoTokenSpy.mockReturnValue(tokenSubject.asObservable());
             localStorageState = RepositoryAuthenticationMethod.SSH;
@@ -325,10 +343,8 @@ describe('CodeButtonComponent', () => {
 
             component.onClick();
             expect(component.useSsh()).toBe(true);
-            // The user has SSH keys, so copy is enabled while the token request is still pending.
             expect(component.copyEnabled()).toBe(true);
 
-            // The repository token resolves now, after the dialog already opened.
             tokenSubject.next(new HttpResponse({ body: repoToken }));
             tokenSubject.complete();
 
@@ -337,8 +353,6 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should not show the manual VCS token warning for a base repository in course management', async () => {
-            // In course management (e.g. the exercise detail page) the personal-token warning must never appear for base
-            // repositories, because a repository-scoped staff token is provisioned automatically instead.
             localStorageState = RepositoryAuthenticationMethod.Token;
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
@@ -363,7 +377,6 @@ describe('CodeButtonComponent', () => {
             component.onClick();
             fixture.detectChanges();
 
-            // The non-masked clone URL must embed the repository-scoped staff token as the password (not a participation or user token).
             const cloneUrl = component.getHttpOrSshRepositoryUri(false);
             expect(cloneUrl).toContain(`:${repoToken}@`);
             expect(component.copyEnabled()).toBe(true);
@@ -372,7 +385,6 @@ describe('CodeButtonComponent', () => {
         it('should warn when fetching the repository token is forbidden (403) and not attempt to create one', async () => {
             const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
             getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
-            // Select the token method so the copy button state reflects the (failed) token, not SSH.
             localStorageState = RepositoryAuthenticationMethod.Token;
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
@@ -415,8 +427,6 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should not crash for a base repository whose view passes a participation-less array (tests/auxiliary repo)', async () => {
-            // The staff tests/auxiliary repository view has no student participation and renders the code button with a
-            // participation-less array. activeParticipation must tolerate that instead of dereferencing undefined (regression).
             localStorageState = RepositoryAuthenticationMethod.Token;
             fixture.componentRef.setInput('repositoryType', 'TESTS');
             fixture.componentRef.setInput('exerciseId', 7);
@@ -430,16 +440,12 @@ describe('CodeButtonComponent', () => {
             component.onClick();
             fixture.detectChanges();
 
-            // The clone URL is built from the base repository URI plus the repository-scoped token, with no participation involved.
             const cloneUrl = component.getHttpOrSshRepositoryUri(false);
             expect(cloneUrl).toContain('test-tests.git');
             expect(cloneUrl).toContain(`:${repoToken}@`);
         });
 
         it('should mint a repository-scoped token for a student repository browsed by staff and never leave the clone button disabled', async () => {
-            // Course staff opening another student's assignment repository in course management. Even without a personal VCS
-            // token, a repository-scoped USER token is provisioned on demand (keyed by the participation), so the copy button
-            // becomes enabled and the clone URL embeds that scoped token.
             vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined } as User));
             localStorageState = RepositoryAuthenticationMethod.Token;
 
@@ -469,8 +475,6 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should mint the student token from a participationId input when no participation object is passed (staff tables)', async () => {
-            // The scores / participations / feedback tables render the code button with only repositoryUri + exerciseId +
-            // participationId (no participations array). The scoped USER token must still be minted so the button is never disabled.
             vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined } as User));
             localStorageState = RepositoryAuthenticationMethod.Token;
             fixture.componentRef.setInput('exerciseId', 55);
@@ -549,8 +553,7 @@ describe('CodeButtonComponent', () => {
         participation.repositoryUri = `https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         participation.team = {};
         fixture.componentRef.setInput('participations', [participation]);
-        localStorageState = RepositoryAuthenticationMethod.Password;
-        component.onClick();
+        component.useHttpsPassword();
         fixture.changeDetectorRef.detectChanges();
 
         let url = component.getHttpOrSshRepositoryUri();
@@ -572,18 +575,15 @@ describe('CodeButtonComponent', () => {
 
         component.onClick();
         fixture.detectChanges();
-        // Placeholder is shown
         let url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         url = component.getHttpOrSshRepositoryUri(false);
         expect(url).toBe(`https://${component.user.login}:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
-        // Team participation does not include user name
         fixture.componentRef.setInput('repositoryUri', `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
         participation.team = {};
 
-        // Placeholder is shown
         url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
@@ -592,8 +592,6 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should use the participation token for the users own test run participation in course management', async () => {
-        // Exam test runs are served under a course-management URL, but the participation belongs to the current user,
-        // so its own participation token (not the personal staff token) must be used and loaded.
         const participationToken = 'vcpat-own-test-run-participation-token';
         getVcsAccessTokenSpy.mockReturnValue(of(new HttpResponse({ body: participationToken })));
         localStorageState = RepositoryAuthenticationMethod.Token;
@@ -622,8 +620,6 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should mint a repository-scoped staff token for another users test run participation in course management', async () => {
-        // When course staff open another instructor's test run summary, the participation is not owned by them. Instead of the
-        // (deprecated) personal staff token, a repository-scoped USER token is minted on demand for that student repository.
         const repoToken = 'vcpat-StaffScopedTestRunTokenStaffScopedTestRun12';
         const getRepoTokenSpy = vi.spyOn(programmingExerciseService, 'getRepositoryVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: repoToken })));
         localStorageState = RepositoryAuthenticationMethod.Token;
@@ -644,9 +640,7 @@ describe('CodeButtonComponent', () => {
         component.onClick();
         fixture.detectChanges();
 
-        // The participation token endpoint must not be used for a repository the staff member does not own.
         expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
-        // A repository-scoped staff token is requested for the student (USER) repository, keyed by the participation.
         expect(getRepoTokenSpy).toHaveBeenCalledWith(77, 'USER', undefined, 43);
         const url = component.getHttpOrSshRepositoryUri(false);
         expect(url).toBe(`https://edx_userLogin:${repoToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git`);
@@ -656,8 +650,6 @@ describe('CodeButtonComponent', () => {
     it('should omit the token and report to Sentry when a participation token is unexpectedly missing', async () => {
         const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
         captureSpy.mockClear();
-        // Simulate a participation whose token can neither be fetched (404) nor created (created but empty body); this is
-        // the terminal failure state that should be reported (should never happen in practice).
         getVcsAccessTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' })));
         createVcsAccessTokenSpy.mockReturnValue(of(new HttpResponse<string>({ body: undefined })));
         localStorageState = RepositoryAuthenticationMethod.Token;
@@ -676,7 +668,6 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
 
         const url = component.getHttpOrSshRepositoryUri(false);
-        // Building the URL again must not report a second time (per-instance guard).
         component.getHttpOrSshRepositoryUri(false);
         expect(createVcsAccessTokenSpy).toHaveBeenCalledWith(7);
         expect(url).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
@@ -687,7 +678,6 @@ describe('CodeButtonComponent', () => {
     it('should not report to Sentry while a participation token is still loading (no terminal failure yet)', async () => {
         const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
         captureSpy.mockClear();
-        // The token request never resolves during this test, so the token is merely in flight, not terminally missing.
         getVcsAccessTokenSpy.mockReturnValue(new Subject<HttpResponse<string>>().asObservable());
         localStorageState = RepositoryAuthenticationMethod.Token;
 
@@ -705,15 +695,12 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
 
         const url = component.getHttpOrSshRepositoryUri(false);
-        // The URL omits the (not-yet-available) token, but no anomaly is reported while it is still loading.
         expect(url).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
         expect(url).not.toContain('undefined');
         expect(captureSpy).not.toHaveBeenCalled();
     });
 
     it('should load the own participation token only after the current user resolves (async ordering)', async () => {
-        // Reproduces the real ordering: participations and the course-management context are known before the async
-        // identity resolves. The token-loading effect must re-run once the user becomes known.
         let resolveIdentity!: (user: User) => void;
         const identitySpy = vi.spyOn(accountService, 'identity').mockReturnValue(new Promise<User>((resolve) => (resolveIdentity = resolve)));
         localStorageState = RepositoryAuthenticationMethod.Token;
@@ -733,7 +720,6 @@ describe('CodeButtonComponent', () => {
         ]);
         freshFixture.detectChanges();
 
-        // Identity still pending → the owner is unknown → the participation token must not be requested yet.
         expect(identitySpy).toHaveBeenCalled();
         expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
 
@@ -741,7 +727,6 @@ describe('CodeButtonComponent', () => {
         await freshFixture.whenStable();
         freshFixture.detectChanges();
 
-        // Now that the user is known, the effect re-runs and loads the own participation token.
         expect(getVcsAccessTokenSpy).toHaveBeenCalledWith(42);
         freshFixture.destroy();
     });
@@ -749,8 +734,6 @@ describe('CodeButtonComponent', () => {
     it('should not report to Sentry while a repository-scoped staff token for a student repository is still loading', async () => {
         const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
         captureSpy.mockClear();
-        // Course staff browsing another participant's repository: a repository-scoped token is minted on demand. While it is
-        // still loading, the URL must omit the token (never contain "undefined"), and this transient state must not be reported.
         const tokenSubject = new Subject<HttpResponse<string>>();
         vi.spyOn(programmingExerciseService, 'getRepositoryVcsAccessToken').mockReturnValue(tokenSubject.asObservable());
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined }));
@@ -1018,7 +1001,6 @@ describe('CodeButtonComponent', () => {
         const getTheiaConfigStub = vi.spyOn(programmingExerciseService, 'getTheiaConfig');
         getTheiaConfigStub.mockReturnValue(of(theiaConfig as ProgrammingExerciseTheiaConfig));
 
-        // Expand the programmingExercise by given properties
         fixture.componentRef.setInput('exercise', {
             ...programmingExercise,
         } as any);
