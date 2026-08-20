@@ -25,7 +25,6 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.VHDL
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.FACT;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GCC;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GRADLE_GRADLE;
-import static de.tum.cit.aet.artemis.programming.domain.ProjectType.MAVEN_BLACKBOX;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.MAVEN_MAVEN;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE;
@@ -70,8 +69,11 @@ public class HadesProgrammingLanguageFeatureService extends ProgrammingLanguageF
         programmingLanguageFeatures.put(DART, new ProgrammingLanguageFeature(DART, false, false, false, true, false, List.of(), false));
         programmingLanguageFeatures.put(GO, new ProgrammingLanguageFeature(GO, false, false, true, true, false, List.of(), false));
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, true, false, false, false, false, List.of(), false));
+        // MAVEN_BLACKBOX is intentionally excluded: blackbox exercises emit results as customFeedbacks/*.json, which the Hades
+        // junit-result-parser does not ingest (it reads only *.xml), so results would never be reported. Re-enable once the
+        // parser supports the JSON format (Hades-Scheduler/hades-artemis-result-parser#6).
         programmingLanguageFeatures.put(JAVA,
-                new ProgrammingLanguageFeature(JAVA, true, false, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN, MAVEN_BLACKBOX), false));
+                new ProgrammingLanguageFeature(JAVA, true, false, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN), false));
         programmingLanguageFeatures.put(JAVASCRIPT, new ProgrammingLanguageFeature(JAVASCRIPT, false, false, true, false, false, List.of(), false));
         programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, false, false, true, true, false, List.of(), false));
         programmingLanguageFeatures.put(MATLAB, new ProgrammingLanguageFeature(MATLAB, false, false, false, false, false, List.of(), false));
