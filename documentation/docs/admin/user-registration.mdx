@@ -1,23 +1,127 @@
 ---
 id: user-registration
-title: User Registration
-sidebar_label: User Registration
+title: User Management
+sidebar_label: User Management
 ---
 
-# User Registration
+# User Management
 
-Artemis supports user registration. It has to be enabled in one `application-*.yml` file and can be customized.
+This page describes how Artemis accounts come into existence, how the `activated` flag governs whether
+they may authenticate, and how to configure self-registration.
 
-Example:
+## Account types
+
+Every account is either **internal** or **external**, recorded in the `is_internal` column:
+
+| | Internal account | External account |
+|---|---|---|
+| Password | Hashed and stored by Artemis | Not stored; the identity provider verifies it |
+| Authenticated by | `ArtemisInternalAuthenticationProvider` | `LdapAuthenticationProvider`, `SAML2Service`, or `OIDCService` |
+| Password reset | Through Artemis | Through the institution's own account management |
+| Typical use | Admins, service accounts, guests, instances without an IdP | Students and staff of the operating institution |
+
+An account can be switched between the two through the admin user form. Turning an external account
+internal requires a password, which Artemis generates when the form leaves it blank.
+
+## Where accounts come from
+
+Several paths create accounts. The important column is the last one — see
+[The `activated` flag](#the-activated-flag) for why.
+
+| Provisioning path | Account type | Created activated? |
+|---|---|---|
+| Self-registration, `POST /register` | Internal | **No** — awaits activation by the user |
+| First login through LDAP | External | Yes |
+| First login through SAML2 | External | Yes |
+| First login through OIDC | External | Yes |
+| Course member import, exam registration, admin user import (resolved against LDAP) | External | Yes |
+| LTI launch | Internal | Yes |
+| Admin *Create User* form | As selected | Yes |
+| `internal-admin` bootstrap on startup | Internal | Yes |
+| Iris bot account | Internal | Yes |
+
+Only the first row leaves the account unactivated, and only that row is a user activating their own
+account. Every other path provisions the account on someone's behalf, so it must be usable immediately.
+
+:::note
+Course and exam **import** and **first login** can both create the same person's account, whichever
+happens first. Both must therefore produce an account in the same state — an imported student who has
+never logged in has to be able to use their repositories straight away.
+:::
+
+An LTI launch additionally offers the account holder the Artemis password generated for them, so they can
+also sign in outside the LMS. Whether that dialog is still owed is tracked by its own `lti_initialized`
+column rather than by `activated`, so the account is usable from the first launch and the dialog is still
+shown exactly once.
+
+## The `activated` flag
+
+`activated` decides whether an account may authenticate at all. It is enforced by:
+
+- `ArtemisInternalAuthenticationProvider`, `SAML2Service`, `OIDCService`, and the passkey provider
+- git over HTTPS (`LocalVCServletService`) and git over SSH (`GitPublickeyAuthenticatorService`)
+
+An account is created unactivated **only when its own owner is expected to activate it**, which
+requires two conditions at the same time:
+
+1. the account is **internal**, and
+2. **self-registration is enabled** (`artemis.user-management.registration.enabled: true`).
+
+Both conditions are necessary because the activation key is redeemable only through `GET /activate`,
+and both that endpoint and the mail carrying the key are gated behind the registration property. An
+externally managed account is never sent an activation mail and cannot redeem a key, so creating one
+unactivated yields an account that *nothing* can ever activate: it would pass web login on an
+LDAP-only instance, because the LDAP provider is the one provider that does not check the flag, while
+being refused by git and by every other provider.
+
+Consequently there are exactly three reasons for `activated = false`:
+
+| Reason | Set by | Activation key |
+|---|---|---|
+| Awaiting self-activation | `UserCreationService.createUser`, `UserService.registerUser` — internal accounts with registration enabled | Present |
+| Deliberately deactivated | `UserCreationService.deactivateUser`, admin edit form — any account type | Absent |
+| Soft-deleted | `UserService.anonymizeUser`, together with `is_deleted` | Absent |
+
+The activation key therefore distinguishes an account still waiting to be activated from one an
+administrator switched off on purpose. That distinction matters when repairing data: activating rows
+that carry a key never re-enables an account somebody deactivated deliberately.
+
+### Activation and cleanup
+
+A self-registered account is mailed a link containing its activation key. Redeeming it through
+`GET /activate` sets `activated = true` and clears the key.
+
+An account that is not activated within `registration.cleanup-time-minutes` (default 60) is
+**deleted**. The removal is scheduled when the account is registered and cancelled when it is
+activated, so the timer applies only to self-registration — no other provisioning path schedules it.
+
+### Deactivation versus deletion
+
+- **Deactivation** keeps the account and its data but refuses authentication. It also revokes the
+  account's credentials — personal and participation VCS access tokens, SSH keys, and passkeys — because
+  the git paths accept a token or key on its own, so deactivation would otherwise not take effect there
+  until those credentials expired. Both routes that deactivate an account — the deactivate endpoint and
+  the admin edit form — write a `DEACTIVATE_USER` entry to the audit log naming the administrator who did
+  it and the account affected; activation is recorded as `ACTIVATE_USER` the same way. These are kept far
+  longer than login records.
+- Nothing lets an account holder reverse a deactivation. Only an administrator can activate an account
+  again.
+- **Soft deletion** sets `is_deleted`, anonymises the personal fields, and revokes credentials, while
+  preserving the rows that reference the account.
+
+## Enabling self-registration
+
+Self-registration is **disabled** unless `artemis.user-management.registration.enabled` is explicitly
+`true`; a missing section counts as disabled. Registered accounts are always internal.
 
 ```yaml
 artemis:
     user-management:
-        use-external: false #false disables ldap authentication
         registration:
             enabled: true
             allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'
             allowed-email-pattern-readable: '@tum.de, @in.tum.de, @mytum.de'
+            cleanup-time-minutes: 60 # non-activated accounts are deleted after this many minutes
 spring:
     mail:
         host: <host>
@@ -41,10 +145,64 @@ management:
         mail:
             enabled: true
 ```
-Users can register a new account on the start page based on the regex defined in allowed-email-pattern.
-If no email pattern is defined, any email address can be used.
-Upon registration, users receive an email to activate their account.
 
-You can find more information on how to configure the email server on the official
-Jhipster
-documentation.
+Users can then register on the start page with any address matching `allowed-email-pattern`. If no
+pattern is configured, any address is accepted. A working mail server is required: without it the
+activation mail is never delivered and the account is deleted once the cleanup time elapses.
+
+## Related authentication settings
+
+Each of the external mechanisms is enabled by its own property. `ldap.enabled` and `saml2.enabled` have
+no default — Artemis refuses to start if they are absent — while `oidc.enabled` defaults to `false`.
+
+```yaml
+artemis:
+    user-management:
+        ldap:
+            enabled: true       # required; LDAP lookups for user details and LDAP authentication
+            url: <url>
+            user-dn: <user-dn>
+            password: <password>
+            base: <base>
+            allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'
+        saml2:
+            enabled: false      # required
+        oidc:
+            enabled: false      # optional, defaults to false
+        use-external: true      # advertises external password reset to the client; does NOT enable or disable LDAP
+```
+
+:::warning
+`use-external` does not switch LDAP authentication on or off, despite its name. It is only reported
+through `/management/info` so the client knows whether to send users to an external password reset.
+LDAP is controlled exclusively by `artemis.user-management.ldap.enabled`.
+:::
+
+See [SAML2 Login and Registration](saml2-login-registration.mdx) and
+[OIDC Login and Registration](oidc-login-registration.mdx) for the provider-specific setup.
+
+## Login form and rate limits
+
+The login form asks for an identifier first and then calls `GET /login-options` to decide whether to
+show a password field or send the user to the configured identity provider. The answer is derived from
+local account state only: an internal account gets the password form, and everything else — an external
+account, and an identifier this instance has not seen — is sent to the identity provider, which is also
+where a first-time user is provisioned.
+
+The account endpoints are rate limited in two independent places, and both are needed: nginx keys on the
+real TCP peer, while the application-level limiter runs per Artemis node and covers deployments that do
+not terminate at this nginx configuration.
+
+| Endpoint | nginx zone | Application limit |
+|---|---|---|
+| `POST /authenticate`, `/saml2`, `/login/webauthn` | `loginlimit`, 30 r/m | `AUTHENTICATION`, 30 rpm |
+| `GET /login-options` | `loginoptionslimit`, 30 r/m | `LOGIN_OPTIONS`, 30 rpm |
+| `/register`, `/activate`, `/account/reset-password/*` | `accountrecoverylimit`, 5 r/m | `ACCOUNT_MANAGEMENT`, 5 rpm |
+| git credential handshake (`/info/refs`) | `gitauthlimit`, 60 r/m | `AUTHENTICATION`, 30 rpm |
+
+Application-level limits can be overridden per type under `artemis.rate-limiting`, for example
+`artemis.rate-limiting.login-options-requests-per-minute`. Rate limiting as a whole is off unless
+`artemis.rate-limiting.enabled` is `true`.
+
+If you run your own reverse proxy instead of the shipped nginx configuration, mirror the zones above;
+otherwise only the application-level limits apply.

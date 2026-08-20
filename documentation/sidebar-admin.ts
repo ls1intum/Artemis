@@ -30,6 +30,7 @@ const sidebars: SidebarsConfig = {
         'user-registration',
         'jenkins-localvc',
         'saml2-login-registration',
+        'oidc-login-registration',
         'troubleshooting',
         'database-tips',
         'known-issues',
