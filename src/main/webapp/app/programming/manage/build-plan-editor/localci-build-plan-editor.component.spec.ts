@@ -302,6 +302,30 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(getTemplateStub).toHaveBeenCalledWith(false, ProgrammingLanguage.JAVA, undefined, expectedStaticAnalysis, expectedSequentialRuns);
     });
 
+    it('should keep an edit made while the default phases were loading unsaved', () => {
+        const exercise = {
+            id: 7,
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            buildConfig: { timeoutSeconds: 60 },
+        } as unknown as ProgrammingExercise;
+        activatedRoute.data = of({ exercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        comp.ngOnInit();
+        expect(comp.canDeactivate()).toBe(true);
+
+        // the instructor edits a field the template does not seed while the request is still running
+        comp.timeout.set(200);
+        getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
+
+        // only the seeded phases may be folded into the baseline, so the timeout edit is still unsaved
+        expect(comp.phases()).toEqual(phases);
+        expect(comp.timeout()).toBe(200);
+        expect(comp.canDeactivate()).toBe(false);
+    });
+
     it('should not overwrite phases authored while the template request was in flight', () => {
         const exercise = {
             id: 7,

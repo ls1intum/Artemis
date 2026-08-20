@@ -131,6 +131,11 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
         if (!programmingLanguage || (this.dockerImage().trim().length > 0 && this.phases().length > 0)) {
             return;
         }
+        // the field values as they stand before the request: only the seeded phases may later be folded into the
+        // baseline, so an edit made while the template is loading stays unsaved instead of being marked as persisted
+        const baselineDockerImage = this.dockerImage();
+        const baselineTimeout = this.timeout();
+        const baselineDockerFlags = this.programmingExercise()?.buildConfig?.dockerFlags;
         this.buildPhasesTemplateService
             // the static analysis and sequential run settings select a different template file on the server, so they have
             // to be passed here as well; otherwise a seeded plan differs from the one Local CI would build the exercise with
@@ -147,8 +152,9 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
                     // re-check the phases here: the instructor may have authored one while the request was in flight
                     if (template.phases?.length && this.phases().length === 0) {
                         this.phases.set(template.phases);
-                        // seeded defaults are not user edits, so fold them into the baseline to avoid a false "unsaved changes" prompt
-                        this.captureBaseline();
+                        // the seeded phases are not a user edit, so they are folded into the baseline; every other field
+                        // keeps its pre-request value, which leaves an edit made in the meantime dirty
+                        this.persistedSnapshot.set(this.snapshotOf(template.phases, baselineDockerImage, baselineTimeout, baselineDockerFlags));
                     }
                 },
                 // the editor stays usable without the template; the instructor can still author the plan manually
@@ -249,12 +255,15 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
      * let env variable, network and resource limit edits be discarded without a warning.
      */
     private snapshot(): string {
-        return JSON.stringify({
-            phases: this.phases(),
-            dockerImage: this.dockerImage(),
-            timeout: this.timeout(),
-            dockerFlags: this.programmingExercise()?.buildConfig?.dockerFlags,
-        });
+        return this.snapshotOf(this.phases(), this.dockerImage(), this.timeout(), this.programmingExercise()?.buildConfig?.dockerFlags);
+    }
+
+    /**
+     * Serializes one specific combination of editable values, so that a baseline can be built from values other than the
+     * ones currently in the fields.
+     */
+    private snapshotOf(phases: BuildPhase[], dockerImage: string, timeout: number, dockerFlags: string | undefined): string {
+        return JSON.stringify({ phases, dockerImage, timeout, dockerFlags });
     }
 
     /**
