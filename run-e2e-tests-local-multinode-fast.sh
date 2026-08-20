@@ -686,6 +686,9 @@ export EXPECTED_CLUSTER_NODE_COUNT="2"
 # node-2 and node-3 both run a build agent, each with its own short name (see node2-fast.env / node3-fast.env).
 export EXPECTED_MIN_BUILD_AGENTS="2"
 export DISTRIBUTED_DATA_PROVIDER="$MIDDLEWARE"
+# Direct per-core-node URLs. The @multi-node specs that assert cross-node behaviour need to address one specific
+# node rather than whichever the load balancer picks, which is the whole point of those assertions.
+export MULTI_NODE_URLS="http://localhost:${HTTP_PORTS[0]},http://localhost:${HTTP_PORTS[1]}"
 
 cd src/test/playwright
 pnpm run playwright:setup-local 2>/dev/null

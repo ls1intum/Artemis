@@ -91,12 +91,13 @@ public class TextPlagiarismDetectionService {
         // Only one plagiarism check per course allowed
         var courseId = textExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
-        try {
-            if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
-                throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
-            }
-            plagiarismCacheService.setActivePlagiarismCheck(courseId);
+        // Claim the course before entering the try block: the finally below releases the course, and a caller that was
+        // refused must not release the check somebody else is running.
+        if (!plagiarismCacheService.tryStartPlagiarismCheck(courseId)) {
+            throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
+        }
 
+        try {
             long start = System.nanoTime();
             String topic = plagiarismWebsocketService.getTextExercisePlagiarismCheckTopic(textExercise.getId());
 
@@ -165,12 +166,16 @@ public class TextPlagiarismDetectionService {
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
             return textPlagiarismResult;
         }
+        catch (BadRequestAlertException ex) {
+            // Already carries the error key the client shows a message for, so wrapping it would hide what went wrong.
+            throw ex;
+        }
         catch (Exception ex) {
             log.warn("Text plagiarism detection NOT successful", ex);
             throw new BadRequestAlertException(ex.getMessage(), "Plagiarism Check", "jplagException");
         }
         finally {
-            plagiarismCacheService.setInactivePlagiarismCheck(courseId);
+            plagiarismCacheService.finishPlagiarismCheck(courseId);
         }
     }
 }

@@ -130,6 +130,9 @@ services:
       # Which distributed data backend the stack runs on. ClusterFormation.spec.ts uses it to decide which node-identity
       # shape it may assert: Hazelcast publishes `[host]:port`, the Redis provider publishes a client name with no port.
       DISTRIBUTED_DATA_PROVIDER: '${DISTRIBUTED_DATA_PROVIDER:-hazelcast}'
+      # Direct per-core-node URLs, so the cross-node specs can address one specific node instead of whichever
+      # the load balancer picks.
+      MULTI_NODE_URLS: 'http://artemis-app-node-1:8080,http://artemis-app-node-2:8080'
     networks:
       - artemis
 
