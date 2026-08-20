@@ -854,6 +854,10 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void testImportFileUploadExerciseFromCourseToCourseAsEditorSuccess() throws Exception {
         Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
+        ZonedDateTime releaseDate = ZonedDateTime.now().plusDays(1);
+        expectedFileUploadExercise.setReleaseDate(releaseDate);
+        expectedFileUploadExercise.setDueDate(releaseDate.plusDays(1));
+        expectedFileUploadExercise.setAssessmentDueDate(releaseDate.plusDays(2));
         Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
         expectedFileUploadExercise.setCourse(course2);
