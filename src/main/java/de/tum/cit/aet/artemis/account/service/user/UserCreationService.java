@@ -13,6 +13,9 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -40,6 +43,13 @@ public class UserCreationService {
 
     private static final Logger log = LoggerFactory.getLogger(UserCreationService.class);
 
+    /**
+     * Duplicated from {@link de.tum.cit.aet.artemis.account.service.AccountService} on purpose: that service already depends on this one, so injecting it here
+     * would create a circular dependency. {@link UserManagementInfoContributor} reads the same property the same way.
+     */
+    @Value("${artemis.user-management.registration.enabled:#{null}}")
+    private Optional<Boolean> registrationEnabled;
+
     private final UserRepository userRepository;
 
     private final PasswordService passwordService;
@@ -52,15 +62,18 @@ public class UserCreationService {
 
     private final AccountSecurityNotificationService accountSecurityNotificationService;
 
+    private final AuditEventRepository auditEventRepository;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
             OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService,
-            AccountSecurityNotificationService accountSecurityNotificationService) {
+            AccountSecurityNotificationService accountSecurityNotificationService, AuditEventRepository auditEventRepository) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
         this.organizationRepository = organizationRepository;
         this.accountCredentialRevocationService = accountCredentialRevocationService;
         this.accountSecurityNotificationService = accountSecurityNotificationService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -101,10 +114,19 @@ public class UserCreationService {
         }
         newUser.setImageUrl(imageUrl);
         newUser.setLangKey(langKey);
-        // new user is not active
-        newUser.setActivated(false);
-        // new user gets registration key
-        newUser.setActivationKey(RandomUtil.generateActivationKey());
+        // Only create the user unactivated when they can actually activate themselves, which needs both an internal account and the
+        // self-registration feature. The activation key is redeemable exclusively through GET /activate, and both that endpoint and the
+        // mail carrying the key are gated behind artemis.user-management.registration.enabled. An externally managed (LDAP/SAML) user
+        // therefore never receives a key and could never redeem one, so creating them unactivated left behind accounts that nothing
+        // could ever activate - which stayed invisible only because the LDAP provider does not check `activated`, until the git
+        // authentication paths started enforcing it and locked those users out of their repositories.
+        if (isInternal && isRegistrationEnabled()) {
+            newUser.setActivated(false);
+            newUser.setActivationKey(RandomUtil.generateActivationKey());
+        }
+        else {
+            newUser.setActivated(true);
+        }
         newUser.setInternal(isInternal);
 
         final var authority = authorityRepository.findById(STUDENT.getAuthority()).orElseThrow();
@@ -121,6 +143,15 @@ public class UserCreationService {
         newUser = saveUser(newUser);
         log.debug("Created user: {}", newUser);
         return newUser;
+    }
+
+    /**
+     * The self-registration feature is only enabled when artemis.user-management.registration.enabled is explicitly set to true. A missing entry means disabled.
+     *
+     * @return whether users can register themselves in this instance
+     */
+    private boolean isRegistrationEnabled() {
+        return registrationEnabled.isPresent() && registrationEnabled.get();
     }
 
     /**
@@ -242,6 +273,7 @@ public class UserCreationService {
         // Captured before the flag is overwritten: the admin edit form reaches the same transition as deactivateUser, and
         // it has to revoke the same credentials, otherwise an account the admin sees as deactivated keeps working over git.
         boolean isBeingDeactivated = Boolean.TRUE.equals(user.getActivated()) && !updatedUserDTO.isActivated();
+        boolean isBeingActivated = !Boolean.TRUE.equals(user.getActivated()) && updatedUserDTO.isActivated();
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
         user.setLangKey(updatedUserDTO.getLangKey());
@@ -267,6 +299,14 @@ public class UserCreationService {
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
+        // Audited here as well as in activateUser/deactivateUser: the admin edit form reaches the same transition without
+        // going through either of them, and an account-state change has to appear in the log whichever route produced it.
+        if (isBeingDeactivated) {
+            auditAccountStateChange(savedUser, Constants.DEACTIVATE_USER);
+        }
+        else if (isBeingActivated) {
+            auditAccountStateChange(savedUser, Constants.ACTIVATE_USER);
+        }
         boolean passwordChangedByAdministrator = user.isInternal() && updatedUserDTO.getPassword() != null;
         boolean credentialsRevoked = isBeingDeactivated || revokeCredentialsAfterPasswordChange;
         if (credentialsRevoked) {
@@ -297,6 +337,7 @@ public class UserCreationService {
         user.setActivated(true);
         user.setActivationKey(null);
         saveUser(user);
+        auditAccountStateChange(user, Constants.ACTIVATE_USER);
         log.info("Activated user: {}", user);
     }
 
@@ -308,10 +349,27 @@ public class UserCreationService {
     public void deactivateUser(User user) {
         user.setActivated(false);
         saveUser(user);
+        auditAccountStateChange(user, Constants.DEACTIVATE_USER);
         // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
         // SSH key without consulting account state, so deactivation only takes effect once those credentials are gone.
         accountCredentialRevocationService.revokeAllCredentials(user, "user deactivated");
         log.info("Deactivated user: {}", user);
+    }
+
+    /**
+     * Records a change to an account's {@code activated} state in the audit log.
+     * <p>
+     * Deactivating an account revokes access everywhere, so who did it and to whom has to be reconstructable long after
+     * the fact - the audit table keeps deliberate actions like this one far longer than login records. The principal is
+     * whoever performed the change, which is an administrator for both the deactivate endpoint and the admin edit form,
+     * and {@code system} where there is no authenticated actor, as when a user redeems their own activation key.
+     *
+     * @param user      the account whose state changed
+     * @param eventType {@link Constants#ACTIVATE_USER} or {@link Constants#DEACTIVATE_USER}
+     */
+    private void auditAccountStateChange(User user, String eventType) {
+        String actor = SecurityUtils.getCurrentUserLogin().orElse(Constants.SYSTEM_ACCOUNT);
+        auditEventRepository.add(new AuditEvent(actor, eventType, "user=" + user.getLogin()));
     }
 
     /**
@@ -335,7 +393,9 @@ public class UserCreationService {
     public String setRandomPasswordAndReturn(User user) {
         String newPassword = RandomUtil.generatePassword();
         user.setPassword(passwordService.hashPassword(newPassword));
-        user.setActivated(true);
+        // Records that the password has been handed over, so the launch offers the dialog only once. This used to set
+        // `activated` instead, which both overloaded that flag and let a deactivated account re-enable itself here.
+        user.setLtiInitialized(true);
         userRepository.save(user);
         return newPassword;
     }

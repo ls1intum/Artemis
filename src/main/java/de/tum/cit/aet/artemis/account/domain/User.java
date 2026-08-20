@@ -104,6 +104,34 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(length = 100)
     private String email;
 
+    /**
+     * Whether this account may authenticate. Every authentication path enforces it: the internal, SAML2, OIDC and passkey
+     * providers, and both git paths (HTTPS via {@code LocalVCServletService} and SSH via {@code GitPublickeyAuthenticatorService}).
+     * <p>
+     * <b>An account is only ever created unactivated when its own owner is expected to activate it.</b> That requires two
+     * things at once, and both are checked in {@link de.tum.cit.aet.artemis.account.service.user.UserCreationService}:
+     * <ol>
+     * <li>the account is <b>internal</b> ({@link #isInternal()}) - an externally managed account authenticates against the
+     * external identity provider, so Artemis has no activation step to offer it, and</li>
+     * <li>self-registration is <b>enabled</b> on this instance ({@code artemis.user-management.registration.enabled}) - the
+     * {@link #activationKey} is redeemable only through {@code GET /activate}, and both that endpoint and the mail that
+     * carries the key are gated behind that property.</li>
+     * </ol>
+     * Creating an external account unactivated therefore produces an account that <em>nothing</em> can ever activate. This
+     * really happened: the student import created LDAP users unactivated, and they lost repository access as soon as git
+     * authentication began enforcing this flag.
+     * <p>
+     * Only three kinds of writes set this to {@code false}, and only the first is the activation workflow:
+     * <ol>
+     * <li><b>awaiting self-activation</b> - {@code UserCreationService.createUser} and {@code UserService.registerUser},
+     * both under the two conditions above. Paired with a non-null {@link #activationKey}.</li>
+     * <li><b>deliberate deactivation</b> - {@code UserCreationService.deactivateUser} and the admin edit form. Applies to
+     * any account regardless of type, and never sets an activation key.</li>
+     * <li><b>soft deletion</b> - {@code UserService.anonymizeUser}, alongside {@link #deleted}.</li>
+     * </ol>
+     * The presence of an {@link #activationKey} consequently distinguishes (1) from (2), which is what made it possible to
+     * repair the affected rows without touching accounts an admin had deactivated on purpose.
+     */
     @NonNull
     @Column(nullable = false)
     private boolean activated = false;
@@ -136,6 +164,12 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "image_url", length = 256)
     private String imageUrl;
 
+    /**
+     * One-time key a user redeems through {@code GET /activate} to activate their own account. Only ever set together with
+     * {@code activated = false} on an internal account while self-registration is enabled - see {@link #activated} for why
+     * an externally managed account must never be given one, and for how the key's presence tells an account awaiting
+     * activation apart from one an admin deactivated.
+     */
     @Size(max = 20)
     @Column(name = "activation_key", length = 20)
     @JsonIgnore
@@ -183,6 +217,17 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Column(name = "lti_created", nullable = false)
     private boolean ltiCreated = false; // default value
+
+    /**
+     * Whether an LTI-provisioned account has already been shown the Artemis password generated for it, so that the
+     * launch offers that dialog exactly once.
+     * <p>
+     * Deliberately separate from {@link #activated}: the LTI flow used to read "not activated" as "not yet
+     * initialised", which only worked while the launch created accounts unactivated. It must not - see
+     * {@link #activated} - so the flow needs a marker of its own.
+     */
+    @Column(name = "lti_initialized", nullable = false)
+    private boolean ltiInitialized = false; // default value
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private final Set<SavedPost> savedPosts = new HashSet<>();
@@ -455,6 +500,14 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setLtiCreated(boolean ltiCreated) {
         this.ltiCreated = ltiCreated;
+    }
+
+    public boolean isLtiInitialized() {
+        return ltiInitialized;
+    }
+
+    public void setLtiInitialized(boolean ltiInitialized) {
+        this.ltiInitialized = ltiInitialized;
     }
 
     public Set<Authority> getAuthorities() {

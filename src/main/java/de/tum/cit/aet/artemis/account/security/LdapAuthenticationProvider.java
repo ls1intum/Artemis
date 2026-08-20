@@ -127,10 +127,8 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
 
         newUser.setAuthorities(authorityService.buildAuthorities(newUser));
 
-        if (!newUser.getActivated()) {
-            newUser.setActivated(true);
-            newUser.setActivationKey(null);
-        }
+        // No activation handling here: userCreationService.createUser already creates an external user activated, because such a user has
+        // no way to redeem an activation key. This used to re-activate the user to undo what the factory did unconditionally.
         log.info("New LDAP user {} created in Artemis", ldapUserDto.getLogin());
         return userCreationService.saveUser(newUser);
     }
