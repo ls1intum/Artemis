@@ -400,25 +400,28 @@ public class UserCreationService {
     }
 
     /**
-     * Generates a fresh password for an LTI-provisioned account and marks it as initialised, so the launch hands the password
-     * over exactly once. The returned value is the only place the plain password exists - the stored one is hashed.
+     * Generates a fresh password for an LTI-provisioned account and marks it as initialised, so the launch can hand the
+     * password over exactly once. The returned value is the only place the plaintext exists - what is stored is the hash.
      * <p>
-     * Writes {@link User#isLtiInitialized()} rather than {@code activated}, which it used to set: that both overloaded a flag
-     * meaning only "may authenticate" and let a deactivated account re-enable itself through the initialisation endpoint.
+     * The password is hashed before the update is attempted, so a hashing failure leaves the account untouched, and the
+     * store and the marker move together in one conditional statement - see
+     * {@link UserRepository#initializeLtiPassword(long, String)} for why neither a plain save nor a separate claim is
+     * sufficient. An empty result means the account was not eligible, in which case nothing was written.
+     * <p>
+     * Writes {@link User#isLtiInitialized()} rather than {@code activated}, which this used to set: that both overloaded a
+     * flag meaning only "may authenticate" and let a deactivated account re-enable itself through the endpoint.
      *
-     * @param user the user to update
-     * @return the newly created password, in plain text, for display to that user
+     * @param user the account to initialise
+     * @return the newly created password in plain text, or empty if the account was not eligible
      */
-    public String setRandomPasswordAndReturn(User user) {
+    public Optional<String> initializeLtiPasswordAndReturn(User user) {
         String newPassword = RandomUtil.generatePassword();
-        user.setPassword(passwordService.hashPassword(newPassword));
-        // The caller has already claimed the initialisation with a conditional update, so this only brings the in-memory
-        // entity in line with what is stored - without it the save below would write the stale false back and undo the
-        // claim. It used to set `activated` instead, which both overloaded that flag and let a deactivated account
-        // re-enable itself here.
-        user.setLtiInitialized(true);
-        userRepository.save(user);
-        return newPassword;
+        String passwordHash = passwordService.hashPassword(newPassword);
+        if (userRepository.initializeLtiPassword(user.getId(), passwordHash) == 0) {
+            log.debug("LTI initialization for user {} was not applied; the account is not eligible any more", user.getLogin());
+            return Optional.empty();
+        }
+        return Optional.of(newPassword);
     }
 
 }

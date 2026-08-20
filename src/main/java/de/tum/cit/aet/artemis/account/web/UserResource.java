@@ -139,16 +139,10 @@ public class UserResource {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
 
-        // Claim the initialisation before rotating the password. The check above is a plain read, so two concurrent launches
-        // would both pass it; only the caller that performs this conditional update may issue a password, because the one
-        // stored hash can only match the password returned by whichever call saved last.
-        if (userRepository.claimLtiInitialization(user.getId()) == 0) {
-            log.debug("LTI initialization for user {} was already claimed by a concurrent request", user.getLogin());
-            return ResponseEntity.ok().body(new UserInitializationDTO(null));
-        }
-
-        String result = userCreationService.setRandomPasswordAndReturn(user);
-        return ResponseEntity.ok().body(new UserInitializationDTO(result));
+        // The condition above is a plain read and only spares an ineligible caller the cost of hashing a password. The
+        // authority is the conditional update inside this call, which re-checks the same account state in the statement that
+        // writes, so a password is returned only when that statement actually applied.
+        return ResponseEntity.ok().body(new UserInitializationDTO(userCreationService.initializeLtiPasswordAndReturn(user).orElse(null)));
     }
 
     /**
