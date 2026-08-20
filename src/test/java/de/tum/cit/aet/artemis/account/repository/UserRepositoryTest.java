@@ -51,6 +51,30 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private LectureUtilService lectureUtilService;
 
+    /**
+     * The conditional update is what makes the LTI initialisation single-shot. Two concurrent launches both pass the plain
+     * read in the endpoint, so if this claim were not conditional they would each rotate the password and each return a
+     * plaintext one, of which only the last saved would still match the stored hash.
+     */
+    @Test
+    void testClaimLtiInitializationSucceedsExactlyOnce() {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "lticlaim");
+        user.setLtiCreated(true);
+        user.setLtiInitialized(false);
+        userRepository.save(user);
+
+        assertThat(userRepository.claimLtiInitialization(user.getId())).as("the first caller claims it").isEqualTo(1);
+        assertThat(userRepository.claimLtiInitialization(user.getId())).as("a second caller claims nothing").isZero();
+        assertThat(userRepository.findById(user.getId()).orElseThrow().isLtiInitialized()).isTrue();
+
+        userRepository.delete(user);
+    }
+
+    @Test
+    void testClaimLtiInitializationDoesNothingForAnUnknownUser() {
+        assertThat(userRepository.claimLtiInitialization(-1L)).isZero();
+    }
+
     @Test
     void testFindAllNotEnrolledUsers() {
         List<User> expected = userRepository.saveAllOrUpdate(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(), 1, 3));

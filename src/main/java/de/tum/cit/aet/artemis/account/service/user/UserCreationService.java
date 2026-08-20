@@ -412,8 +412,10 @@ public class UserCreationService {
     public String setRandomPasswordAndReturn(User user) {
         String newPassword = RandomUtil.generatePassword();
         user.setPassword(passwordService.hashPassword(newPassword));
-        // Records that the password has been handed over, so the launch offers the dialog only once. This used to set
-        // `activated` instead, which both overloaded that flag and let a deactivated account re-enable itself here.
+        // The caller has already claimed the initialisation with a conditional update, so this only brings the in-memory
+        // entity in line with what is stored - without it the save below would write the stale false back and undo the
+        // claim. It used to set `activated` instead, which both overloaded that flag and let a deactivated account
+        // re-enable itself here.
         user.setLtiInitialized(true);
         userRepository.save(user);
         return newPassword;

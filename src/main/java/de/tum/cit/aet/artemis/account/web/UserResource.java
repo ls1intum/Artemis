@@ -139,6 +139,14 @@ public class UserResource {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
 
+        // Claim the initialisation before rotating the password. The check above is a plain read, so two concurrent launches
+        // would both pass it; only the caller that performs this conditional update may issue a password, because the one
+        // stored hash can only match the password returned by whichever call saved last.
+        if (userRepository.claimLtiInitialization(user.getId()) == 0) {
+            log.debug("LTI initialization for user {} was already claimed by a concurrent request", user.getLogin());
+            return ResponseEntity.ok().body(new UserInitializationDTO(null));
+        }
+
         String result = userCreationService.setRandomPasswordAndReturn(user);
         return ResponseEntity.ok().body(new UserInitializationDTO(result));
     }

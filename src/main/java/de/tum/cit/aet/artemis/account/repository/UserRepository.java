@@ -924,6 +924,26 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     void updateUserLanguageKey(@Param("userId") long userId, @Param("languageKey") String languageKey);
 
+    /**
+     * Claims the one-time LTI initialisation of an account, so that exactly one caller may hand over a generated password.
+     * <p>
+     * The transition is expressed as a conditional update rather than a read followed by a save: two concurrent launches
+     * would otherwise both observe {@code ltiInitialized == false}, both rotate the password, and each return a plaintext
+     * password of which only the last one still matches the stored hash.
+     *
+     * @param userId the account to claim
+     * @return 1 if this caller performed the transition and may issue a password, 0 if it had already been claimed
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.ltiInitialized = TRUE
+            WHERE user.id = :userId
+                AND user.ltiInitialized = FALSE
+            """)
+    int claimLtiInitialization(@Param("userId") long userId);
+
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""
