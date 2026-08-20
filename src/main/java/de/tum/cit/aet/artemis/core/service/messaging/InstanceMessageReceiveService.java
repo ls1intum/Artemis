@@ -103,6 +103,10 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processPotentialAthenaExerciseScheduleCancel(message.getMessageObject());
         });
+        hazelcastInstance.<Long>getTopic(MessageTopic.MODELING_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processSchedulePotentialAthenaExercise(message.getMessageObject());
+        });
         hazelcastInstance.<Long>getTopic(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processRemoveNonActivatedUser((message.getMessageObject()));

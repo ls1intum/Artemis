@@ -35,6 +35,14 @@ public interface InstanceMessageSendService {
     void sendTextExerciseScheduleCancel(Long exerciseId);
 
     /**
+     * Send a message to the main server that a modeling exercise was created or updated and its Athena due-date
+     * scheduling has to be (re-)performed
+     *
+     * @param exerciseId the id of the exercise that should be scheduled
+     */
+    void sendModelingExerciseSchedule(Long exerciseId);
+
+    /**
      * Send a message to the main server that the non-activated should be deleted.
      *
      * @param userId the user id of the non-activated user

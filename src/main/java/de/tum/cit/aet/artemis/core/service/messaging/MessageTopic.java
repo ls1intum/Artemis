@@ -10,6 +10,7 @@ public enum MessageTopic {
     PROGRAMMING_EXERCISE_SCHEDULE_CANCEL("programming-exercise-schedule-cancel"),
     TEXT_EXERCISE_SCHEDULE("text-exercise-schedule"),
     TEXT_EXERCISE_SCHEDULE_CANCEL("text-exercise-schedule-cancel"),
+    MODELING_EXERCISE_SCHEDULE("modeling-exercise-schedule"),
     USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS("user-management-remove-non-activated-users"),
     USER_MANAGEMENT_CANCEL_REMOVE_NON_ACTIVATED_USERS("user-management-cancel-remove-non-activated-users"),
     EXERCISE_RELEASED_SCHEDULE("exercise-released-schedule"),

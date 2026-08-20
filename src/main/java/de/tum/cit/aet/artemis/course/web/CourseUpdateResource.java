@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
@@ -239,6 +240,7 @@ public class CourseUpdateResource {
             switch (exercise) {
                 case ProgrammingExercise programmingExercise -> instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExercise.getId());
                 case TextExercise textExercise -> instanceMessageSendService.sendTextExerciseSchedule(textExercise.getId());
+                case ModelingExercise modelingExercise -> instanceMessageSendService.sendModelingExerciseSchedule(modelingExercise.getId());
                 default -> {
                     // no other exercise type is currently wired for Athena due-date scheduling
                 }

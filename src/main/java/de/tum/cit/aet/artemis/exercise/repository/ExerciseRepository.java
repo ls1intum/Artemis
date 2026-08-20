@@ -822,7 +822,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             LEFT JOIN e.exerciseGroup eg
             LEFT JOIN eg.exam exam
             WHERE e.dueDate > :dueDate
-                AND TYPE (e) IN (TextExercise, ProgrammingExercise)
+                AND TYPE (e) IN (TextExercise, ProgrammingExercise, ModelingExercise)
                 AND (c.id = :courseId OR exam.course.id = :courseId)
             """)
     Set<Exercise> findAllAthenaSchedulableExercisesWithFutureDueDateByCourseId(@Param("courseId") long courseId, @Param("dueDate") ZonedDateTime dueDate);
