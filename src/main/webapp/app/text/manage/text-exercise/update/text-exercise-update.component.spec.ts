@@ -532,7 +532,11 @@ describe('TextExercise Management Update Component', () => {
             expect(component.textExercise.exampleSolutionPublicationDate).toBeUndefined();
 
             const timeline = fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance as ExerciseTimelineComponent;
-            expect(timeline.timelineItems().every((item) => !item.disabled)).toBe(true);
+            const exampleSolutionPublicationDateItem = timeline.timelineItems().find((item) => item.labelStringKey === 'artemisApp.exercise.exampleSolutionPublicationDate');
+            const otherTimelineItems = timeline.timelineItems().filter((item) => item.labelStringKey !== 'artemisApp.exercise.exampleSolutionPublicationDate');
+
+            expect(exampleSolutionPublicationDateItem?.disabled).toBe(true);
+            expect(otherTimelineItems.every((item) => !item.disabled)).toBe(true);
         });
 
         it('should load exercise categories', async () => {

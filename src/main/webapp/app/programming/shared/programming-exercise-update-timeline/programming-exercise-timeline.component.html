@@ -114,7 +114,8 @@
                             type="checkbox"
                             class="form-check-input"
                             name="setTestCaseVisibilityToAfterDueDate"
-                            [(ngModel)]="setTestCaseVisibilityToAfterDueDate"
+                            [ngModel]="setTestCaseVisibilityToAfterDueDate()"
+                            (click)="onSetTestCaseVisibilityClick($event)"
                             id="setTestCaseVisibilityToAfterDueDate-checkbox"
                         />
                         <label
@@ -194,3 +195,4 @@
         </div>
     </div>
 </div>
+<p-confirmDialog />

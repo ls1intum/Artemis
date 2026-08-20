@@ -104,7 +104,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
         const editGroupDatesSpy = vi.spyOn(comp.editGroupDates, 'emit');
         fixture.detectChanges();
 
-        const timelineControls = fixture.debugElement.query(By.css('jhi-programming-exercise-update-timeline .section'));
+        const timelineControls = fixture.debugElement.query(By.css('jhi-programming-exercise-timeline .assessment-layout'));
         const notice = timelineControls.query(By.directive(ExerciseGroupDateNoticeComponent));
 
         expect(timelineControls.nativeElement.firstElementChild).toBe(notice.nativeElement);
@@ -361,7 +361,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
             },
             {
                 name: 'timeline',
-                selector: 'jhi-programming-exercise-update-timeline',
+                selector: 'jhi-programming-exercise-timeline',
                 field: ProgrammingExerciseInputField.TIMELINE,
             },
             {
