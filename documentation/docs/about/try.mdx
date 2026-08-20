@@ -1,0 +1,128 @@
+---
+id: try
+title: Try Artemis
+sidebar_label: Try Artemis
+description: Run a local Artemis instance with programming exercises using one command, or ask for a hosted trial.
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Try Artemis
+
+The fastest way to judge Artemis is to use it. The setup below includes the
+[integrated code lifecycle](/instructor/integrations/integrated-code-lifecycle), so **programming
+exercises work**: Artemis hosts the git repositories itself and runs the tests in Docker containers.
+That is the part of Artemis worth looking at first.
+
+## Run it locally with Docker
+
+You need [Docker](https://docs.docker.com/get-started/get-docker/) with the Compose plugin, and about
+6 GB of memory available to it (in Docker Desktop: **Settings → Resources**). Published images cover
+both `amd64` and `arm64`, so Apple Silicon pulls a prebuilt image rather than building one.
+
+```bash
+git clone https://github.com/ls1intum/Artemis.git
+cd Artemis
+docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.yml pull
+docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.yml up
+```
+
+Then open **http://localhost:8080** and sign in as `artemis_admin` / `artemis_admin`.
+
+<Callout variant={CalloutVariant.warning}>
+    Run Compose **from the repository root** and keep `--env-file .env`. The Compose files read image
+    versions from the `.env` file in the repository root, and Compose looks for that file next to the
+    first `-f` file, which is `docker/`, not the root. Without it the images resolve to blanks and the
+    project either fails to start or fails to pull.
+</Callout>
+
+On **Linux with a native Docker daemon**, the build agent needs your host's docker group to reach the
+Docker socket:
+
+```bash
+export ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3)
+```
+
+Docker Desktop on macOS and Windows needs nothing extra.
+
+To stop, press `Ctrl+C`. To remove the containers and the database volume as well:
+
+```bash
+docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.yml down -v
+```
+
+## What you can do with it
+
+The first start creates the database schema, so give it a moment. Once Artemis reports itself started,
+you have a complete instance:
+
+- **Programming exercises.** Create one, let Artemis generate the template, solution, and test
+  repositories, participate as a student, push a commit, and watch the build agent run the tests and
+  return structured feedback. Static code analysis, submission policies, and manual code review in the
+  online editor all work.
+- **Every other exercise type.** Quiz, text, modeling, and file upload, with manual assessment against
+  structured grading criteria.
+- **Exams.** Including exercise variants per student and instructor test runs.
+- **Courses, lectures, competencies, learning paths, communication channels, and FAQs.**
+
+The setup starts one build agent with four concurrent build slots, which is enough to feel how the
+feedback loop behaves. Production deployments scale this out horizontally.
+
+<Callout variant={CalloutVariant.info}>
+    Build agents pull a language-specific Docker image the first time an exercise of that language is
+    built, so the very first programming submission takes noticeably longer than the ones after it.
+</Callout>
+
+## What it deliberately leaves out
+
+- **AI features.** Iris, Athena, and Hyperion are optional integrations and need a configured model
+  provider. See [Artemis Intelligence](/admin/artemis-intelligence).
+- **External authentication.** The trial uses internal accounts. LDAP, SAML2, and OIDC are configured
+  per deployment.
+- **Mail.** Notification emails need an SMTP server; [Mailpit](/developer/mailpit-setup) is the local
+  option.
+
+<Callout variant={CalloutVariant.danger}>
+    This is a trial setup, not a deployment. It runs the development profile with the credentials
+    published in this repository, and it gives the container access to your Docker socket so the build
+    agent can start containers. Never expose it to a network you do not control. For a real deployment,
+    follow the [administrator guide](/admin/intro); the production profile refuses to start until you
+    replace those credentials with your own.
+</Callout>
+
+## Simpler variant, without programming exercises
+
+If you do not need programming exercises, or you would rather not mount the Docker socket, this one is
+smaller and needs no group configuration:
+
+```bash
+docker compose --env-file .env -f docker/artemis-dev-postgres.yml up
+```
+
+## Ask for a hosted trial
+
+If you would rather not run anything, or your institution is too small to operate its own instance,
+the Artemis team at TUM can host one for you. This is intended for schools and for institutions
+evaluating Artemis before committing to their own infrastructure.
+
+Write to [artemis@xcit.tum.de](mailto:artemis@xcit.tum.de).
+
+## Deploy it properly
+
+When the trial has answered your questions:
+
+- [Administrator guide](/admin/intro) for production setup, security, scaling, and operations.
+- [Integrated code lifecycle setup](/admin/production-setup/integrated-code-lifecycle-setup) for
+  running programming exercises in production, including separate build agents.
+- [Artemis Ansible Collection](https://github.com/ls1intum/artemis-ansible-collection) automates a
+  production deployment and is the recommended path.
+- [Docker Compose setups](/developer/docker-compose) documents every Compose file in the repository.
+- [Trust and transparency](./trust) answers the security, privacy, accessibility, and AI questions that
+  come up in an institutional review.
+
+## Develop against it
+
+If you want to change Artemis rather than only run it, start with the
+[developer setup guide](/developer/setup), which sets up the server and client for local development
+with hot reload.
