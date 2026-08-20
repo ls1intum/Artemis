@@ -10,7 +10,7 @@
         <div class="inline-feedback__top">
             <!-- Points of an instruction-linked feedback are owned by that instruction and render as a pill; own
                  points are edited with a half-point stepper while the feedback is open. -->
-            @if (viewOnly() || feedback.gradingInstruction) {
+            @if (viewOnly() || currentFeedback().gradingInstruction) {
                 @if (!Feedback.isNonGradedFeedbackSuggestion(feedback)) {
                     <tum-ui-tag
                         class="inline-feedback__points-pill"
@@ -67,7 +67,7 @@
                     }
                 } @else {
                     <!-- Only editable feedback offers to unlink its grading instruction. -->
-                    @if (feedback.gradingInstruction) {
+                    @if (currentFeedback().gradingInstruction) {
                         <jhi-grading-instruction-link-icon [feedback]="feedback" />
                     }
                 }
@@ -97,7 +97,7 @@
         } @else {
             <div class="inline-feedback__editor" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
                 <!-- Tutor-facing guidance of the linked instruction: says when this score applies. -->
-                @if (feedback.gradingInstruction?.instructionDescription; as instructionDescription) {
+                @if (currentFeedback().gradingInstruction?.instructionDescription; as instructionDescription) {
                     <div class="inline-feedback__section">
                         <span class="inline-feedback__label" jhiTranslate="artemisApp.assessment.detail.criteria"></span>
                         <p class="inline-feedback__scale">{{ instructionDescription }}</p>
@@ -106,8 +106,8 @@
                 }
 
                 <div class="inline-feedback__section">
-                    <span class="inline-feedback__label" jhiTranslate="artemisApp.assessment.detail.feedback"></span>
-                    @if (feedback.gradingInstruction?.feedback; as instructionFeedback) {
+                    <label class="inline-feedback__label" [id]="'feedback-label-' + codeLine()" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
+                    @if (currentFeedback().gradingInstruction?.feedback; as instructionFeedback) {
                         <p class="inline-feedback__instruction-feedback">{{ instructionFeedback }}</p>
                     }
                     <textarea
@@ -117,8 +117,9 @@
                         rows="3"
                         [(ngModel)]="feedback.detailText"
                         #detailText
+                        [attr.aria-labelledby]="'feedback-label-' + codeLine()"
                         [placeholder]="
-                            feedback.gradingInstruction
+                            currentFeedback().gradingInstruction
                                 ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
                                 : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
                         "
