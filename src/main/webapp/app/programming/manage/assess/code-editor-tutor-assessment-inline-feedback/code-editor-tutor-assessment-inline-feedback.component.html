@@ -1,5 +1,5 @@
 @let feedback = currentFeedback();
-<tum-ui-card id="code-editor-inline-feedback-{{ codeLine() }}" class="inline-feedback" [attr.data-tone]="tone(feedback)">
+<tum-ui-card id="code-editor-inline-feedback-{{ codeLine() }}" class="inline-feedback" [attr.data-tone]="tone(currentFeedback())">
     <div class="inline-feedback__content">
         @if (Feedback.isFeedbackSuggestion(feedback) && !readOnly()) {
             <div class="inline-feedback__badges">
@@ -36,8 +36,8 @@
                         class="inline-feedback__points-input"
                         type="number"
                         [step]="CREDITS_STEP"
-                        [ngModel]="feedback.credits"
-                        (ngModelChange)="updateCredits($event)"
+                        [value]="currentFeedback().credits ?? ''"
+                        (input)="updateCredits($any($event.target).valueAsNumber)"
                         [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                         (keydown)="handleKeydown($event)"
                     />
@@ -131,7 +131,15 @@
                         <fa-icon [icon]="faBan" />
                         <span jhiTranslate="entity.action.cancel"></span>
                     </button>
-                    <button id="feedback-save" type="submit" tumUiButton severity="primary" size="small" [disabled]="feedback.credits === undefined" (click)="updateFeedback()">
+                    <button
+                        id="feedback-save"
+                        type="submit"
+                        tumUiButton
+                        severity="primary"
+                        size="small"
+                        [disabled]="currentFeedback().credits === undefined"
+                        (click)="updateFeedback()"
+                    >
                         <fa-icon [icon]="faSave" />
                         <span jhiTranslate="entity.action.save"></span>
                     </button>

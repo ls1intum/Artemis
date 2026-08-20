@@ -15,10 +15,17 @@ import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
+/** One instruction prepared for display, with usage figures precomputed so the template does not call into the selection service while rendering. */
+export interface SortedGradingInstruction {
+    instruction: GradingInstruction;
+    useCount: number;
+    usageLimit: number;
+}
+
 /** A criterion prepared for display: alphabetically sorted instructions plus its live "applied" counter. */
 export interface SortedGradingCriterion {
     title: string;
-    instructions: GradingInstruction[];
+    instructions: SortedGradingInstruction[];
 }
 
 @Component({
@@ -62,7 +69,13 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
             .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
             .map((criterion) => ({
                 title: criterion.title,
-                instructions: [...(criterion.structuredGradingInstructions ?? [])].sort((a, b) => (a.instructionDescription ?? '').localeCompare(b.instructionDescription ?? '')),
+                instructions: [...(criterion.structuredGradingInstructions ?? [])]
+                    .sort((a, b) => (a.instructionDescription ?? '').localeCompare(b.instructionDescription ?? ''))
+                    .map((instruction) => ({
+                        instruction,
+                        useCount: this.selectionService.applicationCount(instruction),
+                        usageLimit: instruction.usageCount ?? 0,
+                    })),
             })),
     );
 
@@ -70,7 +83,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
 
     readonly appliedCountPerCriterion = computed(() => {
         const applied = this.selectionService.appliedInstructionIds();
-        return this.sortedCriteria().map((criterion) => criterion.instructions.filter((instruction) => instruction.id !== undefined && applied.has(instruction.id)).length);
+        return this.sortedCriteria().map((criterion) => criterion.instructions.filter(({ instruction }) => instruction.id !== undefined && applied.has(instruction.id)).length);
     });
 
     /**

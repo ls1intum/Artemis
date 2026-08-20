@@ -21,6 +21,7 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { DeleteDialogData, triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { provideHttpClient } from '@angular/common/http';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     let comp: StructuredGradingInstructionsAssessmentLayoutComponent;
@@ -111,7 +112,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         fixture.componentRef.setInput('criteria', [documentation, camera]);
 
         expect(comp.sortedCriteria().map((criterion) => criterion.title)).toEqual(['Camera', 'Documentation']);
-        expect(comp.sortedCriteria()[1].instructions.map((instruction) => instruction.instructionDescription)).toEqual([
+        expect(comp.sortedCriteria()[1].instructions.map(({ instruction }) => instruction.instructionDescription)).toEqual([
             'All methods have proper JavaDoc.',
             'Not all methods have proper JavaDoc.',
         ]);
@@ -177,7 +178,9 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(fixture.debugElement.query(By.css('jhi-help-icon'))).toBeNull();
 
             instruction.usageCount = 1;
-            fixture.componentRef.setInput('criteria', [{ ...criterion, structuredGradingInstructions: [instruction] }]);
+            const clonedCriterion = deepClone(criterion);
+            clonedCriterion.structuredGradingInstructions = [instruction];
+            fixture.componentRef.setInput('criteria', [clonedCriterion]);
             fixture.detectChanges();
 
             expect(comp.showUsageStepper(instruction)).toBe(false);

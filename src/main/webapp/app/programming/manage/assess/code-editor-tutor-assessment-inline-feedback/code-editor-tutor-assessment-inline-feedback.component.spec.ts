@@ -236,6 +236,29 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.currentFeedback().credits).toBe(1);
     });
 
+    it('should keep the points input, tone, and save button in sync with currentFeedback', () => {
+        const feedback = new Feedback();
+        feedback.credits = 0;
+        fixture.componentRef.setInput('feedback', feedback);
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+
+        const card = fixture.nativeElement.querySelector('.inline-feedback') as HTMLElement;
+        const steps = fixture.nativeElement.querySelectorAll('.inline-feedback__step') as NodeListOf<HTMLButtonElement>;
+
+        expect(Number((fixture.nativeElement.querySelector('#feedback-points') as HTMLInputElement).value)).toBe(0);
+        expect(card.getAttribute('data-tone')).toBe('neutral');
+
+        steps[1].click();
+        fixture.detectChanges();
+
+        const input = fixture.nativeElement.querySelector('#feedback-points') as HTMLInputElement;
+        expect(comp.currentFeedback().credits).toBe(0.5);
+        expect(card.getAttribute('data-tone')).toBe('positive');
+        expect(input.value).toBe('0.5');
+        expect((fixture.nativeElement.querySelector('#feedback-save') as HTMLButtonElement).disabled).toBe(false);
+    });
+
     it('should normalize typed points before saving', () => {
         comp['updateCredits'](0.3);
         expect(comp.currentFeedback().credits).toBe(0.5);
