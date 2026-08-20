@@ -72,11 +72,13 @@ export class ProgrammingExerciseInstructionSsrContentComponent {
         const focusedTaskIndex = this.focusedTaskIndex(host);
         const scrollTop = this.scrollParent()?.scrollTop;
         this.currentHtml = html;
-        // The markup is server-generated, sanitized server-side with a jsoup safelist, and every <script> was removed
-        // by the parent before it reached this component. That is the same trust decision a `bypassSecurityTrustHtml` binding
-        // would encode. It is written imperatively rather than through `[innerHTML]` because a template binding is
-        // applied during this component's view refresh, which Angular runs *before* the view's effects; the focus and
-        // scroll capture above would then already be looking at the replaced DOM.
+        // The markup is server-generated, sanitized server-side with a jsoup safelist, and then sanitized again by the
+        // parent with DOMPurify before it reached this component, which is what covers the PlantUML SVG the server
+        // safelist deliberately does not see. That is the same trust decision a `bypassSecurityTrustHtml` binding would
+        // encode. It is written imperatively rather than through `[innerHTML]` because a template binding is applied
+        // during this component's view refresh, which Angular runs *before* the view's effects; the focus and scroll
+        // capture above would then already be looking at the replaced DOM.
+        // nosemgrep -- the value is DOMPurify output; see the parent's extractRenderableHtml
         host.innerHTML = html ?? '';
         this.renderFormulas(host);
         this.highlightCodeBlocks(host);
@@ -130,9 +132,14 @@ export class ProgrammingExerciseInstructionSsrContentComponent {
             // nothing else. Propagating out of here would skip the task attributes, the scroll and the focus restore
             // below, leaving the whole statement non-interactive over one bad code block.
             try {
+                // `code` is read back from `textContent`, so it is text rather than markup, and highlight.js escapes it
+                // again on the way out; its output is `<span class="hljs-*">` around escaped source and nothing else.
+                // Assigning it is what puts the colours in, since the value is markup by construction.
                 if (!language) {
+                    // nosemgrep -- highlight.js output over text read from textContent
                     element.innerHTML = hljs.highlightAuto(code).value;
                 } else if (hljs.getLanguage(language)) {
+                    // nosemgrep -- highlight.js output over text read from textContent
                     element.innerHTML = hljs.highlight(code, { language, ignoreIllegals: true }).value;
                 }
                 // Unknown language: the legacy pipeline emits the escaped source, which is what the server already put

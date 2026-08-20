@@ -6,9 +6,10 @@
 /**
  * A single test result. `passed: null` means the test is known but was not executed.
  *
- * `message` and `credits` are part of the endpoint's request contract (the server puts them into the `data-feedback`
- * attribute its interactive script reads), so they stay declared even though this client never populates them: it
- * renders with `includeJs: false` and opens the Artemis feedback dialog instead.
+ * `message` and `credits` are part of the endpoint's request contract: the server collects them into the document's
+ * `data-feedback` attribute, which it writes once on the statement container for its interactive script to read, and
+ * which each task references by test id. They stay declared even though this client never populates them: it renders
+ * with `includeJs: false` and opens the Artemis feedback dialog instead.
  */
 export interface TestFeedbackInput {
     testId: number;

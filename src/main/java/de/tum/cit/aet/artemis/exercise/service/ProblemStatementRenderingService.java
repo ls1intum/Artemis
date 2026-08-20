@@ -417,9 +417,10 @@ public class ProblemStatementRenderingService {
             int notExecutedCount = allPassed ? 0 : unresolvedRefs + countNotExecutedTests(testIds, testResults);
 
             // Only emit data-feedback when at least one referenced test actually has feedback. Authored ids are always
-            // added to testIds, so `!testIds.isEmpty()` alone would emit an empty data-feedback="[]" for an empty
-            // (but present) result map. This gates data-feedback only: the stats line below is driven by whether the
-            // task's outcome is known at all, not by whether any of *this* task's tests are among the results.
+            // added to testIds, so `!testIds.isEmpty()` alone would emit an empty attribute for an empty (but present)
+            // result map, which the CSS reads as "this task can be opened". This gates data-feedback only: the stats
+            // line below is driven by whether the task's outcome is known at all, not by whether any of *this* task's
+            // tests are among the results.
             boolean hasFeedback = testResults != null && testIds.stream().anyMatch(testResults::containsKey);
             if (hasFeedback) {
                 testIds.stream().filter(testResults::containsKey).forEach(feedbackTestIds::add);
