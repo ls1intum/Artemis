@@ -3,11 +3,14 @@ package de.tum.cit.aet.artemis.programming.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,10 +21,10 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepo
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
 /**
- * Unit tests for {@link ProgrammingExerciseTaskService#findUnresolvedTaskTestReferences}: unlike
- * {@code extractTasks}, which silently drops task-marker test references that don't resolve to a real test case,
- * this reports them so a caller can surface a precise error (e.g. a variant-generation verify gate) instead of a
- * silently-broken task-test link.
+ * Unit tests for {@link ProgrammingExerciseTaskService#replaceTestNamesWithIds} and
+ * {@link ProgrammingExerciseTaskService#findUnresolvedTaskTestReferences}. Unlike {@code extractTasks}, which silently
+ * drops task-marker test references that don't resolve to a real test case, the latter reports them so a caller can
+ * surface a precise error (e.g. a variant-generation verify gate) instead of a silently-broken task-test link.
  */
 class ProgrammingExerciseTaskServiceTest {
 
@@ -44,8 +47,8 @@ class ProgrammingExerciseTaskServiceTest {
     }
 
     private void withTestCases(String... names) {
-        Set<ProgrammingExerciseTestCase> testCases = java.util.Arrays.stream(names).map(name -> new ProgrammingExerciseTestCase().testName(name).id((long) name.hashCode()))
-                .collect(java.util.stream.Collectors.toSet());
+        Set<ProgrammingExerciseTestCase> testCases = Arrays.stream(names).map(name -> new ProgrammingExerciseTestCase().testName(name).id((long) name.hashCode()))
+                .collect(Collectors.toSet());
         when(testCaseRepository.findByExerciseIdAndActive(anyLong(), eq(true))).thenReturn(testCases);
     }
 
@@ -122,5 +125,53 @@ class ProgrammingExerciseTaskServiceTest {
         List<String> unresolved = taskService.findUnresolvedTaskTestReferences(exercise);
 
         assertThat(unresolved).hasSize(1).first().asString().contains("999");
+    }
+
+    @Test
+    void verifyTaskReplacementInProblemStatementTest() {
+        ProgrammingExerciseTestCase testCase1 = mock(ProgrammingExerciseTestCase.class);
+        when(testCase1.getId()).thenReturn(1L);
+        when(testCase1.getTestName()).thenReturn("TestTask");
+
+        doReturn((Set.of(testCase1))).when(testCaseRepository).findByExerciseIdAndActive(1L, true);
+
+        // A real exercise, not the shared mock: replaceTestNamesWithIds writes the result back via setProblemStatement.
+        ProgrammingExercise realExercise = new ProgrammingExercise();
+        realExercise.setProblemStatement("Some Problem Statement Text infront [task][Placeholder in Problem Statement](TestTask) More Text at the end"
+                + "Only Problem Statement Text infront [task][Placeholder in Problem Statement](TestTask)"
+                + "[task][Placeholder in Problem Statement](TestTask) Only Problem Statement Text at the end");
+        realExercise.setId(1L);
+
+        final String problemStatement = String.format(
+                "Some Problem Statement Text infront [task][Placeholder in Problem Statement](<testid>%d</testid>) More Text at the end"
+                        + "Only Problem Statement Text infront [task][Placeholder in Problem Statement](<testid>%d</testid>)"
+                        + "[task][Placeholder in Problem Statement](<testid>%d</testid>) Only Problem Statement Text at the end",
+                testCase1.getId(), testCase1.getId(), testCase1.getId());
+        taskService.replaceTestNamesWithIds(realExercise);
+        assertThat(realExercise.getProblemStatement()).isEqualTo(problemStatement);
+    }
+
+    @Test
+    void verifyRegexCharacterEscapeForTaskReplacementTest() {
+        ProgrammingExerciseTestCase testCase1 = mock(ProgrammingExerciseTestCase.class);
+        when(testCase1.getId()).thenReturn(1L);
+        when(testCase1.getTestName()).thenReturn("Outerclass$Innerclass#method");
+
+        ProgrammingExerciseTestCase testCase2 = mock(ProgrammingExerciseTestCase.class);
+        when(testCase2.getId()).thenReturn(2L);
+        when(testCase2.getTestName()).thenReturn("someTestNameThatContains\\\\");
+
+        doReturn((Set.of(testCase1, testCase2))).when(testCaseRepository).findByExerciseIdAndActive(1L, true);
+
+        ProgrammingExercise realExercise = new ProgrammingExercise();
+        realExercise.setProblemStatement(
+                "[task][Placeholder in Problem Statement](Outerclass$Innerclass#method)" + "[task][Placeholder2 in Problem Statement](someTestNameThatContains\\\\)");
+        realExercise.setId(1L);
+
+        final String problemStatement = String.format(
+                "[task][Placeholder in Problem Statement](<testid>%d</testid>)" + "[task][Placeholder2 in Problem Statement](<testid>%d</testid>)", testCase1.getId(),
+                testCase2.getId());
+        taskService.replaceTestNamesWithIds(realExercise);
+        assertThat(realExercise.getProblemStatement()).isEqualTo(problemStatement);
     }
 }
