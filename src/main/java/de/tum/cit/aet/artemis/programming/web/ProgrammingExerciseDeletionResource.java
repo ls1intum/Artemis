@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
@@ -58,6 +59,8 @@ public class ProgrammingExerciseDeletionResource {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final Optional<BuildPhasesTemplateService> buildPhasesTemplateService;
+
     private final ExerciseService exerciseService;
 
     private final ExerciseDeletionService exerciseDeletionService;
@@ -71,12 +74,14 @@ public class ProgrammingExerciseDeletionResource {
     private final ExerciseVersionService exerciseVersionService;
 
     public ProgrammingExerciseDeletionResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseDeletionService programmingExerciseDeletionService, ExerciseVersionService exerciseVersionService) {
+            AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<BuildPhasesTemplateService> buildPhasesTemplateService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
+            ProgrammingExerciseDeletionService programmingExerciseDeletionService, ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -127,14 +132,19 @@ public class ProgrammingExerciseDeletionResource {
 
         if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-            continuousIntegrationService.ifPresent(ciService -> {
-                try {
-                    ciService.recreateBuildPlansForExercise(programmingExercise);
+            try {
+                if (continuousIntegrationService.isPresent()) {
+                    // Jenkins recreates the remote build plans; LocalCI resets the persisted build configuration to the default.
+                    continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
                 }
-                catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
+                else if (buildPhasesTemplateService.isPresent()) {
+                    // Hades has no ContinuousIntegrationService but keeps a persisted phase/image configuration, so reset it to the default.
+                    buildPhasesTemplateService.get().resetBuildConfigToDefault(programmingExercise);
                 }
-            });
+            }
+            catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {

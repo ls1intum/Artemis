@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
-import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -17,12 +16,8 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
 /**
  * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
@@ -40,13 +35,9 @@ public class LocalCIService implements ContinuousIntegrationService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
-    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
-    public LocalCIService(BuildPhasesTemplateService buildPhasesTemplateService, DistributedDataAccessService distributedDataAccessService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+    public LocalCIService(BuildPhasesTemplateService buildPhasesTemplateService, DistributedDataAccessService distributedDataAccessService) {
         this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.distributedDataAccessService = distributedDataAccessService;
-        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     @Override
@@ -63,17 +54,8 @@ public class LocalCIService implements ContinuousIntegrationService {
      */
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException {
-        if (exercise == null) {
-            return;
-        }
-        log.debug("Recreating build plans for exercise {}", exercise.getTitle());
-        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise);
-        String image = buildPhasesTemplateService.getDefaultDockerImageFor(exercise);
-        ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-        buildConfig.setBuildScript(null);
-        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(phases, image).toBuildPlanConfiguration());
-        // recreating the build plans for the exercise means we need to store the updated build config in the database
-        programmingExerciseBuildConfigRepository.save(buildConfig);
+        // LocalCI has no remote build plans; recreating them means resetting the persisted build configuration to the default.
+        buildPhasesTemplateService.resetBuildConfigToDefault(exercise);
     }
 
     @Override
