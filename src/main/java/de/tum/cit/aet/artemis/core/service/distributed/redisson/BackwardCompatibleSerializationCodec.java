@@ -12,36 +12,40 @@ import org.redisson.codec.SerializationCodec;
 import io.netty.buffer.ByteBuf;
 
 /**
- * Writes Redis values with Java serialization and reads both Java serialization and Kryo.
+ * Serializes Redis <em>map values</em> the way Hazelcast does, and leaves every other encoding untouched.
  *
  * <p>
- * Artemis switched the Redis codec from Redisson's default Kryo to Java serialization, because Hazelcast serializes
- * that way and the two disagree on values whose class defines its own {@code writeObject} - see
- * {@link de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration} for the case that forced it.
+ * Redisson defaults to Kryo, which does not run a value's own {@code writeObject}: it walks the fields reflectively
+ * instead. That is what made {@code savedPosts} answer 500 under Redis while working under Hazelcast - the cached
+ * {@code List<SavedPost>} reaches a {@code User} whose {@code authorities} is a lazy Hibernate collection, and Kryo
+ * reads its size rather than letting it record that it is uninitialized. Map values are where that class of value
+ * lives, because that is what backs the Spring caches.
  *
  * <p>
- * Changing the codec outright would make everything an older Artemis wrote unreadable: the build job queue, the jobs
- * currently being processed, and scheduling messages all outlive a node. Reading both formats keeps an upgrade
- * non-destructive - a new node still understands what an old one left behind - while everything it writes itself is in
- * the format the whole cluster is moving to.
+ * <b>Keys stay on Kryo, and so do plain values.</b> Redis addresses a hash field by the <em>bytes</em> of its encoded
+ * key, so re-encoding a key does not find the entry that is already there: the lookup misses, a write inserts a second
+ * field for the same logical key, and a remove silently does nothing. That is not theory - it was measured on a
+ * deployment upgraded with an earlier version of this codec, where {@code processingJobs} kept five jobs no node could
+ * delete (a warn loop every five seconds) and {@code features} ended up holding all thirteen toggles twice. Sets,
+ * queues and topics address their elements by encoded bytes for the same reason, so they keep Kryo too.
  *
  * <p>
- * The two formats are told apart by the value rather than by configuration: a Java serialization stream always starts
- * with {@link ObjectStreamConstants#STREAM_MAGIC}, which is not a legal start of a Kryo stream. Nothing has to be
- * remembered across restarts, and an entry rewritten by any node is simply in the new format from then on.
+ * Map values are the one place where nothing is addressed by content, so they can change format safely. Old entries
+ * stay readable because the decoder tells the formats apart by the value itself: a Java serialization stream starts
+ * with {@link ObjectStreamConstants#STREAM_MAGIC}, which cannot start a Kryo stream. Nothing has to be configured or
+ * remembered, and each value moves to the new format the first time any node rewrites it.
  *
  * <p>
- * Note for operators: the reverse direction is not possible. An <em>older</em> node cannot read what a node running
- * this codec writes. Roll a Redis-backed deployment forward, not back, and expect a mixed-version window in which the
- * old nodes ignore the new nodes' entries.
+ * Note for operators: an older node cannot read a map value this codec has rewritten, so roll a Redis-backed
+ * deployment forward rather than back. Keys, sets, queues and topics are unaffected in both directions.
  */
 public class BackwardCompatibleSerializationCodec extends BaseCodec {
 
-    private final Codec writeFormat;
+    private final Codec mapValueFormat;
 
     private final Codec legacyFormat;
 
-    private final Decoder<Object> decoder;
+    private final Decoder<Object> mapValueDecoder;
 
     public BackwardCompatibleSerializationCodec() {
         this(new SerializationCodec(), new Kryo5Codec());
@@ -67,10 +71,10 @@ public class BackwardCompatibleSerializationCodec extends BaseCodec {
         this(classLoader);
     }
 
-    private BackwardCompatibleSerializationCodec(Codec writeFormat, Codec legacyFormat) {
-        this.writeFormat = writeFormat;
+    private BackwardCompatibleSerializationCodec(Codec mapValueFormat, Codec legacyFormat) {
+        this.mapValueFormat = mapValueFormat;
         this.legacyFormat = legacyFormat;
-        this.decoder = (buf, state) -> startsWithJavaSerializationHeader(buf) ? writeFormat.getValueDecoder().decode(buf, state)
+        this.mapValueDecoder = (buf, state) -> startsWithJavaSerializationHeader(buf) ? mapValueFormat.getValueDecoder().decode(buf, state)
                 : legacyFormat.getValueDecoder().decode(buf, state);
     }
 
@@ -83,17 +87,37 @@ public class BackwardCompatibleSerializationCodec extends BaseCodec {
     }
 
     @Override
+    public Decoder<Object> getMapValueDecoder() {
+        return mapValueDecoder;
+    }
+
+    @Override
+    public Encoder getMapValueEncoder() {
+        return mapValueFormat.getValueEncoder();
+    }
+
+    @Override
+    public Decoder<Object> getMapKeyDecoder() {
+        return legacyFormat.getValueDecoder();
+    }
+
+    @Override
+    public Encoder getMapKeyEncoder() {
+        return legacyFormat.getValueEncoder();
+    }
+
+    @Override
     public Decoder<Object> getValueDecoder() {
-        return decoder;
+        return legacyFormat.getValueDecoder();
     }
 
     @Override
     public Encoder getValueEncoder() {
-        return writeFormat.getValueEncoder();
+        return legacyFormat.getValueEncoder();
     }
 
     @Override
     public ClassLoader getClassLoader() {
-        return writeFormat.getClassLoader();
+        return mapValueFormat.getClassLoader();
     }
 }

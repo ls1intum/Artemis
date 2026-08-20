@@ -24,30 +24,46 @@ class BackwardCompatibleSerializationCodecTest {
     private final BackwardCompatibleSerializationCodec codec = new BackwardCompatibleSerializationCodec();
 
     @Test
-    void testReadsWhatAnOlderNodeWroteWithKryo() throws IOException {
-        // A queued build job that an older Artemis left in Redis has to survive the upgrade, or the build never comes back.
+    void testReadsMapValuesAnOlderNodeWroteWithKryo() throws IOException {
+        // A cache entry an older Artemis left in Redis has to survive the upgrade rather than come back as garbage.
         var kryo = new Kryo5Codec();
 
-        assertThat(decode(codec, encode(kryo, "queued-build-job"))).isEqualTo("queued-build-job");
-        assertThat(decode(codec, encode(kryo, 42L))).isEqualTo(42L);
+        assertThat(decodeMapValue(codec, encode(kryo, "cached-by-an-older-node"))).isEqualTo("cached-by-an-older-node");
+        assertThat(decodeMapValue(codec, encode(kryo, 42L))).isEqualTo(42L);
     }
 
     @Test
-    void testWritesJavaSerializationSoTheClusterConvergesOnOneFormat() throws IOException {
-        ByteBuf encoded = encode(codec, "written-by-this-node");
+    void testWritesMapValuesWithJavaSerialization() throws IOException {
+        ByteBuf encoded = codec.getMapValueEncoder().encode("written-by-this-node");
 
-        assertThat(encoded.getShort(encoded.readerIndex())).as("values this codec writes have to be Java serialization").isEqualTo(ObjectStreamConstants.STREAM_MAGIC);
-        assertThat(decode(codec, encoded)).isEqualTo("written-by-this-node");
+        assertThat(encoded.getShort(encoded.readerIndex())).as("map values have to be written with Java serialization").isEqualTo(ObjectStreamConstants.STREAM_MAGIC);
+        assertThat(decodeMapValue(codec, encoded)).isEqualTo("written-by-this-node");
     }
 
     @Test
-    void testRoundTripsAValueThatDefinesItsOwnSerialization() throws IOException {
-        // The whole reason for leaving Kryo: it walks fields reflectively instead of asking the value to write itself,
-        // so a class that rebuilds state in readObject comes back broken.
+    void testLeavesEverythingAddressedByItsBytesOnKryo() throws IOException {
+        // Redis finds a hash field, a set element and a queue entry by the bytes of its encoding. Re-encoding any of
+        // them would stop matching what is already stored: lookups miss, writes duplicate, removes do nothing. This was
+        // measured on a real deployment, so it is pinned rather than argued about.
+        var kryo = new Kryo5Codec();
+        String key = "121775952000135";
+
+        assertThat(bytesOf(codec.getMapKeyEncoder().encode(key))).as("map keys must stay byte-identical to Kryo").isEqualTo(bytesOf(encode(kryo, key)));
+        assertThat(bytesOf(codec.getValueEncoder().encode(key))).as("set elements and queue entries must stay byte-identical to Kryo").isEqualTo(bytesOf(encode(kryo, key)));
+
+        assertThat(codec.getMapKeyDecoder().decode(encode(kryo, key), new State())).isEqualTo(key);
+        assertThat(codec.getValueDecoder().decode(encode(kryo, key), new State())).isEqualTo(key);
+    }
+
+    @Test
+    void testRoundTripsAMapValueThatDefinesItsOwnSerialization() throws IOException {
+        // The whole reason for leaving Kryo on map values: it walks fields reflectively instead of asking the value to
+        // write itself, so a class that rebuilds state in readObject comes back broken.
         var value = new CustomSerializedValue("authorities");
 
-        var throughThisCodec = (CustomSerializedValue) decode(codec, encode(codec, value));
+        var throughThisCodec = (CustomSerializedValue) decodeMapValue(codec, codec.getMapValueEncoder().encode(value));
         assertThat(throughThisCodec.rebuiltOnRead()).as("Java serialization has to run readObject").isTrue();
+        assertThat(throughThisCodec.name()).isEqualTo("authorities");
 
         var throughKryo = (CustomSerializedValue) decode(new Kryo5Codec(), encode(new Kryo5Codec(), value));
         assertThat(throughKryo.rebuiltOnRead()).as("Kryo skipping readObject is the divergence this codec exists to avoid").isFalse();
@@ -59,6 +75,16 @@ class BackwardCompatibleSerializationCodecTest {
 
     private static Object decode(Codec codec, ByteBuf buffer) throws IOException {
         return codec.getValueDecoder().decode(buffer, new State());
+    }
+
+    private static Object decodeMapValue(Codec codec, ByteBuf buffer) throws IOException {
+        return codec.getMapValueDecoder().decode(buffer, new State());
+    }
+
+    private static byte[] bytesOf(ByteBuf buffer) {
+        byte[] bytes = new byte[buffer.readableBytes()];
+        buffer.getBytes(buffer.readerIndex(), bytes);
+        return bytes;
     }
 
     /**
