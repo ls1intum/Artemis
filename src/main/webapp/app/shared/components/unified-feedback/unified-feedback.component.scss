@@ -315,7 +315,7 @@
     }
 
     &.unified-feedback-detail-input-missing {
-        border-color: var(--bs-danger);
+        border-left: 3px solid var(--bs-danger);
     }
 }
 
