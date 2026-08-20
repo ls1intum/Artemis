@@ -281,7 +281,7 @@ describe('CodeButtonComponent', () => {
             fixture.detectChanges();
             expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(repoToken);
-            
+
             // Navigate to the solution repository of the same exercise: same component instance, only the repository type and URI change.
             const solutionToken = 'vcpat-SolutionSolutionSolutionSolutionSolutio123';
             getRepoTokenSpy.mockReturnValue(of(new HttpResponse({ body: solutionToken })));
@@ -354,10 +354,10 @@ describe('CodeButtonComponent', () => {
             // The user has SSH keys, so copy is enabled while the token request is still pending.
             expect(component.copyEnabled()).toBe(true);
 
+            // The repository token resolves now, after the dialog already opened.
             tokenSubject.next(new HttpResponse({ body: repoToken }));
             tokenSubject.complete();
 
-            // The repository token resolves now, after the dialog already opened.
             expect(component.repositoryAccessToken()).toEqual(repoToken);
             expect(component.copyEnabled()).toBe(true);
         });
@@ -388,7 +388,7 @@ describe('CodeButtonComponent', () => {
             await component.ngOnInit();
             component.onClick();
             fixture.detectChanges();
-            
+
             // The non-masked clone URL must embed the repository-scoped staff token as the password (not a participation or user token).
             const cloneUrl = component.getHttpOrSshRepositoryUri(false);
             expect(cloneUrl).toContain(`:${repoToken}@`);
