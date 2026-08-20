@@ -103,7 +103,7 @@
             <br />
             <div class="d-flex flex-wrap flex-lg-nowrap">
                 @if (!result()?.completionDate) {
-                    <span class="d-inline-block m-1" [ngbTooltip]="saveTooltip" container="body">
+                    <span class="inline-block m-1" [attr.tabindex]="saveDisabled ? 0 : null" [ngbTooltip]="saveTooltip" container="body">
                         <button class="btn btn-primary" (click)="save.emit()" [disabled]="saveDisabled">
                             @if (saveBusy()) {
                                 <fa-icon [icon]="faSpinner" animation="spin" />
@@ -112,7 +112,7 @@
                             <span jhiTranslate="entity.action.save"></span>
                         </button>
                     </span>
-                    <span class="d-inline-block m-1" [ngbTooltip]="submitTooltip" container="body">
+                    <span class="inline-block m-1" [attr.tabindex]="submitDisabled ? 0 : null" [ngbTooltip]="submitTooltip" container="body">
                         <button id="submit" class="btn btn-success" (click)="onSubmit.emit(); sendSubmitAssessmentEventToAnalytics()" [disabled]="submitDisabled">
                             @if (submitBusy()) {
                                 <fa-icon [icon]="faSpinner" animation="spin" />

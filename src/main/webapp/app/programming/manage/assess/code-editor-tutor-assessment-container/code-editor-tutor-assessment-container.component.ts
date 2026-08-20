@@ -37,7 +37,7 @@ import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submissi
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
 import { faCircleInfo, faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { cloneDeep } from 'lodash-es';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercise/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
@@ -777,7 +777,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         manualResult.score = (totalScore / this.exercise().maxPoints!) * 100;
         // This is done to update the result string in result.component.ts (the clone also gives the signal a new reference)
-        this.manualResult.set(cloneDeep(manualResult));
+        this.manualResult.set(deepClone(manualResult));
     }
 
     private avoidCircularStructure() {

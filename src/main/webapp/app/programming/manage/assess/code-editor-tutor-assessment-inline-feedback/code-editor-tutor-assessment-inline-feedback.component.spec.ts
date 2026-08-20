@@ -236,6 +236,17 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.currentFeedback().credits).toBe(1);
     });
 
+    it('should normalize typed points before saving', () => {
+        comp['updateCredits'](0.3);
+        expect(comp.currentFeedback().credits).toBe(0.5);
+
+        const onUpdateFeedbackSpy = vi.fn();
+        comp.onUpdateFeedback.subscribe(onUpdateFeedbackSpy);
+        comp.updateFeedback();
+
+        expect(onUpdateFeedbackSpy).toHaveBeenCalledWith(expect.objectContaining({ credits: 0.5 }));
+    });
+
     it('should not step the points of a feedback linked to a grading instruction', () => {
         const feedback = new Feedback();
         feedback.credits = 2;

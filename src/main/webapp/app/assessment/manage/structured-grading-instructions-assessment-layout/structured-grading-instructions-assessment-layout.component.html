@@ -1,24 +1,24 @@
 @if (allowDrop()) {
     <tum-ui-message
         severity="info"
-        class="sgi-hint"
+        class="mb-3 block"
         [icon]="faInfoCircle"
         [text]="(selectable() ? 'artemisApp.exercise.applyInstructionHint' : 'artemisApp.exercise.dragDropInstruction') | artemisTranslate"
     />
 }
 @if (sortedCriteria().length) {
-    <div class="sgi-toolbar">
+    <div class="mb-3 flex items-center gap-1">
         <tum-ui-button variant="text" severity="secondary" size="small" (clicked)="expandAll()">
             <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
         </tum-ui-button>
-        <span class="sgi-toolbar__separator" aria-hidden="true">·</span>
+        <span class="text-muted-color" aria-hidden="true">·</span>
         <tum-ui-button variant="text" severity="secondary" size="small" (clicked)="collapseAll()">
             <span jhiTranslate="artemisApp.assessmentInstructions.collapseAll"></span>
         </tum-ui-button>
     </div>
 }
 @for (criterion of sortedCriteria(); track criterionIndex; let criterionIndex = $index) {
-    <div class="sgi-criterion">
+    <div class="mb-4">
         <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
             <ng-container expandableSectionHeaderActions>
                 @if (selectable()) {
@@ -32,7 +32,7 @@
                     />
                 }
             </ng-container>
-            <div class="sgi-items">
+            <div class="flex flex-col gap-2">
                 @for (instruction of criterion.instructions; track instruction; let instructionIndex = $index) {
                     @let useCount = instructionUseCount(instruction);
                     @let usageLimit = instruction.usageCount ?? 0;
@@ -42,36 +42,42 @@
                     <!-- draggable is bound as a property: as an interpolated attribute the string "false" would still be
                          draggable. isDraggable also stops further drops once a finite usageCount is exhausted. -->
                     <div
-                        class="sgi-item"
+                        class="flex flex-col gap-2 rounded-[0.625rem] border border-[var(--border-color)] p-3"
                         [draggable]="isDraggable(instruction)"
                         (dragstart)="disableDrag()"
                         (dragstart)="drag($event, instruction)"
                         id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
                     >
-                        <div class="sgi-item__top">
-                            <div class="sgi-item__identity">
-                                <tum-ui-tag class="sgi-item__points" [severity]="pointsSeverity(instruction.credits)" [value]="pointsLabel(instruction.credits)" />
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex min-w-0 items-center gap-2">
+                                <tum-ui-tag class="shrink-0" [severity]="pointsSeverity(instruction.credits)" [value]="pointsLabel(instruction.credits)" />
                                 @if (instruction.gradingScale) {
-                                    <span class="sgi-item__level">{{ instruction.gradingScale }}</span>
+                                    <span class="min-w-0 text-sm font-semibold [overflow-wrap:anywhere]">{{ instruction.gradingScale }}</span>
                                 }
                             </div>
-                            <div class="sgi-item__control">
+                            <div class="relative flex shrink-0 items-center gap-2 whitespace-nowrap">
                                 @if (selectable()) {
                                     @if (showUsageStepper(instruction)) {
-                                        <div class="sgi-item__usage-stepper" role="group" [attr.aria-label]="usageTooltip">
+                                        <div
+                                            class="inline-flex items-center overflow-hidden rounded-md border border-[var(--border-color)]"
+                                            role="group"
+                                            [attr.aria-label]="usageTooltip"
+                                        >
                                             <button
                                                 type="button"
-                                                class="sgi-item__usage-step"
+                                                class="inline-flex size-6.5 cursor-pointer items-center justify-center border-0 border-e border-[var(--border-color)] bg-transparent p-0 text-inherit disabled:cursor-not-allowed disabled:opacity-40"
                                                 [disabled]="!canDecrementApplication(instruction)"
                                                 [attr.aria-label]="'artemisApp.exercise.decreaseInstructionUsage' | artemisTranslate"
                                                 (click)="decrementApplication($event, instruction)"
                                             >
                                                 <fa-icon [icon]="faMinus" />
                                             </button>
-                                            <span class="sgi-item__usage-counter" [tumUiTooltip]="usageTooltip"> {{ useCount }} / {{ usageLimit > 0 ? usageLimit : '∞' }} </span>
+                                            <span class="text-muted-color min-w-11 cursor-help px-1.5 text-center text-xs font-semibold tabular-nums" [tumUiTooltip]="usageTooltip">
+                                                {{ useCount }} / {{ usageLimit > 0 ? usageLimit : '∞' }}
+                                            </span>
                                             <button
                                                 type="button"
-                                                class="sgi-item__usage-step"
+                                                class="inline-flex size-6.5 cursor-pointer items-center justify-center border-0 border-s border-[var(--border-color)] bg-transparent p-0 text-inherit disabled:cursor-not-allowed disabled:opacity-40"
                                                 [disabled]="!canIncrementApplication(instruction)"
                                                 [attr.aria-label]="'artemisApp.exercise.increaseInstructionUsage' | artemisTranslate"
                                                 (click)="incrementApplication($event, instruction)"
@@ -93,7 +99,7 @@
                                         />
                                     </span>
                                 } @else {
-                                    <span class="sgi-item__usage">
+                                    <span class="inline-flex items-center gap-1">
                                         @if (instruction!.usageCount && instruction!.usageCount !== 0) {
                                             {{ instruction.usageCount }}
                                         } @else {
@@ -105,8 +111,8 @@
                             </div>
                         </div>
                         <!-- Tutor notes on when this scale level applies (muted), then the student-facing feedback. -->
-                        <div class="sgi-item__guidance markdown-preview" [jhiMarkdown]="instruction!.instructionDescription!"></div>
-                        <div class="sgi-item__student-feedback markdown-preview" [jhiMarkdown]="instruction!.feedback!"></div>
+                        <div class="sgi-item__markdown text-muted-color markdown-preview text-sm" [jhiMarkdown]="instruction!.instructionDescription!"></div>
+                        <div class="sgi-item__markdown markdown-preview" [jhiMarkdown]="instruction!.feedback!"></div>
                     </div>
                 }
             </div>

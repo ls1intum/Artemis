@@ -36,7 +36,8 @@
                         class="inline-feedback__points-input"
                         type="number"
                         [step]="CREDITS_STEP"
-                        [(ngModel)]="feedback.credits"
+                        [ngModel]="feedback.credits"
+                        (ngModelChange)="updateCredits($event)"
                         [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                         (keydown)="handleKeydown($event)"
                     />

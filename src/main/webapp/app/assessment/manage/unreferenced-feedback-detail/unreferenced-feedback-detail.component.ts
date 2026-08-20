@@ -24,7 +24,7 @@ import {
     TumUiTagComponent,
     TumUiTagSeverity,
 } from '@tumaet/ui-angular';
-import { CREDITS_STEP, pointsLabel, pointsSeverity, steppedCredits } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
+import { CREDITS_STEP, normalizedCredits, pointsLabel, pointsSeverity, steppedCredits } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
 
 /** Awarded / deducted / neutral — drives the card's left accent stripe. */
 export type FeedbackTone = 'positive' | 'negative' | 'neutral';
@@ -56,6 +56,7 @@ export type FeedbackTone = 'positive' | 'negative' | 'neutral';
 export class UnreferencedFeedbackDetailComponent implements OnInit {
     structuredGradingCriterionService = inject(StructuredGradingCriterionService);
 
+    // Parent matches feedback by reference (`indexOf`); mutate in place on edit.
     public readonly feedback = model.required<Feedback>();
     readonly resultId = input.required<number>();
     readonly isSuggestion = input<boolean>();
@@ -93,10 +94,14 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     }
 
     /** Severity of the read-only point pill (green awarded / red deducted / neutral). */
-    readonly pointsSeverity = computed<TumUiTagSeverity>(() => pointsSeverity(this.feedback().credits));
+    protected pointsSeverityFor(credits: number | undefined): TumUiTagSeverity {
+        return pointsSeverity(credits);
+    }
 
     /** Signed, compact label of the read-only point pill, e.g. `+10`, `-5`. */
-    readonly pointsLabel = computed(() => pointsLabel(this.feedback().credits));
+    protected pointsLabelFor(credits: number | undefined): string {
+        return pointsLabel(credits);
+    }
 
     /**
      * Points of a feedback linked to a grading instruction are owned by that instruction and cannot be edited, so
@@ -144,12 +149,18 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
      */
     public emitChanges(): void {
         const feedback = this.feedback();
+        feedback.credits = normalizedCredits(feedback.credits);
         if (feedback.type === FeedbackType.AUTOMATIC) {
             feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
         }
         Feedback.updateFeedbackTypeOnChange(feedback);
         this.feedback.set(feedback);
         this.onFeedbackChange.emit(feedback);
+    }
+
+    updateCredits(credits: number | null | undefined): void {
+        this.feedback().credits = normalizedCredits(credits);
+        this.emitChanges();
     }
 
     /**

@@ -26,6 +26,14 @@ export function pointsLabel(credits: number | undefined): string {
 /** Points are graded in half steps throughout Artemis, so every point stepper uses the same one. */
 export const CREDITS_STEP = 0.5;
 
+/** Normalizes typed points to the same half-point grid used by the steppers. */
+export function normalizedCredits(credits: number | null | undefined): number | undefined {
+    if (credits === null || credits === undefined || !Number.isFinite(credits)) {
+        return undefined;
+    }
+    return Math.round(credits / CREDITS_STEP) * CREDITS_STEP;
+}
+
 /**
  * Applies one step of the point stepper. A hand-typed value is snapped onto the half-point grid in the direction of
  * travel first, so stepping up from 1.3 lands on 1.5 (the next grid point) rather than skipping to 2.

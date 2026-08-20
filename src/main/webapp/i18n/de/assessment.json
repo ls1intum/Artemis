@@ -96,7 +96,7 @@
                 "saveFailed": "Das Speichern deiner Bewertung ist fehlgeschlagen!",
                 "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
                 "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
-                "removeAssessmentInstructionLink": "Möchtest du den Link zum Bewertungsanweisung entfernen?",
+                "removeAssessmentInstructionLink": "Möchtest du den Link zur Bewertungsanweisung entfernen?",
                 "incompleteFeedback": "Gib für jeden Feedback-Eintrag einen Text ein, bevor du speicherst oder absendest."
             },
             "dashboard": {

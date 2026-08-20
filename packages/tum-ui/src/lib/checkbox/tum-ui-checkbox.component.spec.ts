@@ -190,8 +190,8 @@ describe('TumUiCheckboxComponent controlled pattern', () => {
 
 @Component({
     // Mirrors the "toggle needs confirmation" pattern: the host owns the state and rejects the user's toggle by
-    // writing the previous value back into `checked` while handling `(onChange)`.
-    template: `<tum-ui-checkbox #checkbox [checked]="applied()" (onChange)="rejectToggle(checkbox)" />`,
+    // writing the previous value back into `checked` while handling `(changed)`.
+    template: `<tum-ui-checkbox #checkbox [checked]="applied()" (changed)="rejectToggle(checkbox)" />`,
     imports: [TumUiCheckboxComponent],
 })
 class RejectingHostComponent {
@@ -213,7 +213,7 @@ describe('TumUiCheckboxComponent (host rejects the toggle)', () => {
         const checkbox = fixture.debugElement.query(By.directive(TumUiCheckboxComponent));
         const input = checkbox.query(By.css('input[type="checkbox"]')).nativeElement as HTMLInputElement;
         const events: TumUiCheckboxChangeEvent[] = [];
-        (checkbox.componentInstance as TumUiCheckboxComponent).onChange.subscribe((event) => events.push(event));
+        (checkbox.componentInstance as TumUiCheckboxComponent).changed.subscribe((event: TumUiCheckboxChangeEvent) => events.push(event));
         expect(input.checked).toBe(true);
 
         input.click();

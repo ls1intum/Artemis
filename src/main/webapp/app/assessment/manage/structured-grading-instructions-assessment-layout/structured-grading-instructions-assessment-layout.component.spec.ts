@@ -172,8 +172,8 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         it('should render a usage stepper for multi-use instructions and hide it for single-use ones', () => {
             // Default: unset usageCount means unlimited multi-use.
             expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
-            expect(fixture.nativeElement.querySelectorAll('.sgi-item__usage-step')).toHaveLength(2);
-            expect(fixture.nativeElement.querySelector('.sgi-item__usage-counter')?.textContent?.trim()).toBe('0 / ∞');
+            expect(fixture.nativeElement.querySelectorAll('[role="group"] button')).toHaveLength(2);
+            expect(fixture.nativeElement.querySelector('[role="group"] span')?.textContent?.trim()).toBe('0 / ∞');
             expect(fixture.debugElement.query(By.css('jhi-help-icon'))).toBeNull();
 
             instruction.usageCount = 1;
@@ -181,7 +181,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             fixture.detectChanges();
 
             expect(comp.showUsageStepper(instruction)).toBe(false);
-            expect(fixture.nativeElement.querySelector('.sgi-item__usage-stepper')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[role="group"]')).toBeNull();
         });
 
         it('should keep single-use instructions checkbox-only even when applied', () => {
@@ -189,7 +189,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             setApplicationCount(1);
 
             expect(comp.showUsageStepper(instruction)).toBe(false);
-            expect(fixture.nativeElement.querySelector('.sgi-item__usage-stepper')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[role="group"]')).toBeNull();
             expect(checkboxInput().checked).toBe(true);
         });
 
@@ -198,7 +198,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             setApplicationCount(2);
 
             expect(comp.instructionUseCount(instruction)).toBe(2);
-            expect(fixture.nativeElement.querySelector('.sgi-item__usage-counter')?.textContent?.trim()).toBe('2 / 2');
+            expect(fixture.nativeElement.querySelector('[role="group"] span')?.textContent?.trim()).toBe('2 / 2');
         });
 
         it('should count the applied instructions of the criterion', () => {
@@ -334,7 +334,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             instruction.usageCount = 2;
             setApplicationCount(1);
 
-            const [decrementButton, incrementButton] = fixture.nativeElement.querySelectorAll('.sgi-item__usage-step') as HTMLButtonElement[];
+            const [decrementButton, incrementButton] = fixture.nativeElement.querySelectorAll('[role="group"] button') as HTMLButtonElement[];
             expect(decrementButton.disabled).toBe(false);
             expect(incrementButton.disabled).toBe(false);
 

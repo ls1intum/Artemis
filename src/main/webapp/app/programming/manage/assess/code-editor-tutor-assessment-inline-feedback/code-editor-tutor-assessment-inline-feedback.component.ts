@@ -24,7 +24,7 @@ import {
     TumUiTagSeverity,
     TumUiTooltipDirective,
 } from '@tumaet/ui-angular';
-import { CREDITS_STEP, pointsSeverity, steppedCredits } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
+import { CREDITS_STEP, normalizedCredits, pointsSeverity, steppedCredits } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
 import { FeedbackTone } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 
 @Component({
@@ -122,7 +122,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * Updates the current feedback and sets props and emits the feedback to parent component
      */
     updateFeedback() {
-        const feedback = this.currentFeedback();
+        const feedback = deepClone(this.currentFeedback());
+        feedback.credits = normalizedCredits(feedback.credits);
         feedback.type = this.MANUAL;
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
         if (Feedback.isFeedbackSuggestion(feedback)) {
@@ -134,6 +135,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         if (feedback.credits && feedback.credits > 0) {
             feedback.positive = true;
         }
+        this.currentFeedback.set(feedback);
         this.onUpdateFeedback.emit(feedback);
     }
 
@@ -176,12 +178,19 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * @param delta the signed step to apply
      */
     protected stepCredits(delta: number): void {
-        const feedback = this.currentFeedback();
+        const feedback = deepClone(this.currentFeedback());
         // Points of a feedback linked to a grading instruction are owned by that instruction.
         if (feedback.gradingInstruction) {
             return;
         }
         feedback.credits = steppedCredits(feedback.credits, delta);
+        this.currentFeedback.set(feedback);
+    }
+
+    protected updateCredits(credits: number | null | undefined): void {
+        const feedback = deepClone(this.currentFeedback());
+        feedback.credits = normalizedCredits(credits);
+        this.currentFeedback.set(feedback);
     }
 
     /**

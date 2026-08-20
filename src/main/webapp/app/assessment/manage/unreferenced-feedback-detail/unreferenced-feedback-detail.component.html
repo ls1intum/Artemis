@@ -1,27 +1,27 @@
 <tum-ui-card
     (drop)="updateFeedbackOnDrop($event)"
     (dragover)="$event.preventDefault()"
-    class="unreferenced-feedback-detail"
+    class="unreferenced-feedback-detail relative w-full min-w-0 overflow-hidden rounded-[1.25rem] border border-[var(--border-color)]"
     [class.is-suggestion]="isSuggestion()"
     [attr.data-tone]="toneForCredits(feedback().credits)"
 >
-    <div class="feedback-card">
+    <div class="feedback-card flex w-full min-w-0 flex-col gap-3 [overflow-wrap:anywhere]">
         @if (isSuggestion() || Feedback.isFeedbackSuggestion(feedback())) {
-            <div class="feedback-card__badges">
+            <div class="flex flex-wrap items-center gap-1.5">
                 <jhi-feedback-suggestion-badge [feedback]="feedback()" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText()" />
             </div>
         }
 
-        <div class="feedback-card__top">
+        <div class="flex min-w-0 items-center justify-between gap-2">
             <!-- Read-only points (linked instruction / read-only card) render as a colored pill; editable points as a stepper. -->
             @if (pointsDisabled()) {
-                <tum-ui-tag class="feedback-card__points-pill" [severity]="pointsSeverity()" [value]="pointsLabel()" />
+                <tum-ui-tag class="text-base" [severity]="pointsSeverityFor(feedback().credits)" [value]="pointsLabelFor(feedback().credits)" />
             } @else {
-                <tum-ui-input-group class="feedback-card__stepper">
+                <tum-ui-input-group class="w-auto">
                     <tum-ui-input-group-addon>
                         <button
                             type="button"
-                            class="feedback-card__step"
+                            class="feedback-card__step flex self-stretch cursor-pointer items-center justify-center border-0 bg-transparent text-inherit"
                             [attr.aria-label]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
                             (click)="stepCredits(-CREDITS_STEP)"
                         >
@@ -31,17 +31,17 @@
                     <input
                         id="feedback-points"
                         tumUiInput
-                        class="feedback-card__points-input"
+                        class="feedback-card__points-input w-18 rounded-none text-center font-semibold"
                         type="number"
                         [step]="CREDITS_STEP"
-                        [(ngModel)]="feedback().credits"
-                        (ngModelChange)="emitChanges()"
+                        [ngModel]="feedback().credits"
+                        (ngModelChange)="updateCredits($event)"
                         [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                     />
                     <tum-ui-input-group-addon>
                         <button
                             type="button"
-                            class="feedback-card__step"
+                            class="feedback-card__step flex self-stretch cursor-pointer items-center justify-center border-0 bg-transparent text-inherit"
                             [attr.aria-label]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
                             (click)="stepCredits(CREDITS_STEP)"
                         >
@@ -51,7 +51,7 @@
                 </tum-ui-input-group>
             }
 
-            <div class="feedback-card__actions">
+            <div class="flex min-w-0 flex-wrap items-center gap-1.5">
                 <!-- Accept/Discard for feedback suggestions -->
                 @if (isSuggestion()) {
                     <tum-ui-button severity="success" size="small" [icon]="faCheck" (clicked)="onAcceptSuggestion.emit(feedback())">
@@ -83,17 +83,17 @@
         </div>
 
         @if (showHeaderSection()) {
-            <div class="feedback-card__section">
-                <span class="feedback-card__label" jhiTranslate="artemisApp.assessment.detail.feedbackHeader"></span>
+            <div class="flex min-w-0 flex-col gap-1">
+                <span class="text-muted-color text-[0.6875rem] font-bold tracking-[0.05em] uppercase" jhiTranslate="artemisApp.assessment.detail.feedbackHeader"></span>
                 @if (headerReadOnly()) {
                     @if (displayTitle(); as title) {
-                        <p class="feedback-card__title">{{ title }}</p>
+                        <p class="m-0 min-w-0 text-sm font-semibold whitespace-pre-wrap">{{ title }}</p>
                     }
                 } @else {
                     <input
                         id="feedback-header"
                         tumUiInput
-                        class="feedback-card__header-input"
+                        class="box-border w-full max-w-full"
                         type="text"
                         [ngModel]="displayTitle() ?? ''"
                         (ngModelChange)="updateHeaderTitle($event)"
@@ -107,22 +107,22 @@
 
         <!-- Tutor-facing guidance of the linked instruction: says when this score applies. -->
         @if (feedback().gradingInstruction?.instructionDescription; as instructionDescription) {
-            <div class="feedback-card__section">
-                <span class="feedback-card__label" jhiTranslate="artemisApp.assessment.detail.criteria"></span>
-                <p class="feedback-card__scale">{{ instructionDescription }}</p>
+            <div class="flex min-w-0 flex-col gap-1">
+                <span class="text-muted-color text-[0.6875rem] font-bold tracking-[0.05em] uppercase" jhiTranslate="artemisApp.assessment.detail.criteria"></span>
+                <p class="text-muted-color m-0 min-w-0 text-sm whitespace-pre-wrap">{{ instructionDescription }}</p>
             </div>
-            <hr class="feedback-card__divider" />
+            <hr class="m-0 border-0 border-t border-[var(--border-color)]" />
         }
 
-        <div class="feedback-card__section">
-            <span class="feedback-card__label" jhiTranslate="artemisApp.assessment.detail.feedback"></span>
+        <div class="flex min-w-0 flex-col gap-1">
+            <span class="text-muted-color text-[0.6875rem] font-bold tracking-[0.05em] uppercase" jhiTranslate="artemisApp.assessment.detail.feedback"></span>
             @if (feedback().gradingInstruction?.feedback; as instructionFeedback) {
-                <p class="feedback-card__instruction-feedback">{{ instructionFeedback }}</p>
+                <p class="m-0 min-w-0 whitespace-pre-wrap">{{ instructionFeedback }}</p>
             }
             <textarea
                 id="feedback-textarea"
                 tumUiTextarea
-                class="feedback-card__textarea"
+                class="box-border w-full max-w-full resize-none"
                 rows="2"
                 [(ngModel)]="feedback().detailText"
                 (ngModelChange)="emitChanges()"
@@ -139,7 +139,7 @@
 
         <!-- Text showing whether the tutor feedback is correct or not (upon validation on the server) -->
         @if (feedback().correctionStatus !== undefined) {
-            <p class="feedback-card__correction-status">
+            <p class="feedback-card__correction-status m-0 flex items-center gap-1 text-sm">
                 @if (feedback().correctionStatus === 'CORRECT') {
                     <span class="text-state-success">{{ 'artemisApp.exampleSubmission.feedback.' + feedback().correctionStatus! | artemisTranslate }}</span>
                 } @else {

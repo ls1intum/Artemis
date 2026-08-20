@@ -134,21 +134,37 @@ describe('Unreferenced Feedback Detail Component', () => {
     });
 
     it('should update tone when credits change via the stepper', () => {
-        fixture.componentRef.setInput('feedback', {
+        const originalFeedback = {
             id: 1,
             detailText: 'feedback',
             credits: 0.5,
-        } as Feedback);
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', originalFeedback);
         fixture.componentRef.setInput('readOnly', false);
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
 
         expect(comp.toneForCredits(comp.feedback().credits)).toBe('positive');
 
         comp.stepCredits(-comp.CREDITS_STEP);
+        expect(comp.feedback()).toBe(originalFeedback);
         expect(comp.feedback().credits).toBe(0);
         expect(comp.toneForCredits(comp.feedback().credits)).toBe('neutral');
+        expect(emitSpy).toHaveBeenCalledWith(originalFeedback);
 
         comp.stepCredits(-comp.CREDITS_STEP);
         expect(comp.feedback().credits).toBe(-0.5);
         expect(comp.toneForCredits(comp.feedback().credits)).toBe('negative');
+    });
+
+    it('should normalize typed credits before emitting feedback', () => {
+        const originalFeedback = { credits: 0 } as Feedback;
+        fixture.componentRef.setInput('feedback', originalFeedback);
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+
+        comp.updateCredits(0.3);
+
+        expect(comp.feedback()).toBe(originalFeedback);
+        expect(comp.feedback().credits).toBe(0.5);
+        expect(emitSpy).toHaveBeenCalledWith(originalFeedback);
     });
 });
