@@ -627,7 +627,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam examI = ExamFactory.generateExam(course1);
         examI.setPublishResultsDate(examI.getEndDate().plusMinutes(30));
         examI.setExamSummaryPublicationDate(examI.getEndDate().plusMinutes(60));
-        return List.of(examA, examB, examC, examD, examE, examF, examG, examH, examI);
+        Exam examJ = ExamFactory.generateTestExam(course1);
+        examJ.setVisibleDate(examJ.getStartDate());
+        return List.of(examA, examB, examC, examD, examE, examF, examG, examH, examI, examJ);
     }
 
     @ParameterizedTest
@@ -921,8 +923,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_failsForInvalidDates(Exam exam) throws Exception {
         // Dates in the updated exam are not valid -> bad request
-        // Use exam1's ID since validation happens after fetching
-        exam.setId(exam1.getId());
+        Exam persistedExamWithSameMode = exam.isTestExam() ? examRepository.save(ExamFactory.generateTestExam(course1)) : exam1;
+        exam.setId(persistedExamWithSameMode.getId());
         request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
     }
 

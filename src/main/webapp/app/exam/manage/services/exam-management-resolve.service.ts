@@ -1,8 +1,6 @@
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, filter, map, of } from 'rxjs';
@@ -58,29 +56,6 @@ export class ExamResolve implements Resolve<Exam> {
             );
         }
         return of(new Exam());
-    }
-}
-
-@Injectable({ providedIn: 'root' })
-export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
-    private exerciseGroupService = inject(ExerciseGroupService);
-
-    /**
-     * Resolves the route by extracting the exerciseGroupId and returns the exercise group with that id if it exists
-     * or creates a new exercise group otherwise.
-     * @param route Contains the information about the route to be resolved
-     */
-    resolve(route: ActivatedRouteSnapshot): Observable<ExerciseGroup> {
-        const courseId = route.params['courseId'] || undefined;
-        const examId = route.params['examId'] || undefined;
-        const exerciseGroupId = route.params['exerciseGroupId'] || undefined;
-        if (courseId && examId && exerciseGroupId) {
-            return this.exerciseGroupService.find(courseId, examId, exerciseGroupId).pipe(
-                filter((response: HttpResponse<ExerciseGroup>) => response.ok),
-                map((exerciseGroup: HttpResponse<ExerciseGroup>) => exerciseGroup.body!),
-            );
-        }
-        return of({ isMandatory: true } satisfies ExerciseGroup);
     }
 }
 
