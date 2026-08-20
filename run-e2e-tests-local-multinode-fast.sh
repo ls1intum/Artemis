@@ -484,16 +484,16 @@ launch_node() {
         set -a
         # shellcheck disable=SC1091
         source docker/artemis/config/prod-multinode-fast.env
-        # shellcheck disable=SC1091
+        # shellcheck disable=SC1090,SC1091
         source "docker/artemis/config/node${n}-fast.env"
         # Last, so the selected backend wins over anything the profile files set.
-        # shellcheck disable=SC1091
+        # shellcheck disable=SC1090,SC1091
         source "docker/artemis/config/middleware-${MIDDLEWARE}.env"
         if [ "$MIDDLEWARE" = "redis" ]; then
             # The host JVMs reach the container through its published port. The client name is this node's identity for
             # the Redis provider, so it has to differ per node or the build agent cleanup sees one node instead of three.
-            SPRING_DATA_REDIS_HOST="localhost"
-            SPRING_DATA_REDIS_CLIENTNAME="artemis-node-${n}"
+            export SPRING_DATA_REDIS_HOST="localhost"
+            export SPRING_DATA_REDIS_CLIENTNAME="artemis-node-${n}"
         fi
         set +a
         export ARTEMIS_CONTINUOUSINTEGRATION_DOCKERCONNECTIONURI="unix://$DOCKER_SOCK"

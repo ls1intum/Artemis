@@ -17,8 +17,9 @@ import { generateUUID } from '../../support/utils';
  * regression is silent:
  * <ul>
  *   <li>the per-node blob caches, which stay coherent only through a cross-node eviction broadcast,</li>
- *   <li>the distributed set behind the "one plagiarism check per course" rule, and</li>
- *   <li>the distributed map behind the admin feature toggles.</li>
+ *   <li>the distributed set behind the "one plagiarism check per course" rule,</li>
+ *   <li>the distributed map behind the admin feature toggles, and</li>
+ *   <li>the distributed map holding one signing key per registered LTI platform.</li>
  * </ul>
  *
  * Backend-agnostic on purpose: Artemis supports Hazelcast and Redis interchangeably, and both must pass this unchanged.
@@ -142,6 +143,53 @@ test.describe('Distributed state coherence', { tag: '@multi-node' }, () => {
         }
     });
 
+    test("An LTI platform registered on one node is served by the other node's JWKS", async ({ playwright }) => {
+        // Registering a platform generates its signing key and stores it in a distributed map. Every node publishes the
+        // whole map as its JWKS, so a platform registered anywhere has to be verifiable everywhere - a per-node map
+        // would leave the platform's tokens rejected by every node but the one that happened to register it.
+        const readingNode = await playwright.request.newContext({ baseURL: NODE_URLS[1], ignoreHTTPSErrors: true });
+        const ltiEnabled = (await activeModuleFeatures(readingNode)).includes('lti');
+        if (!ltiEnabled) {
+            await readingNode.dispose();
+        }
+        test.skip(!ltiEnabled, 'needs a deployment with the LTI module enabled');
+
+        const adminNode = await contextFor(playwright.request, NODE_URLS[0], admin);
+        const keysBefore = await publishedKeyIds(readingNode);
+        let platformId: number | undefined;
+        try {
+            const suffix = generateUUID();
+            const created = await adminNode.post('api/lti/admin/lti-platforms', {
+                data: {
+                    clientId: `client-${suffix}`,
+                    customName: `Coherence platform ${suffix}`,
+                    authorizationUri: 'https://platform.invalid/auth',
+                    jwkSetUri: 'https://platform.invalid/jwks',
+                    tokenUri: 'https://platform.invalid/token',
+                },
+            });
+            expect(created.status(), `registering the platform on ${NODE_URLS[0]}: ${await bodyOf(created)}`).toBe(200);
+            platformId = (await created.json()).id;
+
+            await expect
+                .poll(async () => (await publishedKeyIds(readingNode)).filter((keyId) => !keysBefore.includes(keyId)).length, {
+                    message: `${NODE_URLS[1]} does not publish the key of a platform registered on ${NODE_URLS[0]}`,
+                    timeout: 15_000,
+                    intervals: [250, 500, 1_000],
+                })
+                .toBe(1);
+        } finally {
+            if (platformId !== undefined) {
+                const deleted = await adminNode.delete(`api/lti/admin/lti-platforms/${platformId}`);
+                expect(deleted.status(), `removing the platform again: ${await bodyOf(deleted)}`).toBe(200);
+                // Removing the platform drops its key, and that has to reach the other node just as the write did.
+                await expect.poll(() => publishedKeyIds(readingNode), { timeout: 15_000, intervals: [250, 500, 1_000] }).toEqual(keysBefore);
+            }
+            await adminNode.dispose();
+            await readingNode.dispose();
+        }
+    });
+
     test('A feature switched off on one node is switched off on the other', async ({ playwright }) => {
         // Feature toggles live in a distributed map. Flipping one has to be visible on every node immediately —
         // otherwise a deployment answers the same request differently depending on which node the load balancer picked.
@@ -212,6 +260,26 @@ async function enabledFeatures(context: APIRequestContext): Promise<string[]> {
     const response = await context.get('management/info');
     expect(response.status(), 'reading the enabled features').toBe(200);
     return (await response.json()).features ?? [];
+}
+
+/**
+ * @param context a request context bound to one node
+ * @return the module features that node runs with
+ */
+async function activeModuleFeatures(context: APIRequestContext): Promise<string[]> {
+    const response = await context.get('management/info');
+    expect(response.status(), 'reading the active module features').toBe(200);
+    return (await response.json()).activeModuleFeatures ?? [];
+}
+
+/**
+ * @param context a request context bound to one node
+ * @return the key ids that node publishes in its LTI JWKS, sorted so two nodes can be compared directly
+ */
+async function publishedKeyIds(context: APIRequestContext): Promise<string[]> {
+    const response = await context.get('.well-known/jwks.json');
+    expect(response.status(), 'reading the JWKS').toBe(200);
+    return ((await response.json()).keys ?? []).map((key: { kid: string }) => key.kid).sort();
 }
 
 /**

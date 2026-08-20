@@ -88,11 +88,17 @@ public class TextPlagiarismDetectionService {
      * @return a zip file that can be returned to the client
      */
     public PlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) {
-        // Only one plagiarism check per course allowed
-        var courseId = textExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        // Decide whether there is anything to compare before claiming the course: a request that cannot run must not
+        // occupy the course for the instructor who could have started a real check instead.
+        final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise, minimumScore, minimumSize);
+        if (textSubmissions.size() < 2) {
+            log.info("Insufficient amount of submissions for plagiarism detection. Inform the client with a bad request response.");
+            throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
+        }
 
-        // Claim the course before entering the try block: the finally below releases the course, and a caller that was
-        // refused must not release the check somebody else is running.
+        // Only one plagiarism check per course allowed. Claiming happens before the try block because the finally below
+        // releases the course, and a caller that was refused must not release the check somebody else is running.
+        var courseId = textExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         if (!plagiarismCacheService.tryStartPlagiarismCheck(courseId)) {
             throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
         }
@@ -106,14 +112,8 @@ public class TextPlagiarismDetectionService {
             final var submissionFolderFile = Path.of(submissionsFolderName).toFile();
             submissionFolderFile.mkdirs();
 
-            final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise, minimumScore, minimumSize);
             final var submissionsSize = textSubmissions.size();
             log.info("Save text submissions for JPlag text comparison with {} submissions", submissionsSize);
-
-            if (textSubmissions.size() < 2) {
-                log.info("Insufficient amount of submissions for plagiarism detection. Inform the client with a bad request response.");
-                throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
-            }
 
             AtomicInteger processedSubmissionCount = new AtomicInteger(1);
             textSubmissions.forEach(submission -> {
@@ -165,10 +165,6 @@ public class TextPlagiarismDetectionService {
             log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
             return textPlagiarismResult;
-        }
-        catch (BadRequestAlertException ex) {
-            // Already carries the error key the client shows a message for, so wrapping it would hide what went wrong.
-            throw ex;
         }
         catch (Exception ex) {
             log.warn("Text plagiarism detection NOT successful", ex);
