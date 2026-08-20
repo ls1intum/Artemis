@@ -20,6 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Component for managing exam rooms.
@@ -208,10 +209,8 @@ export class ExamRoomsComponent implements OnInit {
     }
 
     private calculateExamRoomData() {
-        return this.overview()?.newestUniqueExamRooms?.map((examRoomDTO) => ({
-            ...examRoomDTO,
-            defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
-            maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
-        }));
+        return this.overview()?.newestUniqueExamRooms?.map((examRoomDTO) =>
+            cloneWith(examRoomDTO, { defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO), maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO) }),
+        );
     }
 }

@@ -170,8 +170,8 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
 
     it('should pass free days to the table component', () => {
         // All three periods are "free days" (start at 00:00, end at 23:59 on the same day)
-        expect(component.freeDays).toHaveLength(3);
-        expect(component.freePeriods).toHaveLength(0);
-        expect(component.freePeriodsWithinDay).toHaveLength(0);
+        expect(component.freeDays()).toHaveLength(3);
+        expect(component.freePeriods()).toHaveLength(0);
+        expect(component.freePeriodsWithinDay()).toHaveLength(0);
     });
 });

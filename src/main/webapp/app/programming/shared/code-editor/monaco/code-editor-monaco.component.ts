@@ -48,6 +48,7 @@ import {
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { parseJson } from 'app/foundation/util/json.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -147,7 +148,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     );
 
     private attachLineAndReferenceToFeedback(feedback: Feedback): FeedbackWithLineAndReference {
-        return { ...feedback, line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' };
+        return cloneWith(feedback, { line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' });
     }
 
     annotationsArray: Array<Annotation> = [];
@@ -354,10 +355,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                         this.onError.emit('loadingFailed');
                     }
                 }
-                this.fileSession.set({
-                    ...this.fileSession(),
-                    [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } },
-                });
+                this.fileSession.set(
+                    cloneWith(this.fileSession(), { [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } } }),
+                );
             }
 
             // File fetch is async; if the user switched files while it was in flight, ignore the result
@@ -432,15 +432,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             const previousScrollTop = this.fileSession()[fileName].scrollTop;
 
             if (previousText !== text) {
-                this.fileSession.set({
-                    ...this.fileSession(),
-                    [fileName]: {
-                        code: text,
-                        loadingError: false,
-                        scrollTop: previousScrollTop,
-                        cursor: fileName === this.selectedFile() ? this.editor().getPosition() : this.fileSession()[fileName].cursor,
-                    },
-                });
+                this.fileSession.set(
+                    cloneWith(this.fileSession(), {
+                        [fileName]: {
+                            code: text,
+                            loadingError: false,
+                            scrollTop: previousScrollTop,
+                            cursor: fileName === this.selectedFile() ? this.editor().getPosition() : this.fileSession()[fileName].cursor,
+                        },
+                    }),
+                );
 
                 if (!this.shouldSuppressDirtySignal(fileName)) {
                     this.onFileContentChange.emit({ fileName, text });
@@ -766,13 +767,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         const fileSession = this.fileSession();
         const fileState = fileSession[filePath];
         if (fileState && fileState.code !== syncedContent) {
-            this.fileSession.set({
-                ...fileSession,
-                [filePath]: {
-                    ...fileState,
-                    code: syncedContent,
-                },
-            });
+            this.fileSession.set(cloneWith(fileSession, { [filePath]: cloneWith(fileState, { code: syncedContent }) }));
         }
         this.onFileContentChange.emit({ fileName: filePath, text: syncedContent });
     }
@@ -969,7 +964,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && fileChange.fileType === FileType.FILE) {
-            this.fileSession.set({ ...this.fileSession(), [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, scrollTop: 0, loadingError: false } });
+            this.fileSession.set(cloneWith(this.fileSession(), { [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, scrollTop: 0, loadingError: false } }));
         }
         this.setBuildAnnotations(this.annotationsArray);
     }
@@ -984,10 +979,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
         this.localStorageService.store(
             'annotations-' + this.sessionId(),
-            JSON.stringify({
-                ...toKeep,
-                ...toUpdate,
-            }),
+            // toUpdate is built fresh by fromPairs above, so nothing else aliases it and it can be applied as overrides.
+            JSON.stringify(cloneWith(toKeep, toUpdate)),
         );
     }
 
@@ -1004,7 +997,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             this.annotationsArray = buildAnnotations.map((a) => {
                 const hash = a.fileName + a.row + a.column + a.text;
                 if (sessionAnnotations[hash] == undefined || sessionAnnotations[hash].timestamp < a.timestamp) {
-                    return { ...a, hash };
+                    return cloneWith(a, { hash });
                 } else {
                     return sessionAnnotations[hash];
                 }

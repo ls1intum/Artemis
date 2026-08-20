@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { provideTranslateService } from '@ngx-translate/core';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockCourseExerciseService } from 'test/helpers/mocks/service/mock-course-exercise.service';
@@ -13,9 +13,10 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import dayjs from 'dayjs/esm';
+import { BehaviorSubject } from 'rxjs';
 import { MockCourseService } from 'test/helpers/mocks/service/mock-course.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -55,7 +56,7 @@ describe('CourseExerciseRowComponent', () => {
                     { path: 'courses/:courseId/exercises', component: DummyComponent },
                     { path: 'courses/:courseId/exercises/:exerciseId', component: DummyComponent },
                 ]),
-                NgbModule,
+                NgbTooltip,
                 FaIconComponent,
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
@@ -139,5 +140,42 @@ describe('CourseExerciseRowComponent', () => {
 
         const result = fixture.debugElement.query(By.css('jhi-submission-result-status'));
         expect(result).not.toBeNull();
+    });
+    it('should refresh the enriched exercise when a participation arrives over the websocket', async () => {
+        const participationChanges = new BehaviorSubject<Participation | undefined>(undefined);
+        vi.spyOn(participationWebsocketService, 'subscribeForParticipationChanges').mockReturnValue(participationChanges);
+        getAllParticipationsStub.mockReturnValue([]);
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
+        TestBed.tick();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const updated = { id: 7, testRun: false, exercise: { id: 1 } as Exercise } as StudentParticipation;
+        participationChanges.next(updated);
+        TestBed.tick();
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.enrichedExercise().studentParticipations).toEqual([updated]);
+    });
+
+    it('should keep the course shared instead of copying the course graph on every websocket update', async () => {
+        // Regression guard: the row's exercise carries `course`, and the stored course reaches every other exercise of
+        // the course. Copying the enriched exercise therefore cloned the whole graph once per event and handed this row
+        // a course detached from the one the rest of the page shares.
+        const participationChanges = new BehaviorSubject<Participation | undefined>(undefined);
+        vi.spyOn(participationWebsocketService, 'subscribeForParticipationChanges').mockReturnValue(participationChanges);
+        getAllParticipationsStub.mockReturnValue([]);
+        const course = { id: 123, isAtLeastInstructor: true, exercises: [{ id: 1 }, { id: 2 }] } as Course;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
+        TestBed.tick();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        participationChanges.next({ id: 7, testRun: false, exercise: { id: 1 } as Exercise } as StudentParticipation);
+        TestBed.tick();
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.enrichedExercise().course).toBe(course);
     });
 });

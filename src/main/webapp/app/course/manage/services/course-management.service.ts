@@ -34,6 +34,7 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { convertTutorialGroupArrayDatesFromServer, convertTutorialGroupsConfigurationDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -755,7 +756,7 @@ export class CourseManagementService implements OnDestroy {
 
     static convertCourseDatesFromClient(course: Course): Course {
         // copy of the object
-        return Object.assign({}, course, {
+        return cloneWith(course, {
             startDate: convertDateFromClient(course.startDate),
             endDate: convertDateFromClient(course.endDate),
             enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),

@@ -8,6 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { SegmentedToggleComponent } from 'app/shared-ui/segmented-toggle/segmented-toggle.component';
 import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/account/user/settings/learner-profile/entities/course-learner-profile-options.model';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Component for managing course-specific learner profiles.
@@ -139,12 +140,14 @@ export class CourseLearnerProfileComponent implements OnInit {
 
         // Create a new CourseLearnerProfileDTO object with the updated values
         const updatedProfile = new CourseLearnerProfileDTO();
-        Object.assign(updatedProfile, {
-            ...courseLearnerProfile,
-            aimForGradeOrBonus: this.aimForGradeOrBonus(),
-            timeInvestment: this.timeInvestment(),
-            repetitionIntensity: this.repetitionIntensity(),
-        });
+        hydrate(
+            updatedProfile,
+            cloneWith(courseLearnerProfile, {
+                aimForGradeOrBonus: this.aimForGradeOrBonus(),
+                timeInvestment: this.timeInvestment(),
+                repetitionIntensity: this.repetitionIntensity(),
+            }),
+        );
 
         if (!updatedProfile.isValid()) {
             this.alertService.addAlert({

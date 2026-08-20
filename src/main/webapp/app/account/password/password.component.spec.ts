@@ -4,6 +4,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { TumUiCheckboxComponent } from '@tumaet/ui-angular';
 import { provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -250,7 +252,28 @@ describe('Password Component Tests', () => {
 
             const options = fixture.nativeElement.querySelector('[data-testid="password-revocation-options"]');
             expect(options).not.toBeNull();
-            expect(options.querySelectorAll('p-checkbox')).toHaveLength(3);
+            expect(options.querySelectorAll('tum-ui-checkbox')).toHaveLength(3);
+        });
+
+        it('should read the checked state off the change event of each option', () => {
+            // The kit checkbox reports the new state on `changed` as an event object, where the PrimeNG control it
+            // replaced emitted a bare boolean on `ngModelChange`. Emitting from the real child proves each template
+            // binding unwraps `$event.checked` rather than storing the event.
+            comp.onPasswordMayBeCompromisedChange(true);
+            fixture.detectChanges();
+
+            const checkboxes = fixture.debugElement.queryAll(By.directive(TumUiCheckboxComponent));
+            const options = new Map(checkboxes.map((checkbox) => [checkbox.componentInstance.inputId(), checkbox.componentInstance]));
+
+            for (const [inputId, signal] of [
+                ['revokePasskeys', comp.revokePasskeys],
+                ['revokeSshKeys', comp.revokeSshKeys],
+                ['revokeVcsAccessTokens', comp.revokeVcsAccessTokens],
+            ] as const) {
+                expect(signal()).toBe(true);
+                options.get(inputId)!.changed.emit({ originalEvent: new Event('change'), checked: false });
+                expect(signal()).toBe(false);
+            }
         });
     });
 });

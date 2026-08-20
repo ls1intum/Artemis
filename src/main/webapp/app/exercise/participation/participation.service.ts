@@ -17,6 +17,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import dayjs from 'dayjs/esm';
 import { StudentParticipationDTO, fromStudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -193,7 +194,7 @@ export class ParticipationService {
 
     protected convertParticipationDatesFromClient(participation: StudentParticipation): StudentParticipation {
         // return a copy of the object
-        return Object.assign({}, participation, {
+        return cloneWith(participation, {
             initializationDate: convertDateFromClient(participation.initializationDate),
             individualDueDate: convertDateFromClient(participation.individualDueDate),
         });

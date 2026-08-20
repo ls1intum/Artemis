@@ -10,7 +10,10 @@ services:
             CI: 'true'
             BASE_URL: 'https://artemis-nginx'
             ADMIN_USERNAME: '${ARTEMIS_ADMIN_USERNAME}'
-            ADMIN_PASSWORD: '${ARTEMIS_ADMIN_PASSWORD}'
+            # Mirrors docker/artemis/config/playwright.env, which cannot use the published `artemis_admin` password
+            # under the prod profile.
+            # checkov:skip=CKV_SECRET_6: fixture credential of the local E2E/multi-node stacks, not a deployment secret
+            ADMIN_PASSWORD: 'local-e2e-admin-not-a-deployment-credential'
             TEST_TIMEOUT_SECONDS: '${TEST_TIMEOUT_SECONDS}'
             TEST_RETRIES: '${TEST_RETRIES}'
             TEST_WORKER_PROCESSES: '${TEST_WORKER_PROCESSES}'
@@ -25,12 +28,18 @@ services:
             PLAYWRIGHT_REPORT_PHASE: '${PLAYWRIGHT_REPORT_PHASE:-}'
             PLAYWRIGHT_REPORT_TRIGGERED_BY: '${PLAYWRIGHT_REPORT_TRIGGERED_BY:-}'
             GITHUB_RUN_ID: '${GITHUB_RUN_ID:-}'
+        # Both installs are required. The suite reuses the application's models through the `app/*` alias, so loading a
+        # spec pulls in files under src/main/webapp, and those resolve their own dependencies (lodash-es, ...) from the
+        # repository root upwards. Installing only the Playwright workspace leaves them unresolvable, which makes
+        # Playwright fail during collection and report zero tests rather than a failing test.
         command: >
           sh -c '
-          cd /app/artemis/src/test/playwright &&
+          cd /app/artemis &&
           chmod 777 /root &&
-          chmod +x ./run-tests.sh &&
           corepack enable &&
+          pnpm install --frozen-lockfile &&
+          cd /app/artemis/src/test/playwright &&
+          chmod +x ./run-tests.sh &&
           pnpm install --frozen-lockfile &&
           pnpm run playwright:setup &&
           rm -f ./test-reports/results.xml ./test-reports/results-*.xml &&
