@@ -1116,6 +1116,26 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCourseForOverviewIncludesAthenaFlags() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course course = courses.getFirst();
+
+        // Course-level Athena config is what gates student-facing feedback-request controls on the overview path,
+        // so the lean projection must carry it even though most other Athena/instructor-facing fields stay off it.
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepo.save(course);
+
+        CourseForOverviewDTO overview = request.get("/api/course/courses/" + course.getId() + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class);
+
+        assertThat(overview.athenaGradingFeedbackEnabled()).isTrue();
+        assertThat(overview.athenaFormativeFeedbackEnabled()).isTrue();
+    }
+
+    // Test
     public void testGetCourseForOverviewForbidden() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(false);
         unenrollStudent1FromAllCourses();

@@ -17,7 +17,8 @@ import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguratio
  * <p>
  * Every field here has a reader on an overview path. Fields the entity carries but the overview never reads are
  * deliberately absent — short name, description, semester, language, time zone, max points, the enrolment start date
- * and confirmation message, and the instructor-facing onboarding, Athena, grade-relevance and data-retention flags.
+ * and confirmation message, and the instructor-facing onboarding and data-retention flags. The two Athena flags stay
+ * in, unlike the rest of the Athena configuration: student-facing feedback-request controls on this path gate on them.
  * {@code learningPathsEnabled} and {@code trainingEnabled} are gone too: which tabs to offer now comes from
  * {@link CourseAvailableTabsDTO}. Content collections are absent because each tab loads what it needs, and
  * {@code tutorialGroupsConfiguration} because it was never initialised on this path either.
@@ -46,6 +47,8 @@ import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguratio
  * @param maxComplaintResponseTextLimit                  the character limit of a complaint response
  * @param requestMoreFeedbackEnabled                     whether more feedback may be requested at all
  * @param maxRequestMoreFeedbackTimeDays                 how long more feedback may be requested after the result
+ * @param athenaGradingFeedbackEnabled                   whether course-level Athena grading feedback is enabled
+ * @param athenaFormativeFeedbackEnabled                 whether course-level Athena formative feedback is enabled
  * @param courseNotificationCount                        the number of unread notifications for the course
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -54,7 +57,8 @@ public record CourseForOverviewDTO(long id, String title, @Nullable ZonedDateTim
         @Nullable ZonedDateTime unenrollmentEndDate, @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration,
         @Nullable String courseInformationSharingMessagingCodeOfConduct, @Nullable Integer accuracyOfScores, @Nullable Integer presentationScore, boolean complaintsEnabled,
         @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit,
-        boolean requestMoreFeedbackEnabled, int maxRequestMoreFeedbackTimeDays, long courseNotificationCount) {
+        boolean requestMoreFeedbackEnabled, int maxRequestMoreFeedbackTimeDays, boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled,
+        long courseNotificationCount) {
 
     /**
      * JPQL constructor, leaving the notification count at zero for {@link #withNotificationCount(long)} to fill in.
@@ -67,11 +71,11 @@ public record CourseForOverviewDTO(long id, String title, @Nullable ZonedDateTim
             @Nullable ZonedDateTime unenrollmentEndDate, @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration,
             @Nullable String courseInformationSharingMessagingCodeOfConduct, @Nullable Integer accuracyOfScores, @Nullable Integer presentationScore,
             @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit,
-            int maxRequestMoreFeedbackTimeDays) {
+            int maxRequestMoreFeedbackTimeDays, boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled) {
         this(id, title, startDate, endDate, color, courseIcon, testCourse, onlineCourse, enrollmentEnabled, enrollmentEndDate, unenrollmentEnabled, unenrollmentEndDate,
                 courseInformationSharingConfiguration, courseInformationSharingMessagingCodeOfConduct, accuracyOfScores, presentationScore, maxComplaintTimeDays > 0, maxComplaints,
                 maxTeamComplaints, maxComplaintTimeDays, maxComplaintTextLimit, maxComplaintResponseTextLimit, maxRequestMoreFeedbackTimeDays > 0, maxRequestMoreFeedbackTimeDays,
-                0);
+                athenaGradingFeedbackEnabled, athenaFormativeFeedbackEnabled, 0);
     }
 
     /**
@@ -87,6 +91,6 @@ public record CourseForOverviewDTO(long id, String title, @Nullable ZonedDateTim
         return new CourseForOverviewDTO(id, title, startDate, endDate, color, courseIcon, testCourse, onlineCourse, enrollmentEnabled, enrollmentEndDate, unenrollmentEnabled,
                 unenrollmentEndDate, courseInformationSharingConfiguration, courseInformationSharingMessagingCodeOfConduct, accuracyOfScores, presentationScore, complaintsEnabled,
                 maxComplaints, maxTeamComplaints, maxComplaintTimeDays, maxComplaintTextLimit, maxComplaintResponseTextLimit, requestMoreFeedbackEnabled,
-                maxRequestMoreFeedbackTimeDays, courseNotificationCount);
+                maxRequestMoreFeedbackTimeDays, athenaGradingFeedbackEnabled, athenaFormativeFeedbackEnabled, courseNotificationCount);
     }
 }

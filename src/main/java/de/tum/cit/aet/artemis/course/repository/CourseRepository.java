@@ -769,8 +769,11 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                 course.maxComplaintTimeDays,
                 course.maxComplaintTextLimit,
                 course.maxComplaintResponseTextLimit,
-                course.maxRequestMoreFeedbackTimeDays)
+                course.maxRequestMoreFeedbackTimeDays,
+                COALESCE(athenaConfig.gradingFeedbackEnabled, false),
+                COALESCE(athenaConfig.formativeFeedbackEnabled, false))
             FROM Course course
+                LEFT JOIN course.athenaConfig athenaConfig
             WHERE course.id = :courseId
             """)
     Optional<CourseForOverviewDTO> findForOverview(@Param("courseId") long courseId);

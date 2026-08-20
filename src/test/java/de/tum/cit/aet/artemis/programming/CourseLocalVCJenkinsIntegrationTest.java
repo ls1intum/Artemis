@@ -291,6 +291,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForOverviewIncludesAthenaFlags() throws Exception {
+        courseTestService.testGetCourseForOverviewIncludesAthenaFlags();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForOverviewForbidden() throws Exception {
         courseTestService.testGetCourseForOverviewForbidden();
     }
