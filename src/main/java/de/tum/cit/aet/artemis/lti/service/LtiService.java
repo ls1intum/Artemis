@@ -196,6 +196,9 @@ public class LtiService {
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         User user = userRepository.getUser();
+        // Guarded here too, not only where the launch resolves the account: this is the point at which the login cookie is
+        // minted, so checking it here holds no matter which launch variant populated the security context.
+        ensureAccountIsUsable(user);
 
         // Keyed on the LTI initialisation marker rather than on `activated`, which the account now always has: an LTI
         // account is provisioned by this launch rather than registered by its owner, so it is created ready to use.

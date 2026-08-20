@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -147,11 +148,11 @@ class LtiServiceTest {
     }
 
     @Test
-    void addLtiQueryParamsDeactivatedNonLtiUserGetsNoDialog() {
+    void addLtiQueryParamsNonLtiUserGetsNoDialog() {
         when(userRepository.getUser()).thenReturn(user);
-        // A deactivated account that the launch did not create: the initialization dialog used to be offered purely
-        // because it was not activated, and initializing then activated it.
-        user.setActivated(false);
+        // An account the launch did not create has no generated Artemis password to hand over. The dialog used to be
+        // offered purely because the account was not activated, and initializing it then activated it.
+        user.setActivated(true);
         user.setLtiCreated(false);
         when(jwtCookieService.buildLoginCookie(true)).thenReturn(mock(ResponseCookie.class));
 
@@ -159,6 +160,23 @@ class LtiServiceTest {
         ltiService.buildLtiResponse(uriComponentsBuilder, mock(HttpServletResponse.class));
 
         assertThat(uriComponentsBuilder.build().getQueryParams().getFirst("initialize")).isNull();
+    }
+
+    /**
+     * buildLtiResponse is where the login cookie is minted, so the guard has to hold here as well as where the launch
+     * resolves the account - otherwise a launch variant that populates the security context by another route could still
+     * hand a deactivated account a session.
+     */
+    @Test
+    void buildLtiResponse_deactivatedUser_mintsNoCookie() {
+        user.setActivated(false);
+        when(userRepository.getUser()).thenReturn(user);
+
+        HttpServletResponse response = mock(HttpServletResponse.class);
+        assertThatExceptionOfType(InternalAuthenticationServiceException.class).isThrownBy(() -> ltiService.buildLtiResponse(UriComponentsBuilder.newInstance(), response));
+
+        verify(jwtCookieService, never()).buildLoginCookie(anyBoolean());
+        verify(response, never()).addHeader(any(), any());
     }
 
     @Test
