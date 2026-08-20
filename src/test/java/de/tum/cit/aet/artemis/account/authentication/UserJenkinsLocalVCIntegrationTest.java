@@ -260,8 +260,8 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void initializeUserWithoutFlag() throws Exception {
-        userTestService.initializeUserWithoutFlag();
+    void initializeUserAlreadyInitialized() throws Exception {
+        userTestService.initializeUserAlreadyInitialized();
     }
 
     @Test

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Track LTI initialisation separately from `activated`.
+
+        The LTI launch flow used `activated` as its "has this user already been shown their Artemis password"
+        marker: the launch created the account unactivated, buildLtiResponse added ?initialize because of that,
+        and the initialisation endpoint returned a generated password and set activated = true, so later launches
+        skipped the dialog.
+
+        That overloaded a flag whose only meaning is "may authenticate". An LTI account is provisioned by the
+        launch rather than registered by its owner, so it has to be created activated - which leaves the flow
+        without a marker of its own. This column is that marker.
+
+        Backfill: an LTI account that is already activated has been through the dialog, so it is marked
+        initialised. One that is not activated has either never been initialised or was deactivated by an
+        administrator; either way it keeps the default of false, so a genuinely uninitialised account still gets
+        its dialog, while a deactivated one is no longer activated by it.
+    -->
+    <changeSet id="20260820105243-01-add-lti-initialized" author="krusche">
+        <addColumn tableName="jhi_user">
+            <column name="lti_initialized" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260820105243-02-backfill-lti-initialized" author="krusche">
+        <update tableName="jhi_user">
+            <column name="lti_initialized" valueBoolean="true"/>
+            <where>lti_created = true AND activated = true</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>

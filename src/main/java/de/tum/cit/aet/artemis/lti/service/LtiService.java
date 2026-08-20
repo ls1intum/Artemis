@@ -135,6 +135,10 @@ public class LtiService {
             var password = RandomUtil.generatePassword();
             final User newUser = userCreationService.createUser(login, password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
             newUser.setLtiCreated(true);
+            // An LTI user is provisioned by the launch, not by self-registration: they never receive an activation mail and so can never redeem an activation
+            // key. State it explicitly here rather than relying on the factory default, which does create an unactivated user on an instance that has
+            // self-registration enabled. Clearing the key alone used to leave the account stuck at activated = false with no way to ever activate it.
+            newUser.setActivated(true);
             newUser.setActivationKey(null);
             userRepository.save(newUser);
 
@@ -183,8 +187,10 @@ public class LtiService {
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         User user = userRepository.getUser();
 
-        if (!user.getActivated()) {
-            log.info("User is not activated. Adding initialize parameter to query.");
+        // Keyed on the LTI initialisation marker rather than on `activated`, which the account now always has: an LTI
+        // account is provisioned by this launch rather than registered by its owner, so it is created ready to use.
+        if (user.isLtiCreated() && !user.isLtiInitialized()) {
+            log.info("LTI user has not been initialized yet. Adding initialize parameter to query.");
             uriComponentsBuilder.queryParam("initialize", "");
         }
 

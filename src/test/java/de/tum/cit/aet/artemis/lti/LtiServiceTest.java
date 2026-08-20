@@ -101,7 +101,10 @@ class LtiServiceTest {
     @Test
     void addLtiQueryParamsNewUser() {
         when(userRepository.getUser()).thenReturn(user);
-        user.setActivated(false);
+        // Activated, as an LTI-provisioned account now always is: the dialog is offered on the initialisation marker.
+        user.setActivated(true);
+        user.setLtiCreated(true);
+        user.setLtiInitialized(false);
         when(jwtCookieService.buildLoginCookie(true)).thenReturn(mock(ResponseCookie.class));
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
@@ -122,6 +125,8 @@ class LtiServiceTest {
     void addLtiQueryParamsExistingUser() {
         when(userRepository.getUser()).thenReturn(user);
         user.setActivated(true);
+        user.setLtiCreated(true);
+        user.setLtiInitialized(true);
         when(jwtCookieService.buildLoginCookie(true)).thenReturn(mock(ResponseCookie.class));
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
@@ -136,6 +141,21 @@ class LtiServiceTest {
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         assertThat(initialize).isNull();
+    }
+
+    @Test
+    void addLtiQueryParamsDeactivatedNonLtiUserGetsNoDialog() {
+        when(userRepository.getUser()).thenReturn(user);
+        // A deactivated account that the launch did not create: the initialization dialog used to be offered purely
+        // because it was not activated, and initializing then activated it.
+        user.setActivated(false);
+        user.setLtiCreated(false);
+        when(jwtCookieService.buildLoginCookie(true)).thenReturn(mock(ResponseCookie.class));
+
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
+        ltiService.buildLtiResponse(uriComponentsBuilder, mock(HttpServletResponse.class));
+
+        assertThat(uriComponentsBuilder.build().getQueryParams().getFirst("initialize")).isNull();
     }
 
     @Test
@@ -213,6 +233,33 @@ class LtiServiceTest {
 
         assertThatExceptionOfType(InternalAuthenticationServiceException.class)
                 .isThrownBy(() -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser()));
+    }
+
+    @Test
+    void authenticateLtiUser_newUserIsCreatedActivated() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+
+        User unactivatedUser = new User();
+        unactivatedUser.setLogin("username");
+        unactivatedUser.setPassword("password");
+        // What the factory returns on an instance that has self-registration enabled.
+        unactivatedUser.setActivated(false);
+        unactivatedUser.setActivationKey("activation-key");
+
+        when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.empty());
+        when(userRepository.findOneByEmailIgnoreCase("email")).thenReturn(Optional.empty());
+        when(userRepository.findOneByLogin("username")).thenReturn(Optional.empty());
+        when(userCreationService.createUser(any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(unactivatedUser);
+
+        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false);
+
+        ArgumentCaptor<User> savedUser = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(savedUser.capture());
+        // An LTI user is provisioned by the launch and never receives an activation mail, so leaving them unactivated would produce an
+        // account that can never authenticate outside the launch - it would be rejected by password login and by git authentication.
+        assertThat(savedUser.getValue().getActivated()).as("LTI user is activated").isTrue();
+        assertThat(savedUser.getValue().getActivationKey()).as("LTI user keeps no activation key").isNull();
+        assertThat(savedUser.getValue().isLtiCreated()).isTrue();
     }
 
     @Test

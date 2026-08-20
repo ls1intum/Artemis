@@ -117,7 +117,13 @@ public class UserResource {
     }
 
     /**
-     * Initialises users that are flagged as such and are LTI users by setting a new password that gets returned
+     * Hands an LTI-provisioned user the Artemis password generated for them, so they can also sign in outside the LMS. The
+     * launch created the account with a random password nobody has seen, so a fresh one is generated here and returned once.
+     * <p>
+     * This endpoint deliberately never changes {@code activated}. It used to activate the caller when the account was
+     * external or not LTI-created, which was a workaround for external accounts being created unactivated. They no longer
+     * are, so the only way to reach this endpoint unactivated is for an administrator to have deactivated the account -
+     * and reversing that is an administrator's decision, not the account holder's.
      *
      * @return The ResponseEntity with a status 200 (Ok) and either an empty password or the newly created password
      */
@@ -125,12 +131,8 @@ public class UserResource {
     @EnforceAtLeastStudent
     public ResponseEntity<UserInitializationDTO> initializeUser() {
         User user = userRepository.findOneWithAuthoritiesByLogin(SecurityUtils.getCurrentUserLogin().orElseThrow()).orElseThrow();
-        if (user.getActivated()) {
-            return ResponseEntity.ok().body(new UserInitializationDTO(null));
-        }
-        if ((ltiApi.isPresent() && !ltiApi.get().isLtiCreatedUser(user)) || !user.isInternal()) {
-            user.setActivated(true);
-            userRepository.save(user);
+        boolean isUninitialisedLtiUser = user.isInternal() && !user.isLtiInitialized() && ltiApi.isPresent() && ltiApi.get().isLtiCreatedUser(user);
+        if (!isUninitialisedLtiUser) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
 
