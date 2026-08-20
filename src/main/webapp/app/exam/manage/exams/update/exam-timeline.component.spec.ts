@@ -41,9 +41,9 @@ describe('ExamTimelineComponent', () => {
 
     it('should use sequentially strict timeline validation', () => {
         fixture.detectChanges();
-        const timeline = fixture.debugElement.query(By.directive(TimelineComponent)).componentInstance as unknown as { validationMode: TimelineValidationMode };
+        const timeline = fixture.debugElement.query(By.directive(TimelineComponent)).componentInstance as unknown as { validationMode: () => TimelineValidationMode };
 
-        expect(timeline.validationMode).toBe(TimelineValidationMode.SEQUENTIALLY_STRICT);
+        expect(timeline.validationMode()).toBe(TimelineValidationMode.SEQUENTIALLY_STRICT);
     });
 
     it('should use the working-window labels for a test exam', () => {
