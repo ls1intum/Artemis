@@ -67,12 +67,18 @@ first match. Blank identifiers are skipped, and a row with all three blank is re
 
 | Outcome | What happens |
 |---|---|
-| Found in the Artemis database | The existing account is used; its details are refreshed from the directory if it is configured |
+| Found in the Artemis database | The existing account is used as it is |
 | Found only in the directory | An external, activated account is created and used |
 | Found nowhere | The row is returned to the caller as *not found* and no account is created |
 
 Accounts created this way are **activated**, exactly like accounts created on first login. This matters:
 an imported student who has not signed in yet must be able to clone and push straight away.
+
+An existing account is otherwise left untouched by an import. The one exception is the case where the
+searched identifier matched nothing locally but the directory resolved it to a login that does already
+exist — for instance an import by registration number for someone whose account predates that number
+being recorded. Only then are the account's name, email and registration number synced from the
+directory.
 
 :::tip
 If an import reports users as not found, check that `artemis.user-management.ldap.enabled` is `true` and
@@ -130,8 +136,10 @@ activated, so the timer applies only to self-registration — no other provision
   the admin edit form — write a `DEACTIVATE_USER` entry to the audit log naming the administrator who did
   it and the account affected; activation is recorded as `ACTIVATE_USER` the same way. These are kept far
   longer than login records.
-- Nothing lets an account holder reverse a deactivation. Only an administrator can activate an account
-  again.
+- Nothing lets an account holder reverse a deactivation, and no route hands a deactivated account a fresh
+  credential. An LTI launch refuses a deactivated or soft-deleted account as well, because the launch
+  establishes a session directly rather than through an authentication provider and so does not otherwise
+  inherit that check. Only an administrator can activate an account again.
 - **Soft deletion** sets `is_deleted`, anonymises the personal fields, and revokes credentials, while
   preserving the rows that reference the account.
 
@@ -255,9 +263,9 @@ Their account is not activated. Web login on an LDAP-only instance does not chec
 git paths do. Check `activated` for the account and activate it if it was never meant to be off.
 
 **A user reports they cannot sign in at all after being deactivated.**
-That is the intended effect: deactivation refuses authentication everywhere and revokes the account's
-tokens, SSH keys and passkeys. Only an administrator can activate the account again, and the revoked
-credentials have to be created anew afterwards.
+That is the intended effect: deactivation refuses authentication everywhere — including through an LTI
+launch — and revokes the account's tokens, SSH keys and passkeys. Only an administrator can activate the
+account again, and the revoked credentials have to be created anew afterwards.
 
 **A newly registered account disappeared.**
 An account that is not activated within `registration.cleanup-time-minutes` is deleted. Usually the

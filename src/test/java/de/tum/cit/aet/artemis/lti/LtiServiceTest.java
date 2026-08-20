@@ -24,6 +24,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -88,6 +89,8 @@ class LtiServiceTest {
         user.setLogin("login");
         user.setPassword("password");
         user.setLtiCreated(true);
+        // A usable account by default; the tests that exercise the account-state guard set this to false explicitly.
+        user.setActivated(true);
     }
 
     @AfterEach
@@ -260,6 +263,69 @@ class LtiServiceTest {
         assertThat(savedUser.getValue().getActivated()).as("LTI user is activated").isTrue();
         assertThat(savedUser.getValue().getActivationKey()).as("LTI user keeps no activation key").isNull();
         assertThat(savedUser.getValue().isLtiCreated()).isTrue();
+    }
+
+    /**
+     * The launch writes the security context directly rather than going through an AuthenticationProvider, so it does not
+     * inherit the account-state check the providers perform. Without an explicit one, a launch would be a way around an
+     * administrator's deactivation.
+     */
+    @Test
+    void authenticateLtiUser_deactivatedExistingUser_isRefused() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        user.setActivated(false);
+
+        when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.empty());
+        when(userRepository.findOneByEmailIgnoreCase("email")).thenReturn(Optional.empty());
+        when(userRepository.findOneByLogin("username")).thenReturn(Optional.of(user));
+
+        assertThatExceptionOfType(InternalAuthenticationServiceException.class)
+                .isThrownBy(() -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false));
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).as("no session is established").isNull();
+    }
+
+    @Test
+    void authenticateLtiUser_softDeletedExistingUser_isRefused() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        user.setActivated(true);
+        user.setDeleted(true);
+
+        when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.empty());
+        when(userRepository.findOneByEmailIgnoreCase("email")).thenReturn(Optional.empty());
+        when(userRepository.findOneByLogin("username")).thenReturn(Optional.of(user));
+
+        assertThatExceptionOfType(InternalAuthenticationServiceException.class)
+                .isThrownBy(() -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false));
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).as("no session is established").isNull();
+    }
+
+    @Test
+    void authenticateLtiUser_deactivatedUserOnTrustedSystem_isRefused() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        ReflectionTestUtils.setField(ltiService, "trustExternalLTISystems", true);
+        user.setActivated(false);
+
+        when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.of("username"));
+        when(userRepository.findOneWithAuthoritiesByEmail("email")).thenReturn(Optional.of(user));
+
+        assertThatExceptionOfType(InternalAuthenticationServiceException.class)
+                .isThrownBy(() -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false));
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).as("no session is established").isNull();
+    }
+
+    @Test
+    void authenticateLtiUser_activatedExistingUser_isSignedIn() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        user.setActivated(true);
+
+        when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.empty());
+        when(userRepository.findOneByEmailIgnoreCase("email")).thenReturn(Optional.empty());
+        when(userRepository.findOneByLogin("username")).thenReturn(Optional.of(user));
+
+        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getPrincipal()).isEqualTo(user.getLogin());
     }
 
     @Test

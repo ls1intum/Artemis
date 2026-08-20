@@ -120,10 +120,11 @@ public class UserResource {
      * Hands an LTI-provisioned user the Artemis password generated for them, so they can also sign in outside the LMS. The
      * launch created the account with a random password nobody has seen, so a fresh one is generated here and returned once.
      * <p>
-     * This endpoint deliberately never changes {@code activated}. It used to activate the caller when the account was
-     * external or not LTI-created, which was a workaround for external accounts being created unactivated. They no longer
-     * are, so the only way to reach this endpoint unactivated is for an administrator to have deactivated the account -
-     * and reversing that is an administrator's decision, not the account holder's.
+     * This endpoint deliberately never changes {@code activated}, and refuses to act on an account that is not activated. It
+     * used to activate the caller when the account was external or not LTI-created, which was a workaround for external
+     * accounts being created unactivated. They no longer are, so the only way to reach this endpoint unactivated is for an
+     * administrator to have deactivated the account - and reversing that is an administrator's decision, not the account
+     * holder's.
      *
      * @return The ResponseEntity with a status 200 (Ok) and either an empty password or the newly created password
      */
@@ -131,7 +132,9 @@ public class UserResource {
     @EnforceAtLeastStudent
     public ResponseEntity<UserInitializationDTO> initializeUser() {
         User user = userRepository.findOneWithAuthoritiesByLogin(SecurityUtils.getCurrentUserLogin().orElseThrow()).orElseThrow();
-        boolean isUninitialisedLtiUser = user.isInternal() && !user.isLtiInitialized() && ltiApi.isPresent() && ltiApi.get().isLtiCreatedUser(user);
+        // getActivated() is part of the condition, not just isLtiInitialized(): a deactivated account must not be handed a working
+        // credential, and an account can still hold a session issued before it was deactivated.
+        boolean isUninitialisedLtiUser = user.getActivated() && user.isInternal() && !user.isLtiInitialized() && ltiApi.isPresent() && ltiApi.get().isLtiCreatedUser(user);
         if (!isUninitialisedLtiUser) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }

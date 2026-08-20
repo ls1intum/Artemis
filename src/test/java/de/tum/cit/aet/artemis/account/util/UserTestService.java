@@ -626,6 +626,28 @@ public class UserTestService {
     }
 
     // Test
+    public void initializeUserDeactivated() throws Exception {
+        String password = passwordService.hashPassword("ThisIsAPassword");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        user.setPassword(password);
+        user.setInternal(true);
+        user.setLtiCreated(true);
+        user.setLtiInitialized(false);
+        // Deactivated by an administrator, but still holding a session issued before that.
+        user.setActivated(false);
+        userTestRepository.save(user);
+
+        UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+
+        assertThat(dto.password()).as("a deactivated account is not handed a working credential").isNull();
+
+        User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(currentUser.getPassword()).as("the password is left untouched").isEqualTo(password);
+        assertThat(currentUser.getActivated()).as("initialization must not activate an account").isFalse();
+        assertThat(currentUser.isLtiInitialized()).as("and must not consume the initialization either").isFalse();
+    }
+
+    // Test
     public void initializeUserAlreadyInitialized() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
