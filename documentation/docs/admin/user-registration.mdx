@@ -97,8 +97,10 @@ directory cannot be resolved, since Artemis has nothing else to look the person 
 
 `activated` decides whether an account may authenticate at all. It is enforced by:
 
-- `ArtemisInternalAuthenticationProvider`, `SAML2Service`, `OIDCService`, and the passkey provider
+- every authentication provider: `ArtemisInternalAuthenticationProvider`, `LdapAuthenticationProvider`,
+  `SAML2Service`, `OIDCService`, and the passkey provider
 - git over HTTPS (`LocalVCServletService`) and git over SSH (`GitPublickeyAuthenticatorService`)
+- the LTI launch, which establishes a session directly rather than through a provider
 
 An account is created unactivated **only when its own owner is expected to activate it**, which
 requires two conditions at the same time:
@@ -109,9 +111,10 @@ requires two conditions at the same time:
 Both conditions are necessary because the activation key is redeemable only through `GET /activate`,
 and both that endpoint and the mail carrying the key are gated behind the registration property. An
 externally managed account is never sent an activation mail and cannot redeem a key, so creating one
-unactivated yields an account that *nothing* can ever activate: it would pass web login on an
-LDAP-only instance, because the LDAP provider is the one provider that does not check the flag, while
-being refused by git and by every other provider.
+unactivated yields an account that *nothing* can ever activate. Historically such an account could still
+pass web login on an LDAP-only instance, because the LDAP provider was the one provider that did not
+consult the flag while git and every other provider refused it. That gap is now closed, so an account in
+this state cannot authenticate at all.
 
 Consequently there are exactly three reasons for `activated = false`:
 
@@ -266,8 +269,9 @@ like the above; see [Cleanup Service](cleanup-service.mdx).
 ## Troubleshooting
 
 **A user can sign in to the website but git authentication fails.**
-Their account is not activated. Web login on an LDAP-only instance does not check the flag, while both
-git paths do. Check `activated` for the account and activate it if it was never meant to be off.
+Their account is not activated. This combination is only possible on a version where the LDAP provider did
+not yet consult the flag, since it now does; on such a version web login succeeded while both git paths
+refused. Check `activated` for the account and activate it if it was never meant to be off.
 
 **A user reports they cannot sign in at all after being deactivated.**
 That is the intended effect: deactivation refuses authentication everywhere — including through an LTI

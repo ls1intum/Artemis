@@ -123,8 +123,8 @@ public class UserCreationService {
         // self-registration feature. The activation key is redeemable exclusively through GET /activate, and both that endpoint and the
         // mail carrying the key are gated behind artemis.user-management.registration.enabled. An externally managed (LDAP/SAML) user
         // therefore never receives a key and could never redeem one, so creating them unactivated left behind accounts that nothing
-        // could ever activate - which stayed invisible only because the LDAP provider does not check `activated`, until the git
-        // authentication paths started enforcing it and locked those users out of their repositories.
+        // could ever activate - which stayed invisible only because the LDAP provider did not yet check `activated`, until the
+        // git authentication paths started enforcing it and locked those users out of their repositories.
         if (isInternal && isRegistrationEnabled()) {
             newUser.setActivated(false);
             newUser.setActivationKey(RandomUtil.generateActivationKey());
