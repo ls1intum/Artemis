@@ -5,13 +5,15 @@
 # ===================================================================
 artemis:
   continuous-integration:
-    # Hades scheduler (https://github.com/ls1intum/hades), run separately from Artemis.
+    # Hades scheduler (https://github.com/Hades-Scheduler/hades), run separately from Artemis.
     # See documentation/docs/admin/hades-setup.mdx for the full setup.
     url: http://localhost:8081
     hades:
       images:
-        clone-image: ghcr.io/ls1intum/hades/hades-clone-container:latest
-        result-parser-image: ghcr.io/ls1intum/hades/junit-result-parser:latest
+        # Pinned to released images from the Hades-Scheduler org. clone-image git-container:1.1.0 includes the
+        # exact-commit checkout (HADES_ASSIGNMENT_COMMIT / HADES_TEST_COMMIT).
+        clone-image: ghcr.io/hades-scheduler/git-container:1.1.0
+        result-parser-image: ghcr.io/hades-scheduler/hades/junit-result-parser:1.0.0
       adapter:
         # hades-artemis-adapter (https://github.com/ls1intum/hades-artemis-adapter): receives parsed results from
         # junit-result-parser, combines them with build logs, and forwards to Artemis' new-result endpoint.
