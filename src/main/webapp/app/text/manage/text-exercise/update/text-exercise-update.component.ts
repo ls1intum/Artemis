@@ -45,7 +45,7 @@ import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
-import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -121,7 +121,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
     backupExercise!: TextExercise; // set in ngOnInit() from the route-resolved exercise before save() reads it
     readonly isSaving = signal(false);
-    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false });
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);
     readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;
