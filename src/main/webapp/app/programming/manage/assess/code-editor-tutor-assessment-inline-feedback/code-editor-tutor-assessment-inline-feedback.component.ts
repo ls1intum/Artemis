@@ -194,10 +194,12 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /**
-     * Deletes feedback after confirmation and emits to parent component
+     * Deletes feedback after confirmation and emits to parent component.
+     * Existing cards: parent removes via {@link Feedback.areIdentical} against the list copy. Point/comment edits
+     * live on a detached clone in {@link currentFeedback} — emit the pre-edit {@link oldFeedback} snapshot.
      */
     deleteFeedback() {
-        this.onDeleteFeedback.emit(this.currentFeedback());
+        this.onDeleteFeedback.emit(this.feedback() ? this.oldFeedback() : this.currentFeedback());
     }
 
     /**

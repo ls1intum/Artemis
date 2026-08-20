@@ -148,9 +148,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly feedbackSuggestions = signal<Feedback[]>([]);
     totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read
 
-    /** Full assessment feedback for the unreferenced-feedback score summary and instruction usage counts. */
-    readonly allAssessmentFeedbacks = computed(() => [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()]);
-
+    /**
+     * Full assessment feedback for the unreferenced-feedback score summary and instruction usage counts.
+     * Fresh array each call so in-place nested edits (e.g. inline instruction link/unlink) still notify consumers.
+     */
+    allAssessmentFeedbacks(): Feedback[] {
+        return [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+    }
     readonly getTotalMaxPoints = getTotalMaxPoints;
 
     isFirstAssessment = false;

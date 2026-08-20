@@ -89,7 +89,33 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         confirmIcon.triggerEventHandler('confirmEvent', true);
 
         expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
-        expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.currentFeedback());
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.oldFeedback());
+    });
+
+    it('should delete the original feedback after editing points and comment', () => {
+        const original = {
+            id: 42,
+            type: FeedbackType.MANUAL,
+            credits: 1,
+            text: 'File testFile at line 2',
+            detailText: 'old comment',
+            reference: `file:${fileName}_line:${codeLine}`,
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', original);
+        fixture.detectChanges();
+        comp.editFeedback(codeLine);
+
+        comp['stepCredits'](0.5);
+        comp.currentFeedback().detailText = 'new comment';
+
+        const onDeleteFeedbackSpy = vi.fn();
+        comp.onDeleteFeedback.subscribe(onDeleteFeedbackSpy);
+        comp.deleteFeedback();
+
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
+        const emitted = onDeleteFeedbackSpy.mock.calls[0][0] as Feedback;
+        expect(Feedback.areIdentical(emitted, original)).toBe(true);
+        expect(Feedback.areIdentical(comp.currentFeedback(), original)).toBe(false);
     });
 
     it('should show delete control in view mode without opening the editor', () => {

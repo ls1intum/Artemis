@@ -983,4 +983,33 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             expect(comp.submission()).toEqual(submission);
         });
     });
+
+    it('should rebuild allAssessmentFeedbacks so in-place instruction link changes refresh usage state', () => {
+        const instruction = {
+            id: 9,
+            credits: 1,
+            feedback: 'ok',
+            gradingScale: 'good',
+            instructionDescription: 'desc',
+            usageCount: 0,
+        };
+        const feedback = {
+            detailText: 'line note',
+            credits: 1,
+            reference: 'file:src/Main.java_line:0',
+            type: FeedbackType.MANUAL,
+        } as Feedback;
+        comp.referencedFeedback.set([feedback]);
+
+        const beforeLink = comp.allAssessmentFeedbacks();
+        expect(beforeLink.some((item) => item.gradingInstruction?.id === 9)).toBe(false);
+        expect(comp.allAssessmentFeedbacks()).not.toBe(beforeLink);
+
+        // Inline link mutates the existing feedback instance (same as drop / link-icon unlink).
+        feedback.gradingInstruction = instruction;
+        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(true);
+
+        feedback.gradingInstruction = undefined;
+        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(false);
+    });
 });
