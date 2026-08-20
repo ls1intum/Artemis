@@ -81,6 +81,12 @@ preferFrozenLockfile: true
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
 
+# @tumaet/apollon is maintained in the same organization and this integration
+# deliberately consumes its freshly published release. Keep the age-gate
+# exception scoped to that package and remove it once 5.3.0 has aged past 24h.
+minimumReleaseAgeExclude:
+  - '@tumaet/apollon'
+
 # Tell pnpm that Angular 22 is an acceptable peer for packages whose published
 # peerDependencies range still lists only older majors ("18.x || 19.x || 20.x || 21.x").
 # We already pin every relevant @angular/* dep under ng-mocks

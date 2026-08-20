@@ -37,7 +37,7 @@
         "@sentry/angular": "10.70.0",
         "@stomp/rx-stomp": "2.4.0",
         "@stomp/stompjs": "7.3.0",
-        "@tumaet/apollon": "file:../.apollon-local",
+        "@tumaet/apollon": "5.3.0",
         "@tumaet/ui-angular": "workspace:*",
         "@vscode/codicons": "0.0.45",
         "@vscode/markdown-it-katex": "1.1.2",
