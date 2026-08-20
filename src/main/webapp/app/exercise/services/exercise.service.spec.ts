@@ -28,6 +28,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;
@@ -92,6 +93,23 @@ describe('Exercise Service', () => {
 
     afterEach(() => {
         httpMock.verify();
+    });
+
+    it('should fetch only the exercise title projection for selection lists', () => {
+        const titles: ExerciseTitle[] = [
+            { id: 1, title: 'Text title', type: ExerciseType.TEXT },
+            { id: 2, title: 'Programming title', type: ExerciseType.PROGRAMMING },
+        ];
+        let received: ExerciseTitle[] | undefined;
+
+        service.getTitlesForCourse(7).subscribe((response) => (received = response));
+        const request = httpMock.expectOne({ method: 'GET', url: 'api/exercise/courses/7/exercise-titles' });
+        expect(request.request.params.keys()).toEqual([]);
+        expect(request.request.body).toBeNull();
+        request.flush(titles);
+
+        expect(received).toEqual(titles);
+        expect(received?.map(({ id, title, type }) => ({ id, title, type }))).toEqual(titles);
     });
 
     it('should reject equal dates', () => {

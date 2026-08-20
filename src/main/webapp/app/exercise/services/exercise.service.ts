@@ -8,6 +8,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { map, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory, SerializedExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
@@ -24,6 +25,7 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { UMLModel } from '@tumaet/apollon';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -72,6 +74,15 @@ export class ExerciseService {
     private entityTitleService = inject(EntityTitleService);
 
     public resourceUrl = 'api/exercise/exercises';
+
+    /**
+     * Fetches the id, title and type of the course exercises the user may see, for callers that only have to name
+     * exercises rather than show them.
+     * @param courseId the course to fetch the exercise titles for
+     */
+    getTitlesForCourse(courseId: number): Observable<ExerciseTitle[]> {
+        return this.http.get<ExerciseTitle[]>(`api/exercise/courses/${courseId}/exercise-titles`);
+    }
     public adminResourceUrl = 'api/exercise/admin/exercises';
     public courseResourceUrl = 'api/course/courses';
 
@@ -329,7 +340,7 @@ export class ExerciseService {
      * @param { Exercise } exercise - Exercise from client whose date is adjusted
      */
     static convertExerciseDatesFromClient<E extends Exercise>(exercise: E): E {
-        return Object.assign({}, exercise, {
+        return cloneWith(exercise, {
             releaseDate: convertDateFromClient(exercise.releaseDate),
             startDate: convertDateFromClient(exercise.startDate),
             dueDate: convertDateFromClient(exercise.dueDate),
@@ -450,8 +461,9 @@ export class ExerciseService {
      * @param exercise - Exercise that will be modified
      */
     static convertExerciseFromClient<E extends Exercise>(exercise: E): Exercise {
-        let copy = Object.assign(exercise, {});
-        copy = ExerciseService.convertExerciseDatesFromClient(copy);
+        // convertExerciseDatesFromClient already returns a detached copy, so no separate copy step is needed
+        // (the previous `Object.assign(exercise, {})` was a no-op that returned the argument itself).
+        const copy = ExerciseService.convertExerciseDatesFromClient(exercise);
         ExerciseService.stringifyExerciseCategories(copy);
         if (copy.course) {
             copy.course.exercises = [];

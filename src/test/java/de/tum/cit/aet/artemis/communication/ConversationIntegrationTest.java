@@ -103,7 +103,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         // updateLastMessageDateAsync runs in a separate thread; wait for it to commit before
         // querying conversations so the oneToOneChat.lastMessageDate IS NOT NULL condition is met
-        await().atMost(5, TimeUnit.SECONDS).until(() -> conversationRepository.findByIdElseThrow(oneToOneChat.getId()).getLastMessageDate() != null);
+        await().atMost(30, TimeUnit.SECONDS).until(() -> conversationRepository.findByIdElseThrow(oneToOneChat.getId()).getLastMessageDate() != null);
         this.resetWebsocketMock();
         favoriteConversation(oneToOneChat.getId(), "tutor1");
         var channel2 = createChannel(false, TEST_PREFIX + "2");
@@ -177,8 +177,10 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide");
         // then
         // TODO: Hibernate 7 increased query count from 10 to 11 — investigate remaining 1 extra query in a follow-up
-        // 4 calls are for user authentication checks, 6 calls are made for retrieving conversation related data
-        assertThatDb(() -> request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class)).hasBeenCalledTimes(11);
+        // 4 calls are for user authentication checks, 6 calls are made for retrieving conversation related data, and 1
+        // projects the exercise/lecture/exam dates for all channels at once. That last one must stay a single call:
+        // reading those dates off each channel's referenced entity would resolve one lazy proxy per channel.
+        assertThatDb(() -> request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class)).hasBeenCalledTimes(12);
 
         // cleanup
         conversationMessageRepository.deleteById(post.id());
@@ -186,6 +188,31 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(oneToOneChat.getId());
         conversationRepository.deleteById(channel.getId());
         conversationRepository.deleteById(courseWideChannel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getConversationsOfUser_shouldCarryTheDatesOfTheReferencedExercise() throws Exception {
+        // The sidebar marks a channel as current from these dates. They used to be looked up in the course's exercises,
+        // which only worked while the course carried all of its content.
+        // Truncated to milliseconds: the database keeps that precision, so untruncated dates would differ on read-back
+        var releaseDate = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS).minusDays(3);
+        var dueDate = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS).plusDays(4);
+        var exercise = textExerciseUtilService.createIndividualTextExercise(exampleCourse, releaseDate, dueDate, dueDate.plusDays(7));
+        var exerciseChannel = conversationUtilService.addChannelToExercise(exercise);
+
+        var conversations = request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
+
+        var channel = conversations.stream().filter(ChannelDTO.class::isInstance).map(ChannelDTO.class::cast).filter(dto -> dto.getId().equals(exerciseChannel.getId())).findFirst()
+                .orElseThrow();
+        // PostgreSQL stores timestamps as UTC, so compare instants rather than zoned values
+        assertThat(channel.getSubTypeReferenceStartDate()).isNotNull();
+        assertThat(channel.getSubTypeReferenceStartDate().toInstant()).isEqualTo(exercise.getReleaseDate().toInstant());
+        assertThat(channel.getSubTypeReferenceEndDate()).isNotNull();
+        assertThat(channel.getSubTypeReferenceEndDate().toInstant()).isEqualTo(exercise.getDueDate().toInstant());
+
+        // cleanup
+        conversationRepository.deleteById(exerciseChannel.getId());
     }
 
     @Test

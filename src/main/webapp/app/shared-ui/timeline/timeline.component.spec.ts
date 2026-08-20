@@ -1,6 +1,8 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
+import { DatePicker } from 'primeng/datepicker';
 import { vi } from 'vitest';
 
 import { TimelineComponent, TimelineItem, TimelineValidationMode } from './timeline.component';
@@ -264,5 +266,64 @@ describe('ExerciseTimeline', () => {
 
         expect(input.value).toBe('07.06.2026 17:24');
         expect(item.date()?.isSame(dayjs('2026-06-07T17:24:00'))).toBe(true);
+    });
+
+    it('should display a reactive warning without invalidating the timeline', () => {
+        const warningStringKey = signal<string | undefined>('timeline.warning');
+        const timelineItem: TimelineItem = {
+            kind: 'required',
+            labelStringKey: 'release',
+            date: signal(dayjs('2026-01-01T10:00:00Z')),
+            warningStringKey,
+        };
+        fixture.componentRef.setInput('timelineItems', [timelineItem]);
+        fixture.detectChanges();
+
+        expect(component.internalTimelineItems()[0]).toMatchObject({
+            hasWarning: true,
+            tooltip: 'timeline.warning',
+        });
+        expect(component.timelineStatus()).toEqual({ valid: true, empty: false });
+
+        const datePicker = fixture.debugElement.query(By.directive(DatePicker)).componentInstance as DatePicker;
+        expect(datePicker.inputStyle?.['border-color']).toBe('var(--warning)');
+        expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon.warning')).not.toBeNull();
+
+        warningStringKey.set(undefined);
+        fixture.detectChanges();
+
+        expect(component.internalTimelineItems()[0]).toMatchObject({
+            hasWarning: false,
+            tooltip: undefined,
+        });
+        expect(datePicker.inputStyle?.['border-color']).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon')).toBeNull();
+    });
+
+    it('should let a validation error supersede a warning', () => {
+        const timelineItems: TimelineItem[] = [
+            { kind: 'required', labelStringKey: 'release', date: signal(dayjs('2026-01-10T10:00:00Z')) },
+            {
+                kind: 'required',
+                labelStringKey: 'due',
+                date: signal(dayjs('2026-01-05T10:00:00Z')),
+                warningStringKey: signal('timeline.warning'),
+            },
+        ];
+        fixture.componentRef.setInput('timelineItems', timelineItems);
+        fixture.detectChanges();
+
+        expect(component.internalTimelineItems()[1]).toMatchObject({
+            hasInvalidDateOrder: true,
+            hasWarning: false,
+            tooltip: 'artemisApp.exercise.timelineDateOrderTooltip',
+        });
+        expect(component.timelineStatus().valid).toBe(false);
+
+        const secondRow = fixture.nativeElement.querySelectorAll('.timeline-item-row')[1] as HTMLElement;
+        const infoIcon = secondRow.querySelector('.timeline-datepicker-info-icon') as HTMLElement;
+        const secondDatePicker = fixture.debugElement.queryAll(By.directive(DatePicker))[1].componentInstance as DatePicker;
+        expect(secondDatePicker.inputStyle?.['border-color']).toBeUndefined();
+        expect(infoIcon.classList.contains('warning')).toBe(false);
     });
 });

@@ -29,7 +29,11 @@
                 <div class="datepicker-and-info">
                     <p-datepicker
                         styleClass="timeline-datepicker"
-                        [inputStyle]="{ width: '100%', 'box-sizing': 'border-box' }"
+                        [inputStyle]="{
+                            width: '100%',
+                            'box-sizing': 'border-box',
+                            'border-color': internalItem.hasWarning && !isInvalid ? 'var(--warning)' : undefined,
+                        }"
                         [inputId]="'datepicker-' + index"
                         [ngModel]="internalItem.internalDate"
                         (onInput)="handleManualInput(internalItem, $event)"
@@ -51,8 +55,13 @@
                         [invalid]="isInvalid"
                         [disabled]="internalItem.isDisabled"
                     />
-                    @if (isInvalid) {
-                        <i class="pi pi-info-circle timeline-datepicker-info-icon" [pTooltip]="internalItem.tooltip" tooltipPosition="right"></i>
+                    @if (isInvalid || internalItem.hasWarning) {
+                        <i
+                            class="pi pi-info-circle timeline-datepicker-info-icon"
+                            [class.warning]="internalItem.hasWarning && !isInvalid"
+                            [pTooltip]="internalItem.tooltip"
+                            tooltipPosition="right"
+                        ></i>
                     }
                 </div>
             </div>

@@ -13,7 +13,6 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -43,6 +42,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -139,7 +139,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
             const data = this.routeData();
             if (data?.fileUploadExercise) {
                 this.fileUploadExercise.set(data.fileUploadExercise);
-                this.backupExercise.set(cloneDeep(data.fileUploadExercise));
+                this.backupExercise.set(deepClone(data.fileUploadExercise));
                 this.examCourseId.set(getCourseId(data.fileUploadExercise));
             }
         });

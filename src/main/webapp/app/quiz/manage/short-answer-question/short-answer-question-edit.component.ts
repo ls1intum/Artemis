@@ -22,7 +22,6 @@ import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mappin
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
-import { cloneDeep } from 'lodash-es';
 import { QuizQuestion, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { markdownForHtml } from 'app/foundation/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/foundation/util/markdown.util';
@@ -54,6 +53,7 @@ import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -161,7 +161,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             }
             this.shortAnswerQuestion = this.question() as ShortAnswerQuestion;
 
-            this.backupQuestion = cloneDeep(this.shortAnswerQuestion);
+            this.backupQuestion = deepClone(this.shortAnswerQuestion);
             this.textParts.set(this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!));
 
             if (!this.firstChange) {
@@ -687,7 +687,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      */
     resetQuestionText() {
         this.shortAnswerQuestion.text = this.backupQuestion.text;
-        this.shortAnswerQuestion.spots = cloneDeep(this.backupQuestion.spots);
+        this.shortAnswerQuestion.spots = deepClone(this.backupQuestion.spots);
         this.shortAnswerQuestion.explanation = this.backupQuestion.explanation;
         this.shortAnswerQuestion.hint = this.backupQuestion.hint;
 
@@ -703,9 +703,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.shortAnswerQuestion.invalid = this.backupQuestion.invalid;
         this.shortAnswerQuestion.randomizeOrder = this.backupQuestion.randomizeOrder;
         this.shortAnswerQuestion.scoringType = this.backupQuestion.scoringType;
-        this.shortAnswerQuestion.solutions = cloneDeep(this.backupQuestion.solutions);
-        this.shortAnswerQuestion.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
-        this.shortAnswerQuestion.spots = cloneDeep(this.backupQuestion.spots);
+        this.shortAnswerQuestion.solutions = deepClone(this.backupQuestion.solutions);
+        this.shortAnswerQuestion.correctMappings = deepClone(this.backupQuestion.correctMappings);
+        this.shortAnswerQuestion.spots = deepClone(this.backupQuestion.spots);
         this.resetQuestionText();
     }
 

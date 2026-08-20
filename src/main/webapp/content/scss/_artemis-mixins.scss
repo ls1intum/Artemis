@@ -48,21 +48,86 @@
 }
 
 /*
- * Compact PrimeNG controls inside the title bars rendered below the breadcrumbs. Caps them at 28px so that
- * together with the bars' py-2 (16px) every bar renders at the 44px floor (`min-h-11`) of the admin title bar,
- * whether or not it contains action controls. Vertical centering of the control content is handled by the
- * components' own flex layout.
+ * Layout shared by the title bars in the student overview, course management and administration shells:
+ * `--title-bar-content-height` of content plus `--title-bar-padding-block` above and below, i.e.
+ * `--title-bar-height` in total. Applied to the bar element itself.
+ *
+ * The row does not wrap: the bar must stay at `--title-bar-height` on every viewport, so a crowded action row
+ * shrinks its controls rather than growing the bar. Pages that project many controls therefore have to let them
+ * shrink — the calendar filter caps its reserved width for exactly this reason.
+ */
+@mixin title-bar-frame {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: var(--title-bar-height);
+    padding-block: var(--title-bar-padding-block);
+    flex-wrap: nowrap;
+}
+
+/*
+ * Normalises the action controls projected into a title bar. Pages contribute a mix of TUM UI buttons, selects
+ * and select buttons plus a few legacy PrimeNG controls whose natural heights differ by up to 14px; left alone
+ * they made otherwise identical bars render at different heights. Pinning every control to the bar's content
+ * height keeps the bars — and the buttons within them — identical across all three shells. Vertical centering
+ * of the control content is handled by the components' own flex layout.
  */
 @mixin title-bar-compact-controls {
+    .tum-ui-btn,
+    .tum-ui-select-trigger,
+    .tum-ui-select-button,
+    .tum-ui-select-button-option,
     .p-button,
     .p-togglebutton,
-    .p-select {
-        height: 1.75rem;
+    .p-select,
+    .p-multiselect,
+    /* Search fields are projected into these bars too (FAQ, both shells); PrimeNG sizes its inputs taller. */
+    .p-inputtext,
+    .p-iconfield,
+    .btn {
+        height: var(--title-bar-content-height);
+        min-height: var(--title-bar-content-height);
         padding-block: 0;
+
+        /*
+         * Matching the line box to the pinned height is what vertically centres the label. Bootstrap's `.btn` is
+         * `inline-block` with its own smaller line-height, so with the vertical padding removed above its text would
+         * otherwise sit at the top of the box. Centring via `inline-flex` instead would drop the whitespace between an
+         * icon and its label — flex does not render whitespace-only text nodes — so the labels would touch their icons.
+         */
+        line-height: var(--title-bar-content-height);
     }
 
-    .p-togglebutton-content {
+    /*
+     * A select button option is padded twice by PrimeNG: 4px on the option and 12px on the content inside it. On a
+     * crowded bar (the calendar's week/month switch) that is width the row needs, so the outer pad goes entirely and
+     * the inner one halves.
+     *
+     * The content selector is element-qualified on purpose: PrimeNG's own rule for that class is injected after our
+     * stylesheets, so a bare class selector loses to it on source order.
+     */
+    .p-togglebutton {
+        padding-inline: 0;
+    }
+
+    /*
+     * The TUM UI select button reserves 16px a side per option. Once the bar is narrow enough that its options are
+     * down to icons, that is more padding than icon — on a phone the four view options of course management alone
+     * took 203px of a 282px row and pushed it past the bar — so halve it there. The class is repeated to outrank the
+     * component's own rule, which view encapsulation compiles to a class plus an attribute.
+     */
+    @container title-bar (max-width: 40rem) {
+        /* stylelint-disable-next-line no-duplicate-selectors */
+        .tum-ui-select-button-option.tum-ui-select-button-option {
+            padding-inline: 0.5rem;
+        }
+    }
+
+    .p-togglebutton .p-togglebutton-content {
         padding-block: 0;
+        padding-inline: 0.375rem;
     }
 
     .p-select {
@@ -72,6 +137,51 @@
             padding-block: 0;
         }
     }
+
+    /*
+     * PrimeNG pads its multiselect label vertically. Once the control is pinned to the bar's content height that
+     * padding pushes the label's content (for the calendar filter: its chips) past the bottom of the visible box,
+     * where the label container clips it. This has to live in the bar's stylesheet rather than the page's: the label
+     * belongs to PrimeNG's own view, so a page-scoped selector never matches it.
+     */
+    .p-multiselect-label {
+        display: flex;
+        align-items: center;
+        height: 100%;
+        padding-block: 0;
+    }
+}
+
+/*
+ * Turns a title bar into a size container so the controls projected into it can react to the width of the bar
+ * instead of the width of the viewport. The two differ by whatever the sidebar currently takes, so a viewport
+ * media query collapses labels far too late on a page that has one. Paired with `.title-bar-collapsible-label`
+ * in `global.scss`.
+ */
+@mixin title-bar-size-container {
+    container: title-bar / inline-size;
+}
+
+/*
+ * Height of a shell's content region (student overview, course management, administration): everything between
+ * the sticky navbar and the footer, minus one grey divider, so the shell ends exactly one divider above the
+ * footer. A shell can reserve its own top divider through `--shell-top-spacing`; the student overview uses this
+ * after removing its breadcrumbs. `--navbar-height` / `--footer-height` are kept in sync with the rendered elements by
+ * `observeShellMetrics()`; the theme values are only fallbacks for the first paint. Note this uses
+ * `--navbar-height`, not `--header-height`: the latter is repurposed by exam mode for the exam navigation bar.
+ *
+ * Do NOT also subtract `--system-notification-height`: the notification banner renders INSIDE `jhi-navbar`, so
+ * the measured `--navbar-height` already covers it (SystemNotificationComponent re-measures the navbar whenever
+ * the banner's height changes). Subtracting it again shortened both shells by the banner height.
+ *
+ * Prefer this over `dynamic-content-height` for shell-level regions: the latter's
+ * `--sidebar-header-footer-combined-height` is a hardcoded estimate of navbar + footer that under-states the
+ * real value, which made the gap above the footer differ from page to page. The two formulas therefore
+ * disagree by ~50px, so a region nested inside a shell that still uses `dynamic-content-height` remains
+ * mis-sized (pre-existing; see the follow-up note in the PR description).
+ */
+@mixin shell-content-height {
+    height: calc(100vh - var(--navbar-height) - var(--footer-height) - var(--spacing-divider) - var(--shell-top-spacing, 0px));
 }
 
 @mixin dynamic-content-height($extra-height-to-subtract...) {

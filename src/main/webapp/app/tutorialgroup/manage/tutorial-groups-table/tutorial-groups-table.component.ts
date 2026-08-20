@@ -3,7 +3,6 @@ import { faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
@@ -36,8 +35,6 @@ export class TutorialGroupsTableComponent {
 
     readonly timeZone = input<string>();
 
-    readonly timeZoneUsedForDisplay = signal<string>(dayjs.tz.guess());
-
     sortingPredicate = 'title';
     ascending = true;
     faSort = faSort;
@@ -58,14 +55,6 @@ export class TutorialGroupsTableComponent {
     readonly mifOfDifferentLanguages = signal(false);
 
     constructor() {
-        // Effect to update timeZone
-        effect(() => {
-            const tz = this.timeZone();
-            if (tz) {
-                this.timeZoneUsedForDisplay.set(tz);
-            }
-        });
-
         // Effect to update tutorial groups display properties
         effect(() => {
             const groups = this.tutorialGroups();

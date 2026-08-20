@@ -1,4 +1,4 @@
-import { Component, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, Signal, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -11,6 +11,7 @@ export interface TimelineItem {
     kind: 'required' | 'optional';
     labelStringKey: string;
     date: WritableSignal<Dayjs | undefined>;
+    warningStringKey?: Signal<string | undefined>;
     otherRequiredItem?: TimelineItem;
     disabled?: boolean;
 }
@@ -27,6 +28,7 @@ type InternalTimelineItem = TimelineItem & {
     isOtherRequiredItemDateUndefined: boolean;
     isInvalidInput: boolean;
     isDisabled: boolean;
+    hasWarning: boolean;
     tooltip: string | undefined;
 };
 
@@ -137,6 +139,9 @@ export class TimelineComponent {
             const isOtherRequiredItemDateUndefined = date !== undefined && otherRequiredItem !== undefined && otherRequiredItem.date() === undefined;
             const isInvalidInput = invalidInputKeys.has(item.labelStringKey);
             const isDisabled = item.disabled ?? false;
+            const hasError = isInvalidInput || hasInvalidDateOrder || isInputRequiredButUndefined || isOtherRequiredItemDateUndefined;
+            const warningStringKey = item.warningStringKey?.();
+            const hasWarning = !hasError && warningStringKey !== undefined;
             let tooltip: string | undefined;
             if (isInvalidInput) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateInvalidTooltip');
@@ -151,6 +156,8 @@ export class TimelineComponent {
             } else if (isOtherRequiredItemDateUndefined && otherRequiredItem) {
                 const otherInputName = this.translateService.instant(otherRequiredItem.labelStringKey);
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineOtherRequiredDateTooltip', { otherInputName });
+            } else if (warningStringKey !== undefined) {
+                tooltip = this.translateService.instant(warningStringKey);
             }
 
             return {
@@ -164,6 +171,7 @@ export class TimelineComponent {
                 isOtherRequiredItemDateUndefined,
                 isInvalidInput,
                 isDisabled,
+                hasWarning,
                 tooltip,
             };
         });

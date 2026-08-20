@@ -15,7 +15,6 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { FormsModule, NgForm, NgModel } from '@angular/forms';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/foundation/util/global.utils';
@@ -48,6 +47,7 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedbac
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -184,7 +184,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
 
-            this.backupExercise = cloneDeep(this.textExercise);
+            this.backupExercise = deepClone(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
         });
 
