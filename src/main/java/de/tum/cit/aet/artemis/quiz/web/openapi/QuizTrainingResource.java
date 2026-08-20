@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.quiz.web.training;
+package de.tum.cit.aet.artemis.quiz.web.openapi;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
