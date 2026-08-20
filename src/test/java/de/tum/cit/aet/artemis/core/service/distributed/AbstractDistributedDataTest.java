@@ -328,6 +328,52 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
         map.clear();
     }
 
+    /**
+     * A value that only survives a round trip if the backend honours the object's own serialization hooks.
+     *
+     * <p>
+     * {@code derived} is transient and rebuilt in {@code readObject}, which is a stand-in for the far less obvious case
+     * that actually broke: a cached Hibernate entity whose lazy collection writes itself as uninitialized under Java
+     * serialization, but is walked - and therefore initialized, from a closed session - by a reflective codec.
+     */
+    private static final class CustomSerializedValue implements java.io.Serializable {
+
+        @java.io.Serial
+        private static final long serialVersionUID = 1L;
+
+        private final String stored;
+
+        private transient String derived;
+
+        private CustomSerializedValue(String stored) {
+            this.stored = stored;
+            this.derived = stored.toUpperCase(java.util.Locale.ROOT);
+        }
+
+        @java.io.Serial
+        private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+            in.defaultReadObject();
+            derived = stored.toUpperCase(java.util.Locale.ROOT);
+        }
+    }
+
+    @Test
+    void testValueWithCustomSerializationSurvivesARoundTrip() {
+        // Every backend must serialize the way Hazelcast does, because Hazelcast is the default and everything stored
+        // has to be java.io.Serializable for it. A reflective codec that ignores readObject silently returns a
+        // half-built object instead, which is how a Redis deployment answered 500 for every read of a user's saved
+        // posts while Hazelcast was fine.
+        DistributedMap<String, CustomSerializedValue> map = getDistributedDataProvider().getMap("customSerializationTest");
+        map.put("key", new CustomSerializedValue("value"));
+
+        CustomSerializedValue roundTripped = map.get("key");
+        assertThat(roundTripped).isNotNull();
+        assertThat(roundTripped.stored).isEqualTo("value");
+        assertThat(roundTripped.derived).as("the backend must honour readObject rather than copying fields reflectively").isEqualTo("VALUE");
+
+        map.clear();
+    }
+
     @Test
     void testGetAllOmitsAbsentKeys() {
         DistributedMap<String, String> map = getDistributedDataProvider().getMap("getAllAbsentKeyTest");

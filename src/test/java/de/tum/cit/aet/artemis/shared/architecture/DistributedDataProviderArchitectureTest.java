@@ -52,6 +52,8 @@ class DistributedDataProviderArchitectureTest extends AbstractArchitectureTest {
      * discovery, which has to exist before any provider can be built on top of it.</li>
      * <li>{@code DisableRedisAutoConfig} — switches Spring Boot's Redis auto-configuration off when Redis is not the
      * configured provider, so it necessarily names the auto-configuration classes.</li>
+     * <li>{@code RedissonCodecConfiguration} — aligns Redis serialization with Hazelcast's, which means naming the
+     * Redisson codec.</li>
      * <li>{@code RateLimitConfig} — Bucket4j ships one storage module per backend and offers no common abstraction, so
      * the bean that selects the storage has to name both.</li>
      * <li>{@code HazelcastHealthIndicator}, {@code RedisHealthIndicator}, {@code ArtemisMetricsEndpoint} — report
@@ -63,9 +65,9 @@ class DistributedDataProviderArchitectureTest extends AbstractArchitectureTest {
             "de.tum.cit.aet.artemis.core.service.distributed.redisson.", "de.tum.cit.aet.artemis.core.config.HazelcastConfiguration",
             "de.tum.cit.aet.artemis.core.config.HazelcastClusterManager", "de.tum.cit.aet.artemis.core.config.HazelcastPathSerializer",
             "de.tum.cit.aet.artemis.core.config.EurekaHazelcastDiscoveryStrategy", "de.tum.cit.aet.artemis.core.config.EurekaHazelcastDiscoveryStrategyFactory",
-            "de.tum.cit.aet.artemis.core.config.RateLimitConfig", "de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint",
-            "de.tum.cit.aet.artemis.core.service.connectors.HazelcastHealthIndicator", "de.tum.cit.aet.artemis.core.service.connectors.RedisHealthIndicator",
-            "de.tum.cit.aet.artemis.config.DisableRedisAutoConfig");
+            "de.tum.cit.aet.artemis.core.config.RateLimitConfig", "de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration",
+            "de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint", "de.tum.cit.aet.artemis.core.service.connectors.HazelcastHealthIndicator",
+            "de.tum.cit.aet.artemis.core.service.connectors.RedisHealthIndicator", "de.tum.cit.aet.artemis.config.DisableRedisAutoConfig");
 
     private static final String REASON = """
             all cross-node state must go through DistributedDataProvider. Using Hazelcast or Redis directly pins the \

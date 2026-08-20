@@ -1,6 +1,20 @@
 package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 
-public class MapItemEvent<K, V> {
+import java.io.Serial;
+import java.io.Serializable;
+
+/**
+ * The map mutation broadcast on a map's notification topic, so that listeners on other nodes see it.
+ *
+ * <p>
+ * Serializable because it travels over the wire like every other value in the distributed store. It carries the entry's
+ * key and values, so those have to be serializable too - which they already are, since Hazelcast requires it of
+ * everything stored in a distributed map.
+ */
+public class MapItemEvent<K, V> implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public enum EventType {
         ADD, UPDATE, REMOVE
