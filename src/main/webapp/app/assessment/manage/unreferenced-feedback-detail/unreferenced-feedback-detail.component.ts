@@ -84,13 +84,13 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     readonly CREDITS_STEP = CREDITS_STEP;
 
     /** Whether this feedback awards, deducts or changes nothing — the card's left accent stripe follows it. */
-    readonly tone = computed<FeedbackTone>(() => {
-        const credits = this.feedback().credits ?? 0;
-        if (credits > 0) {
+    protected toneForCredits(credits: number | undefined): FeedbackTone {
+        const value = credits ?? 0;
+        if (value > 0) {
             return 'positive';
         }
-        return credits < 0 ? 'negative' : 'neutral';
-    });
+        return value < 0 ? 'negative' : 'neutral';
+    }
 
     /** Severity of the read-only point pill (green awarded / red deducted / neutral). */
     readonly pointsSeverity = computed<TumUiTagSeverity>(() => pointsSeverity(this.feedback().credits));

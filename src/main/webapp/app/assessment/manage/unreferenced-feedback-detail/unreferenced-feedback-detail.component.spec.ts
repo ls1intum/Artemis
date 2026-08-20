@@ -132,4 +132,23 @@ describe('Unreferenced Feedback Detail Component', () => {
             }),
         );
     });
+
+    it('should update tone when credits change via the stepper', () => {
+        fixture.componentRef.setInput('feedback', {
+            id: 1,
+            detailText: 'feedback',
+            credits: 0.5,
+        } as Feedback);
+        fixture.componentRef.setInput('readOnly', false);
+
+        expect(comp.toneForCredits(comp.feedback().credits)).toBe('positive');
+
+        comp.stepCredits(-comp.CREDITS_STEP);
+        expect(comp.feedback().credits).toBe(0);
+        expect(comp.toneForCredits(comp.feedback().credits)).toBe('neutral');
+
+        comp.stepCredits(-comp.CREDITS_STEP);
+        expect(comp.feedback().credits).toBe(-0.5);
+        expect(comp.toneForCredits(comp.feedback().credits)).toBe('negative');
+    });
 });

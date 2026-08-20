@@ -3,7 +3,7 @@
     (dragover)="$event.preventDefault()"
     class="unreferenced-feedback-detail"
     [class.is-suggestion]="isSuggestion()"
-    [attr.data-tone]="tone()"
+    [attr.data-tone]="toneForCredits(feedback().credits)"
 >
     <div class="feedback-card">
         @if (isSuggestion() || Feedback.isFeedbackSuggestion(feedback())) {
