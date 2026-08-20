@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 
 import java.time.ZonedDateTime;
@@ -214,10 +215,10 @@ public class ProgrammingExerciseImportService {
             // The importBuildPlans method includes this process.
             importBuildPlans(sourceExercise, newExercise);
         }
-        else if (profileService.isLocalCIActive()) {
-            // LocalCI has no per-exercise build plan to clone, but the imported template and solution still need an
-            // initial build so the new exercise has up-to-date results. (Hades triggers builds on-demand from
-            // participation pushes, so it is intentionally excluded here.)
+        else if (profileService.isLocalCIActive() || profileService.isProfileActive(PROFILE_HADES)) {
+            // LocalCI and Hades have no per-exercise build plan to clone, but the imported template and solution still need
+            // an initial build so the new exercise has up-to-date results. This mirrors setupBuildPlansForNewExercise, which
+            // triggers these builds when the build plans are recreated, so the no-recreation path must trigger them as well.
             ContinuousIntegrationTriggerService triggerService = continuousIntegrationTriggerService.orElseThrow();
             triggerService.triggerBuild(newExercise.getTemplateParticipation());
             triggerService.triggerBuild(newExercise.getSolutionParticipation());
