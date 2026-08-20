@@ -34,8 +34,8 @@ artemis:
     url: http://localhost:8081 # Hades scheduler URL
     hades:
       images:
-        clone-image: ghcr.io/ls1intum/hades/hades-clone-container:latest
-        result-parser-image: ghcr.io/ls1intum/hades/junit-result-parser:latest
+        clone-image: ghcr.io/hades-scheduler/git-container:1.1.0
+        result-parser-image: ghcr.io/hades-scheduler/hades/junit-result-parser:1.0.0
       adapter:
         endpoint: http://host.docker.internal:8083/adapter/test-results
         logs-endpoint: http://host.docker.internal:8083/adapter/logs
@@ -43,7 +43,7 @@ artemis:
 ```
 
 - `url` — where the Hades scheduler is reachable. Adjust the host/port to match your Hades scheduler deployment.
-- `hades.images.*` — the container images used for the pipeline steps that clone repositories and parse test results. These are public images maintained by the Hades project; you usually don't need to change them.
+- `hades.images.*` — the container images used for the pipeline steps that clone repositories and parse test results. These are public, released images maintained by the Hades project (pinned to a version tag for reproducibility); you usually don't need to change them.
 - `hades.adapter.endpoint` — where the `hades-artemis-adapter` is reachable from inside the build containers. `host.docker.internal` lets containers managed by the Hades scheduler reach back out to the Docker host; adjust if the adapter runs elsewhere. The adapter receives parsed test results, combines them with the build logs, and forwards the combined result to Artemis' own result-ingestion endpoint.
 - `hades.adapter.logs-endpoint` — per-job callback URL that Artemis sends with each build job; the Hades scheduler's log manager POSTs the aggregated build logs there. This replaces the global `ARTEMIS_ADAPTER_URL` that Hades previously required and needs a Hades scheduler that includes [ls1intum/hades#452](https://github.com/ls1intum/hades/pull/452). Point it at the `hades-artemis-adapter` log route. Leave it empty to disable log forwarding (no `callback_url` is sent with the job).
 - `hades.auth-key` — Basic Auth password Artemis sends to the Hades scheduler (username `hades`). Must match the credential configured on the Hades scheduler side; set a strong value in production.
@@ -67,5 +67,5 @@ The Hades integration is still under active development. The following capabilit
 
 - **Maven blackbox exercises are not supported.** Blackbox exercises emit their results as `customFeedbacks/*.json`, which the Hades result parser does not ingest yet (it reads only JUnit `*.xml`), so no results would be reported. `MAVEN_BLACKBOX` is therefore not offered for Hades exercises. Tracked in [hades-artemis-result-parser#6](https://github.com/Hades-Scheduler/hades-artemis-result-parser/issues/6).
 - **Build timeout and Docker resource limits are not enforced.** The custom build-plan editor shows timeout, environment variable, network, and CPU/memory/swap fields, but Hades currently only honors the custom Docker image; the other settings are not applied. Tracked in [hades#500](https://github.com/Hades-Scheduler/hades/issues/500).
-- **Commit pinning requires an up-to-date clone container.** Artemis sends the exact assignment and test commit hashes to the clone step, but the container only checks them out with [git-container#26](https://github.com/Hades-Scheduler/git-container/pull/26); with an older image the build runs against the branch HEAD.
+- **Commit pinning requires clone container `1.1.0` or newer.** Artemis sends the exact assignment and test commit hashes to the clone step; the container checks them out as of [git-container v1.1.0](https://github.com/Hades-Scheduler/git-container/releases/tag/v1.1.0) (the pinned default). With an older image the build runs against the branch HEAD instead of the scheduled commit.
 - **Result ingestion scans a broad directory.** Because result paths are depth-agnostic, the parser is pointed at the working directory root and matches any `*.xml`; a single malformed XML fails the whole result submission. Tracked in [hades-artemis-result-parser#7](https://github.com/Hades-Scheduler/hades-artemis-result-parser/issues/7).
