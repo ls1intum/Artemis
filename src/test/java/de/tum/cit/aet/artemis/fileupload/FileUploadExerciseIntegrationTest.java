@@ -334,8 +334,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         conversationUtilService.addChannelToExercise(fileUploadExercise);
 
-        FileUploadExerciseDTO receivedFileUploadExercise = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK,
-                FileUploadExerciseDTO.class);
+        FileUploadExerciseDTO receivedFileUploadExercise = assertThatDb(
+                () -> request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExerciseDTO.class)).hasBeenCalledAtMostTimes(10);
 
         assertThat(fileUploadExercise.getId()).isEqualTo(receivedFileUploadExercise.id());
         assertThat(receivedFileUploadExercise.course()).isNotNull();
@@ -504,9 +504,10 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(11));
         fileUploadExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(newCompetency, fileUploadExercise, 1)));
 
-        FileUploadExerciseDTO receivedFileUploadExercise = request.putWithResponseBody(
-                "/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "?notificationText=notification", UpdateFileUploadExerciseDTO.of(fileUploadExercise),
-                FileUploadExerciseDTO.class, HttpStatus.OK);
+        FileUploadExerciseDTO receivedFileUploadExercise = assertThatDb(
+                () -> request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "?notificationText=notification",
+                        UpdateFileUploadExerciseDTO.of(fileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.OK))
+                .hasBeenCalledAtMostTimes(40);
         assertThat(receivedFileUploadExercise.dueDate()).isCloseTo(dueDate, HalfSecond());
         assertThat(receivedFileUploadExercise.course()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.exerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
@@ -749,9 +750,10 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         usedInstruction.setCredits(3);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
-        FileUploadExerciseDTO updatedFileUploadExerciseDTO = request.putWithResponseBody(
-                "/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=false",
-                UpdateFileUploadExerciseDTO.of(fileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.OK);
+        FileUploadExerciseDTO updatedFileUploadExerciseDTO = assertThatDb(
+                () -> request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=false",
+                        UpdateFileUploadExerciseDTO.of(fileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.OK))
+                .hasBeenCalledAtMostTimes(50);
         FileUploadExercise updatedFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(updatedFileUploadExerciseDTO.id());
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedFileUploadExercise);
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> instruction.getId().equals(usedInstruction.getId())).orElseThrow().getCredits())
@@ -791,7 +793,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(response.gradingCriteria()).isNullOrEmpty();
         assertThat(response.competencyLinks()).isNullOrEmpty();
         assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId())).isEmpty();
-        assertThat(fileUploadExerciseRepository.findWithEagerCompetenciesByIdElseThrow(exercise.getId()).getCompetencyLinks()).isEmpty();
+        assertThat(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exercise.getId())).isEmpty();
     }
 
     @Test

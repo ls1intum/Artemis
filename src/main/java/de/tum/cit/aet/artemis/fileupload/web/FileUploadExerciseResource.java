@@ -545,7 +545,7 @@ public class FileUploadExerciseResource {
     public ResponseEntity<FileUploadExerciseDTO> getFileUploadExercise(@PathVariable Long exerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
-        var exercise = loadFileUploadExerciseForResponse(exerciseId);
+        var exercise = loadFileUploadExercise(exerciseId);
         // If the exercise belongs to an exam, only editors or above are allowed to
         // access it, otherwise also TA have access
         if (exercise.isExamExercise()) {
@@ -555,20 +555,27 @@ public class FileUploadExerciseResource {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         }
 
-        return ResponseEntity.ok(FileUploadExerciseDTO.of(exercise));
+        return ResponseEntity.ok(FileUploadExerciseDTO.of(enrichFileUploadExerciseForResponse(exercise)));
     }
 
     /**
-     * Reloads a file upload exercise with every association required by the full response DTO.
-     * This avoids mapping the entity returned by {@code save()}, whose merged instance may not retain initialized lazy associations or transient channel data.
+     * Loads a file upload exercise with the associations required for authorization and a full response DTO.
      *
      * @param exerciseId the exercise identifier
+     * @return the loaded exercise
+     */
+    private FileUploadExercise loadFileUploadExercise(Long exerciseId) {
+        return fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("FileUploadExercise", exerciseId));
+    }
+
+    /**
+     * Enriches an authorized file upload exercise with the remaining data required by the full response DTO.
+     *
+     * @param exercise the authorized exercise
      * @return the response-ready exercise
      */
-    private FileUploadExercise loadFileUploadExerciseForResponse(Long exerciseId) {
-        FileUploadExercise exercise = fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("FileUploadExercise", exerciseId));
-
+    private FileUploadExercise enrichFileUploadExerciseForResponse(FileUploadExercise exercise) {
         if (exercise.isCourseExercise()) {
             Channel channel = channelRepository.findChannelByExerciseId(exercise.getId());
             if (channel != null) {
@@ -576,14 +583,15 @@ public class FileUploadExerciseResource {
             }
         }
 
-        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, exercise);
         return exercise;
     }
 
     private FileUploadExerciseDTO loadFileUploadExerciseDTOForResponse(Long exerciseId) {
-        return FileUploadExerciseDTO.of(loadFileUploadExerciseForResponse(exerciseId));
+        // Do not map the entity returned by save(): its merged instance can lose initialized lazy associations and transient channel data.
+        return FileUploadExerciseDTO.of(enrichFileUploadExerciseForResponse(loadFileUploadExercise(exerciseId)));
     }
 
     /**

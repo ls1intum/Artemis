@@ -4,8 +4,11 @@ import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/co
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { fromFileUploadExerciseDTO, toFileUploadExerciseInputDTO } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
+import { fromFileUploadExerciseDTO, toCompetencyLinkDTO, toFileUploadExerciseInputDTO } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
 import type { FileUploadExerciseDto } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
 import { toUpdateFileUploadExerciseDTO } from 'app/fileupload/shared/entities/update-file-upload-exercise-dto';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -21,6 +24,18 @@ describe('FileUploadExercise DTO adapters', () => {
         exercise.releaseDate = dayjs('2026-01-02T10:00:00.000Z');
         exercise.categories = [new ExerciseCategory('Files', '#123456')];
         exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 0.5)];
+        exercise.teamAssignmentConfig = new TeamAssignmentConfig();
+        exercise.teamAssignmentConfig.id = 45;
+        exercise.teamAssignmentConfig.minTeamSize = 2;
+        exercise.teamAssignmentConfig.maxTeamSize = 4;
+        exercise.plagiarismDetectionConfig = {
+            continuousPlagiarismControlEnabled: true,
+            continuousPlagiarismControlPostDueDateChecksEnabled: false,
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
+            similarityThreshold: 90,
+            minimumScore: 10,
+            minimumSize: 50,
+        };
 
         const dto = toFileUploadExerciseInputDTO(exercise);
 
@@ -28,7 +43,10 @@ describe('FileUploadExercise DTO adapters', () => {
         expect('course' in dto).toBe(false);
         expect(dto.releaseDate).toBe('2026-01-02T10:00:00.000Z');
         expect(dto.categories?.map((category) => parseJson(category))).toEqual([{ category: 'Files', color: '#123456' }]);
+        expect(dto.teamAssignmentConfig).toEqual({ id: 45, minTeamSize: 2, maxTeamSize: 4 });
         expect(dto.competencyLinks).toEqual([{ competency: { id: 34 }, weight: 0.5 }]);
+        expect(dto.plagiarismDetectionConfig).toEqual(exercise.plagiarismDetectionConfig);
+        expect(dto.plagiarismDetectionConfig).not.toBe(exercise.plagiarismDetectionConfig);
     });
 
     it('uses the update-compatible fallback for a competency link without a weight', () => {
@@ -47,6 +65,15 @@ describe('FileUploadExercise DTO adapters', () => {
         exercise.competencyLinks = [new CompetencyExerciseLink(new Competency(), exercise, 1)];
 
         expect(() => toFileUploadExerciseInputDTO(exercise)).toThrow('competency link that has no competency ID');
+    });
+
+    it('rejects a competency link without a weight when no fallback is provided', () => {
+        const competency = new Competency();
+        competency.id = 34;
+        const link = new CompetencyExerciseLink(competency, undefined, 1);
+        Reflect.deleteProperty(link, 'weight');
+
+        expect(() => toCompetencyLinkDTO(link)).toThrow('competency link that has no weight');
     });
 
     it('requires the non-null update fields before constructing the update contract', () => {
@@ -97,5 +124,67 @@ describe('FileUploadExercise DTO adapters', () => {
         expect(exercise.exerciseVariantGroup?.dueDate?.toISOString()).toBe('2026-02-03T08:00:00.000Z');
         expect(exercise.teamMode).toBe(false);
         expect(exercise.gradingInstructionFeedbackUsed).toBe(true);
+    });
+
+    it('rebuilds full response associations including competency titles', () => {
+        const plagiarismDetectionConfig = {
+            continuousPlagiarismControlEnabled: true,
+            continuousPlagiarismControlPostDueDateChecksEnabled: false,
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
+            similarityThreshold: 90,
+            minimumScore: 10,
+            minimumSize: 50,
+        };
+        const dto: FileUploadExerciseDto = {
+            id: 56,
+            type: ExerciseType.FILE_UPLOAD,
+            title: 'Team upload',
+            mode: ExerciseMode.TEAM,
+            teamMode: true,
+            gradingInstructionFeedbackUsed: false,
+            categories: [JSON.stringify({ category: 'Files', color: '#123456' }), 'invalid JSON'],
+            teamAssignmentConfig: { id: 45, minTeamSize: 2, maxTeamSize: 4 },
+            course: { id: 12, title: 'Course', shortName: 'COURSE', testCourse: true, presentationScore: 2, accuracyOfScores: 1 },
+            gradingCriteria: [
+                {
+                    id: 67,
+                    title: 'Quality',
+                    structuredGradingInstructions: [
+                        {
+                            id: 78,
+                            credits: 2.5,
+                            gradingScale: 'GOOD',
+                            instructionDescription: 'Well structured',
+                            feedback: 'Good work',
+                            usageCount: 3,
+                        },
+                    ],
+                },
+            ],
+            competencyLinks: [{ competency: { id: 34, title: 'Quality Assurance' }, weight: 0.5 }],
+            plagiarismDetectionConfig,
+        };
+
+        const exercise = fromFileUploadExerciseDTO(dto);
+
+        expect(exercise.course).toBeInstanceOf(Course);
+        expect(exercise.course).toMatchObject({ id: 12, title: 'Course', shortName: 'COURSE', testCourse: true, presentationScore: 2, accuracyOfScores: 1 });
+        expect(exercise.categories).toEqual([new ExerciseCategory('Files', '#123456')]);
+        expect(exercise.teamAssignmentConfig).toBeInstanceOf(TeamAssignmentConfig);
+        expect(exercise.teamAssignmentConfig).toMatchObject({ id: 45, minTeamSize: 2, maxTeamSize: 4 });
+        expect(exercise.gradingCriteria?.[0]).toBeInstanceOf(GradingCriterion);
+        expect(exercise.gradingCriteria?.[0].structuredGradingInstructions[0]).toBeInstanceOf(GradingInstruction);
+        expect(exercise.gradingCriteria?.[0].structuredGradingInstructions[0]).toMatchObject({
+            id: 78,
+            credits: 2.5,
+            gradingScale: 'GOOD',
+            instructionDescription: 'Well structured',
+            feedback: 'Good work',
+            usageCount: 3,
+        });
+        expect(exercise.competencyLinks?.[0].competency).toBeInstanceOf(Competency);
+        expect(exercise.competencyLinks?.[0].competency).toMatchObject({ id: 34, title: 'Quality Assurance' });
+        expect(exercise.plagiarismDetectionConfig).toEqual(plagiarismDetectionConfig);
+        expect(exercise.plagiarismDetectionConfig).not.toBe(plagiarismDetectionConfig);
     });
 });

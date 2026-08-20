@@ -256,6 +256,7 @@ function fromCompetencyLinkDTO(dto: CompetencyLinkDTO, exercise: FileUploadExerc
 function fromCompetencyDTO(dto: CompetencyDTO): Competency {
     const competency = new Competency();
     competency.id = dto.id;
+    competency.title = dto.title;
     return competency;
 }
 
