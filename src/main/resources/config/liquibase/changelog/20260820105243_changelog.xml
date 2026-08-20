@@ -33,4 +33,27 @@
             <where>lti_created = true AND activated = true</where>
         </update>
     </changeSet>
+    <!--
+        Recover an LTI account whose first launch never finished.
+
+        Under the old flow the launch created the account unactivated and the initialisation dialog activated it, so an
+        account whose owner closed the launch before that dialog completed stayed unactivated. It could still launch again,
+        because the launch did not check account state. It does now, which would leave exactly this population unable to
+        launch at all - so the state has to be repaired in the same migration that introduces the marker.
+
+        `last_modified_by` separates the two ways an LTI account can be unactivated. Deactivating an account is an
+        authenticated administrative action, so it stamps the administrator's login; an account that never got past
+        provisioning has never been written by an authenticated principal and still carries the unauthenticated default. An
+        account an administrator deactivated can therefore not match this predicate, which is what keeps that decision
+        intact. Soft-deleted rows are excluded outright.
+
+        `lti_initialized` is deliberately left false for these rows: they are activated so the launch works, and the dialog
+        is still owed, which is exactly the state the old flow would have left them in.
+    -->
+    <changeSet id="20260820105243-03-recover-unfinished-lti-provisioning" author="krusche">
+        <update tableName="jhi_user">
+            <column name="activated" valueBoolean="true"/>
+            <where>lti_created = true AND activated = false AND is_deleted = false AND (last_modified_by IS NULL OR last_modified_by IN ('system', 'anonymousUser'))</where>
+        </update>
+    </changeSet>
 </databaseChangeLog>

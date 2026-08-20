@@ -255,9 +255,10 @@ public class UserCreationService {
      * This method is typically invoked by the admin user
      * <p>
      * The edit form can flip {@code activated} in either direction, so this reaches the same transitions as
-     * {@link #activateUser(User)} and {@link #deactivateUser(User)} without going through them. It therefore repeats what
-     * they do around the flag itself: the change is written to the audit log, and a deactivation revokes the credentials
-     * that would otherwise keep working over git.
+     * {@link #activateUser(User)} and {@link #deactivateUser(User)} without going through them. A deactivation therefore
+     * repeats what {@link #deactivateUser(User)} does around the flag: it is written to the audit log, and the credentials
+     * that would otherwise keep working over git are revoked. An activation is not audited here, because the caller
+     * follows an activating update with {@link UserService#activateUser(User)}, which records it.
      *
      * @param user           The user that should get updated
      * @param updatedUserDTO The DTO containing the to be updated values
@@ -283,7 +284,6 @@ public class UserCreationService {
         // Captured before the flag is overwritten: the admin edit form reaches the same transition as deactivateUser, and
         // it has to revoke the same credentials, otherwise an account the admin sees as deactivated keeps working over git.
         boolean isBeingDeactivated = Boolean.TRUE.equals(user.getActivated()) && !updatedUserDTO.isActivated();
-        boolean isBeingActivated = !Boolean.TRUE.equals(user.getActivated()) && updatedUserDTO.isActivated();
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
         user.setLangKey(updatedUserDTO.getLangKey());
@@ -309,13 +309,12 @@ public class UserCreationService {
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
-        // Audited here as well as in activateUser/deactivateUser: the admin edit form reaches the same transition without
-        // going through either of them, and an account-state change has to appear in the log whichever route produced it.
+        // Only the deactivation is audited here. The admin edit form reaches that transition without going through
+        // deactivateUser, so it would otherwise go unrecorded. The opposite direction needs no entry here: the only caller,
+        // AdminUserResource.updateUser, follows an activating update with userService.activateUser, which audits it - doing
+        // it in both places recorded a single activation twice.
         if (isBeingDeactivated) {
             auditAccountStateChange(savedUser, Constants.DEACTIVATE_USER);
-        }
-        else if (isBeingActivated) {
-            auditAccountStateChange(savedUser, Constants.ACTIVATE_USER);
         }
         boolean passwordChangedByAdministrator = user.isInternal() && updatedUserDTO.getPassword() != null;
         boolean credentialsRevoked = isBeingDeactivated || revokeCredentialsAfterPasswordChange;

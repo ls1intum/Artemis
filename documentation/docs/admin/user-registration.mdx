@@ -54,6 +54,13 @@ also sign in outside the LMS. Whether that dialog is still owed is tracked by it
 column rather than by `activated`, so the account is usable from the first launch and the dialog is still
 shown exactly once.
 
+:::note
+Before that column existed, the launch created the account unactivated and the dialog activated it. An
+account whose owner closed the launch before finishing therefore stayed unactivated. The upgrade activates
+those accounts so they can launch again, distinguishing them from administrative deactivations by whether
+the row has ever been written by an authenticated principal. The dialog is still owed afterwards.
+:::
+
 ## Importing users
 
 Instructors add course members and exam participants from a list of identifiers, and administrators can

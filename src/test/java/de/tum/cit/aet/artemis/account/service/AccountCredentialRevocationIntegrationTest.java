@@ -443,6 +443,28 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     }
 
     /**
+     * The admin edit form and the dedicated activate action both run for one activation through the resource, so the
+     * transition has to be recorded once rather than by each of them.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void activatingThroughTheAdminUpdateIsRecordedExactlyOnce() {
+        userCreationService.deactivateUser(user);
+        persistenceAuditEventRepository.deleteAll();
+
+        // Mirrors AdminUserResource.updateUser, which follows an activating update with userService.activateUser.
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setActivated(true);
+        update.setPassword(null);
+        User updated = userCreationService.updateUser(userWithAuthorities, update);
+        userService.activateUser(updated);
+
+        assertThat(auditEventService.findAll(Pageable.unpaged()).stream().filter(event -> Constants.ACTIVATE_USER.equals(event.getType())).toList())
+                .as("one activation produces one audit entry").hasSize(1);
+    }
+
+    /**
      * Read through AuditEventService rather than the repository, because it loads {@code data} through an entity graph
      * while findAll() leaves that collection lazy and unreadable outside a session.
      */
