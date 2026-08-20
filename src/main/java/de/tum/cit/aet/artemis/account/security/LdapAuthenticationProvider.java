@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.account.security;
 
 import java.util.HashSet;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -16,7 +15,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.config.LdapEnabled;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -25,6 +23,7 @@ import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
+import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 /**
@@ -45,15 +44,18 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
 
     private final UserCreationService userCreationService;
 
+    private final UserService userService;
+
     private final SpringSecurityLdapTemplate ldapTemplate;
 
     private final UserRepository userRepository;
 
-    public LdapAuthenticationProvider(LdapUserService ldapUserService, AuthorityService authorityService, UserCreationService userCreationService,
+    public LdapAuthenticationProvider(LdapUserService ldapUserService, AuthorityService authorityService, UserCreationService userCreationService, UserService userService,
             SpringSecurityLdapTemplate ldapTemplate, UserRepository userRepository) {
         this.ldapUserService = ldapUserService;
         this.authorityService = authorityService;
         this.userCreationService = userCreationService;
+        this.userService = userService;
         this.ldapTemplate = ldapTemplate;
         this.userRepository = userRepository;
     }
@@ -107,7 +109,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
         // update the user details from ldapUserDto (because they might have changed, e.g. when the user changes the name)
         if (optionalUser.isPresent()) {
             // TODO: make sure the user is not deactivated in the meantime
-            return saveUserIfNeeded(optionalUser.get(), ldapUserDto);
+            return userService.syncUserWithLdapAndRenameScienceEventIdentity(optionalUser.get(), ldapUserDto);
         }
         else {
             // this handles the case that the user does not exist in the Artemis database yet (i.e. first time user login)
@@ -135,45 +137,6 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
         }
         log.info("New LDAP user {} created in Artemis", ldapUserDto.getLogin());
         return userCreationService.saveUser(newUser);
-    }
-
-    /**
-     * Saves the user if any of the fields have changed compared to the LDAP user DTO.
-     *
-     * @param user        The Artemis user to be saved
-     * @param ldapUserDto The LDAP user DTO containing the latest information
-     * @return The saved or updated user
-     */
-    private User saveUserIfNeeded(User user, LdapUserDto ldapUserDto) {
-        boolean saveNeeded = false;
-        if (!Objects.equals(user.getLogin(), ldapUserDto.getLogin())) {
-            user.setLogin(ldapUserDto.getLogin());
-            saveNeeded = true;
-        }
-        if (!Objects.equals(user.getFirstName(), ldapUserDto.getFirstName())) {
-            user.setFirstName(ldapUserDto.getFirstName());
-            saveNeeded = true;
-        }
-        if (!Objects.equals(user.getLastName(), ldapUserDto.getLastName())) {
-            user.setLastName(ldapUserDto.getLastName());
-            saveNeeded = true;
-        }
-        if (!Objects.equals(user.getEmail(), ldapUserDto.getEmail())) {
-            user.setEmail(ldapUserDto.getEmail());
-            saveNeeded = true;
-        }
-        if (!Objects.equals(user.getRegistrationNumber(), ldapUserDto.getRegistrationNumber())) {
-            // an empty string is considered as null to satisfy the unique constraint on registration number
-            if (StringUtils.hasText(ldapUserDto.getRegistrationNumber())) {
-                user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
-                saveNeeded = true;
-            }
-        }
-        // only save the user in the database in case it has changed
-        if (saveNeeded) {
-            user = userRepository.save(user);
-        }
-        return user;
     }
 
     /**

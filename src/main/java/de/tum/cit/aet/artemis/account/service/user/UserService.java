@@ -293,6 +293,45 @@ public class UserService {
     }
 
     /**
+     * Synchronizes changed LDAP user fields and renames matching science event identities in the same transaction if the login changed.
+     *
+     * @param user        the Artemis user to update
+     * @param ldapUserDto the LDAP user DTO containing the latest information
+     * @return the saved or unchanged user
+     */
+    @Transactional
+    public User syncUserWithLdapAndRenameScienceEventIdentity(User user, LdapUserDto ldapUserDto) {
+        final String oldLogin = user.getLogin();
+        boolean saveNeeded = false;
+        if (!Objects.equals(user.getLogin(), ldapUserDto.getLogin())) {
+            user.setLogin(ldapUserDto.getLogin());
+            saveNeeded = true;
+        }
+        if (!Objects.equals(user.getFirstName(), ldapUserDto.getFirstName())) {
+            user.setFirstName(ldapUserDto.getFirstName());
+            saveNeeded = true;
+        }
+        if (!Objects.equals(user.getLastName(), ldapUserDto.getLastName())) {
+            user.setLastName(ldapUserDto.getLastName());
+            saveNeeded = true;
+        }
+        if (!Objects.equals(user.getEmail(), ldapUserDto.getEmail())) {
+            user.setEmail(ldapUserDto.getEmail());
+            saveNeeded = true;
+        }
+        if (!Objects.equals(user.getRegistrationNumber(), ldapUserDto.getRegistrationNumber()) && StringUtils.hasText(ldapUserDto.getRegistrationNumber())) {
+            user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
+            saveNeeded = true;
+        }
+        if (saveNeeded) {
+            User updatedUser = userRepository.save(user);
+            renameScienceEventIdentityIfLoginChanged(oldLogin, updatedUser.getLogin());
+            return updatedUser;
+        }
+        return user;
+    }
+
+    /**
      * Set password reset data for a user if eligible
      *
      * @param user user requesting reset
