@@ -188,15 +188,14 @@ describe('Unreferenced Feedback Detail Component', () => {
         fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
         fixture.detectChanges();
 
-        const header = fixture.nativeElement.querySelector(`#${comp.headerInputId}`) as HTMLInputElement;
-        const textarea = fixture.nativeElement.querySelector(`#${comp.textareaId}`) as HTMLTextAreaElement;
-        const points = fixture.nativeElement.querySelector(`#${comp.pointsInputId}`) as HTMLInputElement;
-        expect(header).not.toBeNull();
-        expect(textarea).not.toBeNull();
-        expect(points).not.toBeNull();
-        expect(fixture.nativeElement.querySelector(`label[for="${comp.headerInputId}"]`)).not.toBeNull();
-        expect(fixture.nativeElement.querySelector(`label[for="${comp.textareaId}"]`)).not.toBeNull();
-        expect(comp.headerInputId).not.toBe(comp.textareaId);
-        expect(comp.pointsInputId).not.toBe(comp.textareaId);
+        const header = fixture.nativeElement.querySelector('.feedback-card__header-input') as HTMLInputElement;
+        const textarea = fixture.nativeElement.querySelector('.feedback-card__textarea') as HTMLTextAreaElement;
+        const points = fixture.nativeElement.querySelector('.feedback-card__points-input') as HTMLInputElement;
+        expect(header?.id).toBeTruthy();
+        expect(textarea?.id).toBeTruthy();
+        expect(points?.id).toBeTruthy();
+        expect(fixture.nativeElement.querySelector(`label[for="${header.id}"]`)).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(`label[for="${textarea.id}"]`)).not.toBeNull();
+        expect(new Set([header.id, textarea.id, points.id]).size).toBe(3);
     });
 });
