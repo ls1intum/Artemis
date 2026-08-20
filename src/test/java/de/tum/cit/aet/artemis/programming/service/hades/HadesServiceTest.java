@@ -231,6 +231,76 @@ class HadesServiceTest {
         assertThatExceptionOfType(ContinuousIntegrationException.class).isThrownBy(() -> hadesService.build(dto));
     }
 
+    @Test
+    void build_withCommitHashes_addsCommitHashesToCloneStep() throws ContinuousIntegrationException {
+        var dto = buildTriggerRequest(Map.of());
+        var expectedUuid = UUID.randomUUID();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(HadesBuildResponseDTO.class)))
+                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
+
+        hadesService.build(dto);
+
+        var cloneStep = requestCaptor.getValue().getBody().steps().stream().filter(step -> "Clone".equals(step.name())).findFirst().orElseThrow();
+        assertThat(cloneStep.metadata()).containsEntry("HADES_ASSIGNMENT_COMMIT", "abc123").containsEntry("HADES_TEST_COMMIT", "def456");
+    }
+
+    @Test
+    void build_withoutCommitHashes_omitsCommitHashesFromCloneStep() throws ContinuousIntegrationException {
+        var dto = new BuildTriggerRequestDTO(1L, 2L, new RepositoryDTO("http://example.com/exercise.git", "", null, null),
+                new RepositoryDTO("http://example.com/test.git", "", null, null), List.of(), "mvn test", ScriptType.SHELL, "JAVA", Map.of(), null);
+        var expectedUuid = UUID.randomUUID();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(HadesBuildResponseDTO.class)))
+                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
+
+        hadesService.build(dto);
+
+        var cloneStep = requestCaptor.getValue().getBody().steps().stream().filter(step -> "Clone".equals(step.name())).findFirst().orElseThrow();
+        assertThat(cloneStep.metadata()).doesNotContainKeys("HADES_ASSIGNMENT_COMMIT", "HADES_TEST_COMMIT");
+    }
+
+    @Test
+    void build_withoutCloneLocations_usesDefaultCheckoutPaths() throws ContinuousIntegrationException {
+        var dto = buildTriggerRequest(Map.of());
+        var expectedUuid = UUID.randomUUID();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(HadesBuildResponseDTO.class)))
+                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
+
+        hadesService.build(dto);
+
+        var cloneStep = requestCaptor.getValue().getBody().steps().stream().filter(step -> "Clone".equals(step.name())).findFirst().orElseThrow();
+        assertThat(cloneStep.metadata()).containsEntry("HADES_ASSIGNMENT_PATH", "./assignment").containsEntry("HADES_TEST_PATH", "./");
+    }
+
+    @Test
+    void build_withCloneLocations_usesConfiguredCheckoutPaths() throws ContinuousIntegrationException {
+        var dto = new BuildTriggerRequestDTO(1L, 2L, new RepositoryDTO("http://example.com/exercise.git", "abc123", "custom-assignment", null),
+                new RepositoryDTO("http://example.com/test.git", "def456", "custom-tests", null), List.of(), "mvn test", ScriptType.SHELL, "JAVA", Map.of(), null);
+        var expectedUuid = UUID.randomUUID();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(HadesBuildResponseDTO.class)))
+                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
+
+        hadesService.build(dto);
+
+        var cloneStep = requestCaptor.getValue().getBody().steps().stream().filter(step -> "Clone".equals(step.name())).findFirst().orElseThrow();
+        assertThat(cloneStep.metadata()).containsEntry("HADES_ASSIGNMENT_PATH", "./custom-assignment").containsEntry("HADES_TEST_PATH", "./custom-tests");
+    }
+
     private BuildTriggerRequestDTO buildTriggerRequest(Map<String, String> additionalProperties) {
         return buildTriggerRequest(additionalProperties, null);
     }

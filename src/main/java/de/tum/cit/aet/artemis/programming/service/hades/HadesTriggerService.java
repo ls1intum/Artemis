@@ -3,10 +3,10 @@ package de.tum.cit.aet.artemis.programming.service.hades;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
@@ -65,6 +64,8 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
     private static final String HADES_WORKING_DIRECTORY = "/shared";
 
     private static final String DEFAULT_INGEST_DIRECTORY = HADES_WORKING_DIRECTORY + "/build/test-results/test";
+
+    private static final String DEFAULT_ASSIGNMENT_CHECKOUT_PATH = "assignment";
 
     public HadesTriggerService(HadesService hadesService, BuildPhaseEvaluationService buildPhaseEvaluationService, BuildPhasesTemplateService buildPhasesTemplateService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, GitService gitService, BuildScriptProviderService buildScriptProviderService) {
@@ -106,8 +107,18 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
                     : gitService.getLastCommitHash(participation.getVcsRepositoryUri());
             String testHash = triggeredByPushTo == RepositoryType.TESTS && commitHash != null ? commitHash
                     : gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri());
-            String testCheckoutPath = RepositoryCheckoutService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(participation.getProgrammingExercise().getProgrammingLanguage());
-            var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), assignmentHash, null, null);
+            // Honor the exercise's configured checkout paths so the clone step writes into the same directories the build script
+            // references. Imported exercises keep custom checkout paths, so falling back to the language default would clone the
+            // repositories into the wrong directories. Language defaults are only used when no checkout path is configured.
+            String assignmentCheckoutPath = buildConfig.getAssignmentCheckoutPath();
+            if (assignmentCheckoutPath == null || assignmentCheckoutPath.isBlank()) {
+                assignmentCheckoutPath = DEFAULT_ASSIGNMENT_CHECKOUT_PATH;
+            }
+            String testCheckoutPath = buildConfig.getTestCheckoutPath();
+            if (testCheckoutPath == null || testCheckoutPath.isBlank()) {
+                testCheckoutPath = RepositoryCheckoutService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(participation.getProgrammingExercise().getProgrammingLanguage());
+            }
+            var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), assignmentHash, assignmentCheckoutPath, null);
             var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTestRepositoryUri().getURI().toString(), testHash, testCheckoutPath, null);
 
             // Hades should use a Bash script
@@ -121,8 +132,7 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
                 additionalProperties.put("projectType", projectType.toString());
             }
 
-            additionalProperties.put("resultIngestDirectory",
-                    resolveResultIngestDirectory(activePhases, buildConfig, participation.getProgrammingExercise().getProgrammingLanguage(), projectType));
+            additionalProperties.put("resultIngestDirectory", resolveResultIngestDirectory(activePhases, buildConfig, projectType));
 
             // Create the build trigger request DTO
             BuildTriggerRequestDTO buildTriggerRequest = new BuildTriggerRequestDTO(exerciseID, participationID, exerciseRepository, testRepository, auxiliaryRepository,
@@ -158,18 +168,38 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             (phase.forceRun() ? forceRunPhases : nonForceRunPhases).add(phase);
         }
 
-        String nonForceRunCommands = nonForceRunPhases.stream().map(HadesTriggerService::resetToWorkingDirectory).collect(Collectors.joining(" && "));
-
-        if (forceRunPhases.isEmpty()) {
-            return "set -e && " + (nonForceRunCommands.isEmpty() ? "cd " + HADES_WORKING_DIRECTORY : nonForceRunCommands);
+        // Each phase is rendered as a Bash function whose body first resets the working directory to /shared and then runs the
+        // phase script. Wrapping the scripts in functions keeps `local` (used by the MAVEN_BLACKBOX templates) legal, which would
+        // fail at Bash top level. The functions are invoked afterwards so `set -e` fail-fast semantics still apply per phase.
+        StringBuilder functionDefinitions = new StringBuilder();
+        List<String> nonForceRunCalls = new ArrayList<>();
+        List<String> forceRunCalls = new ArrayList<>();
+        int phaseIndex = 0;
+        for (BuildPhaseDTO phase : nonForceRunPhases) {
+            String functionName = "phase_" + phaseIndex++;
+            functionDefinitions.append(renderPhaseFunction(functionName, phase));
+            nonForceRunCalls.add(functionName);
+        }
+        for (BuildPhaseDTO phase : forceRunPhases) {
+            String functionName = "phase_" + phaseIndex++;
+            functionDefinitions.append(renderPhaseFunction(functionName, phase));
+            forceRunCalls.add(functionName);
         }
 
-        String forceRunCommands = forceRunPhases.stream().map(HadesTriggerService::resetToWorkingDirectory).collect(Collectors.joining("\n"));
-        return "( set -e\n" + nonForceRunCommands + "\n)\nbuild_exit_code=$?\n" + forceRunCommands + "\nexit ${build_exit_code}";
+        String nonForceRunBody = nonForceRunCalls.isEmpty() ? "cd " + HADES_WORKING_DIRECTORY : String.join("\n", nonForceRunCalls);
+
+        if (forceRunPhases.isEmpty()) {
+            // No force-run phases: run the non-force-run phases directly under `set -e` so the first failing phase aborts the build.
+            return "set -e\n" + functionDefinitions + nonForceRunBody;
+        }
+
+        // The non-force-run phases run inside a `set -e` subshell so the build fails fast, but its exit code is captured so the
+        // force-run phases always run afterwards and the script still exits with the original build result.
+        return functionDefinitions + "(\nset -e\n" + nonForceRunBody + "\n)\nbuild_exit_code=$?\n" + String.join("\n", forceRunCalls) + "\nexit ${build_exit_code}";
     }
 
-    private static String resetToWorkingDirectory(BuildPhaseDTO phase) {
-        return "cd " + HADES_WORKING_DIRECTORY + " && " + phase.script().strip();
+    private static String renderPhaseFunction(String functionName, BuildPhaseDTO phase) {
+        return functionName + "() {\ncd " + HADES_WORKING_DIRECTORY + "\n" + phase.script().strip() + "\n}\n";
     }
 
     private List<BuildPhaseDTO> resolveActivePhases(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExerciseParticipation participation,
@@ -208,27 +238,66 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
         return StringUtils.hasText(buildPlanPhasesDTO.dockerImage()) ? buildPlanPhasesDTO.dockerImage() : null;
     }
 
-    private String resolveResultIngestDirectory(List<BuildPhaseDTO> activePhases, ProgrammingExerciseBuildConfig buildConfig, ProgrammingLanguage programmingLanguage,
-            ProjectType projectType) {
-        boolean isMaven = projectType != null && projectType.toString().contains("MAVEN");
-        if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            return isMaven ? HADES_WORKING_DIRECTORY + "/target/surefire-reports" : DEFAULT_INGEST_DIRECTORY;
-        }
-
+    private String resolveResultIngestDirectory(List<BuildPhaseDTO> activePhases, ProgrammingExerciseBuildConfig buildConfig, ProjectType projectType) {
         List<String> rawResultPaths = activePhases.stream().map(BuildPhaseDTO::resultPaths).filter(Objects::nonNull).flatMap(List::stream)
                 .filter(path -> path != null && !path.isBlank()).distinct().toList();
 
-        if (!rawResultPaths.isEmpty()) {
-            List<String> resolvedResultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(rawResultPaths, buildConfig);
-            return toIngestDirectory(resolvedResultPaths.get(0));
+        // Only fall back to a language default when the active phases declare no result paths at all. Otherwise the parser scans a
+        // single INGEST_DIR, so it must point at a directory that contains every declared suite.
+        if (rawResultPaths.isEmpty()) {
+            boolean isMaven = projectType != null && projectType.toString().contains("MAVEN");
+            return isMaven ? HADES_WORKING_DIRECTORY + "/target/surefire-reports" : DEFAULT_INGEST_DIRECTORY;
         }
-        return DEFAULT_INGEST_DIRECTORY;
+
+        List<String> resolvedResultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(rawResultPaths, buildConfig);
+        List<String> resultDirectories = resolvedResultPaths.stream().map(HadesTriggerService::resultPathToDirectory).distinct().toList();
+        String commonAncestor = longestCommonDirectory(resultDirectories);
+        return commonAncestor.isBlank() ? HADES_WORKING_DIRECTORY : HADES_WORKING_DIRECTORY + "/" + commonAncestor;
     }
 
-    private static String toIngestDirectory(String resultPathGlob) {
-        String cleaned = resultPathGlob.strip().replace("**/", "");
-        int lastSlash = cleaned.lastIndexOf('/');
-        String directory = lastSlash >= 0 ? cleaned.substring(0, lastSlash) : "";
-        return directory.isBlank() ? HADES_WORKING_DIRECTORY : HADES_WORKING_DIRECTORY + "/" + directory;
+    /**
+     * Strips glob wildcards and the trailing file pattern from a resolved result path, leaving the directory that contains the
+     * result files (relative to {@link #HADES_WORKING_DIRECTORY}).
+     */
+    private static String resultPathToDirectory(String resultPathGlob) {
+        // The directory is the literal path prefix up to (but excluding) the first segment that contains a wildcard. The
+        // parser scans INGEST_DIR recursively, so a leading "**" (results at an unknown depth) resolves to the working-directory
+        // root and the recursive walk locates them. Anchoring the stripped remainder instead would point at a directory that
+        // never exists (e.g. "**/target/surefire-reports" -> "target/surefire-reports", while the reports live under
+        // "structural/target/..." and "behavior/target/..."). The final segment is always the file pattern, never a directory.
+        String[] segments = resultPathGlob.strip().split("/");
+        StringBuilder directory = new StringBuilder();
+        for (int i = 0; i < segments.length - 1; i++) {
+            String segment = segments[i];
+            if (segment.isEmpty() || segment.contains("*") || segment.contains("?")) {
+                break;
+            }
+            if (directory.length() > 0) {
+                directory.append('/');
+            }
+            directory.append(segment);
+        }
+        return directory.toString();
+    }
+
+    /**
+     * Computes the longest common parent directory (by path segment) that is an ancestor of all given directories. Returns an
+     * empty string when the directories share no common ancestor, meaning the ingest directory becomes the working directory root.
+     */
+    private static String longestCommonDirectory(List<String> directories) {
+        if (directories.isEmpty()) {
+            return "";
+        }
+        String[] commonSegments = directories.get(0).split("/");
+        int commonLength = commonSegments.length;
+        for (String directory : directories) {
+            String[] segments = directory.split("/");
+            int index = 0;
+            while (index < commonLength && index < segments.length && commonSegments[index].equals(segments[index])) {
+                index++;
+            }
+            commonLength = index;
+        }
+        return String.join("/", Arrays.copyOfRange(commonSegments, 0, commonLength));
     }
 }

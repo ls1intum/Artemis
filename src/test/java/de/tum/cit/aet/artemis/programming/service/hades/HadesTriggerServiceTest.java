@@ -148,9 +148,10 @@ class HadesTriggerServiceTest {
         }
 
         @Test
-        void triggerBuild_withDeclaredResultPath_derivesIngestDirectoryFromIt() throws ContinuousIntegrationException {
+        void triggerBuild_withLiteralResultPath_derivesNarrowDirectory() throws ContinuousIntegrationException {
+            // A result path with a literal (wildcard-free) directory prefix resolves to that exact directory.
             exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
-            var phase = new BuildPhaseDTO("test", "pytest", BuildPhaseCondition.ALWAYS, false, List.of("**/custom-reports/*.xml"));
+            var phase = new BuildPhaseDTO("test", "pytest", BuildPhaseCondition.ALWAYS, false, List.of("reports/junit/*.xml"));
             when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(phase));
             when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
             when(buildScriptProviderService.replaceResultPathsPlaceholders(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -159,11 +160,28 @@ class HadesTriggerServiceTest {
             hadesTriggerService.triggerBuild(participation, null, null);
 
             verify(hadesService).build(captor.capture());
-            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/custom-reports");
+            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/reports/junit");
         }
 
         @Test
-        void triggerBuild_withMidPathWildcard_stripsWildcardSegment() throws ContinuousIntegrationException {
+        void triggerBuild_withLeadingWildcardResultPath_usesRecursiveRoot() throws ContinuousIntegrationException {
+            // A leading "**" means the results live at an unknown depth; the recursive parser locates them from the working
+            // directory root. This is the shape shipped by the real Gradle template (**/test-results/test/*.xml).
+            var phase = new BuildPhaseDTO("test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("**/test-results/test/*.xml"));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(phase));
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            when(buildScriptProviderService.replaceResultPathsPlaceholders(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared");
+        }
+
+        @Test
+        void triggerBuild_withMidPathWildcard_stopsAtWildcardSegment() throws ContinuousIntegrationException {
+            // The ingest directory is the literal prefix up to the first wildcard segment: "src/**/test-results/*.xml" -> "src".
             exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
             var phase = new BuildPhaseDTO("test", "pytest", BuildPhaseCondition.ALWAYS, false, List.of("src/**/test-results/*.xml"));
             when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(phase));
@@ -174,7 +192,7 @@ class HadesTriggerServiceTest {
             hadesTriggerService.triggerBuild(participation, null, null);
 
             verify(hadesService).build(captor.capture());
-            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/src/test-results");
+            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/src");
         }
 
         @Test
@@ -214,6 +232,88 @@ class HadesTriggerServiceTest {
 
             verify(hadesService).build(captor.capture());
             assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/build/test-results/test");
+        }
+
+        @Test
+        void triggerBuild_withSequentialMavenResultPaths_derivesCommonAncestor() throws ContinuousIntegrationException {
+            // Sequential Maven writes surefire reports under both structural/target and behavior/target (real template glob
+            // "**/target/surefire-reports/*.xml"), so the ingest directory must be the common ancestor /shared for the
+            // recursive parser to find both suites.
+            exercise.setProjectType(ProjectType.PLAIN_MAVEN);
+            var structural = new BuildPhaseDTO("structural", "cd structural && mvn test", BuildPhaseCondition.ALWAYS, false, List.of("**/target/surefire-reports/*.xml"));
+            var behavior = new BuildPhaseDTO("behavior", "cd behavior && mvn test", BuildPhaseCondition.ALWAYS, false, List.of("**/target/surefire-reports/*.xml"));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(structural, behavior));
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            when(buildScriptProviderService.replaceResultPathsPlaceholders(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared");
+        }
+
+        @Test
+        void triggerBuild_withSequentialGradleResultPaths_usesRecursiveRoot() throws ContinuousIntegrationException {
+            // Sequential Gradle uses the real template globs "**/test-results/structuralTests/*.xml" and
+            // "**/test-results/behaviorTests/*.xml"; both start with "**", so the ingest directory is the recursive root /shared.
+            var structural = new BuildPhaseDTO("structural_tests", "./gradlew structuralTests", BuildPhaseCondition.ALWAYS, false,
+                    List.of("**/test-results/structuralTests/*.xml"));
+            var behavior = new BuildPhaseDTO("behavior_tests", "./gradlew behaviorTests", BuildPhaseCondition.ALWAYS, false, List.of("**/test-results/behaviorTests/*.xml"));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(structural, behavior));
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            when(buildScriptProviderService.replaceResultPathsPlaceholders(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared");
+        }
+
+        @Test
+        void triggerBuild_withMavenBlackboxResultPaths_usesRecursiveRoot() throws ContinuousIntegrationException {
+            // Maven blackbox uses the real template glob "**/customFeedbacks/TEST-*.json"; the leading "**" resolves to the
+            // recursive root /shared.
+            var secret = new BuildPhaseDTO("secret_tests", "runtest secret", BuildPhaseCondition.ALWAYS, false, List.of("**/customFeedbacks/TEST-*.json"));
+            var publicTests = new BuildPhaseDTO("public_tests", "runtest public", BuildPhaseCondition.ALWAYS, false, List.of("**/customFeedbacks/TEST-*.json"));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(secret, publicTests));
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            when(buildScriptProviderService.replaceResultPathsPlaceholders(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared");
+        }
+
+        @Test
+        void triggerBuild_withoutConfiguredCheckoutPaths_usesLanguageDefaults() throws ContinuousIntegrationException {
+            // JAVA test checkout default is an empty string; the assignment falls back to "assignment".
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().exerciseRepository().cloneLocation()).isEqualTo("assignment");
+            assertThat(captor.getValue().testRepository().cloneLocation()).isEqualTo("");
+        }
+
+        @Test
+        void triggerBuild_withConfiguredCheckoutPaths_usesBuildConfigPaths() throws ContinuousIntegrationException {
+            // Imported exercises keep custom checkout paths, which must flow into the clone metadata.
+            buildConfig.setAssignmentCheckoutPath("custom-assignment");
+            buildConfig.setTestCheckoutPath("custom-tests");
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().exerciseRepository().cloneLocation()).isEqualTo("custom-assignment");
+            assertThat(captor.getValue().testRepository().cloneLocation()).isEqualTo("custom-tests");
         }
 
         @Test
@@ -293,7 +393,69 @@ class HadesTriggerServiceTest {
 
             String script = hadesTriggerService.getBuildScript(buildConfig, participation, exercise);
 
-            assertThat(script).isEqualTo("set -e && cd /shared && cd \"structural\" && mvn test && cd /shared && cd \"behavior\" && mvn test");
+            // Each phase is a Bash function whose body first resets to /shared so a relative cd cannot leak into the next phase.
+            assertThat(script).isEqualTo("""
+                    set -e
+                    phase_0() {
+                    cd /shared
+                    cd "structural" && mvn test
+                    }
+                    phase_1() {
+                    cd /shared
+                    cd "behavior" && mvn test
+                    }
+                    phase_0
+                    phase_1""");
+        }
+
+        @Test
+        void getBuildScript_wrapsPhaseScriptsInFunctionsSoLocalIsLegal() {
+            // A MAVEN_BLACKBOX-style phase uses `local`, which is only legal inside a function. Rendering the phase as a function
+            // body keeps it valid Bash.
+            var phase = new BuildPhaseDTO("replace_script_variables", "local JAVA_FLAGS=\"\"\nsed -i \"s#JAVA_FLAGS#${JAVA_FLAGS}#\" config.exp", BuildPhaseCondition.ALWAYS, false,
+                    null);
+            when(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise)).thenReturn(List.of(phase));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(List.of(phase), participation)).thenReturn(List.of(phase));
+            when(buildScriptProviderService.replacePlaceholders(any(), any(), any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+            String script = hadesTriggerService.getBuildScript(buildConfig, participation, exercise);
+
+            assertThat(script).isEqualTo("""
+                    set -e
+                    phase_0() {
+                    cd /shared
+                    local JAVA_FLAGS=""
+                    sed -i "s#JAVA_FLAGS#${JAVA_FLAGS}#" config.exp
+                    }
+                    phase_0""");
+        }
+
+        @Test
+        void getBuildScript_withForceRunPhase_alwaysRunsForceRunAfterButExitsWithBuildResult() {
+            var test = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.ALWAYS, false, null);
+            var sanitize = new BuildPhaseDTO("sanitize_feedback", "sed -i 's/x/y/g' customFeedbacks/*.json || true", BuildPhaseCondition.ALWAYS, true, null);
+            when(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise)).thenReturn(List.of(test, sanitize));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(List.of(test, sanitize), participation)).thenReturn(List.of(test, sanitize));
+            when(buildScriptProviderService.replacePlaceholders(any(), any(), any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+            String script = hadesTriggerService.getBuildScript(buildConfig, participation, exercise);
+
+            assertThat(script).isEqualTo("""
+                    phase_0() {
+                    cd /shared
+                    mvn test
+                    }
+                    phase_1() {
+                    cd /shared
+                    sed -i 's/x/y/g' customFeedbacks/*.json || true
+                    }
+                    (
+                    set -e
+                    phase_0
+                    )
+                    build_exit_code=$?
+                    phase_1
+                    exit ${build_exit_code}""");
         }
     }
 }
