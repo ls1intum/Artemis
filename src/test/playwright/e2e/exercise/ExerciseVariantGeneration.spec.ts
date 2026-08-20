@@ -55,7 +55,7 @@ test.describe('Exercise variant generation with AI', { tag: '@fast' }, () => {
 
     test.beforeEach(async ({ login, exerciseAPIRequests }) => {
         await login(admin);
-        // The API helper derives the channel name from the title and caps it at 20 chars (sanitizeTitleForChannel);
+        // The API helper derives the channel name from the title and caps it at 20 chars (titleLowercase);
         // keep the prefix short so the unique UUID suffix survives the cap and the two parallel tests can't collide.
         sourceQuiz = await exerciseAPIRequests.createQuizExercise({
             body: { course },

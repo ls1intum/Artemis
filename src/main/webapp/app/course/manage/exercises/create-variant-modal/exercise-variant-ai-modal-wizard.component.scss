@@ -466,26 +466,6 @@
 
 // ── Result phase ───────────────────────────────────────────────────────────────
 
-.result-success {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--success);
-    font-weight: 500;
-    font-size: 0.9rem;
-
-    &__icon {
-        width: 1.5rem;
-        height: 1.5rem;
-        background: color-mix(in srgb, var(--success) 12%, transparent);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-    }
-}
-
 // "source → variant" flow card shown on the generating and result steps.
 .variant-flow-card {
     display: flex;

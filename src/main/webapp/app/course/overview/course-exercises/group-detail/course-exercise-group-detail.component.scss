@@ -20,8 +20,9 @@
 
 .variant-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(480px, 100%), 1fr));
     gap: 0.75rem;
+    align-items: start;
 }
 
 .variant-card {
@@ -56,7 +57,8 @@
         background-color: var(--danger);
     }
 
-    &:hover {
+    &:hover,
+    &:focus-within {
         background-color: var(--link-item-bg);
     }
 
@@ -72,8 +74,7 @@
         }
     }
 
-    // High-specificity selectors to beat the global `a:not(.btn):not(.tab-link):hover`
-    // rule (specificity 0,3,1). Angular's _ngcontent attribute raises this to 0,4,1.
+    // Beats the global `a:not(.btn):not(.tab-link):hover` rule.
     a.variant-card__link:hover,
     a.variant-card__link:focus,
     a.variant-card__link:active {
@@ -102,7 +103,9 @@
         }
     }
 
-    &:hover &__ps {
+    // Expand on focus too, so keyboard users can reach the truncated problem statement.
+    &:hover &__ps,
+    &:focus-within &__ps {
         max-height: 22rem;
         overflow-y: auto;
         overflow-x: hidden;
@@ -114,7 +117,6 @@
     }
 }
 
-// Scale down heading sizes in the rendered problem statement
 /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
 :host ::ng-deep .variant-card__ps {
     h1,

@@ -1,7 +1,6 @@
-import { TumUiButtonComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
-
+import { TumUiButtonComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -10,9 +9,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 export const IMPORT_DIALOG_BACK = '__import_dialog_back__';
 
 /**
- * Footer rendered inside the regular Artemis import dialog when it is opened from the manage-exercises
- * modal. It adds a "Back" button that closes the dialog with the {@link IMPORT_DIALOG_BACK} sentinel so the caller
- * can reopen the manage-exercises modal at the exercise-type selection step.
+ * Footer for the regular Artemis import dialog when opened from the manage-exercises modal. Its "Back" button closes
+ * the dialog with {@link IMPORT_DIALOG_BACK} so the caller can reopen the modal at the type-selection step.
  */
 @Component({
     selector: 'jhi-import-dialog-footer',

@@ -1,4 +1,3 @@
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
@@ -9,6 +8,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 
 @Component({
@@ -34,8 +34,7 @@ export class ConsistencyCheckComponent {
     faCheck = faCheck;
 
     constructor() {
-        // Run the check each time the dialog opens (reading the inputs untracked so a mid-open change doesn't re-trigger),
-        // matching the admin declarative-modal pattern; ngOnInit would only run once and miss a reopen for a new selection.
+        // Run the check on each open, not just once in ngOnInit; untracked so a mid-open change doesn't re-trigger.
         effect(() => {
             if (this.visible()) {
                 untracked(() => this.runCheck());

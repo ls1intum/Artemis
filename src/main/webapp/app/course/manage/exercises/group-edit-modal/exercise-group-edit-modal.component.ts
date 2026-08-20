@@ -1,9 +1,8 @@
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo, faCircleXmark, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-
+import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
@@ -12,10 +11,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
- * Declarative group-edit dialog (rendered from {@code ExerciseGroupTimelineLockComponent} and
- * {@code CourseManagementExercisesComponent}). The edited group is passed via the {@link group} input and shown while
- * {@link visible} is true; saving emits the updated {@link CourseExerciseGroup} on {@link saved} and closes, cancelling
- * just closes (no event).
+ * Declarative group-edit dialog. The edited group comes in via {@link group} and is shown while {@link visible} is
+ * true; saving emits the updated {@link CourseExerciseGroup} on {@link saved} and closes, cancelling just closes.
  */
 @Component({
     selector: 'jhi-exercise-group-edit-modal',
@@ -45,7 +42,7 @@ export class ExerciseGroupEditModalComponent {
     readonly visible = model<boolean>(false);
     /** The group being edited, supplied by the parent. */
     readonly group = input.required<CourseExerciseGroup>();
-    /** Whether the modal is creating a new group (vs. editing an existing one); selects the header text. */
+    /** True when the group does not exist yet, so the dialog is titled "Create Group" instead of "Edit Group". */
     readonly isNew = input(false);
     /** Emits the edited group on save (only when something actually changed); cancel/close emit nothing. */
     readonly saved = output<CourseExerciseGroup>();
@@ -57,6 +54,8 @@ export class ExerciseGroupEditModalComponent {
     readonly draftDueDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftAssessmentDueDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftExampleSolutionPublicationDate = signal<dayjs.Dayjs | undefined>(undefined);
+
+    readonly headerStringKey = computed(() => (this.isNew() ? 'artemisApp.exerciseManagement.groupEdit.createHeader' : 'artemisApp.exerciseManagement.groupEdit.header'));
 
     readonly timelineItems = computed<TimelineItem[]>(() => {
         const releaseDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate };
@@ -71,8 +70,7 @@ export class ExerciseGroupEditModalComponent {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
                 date: this.draftExampleSolutionPublicationDate,
-                // The group only requires exampleSolutionPublicationDate >= releaseDate (ExerciseVariantGroup#areDatesValid);
-                // unlike a single exercise it has no IncludedInOverallScore, so it can't enforce the stricter due-date rule.
+                // The group only requires `>= releaseDate` (see ExerciseVariantGroup#areDatesValid).
                 orderCheckAgainst: [releaseDateItem],
             },
         );
@@ -92,9 +90,8 @@ export class ExerciseGroupEditModalComponent {
             const g = this.group();
             this.draftTitle.set(g.title ?? '');
             this.draftMaxPoints.set(g.maxPoints);
-            // The group's dates are typed as dayjs but arrive as ISO strings at runtime: the exercise's date
-            // deserialization does not reach the nested variant-group reference. Coerce so the timeline (which calls
-            // dayjs.toDate()) receives real dayjs objects. See {@link ExerciseTimelineComponent}.
+            // The group's dates are typed as dayjs but arrive as ISO strings: exercise date deserialization does
+            // not reach the nested variant-group reference, so coerce them for the timeline.
             this.draftReleaseDate.set(toDayjs(g.releaseDate));
             this.draftStartDate.set(toDayjs(g.startDate));
             this.draftDueDate.set(toDayjs(g.dueDate));

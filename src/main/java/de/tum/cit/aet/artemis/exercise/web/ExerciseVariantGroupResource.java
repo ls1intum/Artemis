@@ -182,7 +182,7 @@ public class ExerciseVariantGroupResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<ExerciseProblemStatementDTO>> getExerciseVariantGroupProblemStatements(@PathVariable Long groupId, @PathVariable Long courseId) {
         log.debug("REST request to get problem statements of ExerciseVariantGroup {} in course {}", groupId, courseId);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(groupId, courseId);
         // The members are fetched with a lazy course and open-in-view is off; set the known path course on each so the
         // visibility check below resolves without a LazyInitializationException and without an extra per-exercise query.

@@ -212,19 +212,6 @@ public class ExerciseVariantJobService {
     }
 
     /**
-     * Publishes a PROGRESS sub-label without changing job state ("Validating quiz questions").
-     *
-     * @param jobId  the job id
-     * @param detail the progress detail
-     */
-    public void recordProgress(String jobId, String detail) {
-        VariantJob job = jobMap.get(jobId);
-        if (job != null) {
-            publish(job, VariantGenerationEventDTO.progress(job.getPhase(), detail));
-        }
-    }
-
-    /**
      * Appends a phase's step output to the job's per-phase history and publishes STEP_OUTPUT (expandable
      * panels). Outputs are never overwritten: a phase visited multiple times (verify/repair attempts) keeps
      * every message, oldest first, so instructors can debug earlier failures after a later success.

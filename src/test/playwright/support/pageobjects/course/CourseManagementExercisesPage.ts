@@ -19,12 +19,9 @@ export class CourseManagementExercisesPage {
     }
 
     /**
-     * Clicks a row action for the given exercise. Exercise actions live in the shared `jhi-exercise-actions` component:
-     * each action is rendered inline in the row, but narrow rows collapse the leftmost ones into an ellipsis overflow
-     * menu (appended to the body). This resolves the action whether it is visible inline or hidden in that menu.
-     *
+     * Clicks a row action, resolving it whether it is inline or collapsed into the row's ellipsis overflow menu.
      * @param exerciseID the exercise whose row to act on
-     * @param actionId the action id as defined in `exercise-actions.component.ts` (e.g. `delete`, `edit`, `participations`, `teams`)
+     * @param actionId the action id from `exercise-actions.component.ts` (e.g. `delete`, `edit`, `participations`)
      */
     private async clickRowAction(exerciseID: number, actionId: string) {
         const row = this.getExercise(exerciseID);

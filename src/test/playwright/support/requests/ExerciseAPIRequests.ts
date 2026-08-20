@@ -27,7 +27,7 @@ import {
     TEXT_EXERCISE_BASE,
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
-import { dayjsToString, generateUUID, sanitizeTitleForChannel } from '../utils';
+import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -131,7 +131,7 @@ export class ExerciseAPIRequests {
             title,
             shortName: programmingShortName,
             packageName,
-            channelName: 'exercise-' + sanitizeTitleForChannel(title),
+            channelName: 'exercise-' + titleLowercase(title),
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
             ...(course ? { course } : {}),
             ...(exerciseGroup ? { exerciseGroup } : {}),
@@ -238,7 +238,7 @@ export class ExerciseAPIRequests {
         const textExercise = {
             ...exerciseTemplate,
             title,
-            channelName: 'exercise-' + sanitizeTitleForChannel(title),
+            channelName: 'exercise-' + titleLowercase(title),
             ...this.toExerciseReference(body),
         };
         return this.withKnownExerciseGroup(await this.postTextExercise(textExercise), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
@@ -263,7 +263,7 @@ export class ExerciseAPIRequests {
         const textExercise = {
             ...textExerciseTemplate,
             title,
-            channelName: 'exercise-' + sanitizeTitleForChannel(title),
+            channelName: 'exercise-' + titleLowercase(title),
             releaseDate: dayjsToString(releaseDate),
             dueDate: dayjsToString(dueDate),
             assessmentDueDate: dayjsToString(assessmentDueDate),
@@ -351,7 +351,7 @@ export class ExerciseAPIRequests {
         const template = {
             ...fileUploadExerciseTemplate,
             title,
-            channelName: 'exercise-' + sanitizeTitleForChannel(title),
+            channelName: 'exercise-' + titleLowercase(title),
         };
         const uploadExercise = Object.assign({}, template, body);
         const response = await this.page.request.post(UPLOAD_EXERCISE_BASE, { data: uploadExercise });
@@ -422,7 +422,7 @@ export class ExerciseAPIRequests {
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
-            channelName: 'exercise-' + sanitizeTitleForChannel(title),
+            channelName: 'exercise-' + titleLowercase(title),
             mode,
             ...(teamAssignmentConfig ? { teamAssignmentConfig } : {}),
         };
@@ -592,7 +592,7 @@ export class ExerciseAPIRequests {
             quizQuestions,
             duration,
             quizMode,
-            channelName: 'exercise-' + sanitizeTitleForChannel(title),
+            channelName: 'exercise-' + titleLowercase(title),
         };
 
         let url: string;

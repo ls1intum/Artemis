@@ -1,4 +1,3 @@
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, Type, computed, effect, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -8,7 +7,7 @@ import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
@@ -88,9 +87,8 @@ export class ExerciseAddModalComponent {
     private readonly programmingEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
 
     /**
-     * The exercise-type cards actually shown, gated like the legacy add popover: text / modeling / file-upload are
-     * hidden when their module feature is inactive, and programming while its feature toggle is off. This keeps the
-     * modal from routing users into create/import screens for unavailable exercise types.
+     * The exercise-type cards on offer, gated like the legacy add popover so unavailable types are hidden: text,
+     * modeling and file-upload by module feature, programming by its feature toggle.
      */
     protected readonly exerciseTypeCards = computed<ExerciseTypeCard[]>(() =>
         EXERCISE_TYPE_CARDS.filter((card) => {
@@ -146,9 +144,8 @@ export class ExerciseAddModalComponent {
     }
 
     /**
-     * Opens the regular Artemis exercise import dialog for the selected exercise type. Mirrors
-     * {@link ExerciseImportButtonComponent}: programming exercises use the tabbed variant (which also allows importing
-     * from a file), all other types use the direct import list.
+     * Opens the regular Artemis import dialog for the type. Mirrors {@link ExerciseImportButtonComponent}: programming
+     * uses the tabbed variant (which also imports from a file), everything else the direct list.
      */
     startImport(type: ExerciseType): void {
         this.close();

@@ -6,15 +6,13 @@
         position: relative;
     }
 
-    /* Transparent click-catcher shown over a timeline whose dates are governed by the variant group. It sits above the
-       disabled datepickers so a click opens the group-edit dialog instead of interacting with the read-only fields. */
+    // Click-catcher over group-governed dates: opens the group-edit dialog instead of the disabled datepickers.
     .timeline-lock-overlay {
         position: absolute;
         inset: 0;
         z-index: 5;
         cursor: pointer;
 
-        /* Colour comes from the `text-muted-color` token utility on the element itself (see template). */
         .timeline-lock-icon {
             position: absolute;
             top: 0.5rem;

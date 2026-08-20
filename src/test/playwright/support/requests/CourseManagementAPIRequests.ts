@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { generateUUID, sanitizeTitleForChannel } from '../utils';
+import { generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { COURSE_ADMIN_BASE, Exercise } from '../constants';
 import { UserCredentials } from '../users';
@@ -207,7 +207,7 @@ export class CourseManagementAPIRequests {
             title,
             startDate,
             endDate,
-            channelName: 'lecture-' + sanitizeTitleForChannel(title),
+            channelName: 'lecture-' + titleLowercase(title),
         };
         const response = await this.page.request.post(`api/lecture/lectures`, { data });
         return response.json();

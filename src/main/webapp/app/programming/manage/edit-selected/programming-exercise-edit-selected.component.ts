@@ -1,4 +1,3 @@
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -15,6 +14,7 @@ import { ProgrammingExerciseUpdateTimelineComponent } from '../../shared/program
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
@@ -50,8 +50,7 @@ export class ProgrammingExerciseEditSelectedComponent {
     faSave = faSave;
 
     constructor() {
-        // Reset per-open state each time the dialog opens, so reopening the editor for a different selection does not
-        // carry over a stale draft, notification text, or a previous run's failure/progress (matches the admin pattern).
+        // Reset on each open, so a reopen for a different selection starts without a stale draft or previous result.
         effect(() => {
             if (this.visible()) {
                 untracked(() => {
@@ -144,9 +143,7 @@ export class ProgrammingExerciseEditSelectedComponent {
         this.visible.set(false);
     }
 
-    /**
-     * Closes the modal (× / cancel).
-     */
+    /** Closes the modal (× / cancel). */
     clear() {
         this.visible.set(false);
     }

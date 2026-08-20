@@ -87,7 +87,7 @@
             },
             "groupEdit": {
                 "header": "Edit Group",
-                "headerCreate": "Create Group",
+                "createHeader": "Create Group",
                 "name": "Name",
                 "namePlaceholder": "Group name",
                 "maxPoints": "Max points",

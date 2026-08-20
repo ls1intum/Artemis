@@ -420,8 +420,9 @@ describe('ExerciseTableComponent', () => {
             await fixture.whenStable();
             fixture.detectChanges();
 
-            const label = element.querySelector('tum-ui-select button[role="combobox"] span');
-            expect(label?.textContent).toContain('artemisApp.exerciseManagement.table.noGroup');
+            // The kit select renders its current label inside the combobox trigger button.
+            const trigger = element.querySelector('[role="combobox"]');
+            expect(trigger?.textContent).toContain('artemisApp.exerciseManagement.table.noGroup');
         });
 
         it('reflects the active sort column in the header', () => {
@@ -439,7 +440,8 @@ describe('ExerciseTableComponent', () => {
             // emits (field, order) and this component must apply it to sortColumn/sortAsc.
             renderRows([quiz]);
             const pointsHeader = fixture.nativeElement.querySelector('th[tumUiSortableColumn="points"]') as HTMLElement;
-            const pointsSortButton = pointsHeader.querySelector('button') as HTMLElement;
+            // The kit puts the activation on a real button inside the header, not on the <th> itself.
+            const pointsSortButton = pointsHeader.querySelector('.tum-ui-sort-button') as HTMLButtonElement;
 
             pointsSortButton.click();
             fixture.detectChanges();

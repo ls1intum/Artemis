@@ -1,11 +1,4 @@
-<tum-ui-dialog
-    [(visible)]="visible"
-    [header]="(isNew() ? 'artemisApp.exerciseManagement.groupEdit.headerCreate' : 'artemisApp.exerciseManagement.groupEdit.header') | artemisTranslate"
-    [closable]="true"
-    [closeOnEscape]="true"
-    [dismissableMask]="false"
-    size="medium"
->
+<tum-ui-dialog [(visible)]="visible" [header]="headerStringKey() | artemisTranslate" [closable]="true" [closeOnEscape]="true" [dismissableMask]="false" size="medium">
     <div class="d-flex flex-column gap-4">
         <!-- Name + Points -->
         <div class="d-flex flex-wrap gap-3">
@@ -38,6 +31,7 @@
                     (ngModelChange)="draftMaxPoints.set($event)"
                     [min]="0"
                     [maxFractionDigits]="1"
+                    [showButtons]="true"
                     [placeholder]="'artemisApp.exerciseManagement.groupEdit.maxPointsPlaceholder' | artemisTranslate"
                 />
             </div>
@@ -46,12 +40,12 @@
         <!-- Dates -->
         <div>
             <div class="fw-semibold mb-2" jhiTranslate="artemisApp.exerciseManagement.groupEdit.dates"></div>
-            <tum-ui-message severity="warn" [icon]="faTriangleExclamation" styleClass="mb-2">
+            <tum-ui-message severity="warn" [icon]="faTriangleExclamation" class="mb-2">
                 <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesOverrideWarning"></span>
             </tum-ui-message>
             <jhi-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="timelineStatus.set($event)" />
             @if (!timelineStatus().valid) {
-                <tum-ui-message severity="error" [icon]="faCircleXmark" styleClass="mt-2">
+                <tum-ui-message severity="error" [icon]="faCircleXmark" class="mt-2">
                     <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesInvalidOrder"></span>
                 </tum-ui-message>
             }

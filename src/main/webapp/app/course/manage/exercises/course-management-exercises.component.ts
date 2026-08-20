@@ -1,4 +1,3 @@
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiMessageComponent, TumUiPanelComponent, TumUiSelectButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -8,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FormsModule } from '@angular/forms';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiMessageComponent, TumUiPanelComponent, TumUiSelectButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
@@ -128,18 +128,14 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly exercises = signal<Exercise[]>([]);
     readonly groups = signal<CourseExerciseGroup[]>([]);
     readonly cards = signal<CourseExerciseCard[]>([]);
-    /**
-     * Whether the initial exercise load has finished. Gates the "no exercises match" empty state so it is not shown
-     * during the brief window before the exercises first arrive, while still showing it for a genuinely empty result.
-     */
+    /** Whether the initial load has finished, so the empty state is not shown while the exercises are still coming. */
     readonly loaded = signal(false);
 
     readonly selectedIds = signal<Set<number>>(new Set());
     readonly addModalVisible = signal(false);
     readonly addModalMode = signal<AddModalMode>('create');
 
-    // Declarative-modal state (rendered in the template, admin pattern): a `show*` visibility flag plus, where the
-    // modal's input is required, the data signal that gates its `@if`.
+    // Declarative-modal state: a `show*` visibility flag plus, where the modal's input is required, its data signal.
     readonly showGroupEdit = signal(false);
     readonly groupEditGroup = signal<CourseExerciseGroup | undefined>(undefined);
     /** Whether the group-edit modal is creating (vs. updating) — chooses the persistence path on save. */
@@ -173,10 +169,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     });
 
     /**
-     * Whether the current selection contains a variant-group member. The legacy edit-selected modal writes each
-     * exercise's timeline directly through its type endpoint, which would leave a member's dates diverging from the
-     * group's shared timeline — so bulk timeline editing is blocked while any group member is selected (edit the group
-     * instead). The other bulk actions (repo export, consistency check, delete) do not touch the timeline and stay available.
+     * Whether the selection contains a variant-group member. The edit-selected modal writes each exercise's timeline
+     * directly, which would desync a member from its group, so only bulk timeline editing is blocked for those.
      */
     readonly selectionHasGroupMember = computed(() => this.selectedExercises().some((exercise) => exercise.exerciseVariantGroup?.id !== undefined));
 
@@ -213,8 +207,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly selectedDeleteError$ = this.selectedDeleteError.asObservable();
 
     constructor() {
-        // Restore the last-selected view so returning from an exercise editor keeps the chosen view instead of the
-        // 'type' default. Validated against the known views so a stale/corrupt entry falls back to the default.
+        // Restore the last-selected view, validated so a stale entry falls back to the default.
         const storedView = this.localStorageService.retrieve<ExerciseManagementView>(VIEW_STORAGE_KEY);
         if (storedView && this.viewOptions.some((option) => option.value === storedView)) {
             this.view.set(storedView);
@@ -223,8 +216,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        // Card titles are resolved eagerly via TranslateService.instant, so in this zoneless app they must be rebuilt
-        // on language change — otherwise they keep the previous language until the next interaction rebuilds the cards.
+        // Card titles are resolved eagerly via TranslateService.instant, so rebuild them on a language switch.
         this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.rebuildCards());
 
         this.route.parent!.data.subscribe(({ course }) => {
@@ -255,14 +247,11 @@ export class CourseManagementExercisesComponent implements OnInit {
                     }
                 });
                 this.exercises.set(exercises);
-                // The variant-group endpoints are editor-only. This page is also reachable by tutors, so only load
-                // groups for editors; tutors see the plain exercise list without groups (and avoid a 403 on load).
+                // The variant-group endpoints are editor-only, and this page is also reachable by tutors.
                 if (loadedCourse?.isAtLeastEditor) {
                     this.loadGroupsFromServer(courseId);
                 } else {
-                    // Tutors have no group data for this course; clear any groups left over from a previously shown
-                    // (editor) course so they are not rendered against this course's exercises when Angular reuses the
-                    // component instance across a course switch.
+                    // Clear groups left over from a previously shown course, since the instance is reused.
                     this.groups.set([]);
                 }
                 this.rebuildCards();
@@ -305,9 +294,7 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     changeExerciseGroup(exercise: Exercise, newGroup: CourseExerciseGroup | undefined): void {
         if (newGroup && this.isQuizNonIndividual(exercise)) {
-            // Mirrors the server-side rejection: synchronized/batched quizzes have a single shared run and cannot
-            // share a group's timeline with other variants. The UI already disables the control for these exercises;
-            // this is a defensive fallback (e.g. drag-and-drop in the group view).
+            // Defensive fallback (e.g. drag-and-drop) for what the server rejects and the UI already disables.
             this.alertService.addErrorAlert('artemisApp.exerciseManagement.error.onlyIndividualQuiz');
             return;
         }
@@ -321,9 +308,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     /**
-     * Deletes every selected exercise via its type-specific service, invoked by the bulk-delete button's
-     * {@code jhiDeleteButton} directive on confirm. Reloads from the server afterwards (rather than pruning locally) so
-     * the view reflects the true state even on a partial failure; errors are surfaced through {@link selectedDeleteError}.
+     * Deletes every selected exercise via its type-specific service, invoked by the bulk-delete button on confirm.
+     * Reloads afterwards so the view matches the server even on a partial failure.
      */
     deleteSelectedExercises(event: { [key: string]: boolean } = {}): void {
         const exercisesToDelete = this.selectedExercises();
@@ -332,9 +318,8 @@ export class CourseManagementExercisesComponent implements OnInit {
             this.selectedDeleteError.next('');
             return;
         }
-        // Let every delete settle instead of aborting the batch on the first failure: catchError turns a rejected
-        // delete into an emitted error value so forkJoin still waits for the rest, then we reload once and surface
-        // any error. (merge(...) would unsubscribe the remaining in-flight deletes as soon as one failed.)
+        // catchError turns a rejected delete into an emitted value, so forkJoin waits for the whole batch
+        // instead of unsubscribing the remaining deletes on the first failure.
         const deletionObservables = exercisesToDelete.map((exercise) =>
             this.deleteObservableFor(exercise, event).pipe(
                 map(() => undefined),
@@ -356,8 +341,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     private deleteObservableFor(exercise: Exercise, event: { [key: string]: boolean }): Observable<HttpResponse<void>> {
         switch (exercise.type) {
             case ExerciseType.PROGRAMMING:
-                // The repository/build-plan cleanup checks are only offered on non-LocalCI setups (see the bulk delete
-                // button's additionalChecks); the flags default to false when the dialog showed no checkboxes.
+                // The cleanup checks are only offered on non-LocalCI setups, so the flags default to false.
                 return this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans ?? false, event.deleteBaseReposBuildPlans ?? false);
             case ExerciseType.QUIZ:
                 return this.quizExerciseService.delete(exercise.id!);
@@ -372,14 +356,9 @@ export class CourseManagementExercisesComponent implements OnInit {
         }
     }
 
-    /**
-     * Opens the shared "edit selected" modal to apply a common timeline (release/due/assessment dates, etc.) to all
-     * selected programming exercises at once. On close the exercises are reloaded so the updated dates are reflected
-     * in the table and the week/group cards. Mirrors the develop programming-exercise list behaviour.
-     */
+    /** Opens the "edit selected" modal to apply a common timeline to all selected programming exercises at once. */
     editSelectedExercises(): void {
-        // Defensive: the button is disabled in this case, but never route a variant-group member through the
-        // timeline-editing modal — it would desync the member from the group's shared timeline.
+        // Defensive: the button is already disabled, and a group member routed through here would desync.
         if (this.selectionHasGroupMember()) {
             return;
         }
@@ -412,7 +391,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     openQuizExportDialog(): void {
-        // Quiz exercises are the only exportable type.
         if (this.courseId() === undefined) {
             return;
         }
@@ -426,10 +404,9 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     onAddModalGroupCreate(): void {
-        // Switch to (and remember) the group view via the shared handler, so a later editor visit returns here.
+        // Switch to (and remember) the group view, so a later editor visit returns here.
         this.onViewChange('group');
-        // Open the edit modal with a blank draft — the user names the group there (the modal's Save stays disabled until
-        // a title is entered) and it is only persisted when they save.
+        // Blank draft: the user names the group in the modal, and it is only persisted on save.
         this.openGroupEditDialog({ exercises: [] }, true);
     }
 
@@ -458,8 +435,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     onExerciseDeleted(deleted: Exercise): void {
-        // Remove the deleted exercise from the flat list and from any group it belonged to, then rebuild the cards
-        // so it disappears from the view without requiring a page refresh.
+        // Prune the exercise locally (flat list + its group) so it disappears without a reload.
         this.exercises.set(this.exercises().filter((e) => e.id !== deleted.id));
         this.groups.set(this.groups().map((g) => cloneWith(g, { exercises: (g.exercises ?? []).filter((e) => e.id !== deleted.id) })));
         if (deleted.id !== undefined && this.selectedIds().has(deleted.id)) {
@@ -489,11 +465,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         }
     }
 
-    /**
-     * Opens the declarative group-edit modal (rendered in the template with {@code [(visible)]="showGroupEdit"}).
-     * {@code isNew} selects the create vs. update persistence path in {@link onGroupEditModalSave}, applied when the
-     * modal emits {@code (saved)}.
-     */
+    /** Opens the group-edit modal. {@code isNew} selects the create vs. update path in {@link onGroupEditModalSave}. */
     private openGroupEditDialog(group: CourseExerciseGroup, isNew: boolean): void {
         this.groupEditGroup.set(group);
         this.groupEditIsNew.set(isNew);
@@ -536,8 +508,7 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     onGroupEditModalSave(updated: CourseExerciseGroup, isNew: boolean): void {
         const courseId = this.course()?.id;
-        // The modal's Save button already enforces a non-empty title; narrowing here makes that guarantee explicit
-        // instead of asserting it at the mapping site.
+        // The modal's Save button already enforces a non-empty title; narrowing makes that explicit.
         if (courseId === undefined || !isPersistableGroup(updated)) {
             return;
         }
@@ -557,9 +528,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         if (groupId !== undefined) {
             this.exerciseVariantGroupService.updateGroup(courseId, toUpdateGroupPayload(updated, groupId)).subscribe({
                 next: (dto) => {
-                    // The group timeline may have changed. Re-sync each member exercise's own date fields and quiz
-                    // client state (mirroring the server-side re-sync) so member dates and quiz badges / lifecycle
-                    // buttons reflect the new dates immediately, without waiting for a full reload.
+                    // Mirror the server-side re-sync onto each member, so dates and quiz badges update without a reload.
                     const memberIds = new Set(dto.exerciseIds ?? []);
                     const now = dayjs();
                     const refreshedExercises = this.exercises().map((ex) =>
@@ -577,11 +546,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         }
     }
 
-    /**
-     * The /with-exercises response does not load the quizBatches association, so batches would be missing after a
-     * refresh. Fetch them from the dedicated quiz endpoint and merge them into the loaded quiz exercises (see
-     * {@link ExerciseGroupSyncService#mergeQuizInfo}).
-     */
+    /** The /with-exercises response omits the quizBatches association, so fetch it from the quiz endpoint and merge. */
     private loadQuizBatches(courseId: number): void {
         this.quizExerciseService.findForCourse(courseId).subscribe((response) => {
             const merged = this.groupSync.mergeQuizInfo(this.exercises(), this.groups(), response.body ?? []);
@@ -604,8 +569,7 @@ export class CourseManagementExercisesComponent implements OnInit {
                 this.rebuildCards();
             },
             error: (errorRes: HttpErrorResponse) => {
-                // Do not keep groups from a previously shown course when this course's fetch fails — the stale groups
-                // would be rendered against the new exercise list.
+                // Drop the previous course's groups, or they would be rendered against the new exercise list.
                 this.groups.set([]);
                 this.rebuildCards();
                 this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params);

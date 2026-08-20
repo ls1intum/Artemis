@@ -1,5 +1,29 @@
-// Fill the available width when the host is a flex item; no effect in normal
-// block form layouts where the host already spans full width.
+:host {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.icon-full-size {
+    height: 1rem;
+    width: 1rem;
+}
+
+.visible-date-warning {
+    color: var(--p-text-color) !important;
+}
+
+// Warning border, distinct from the red invalid border handled globally.
+.date-time-picker-warning-border {
+    border-color: var(--color-state-warning) !important;
+}
+
+// PrimeNG's radius-collapse only reaches direct inputgroup children, not this composite picker's nested input.
+:host-context(p-inputgroup) .p-datepicker-input {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+// Click-catcher over a group-governed field: opens the group-edit dialog instead of focusing the disabled input.
 .date-lock-overlay {
     position: absolute;
     inset: 0;

@@ -243,10 +243,6 @@ public class VariantJob implements Serializable {
         return stepOutputs;
     }
 
-    public void setStepOutputs(Map<VariantJobPhase, List<StepOutput>> stepOutputs) {
-        this.stepOutputs = stepOutputs;
-    }
-
     public List<String> getWarnings() {
         return warnings;
     }

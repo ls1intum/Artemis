@@ -1,10 +1,8 @@
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
-
+import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -77,6 +75,16 @@ describe('ExerciseGroupEditModalComponent', () => {
         const releaseDate = component.draftReleaseDate();
         expect(releaseDate?.isValid()).toBe(true);
         expect(releaseDate?.isSame(dayjs('2026-03-03T00:00:00Z'))).toBe(true);
+    });
+
+    it('titles the dialog "create" for a new group and "edit" for an existing one', () => {
+        fixture.componentRef.setInput('group', buildGroup());
+        fixture.detectChanges();
+        expect(component.headerStringKey()).toBe('artemisApp.exerciseManagement.groupEdit.header');
+
+        fixture.componentRef.setInput('isNew', true);
+        fixture.detectChanges();
+        expect(component.headerStringKey()).toBe('artemisApp.exerciseManagement.groupEdit.createHeader');
     });
 
     it('marks the title invalid when blank and disables save', () => {

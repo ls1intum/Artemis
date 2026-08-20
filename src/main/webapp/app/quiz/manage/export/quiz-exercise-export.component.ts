@@ -1,4 +1,3 @@
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
@@ -16,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { ButtonModule } from 'primeng/button';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',
@@ -43,8 +43,7 @@ export class QuizExerciseExportComponent {
     protected readonly faArrowLeft = faArrowLeft;
 
     constructor() {
-        // Load the course's quizzes each time the dialog opens (courseId is already bound by then; read untracked so a
-        // mid-open change doesn't re-trigger), matching the admin declarative-modal pattern.
+        // Load on each open; untracked so a mid-open change doesn't re-trigger.
         effect(() => {
             if (this.visible()) {
                 untracked(() => this.loadForCourse(this.courseId()));
@@ -53,9 +52,8 @@ export class QuizExerciseExportComponent {
     }
 
     /**
-     * Loads course for the given id and populates quiz exercises for the given course id.
-     * All quiz questions are collected first and assigned in a single step (via forkJoin) so the view renders once
-     * with the full list instead of growing as each quiz loads — which otherwise makes the dialog jump in height.
+     * Loads the course and its quiz questions. The questions are collected via forkJoin and assigned in one step,
+     * so the list renders at full length instead of growing (and resizing the dialog) as each quiz loads.
      * @param courseId Id of the course
      */
     private loadForCourse(courseId: number) {
@@ -67,7 +65,7 @@ export class QuizExerciseExportComponent {
             },
             next: (courseResponse) => {
                 this.course.set(courseResponse.body!);
-                // For the given course, get the list of all quiz exercises, then load each quiz's questions in parallel.
+                // List the course's quizzes, then load each quiz's questions in parallel.
                 this.quizExerciseService.findForCourse(courseId).subscribe({
                     next: (res: HttpResponse<QuizExercise[]>) => {
                         const quizExercises = (res.body ?? []).filter((quizExercise): quizExercise is QuizExercise & { id: number } => quizExercise.id !== undefined);
@@ -109,13 +107,10 @@ export class QuizExerciseExportComponent {
     /** Exports selected questions into a json file. */
     exportQuiz() {
         this.quizExerciseService.exportQuiz(this.questions(), false);
-        // Close once the export has been triggered.
         this.visible.set(false);
     }
 
-    /**
-     * Emits {@link back} and closes, so the caller can reopen the manage-exercises modal.
-     */
+    /** Emits {@link back} and closes, so the caller can reopen the manage-exercises modal. */
     onBack() {
         this.back.emit();
         this.visible.set(false);
