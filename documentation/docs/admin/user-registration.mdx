@@ -54,6 +54,32 @@ also sign in outside the LMS. Whether that dialog is still owed is tracked by it
 column rather than by `activated`, so the account is usable from the first launch and the dialog is still
 shown exactly once.
 
+## Importing users
+
+Instructors add course members and exam participants from a list of identifiers, and administrators can
+import users the same way. Each row may carry any combination of **login**, **email** and **registration
+number**.
+
+Resolution happens in two stages. The Artemis database is searched first and completely; only if nothing
+matches is the configured LDAP consulted, and an account found there is created in Artemis. Within each
+stage the identifiers are tried in the order login, then email, then registration number, stopping at the
+first match. Blank identifiers are skipped, and a row with all three blank is reported as not found.
+
+| Outcome | What happens |
+|---|---|
+| Found in the Artemis database | The existing account is used; its details are refreshed from the directory if it is configured |
+| Found only in the directory | An external, activated account is created and used |
+| Found nowhere | The row is returned to the caller as *not found* and no account is created |
+
+Accounts created this way are **activated**, exactly like accounts created on first login. This matters:
+an imported student who has not signed in yet must be able to clone and push straight away.
+
+:::tip
+If an import reports users as not found, check that `artemis.user-management.ldap.enabled` is `true` and
+that the identifiers match what the directory holds. A registration number that does not exist in the
+directory cannot be resolved, since Artemis has nothing else to look the person up by.
+:::
+
 ## The `activated` flag
 
 `activated` decides whether an account may authenticate at all. It is enforced by:
@@ -206,3 +232,45 @@ Application-level limits can be overridden per type under `artemis.rate-limiting
 
 If you run your own reverse proxy instead of the shipped nginx configuration, mirror the zones above;
 otherwise only the application-level limits apply.
+
+## Audit log
+
+Deliberate changes to an account are recorded in the audit log, which keeps them far longer than login
+records. The entries relevant to account state:
+
+| Event type | Recorded when | Principal | Data |
+|---|---|---|---|
+| `ACTIVATE_USER` | An account is activated, by an administrator or by its owner redeeming an activation key | Whoever performed it, or `system` if unauthenticated | `user=<login>` |
+| `DEACTIVATE_USER` | An account is deactivated, through either the deactivate action or the admin edit form | The acting administrator | `user=<login>` |
+| `ADMIN_CHANGE_USER_PASSWORD` | An administrator sets a user's password | The acting administrator | Which credential types were revoked |
+
+Browse them under **Server Administration → Audits** in the admin UI, or through
+`GET /api/admin/audits`. Retention is configured separately for login records and for deliberate actions
+like the above; see [Cleanup Service](cleanup-service.mdx).
+
+## Troubleshooting
+
+**A user can sign in to the website but git authentication fails.**
+Their account is not activated. Web login on an LDAP-only instance does not check the flag, while both
+git paths do. Check `activated` for the account and activate it if it was never meant to be off.
+
+**A user reports they cannot sign in at all after being deactivated.**
+That is the intended effect: deactivation refuses authentication everywhere and revokes the account's
+tokens, SSH keys and passkeys. Only an administrator can activate the account again, and the revoked
+credentials have to be created anew afterwards.
+
+**A newly registered account disappeared.**
+An account that is not activated within `registration.cleanup-time-minutes` is deleted. Usually the
+activation mail was never delivered — verify the mail configuration and that
+`management.health.mail.enabled` reports healthy.
+
+**An imported student has no registration number.**
+Only accounts resolved through the directory carry one. An account created on first login through SAML2 or
+OIDC has one only if the provider supplies it through the configured registration-number attribute.
+
+## Related pages
+
+- [Access Rights](access-rights.mdx) — roles, groups and what each may do
+- [SAML2 Login and Registration](saml2-login-registration.mdx)
+- [OpenID Connect Login](oidc-login-registration.mdx)
+- [Cleanup Service](cleanup-service.mdx) — removing inactive accounts and pruning the audit log

@@ -78,6 +78,11 @@ public class UserCreationService {
 
     /**
      * Create user only in the internal Artemis database. This is a pure service method without any logic with respect to external systems.
+     * <p>
+     * The account is created <b>activated</b> unless its own owner is expected to activate it, which needs {@code isInternal}
+     * <em>and</em> self-registration to be enabled on this instance. Only then does it get {@code activated = false} and an
+     * activation key. See {@link User#activated} for why an externally managed account must never be created unactivated, and
+     * {@link #isRegistrationEnabled()} for the property involved.
      *
      * @param login              user login string
      * @param password           user password, if set to null, the password will be set randomly
@@ -88,7 +93,7 @@ public class UserCreationService {
      * @param imageUrl           user image url
      * @param langKey            user language
      * @param isInternal         true if the actual password gets saved in the database
-     * @return newly created user
+     * @return newly created user, activated unless it is an internal account awaiting self-activation
      */
     public User createUser(String login, @Nullable String password, String firstName, String lastName, String email, @Nullable String registrationNumber, String imageUrl,
             String langKey, boolean isInternal) {
@@ -248,6 +253,11 @@ public class UserCreationService {
     /**
      * Update all information for a specific user (including its password), and return the modified user.
      * This method is typically invoked by the admin user
+     * <p>
+     * The edit form can flip {@code activated} in either direction, so this reaches the same transitions as
+     * {@link #activateUser(User)} and {@link #deactivateUser(User)} without going through them. It therefore repeats what
+     * they do around the flag itself: the change is written to the audit log, and a deactivation revokes the credentials
+     * that would otherwise keep working over git.
      *
      * @param user           The user that should get updated
      * @param updatedUserDTO The DTO containing the to be updated values
@@ -329,7 +339,10 @@ public class UserCreationService {
     }
 
     /**
-     * Activate user
+     * Activates an account, clears its activation key, and records the change in the audit log.
+     * <p>
+     * Reached both from the administrative activate endpoint and from a user redeeming their own activation key, so the
+     * recorded principal is whichever of the two performed it.
      *
      * @param user the user that should be activated
      */
@@ -342,7 +355,11 @@ public class UserCreationService {
     }
 
     /**
-     * Deactivate user
+     * Deactivates an account so it can no longer authenticate anywhere, records the change in the audit log, and revokes the
+     * credentials that would otherwise keep working without it.
+     * <p>
+     * Only an administrator can reverse this. No endpoint lets the account holder activate themselves again - see
+     * {@link de.tum.cit.aet.artemis.account.web.UserResource#initializeUser()}, which deliberately does not touch the flag.
      *
      * @param user the user that should be deactivated
      */
@@ -384,11 +401,14 @@ public class UserCreationService {
     }
 
     /**
-     * Sets for the provided user a random password and ends the initialization process.
-     * Updates the password on CI and VCS systems
+     * Generates a fresh password for an LTI-provisioned account and marks it as initialised, so the launch hands the password
+     * over exactly once. The returned value is the only place the plain password exists - the stored one is hashed.
+     * <p>
+     * Writes {@link User#isLtiInitialized()} rather than {@code activated}, which it used to set: that both overloaded a flag
+     * meaning only "may authenticate" and let a deactivated account re-enable itself through the initialisation endpoint.
      *
      * @param user the user to update
-     * @return the newly created password
+     * @return the newly created password, in plain text, for display to that user
      */
     public String setRandomPasswordAndReturn(User user) {
         String newPassword = RandomUtil.generatePassword();

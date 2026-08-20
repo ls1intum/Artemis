@@ -143,6 +143,10 @@ public class PublicAccountResource {
 
     /**
      * {@code GET /activate} : activate the registered user.
+     * <p>
+     * The only way an activation key is ever redeemed, and gated behind the self-registration feature just like the mail that
+     * carries the key. That is why an unactivated account is only ever meaningful for an internal account on an instance with
+     * registration enabled - see {@link User#activated}.
      *
      * @param key the activation key.
      * @return ResponseEntity with status 200 (OK)
@@ -236,6 +240,12 @@ public class PublicAccountResource {
      * <p>
      * This endpoint is public and is used during the first step of the identifier-first login flow
      * to determine if the user should enter their local password or redirect to an external identity provider.
+     * <p>
+     * Being unauthenticated, it is bounded on two layers: {@link RateLimitType#LOGIN_OPTIONS} here, and a matching nginx zone
+     * keyed on the real TCP peer, which this limiter cannot see. It has its own bucket rather than sharing
+     * {@link RateLimitType#AUTHENTICATION}, because the client calls it once immediately before authenticating and sharing
+     * would halve the budget a real user has for logging in. See {@link LoginOptionsService} for why the answer is derived
+     * from local account state only.
      *
      * @param usernameOrEmail the login or email address entered by the user
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the {@link LoginOptionsDTO}

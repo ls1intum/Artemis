@@ -180,6 +180,11 @@ public class LtiService {
 
     /**
      * Build the response for the LTI launch to include the necessary query params and the JWT cookie.
+     * <p>
+     * Adds {@code ?initialize} while the account still needs to be shown the Artemis password generated for it, which the
+     * client turns into the initialisation dialog. Keyed on {@link User#isLtiInitialized()} rather than on
+     * {@link User#getActivated()}: an LTI account is provisioned by this launch rather than registered by its owner, so it
+     * is created ready to use and the flag would never be false.
      *
      * @param uriComponentsBuilder the uri builder to add the query params to
      * @param response             the response to add the JWT cookie to

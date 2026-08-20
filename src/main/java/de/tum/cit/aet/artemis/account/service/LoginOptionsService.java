@@ -16,8 +16,13 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 /**
- * Service responsible for determining the appropriate login options (such as password, OIDC, or SAML2)
- * for a user based on their identifier (login or email).
+ * Determines which login option (password, OIDC, or SAML2) the login form should offer for a given identifier, so that the
+ * identifier-first form can either show a password field or send the user to the configured identity provider.
+ * <p>
+ * The decision is made from local account state alone. This backs an unauthenticated endpoint, so its answer must be
+ * derivable from what the caller already supplies: it deliberately does not consult the configured directory, which would
+ * both make the response depend on whether the identifier exists there and let an unauthenticated caller drive queries
+ * against it.
  */
 @Profile(PROFILE_CORE)
 @Service
@@ -44,6 +49,13 @@ public class LoginOptionsService {
 
     /**
      * Determines which login method the user should use based on their identifier (login or email).
+     * <p>
+     * An internal account is the only kind that authenticates against a password stored in Artemis, so it is the only case
+     * answered with the password form. Everything else - an externally managed account, and an identifier this instance has
+     * never seen - is sent to the external provider, which is also where a first-time user gets provisioned. Those two are
+     * answered identically on purpose, so the response does not distinguish a known identifier from an unknown one.
+     * <p>
+     * Falls back to the password form when no external provider is configured, and for a blank identifier.
      *
      * @param emailOrLogin the username or email address entered by the user
      * @return the LoginOptionsDTO containing the determined login method and the display name of the provider
