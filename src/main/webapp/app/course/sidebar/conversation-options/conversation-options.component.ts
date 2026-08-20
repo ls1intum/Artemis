@@ -23,6 +23,7 @@ import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
 } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-conversation-options',
@@ -121,14 +122,16 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
 
     openConversationDetailDialog(event: MouseEvent) {
         event.stopPropagation();
-        const ref = this.dialogService.open(ConversationDetailDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: {
-                course: this.course,
-                activeConversation: this.conversation(),
-                selectedTab: ConversationDetailTabs.SETTINGS,
-            },
-        });
+        const ref = this.dialogService.open(
+            ConversationDetailDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                data: {
+                    course: this.course,
+                    activeConversation: this.conversation(),
+                    selectedTab: ConversationDetailTabs.SETTINGS,
+                },
+            }),
+        );
         ref?.onClose
             .pipe(
                 filter((result) => !!result),

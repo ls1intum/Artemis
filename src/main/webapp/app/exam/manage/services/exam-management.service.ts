@@ -31,6 +31,9 @@ import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-regist
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
 import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
+import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -329,11 +332,9 @@ export class ExamManagementService {
             })
             .pipe(
                 map((res) => ({
-                    content: (res.body ?? []).map((row) => ({
-                        ...row,
-                        startedDate: convertDateFromServer(row.startedDate),
-                        submissionDate: convertDateFromServer(row.submissionDate),
-                    })),
+                    content: (res.body ?? []).map((row) =>
+                        cloneWith(row, { startedDate: convertDateFromServer(row.startedDate), submissionDate: convertDateFromServer(row.submissionDate) }),
+                    ),
                     totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
                 })),
             );
@@ -427,11 +428,11 @@ export class ExamManagementService {
      * Generate a test run student exam based on the testRunConfiguration.
      * @param courseId the id of the course
      * @param examId the id of the exam
-     * @param testRunConfiguration the desired configuration
-     * @returns the created test run
+     * @param testRunConfiguration the desired exam id, exercise ids (in persistence order) and working time
+     * @returns the created test run. The response body no longer includes `exercises`; it includes the nested `user`.
      */
-    createTestRun(courseId: number, examId: number, testRunConfiguration: StudentExam): Observable<HttpResponse<StudentExam>> {
-        return this.http.post<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs`, testRunConfiguration, { observe: 'response' });
+    createTestRun(courseId: number, examId: number, testRunConfiguration: CreateTestRunDTO): Observable<HttpResponse<StudentExamDTO>> {
+        return this.http.post<StudentExamDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs`, testRunConfiguration, { observe: 'response' });
     }
 
     /**
@@ -448,9 +449,10 @@ export class ExamManagementService {
      * Find all the test runs for the exam
      * @param courseId the id of the course
      * @param examId the id of the exam
+     * @returns the test runs, each including the nested `user` (no `exercises`, no `exam`)
      */
-    findAllTestRunsForExam(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
-        return this.http.get<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs`, { observe: 'response' });
+    findAllTestRunsForExam(courseId: number, examId: number): Observable<HttpResponse<StudentExamDTO[]>> {
+        return this.http.get<StudentExamDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs`, { observe: 'response' });
     }
 
     /**

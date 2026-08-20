@@ -2,7 +2,6 @@ import { AfterContentInit, Component, Injector, OnInit, afterNextRender, inject,
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { cloneDeep } from 'lodash-es';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { GradingCreditsAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-credits.action';
@@ -20,6 +19,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-grading-instructions-details',
@@ -75,7 +75,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     ngOnInit() {
         this.criteria.set(this.exercise().gradingCriteria || []);
-        this.backupExercise = cloneDeep(this.exercise());
+        this.backupExercise = deepClone(this.exercise());
         this.markdownEditorText.set(this.generateMarkdown());
         this.showEditMode.set(true);
     }
@@ -368,7 +368,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
 
             if (backupInstructionIndex != undefined && backupInstructionIndex >= 0) {
-                this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions[instructionIndex] = cloneDeep(
+                this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions[instructionIndex] = deepClone(
                     this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions[backupInstructionIndex],
                 );
             }
@@ -443,7 +443,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const criterionIndex = this.findCriterionIndex(criterion, this.exercise());
         const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
         if (backupCriterionIndex >= 0) {
-            this.exercise().gradingCriteria![criterionIndex].title = cloneDeep(this.backupExercise.gradingCriteria![backupCriterionIndex].title);
+            this.exercise().gradingCriteria![criterionIndex].title = deepClone(this.backupExercise.gradingCriteria![backupCriterionIndex].title);
         } else {
             criterion.title = '';
         }

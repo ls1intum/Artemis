@@ -244,7 +244,8 @@
                 "chatTopicSet": "Chat-Thema gesetzt:",
                 "chatTopicCleared": "Chat-Thema entfernt",
                 "chatTopicSwitched": "Chat-Thema gewechselt:",
-                "addContextTooltip": "Vorlesung oder Aufgabe wählen"
+                "addContextTooltip": "Vorlesung oder Aufgabe wählen",
+                "tutorSuggestionContext": "Tutor-Vorschlag"
             },
             "citation": {
                 "unitLabel": "Einheit:",
