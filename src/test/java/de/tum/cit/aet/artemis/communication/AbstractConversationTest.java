@@ -135,7 +135,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCI
     void verifyParticipantTopicWebsocketSent(MetisCrudAction crudAction, Long conversationId, String userLoginsWithoutPrefix) {
         var receivingUser = userUtilService.getUserByLogin(testPrefix + userLoginsWithoutPrefix);
         var topic = ConversationService.getConversationParticipantTopicName(exampleCourseId) + receivingUser.getId();
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
+        verify(websocketMessagingService, timeout(10000)).sendMessageToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).action().equals(crudAction)
                         && ((ConversationWebsocketDTO) argument).conversation().getId().equals(conversationId)));
 

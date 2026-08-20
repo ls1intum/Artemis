@@ -56,6 +56,12 @@ jobs:
       - name: Java Documentation
         run: ./gradlew checkstyleMain -x webapp
         if: ${{ !cancelled() }}
+      # Tightly-coupled dependency families (HttpComponents, Bouncy Castle, JGit, SSHD) must not resolve to mixed or
+      # downgraded versions: that is a runtime LinkageError rather than a build failure, so nothing else catches it.
+      # Run explicitly because this task hangs off `check`, which no CI job invokes.
+      - name: Dependency Families
+        run: ./gradlew verifyDependencyFamilies -x webapp
+        if: ${{ !cancelled() }}
       - name: Java Architecture Tests
         run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
         if: ${{ !cancelled() }}
