@@ -96,7 +96,7 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
 
         // Programming exercise + local VC repositories, mirroring PyrisEventSystemIntegrationTest so that
         // toPyrisSubmissionDTO can read the (committed) repository contents off-thread.
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);

@@ -58,7 +58,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
         studentNoAi.setSelectedLLMUsage(null);
         userTestRepository.save(studentNoAi);
 
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         activateIrisFor(course);
