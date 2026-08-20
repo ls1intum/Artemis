@@ -13,15 +13,17 @@
                         <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
                     </span>
                     @if (editable() && titleEditable()) {
-                        <input
+                        <textarea
+                            #titleTextarea
                             class="unified-feedback-title-input"
-                            type="text"
+                            rows="1"
                             [ngModel]="displayTitle()"
                             (ngModelChange)="onTitleInput($event)"
+                            (input)="onTitleTextareaInput()"
                             [placeholder]="defaultTitlePlaceholder()"
                             [attr.aria-label]="defaultTitlePlaceholder()"
                             [disabled]="readOnly()"
-                        />
+                        ></textarea>
                     } @else if (inferredTitle()) {
                         <span class="unified-feedback-title" [tumUiTooltip]="inferredTitle()!">{{ inferredTitle() }}</span>
                     }

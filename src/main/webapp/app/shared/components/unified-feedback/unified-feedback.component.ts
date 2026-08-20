@@ -54,30 +54,44 @@ export class UnifiedFeedbackComponent {
         // with feedbackDetail already populated, so that first flush is exactly when this matters.
         afterRenderEffect(() => {
             this.feedbackDetail();
+            this.feedbackTitle();
             if (this.editable()) {
                 this.autogrowDetailTextarea();
+                this.autogrowTitleTextarea();
             }
         });
 
-        // Re-measuring only on feedbackDetail changes misses the case where the textarea's own available
-        // width shrinks later (e.g. a modeling exercise's Apollon diagram finishes laying out after an AI
-        // feedback suggestion already landed) - the text then wraps into more lines than the height that was
+        // Re-measuring only on feedbackDetail/feedbackTitle changes misses the case where a textarea's own
+        // available width shrinks later (e.g. a modeling exercise's Apollon diagram finishes laying out after an
+        // AI feedback suggestion already landed) - the text then wraps into more lines than the height that was
         // computed at mount time, with nothing left to trigger a re-measure. Watch width specifically (not
         // the observed box as a whole) so our own height writes below don't retrigger this callback.
         afterNextRender(() => {
-            const textarea = this.detailTextarea()?.nativeElement;
-            if (!textarea) {
+            const detailTextarea = this.detailTextarea()?.nativeElement;
+            const titleTextarea = this.titleTextarea()?.nativeElement;
+            if (!detailTextarea && !titleTextarea) {
                 return;
             }
-            let lastWidth = textarea.clientWidth;
+            let lastDetailWidth = detailTextarea?.clientWidth;
+            let lastTitleWidth = titleTextarea?.clientWidth;
             const resizeObserver = new ResizeObserver((entries) => {
-                const width = entries[0]?.contentRect.width ?? 0;
-                if (width !== lastWidth) {
-                    lastWidth = width;
-                    this.autogrowDetailTextarea();
+                for (const entry of entries) {
+                    const width = entry.contentRect.width;
+                    if (entry.target === detailTextarea && width !== lastDetailWidth) {
+                        lastDetailWidth = width;
+                        this.autogrowDetailTextarea();
+                    } else if (entry.target === titleTextarea && width !== lastTitleWidth) {
+                        lastTitleWidth = width;
+                        this.autogrowTitleTextarea();
+                    }
                 }
             });
-            resizeObserver.observe(textarea);
+            if (detailTextarea) {
+                resizeObserver.observe(detailTextarea);
+            }
+            if (titleTextarea) {
+                resizeObserver.observe(titleTextarea);
+            }
             this.destroyRef.onDestroy(() => resizeObserver.disconnect());
         });
     }
@@ -109,6 +123,7 @@ export class UnifiedFeedbackComponent {
     readonly onDelete = output<void>();
 
     private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
+    private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
     private readonly confirmIcon = viewChild(ConfirmIconComponent);
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
@@ -255,6 +270,10 @@ export class UnifiedFeedbackComponent {
         this.feedbackTitle.set(`${this.nextTitlePrefix()}${value}`);
     }
 
+    onTitleTextareaInput(): void {
+        this.autogrowTitleTextarea();
+    }
+
     onDetailChange(value: string): void {
         this.feedbackDetail.set(value);
         this.markAdaptedIfSuggestion();
@@ -289,6 +308,15 @@ export class UnifiedFeedbackComponent {
 
     private autogrowDetailTextarea(): void {
         const textarea = this.detailTextarea()?.nativeElement;
+        if (!textarea) {
+            return;
+        }
+        textarea.style.height = '0px';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+
+    private autogrowTitleTextarea(): void {
+        const textarea = this.titleTextarea()?.nativeElement;
         if (!textarea) {
             return;
         }

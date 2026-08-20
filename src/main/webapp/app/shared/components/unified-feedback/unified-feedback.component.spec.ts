@@ -403,7 +403,7 @@ describe('UnifiedFeedbackComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const titleInput = fixture.nativeElement.querySelector('.unified-feedback-title-input') as HTMLInputElement;
+        const titleInput = fixture.nativeElement.querySelector('.unified-feedback-title-input') as HTMLTextAreaElement;
         const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
         const detailInput = fixture.nativeElement.querySelector('.unified-feedback-detail-input') as HTMLTextAreaElement;
 
