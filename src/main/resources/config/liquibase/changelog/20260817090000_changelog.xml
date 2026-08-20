@@ -67,7 +67,7 @@
             <column name="result_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="seq" type="INT">
+            <column name="seq" type="SMALLINT">
                 <constraints nullable="false"/>
             </column>
             <column name="test_case_id" type="BIGINT">
@@ -86,7 +86,7 @@
             <column name="result_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="seq" type="INT">
+            <column name="seq" type="SMALLINT">
                 <constraints nullable="false"/>
             </column>
             <!-- StaticCodeAnalysisTool enum name, copied verbatim from the previous feedback.reference -->
