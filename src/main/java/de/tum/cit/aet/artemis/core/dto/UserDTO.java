@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.admin.dto.AuditingEntityDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
@@ -80,7 +81,7 @@ public class UserDTO extends AuditingEntityDTO {
 
     private List<CourseAccessRightsDTO> courseRoles;
 
-    private Set<Organization> organizations;
+    private Set<OrganizationDTO> organizations;
 
     private String vcsAccessToken;
 
@@ -141,7 +142,7 @@ public class UserDTO extends AuditingEntityDTO {
         }
         Set<Organization> organizations = user.getOrganizations();
         if (organizations != null && Hibernate.isInitialized(organizations)) {
-            this.organizations = organizations;
+            this.organizations = organizations.stream().map(OrganizationDTO::of).collect(Collectors.toSet());
         }
         this.selectedLLMUsage = user.getSelectedLLMUsage();
         this.selectedLLMUsageTimestamp = user.getSelectedLLMUsageTimestamp();
@@ -244,11 +245,11 @@ public class UserDTO extends AuditingEntityDTO {
         this.courseRoles = courseRoles;
     }
 
-    public Set<Organization> getOrganizations() {
+    public Set<OrganizationDTO> getOrganizations() {
         return organizations;
     }
 
-    public void setOrganizations(Set<Organization> organizations) {
+    public void setOrganizations(Set<OrganizationDTO> organizations) {
         this.organizations = organizations;
     }
 

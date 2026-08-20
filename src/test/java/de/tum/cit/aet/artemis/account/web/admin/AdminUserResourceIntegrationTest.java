@@ -22,8 +22,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.admin.organization.util.OrganizationUtilService;
+import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -40,6 +44,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private OrganizationUtilService organizationUtilService;
 
     @Nested
     class AdminTryingToEscalatePrivilegesUpdateUser {
@@ -748,6 +755,50 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isOk());
             assertThat(userTestRepository.findOneByLogin(user.getLogin()).orElseThrow().isTestUser()).as("the flag is cleared").isFalse();
+        }
+    }
+
+    @Nested
+    class OrganizationReferences {
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUser_replacesAndClearsOrganizationsUsingDTOIds() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "organizationuser");
+            Organization initialOrganization = organizationUtilService.createOrganization();
+            Organization replacementOrganization = organizationUtilService.createOrganization();
+            userTestRepository.addOrganizationToUser(user.getId(), initialOrganization);
+
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
+            managedUserVM.setId(user.getId());
+            managedUserVM.setOrganizations(Set.of(OrganizationDTO.of(replacementOrganization)));
+
+            String responseBody = mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+            UserDTO responseDTO = objectMapper.readValue(responseBody, UserDTO.class);
+            assertThat(responseDTO.getOrganizations()).containsExactly(OrganizationDTO.of(replacementOrganization));
+            User replacedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(user.getId());
+            assertThat(replacedUser.getOrganizations()).containsExactly(replacementOrganization);
+
+            managedUserVM.setOrganizations(Set.of());
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+
+            User clearedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(user.getId());
+            assertThat(clearedUser.getOrganizations()).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUser_rejectsUnknownOrganizationId() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "unknownorganization");
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
+            managedUserVM.setId(user.getId());
+            managedUserVM.setOrganizations(Set.of(new OrganizationDTO(Long.MAX_VALUE, "Ignored", "ignored", null, null, "ignored", null, null, null)));
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isNotFound());
         }
     }
 }

@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationInputDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.admin.organization.util.OrganizationUtilService;
@@ -70,6 +71,11 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
     private SearchTermPageableSearchDTO<String> buildSearch(String searchTerm) {
         return buildSearch(searchTerm, 0, 100, "id", SortingOrder.ASCENDING);
+    }
+
+    private OrganizationInputDTO toInputDTO(Organization organization) {
+        return new OrganizationInputDTO(organization.getId(), organization.getName(), organization.getShortName(), organization.getUrl(), organization.getDescription(),
+                organization.getLogoUrl(), organization.getEmailPattern());
     }
 
     /**
@@ -250,10 +256,11 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         Organization organization = organizationUtilService.createOrganization();
 
-        Organization updatedOrganization = request.postWithResponseBody("/api/core/admin/organizations", organization, Organization.class, HttpStatus.OK);
-        Organization updatedOrganization2 = request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
+        OrganizationDTO updatedOrganization = request.postWithResponseBody("/api/core/admin/organizations", toInputDTO(organization), OrganizationDTO.class, HttpStatus.OK);
+        OrganizationDTO updatedOrganization2 = request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK, OrganizationDTO.class);
         assertThat(updatedOrganization2).isNotNull();
-        assertThat(updatedOrganization.getId()).isNotNull();
+        assertThat(updatedOrganization.id()).isNotNull();
+        assertThat(updatedOrganization).isEqualTo(OrganizationDTO.of(organization));
     }
 
     /**
@@ -265,8 +272,11 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         Organization organization = organizationUtilService.createOrganization();
         organization.setName("UpdatedName");
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
-        assertThat(updatedOrganization.getName()).isEqualTo("UpdatedName");
+        OrganizationDTO updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + organization.getId(), toInputDTO(organization), OrganizationDTO.class,
+                HttpStatus.OK);
+        assertThat(updatedOrganization.name()).isEqualTo("UpdatedName");
+        assertThat(updatedOrganization.url()).isEqualTo(organization.getUrl());
+        assertThat(updatedOrganization.description()).isEqualTo(organization.getDescription());
     }
 
     /**
@@ -280,8 +290,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         organizationRepo.save(initialOrganization);
         initialOrganization.setId(null);
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + initialOrganizationId, initialOrganization, Organization.class,
-                HttpStatus.BAD_REQUEST);
+        OrganizationDTO updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + initialOrganizationId, toInputDTO(initialOrganization),
+                OrganizationDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedOrganization).isNull();
     }
 
@@ -297,7 +307,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         organization.setName("UpdatedName");
         long wrongId = 1337420;
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + wrongId, organization, Organization.class, HttpStatus.BAD_REQUEST);
+        OrganizationDTO updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + wrongId, toInputDTO(organization), OrganizationDTO.class,
+                HttpStatus.BAD_REQUEST);
         organization.setName(initialName);
         assertThat(updatedOrganization).isNull();
     }
@@ -317,7 +328,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
         request.delete("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK);
-        request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.NOT_FOUND, Organization.class);
+        request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.NOT_FOUND, OrganizationDTO.class);
     }
 
     /**
@@ -623,15 +634,14 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         userTestRepository.removeOrganizationFromUser(student.getId(), organization);
         userTestRepository.addOrganizationToUser(student.getId(), organization);
 
-        Organization result = request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
+        OrganizationDTO result = request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK, OrganizationDTO.class);
         List<OrganizationCourseDTO> courses = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch("")));
         List<OrganizationMemberDTO> users = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch("")));
 
         Long expectedCourseId = course1.getId();
-        assertThat(result.getId()).isEqualTo(organization.getId());
-        assertThat(result.getName()).isEqualTo(organization.getName());
+        assertThat(result).isEqualTo(OrganizationDTO.of(organization));
 
         assertThat(courses).hasSize(1);
         assertThat(courses.get(0).id()).isEqualTo(expectedCourseId);
@@ -654,8 +664,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
-        List<Organization> result = request.getList("/api/core/organizations/courses/" + course1.getId(), HttpStatus.OK, Organization.class);
-        assertThat(result).contains(organization);
+        List<OrganizationDTO> result = request.getList("/api/core/organizations/courses/" + course1.getId(), HttpStatus.OK, OrganizationDTO.class);
+        assertThat(result).contains(OrganizationDTO.of(organization));
     }
 
     /**
@@ -670,9 +680,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         userTestRepository.addOrganizationToUser(student.getId(), organization);
 
-        List<Organization> result = request.getList("/api/core/admin/organizations/users/" + student.getId(), HttpStatus.OK, Organization.class);
+        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations/users/" + student.getId(), HttpStatus.OK, OrganizationDTO.class);
 
-        assertThat(result).contains(organization);
+        assertThat(result).contains(OrganizationDTO.of(organization));
     }
 
     /**
@@ -691,8 +701,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         organization.setEmailPattern("^" + student.getEmail() + "$");
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
-        List<OrganizationMemberDTO> members = request.getList("/api/core/admin/organizations/" + updatedOrganization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+        OrganizationDTO updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + organization.getId(), toInputDTO(organization), OrganizationDTO.class,
+                HttpStatus.OK);
+        List<OrganizationMemberDTO> members = request.getList("/api/core/admin/organizations/" + updatedOrganization.id() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch("")));
 
         assertThat(members).hasSize(1);

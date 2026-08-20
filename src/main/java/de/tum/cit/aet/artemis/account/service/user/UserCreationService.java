@@ -5,9 +5,12 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -22,6 +25,7 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -31,6 +35,7 @@ import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 @Profile(PROFILE_CORE)
@@ -261,7 +266,20 @@ public class UserCreationService {
                 user.setPassword(passwordService.hashPassword(newPassword));
             }
         }
-        user.setOrganizations(updatedUserDTO.getOrganizations());
+        Set<OrganizationDTO> organizationDTOs = updatedUserDTO.getOrganizations();
+        if (organizationDTOs == null) {
+            user.setOrganizations(null);
+        }
+        else {
+            Set<Long> organizationIds = organizationDTOs.stream().map(OrganizationDTO::id).filter(Objects::nonNull).collect(Collectors.toSet());
+            List<Organization> organizations = organizationRepository.findAllById(organizationIds);
+            if (organizations.size() != organizationIds.size()) {
+                Set<Long> resolvedOrganizationIds = organizations.stream().map(Organization::getId).collect(Collectors.toSet());
+                Long missingOrganizationId = organizationIds.stream().filter(id -> !resolvedOrganizationIds.contains(id)).findFirst().orElseThrow();
+                throw new EntityNotFoundException("Organization", missingOrganizationId);
+            }
+            user.setOrganizations(new HashSet<>(organizations));
+        }
         setUserAuthorities(updatedUserDTO, user);
 
         log.debug("Changed Information for User: {}", user);
