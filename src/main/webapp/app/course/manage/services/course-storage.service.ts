@@ -17,12 +17,6 @@ export class CourseStorageService implements OnDestroy {
 
     private storedCourses: Course[] = [];
 
-    /**
-     * Ids of courses whose stored object contains the full details from the single-course for-dashboard call
-     * (as opposed to the slim version from the course list, which e.g. misses exams and lectures).
-     */
-    private readonly fullyLoadedCourseIds = new Set<number>();
-
     private readonly courseUpdateSubscriptions: Map<number, SubjectObservablePair<Course>> = new Map();
 
     private currentUserId?: number;
@@ -49,15 +43,12 @@ export class CourseStorageService implements OnDestroy {
      */
     private resetState(): void {
         this.storedCourses = [];
-        this.fullyLoadedCourseIds.clear();
         this.courseUpdateSubscriptions.forEach((pair) => pair.subject.complete());
         this.courseUpdateSubscriptions.clear();
     }
 
     setCourses(courses?: Course[]) {
         this.storedCourses = courses ?? [];
-        // The course list only contains slim courses (e.g. without exams and lectures), which replace any stored full course
-        this.fullyLoadedCourseIds.clear();
     }
 
     getCourse(courseId: number) {
@@ -67,45 +58,27 @@ export class CourseStorageService implements OnDestroy {
     /**
      * Stores (or replaces) a course and notifies subscribers of {@link subscribeToCourseUpdates}.
      *
-     * @param course       the course to store
-     * @param isFullCourse whether the course contains the full details from the single-course for-dashboard call.
-     *                         For any other course object the fully-loaded marker is dropped, as its completeness is unknown
-     *                         (see {@link isCourseFullyLoaded}).
+     * @param course the course to store
      */
-    updateCourse(course?: Course, isFullCourse = false): void {
+    updateCourse(course?: Course): void {
         if (course) {
             // filter out the old course object with the same id
             this.storedCourses = this.storedCourses.filter((existingCourse) => existingCourse.id !== course.id);
             this.storedCourses.push(course);
-            if (course.id) {
-                if (isFullCourse) {
-                    this.fullyLoadedCourseIds.add(course.id);
-                } else {
-                    this.fullyLoadedCourseIds.delete(course.id);
-                }
-            }
             return this.courseUpdateSubscriptions.get(course.id!)?.subject.next(course);
         }
     }
 
     /**
-     * Whether the stored course contains the full details from the single-course for-dashboard call.
-     * Access decisions (e.g. in the CourseOverviewGuard) must only rely on fully loaded courses;
-     * the slim course from the course list would produce wrong results (e.g. it always has empty exams).
+     * Drops the stored course, so a response that carried no course does not leave the previous one readable.
      *
-     * @param courseId the id of the course to check
+     * Separate from {@link updateCourse}, which cannot express this: it takes the course to store, so it has no id to
+     * remove by when there is nothing to store.
+     *
+     * @param courseId the course to drop
      */
-    isCourseFullyLoaded(courseId: number): boolean {
-        return this.fullyLoadedCourseIds.has(courseId);
-    }
-
-    /**
-     * Drops the fully-loaded marker for a single course without touching the stored course object.
-     * Used by components that cache-reuse the full course during their lifetime but must not let
-     * the marker survive beyond it — the next visit should always re-fetch fresh data.
-     */
-    clearFullyLoaded(courseId: number): void {
-        this.fullyLoadedCourseIds.delete(courseId);
+    removeCourse(courseId: number): void {
+        this.storedCourses = this.storedCourses.filter((existingCourse) => existingCourse.id !== courseId);
     }
 
     subscribeToCourseUpdates(courseId: number): Observable<Course> {

@@ -5,6 +5,7 @@ import { generateUUID } from '../../support/utils';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { SEED_COURSES, SEED_CHANNELS } from '../../support/seedData';
+import { Commands } from '../../support/commands';
 
 const writeCourse = { id: SEED_COURSES.channel2.id };
 // Use the pre-seeded "random" channel — students are already joined
@@ -47,22 +48,15 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             await courseMessages.checkMessage(message.id!, message.content!);
             await courseMessages.bookmarkMessage(message.id!);
             await courseMessages.checkMessageBookmarked(message.id!, true);
-            // Reload the page completely. Under heavy multi-node load the conversation occasionally fails to
-            // re-activate from the conversationId query param after a reload (the conversations-cache activation race
-            // that openConversation also works around), leaving an empty view in which the message never renders.
-            // Retry the full reload until the message reappears so this assertion tests bookmark persistence rather
-            // than that unrelated activation race.
-            for (let attempt = 0; attempt < 3; attempt++) {
-                await page.reload();
-                try {
-                    await courseMessages.getSinglePost(message.id!).waitFor({ state: 'visible', timeout: 12000 });
-                    break;
-                } catch {
-                    if (attempt === 2) {
-                        throw new Error('Bookmarked message did not reappear after reload — conversation failed to re-activate');
-                    }
-                }
-            }
+            // The route is captured before the reload, because a reload that drifts to the bare /courses fallback
+            // would leave the page somewhere the message cannot be; restoreRouteIfDrifted returns to it.
+            // No retry beyond that: the conversation used to fail to re-activate from the conversationId query
+            // parameter, since the route emits it while the request that loads the conversations is still in flight
+            // and the activation was dropped rather than deferred. MetisConversationService now remembers it and
+            // applies it when the list arrives, so one reload has to be enough.
+            const conversationUrl = page.url();
+            await Commands.reloadAndRestoreRoute(page, conversationUrl);
+            await courseMessages.getSinglePost(message.id!).waitFor({ state: 'visible' });
             // Verify the message is still visible and still bookmarked
             await courseMessages.checkMessage(message.id!, message.content!);
             await courseMessages.checkMessageBookmarked(message.id!, true);
@@ -359,6 +353,53 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             await expect(page.getByRole('heading', { name: /search results/i })).toBeVisible({ timeout: 15000 });
             // Verify no message posts are shown in the results area (markdown-preview contains message content)
             await expect(page.locator('.markdown-preview', { hasText: noMatchText })).toHaveCount(0, { timeout: 5000 });
+        });
+    });
+
+    test.describe('Emoji shortcode autocomplete', () => {
+        test('Student can accept an emoji shortcode suggestion and send the message', async ({ login, courseMessages }) => {
+            await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=${seedChannelId}`);
+
+            await courseMessages.typeInMessageEditor('Nice :jo');
+
+            // The suggest widget opens after typing ":" plus at least one letter and offers a ":joy:" row.
+            // "jo" fuzzy-matches several shortcodes (":joystick:", ":banjo:", ...), so the row is selected
+            // explicitly by its shortcode rather than relying on whichever entry Monaco highlights by default.
+            // The accessible name of a row is the label plus a kind suffix (e.g. "😂 :joy:, Constant"), so the
+            // shortcode is matched as a substring; ":joy:" cannot collide with ":joy_cat:" or ":joystick:".
+            const suggestWidget = courseMessages.getSuggestWidget();
+            await expect(suggestWidget).toBeVisible({ timeout: 10000 });
+            const joySuggestion = suggestWidget.getByRole('option', { name: /:joy:/ });
+            await expect(joySuggestion).toBeVisible();
+
+            // Accepting the suggestion (click) replaces the shortcode with the native emoji glyph
+            await joySuggestion.click();
+            await expect(suggestWidget).toBeHidden();
+            const editorText = courseMessages.getMessageEditorText();
+            await expect(editorText).toContainText('😂');
+            await expect(editorText).not.toContainText(':jo');
+
+            // The editor propagates content to the send form with a 200ms debounce, and the Enter handler
+            // silently drops the submit while the form is still empty/invalid. The send button's enabled
+            // state mirrors form validity, so wait for it before sending (a real user is slower than 200ms).
+            await courseMessages.waitUntilSendEnabled();
+
+            const message = await courseMessages.sendMessageWithEnterKey();
+            expect(message.content!).toContain('😂');
+            await courseMessages.checkMessage(message.id!, '😂');
+        });
+
+        test('Typing a colon-separated number does not open the suggest widget', async ({ login, courseMessages }) => {
+            await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=${seedChannelId}`);
+
+            await courseMessages.typeInMessageEditor('10:30');
+
+            // The character before the trigger colon is a digit, not whitespace, so the word-boundary
+            // check rejects the trigger and the widget must stay closed. The editor text is asserted
+            // first: it waits until all keystrokes are rendered, so the hidden check afterwards is
+            // meaningful (a broken boundary check would have opened the widget while typing ":3").
+            await expect(courseMessages.getMessageEditorText()).toContainText('10:30');
+            await expect(courseMessages.getSuggestWidget()).toBeHidden();
         });
     });
 

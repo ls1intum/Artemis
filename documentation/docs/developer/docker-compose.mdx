@@ -35,6 +35,10 @@ import dockerStructure from './assets/artemis-docker-file-structure.drawio.png';
     The first `docker compose pull` command is just necessary the first time as an extra step; otherwise, Artemis will be built from source as you don't already have an Artemis Image locally. For Arm-based Macs, Dev boards, etc., you will have to build the Artemis Docker Image first, as we currently do not distribute Docker Images for these architectures.
 </Callout>
 
+<Callout variant={CalloutVariant.info}>
+    `docker-compose.yml` mirrors the production setup, so it needs a signing key and an admin password of your own before it starts — see [Other Docker Compose Setups](#other-docker-compose-setups) below. If you would rather not configure anything, `docker compose -f docker/artemis-dev-postgres.yml up` starts as it is.
+</Callout>
+
 ---
 
 ## Other Docker Compose Setups
@@ -65,8 +69,40 @@ docker compose -f docker/artemis-dev-postgres.yml up
 ```
 
 <Callout variant={CalloutVariant.info}>
-    There is also a single `docker-compose.yml` in the directory `docker/` which mirrors the setup of `artemis-prod-mysql.yml`. This should provide a quick way, without manual changes necessary, for new contributors to start up an Artemis instance. If the documentation just mentions to run `docker compose` without a `-f <file.yml>` argument, it's assumed you are running the command from the `docker/` directory.
+    There is also a single `docker-compose.yml` in the directory `docker/` which mirrors the setup of `artemis-prod-mysql.yml`. If the documentation just mentions to run `docker compose` without a `-f <file.yml>` argument, it's assumed you are running the command from the `docker/` directory.
 </Callout>
+
+### Credentials for the Prod Setups
+
+The **dev** setups start without any configuration. The **prod** setups - and `docker-compose.yml`, which mirrors one of them - need credentials of your own: they activate the `prod` profile, and `docker/artemis/config/prod.env` deliberately keeps placeholders that Artemis rejects at startup, because a credential committed to this repository can be read by everyone.
+
+Keep your values in a file of your own, for example `docker/artemis/config/local-secrets.env`, which is not tracked:
+
+```bash
+JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET="<output of: openssl rand -base64 64 | tr -d '\n'>"
+ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD="<a unique password>"
+```
+
+If your setup also activates `localvc` or `buildagent` - the setups listed above do not - add a build-agent git password of your own, because the shipped one is rejected as well:
+
+```bash
+ARTEMIS_VERSIONCONTROL_BUILDAGENTGITPASSWORD="<a unique password, kept in sync with the build agents>"
+```
+
+Hand the file to the setup with a small override file, `docker/local-secrets.yml`:
+
+```yaml
+services:
+    artemis-app:
+        env_file:
+            - ./artemis/config/local-secrets.env
+```
+
+```bash
+docker compose -f docker/artemis-prod-postgres.yml -f docker/local-secrets.yml up
+```
+
+The `docker/test-server-*.yml` setups take a full replacement for `prod.env` through `ARTEMIS_ENV_FILE`, so there you point that variable at your own copy of `prod.env` rather than at a file that only holds the credentials. See [Security](/admin/production-setup/security) for the properties that are validated. If you just want a running Artemis without configuring anything, use one of the dev setups.
 
 ### Base Services
 

@@ -8,7 +8,15 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithoutSolutionDTO;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
+@Schema(discriminatorProperty = "type", discriminatorMapping = { @DiscriminatorMapping(value = "multiple-choice", schema = MultipleChoiceSubmittedAnswerBeforeEvaluationDTO.class),
+        @DiscriminatorMapping(value = "drag-and-drop", schema = DragAndDropSubmittedAnswerBeforeEvaluationDTO.class),
+        @DiscriminatorMapping(value = "short-answer", schema = ShortAnswerSubmittedAnswerBeforeEvaluationDTO.class) }, oneOf = {
+                MultipleChoiceSubmittedAnswerBeforeEvaluationDTO.class, DragAndDropSubmittedAnswerBeforeEvaluationDTO.class, ShortAnswerSubmittedAnswerBeforeEvaluationDTO.class })
+// Note: Only one of the three submitted answers will be non-null depending on the question type
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWithoutSolutionDTO quizQuestion,
         @JsonUnwrapped MultipleChoiceSubmittedAnswerWithoutSolutionDTO multipleChoiceSubmittedAnswer, @JsonUnwrapped DragAndDropSubmittedAnswerDTO dragAndDropSubmittedAnswer,
@@ -37,4 +45,26 @@ public record SubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWithoutSol
 
     }
 
+}
+
+// These definitions are used for OpenAPI generation because polymorphic types with @JsonUnwrapped do not work here
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "multiple-choice" }, defaultValue = "multiple-choice"))
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record MultipleChoiceSubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWithoutSolutionDTO quizQuestion,
+        @JsonUnwrapped MultipleChoiceSubmittedAnswerWithoutSolutionDTO multipleChoiceSubmittedAnswer) {
+}
+
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "drag-and-drop" }, defaultValue = "drag-and-drop"))
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record DragAndDropSubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWithoutSolutionDTO quizQuestion,
+        @JsonUnwrapped DragAndDropSubmittedAnswerDTO dragAndDropSubmittedAnswer) {
+}
+
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "short-answer" }, defaultValue = "short-answer"))
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record ShortAnswerSubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWithoutSolutionDTO quizQuestion,
+        @JsonUnwrapped ShortAnswerSubmittedAnswerDTO shortAnswerSubmittedAnswer) {
 }
