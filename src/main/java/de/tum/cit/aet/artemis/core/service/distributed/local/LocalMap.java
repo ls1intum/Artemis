@@ -69,16 +69,18 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
             if (deadline.getValue() - now > 0) {
                 continue;
             }
-            // Removing the deadline conditionally on the exact value observed, and evicting under the same key lock the
-            // writers use, prevents deleting a value that was replaced between the scan and the eviction.
-            if (!expiryDeadlines.remove(key, deadline.getValue())) {
-                continue;
-            }
+            // Re-read the deadline under the key lock rather than acting on what the scan saw. Between the two, a
+            // writer can replace the value and drop or renew its deadline; deciding outside the lock let purge delete
+            // that fresh value.
             ReentrantLock lock = getLock(key);
-            V expiredValue;
+            V expiredValue = null;
             lock.lock();
             try {
-                expiredValue = expiryDeadlines.containsKey(key) ? null : map.remove(key);
+                Long current = expiryDeadlines.get(key);
+                if (current != null && current - now <= 0) {
+                    expiryDeadlines.remove(key);
+                    expiredValue = map.remove(key);
+                }
             }
             finally {
                 lock.unlock();
@@ -86,6 +88,22 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
             if (expiredValue != null) {
                 notifyEntryRemoved(key, expiredValue);
             }
+        }
+    }
+
+    /**
+     * Records or clears the lifetime of an entry. Always called while holding that key's lock, so the value and its
+     * deadline move together: a reader or the purge never sees a value whose deadline belongs to a previous write.
+     *
+     * @param key      the entry the lifetime belongs to
+     * @param deadline the nano-time the entry expires at, or null to store it without a lifetime
+     */
+    private void writeDeadline(K key, Long deadline) {
+        if (deadline == null) {
+            expiryDeadlines.remove(key);
+        }
+        else {
+            expiryDeadlines.put(key, deadline);
         }
     }
 
@@ -123,18 +141,21 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public void put(K key, V value, Duration timeToLive) {
-        expiryDeadlines.put(key, System.nanoTime() + timeToLive.toNanos());
-        putInternal(key, value);
+        putInternal(key, value, System.nanoTime() + timeToLive.toNanos());
     }
 
     @Override
     public void put(K key, V value) {
         // A plain put replaces any previously configured lifetime for this key.
-        expiryDeadlines.remove(key);
-        putInternal(key, value);
+        putInternal(key, value, null);
     }
 
-    private void putInternal(K key, V value) {
+    /**
+     * @param key      the entry to write
+     * @param value    the value to store
+     * @param deadline the nano-time the entry expires at, or null to store it without a lifetime
+     */
+    private void putInternal(K key, V value, Long deadline) {
         ReentrantLock lock = getLock(key);
         V oldValue;
         boolean isUpdate;
@@ -143,6 +164,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         try {
             oldValue = map.put(key, value);
             isUpdate = oldValue != null;
+            writeDeadline(key, deadline);
         }
         finally {
             lock.unlock();
@@ -158,30 +180,31 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public V putIfAbsent(K key, V value) {
-        V existing = putIfAbsentInternal(key, value);
-        if (existing == null) {
-            // Only the caller that actually stored the value may drop a previously configured lifetime.
-            expiryDeadlines.remove(key);
-        }
-        return existing;
+        return putIfAbsentInternal(key, value, null);
     }
 
     @Override
     public V putIfAbsent(K key, V value, Duration timeToLive) {
-        V existing = putIfAbsentInternal(key, value);
-        if (existing == null) {
-            expiryDeadlines.put(key, System.nanoTime() + timeToLive.toNanos());
-        }
-        return existing;
+        return putIfAbsentInternal(key, value, System.nanoTime() + timeToLive.toNanos());
     }
 
-    private V putIfAbsentInternal(K key, V value) {
+    /**
+     * @param key      the entry to write if it is absent
+     * @param value    the value to store
+     * @param deadline the nano-time the entry expires at, or null to store it without a lifetime
+     * @return the value that was already there, or null if this call stored the value
+     */
+    private V putIfAbsentInternal(K key, V value, Long deadline) {
         purgeExpiredEntries();
         ReentrantLock lock = getLock(key);
         V existing;
         lock.lock();
         try {
             existing = map.putIfAbsent(key, value);
+            if (existing == null) {
+                // Only the caller that actually stored the value may set or drop the lifetime.
+                writeDeadline(key, deadline);
+            }
         }
         finally {
             lock.unlock();
@@ -200,12 +223,14 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         lock.lock();
         try {
             removed = map.remove(key, value);
+            if (removed) {
+                expiryDeadlines.remove(key);
+            }
         }
         finally {
             lock.unlock();
         }
         if (removed) {
-            expiryDeadlines.remove(key);
             notifyEntryRemoved(key, value);
         }
         return removed;
@@ -213,13 +238,13 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public V remove(K key) {
-        expiryDeadlines.remove(key);
         ReentrantLock lock = getLock(key);
         V oldValue;
 
         lock.lock();
         try {
             oldValue = map.remove(key);
+            expiryDeadlines.remove(key);
         }
         finally {
             lock.unlock();
@@ -265,14 +290,16 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public void clear() {
-        expiryDeadlines.clear();
         Set<K> keysCopy = Set.copyOf(map.keySet());
         Map<K, V> entriesCopy = new HashMap<>(map);
         try {
             for (K key : keysCopy) {
                 getLock(key).lock();
             }
+            // Both wipes happen while the locks are held, for the same reason the per-key writes keep them together:
+            // dropping the deadlines first would briefly leave live values without the lifetime they were stored with.
             map.clear();
+            expiryDeadlines.clear();
         }
         finally {
             for (K key : keysCopy) {
