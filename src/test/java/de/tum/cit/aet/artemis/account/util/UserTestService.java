@@ -657,7 +657,9 @@ public class UserTestService {
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        assertThat(currentUser.getActivated()).isTrue();
+        // An account the LTI launch did not create is answered without being touched. It used to be activated here, which
+        // let it undo an administrator's deactivation.
+        assertThat(currentUser.getActivated()).as("initialization must not activate an account").isFalse();
         assertThat(currentUser.isInternal()).isTrue();
     }
 
@@ -677,7 +679,9 @@ public class UserTestService {
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        assertThat(currentUser.getActivated()).isTrue();
+        // Same for an externally managed account: it has no Artemis password to initialise, and only an administrator may
+        // reverse a deactivation.
+        assertThat(currentUser.getActivated()).as("initialization must not activate an account").isFalse();
         assertThat(currentUser.isInternal()).isFalse();
     }
 
