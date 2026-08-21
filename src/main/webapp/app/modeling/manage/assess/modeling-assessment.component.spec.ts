@@ -497,6 +497,118 @@ describe('ModelingAssessmentComponent', () => {
         (comp as any).handleFeedback();
         expect(comp.referencedFeedbacks).toEqual([]);
     });
+    /** Installs a jsdom-friendly Fullscreen API and returns a restore function. */
+    const stubFullscreenApi = (requestFullscreen: () => Promise<void>) => {
+        let fullscreenElement: Element | null = null;
+        const originals = {
+            fullscreenElement: Object.getOwnPropertyDescriptor(document, 'fullscreenElement'),
+            exitFullscreen: Object.getOwnPropertyDescriptor(document, 'exitFullscreen'),
+            requestFullscreen: Object.getOwnPropertyDescriptor(document.documentElement, 'requestFullscreen'),
+        };
+        const exitFullscreen = vi.fn(async () => {
+            fullscreenElement = null;
+        });
+        Object.defineProperty(document.documentElement, 'requestFullscreen', {
+            configurable: true,
+            value: vi.fn(async () => {
+                await requestFullscreen();
+                fullscreenElement = document.documentElement;
+            }),
+        });
+        Object.defineProperty(document, 'fullscreenElement', {
+            configurable: true,
+            get: () => fullscreenElement,
+            set: (value) => {
+                fullscreenElement = value;
+            },
+        });
+        Object.defineProperty(document, 'exitFullscreen', { configurable: true, value: exitFullscreen });
+        return {
+            exitFullscreen,
+            setFullscreenElement: (element: Element | null) => (fullscreenElement = element),
+            restore: () => {
+                for (const [key, descriptor] of [
+                    ['fullscreenElement', originals.fullscreenElement],
+                    ['exitFullscreen', originals.exitFullscreen],
+                ] as const) {
+                    if (descriptor) {
+                        Object.defineProperty(document, key, descriptor);
+                    } else {
+                        Reflect.deleteProperty(document, key);
+                    }
+                }
+                if (originals.requestFullscreen) {
+                    Object.defineProperty(document.documentElement, 'requestFullscreen', originals.requestFullscreen);
+                } else {
+                    Reflect.deleteProperty(document.documentElement, 'requestFullscreen');
+                }
+            },
+        };
+    };
+
+    it('should leave the page alone when something else already holds fullscreen', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const api = stubFullscreenApi(async () => {});
+        const frame = fixture.nativeElement.querySelector('.modeling-assessment') as HTMLElement;
+        const originalParent = frame.parentNode;
+        // A video player, a dialog, anything: promoting on top of it would leave two owners of the same screen.
+        api.setFullscreenElement(document.createElement('video'));
+
+        try {
+            await comp.toggleFullscreen();
+
+            expect(document.documentElement.requestFullscreen).not.toHaveBeenCalled();
+            expect(frame.parentNode).toBe(originalParent);
+            expect(comp.fullscreenActive()).toBe(false);
+        } finally {
+            api.restore();
+        }
+    });
+
+    it('should put the frame back when the browser refuses the fullscreen request', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const api = stubFullscreenApi(async () => {
+            throw new Error('denied');
+        });
+        const frame = fixture.nativeElement.querySelector('.modeling-assessment') as HTMLElement;
+        const originalParent = frame.parentNode;
+
+        try {
+            await comp.toggleFullscreen();
+
+            // A refused request must not strand the canvas under <body>, detached from its layout.
+            expect(frame.parentNode).toBe(originalParent);
+            expect(frame.classList.contains(APOLLON_FULLSCREEN_FRAME_CLASS)).toBe(false);
+            expect(comp.fullscreenActive()).toBe(false);
+        } finally {
+            api.restore();
+        }
+    });
+
+    it('should exit fullscreen when destroyed while it owns the screen', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const api = stubFullscreenApi(async () => {});
+
+        try {
+            await comp.toggleFullscreen();
+            comp['onFullscreenChange']();
+            expect(comp.fullscreenActive()).toBe(true);
+
+            comp.ngOnDestroy();
+
+            expect(api.exitFullscreen).toHaveBeenCalledOnce();
+            expect(comp.fullscreenActive()).toBe(false);
+        } finally {
+            api.restore();
+        }
+    });
+
     /*
      * Regression: subtree fullscreen would make this component the fullscreen element, and a browser paints nothing
      * outside the fullscreen subtree. The Apollon popovers this canvas enables render through a Base UI portal under

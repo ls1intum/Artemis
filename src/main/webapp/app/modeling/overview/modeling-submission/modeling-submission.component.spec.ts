@@ -39,6 +39,9 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { captureException } from '@sentry/angular';
+import { User } from 'app/account/user/user.model';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -73,6 +76,11 @@ class StubModelingEditorComponent {
 
     importPatch = vi.fn();
 }
+
+vi.mock('@sentry/angular', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@sentry/angular')>()),
+    captureException: vi.fn(),
+}));
 
 describe('ModelingSubmissionComponent', () => {
     let comp: ModelingSubmissionComponent;
@@ -873,6 +881,138 @@ describe('ModelingSubmissionComponent', () => {
             expect(result?.completionDate?.isSame(expectedSortedResults[index].completionDate)).toBe(true);
         });
     });
+    describe('feedback presentation', () => {
+        // The list beside the canvas has to read like the diagram: same tone, a sign on every score, and the
+        // element name Apollon shows. Credits of exactly 0 are their own case — feedback without points is a
+        // remark, not a deduction.
+        it.each([
+            { credits: 5, tone: 'positive', points: '+5', icon: faCheck },
+            { credits: -2.5, tone: 'negative', points: '-2.5', icon: faXmark },
+            { credits: 0, tone: 'zero', points: '0', icon: faTriangleExclamation },
+            { credits: undefined, tone: 'zero', points: '0', icon: faTriangleExclamation },
+        ])('describes feedback worth $credits credits as $tone', ({ credits, tone, points, icon }) => {
+            createModelingSubmissionComponent();
+            const feedback = { credits } as Feedback;
+
+            expect(comp['feedbackTone'](feedback)).toBe(tone);
+            expect(comp['feedbackPoints'](feedback)).toBe(points);
+            expect(comp['feedbackToneIcon'](feedback)).toBe(icon);
+        });
+
+        it('should soften the Apollon owner separator in an element name and stay silent without one', () => {
+            createModelingSubmissionComponent();
+            comp.assessmentsNames.set({ ref1: { name: 'Course::+ title: String', type: 'attribute' } });
+
+            expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('Course › + title: String');
+            // No reference, no entry for the reference, and an entry without a name all mean "nothing to show".
+            expect(comp['feedbackElementName']({} as Feedback)).toBeUndefined();
+            expect(comp['feedbackElementName']({ referenceId: 'unknown' } as Feedback)).toBeUndefined();
+            comp.assessmentsNames.set({ ref1: { name: '', type: 'attribute' } });
+            expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBeUndefined();
+        });
+    });
+
+    describe('unsaved changes', () => {
+        it('should allow leaving while the editor has not mounted, since there is nothing to lose yet', () => {
+            createModelingSubmissionComponent();
+            comp.submission.set(submission);
+            (mockModelingEditor as any).isApollonEditorMounted = false;
+
+            expect(comp.canDeactivate()).toBe(true);
+            expect(mockModelingEditor.getCurrentModel).not.toHaveBeenCalled();
+        });
+
+        it('should treat an edited explanation as an unsaved change even when the diagram is untouched', () => {
+            createModelingSubmissionComponent();
+            const model = { nodes: [], edges: [], version: '3.0.0' } as unknown as UMLModel;
+            (mockModelingEditor.getCurrentModel as ReturnType<typeof vi.fn>).mockReturnValue(model);
+            (mockModelingEditor as any).isApollonEditorMounted = true;
+            comp.submission.set(<ModelingSubmission>(<unknown>{ id: 1, model: JSON.stringify(model), explanationText: 'saved', participation }));
+
+            comp.explanation = 'saved';
+            expect(comp.canDeactivate()).toBe(true);
+
+            comp.explanation = 'edited';
+            expect(comp.canDeactivate()).toBe(false);
+        });
+
+        it('should count a first diagram drawn against an empty submission as unsaved', () => {
+            createModelingSubmissionComponent();
+            (mockModelingEditor as any).isApollonEditorMounted = true;
+            comp.submission.set(<ModelingSubmission>(<unknown>{ id: 1, participation }));
+            comp.explanation = '';
+
+            (mockModelingEditor.getCurrentModel as ReturnType<typeof vi.fn>).mockReturnValue({ nodes: [], edges: [], version: '3.0.0' } as unknown as UMLModel);
+            expect(comp.canDeactivate()).toBe(true);
+
+            (mockModelingEditor.getCurrentModel as ReturnType<typeof vi.fn>).mockReturnValue({ nodes: [{ id: 'a' }], edges: [], version: '3.0.0' } as unknown as UMLModel);
+            expect(comp.canDeactivate()).toBe(false);
+        });
+
+        it('should block the browser unload only while changes are unsaved', () => {
+            createModelingSubmissionComponent();
+            const canDeactivate = vi.spyOn(comp, 'canDeactivate');
+            const event = { preventDefault: vi.fn() } as unknown as BeforeUnloadEvent;
+
+            canDeactivate.mockReturnValue(true);
+            expect(comp.unloadNotification(event)).toBe(true);
+            expect(event.preventDefault).not.toHaveBeenCalled();
+
+            canDeactivate.mockReturnValue(false);
+            comp.unloadNotification(event);
+            expect(event.preventDefault).toHaveBeenCalledOnce();
+        });
+
+        it('should report no model elements for a submission without a model', () => {
+            createModelingSubmissionComponent();
+            comp.submission.set(<ModelingSubmission>(<unknown>{ id: 1, participation }));
+
+            expect(comp.calculateNumberOfModelElements()).toBe(0);
+        });
+    });
+
+    describe('collaboration user', () => {
+        it('should fall back from name to login when the account has no display name', async () => {
+            createModelingSubmissionComponent();
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'identity').mockResolvedValue({ login: 'ab12cde' } as User);
+
+            comp.ngOnInit();
+            await vi.waitFor(() => expect(comp['apollonCollaborationUser']()).toBeDefined());
+
+            expect(comp['apollonCollaborationUser']()).toEqual(expect.objectContaining({ id: 'ab12cde', name: 'ab12cde' }));
+        });
+
+        it('should report a missing identity instead of mounting collaboration without one', async () => {
+            createModelingSubmissionComponent();
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'identity').mockResolvedValue(undefined);
+
+            comp.ngOnInit();
+            await vi.waitFor(() => expect(captureException).toHaveBeenCalled());
+
+            expect(comp['apollonCollaborationUser']()).toBeUndefined();
+        });
+    });
+
+    describe('complaint section', () => {
+        // The complaint belongs to a result, is meaningless in an exam, and must not appear in the read-only
+        // feedback view of an older submission.
+        it.each([
+            { result: true, examMode: false, feedbackView: false, expected: true },
+            { result: false, examMode: false, feedbackView: false, expected: false },
+            { result: true, examMode: true, feedbackView: false, expected: false },
+            { result: true, examMode: false, feedbackView: true, expected: false },
+        ])('shows the complaint section: $expected (result=$result, exam=$examMode, feedbackView=$feedbackView)', ({ result, examMode, feedbackView, expected }) => {
+            createModelingSubmissionComponent();
+            comp.result.set(result ? ({ id: 1 } as Result) : undefined);
+            comp.examMode.set(examMode);
+            comp.isFeedbackView.set(feedbackView);
+
+            expect(comp['showComplaintSection']()).toBe(expected);
+        });
+    });
+
     // Regression: the graded and the practice participation are both `participate/:participationId` on the same route,
     // so switching between them only re-emits the route params and reuses this component. A result is assigned only
     // when the loaded submission carries one, so without an explicit reset the practice attempt kept the graded result
