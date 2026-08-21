@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
@@ -109,6 +110,8 @@ public class UserService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
     private final FileService fileService;
 
     private final Optional<ScienceEventApi> scienceEventApi;
@@ -135,8 +138,9 @@ public class UserService {
             ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
             AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
             CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
-            GlobalNotificationSettingService globalNotificationSettingService) {
+            GlobalNotificationSettingService globalNotificationSettingService, UserRecoveryKeyService userRecoveryKeyService) {
         this.userCreationService = userCreationService;
+        this.userRecoveryKeyService = userRecoveryKeyService;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
         this.authorityService = authorityService;
@@ -251,7 +255,7 @@ public class UserService {
      */
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
-        return userRepository.findOneByActivationKey(key).map(user -> {
+        return userRecoveryKeyService.findUserIdByActivationKey(key).flatMap(userRepository::findById).map(user -> {
             activateUser(user);
             return user;
         });
@@ -279,20 +283,20 @@ public class UserService {
      */
     public Optional<User> completePasswordReset(String newPassword, String key, CredentialRevocationChoiceDTO revocationChoice) {
         log.debug("Reset user password for reset key {}", key);
-        return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
-            user.setPassword(passwordService.hashPassword(newPassword));
-            user.setResetKey(null);
-            user.setResetDate(null);
-            saveUser(user);
-            // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
-            // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
-            // exactly as they do when changing a password from inside the account - with the difference that a reset
-            // defaults to revoking everything (see KeyAndPasswordVM#revokeCredentialsOrAll), because completing one
-            // only proves control of the mailbox.
-            accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password reset completed");
-            accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.RESET);
-            return user;
-        });
+        return userRecoveryKeyService.findByResetKey(key).filter(row -> row.getResetDate() != null && row.getResetDate().isAfter(Instant.now().minusSeconds(86400)))
+                .flatMap(row -> userRepository.findById(row.getUserId())).map(user -> {
+                    user.setPassword(passwordService.hashPassword(newPassword));
+                    userRecoveryKeyService.clearResetKey(user.getId());
+                    saveUser(user);
+                    // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
+                    // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
+                    // exactly as they do when changing a password from inside the account - with the difference that a reset
+                    // defaults to revoking everything (see KeyAndPasswordVM#revokeCredentialsOrAll), because completing one
+                    // only proves control of the mailbox.
+                    accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password reset completed");
+                    accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.RESET);
+                    return user;
+                });
     }
 
     /**
@@ -314,9 +318,7 @@ public class UserService {
      */
     public boolean prepareUserForPasswordReset(User user) {
         if (user.getActivated() && user.isInternal()) {
-            user.setResetKey(RandomUtil.generateResetKey());
-            user.setResetDate(Instant.now());
-            saveUser(user);
+            userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
             return true;
         }
         return false;
@@ -349,7 +351,7 @@ public class UserService {
         // registered users are always internal
         newUser.setInternal(true);
         // new user gets registration key
-        newUser.setActivationKey(RandomUtil.generateActivationKey());
+        // The key is stored after the user is saved, since it is keyed on the user id.
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(STUDENT.getAuthority()).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
@@ -378,6 +380,7 @@ public class UserService {
 
         // we need to save first so that the user can be found in the database in the subsequent method
         User savedNonActivatedUser = saveUser(newUser);
+        userRecoveryKeyService.storeActivationKey(savedNonActivatedUser.getId(), RandomUtil.generateActivationKey());
 
         // Automatically remove the user if it wasn't activated after a certain amount of time.
         instanceMessageSendService.sendRemoveNonActivatedUserSchedule(savedNonActivatedUser.getId());

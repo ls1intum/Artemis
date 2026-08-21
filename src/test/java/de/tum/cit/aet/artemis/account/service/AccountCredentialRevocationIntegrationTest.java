@@ -72,6 +72,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     private UserVcsAccessTokenService userVcsAccessTokenService;
 
     @Autowired
+    private UserRecoveryKeyService userRecoveryKeyService;
+
+    @Autowired
     private UserCreationService userCreationService;
 
     @Autowired
@@ -389,8 +392,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     }
 
     private void prepareResetKey() {
-        user.setResetKey("reset-key-" + user.getId());
-        user.setResetDate(Instant.now());
+        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-" + user.getId(), Instant.now());
         userRepository.save(user);
     }
 

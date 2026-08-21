@@ -82,8 +82,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     String FILTER_WITHOUT_REG_NO = "WITHOUT_REG_NO";
 
-    Optional<User> findOneByResetKey(String resetKey);
-
     Optional<User> findOneByEmailIgnoreCase(String email);
 
     List<User> findByVcsAccessTokenExpiryDateBetween(ZonedDateTime from, ZonedDateTime to);
@@ -124,8 +122,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND u.deleted = FALSE
             """)
     Optional<Boolean> isInternalUserByEmailIgnoreCase(@Param("email") String email);
-
-    Optional<User> findOneByActivationKey(String activationKey);
 
     @EntityGraph(type = LOAD, attributePaths = { "authorities" })
     Set<User> findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);

@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -56,9 +57,11 @@ public class UserCreationService {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
             OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService,
-            AccountSecurityNotificationService accountSecurityNotificationService, AuditEventRepository auditEventRepository) {
+            AccountSecurityNotificationService accountSecurityNotificationService, AuditEventRepository auditEventRepository, UserRecoveryKeyService userRecoveryKeyService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
@@ -66,6 +69,7 @@ public class UserCreationService {
         this.accountCredentialRevocationService = accountCredentialRevocationService;
         this.accountSecurityNotificationService = accountSecurityNotificationService;
         this.auditEventRepository = auditEventRepository;
+        this.userRecoveryKeyService = userRecoveryKeyService;
     }
 
     /**
@@ -122,7 +126,6 @@ public class UserCreationService {
         // here and it reads `activated` as its own "already initialised" marker.
         if (isInternal) {
             newUser.setActivated(false);
-            newUser.setActivationKey(RandomUtil.generateActivationKey());
         }
         else {
             newUser.setActivated(true);
@@ -141,6 +144,10 @@ public class UserCreationService {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
         newUser = saveUser(newUser);
+        if (isInternal) {
+            // Stored after the save, since the key is keyed on the user id.
+            userRecoveryKeyService.storeActivationKey(newUser.getId(), RandomUtil.generateActivationKey());
+        }
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -172,8 +179,6 @@ public class UserCreationService {
             String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
             user.setPassword(passwordService.hashPassword(password));
         }
-        user.setResetKey(RandomUtil.generateResetKey());
-        user.setResetDate(Instant.now());
         try {
             Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
             user.setOrganizations(matchingOrganizations);
@@ -189,6 +194,8 @@ public class UserCreationService {
             user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         }
         saveUser(user);
+        // An administrator-created account gets a reset key so its owner can set their own password.
+        userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
 
         log.debug("Created Information for User: {}", user);
         return user;
@@ -333,8 +340,8 @@ public class UserCreationService {
      */
     public void activateUser(User user) {
         user.setActivated(true);
-        user.setActivationKey(null);
         saveUser(user);
+        userRecoveryKeyService.clearActivationKey(user.getId());
         auditAccountStateChange(user, Constants.ACTIVATE_USER);
         log.info("Activated user: {}", user);
     }

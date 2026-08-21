@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -98,9 +99,11 @@ public class PublicAccountResource {
 
     private final UserVcsAccessTokenService userVcsAccessTokenService;
 
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
             Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
-            UserVcsAccessTokenService userVcsAccessTokenService) {
+            UserVcsAccessTokenService userVcsAccessTokenService, UserRecoveryKeyService userRecoveryKeyService) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
@@ -109,6 +112,7 @@ public class PublicAccountResource {
         this.tokenProvider = tokenProvider;
         this.loginOptionsService = loginOptionsService;
         this.userVcsAccessTokenService = userVcsAccessTokenService;
+        this.userRecoveryKeyService = userRecoveryKeyService;
     }
 
     /**
@@ -142,7 +146,8 @@ public class PublicAccountResource {
         }
 
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
-        mailService.sendActivationEmail(MailRecipientDTO.from(user));
+        // The template renders the key, which now lives in user_recovery_key rather than on the user.
+        mailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(user, userRecoveryKeyService.findActivationKey(user.getId()), null));
         return ResponseEntity.created(new URI("/api/register/" + user.getId())).build();
     }
 
@@ -308,7 +313,7 @@ public class PublicAccountResource {
             }
             var internalUser = internalUsers.getFirst();
             if (userService.prepareUserForPasswordReset(internalUser)) {
-                mailService.sendPasswordResetMail(MailRecipientDTO.from(internalUser));
+                mailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(internalUser, null, userRecoveryKeyService.findResetKey(internalUser.getId())));
             }
         }
         else {

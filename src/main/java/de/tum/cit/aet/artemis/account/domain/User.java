@@ -170,16 +170,40 @@ public class User extends AbstractAuditingEntity implements Participant {
      * an externally managed account must never be given one, and for how the key's presence tells an account awaiting
      * activation apart from one an admin deactivated.
      */
+    /**
+     * No longer read or written by anything; the recovery keys live in {@code user_recovery_key}.
+     * <p>
+     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
+     *
+     * @deprecated superseded by {@code user_recovery_key}
+     */
+    @Deprecated(forRemoval = true)
     @Size(max = 20)
     @Column(name = "activation_key", length = 20)
     @JsonIgnore
     private String activationKey;
 
+    /**
+     * No longer read or written by anything; the recovery keys live in {@code user_recovery_key}.
+     * <p>
+     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
+     *
+     * @deprecated superseded by {@code user_recovery_key}
+     */
+    @Deprecated(forRemoval = true)
     @Size(max = 20)
     @Column(name = "reset_key", length = 20)
     @JsonIgnore
     private String resetKey;
 
+    /**
+     * No longer read or written by anything; the recovery keys live in {@code user_recovery_key}.
+     * <p>
+     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
+     *
+     * @deprecated superseded by {@code user_recovery_key}
+     */
+    @Deprecated(forRemoval = true)
     @Column(name = "reset_date")
     private Instant resetDate = null;
 

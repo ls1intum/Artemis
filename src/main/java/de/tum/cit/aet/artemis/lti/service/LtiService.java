@@ -142,7 +142,7 @@ public class LtiService {
             // Marked in user_lti rather than on the user row, which the lti module does not own.
             userRepository.save(newUser);
             userLtiRepository.save(new UserLti(newUser.getId(), true));
-            newUser.setActivationKey(null);
+
             userRepository.save(newUser);
 
             log.info("Created new user {}", newUser);
