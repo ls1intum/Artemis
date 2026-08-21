@@ -24,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -96,6 +97,9 @@ class IrisStruggleInterventionPrimitivesTest {
     @Mock
     private IrisAmbientDecisionRepository irisAmbientDecisionRepository;
 
+    @Mock
+    private PlatformTransactionManager transactionManager;
+
     private IrisStruggleInterventionService service;
 
     private User user;
@@ -111,7 +115,7 @@ class IrisStruggleInterventionPrimitivesTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository);
+                irisAmbientDecisionRepository, transactionManager);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
     }
 
@@ -133,10 +137,12 @@ class IrisStruggleInterventionPrimitivesTest {
         decision.setEpisodeId(episodeId);
         decision.setHintText(serverText);
         decision.setCreatedAt(ZonedDateTime.now());
-        when(irisAmbientDecisionRepository.findByUserIdAndExerciseIdAndEpisodeId(USER_ID, EXERCISE_ID, episodeId)).thenReturn(Optional.of(decision));
+        // findForReveal, not the plain finder: the reveal takes the decision under a write lock so the
+        // unconsumed-check and the claim cannot interleave with a concurrent reveal of the same offer.
+        when(irisAmbientDecisionRepository.findForReveal(USER_ID, EXERCISE_ID, episodeId)).thenReturn(Optional.of(decision));
         // lenient: the tests that assert a rejection never reach the claim, and an offered decision is still the
         // correct precondition for them - the rejection must come from the guard under test, not from a missing offer.
-        lenient().when(irisAmbientDecisionRepository.claimIfUnconsumed(eq(900L), any(), any())).thenReturn(1);
+        lenient().when(irisAmbientDecisionRepository.save(decision)).thenReturn(decision);
         return decision;
     }
 

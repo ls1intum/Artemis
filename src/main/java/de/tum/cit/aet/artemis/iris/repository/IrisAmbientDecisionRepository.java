@@ -3,8 +3,11 @@ package de.tum.cit.aet.artemis.iris.repository;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import jakarta.persistence.LockModeType;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -33,6 +36,20 @@ public interface IrisAmbientDecisionRepository extends ArtemisJpaRepository<Iris
      * @return the decision, if Artemis recorded one for this triple
      */
     Optional<IrisAmbientDecision> findByUserIdAndExerciseIdAndEpisodeId(long userId, long exerciseId, String episodeId);
+
+    /**
+     * The same lookup, but taking a write lock on the decision row. Concurrent reveals of one decision serialize on
+     * this lock, so the "is it still unconsumed" check and the claim that follows cannot interleave and let two
+     * requests each insert a message for the same offer.
+     *
+     * @param userId     the revealing student
+     * @param exerciseId the exercise the reveal targets
+     * @param episodeId  the client-allocated episode id
+     * @return the locked decision, if Artemis recorded one for this triple
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT d FROM IrisAmbientDecision d WHERE d.userId = :userId AND d.exerciseId = :exerciseId AND d.episodeId = :episodeId")
+    Optional<IrisAmbientDecision> findForReveal(@Param("userId") long userId, @Param("exerciseId") long exerciseId, @Param("episodeId") String episodeId);
 
     /**
      * Row-scoped single-use claim: marks the decision consumed ONLY IF it is still unconsumed. Mirrors

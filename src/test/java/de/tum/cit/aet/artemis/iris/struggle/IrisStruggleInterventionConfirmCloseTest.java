@@ -19,6 +19,7 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -103,6 +104,9 @@ class IrisStruggleInterventionConfirmCloseTest {
     @Mock
     private IrisAmbientDecisionRepository irisAmbientDecisionRepository;
 
+    @Mock
+    private PlatformTransactionManager transactionManager;
+
     private IrisStruggleInterventionService service;
 
     private User user;
@@ -120,7 +124,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository);
+                irisAmbientDecisionRepository, transactionManager);
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }
 

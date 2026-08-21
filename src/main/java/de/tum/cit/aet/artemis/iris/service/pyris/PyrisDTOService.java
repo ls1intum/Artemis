@@ -97,9 +97,9 @@ public class PyrisDTOService {
         Map<String, String> committedFiles = getFilteredRepositoryContents(participation);
         Map<String, String> mergedRepository = new HashMap<>(committedFiles);
         mergedRepository.putAll(uncommittedFiles); // This overwrites any files with same path
-        // getFilteredRepositoryContents tolerates a null participation and returns an empty map, but the language
-        // lookup below dereferences it, so a submission without one would NPE here instead of degrading to
-        // "no committed code readable" like every other unreadable-repository case.
+        // getFilteredRepositoryContents tolerates a null participation and returns an empty map, so every other
+        // dereference below has to tolerate it too, otherwise a submission without one NPEs and aborts the whole
+        // Pyris conversion instead of degrading to "no committed code readable" like any unreadable repository.
         var programmingLanguage = participation != null ? participation.getProgrammingExercise().getProgrammingLanguage() : null;
         var submittedRepository = buildSubmittedRepository(committedFiles, uncommittedFiles, programmingLanguage);
         // submittedRepositoryAvailable = we actually read the submitted repo (non-empty committed set). Lets Pyris
@@ -107,7 +107,7 @@ public class PyrisDTOService {
         // otherwise be an empty submittedRepository, e.g. on a repository-fetch failure).
         boolean submittedRepositoryAvailable = !committedFiles.isEmpty();
         return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submittedRepository, submittedRepositoryAvailable,
-                submission.getParticipation().isPracticeMode(), submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
+                submission.getParticipation() != null && submission.getParticipation().isPracticeMode(), submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
     }
 
     /**

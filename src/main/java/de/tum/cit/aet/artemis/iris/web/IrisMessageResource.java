@@ -269,11 +269,15 @@ public class IrisMessageResource {
         // an episode, so a second row cannot establish a competing outcome for the same episode.
         var episodeId = message.getProactiveEpisodeId();
         if (episodeId != null && !episodeId.isBlank()) {
-            irisStruggleInterventionService.writeEpisodeOutcome(episodeId, outcome, message.getSession().getUserId());
+            long userId = message.getSession().getUserId();
+            irisStruggleInterventionService.writeEpisodeOutcome(episodeId, outcome, userId);
+            // The episode writes to its stable smallest-id row, which is not necessarily the row addressed here.
+            // Reloading messageId would then answer with a null proactiveOutcome even though one was recorded, so
+            // return the row that actually carries the episode's outcome.
+            var canonical = irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc(episodeId, userId).stream().findFirst();
+            return ResponseEntity.ok(IrisMessageResponseDTO.of(canonical.map(row -> irisMessageRepository.findByIdElseThrow(row.getId())).orElse(message)));
         }
-        else {
-            irisMessageRepository.setProactiveOutcomeIfNull(message.getId(), outcome);
-        }
+        irisMessageRepository.setProactiveOutcomeIfNull(message.getId(), outcome);
         return ResponseEntity.ok(IrisMessageResponseDTO.of(irisMessageRepository.findByIdElseThrow(messageId)));
     }
 

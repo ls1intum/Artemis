@@ -20,6 +20,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -102,6 +104,8 @@ public class IrisStruggleInterventionService {
 
     private final IrisAmbientDecisionRepository irisAmbientDecisionRepository;
 
+    private final TransactionTemplate transactionTemplate;
+
     @Value("${artemis.iris.proactive.struggle.confidence-threshold:0.6}")
     private double confidenceThreshold;
 
@@ -109,7 +113,7 @@ public class IrisStruggleInterventionService {
             IrisSettingsService irisSettingsService, IrisChatSessionRepository irisChatSessionRepository, PyrisDTOService pyrisDTOService,
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisChatSessionService irisChatSessionService,
             IrisMessageService irisMessageService, IrisChatWebsocketService irisChatWebsocketService, IrisMessageRepository irisMessageRepository,
-            IrisAmbientDecisionRepository irisAmbientDecisionRepository) {
+            IrisAmbientDecisionRepository irisAmbientDecisionRepository, PlatformTransactionManager transactionManager) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
@@ -123,6 +127,7 @@ public class IrisStruggleInterventionService {
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.irisMessageRepository = irisMessageRepository;
         this.irisAmbientDecisionRepository = irisAmbientDecisionRepository;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -431,6 +436,50 @@ public class IrisStruggleInterventionService {
     }
 
     /**
+     * The transactional core of {@link #revealAmbient}: take the offered decision under a write lock, persist the
+     * message carrying the server-authored text, and mark the decision consumed. All three commit together, so a
+     * failure anywhere leaves neither a message nor a consumed decision behind.
+     *
+     * <p>
+     * The pessimistic lock is what makes the unconsumed-check and the claim indivisible. Without it two concurrent
+     * reveals of the same offer could both read it as unconsumed and both insert a message; the guarded update alone
+     * would then leave the loser's row orphaned.
+     *
+     * @param user            the student performing the reveal
+     * @param exerciseId      the programming exercise id (session scope)
+     * @param episodeId       the client-allocated episode UUID to stamp on the row
+     * @param clientMessageId the client-generated UUID used as the message-level idempotency key
+     * @return the persisted message as a DTO
+     */
+    private IrisMessageResponseDTO revealAmbientInTransaction(User user, long exerciseId, String episodeId, String clientMessageId) {
+        var decision = irisAmbientDecisionRepository.findForReveal(user.getId(), exerciseId, episodeId)
+                .orElseThrow(() -> new ConflictException("No ambient hint was offered for this episode", "IrisMessage", "revealWithoutDecision"));
+        if (decision.getConsumedAt() != null) {
+            // Already revealed. Return that reveal's row so a replay is idempotent rather than a second insert;
+            // if the row is gone (superseded and deleted), the offer is spent and there is nothing to surface.
+            return irisMessageRepository.findById(decision.getConsumedMessageId() == null ? -1L : decision.getConsumedMessageId()).map(IrisMessageResponseDTO::of)
+                    .orElseThrow(() -> new ConflictException("The ambient hint for this episode was already revealed", "IrisMessage", "revealAlreadyConsumed"));
+        }
+
+        var session = resolveProactiveSession(user, exerciseId);
+        if (session == null) {
+            throw new ConflictException("Cannot persist reveal: the exercise-chat session could not be resolved", "IrisMessage", "revealSessionConflict");
+        }
+        var message = new IrisMessage();
+        message.addContent(new IrisTextMessageContent(decision.getHintText()));
+        message.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        message.setProactiveEpisodeId(episodeId);
+        message.setProactiveClientMessageId(clientMessageId);
+        var saved = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+
+        // The locked entity is managed, so consuming it is part of this transaction's flush.
+        decision.setConsumedAt(ZonedDateTime.now());
+        decision.setConsumedMessageId(saved.getId());
+        irisAmbientDecisionRepository.save(decision);
+        return IrisMessageResponseDTO.of(saved);
+    }
+
+    /**
      * Record the ambient hint Artemis is about to offer, so the later reveal can persist the server's own text
      * instead of whatever the caller sends back.
      *
@@ -548,39 +597,11 @@ public class IrisStruggleInterventionService {
         if (episodeId == null || episodeId.isBlank()) {
             throw new BadRequestException("An episode id is required to reveal an ambient hint");
         }
-        var decision = irisAmbientDecisionRepository.findByUserIdAndExerciseIdAndEpisodeId(user.getId(), exerciseId, episodeId)
-                .orElseThrow(() -> new ConflictException("No ambient hint was offered for this episode", "IrisMessage", "revealWithoutDecision"));
-        if (decision.getConsumedAt() != null) {
-            // Already revealed. Return that reveal's row so a replay is idempotent rather than a second insert;
-            // if the row is gone (superseded and deleted), the offer is spent and there is nothing to surface.
-            return irisMessageRepository.findById(decision.getConsumedMessageId() == null ? -1L : decision.getConsumedMessageId()).map(IrisMessageResponseDTO::of)
-                    .orElseThrow(() -> new ConflictException("The ambient hint for this episode was already revealed", "IrisMessage", "revealAlreadyConsumed"));
-        }
-
-        var session = resolveProactiveSession(user, exerciseId);
-        if (session == null) {
-            throw new ConflictException("Cannot persist reveal: the exercise-chat session could not be resolved", "IrisMessage", "revealSessionConflict");
-        }
-        var message = new IrisMessage();
-        message.addContent(new IrisTextMessageContent(decision.getHintText()));
-        message.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
-        message.setProactiveEpisodeId(episodeId);
-        message.setProactiveClientMessageId(clientMessageId);
         try {
-            var saved = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            // Claim the offer in the same transaction as the insert. Doing it before the insert would lose the
-            // reveal outright if this process died in between; doing it in a separate transaction would allow a
-            // concurrent reveal to insert a second message. The guarded update is the single-use gate: losing it
-            // means another request already persisted the reveal, so we surface that row instead of ours.
-            if (irisAmbientDecisionRepository.claimIfUnconsumed(decision.getId(), ZonedDateTime.now(), saved.getId()) == 0) {
-                var winner = irisAmbientDecisionRepository.findById(decision.getId()).map(IrisAmbientDecision::getConsumedMessageId).orElse(null);
-                if (winner != null && !winner.equals(saved.getId())) {
-                    irisMessageRepository.deleteById(saved.getId());
-                    return irisMessageRepository.findById(winner).map(IrisMessageResponseDTO::of)
-                            .orElseThrow(() -> new ConflictException("The ambient hint for this episode was already revealed", "IrisMessage", "revealAlreadyConsumed"));
-                }
-            }
-            return IrisMessageResponseDTO.of(saved);
+            // The insert and the claim have to commit together, otherwise a crash between them persists a message
+            // that no decision records as consumed, and the offer could be revealed a second time. TransactionTemplate
+            // rather than @Transactional on this method: a same-class helper would be self-invoked and bypass the proxy.
+            return transactionTemplate.execute(status -> revealAmbientInTransaction(user, exerciseId, episodeId, clientMessageId));
         }
         catch (DataIntegrityViolationException ex) {
             // The global unique index on proactive_client_message_id rejected the insert. Re-select user-scoped: a
