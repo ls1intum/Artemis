@@ -299,16 +299,44 @@ describe('AuditsComponent', () => {
         });
     });
 
+    describe('extra data column', () => {
+        it('shows every recorded payload entry, not just the two keys the login events use', () => {
+            // A domain action records its own keys ("course=..." becomes { course: ... }) and an account security event
+            // records e.g. a reason, so a column limited to message/remoteAddress would be empty for almost every row
+            // in the Application and Security tabs.
+            comp.audits.set([
+                { data: { course: 'Intro to Programming' }, principal: 'admin', timestamp: '2026-08-21T10:00:00Z', type: 'DELETE_COURSE' },
+                { data: { reason: 'unknown-identifier' }, principal: 'anonymous', timestamp: '2026-08-21T10:01:00Z', type: 'PASSWORD_RESET_REQUEST_REJECTED' },
+            ]);
+
+            expect(comp.auditRows().map((row) => row.otherData)).toEqual([[['course', 'Intro to Programming']], [['reason', 'unknown-identifier']]]);
+        });
+
+        it('leaves out the keys that have their own rendering, so they are not shown twice', () => {
+            comp.audits.set([{ data: { message: 'a message', remoteAddress: '127.0.0.1', sessionId: 'abc' }, principal: 'admin', timestamp: '2026-08-21T10:00:00Z', type: 'X' }]);
+
+            expect(comp.auditRows()[0].otherData).toEqual([['sessionId', 'abc']]);
+        });
+
+        it('leaves out empty values rather than rendering a dangling label', () => {
+            comp.audits.set([{ data: { course: '', reason: undefined, kept: 'yes' }, principal: 'admin', timestamp: '2026-08-21T10:00:00Z', type: 'X' }]);
+
+            expect(comp.auditRows()[0].otherData).toEqual([['kept', 'yes']]);
+        });
+
+        it('tolerates an event with no payload at all', () => {
+            comp.audits.set([{ data: undefined as never, principal: 'admin', timestamp: '2026-08-21T10:00:00Z', type: 'X' }]);
+
+            expect(comp.auditRows()[0].otherData).toEqual([]);
+        });
+    });
+
     describe('audit log tabs', () => {
         it('defaults to the general log and sends it with the query', () => {
             comp.ngOnInit();
 
             expect(comp.logType()).toBe(AuditLogType.GENERAL);
             expect(service.query).toHaveBeenCalledWith(expect.objectContaining({ logType: AuditLogType.GENERAL }));
-        });
-
-        it('offers exactly the three audit logs as tabs, in a stable order', () => {
-            expect(comp.logTypeTabs.map((tab) => tab.value)).toEqual([AuditLogType.GENERAL, AuditLogType.SECURITY, AuditLogType.APPLICATION]);
         });
 
         it('navigates with the selected log when a different tab is chosen, so the reload picks it up from the URL', () => {

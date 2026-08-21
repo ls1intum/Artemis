@@ -57,17 +57,27 @@ export class AuditsComponent implements OnInit {
     readonly audits = signal<Audit[]>([]);
 
     /**
+     * The rows the table renders: each audit plus the entries of its `data` payload that the row does not already show
+     * in a column of its own.
+     *
+     * Precomputed rather than derived in the template, because only the general log's payload has a known shape. A
+     * domain action records its own keys (`course`, `sessionId`, ...) and an account security event records e.g.
+     * `reason`, so a column that only rendered `message` and `remoteAddress` would leave the Application and Security
+     * tabs with an empty Extra data column for almost every row.
+     */
+    readonly auditRows = computed(() =>
+        this.audits().map((audit) => ({
+            audit,
+            // remoteAddress is rendered separately, with a translated label; message is rendered on its own as prose.
+            otherData: Object.entries(audit.data ?? {}).filter(([key, value]) => key !== 'message' && key !== 'remoteAddress' && value !== undefined && value !== ''),
+        })),
+    );
+
+    /**
      * Which of the three audit logs is shown. Each is a separate table with its own retention period, so switching tabs
      * queries a different (and much smaller) table rather than filtering one large one.
      */
     readonly logType = signal<AuditLogType>(AuditLogType.GENERAL);
-
-    /** The tabs rendered above the table, in display order. */
-    readonly logTypeTabs: readonly { value: AuditLogType; labelKey: string }[] = [
-        { value: AuditLogType.GENERAL, labelKey: 'audits.logType.general' },
-        { value: AuditLogType.SECURITY, labelKey: 'audits.logType.security' },
-        { value: AuditLogType.APPLICATION, labelKey: 'audits.logType.application' },
-    ];
 
     /** Date range filter - from date */
     readonly fromDate = signal('');
@@ -107,6 +117,8 @@ export class AuditsComponent implements OnInit {
 
     protected readonly faSort = faSort;
     protected readonly DateTimePickerType = DateTimePickerType;
+    /** Exposed so the template can name the three tab values without repeating their string literals. */
+    protected readonly AuditLogType = AuditLogType;
 
     ngOnInit(): void {
         this.toDate.set(this.today());

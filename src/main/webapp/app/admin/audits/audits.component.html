@@ -1,14 +1,21 @@
 <div>
     <h5 *adminTitleBarTitle id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
     <!-- One tab per audit log. Each log is a separate table with its own retention period, so switching tabs queries a
-         different, much smaller table instead of filtering one large one. -->
+         different, much smaller table instead of filtering one large one.
+         The tabs are declared one by one rather than with @for: tum-ui-tab's `value` is a required input, and inside a
+         control-flow block the tab list reads it through its contentChildren query before the binding is applied, which
+         throws NG0950. The other tum-ui-tabs usages in the app declare their tabs the same way. -->
     <tum-ui-tabs class="mb-4" [value]="logType()" (valueChange)="onLogTypeChange($event)" data-testid="audits-log-type-tabs">
         <tum-ui-tab-list>
-            @for (tab of logTypeTabs; track tab.value) {
-                <tum-ui-tab [value]="tab.value" [attr.data-testid]="'audits-log-type-tab-' + tab.value">
-                    <span [jhiTranslate]="tab.labelKey"></span>
-                </tum-ui-tab>
-            }
+            <tum-ui-tab [value]="AuditLogType.GENERAL" data-testid="audits-log-type-tab-GENERAL">
+                <span jhiTranslate="audits.logType.general"></span>
+            </tum-ui-tab>
+            <tum-ui-tab [value]="AuditLogType.SECURITY" data-testid="audits-log-type-tab-SECURITY">
+                <span jhiTranslate="audits.logType.security"></span>
+            </tum-ui-tab>
+            <tum-ui-tab [value]="AuditLogType.APPLICATION" data-testid="audits-log-type-tab-APPLICATION">
+                <span jhiTranslate="audits.logType.application"></span>
+            </tum-ui-tab>
         </tum-ui-tab-list>
     </tum-ui-tabs>
     <h4 class="mb-3" jhiTranslate="audits.filter.title"></h4>
@@ -66,20 +73,27 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (audit of audits(); track audit) {
+                    @for (row of auditRows(); track row.audit) {
                         <tr>
-                            <td>{{ audit.timestamp | artemisDate: 'long' : true }}</td>
+                            <td>{{ row.audit.timestamp | artemisDate: 'long' : true }}</td>
                             <td>
-                                <small>{{ audit.principal }}</small>
+                                <small>{{ row.audit.principal }}</small>
                             </td>
-                            <td>{{ audit.type }}</td>
+                            <td>{{ row.audit.type }}</td>
                             <td>
-                                @if (audit.data?.message) {
-                                    <span>{{ audit.data.message }}</span>
-                                }
-                                @if (audit.data?.remoteAddress) {
-                                    <span><span jhiTranslate="audits.table.data.remoteAddress"></span> {{ audit.data.remoteAddress }}</span>
-                                }
+                                <div class="flex flex-col">
+                                    @if (row.audit.data?.message) {
+                                        <span>{{ row.audit.data.message }}</span>
+                                    }
+                                    @if (row.audit.data?.remoteAddress) {
+                                        <span><span jhiTranslate="audits.table.data.remoteAddress"></span> {{ row.audit.data.remoteAddress }}</span>
+                                    }
+                                    <!-- Everything the server recorded that has no column of its own. Keys are event-specific
+                                         (`course`, `reason`, `revokedPasskeys`, ...), so they are shown verbatim. -->
+                                    @for (entry of row.otherData; track entry[0]) {
+                                        <span>{{ entry[0] }}: {{ entry[1] }}</span>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }

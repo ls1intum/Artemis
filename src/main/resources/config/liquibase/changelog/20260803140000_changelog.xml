@@ -329,15 +329,19 @@
     </changeSet>
 
     <!-- PostgreSQL identity columns do not advance their sequence when explicit values are inserted, so the next
-         generated id would collide with a migrated row. MySQL/H2 update AUTO_INCREMENT automatically and need no reset. -->
+         generated id would collide with a migrated row. MySQL/H2 update AUTO_INCREMENT automatically and need no reset.
+
+         setval is called with is_called = false, so the next generated id is exactly the value given: one past the
+         highest migrated id, or 1 on an instance that had nothing to migrate. Passing the maximum with the default
+         is_called = true would instead start a fresh installation at 2. -->
     <changeSet id="20260803140000-13-reset-identity-sequences" author="krusche" dbms="postgresql">
         <sql>
             SELECT setval(pg_get_serial_sequence('security_audit_event', 'event_id'),
-                          COALESCE((SELECT MAX(event_id) FROM security_audit_event), 1));
+                          COALESCE((SELECT MAX(event_id) FROM security_audit_event), 0) + 1, false);
         </sql>
         <sql>
             SELECT setval(pg_get_serial_sequence('application_audit_event', 'event_id'),
-                          COALESCE((SELECT MAX(event_id) FROM application_audit_event), 1));
+                          COALESCE((SELECT MAX(event_id) FROM application_audit_event), 0) + 1, false);
         </sql>
     </changeSet>
 
