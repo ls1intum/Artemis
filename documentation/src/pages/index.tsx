@@ -22,6 +22,20 @@ const audienceDestinations: AudienceDestination[] = [
     { role: 'administrator', title: 'Administrator', description: 'Run Artemis', to: '/admin/intro' },
 ];
 
+interface ProjectDestination {
+    title: string;
+    description: string;
+    action: string;
+    to: string;
+}
+
+const projectDestinations: ProjectDestination[] = [
+    { title: 'About Artemis', description: 'Mission, scope, and who develops the platform', action: 'Read about the project', to: '/about' },
+    { title: 'Trust & Transparency', description: 'Security, privacy, accessibility, and AI data processing', action: 'Review the details', to: '/about/trust' },
+    { title: 'Research & publications', description: 'The evidence behind the platform', action: 'Explore research', to: '/publications' },
+    { title: 'Compare Artemis', description: 'See how Artemis compares with other learning platforms', action: 'Explore comparison', to: '/compare' },
+];
+
 function ArrowIcon(): ReactNode {
     return (
         <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
@@ -103,27 +117,19 @@ function HomepageContent(): ReactNode {
 
             <div className={styles.secondaryStrip}>
                 <div className="container">
-                    <nav className={styles.secondaryGrid} aria-label="Additional resources">
-                        <Link to="/compare" className={styles.secondaryLink}>
-                            <span className={styles.secondaryCopy}>
-                                <strong>Compare Artemis</strong>
-                                <span>See how Artemis compares with other learning platforms</span>
-                            </span>
-                            <span className={styles.secondaryAction}>
-                                Explore comparison
-                                <ArrowIcon />
-                            </span>
-                        </Link>
-                        <Link to="/publications" className={styles.secondaryLink}>
-                            <span className={styles.secondaryCopy}>
-                                <strong>Research &amp; publications</strong>
-                                <span>The evidence behind the platform</span>
-                            </span>
-                            <span className={styles.secondaryAction}>
-                                Explore research
-                                <ArrowIcon />
-                            </span>
-                        </Link>
+                    <nav className={styles.secondaryGrid} aria-label="About the Artemis project">
+                        {projectDestinations.map((destination) => (
+                            <Link key={destination.to} to={destination.to} className={styles.secondaryLink}>
+                                <span className={styles.secondaryCopy}>
+                                    <strong>{destination.title}</strong>
+                                    <span>{destination.description}</span>
+                                </span>
+                                <span className={styles.secondaryAction}>
+                                    {destination.action}
+                                    <ArrowIcon />
+                                </span>
+                            </Link>
+                        ))}
                     </nav>
                 </div>
             </div>
