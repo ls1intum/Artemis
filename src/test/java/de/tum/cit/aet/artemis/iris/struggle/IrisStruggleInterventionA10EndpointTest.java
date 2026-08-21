@@ -276,18 +276,18 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow", student1.getId())).containsExactly(IrisProactiveOutcome.DISMISSED);
 
         // (b) Insert row2 (larger id, null outcome) - must NOT shift the target or duplicate the outcome.
-        // Use a fresh session reference so saveMessage reloads from the DB: after the PUT above, the test's original
-        // `session` object has an initialized (stale) messages collection. If we pass that stale session to saveMessage,
-        // the reload guard (Hibernate.isInitialized) is true and the cascade-save overwrites row1's committed outcome
-        // with null. A fresh session loaded here has the committed state (row1.proactiveOutcome = DISMISSED) so the
-        // cascade-save keeps it intact.
-        var freshSession = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId(), student1);
+        // Deliberately reuse the ORIGINAL `session`, whose messages collection is stale after the PUT above: it still
+        // carries row1 with a null outcome. saveMessage reloads immediately before the cascade, so the committed
+        // DISMISSED survives. Handing it a freshly loaded session instead would hide a regression in that reload,
+        // which is exactly what this assertion is here to catch.
         var msg2 = new IrisMessage();
         msg2.addContent(new IrisTextMessageContent("hint-row2"));
         msg2.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
         msg2.setProactiveEpisodeId("ep-multirow");
-        var row2 = irisMessageService.saveMessage(msg2, freshSession, IrisMessageSender.LLM);
+        var row2 = irisMessageService.saveMessage(msg2, session, IrisMessageSender.LLM);
 
+        // The committed outcome on row1 must not have been clobbered by the stale cascade.
+        assertThat(irisMessageRepository.findById(row1.getId()).orElseThrow().getProactiveOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
         assertThat(row2.getId()).isGreaterThan(row1.getId());                                          // row2 has a larger id
         assertThat(irisMessageRepository.findById(row2.getId()).orElseThrow().getProactiveOutcome()).isNull(); // row2 carries no outcome
         // Stable target is still row1
