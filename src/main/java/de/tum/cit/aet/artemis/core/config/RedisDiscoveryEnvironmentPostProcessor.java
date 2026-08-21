@@ -29,13 +29,13 @@ import org.springframework.core.env.MapPropertySource;
  * to be running for Artemis to come up.
  *
  * <p>
- * A single property switches all of it off coherently. This is deliberately not
- * {@code @EnableAutoConfiguration(exclude = ...)}, which is what an earlier version did: excluding the
- * auto-configurations leaves {@code eureka.client.enabled} at the {@code true} that {@code application-buildagent.yml}
- * sets, so the surrounding beans still believe discovery is active and ask for parts that no longer exist. The property
- * also cannot drift out of date the way a hand-maintained list of Spring Cloud class names does. With it set, Spring
- * Cloud's own {@code @ConditionalOnProperty} keeps every Eureka auto-configuration out of the context, so no client,
- * registration, heartbeat thread or health indicator is created.
+ * Properties do this rather than {@code @EnableAutoConfiguration(exclude = ...)}, which is what an earlier version
+ * used. Excluding the auto-configurations leaves {@code eureka.client.enabled} at the {@code true} that
+ * {@code application-buildagent.yml} sets, so the surrounding beans still believe discovery is active and ask for parts
+ * that no longer exist; a hand-maintained list of Spring Cloud class names also drifts on every upgrade, and Boot fails
+ * startup outright once one of those names stops being an auto-configuration class. With these two properties set,
+ * Spring Cloud's own conditions keep every discovery and Eureka auto-configuration out of the context, so no client,
+ * registration, heartbeat thread or health indicator is created in the first place.
  *
  * <p>
  * The property source is added first on purpose: {@code application-buildagent.yml} and the deployment's environment
@@ -50,7 +50,11 @@ public class RedisDiscoveryEnvironmentPostProcessor implements EnvironmentPostPr
         if (!DistributedDataProviderResolver.isProvider(environment, REDIS)) {
             return;
         }
-        environment.getPropertySources().addFirst(new MapPropertySource(PROPERTY_SOURCE_NAME, Map.of("eureka.client.enabled", "false")));
+        // Two switches, because they remove different halves. Turning the Eureka client off stops the registration,
+        // the heartbeat and the registry health indicator; it leaves Spring Cloud's own discovery health indicators
+        // behind, reporting "Discovery Client not initialized" for ever, which drags the whole health endpoint down.
+        // Turning discovery off removes those, and keeps every DiscoveryClient auto-configuration out of the context.
+        environment.getPropertySources().addFirst(new MapPropertySource(PROPERTY_SOURCE_NAME, Map.of("eureka.client.enabled", "false", "spring.cloud.discovery.enabled", "false")));
     }
 
     /**

@@ -72,10 +72,14 @@ cluster. Every reader of the registry — `HazelcastConfiguration`, `HazelcastCl
 `EurekaHazelcastDiscoveryStrategy` and the `EurekaInstanceHelper` they share — is conditional on Hazelcast. Nothing else
 in Artemis reads it: there are no `@LoadBalanced` clients, no `lb://` URIs and no Spring Cloud Config server.
 
-So on Redis, `RedisDiscoveryEnvironmentPostProcessor` sets `eureka.client.enabled=false` before the context is built,
-and Spring Cloud's own conditions then keep every Eureka auto-configuration out of it. A Redis node creates no Eureka
-client, registers nothing, runs no heartbeat thread and contributes no registry health indicator — verified on a
-three-node cluster: zero Eureka threads, zero live `com.netflix.*` objects, zero references to port 8761.
+So on Redis, `RedisDiscoveryEnvironmentPostProcessor` sets both `eureka.client.enabled=false` and
+`spring.cloud.discovery.enabled=false` before the context is built, and Spring Cloud's own conditions then keep every
+Eureka and discovery auto-configuration out of it. Both are needed: the first stops the registration, the heartbeat and
+the registry health indicator, but on its own it leaves Spring Cloud's discovery health indicators behind reporting
+`Discovery Client not initialized`, which drags the whole health endpoint down. A Redis node ends up with no Eureka
+client, no registration, no heartbeat thread and no discovery health indicator at all — verified on a three-node
+cluster: zero Eureka threads, zero live `com.netflix.*` objects, zero references to port 8761, and a health endpoint
+with no discovery entries.
 
 **A Redis deployment therefore does not need to run a JHipster registry at all.** The local multi-node runner does not
 start one for `--middleware redis`, which is what keeps this property honest: if anything started depending on the
