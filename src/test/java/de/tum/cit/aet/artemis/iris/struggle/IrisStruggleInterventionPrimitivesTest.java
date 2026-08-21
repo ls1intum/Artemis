@@ -6,10 +6,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,12 +29,14 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisAmbientDecision;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -89,6 +93,9 @@ class IrisStruggleInterventionPrimitivesTest {
     @Mock
     private IrisMessageRepository irisMessageRepository;
 
+    @Mock
+    private IrisAmbientDecisionRepository irisAmbientDecisionRepository;
+
     private IrisStruggleInterventionService service;
 
     private User user;
@@ -103,14 +110,39 @@ class IrisStruggleInterventionPrimitivesTest {
         user.setId(USER_ID);
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
-                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository);
+                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
+                irisAmbientDecisionRepository);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
     }
 
     // ---- revealAmbient ----
 
+    /**
+     * Stub the ambient decision Artemis recorded when it emitted the pointer. A reveal now requires one: it is
+     * what makes the persisted text the server's rather than the caller's, and what makes the offer single-use.
+     *
+     * @param episodeId  the episode the offer belongs to
+     * @param serverText the hint text as authored by Pyris
+     * @return the stubbed decision
+     */
+    private IrisAmbientDecision offeredDecision(String episodeId, String serverText) {
+        var decision = new IrisAmbientDecision();
+        decision.setId(900L);
+        decision.setUserId(USER_ID);
+        decision.setExerciseId(EXERCISE_ID);
+        decision.setEpisodeId(episodeId);
+        decision.setHintText(serverText);
+        decision.setCreatedAt(ZonedDateTime.now());
+        when(irisAmbientDecisionRepository.findByUserIdAndExerciseIdAndEpisodeId(USER_ID, EXERCISE_ID, episodeId)).thenReturn(Optional.of(decision));
+        // lenient: the tests that assert a rejection never reach the claim, and an offered decision is still the
+        // correct precondition for them - the rejection must come from the guard under test, not from a missing offer.
+        lenient().when(irisAmbientDecisionRepository.claimIfUnconsumed(eq(900L), any(), any())).thenReturn(1);
+        return decision;
+    }
+
     @Test
     void revealAmbient_createsRowWithServerSentAt_andReturnsDtoWithoutSendMessage() {
+        offeredDecision("ep-1", "Re-check the loop.");
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
         when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("cid-1", USER_ID)).thenReturn(Optional.empty());
@@ -147,6 +179,7 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void revealAmbient_concurrentRetry_catchesIntegrityViolation_andReSelects() {
+        offeredDecision("ep-1", "Re-check the loop.");
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
         // First findBy returns empty (no row yet), save throws on the unique constraint, second findBy returns the row
@@ -164,6 +197,7 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void revealAmbient_differentClientMessageId_doesNotCollideWithSameEpisodeOtherRow() {
+        offeredDecision("ep-1", "Same text as escalation.");
         // Two reveals for the same episode with different clientMessageIds must result in two distinct rows
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
@@ -182,6 +216,7 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void revealAmbient_crossUserClientMessageId_neverReturnsForeignRow() {
+        offeredDecision("ep-1", "victim hint");
         // IDOR guard (Fix 3): a replayed, globally-unique clientMessageId that belongs to ANOTHER user's row must not
         // be readable. The user-scoped finder returns empty for this user, so the fast path falls through to an insert
         // which hits the global unique index (DataIntegrityViolationException). The user-scoped re-select also returns

@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -99,6 +100,9 @@ class IrisStruggleInterventionDecisionTest {
     @Mock
     private IrisMessageRepository irisMessageRepository;
 
+    @Mock
+    private IrisAmbientDecisionRepository irisAmbientDecisionRepository;
+
     private IrisStruggleInterventionService service;
 
     private User user;
@@ -121,7 +125,8 @@ class IrisStruggleInterventionDecisionTest {
         user.setId(3L);
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
-                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository);
+                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
+                irisAmbientDecisionRepository);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }

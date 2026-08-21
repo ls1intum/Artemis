@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Records the ambient struggle decisions Artemis emits, so revealing one no longer trusts the client.
+
+    The ambient flow is a pull model: Artemis tells the client a hint exists for an episode and only writes the
+    chat message when the student clicks reveal. Until now the reveal endpoint took the hint text straight from
+    the caller, so a student could post arbitrary text as an LLM / PROACTIVE_STRUGGLE message - forging assistant
+    history that is fed back into the Pyris prompt - and could mint unlimited such rows with fresh ids.
+
+    Each row is the server's own copy of what it offered. Reveal looks it up by (user_id, exercise_id,
+    episode_id), persists hint_text rather than the caller's copy, and claims the row via consumed_at in the same
+    transaction, which makes a decision revealable exactly once.
+
+    The unique constraint on (user_id, exercise_id, episode_id) matches the flow's contract of one ambient offer
+    per episode, and lets a repeated decision callback for the same episode be recognised instead of duplicating
+    the offer. episode_id is NOT NULL on purpose: a decision without an episode cannot be addressed by a reveal,
+    so those are never recorded and no nullable column takes part in the uniqueness.
+    -->
+    <changeSet id="20260821-iris-ambient-decision" author="berger">
+        <createTable tableName="iris_ambient_decision">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="episode_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="hint_text" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+            <column name="consumed_at" type="datetime"/>
+            <column name="consumed_message_id" type="BIGINT"/>
+        </createTable>
+        <addUniqueConstraint tableName="iris_ambient_decision" columnNames="user_id, exercise_id, episode_id"
+                             constraintName="ux_iris_ambient_decision_user_exercise_episode"/>
+        <createIndex tableName="iris_ambient_decision" indexName="idx_iris_ambient_decision_created_at">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

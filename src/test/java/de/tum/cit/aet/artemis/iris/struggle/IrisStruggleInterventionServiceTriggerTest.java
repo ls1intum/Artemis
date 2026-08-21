@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -85,6 +86,9 @@ class IrisStruggleInterventionServiceTriggerTest {
     @Mock
     private IrisMessageRepository irisMessageRepository;
 
+    @Mock
+    private IrisAmbientDecisionRepository irisAmbientDecisionRepository;
+
     private IrisStruggleInterventionService service;
 
     private static final long EX = 42L;
@@ -110,7 +114,8 @@ class IrisStruggleInterventionServiceTriggerTest {
         user.setId(USER_ID);
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
-                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository);
+                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
+                irisAmbientDecisionRepository);
         lenient().when(programmingExerciseRepository.findByIdElseThrow(EX)).thenReturn(exercise);
     }
 
