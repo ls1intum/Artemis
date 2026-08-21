@@ -195,12 +195,49 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(component.feedback().correctionStatus).toBeUndefined();
     });
 
-    it('should send assessment event if feedback type changed', () => {
-        component.feedback().text = 'FeedbackSuggestion:accepted:Test';
+    it('should send assessment event and rewrite the prefix on the first edit of an accepted suggestion', () => {
+        const feedback = Feedback.forText(textBlock);
+        feedback.text = 'FeedbackSuggestion:accepted:Test';
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.changeDetectorRef.detectChanges();
         //@ts-ignore
         const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+
         component.didChange();
+
         expect(typeSpy).toHaveBeenCalledOnce();
+        expect(component.feedback().text).toBe('FeedbackSuggestion:adapted:Test');
+    });
+
+    it('should not send another assessment event on later edits of an already-adapted suggestion', () => {
+        const feedback = Feedback.forText(textBlock);
+        feedback.text = 'FeedbackSuggestion:accepted:Test';
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.changeDetectorRef.detectChanges();
+        //@ts-ignore
+        const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+
+        component.didChange();
+        component.didChange();
+
+        expect(typeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should transition an accepted suggestion via connectFeedbackWithInstruction and send the assessment event once', () => {
+        const feedback = Feedback.forText(textBlock);
+        feedback.text = 'FeedbackSuggestion:accepted:Test';
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.changeDetectorRef.detectChanges();
+        //@ts-ignore
+        vi.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
+        //@ts-ignore
+        const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        const mockEvent = { preventDefault: vi.fn(), dataTransfer: { getData: vi.fn().mockReturnValue('{}') } } as unknown as Event;
+
+        component.connectFeedbackWithInstruction(mockEvent);
+
+        expect(typeSpy).toHaveBeenCalledOnce();
+        expect(component.feedback().text).toBe('FeedbackSuggestion:adapted:Test');
     });
 
     it('should not send assessment event if feedback text is unchanged', () => {
