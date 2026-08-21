@@ -912,6 +912,16 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.loadingFeedbackSuggestions()).toBe(false);
     });
 
+    it('should reset loadingFeedbackSuggestions when a new submission that needs no suggestions arrives while a previous request is still pending', async () => {
+        // Simulate submission A's Athena request still being in flight when navigation loads submission B, an
+        // already-assessed submission which never starts its own request.
+        comp.loadingFeedbackSuggestions.set(true);
+
+        await internals(comp).onSubmissionReceived('123', submission);
+
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+    });
+
     it('should render the feedback suggestions banner when submission is set', async () => {
         vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
         vi.spyOn(repositoryFileService, 'getFile').mockReturnValue(new BehaviorSubject({ fileContent: '' }));

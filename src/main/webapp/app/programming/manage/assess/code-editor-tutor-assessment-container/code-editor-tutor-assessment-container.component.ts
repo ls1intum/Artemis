@@ -302,6 +302,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.loadingInitialSubmission.set(false);
         // Reset for the new submission so a stale automatic-feedback banner from the previous one doesn't linger.
         this.hasAcceptedFeedbackSuggestions.set(false);
+        // Reset so a still-pending request for the previous submission can't leave this one's banner spinning
+        // forever if this submission doesn't need suggestions and never starts its own request.
+        this.loadingFeedbackSuggestions.set(false);
 
         // Set domain to correctly fetch data
         this.domainService.setDomain([DomainType.PARTICIPATION, submission.participation!]);
