@@ -137,12 +137,120 @@ benchmark on your own deployment, please consider contributing the result: it he
 size their infrastructure, and it turns a claim into evidence. Open a pull request against this page or
 write to `artemis@xcit.tum.de`.
 
-{/*
-TODO(maintainers): publish the TUM reference run here (topology, hardware, scenario, percentiles).
-Artemis states "used for courses and online exams with more than 2,000 students" in the README, the
-landing page, and the platform comparison. That claim is about real cohorts, and the evidence for it
-is operational history rather than a benchmark rung, so word whatever lands here in terms of what the
-run actually showed (the largest size that held its percentiles, and what saturated first) instead of
-tying it to a target number. A simulated 1,000 is already a harder test than a real 2,000; see "A
-simulated student is not a real student" above.
-*/}
+## Reference run
+
+The run below is published so that other deployments have something concrete to compare against. It is
+one scenario on one cluster, not a certification, and the caveats under
+[A simulated student is not a real student](#a-simulated-student-is-not-a-real-student) apply to every
+number in it.
+
+### Deployment under test
+
+`staging1`, the TUM staging cluster, on Artemis 9.9.1. Every host is a VM with 4 vCPUs, 3.8 GB of
+memory and a 10 Gb/s NIC:
+
+| Role | Hosts | Notes |
+| --- | --- | --- |
+| Artemis core nodes | 3 | Behind an nginx reverse proxy, clustered with Hazelcast |
+| Database | 1 | MySQL, own host |
+| Storage | 1 | NFS v4.2 server holding the git repositories, mounted by every core node |
+| Build agents | 3 | 6 concurrent build slots in total |
+| Reverse proxy | 1 | nginx |
+
+The tool ran on a separate 8 vCPU, 7.8 GB host, so its client concurrency cap was 80 threads.
+
+### Scenario
+
+The standard exam (one programming, one modeling, one quiz, one text exercise), one to two commits and
+pushes per student, all repository access over HTTPS with a password (100% password, 0% online IDE, 0%
+token, 0% SSH). Both runs completed with zero errors.
+
+| | 500 students | 1000 students |
+| --- | --- | --- |
+| Requests | 17,758 | 36,009 |
+| Duration of the participation phase | 91 s | 151 s |
+| Request rate | 195 /s | 238 /s |
+| Git operations | 829 /min | 997 /min |
+| Mean response time, all actions | 0.36 s | 0.30 s |
+| Clone | 3.09 s | 1.80 s |
+| Push | 2.34 s | 2.34 s |
+| Submit exercise | 0.67 s | 0.57 s |
+| Start student exam | 0.09 s | 0.13 s |
+| Submit student exam | 0.09 s | 0.12 s |
+
+The tool reports means rather than percentiles, so these are means. The 500-student clone figure is
+pessimistic: that run started 45 seconds after the tool was restarted, so its JVM was still cold.
+
+### Where the load landed
+
+Averages over the participation phase, with peaks in brackets. CPU is a percentage of the whole host,
+so 100% means all four vCPUs were busy:
+
+| Host | CPU 500 | CPU 1000 | Memory 1000 | Network rx/tx 1000 | Disk busy 1000 |
+| --- | --- | --- | --- | --- | --- |
+| Core node 1 | 59% | **88%** (99%) | 88% | 89 / 51 Mb/s | 41% |
+| Core node 2 | 56% | **75%** (99%) | 77% | 88 / 59 Mb/s | 6% |
+| Core node 3 | 52% | **74%** (100%) | 73% | 90 / 52 Mb/s | 4% |
+| Database | 32% | 36% (97%) | 70% | 35 / 218 Mb/s | 96% |
+| NFS storage | 6% | 7% (13%) | 24% | 16 / 20 Mb/s | 8% |
+| Reverse proxy | 4% | 6% (44%) | 28% | 4 / 70 Mb/s | 1% |
+| Build agents | 52-57% | 55-56% | 56% | 13-15 / 0 Mb/s | 57% |
+
+### What saturated, and what did not
+
+**Core node CPU is the binding resource.** Doubling from 500 to 1000 students took the busiest node
+from 59% to 88%, with peaks touching 99%. Nothing else came close. Node 1 runs hotter than its peers
+because it also carries the scheduled and cluster-wide work, so the ceiling is set by the hottest node
+rather than by the average.
+
+**The network was never a factor.** The busiest interface averaged 90 Mb/s and peaked at 424 Mb/s on a
+10 Gb/s NIC, under 5% of the link.
+
+**The NFS storage was close to idle**, at 7% CPU and 8% disk busy. Over the 1000-student run the three
+core nodes issued 1.1 million RPCs against it, and the average round trip stayed between 0.21 ms and
+0.38 ms. Shared storage over NFS is an intuitive suspect for git-heavy load, and on this cluster it was
+not the problem: the traffic is dominated by small metadata calls that the server answers from memory.
+
+**The reverse proxy was close to idle** at 6% CPU.
+
+Two results in that table are defects on this cluster rather than properties of Artemis, and both are
+worth checking on any deployment before reading its numbers:
+
+- **The database host was swapping.** `innodb_buffer_pool_size` was set to 10 GB on a host with 3.8 GB
+  of memory, so `mysqld` had roughly 1 GB paged out and the disk sat at 96% busy with 8% iowait, while
+  its CPU stayed at 36%. The database was not short of CPU, it was short of memory. A buffer pool that
+  fits in RAM would move this row further down the list.
+- **Build capacity is oversubscribed by a wide margin.** 1000 students pushing one to two times each
+  submitted 1509 builds in 151 seconds, an offered rate near 600 builds per minute. Six concurrent
+  slots at about 13 seconds per build drain roughly 26 per minute, so the queue needed close to an hour
+  to clear. This is expected for a maximum-throughput simulation and is a capacity-planning input, not
+  a fault, but it means build feedback during an exam of this size needs many more agents: serving that
+  queue within ten minutes would take roughly 33 concurrent slots instead of 6.
+
+### What this says about capacity
+
+The load generator was itself close to its limit in both runs: its 80 threads were 86% and 87% busy, so
+doubling the student count did not double the offered load. Both figures below are therefore floors on
+what this cluster can serve, not its ceiling.
+
+Read as a statement about concurrent sessions, which is the useful unit for an exam: `staging1`
+sustained 1000 simultaneous simulated students through the most demanding phase of an exam with every
+core node below 90% CPU and no errors. Extrapolating the measured slope of the busiest node, 29
+percentage points of CPU per 500 students, the cluster reaches saturation somewhere around 1200
+simultaneous simulated students in this scenario. Because a simulated student has no think time while a
+real one spends most of an exam reading and typing, the equivalent real cohort is considerably larger.
+
+The practical conclusions for anyone sizing a comparable deployment:
+
+- **Scale the core nodes first.** They are what runs out, and the load spreads unevenly across them.
+- **Scale build agents according to the feedback you promise students**, not according to the exam size.
+  This is by far the largest gap between offered and available capacity, and it is independent of
+  everything above.
+- **Check that the database buffer pool fits in memory** before concluding anything about database
+  performance.
+- **Do not size the storage tier for this workload on git traffic alone.** It was the least loaded
+  component in the cluster.
+
+A note on the frequently quoted figure of more than 2000 students: that describes real cohorts on the
+production deployment and rests on operational history, not on this benchmark. The two are not
+comparable, and a simulated 1000 is the harder test of the two.
