@@ -84,6 +84,9 @@ if [ ${#TEST_PATHS[@]} -gt 0 ]; then
     # Then the tests that mutate global server state, alone.
     echo "--- Running sequential tests ---"
     run_playwright sequential --project=sequential-tests --workers 1 "${TEST_PATHS[@]}"
+
+    echo "--- Running cross-engine tests ---"
+    run_playwright cross-engine --project=cross-engine-chromium --project=cross-engine-firefox --project=cross-engine-webkit "${TEST_PATHS[@]}"
 else
     echo "Running all tests"
 
@@ -95,6 +98,12 @@ else
     # page loads. It therefore runs in its own invocation, single-worker, once nothing else is in flight.
     echo "--- Running sequential tests ---"
     run_playwright sequential e2e --project=sequential-tests --workers 1
+
+    # A handful of assertions whose answer differs per browser engine, so a Chromium-only run cannot make them.
+    # Deliberately its own invocation rather than a second browser for the whole suite: running everything three
+    # times over would be unaffordable, and almost nothing else here depends on the engine.
+    echo "--- Running cross-engine tests ---"
+    run_playwright cross-engine e2e --project=cross-engine-chromium --project=cross-engine-firefox --project=cross-engine-webkit
 fi
 
 # Run the @multi-node project only when the surrounding stack opts in via env var. The multi-node
@@ -143,11 +152,12 @@ echo "E2E counts: ${E2E_PASSED} passed, ${E2E_FLAKY} flaky, ${E2E_FAILED} failed
 # moving the real report into place, so CI never consumes an outdated report.
 echo "--- Finalizing test reports ---"
 rm -f ./test-reports/results.xml
-# Collected rather than enumerated per combination: each invocation above writes its own
-# results-<type>.xml, and a report left out here is invisible to the JUnit report and to the failure
-# classifier, so a failure in it cannot even be named while the script still exits nonzero.
+# Globbed rather than enumerated: each invocation above writes its own results-<type>.xml, and a report
+# left out here is invisible to the JUnit report and to the failure classifier, so a failure in it cannot
+# even be named while the script still exits nonzero. The list was enumerated until a new invocation was
+# added and silently went unreported, which is precisely the failure this comment already warned about.
 REPORTS=()
-for report in ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml ./test-reports/results-multinode.xml; do
+for report in ./test-reports/results-*.xml; do
     [ -f "$report" ] && REPORTS+=("$report")
 done
 if [ ${#REPORTS[@]} -gt 1 ]; then
