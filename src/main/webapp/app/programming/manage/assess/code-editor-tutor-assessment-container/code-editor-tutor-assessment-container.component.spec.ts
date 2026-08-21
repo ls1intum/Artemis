@@ -385,6 +385,24 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         );
         expect(comp.unreferencedFeedback()).toEqual([existingUnreferenced]);
         expect(comp.hasAcceptedFeedbackSuggestions()).toBe(true);
+        // Auto-accepted suggestions are unsaved changes: navigating away must warn like any other edit.
+        expect(comp.hasPendingChanges).toBe(true);
+    });
+
+    it('should reset hasAcceptedFeedbackSuggestions when a new submission is received', async () => {
+        // Simulate the banner still being shown for a previously loaded submission's auto-accepted suggestions.
+        comp.hasAcceptedFeedbackSuggestions.set(true);
+
+        submission.results![0].feedbacks = [
+            {
+                detailText: 'text',
+                credits: 1,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            },
+        ];
+        await internals(comp).onSubmissionReceived('123', submission);
+
+        expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
     });
 
     it('should show complaint for result with complaint and check assessor', async () => {

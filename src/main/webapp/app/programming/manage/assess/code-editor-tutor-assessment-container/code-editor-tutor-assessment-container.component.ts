@@ -300,6 +300,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private async handleReceivedSubmission(submission: ProgrammingSubmission): Promise<void> {
         this.loadingInitialSubmission.set(false);
+        // Reset for the new submission so a stale automatic-feedback banner from the previous one doesn't linger.
+        this.hasAcceptedFeedbackSuggestions.set(false);
 
         // Set domain to correctly fetch data
         this.domainService.setDomain([DomainType.PARTICIPATION, submission.participation!]);
@@ -379,6 +381,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     manualResult.feedbacks = [...(manualResult.feedbacks ?? []), ...newSuggestions];
                 }
                 this.hasAcceptedFeedbackSuggestions.set(true);
+                // Auto-accepted suggestions are unsaved changes: warn on navigation away like any other edit.
+                this.hasPendingChanges = true;
                 this.handleFeedback();
             }
         } finally {
