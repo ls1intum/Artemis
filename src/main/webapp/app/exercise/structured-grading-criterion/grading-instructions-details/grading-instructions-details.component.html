@@ -1,14 +1,58 @@
 @let currentExercise = exercise();
+@let generationUnavailableReason = generationDisabledReason();
+<tum-ui-confirm-dialog key="assessment-criteria-generation-confirmation" />
 <!--- Template If Grading Instructions are not used in Assessment --->
 @if (!currentExercise.gradingInstructionFeedbackUsed) {
     <div class="edit-sqi">
-        <div class="col-12 col-sm-auto d-flex me-1 mb-1">
-            <button id="edit-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': showEditMode(), 'btn-default': !showEditMode() }">
-                <span jhiTranslate="entity.action.edit"></span>
-            </button>
-            <button id="edit-text-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': !showEditMode(), 'btn-default': showEditMode() }">
-                <span jhiTranslate="artemisApp.exercise.editText"></span>
-            </button>
+        <div class="assessment-criteria-generation__header flex w-full flex-wrap items-start justify-between gap-2">
+            <div class="col-12 col-sm-auto d-flex me-1 mb-1">
+                <button
+                    id="edit-mode"
+                    class="btn btn-block"
+                    (click)="switchMode()"
+                    [disabled]="!editable()"
+                    [ngClass]="{ 'btn-secondary': showEditMode(), 'btn-default': !showEditMode() }"
+                >
+                    <span jhiTranslate="entity.action.edit"></span>
+                </button>
+                <button
+                    id="edit-text-mode"
+                    class="btn btn-block"
+                    (click)="switchMode()"
+                    [disabled]="!editable()"
+                    [ngClass]="{ 'btn-secondary': !showEditMode(), 'btn-default': showEditMode() }"
+                >
+                    <span jhiTranslate="artemisApp.exercise.editText"></span>
+                </button>
+            </div>
+            @if (canShowGenerationButton()) {
+                <div class="min-w-fit flex-1">
+                    <div class="assessment-criteria-generation__controls">
+                        <span
+                            class="assessment-criteria-generation__tooltip-trigger"
+                            [attr.tabindex]="generationUnavailableReason ? 0 : null"
+                            [tumUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
+                        >
+                            <tum-ui-button
+                                type="button"
+                                severity="secondary"
+                                data-testid="generate-assessment-criteria"
+                                [style.cursor]="isGenerationDisabled() ? 'default' : undefined"
+                                [disabled]="isGenerationDisabled()"
+                                [loading]="isGenerating()"
+                                [icon]="facArtemisIntelligence"
+                                (clicked)="generateAssessmentCriteria()"
+                            >
+                                @if (isGenerating()) {
+                                    <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
+                                } @else {
+                                    <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
+                                }
+                            </tum-ui-button>
+                        </span>
+                    </div>
+                </div>
+            }
         </div>
         <div class="grading-instructions-update-border">
             <!--- Edit Mode --->
@@ -28,6 +72,7 @@
                                             id="criterionTitle"
                                             name="criterionTitle"
                                             [(ngModel)]="criterion.title!"
+                                            [disabled]="!editable()"
                                             (change)="onCriterionTitleChange($event, criterion)"
                                             placeholder="Criterion Title"
                                         />
@@ -78,6 +123,7 @@
                                                     <input
                                                         class="form-control input-lg"
                                                         [(ngModel)]="instruction.credits"
+                                                        [disabled]="!editable()"
                                                         type="number"
                                                         step="0.5"
                                                         (change)="updateGradingInstruction(instruction, criterion)"
@@ -87,6 +133,7 @@
                                                     <input
                                                         class="form-control input-lg"
                                                         [(ngModel)]="instruction.gradingScale"
+                                                        [disabled]="!editable()"
                                                         type="text"
                                                         [placeholder]="'artemisApp.exercise.gradingScalePlaceholder' | artemisTranslate"
                                                         (change)="updateGradingInstruction(instruction, criterion)"
@@ -96,6 +143,7 @@
                                                     <textarea
                                                         class="form-control input-lg"
                                                         [(ngModel)]="instruction.instructionDescription"
+                                                        [disabled]="!editable()"
                                                         type="text"
                                                         rows="2"
                                                         [placeholder]="'artemisApp.exercise.descriptionPlaceholder' | artemisTranslate"
@@ -106,6 +154,7 @@
                                                     <textarea
                                                         class="form-control input-lg"
                                                         [(ngModel)]="instruction.feedback"
+                                                        [disabled]="!editable()"
                                                         type="text"
                                                         rows="2"
                                                         [placeholder]="'artemisApp.exercise.feedbackPlaceholder' | artemisTranslate"
@@ -116,6 +165,7 @@
                                                     <input
                                                         class="form-control input-lg"
                                                         [(ngModel)]="instruction.usageCount"
+                                                        [disabled]="!editable()"
                                                         type="number"
                                                         step="1"
                                                         min="0"
@@ -136,14 +186,25 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <span class="re-evaluate-button mb-3" id="add-instruction-button" (click)="addNewInstruction(criterion)">
-                                <fa-icon [icon]="faPlus" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}" />
-                            </span>
+                            <tum-ui-button
+                                type="button"
+                                class="mb-3"
+                                id="add-instruction-button"
+                                severity="secondary"
+                                variant="text"
+                                size="small"
+                                [rounded]="true"
+                                [icon]="faPlus"
+                                [disabled]="!editable()"
+                                [ariaLabel]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                [tumUiTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                (clicked)="addNewInstruction(criterion)"
+                            />
                         </div>
                     }
                     <div class="row mt-4">
                         <div class="col-12 col-sm-6 col-xl-3 mb-1">
-                            <button id="add-criterion-button" class="btn btn-block btn-success" (click)="addNewGradingCriterion()">
+                            <button id="add-criterion-button" class="btn btn-block btn-success" (click)="addNewGradingCriterion()" [disabled]="!editable()">
                                 <fa-icon [icon]="faPlus" />
                                 <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
                             </button>
@@ -162,6 +223,8 @@
                         [showPreviewButton]="false"
                         [showEditButton]="false"
                         [domainActions]="domainActionsForMainEditor"
+                        [isReadOnly]="!editable()"
+                        [enableFileUpload]="editable()"
                         [enableResize]="false"
                         [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                         (markdownChange)="prepareForSave()"
@@ -176,6 +239,32 @@
 <!--- Template If Grading Instructions are used in Assessment --->
 @if (currentExercise.gradingInstructionFeedbackUsed) {
     <div class="edit-sqi">
+        @if (canShowGenerationButton()) {
+            <div class="assessment-criteria-generation__controls">
+                <span
+                    class="assessment-criteria-generation__tooltip-trigger"
+                    [attr.tabindex]="generationUnavailableReason ? 0 : null"
+                    [tumUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
+                >
+                    <tum-ui-button
+                        type="button"
+                        severity="secondary"
+                        data-testid="generate-assessment-criteria"
+                        [style.cursor]="isGenerationDisabled() ? 'default' : undefined"
+                        [disabled]="isGenerationDisabled()"
+                        [loading]="isGenerating()"
+                        [icon]="facArtemisIntelligence"
+                        (clicked)="generateAssessmentCriteria()"
+                    >
+                        @if (isGenerating()) {
+                            <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
+                        } @else {
+                            <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
+                        }
+                    </tum-ui-button>
+                </span>
+            </div>
+        }
         <div class="grading-instructions-update-border">
             <div class="instructions pb-2 row-cols-2">
                 <jhi-markdown-editor-monaco
@@ -183,6 +272,7 @@
                     class="editor col-md-8"
                     [markdown]="markdownEditorText()"
                     [domainActions]="domainActionsForGradingInstructionParsing"
+                    [isReadOnly]="!editable()"
                     (markdownChange)="prepareForSave()"
                     (textWithDomainActionsFound)="setExerciseGradingInstructionText($event)"
                     [enableFileUpload]="false"
@@ -200,17 +290,20 @@
                                         class="form-control"
                                         type="text"
                                         [(ngModel)]="criteria.title!"
+                                        [disabled]="!editable()"
                                         (change)="onCriterionTitleChange($event, criteria)"
                                         placeholder="Criterion Title"
                                     />
-                                    <span
+                                    <button
+                                        type="button"
                                         class="col-md-auto input-group-btn d-flex align-items-center p-2"
                                         style="cursor: pointer"
                                         id="reset-criteria-button"
                                         (click)="resetCriterionTitle(criteria)"
+                                        [disabled]="!editable()"
                                     >
                                         <fa-icon [icon]="faUndo" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentCriterionTitle' | artemisTranslate }}" />
-                                    </span>
+                                    </button>
                                     <div class="col-md-auto input-group-btn d-flex align-items-center">
                                         <span class="btn btn-block btn-danger" id="delete-criteria-button" (click)="deleteGradingCriterion(criteria)">
                                             <fa-icon [icon]="faTrash" />
@@ -235,6 +328,7 @@
                                                 [showEditButton]="false"
                                                 [showPreviewButton]="false"
                                                 [domainActions]="[]"
+                                                [isReadOnly]="!editable()"
                                                 (markdownChange)="prepareForSave()"
                                                 (textWithDomainActionsFound)="onInstructionChange($event, instruction)"
                                                 [enableFileUpload]="false"
@@ -249,9 +343,19 @@
                                                 <span class="re-evaluate-button" id="delete-button" (click)="deleteInstruction(instruction, criteria)">
                                                     <fa-icon [icon]="faTrash" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}" />
                                                 </span>
-                                                <span class="re-evaluate-button" id="add-button" (click)="addInstruction(criteria)">
-                                                    <fa-icon [icon]="faPlus" size="2x" ngbTooltip="{{ 'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate }}" />
-                                                </span>
+                                                <tum-ui-button
+                                                    type="button"
+                                                    id="add-button"
+                                                    severity="secondary"
+                                                    variant="text"
+                                                    size="small"
+                                                    [rounded]="true"
+                                                    [icon]="faPlus"
+                                                    [disabled]="!editable()"
+                                                    [ariaLabel]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                                    [tumUiTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                                    (clicked)="addInstruction(criteria)"
+                                                />
                                             </div>
                                         </div>
                                     </div>
@@ -263,7 +367,7 @@
             }
             <div class="row mt-2">
                 <div class="col-12 col-sm-6 col-xl-3 mb-1">
-                    <button id="add-criteria-button" class="btn btn-block btn-success" (click)="addGradingCriterion()">
+                    <button id="add-criteria-button" class="btn btn-block btn-success" (click)="addGradingCriterion()" [disabled]="!editable()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
                     </button>
