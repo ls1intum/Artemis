@@ -135,6 +135,17 @@ check_port_available() {
     local listeners
     listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
     if [ -n "$listeners" ]; then
+        # A port published by a container is held by Docker's own forwarder, not by a leftover JVM. Killing
+        # that process takes Docker Desktop down with it, which then fails this run at the next compose call
+        # with a misleading "cannot connect to the Docker daemon". Refuse instead, and say what to stop.
+        local docker_holder
+        docker_holder=$(echo "$listeners" | awk 'NR>1 {print $1}' | grep -iE '^(com\.docker|docker|vpnkit)' | head -1)
+        if [ -n "$docker_holder" ]; then
+            echo -e "${RED}Port ${port} (${service_name}) is published by a container (held by '${docker_holder}').${NC}"
+            echo -e "${RED}Refusing to kill it: that would stop Docker Desktop. Tear the container stack down first, e.g.${NC}"
+            echo -e "${RED}  ./run-e2e-tests-local-multinode.sh --stop${NC}"
+            exit 1
+        fi
         echo -e "${YELLOW}Port ${port} (${service_name}) is in use — killing existing process...${NC}"
         local pids
         pids=$(echo "$listeners" | awk 'NR>1 {print $2}' | sort -u)
@@ -313,10 +324,11 @@ if [ "$SKIP_BUILD" = false ]; then
     set -e
     if [ "$CLIENT_RC" -ne 0 ] || [ "$SERVER_RC" -ne 0 ]; then
         echo -e "${RED}Build failed (client rc=$CLIENT_RC, server rc=$SERVER_RC).${NC}"
-        for tag in "client" "server"; do
-            log_var="${tag^^}_LOG"
-            echo -e "${RED}--- last 50 lines of ${tag} log ---${NC}"
-            tail -n 50 "${!log_var}" 2>/dev/null || true
+        # Indirect expansion by name, without `${tag^^}`: macOS still ships bash 3.2, where that is a syntax
+        # error, and the failure replaced the build output with "bad substitution" exactly when it was needed.
+        for pair in "client:$CLIENT_LOG" "server:$SERVER_LOG"; do
+            echo -e "${RED}--- last 50 lines of ${pair%%:*} log ---${NC}"
+            tail -n 50 "${pair#*:}" 2>/dev/null || true
         done
         exit 1
     fi
