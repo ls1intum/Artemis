@@ -197,7 +197,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      */
     updateFeedback(feedback: Feedback) {
         const unreferencedFeedback = [...this.unreferencedFeedback];
-        const indexToUpdate = unreferencedFeedback.indexOf(feedback);
+        const indexToUpdate = feedback.id != undefined ? unreferencedFeedback.findIndex((existing) => existing.id === feedback.id) : unreferencedFeedback.indexOf(feedback);
         if (indexToUpdate < 0) {
             unreferencedFeedback.push(feedback);
         } else {

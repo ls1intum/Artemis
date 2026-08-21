@@ -92,6 +92,17 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(comp.unreferencedFeedback[0].text).toBe(feedback.text);
     });
 
+    it('should update unreferenced feedback by id even when the emitted object is a different reference (e.g. long feedback hydration)', () => {
+        const feedback = { id: 42, text: 'NewFeedback', credits: 3 } as Feedback;
+        comp.unreferencedFeedback = [feedback];
+
+        const hydratedFeedback = { ...feedback, detailText: 'loaded long feedback text' } as Feedback;
+        comp.updateFeedback(hydratedFeedback);
+
+        expect(comp.unreferencedFeedback).toHaveLength(1);
+        expect(comp.unreferencedFeedback[0].detailText).toBe('loaded long feedback text');
+    });
+
     it('should delete unreferenced feedback', () => {
         const feedback = { text: 'NewFeedback', credits: 3 } as Feedback;
         comp.unreferencedFeedback = [feedback];
