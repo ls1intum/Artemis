@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -132,6 +131,8 @@ public class LocalVCServletService {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
+
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
 
@@ -152,7 +153,7 @@ public class LocalVCServletService {
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
-            ExerciseVersionService exerciseVersionService) {
+            ExerciseVersionService exerciseVersionService, UserVcsAccessTokenService userVcsAccessTokenService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -169,6 +170,7 @@ public class LocalVCServletService {
         this.authorizationCheckService = authorizationCheckService;
         this.rateLimitService = rateLimitService;
         this.exerciseVersionService = exerciseVersionService;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
     }
 
     /**
@@ -432,7 +434,7 @@ public class LocalVCServletService {
         if (!password.startsWith(TOKEN_PREFIX)) {
             return AuthenticationMechanism.PASSWORD;
         }
-        if (secretMatches(user.getVcsAccessToken(), password)) {
+        if (secretMatches(userVcsAccessTokenService.findToken(user.getId()), password)) {
             return AuthenticationMechanism.USER_VCS_ACCESS_TOKEN;
         }
         if (localVCRepositoryUri != null) {
@@ -489,9 +491,10 @@ public class LocalVCServletService {
             throw new LocalVCAuthException("Account is not active");
         }
 
-        // check user VCS access token
-        if (user.getVcsAccessTokenExpiryDate() != null && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())
-                && secretMatches(user.getVcsAccessToken(), passwordOrToken)) {
+        // check user VCS access token. findUsableToken already excludes an expired one, so the expiry no longer has to be
+        // compared here.
+        var personalToken = userVcsAccessTokenService.findUsableToken(user.getId());
+        if (personalToken.isPresent() && secretMatches(personalToken.get().getToken(), passwordOrToken)) {
             return user;
         }
 
@@ -542,7 +545,9 @@ public class LocalVCServletService {
                 if (studentParticipation.isPresent()) {
                     var storedToken = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), studentParticipation.get().getId());
                     if (storedToken.isPresent() && secretMatches(storedToken.get().getVcsAccessToken(), providedToken)) {
-                        user.setVcsAccessToken(storedToken.get().getVcsAccessToken());
+                        // The matched token is deliberately not copied onto the user. It used to be, which made the access log
+                        // resolve the mechanism as USER_VCS_ACCESS_TOKEN afterwards - resolveHTTPSAuthenticationMechanism runs
+                        // after this and compared the presented secret against the user's own token.
                         return true;
                     }
                 }

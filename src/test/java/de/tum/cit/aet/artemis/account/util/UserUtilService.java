@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepo
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 
 /**
  * Service responsible for initializing the database with specific testdata related to Users for use in integration tests.
@@ -79,6 +80,9 @@ public class UserUtilService {
 
     @Autowired
     private UserTestRepository userTestRepository;
+
+    @Autowired
+    private UserVcsAccessTokenService userVcsAccessTokenService;
 
     @Autowired
     private CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
@@ -206,9 +210,9 @@ public class UserUtilService {
      * @return The updated User
      */
     public User setUserVcsAccessTokenAndExpiryDateAndSave(User user, String vcsAccessToken, ZonedDateTime expiryDate) {
-        user.setVcsAccessToken(vcsAccessToken);
-        user.setVcsAccessTokenExpiryDate(expiryDate);
-        return userTestRepository.save(user);
+        // The personal token lives in user_vcs_access_token, so it is seeded through its service rather than on the user row.
+        userVcsAccessTokenService.store(user.getId(), vcsAccessToken, expiryDate);
+        return user;
     }
 
     /**
@@ -231,9 +235,7 @@ public class UserUtilService {
      * @param userWithUserToken The user whose token gets deleted
      */
     public void deleteUserVcsAccessToken(User userWithUserToken) {
-        userWithUserToken.setVcsAccessTokenExpiryDate(null);
-        userWithUserToken.setVcsAccessToken(null);
-        userTestRepository.save(userWithUserToken);
+        userVcsAccessTokenService.revoke(userWithUserToken.getId());
     }
 
     /**

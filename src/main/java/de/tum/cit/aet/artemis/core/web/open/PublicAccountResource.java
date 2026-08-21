@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
@@ -95,8 +96,11 @@ public class PublicAccountResource {
 
     private final LoginOptionsService loginOptionsService;
 
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
-            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService) {
+            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
+            UserVcsAccessTokenService userVcsAccessTokenService) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
@@ -104,6 +108,7 @@ public class PublicAccountResource {
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.tokenProvider = tokenProvider;
         this.loginOptionsService = loginOptionsService;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
     }
 
     /**
@@ -224,11 +229,11 @@ public class PublicAccountResource {
         return ResponseEntity.ok(userDTO);
     }
 
-    private static UserDTO getUserDTO(User user, boolean shouldPromptUserToSetupPasskey, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved) {
+    private UserDTO getUserDTO(User user, boolean shouldPromptUserToSetupPasskey, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved) {
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
-        userDTO.setVcsAccessToken(user.getVcsAccessToken());
-        userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
+        userDTO.setVcsAccessToken(userVcsAccessTokenService.findToken(user.getId()));
+        userDTO.setVcsAccessTokenExpiryDate(userVcsAccessTokenService.findExpiryDate(user.getId()));
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
         userDTO.setLoggedInWithPasskey(isLoggedInWithPasskey);
         userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);

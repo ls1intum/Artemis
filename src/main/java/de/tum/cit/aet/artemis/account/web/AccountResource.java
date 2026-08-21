@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 
 /**
  * REST controller for managing the current user's account.
@@ -65,6 +66,8 @@ public class AccountResource {
 
     private final UserRepository userRepository;
 
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
+
     private final UserService userService;
 
     private final AccountService accountService;
@@ -78,8 +81,10 @@ public class AccountResource {
     private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
     public AccountResource(UserRepository userRepository, UserService userService, AccountService accountService, FileService fileService,
-            AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService) {
+            AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
+            UserVcsAccessTokenService userVcsAccessTokenService) {
         this.userRepository = userRepository;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.userService = userService;
         this.accountService = accountService;
         this.fileService = fileService;
@@ -168,13 +173,14 @@ public class AccountResource {
             throw new BadRequestException("Invalid expiry date provided");
         }
 
-        userRepository.updateUserVcsAccessToken(user.getId(), LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken(), expiryDate);
+        String token = LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken();
+        userVcsAccessTokenService.store(user.getId(), token, expiryDate);
         log.debug("Successfully created a VCS access token for user {}", user.getLogin());
-        user = userRepository.getUser();
         UserDTO userDTO = new UserDTO();
         userDTO.setLogin(user.getLogin());
-        userDTO.setVcsAccessToken(user.getVcsAccessToken());
-        userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
+        // Returned from what was just generated rather than read back: the plaintext exists only here.
+        userDTO.setVcsAccessToken(token);
+        userDTO.setVcsAccessTokenExpiryDate(expiryDate);
         return ResponseEntity.ok(userDTO);
     }
 
@@ -188,7 +194,7 @@ public class AccountResource {
     public ResponseEntity<Void> deleteVcsAccessToken() {
         User user = userRepository.getUser();
         log.debug("REST request to remove VCS access token key of user {}", user.getLogin());
-        userRepository.updateUserVcsAccessToken(user.getId(), null, null);
+        userVcsAccessTokenService.revoke(user.getId());
         log.debug("Successfully deleted VCS access token of user {}", user.getLogin());
         return ResponseEntity.ok().build();
     }

@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
@@ -84,6 +85,9 @@ public class UserTestService {
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private UserVcsAccessTokenService userVcsAccessTokenService;
 
     @Autowired
     private TeamUtilService teamUtilService;
@@ -357,7 +361,7 @@ public class UserTestService {
     // Test
     public void createExternalUser_asAdmin_withVcsToken_isSuccessful() throws Exception {
         var user = this.createExternalUser_asAdmin_isSuccessful();
-        assertThat(user.getVcsAccessToken()).as("VCS Access token is set correctly").isEqualTo("acccess-token-value");
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).as("VCS Access token is set correctly").isEqualTo("acccess-token-value");
     }
 
     // Test
@@ -749,7 +753,7 @@ public class UserTestService {
     // Test
     public void createAndDeleteUserVcsAccessToken() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(user.getVcsAccessToken()).isNull();
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
 
         // Set expiry date to already past date -> Bad Request
         ZonedDateTime expiryDate = ZonedDateTime.now().minusMonths(1);
@@ -760,14 +764,14 @@ public class UserTestService {
         expiryDate = ZonedDateTime.now().plusMonths(1);
         userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(user.getVcsAccessToken()).isEqualTo(userDTO.getVcsAccessToken());
-        assertThat(user.getVcsAccessTokenExpiryDate()).isEqualTo(userDTO.getVcsAccessTokenExpiryDate());
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).isEqualTo(userDTO.getVcsAccessToken());
+        assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNotNull();
 
         // Delete token
         request.delete("/api/account/user-vcs-access-token", HttpStatus.OK);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(user.getVcsAccessToken()).isNull();
-        assertThat(user.getVcsAccessTokenExpiryDate()).isNull();
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
+        assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNull();
     }
 
     public UserRepository getUserTestRepository() {

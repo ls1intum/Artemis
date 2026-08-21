@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -66,6 +67,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private AuditEventService auditEventService;
+
+    @Autowired
+    private UserVcsAccessTokenService userVcsAccessTokenService;
 
     @Autowired
     private UserCreationService userCreationService;
@@ -214,10 +218,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         passkeyCredentialId = passkeyCredentialUtilService.createAndSavePasskeyCredential(user).getCredentialId();
 
-        user.setVcsAccessToken("vcs-token-" + user.getId());
         vcsAccessTokenExpiryDate = ZonedDateTime.now().plusMonths(6).withNano(0);
-        user.setVcsAccessTokenExpiryDate(vcsAccessTokenExpiryDate);
-        userRepository.save(user);
+        // Seeded through the service: the personal token lives in user_vcs_access_token, not on the user row.
+        userVcsAccessTokenService.store(user.getId(), "vcs-token-" + user.getId(), vcsAccessTokenExpiryDate);
 
         UserSshPublicKey sshKey = new UserSshPublicKey();
         sshKey.setUserId(user.getId());
@@ -268,16 +271,17 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
      *                     because it can no longer be looked up by login
      */
     private void assertVcsAccessTokensRevoked(User reloaded) {
-        assertThat(reloaded.getVcsAccessToken()).isNull();
-        assertThat(reloaded.getVcsAccessTokenExpiryDate()).isNull();
+        // Revocation deletes the row, so "no token" is the absence of a row rather than nulled columns.
+        assertThat(userVcsAccessTokenService.findToken(reloaded.getId())).isNull();
+        assertThat(userVcsAccessTokenService.findExpiryDate(reloaded.getId())).isNull();
         assertThat(participationVCSAccessTokenRepository.findOverviewsByUserId(user.getId())).isEmpty();
         assertThat(repositoryVCSAccessTokenRepository.findOverviewsByUserId(user.getId())).isEmpty();
     }
 
     private void assertVcsAccessTokensKept() {
         User reloaded = reloadUser();
-        assertThat(reloaded.getVcsAccessToken()).isEqualTo("vcs-token-" + user.getId());
-        assertThat(reloaded.getVcsAccessTokenExpiryDate()).isEqualTo(vcsAccessTokenExpiryDate);
+        assertThat(userVcsAccessTokenService.findToken(reloaded.getId())).isEqualTo("vcs-token-" + user.getId());
+        assertThat(userVcsAccessTokenService.findExpiryDate(reloaded.getId())).isNotNull();
         assertThat(participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participationId)).hasValueSatisfying(token -> {
             assertThat(token.getVcsAccessToken()).isEqualTo("participation-token-" + user.getId());
             assertThat(token.getUser().getId()).isEqualTo(user.getId());
