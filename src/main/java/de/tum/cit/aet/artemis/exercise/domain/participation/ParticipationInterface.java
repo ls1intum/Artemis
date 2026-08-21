@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -43,6 +45,7 @@ public interface ParticipationInterface {
      *
      * @return true if the individual due date has passed and represents a feedback request, not an extension
      */
+    @JsonIgnore
     default boolean isFeedbackRequest() {
         ZonedDateTime individualDueDate = getIndividualDueDate();
         if (individualDueDate == null || individualDueDate.isAfter(ZonedDateTime.now())) {

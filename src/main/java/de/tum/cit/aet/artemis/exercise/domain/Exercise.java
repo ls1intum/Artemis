@@ -690,6 +690,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
 
+    /**
+     * Checks whether Athena formative feedback requests are enabled for this exercise's course.
+     *
+     * @return true if the course has Athena formative feedback enabled, false otherwise
+     */
     @JsonIgnore
     public boolean getAllowFeedbackRequests() {
         var course = getCourseViaExerciseGroupOrCourseMember();
