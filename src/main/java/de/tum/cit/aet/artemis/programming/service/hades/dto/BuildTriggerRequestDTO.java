@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.programming.service.hades.ScriptType;
 
 /**
@@ -20,5 +21,5 @@ import de.tum.cit.aet.artemis.programming.service.hades.ScriptType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildTriggerRequestDTO(@NotNull Long exerciseId, @NotNull Long participationId, @NotNull @Valid RepositoryDTO exerciseRepository, @Valid RepositoryDTO testRepository,
         List<@Valid RepositoryDTO> auxiliaryRepositories, @NotBlank String buildScript, ScriptType scriptType, @NotBlank String programmingLanguage,
-        Map<String, String> additionalProperties, String dockerImage) {
+        Map<String, String> additionalProperties, String dockerImage, Integer timeoutSeconds, DockerFlagsDTO dockerFlags) {
 }

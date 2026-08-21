@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record HadesBuildJobDTO(@NotBlank String name, List<VolumeDTO> volumes, HashMap<String, String> metadata, String timestamp, Integer priority,
-        @NotEmpty List<HadesBuildStepDTO> steps, @JsonProperty("callback_url") String callbackUrl) implements Serializable {
+        @NotEmpty List<HadesBuildStepDTO> steps, @JsonProperty("callback_url") String callbackUrl, @JsonProperty("timeout_seconds") Long timeoutSeconds) implements Serializable {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record VolumeDTO(String name, EmptyDirDTO emptyDir) {
@@ -30,12 +30,13 @@ public record HadesBuildJobDTO(@NotBlank String name, List<VolumeDTO> volumes, H
     public record EmptyDirDTO() {
     }
 
-    public HadesBuildJobDTO(String name, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps, String callbackUrl) {
+    public HadesBuildJobDTO(String name, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps, String callbackUrl,
+            Long timeoutSeconds) {
         if (steps == null) {
             steps = List.of();
         }
 
         List<VolumeDTO> volumes = List.of(new VolumeDTO("shared", new EmptyDirDTO()));
-        this(name, volumes, metadata, timestamp, priority, steps, callbackUrl);
+        this(name, volumes, metadata, timestamp, priority, steps, callbackUrl, timeoutSeconds);
     }
 }
