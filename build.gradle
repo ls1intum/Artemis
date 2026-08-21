@@ -443,6 +443,11 @@ dependencies {
 
 
     // Required for synchronization between nodes and build agents (LocalCI)
+    // Per-node cache for large values (file contents, rendered diagrams). Deliberately not distributed: pushing
+    // multi-MB blobs through a shared grid costs a network transfer per read and, on Redis, blocks the single-threaded
+    // server for every other operation. Version is managed by the Spring Boot BOM.
+    implementation "com.github.ben-manes.caffeine:caffeine"
+
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     // alternative for Hazelcast
@@ -524,6 +529,8 @@ dependencies {
 
     implementation "com.bucket4j:bucket4j_jdk17:${bucket4j_version}"
     implementation "com.bucket4j:bucket4j_jdk17-hazelcast:${bucket4j_version}"
+    // Rate-limit bucket storage for the Redis provider; the Hazelcast module above covers the Hazelcast provider.
+    implementation "com.bucket4j:bucket4j_jdk17-redisson:${bucket4j_version}"
 
     // Weaviate vector database client for semantic search
     implementation "io.weaviate:client6:${weaviate_client_version}"
