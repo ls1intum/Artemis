@@ -270,6 +270,16 @@ describe('problem statement frame assembly', () => {
             expect(assemble('<a href="https://example.org">a</a><a href="https://example.org">again</a><a href="/x">b</a>').linkTargets).toEqual(['https://example.org', '/x']);
         });
 
+        it('does not hoist a style element out of the statement, which would hand back the css the sanitizer emptied', () => {
+            // PlantUML ships diagram CSS in an SVG `<style>`, so this element really does occur inside a statement.
+            const frame = frameOf('<svg><style>.a{background:url(https://attacker.example/b.png)}@import url(https://attacker.example/x.css);</style></svg>');
+
+            expect(frame.head.innerHTML).not.toContain('attacker.example');
+            expect(frame.head.innerHTML).not.toContain('@import');
+            // The server's own stylesheet still has to survive the filter, or the frame loses its typography.
+            expect(frame.head.innerHTML).toContain('.artemis-task');
+        });
+
         it('produces nothing at all when the response carries no statement', () => {
             expect(assembleFrameDocument('<html><body><p>no statement here</p></body></html>', 'en', 'x')).toEqual({ srcdoc: '', generation: '', tasks: [], linkTargets: [] });
         });

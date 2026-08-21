@@ -378,11 +378,17 @@ export function assembleFrameDocument(serverDocument: string, locale: string, un
     // wanted here: KaTeX has already run in this file, and the trusted frame script is added below.
     parsed.querySelectorAll('script').forEach((script) => script.remove());
 
-    const styleNodes = [...parsed.querySelectorAll('style, link[rel="stylesheet"]')];
     const fragment = parsed.querySelector('.artemis-problem-statement');
     if (!fragment) {
         return { srcdoc: '', generation: '', tasks: [], linkTargets: [] };
     }
+
+    // Document-level stylesheets only, which is what the filter is for. A `<style>` inside the statement is not
+    // hypothetical: PlantUML puts its diagram CSS in one, and an SVG `<style>` matches this selector like any
+    // other. That copy is sanitized as part of the fragment and travels with it into the body, so hoisting the
+    // pre-sanitization original into the head would hand the statement its `@import` and `url()` back unchecked
+    // and defeat the emptying rule in `sanitizeFragment`.
+    const styleNodes = [...parsed.querySelectorAll('style, link[rel="stylesheet"]')].filter((node) => !fragment.contains(node));
 
     // Read before stripping: the task metadata lives in the same attributes some of which are about to go.
     const tasks = extractTasks(fragment);
