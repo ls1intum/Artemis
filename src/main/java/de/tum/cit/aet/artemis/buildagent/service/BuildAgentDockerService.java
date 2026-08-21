@@ -532,9 +532,21 @@ public class BuildAgentDockerService {
             // timeout shorter than the poll interval is honoured just as precisely as a longer one.
             long nowNanos = System.nanoTime();
             long sliceNanos = Math.max(0, Math.min(pollIntervalNanos, Math.min(lastProgressAtNanos + stallNanos - nowNanos, deadlineNanos - nowNanos)));
-            if (callback.awaitFinished(sliceNanos, TimeUnit.NANOSECONDS)) {
-                callback.throwIfPullFailed();
-                return;
+            try {
+                if (callback.awaitFinished(sliceNanos, TimeUnit.NANOSECONDS)) {
+                    callback.throwIfPullFailed();
+                    return;
+                }
+            }
+            catch (InterruptedException e) {
+                try {
+                    callback.close();
+                }
+                catch (IOException closeException) {
+                    log.warn("Could not close the callback of the interrupted pull of docker image {}", imageName, closeException);
+                }
+                Thread.currentThread().interrupt();
+                throw e;
             }
             long progressCount = callback.progressCount();
             if (progressCount != lastProgressCount) {

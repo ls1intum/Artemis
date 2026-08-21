@@ -217,6 +217,25 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     @Test
+    void testPullDockerImageClosesCallbackAndRestoresInterruptStatusWhenInterrupted() throws InterruptedException, IOException {
+        var build = mockPendingImagePull();
+        doThrow(new InterruptedException()).when(pullImageCallback).awaitFinished(anyLong(), any(TimeUnit.class));
+
+        try {
+            assertThatThrownBy(() -> buildAgentDockerService.pullDockerImage(build, buildLogsMap)).isInstanceOf(LocalCIException.class).rootCause()
+                    .isInstanceOf(InterruptedException.class);
+
+            verify(pullImageCallback).close();
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+            assertThat(buildAgentDockerService.isImagePullInProgress(build.id())).isFalse();
+        }
+        finally {
+            Thread.interrupted();
+            buildLogsMap.removeBuildLogs(build.id());
+        }
+    }
+
+    @Test
     void testProgressingPullThatOutlastsThePollIntervalIsNotAborted() throws Exception {
         // Regression test: a healthy pull that keeps reporting progress and takes longer than a single poll interval must
         // run to completion. Before the fix, awaitPullCompletion sliced the wait with docker-java's
