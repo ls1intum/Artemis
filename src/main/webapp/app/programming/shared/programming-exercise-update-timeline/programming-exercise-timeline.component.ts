@@ -29,7 +29,6 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
 @Component({
     selector: 'jhi-programming-exercise-timeline',
     templateUrl: './programming-exercise-timeline.component.html',
-    styleUrls: ['./programming-exercise-timeline.component.scss'],
     imports: [
         FormsModule,
         TranslateDirective,
