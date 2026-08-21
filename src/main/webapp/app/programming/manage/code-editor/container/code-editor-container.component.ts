@@ -107,6 +107,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
     onUpdateFeedback = output<Feedback[]>();
+    onPendingFeedbackChange = output<Feedback[]>();
     onFileLoad = output<string>();
     onAcceptSuggestion = output<Feedback>();
     onDiscardSuggestion = output<Feedback>();

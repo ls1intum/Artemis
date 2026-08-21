@@ -59,11 +59,14 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
     it('should cancel feedback and emit to parent', () => {
         const onCancelFeedbackSpy = vi.fn();
+        const onPendingSpy = vi.fn();
         comp.onCancelFeedback.subscribe(onCancelFeedbackSpy);
+        comp.onPendingFeedbackChange.subscribe(onPendingSpy);
         comp.cancelFeedback();
 
         expect(onCancelFeedbackSpy).toHaveBeenCalledOnce();
         expect(onCancelFeedbackSpy).toHaveBeenCalledWith(codeLine);
+        expect(onPendingSpy).toHaveBeenCalledExactlyOnceWith(undefined);
     });
 
     it('should delete feedback and emit to parent', () => {
@@ -130,19 +133,74 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(fixture.debugElement.query(By.css('jhi-confirm-icon'))).not.toBeNull();
     });
 
-    it('should update feedback with SGI and emit to parent', () => {
+    it('should update feedback with SGI and emit pending change for unsaved cards', () => {
         const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
         // Fake call as a DragEvent cannot be created programmatically
         vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback: Feedback) => {
             feedback.gradingInstruction = instruction;
             feedback.credits = instruction.credits;
         });
-        // Call spy function with empty event
+        const onPendingSpy = vi.fn();
+        comp.onPendingFeedbackChange.subscribe(onPendingSpy);
+
         comp.updateFeedbackOnDrop(new Event(''));
 
         expect(comp.currentFeedback().gradingInstruction).toEqual(instruction);
         expect(comp.currentFeedback().credits).toEqual(instruction.credits);
         expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
+        expect(onPendingSpy).toHaveBeenCalledExactlyOnceWith(comp.currentFeedback());
+    });
+
+    it('should emit onUpdateFeedback for SGI drop on an existing card', () => {
+        const existing = { type: FeedbackType.MANUAL, credits: 1, detailText: 'note', reference: `file:${fileName}_line:${codeLine}` } as Feedback;
+        fixture.componentRef.setInput('feedback', existing);
+        fixture.detectChanges();
+        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description', usageCount: 0 };
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback: Feedback) => {
+            feedback.gradingInstruction = instruction;
+            feedback.credits = instruction.credits;
+        });
+        const onUpdateSpy = vi.fn();
+        const onPendingSpy = vi.fn();
+        comp.onUpdateFeedback.subscribe(onUpdateSpy);
+        comp.onPendingFeedbackChange.subscribe(onPendingSpy);
+        comp.editFeedback(codeLine);
+
+        comp.updateFeedbackOnDrop(new Event(''));
+
+        expect(onUpdateSpy).toHaveBeenCalledExactlyOnceWith(comp.currentFeedback());
+        expect(onPendingSpy).not.toHaveBeenCalled();
+    });
+
+    it('should restore and emit onUpdateFeedback when canceling an existing card edit', () => {
+        const existing = {
+            type: FeedbackType.MANUAL,
+            credits: 1,
+            detailText: 'note',
+            reference: `file:${fileName}_line:${codeLine}`,
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', existing);
+        fixture.detectChanges();
+        comp.editFeedback(codeLine);
+        comp.currentFeedback().gradingInstruction = {
+            id: 1,
+            credits: 2,
+            feedback: 'test',
+            gradingScale: 'good',
+            instructionDescription: 'description',
+            usageCount: 0,
+        };
+        const onUpdateSpy = vi.fn();
+        const onCancelSpy = vi.fn();
+        comp.onUpdateFeedback.subscribe(onUpdateSpy);
+        comp.onCancelFeedback.subscribe(onCancelSpy);
+
+        comp.cancelFeedback();
+
+        expect(onUpdateSpy).toHaveBeenCalledOnce();
+        expect(onUpdateSpy.mock.calls[0][0].gradingInstruction).toBeUndefined();
+        expect(onCancelSpy).not.toHaveBeenCalled();
+        expect(comp.viewOnly()).toBe(true);
     });
 
     it('should count feedback with one credit as positive', () => {

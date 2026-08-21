@@ -79,6 +79,7 @@
                 [course]="getCourseFromExercise(exercise())"
                 [gradingCriteria]="exercise()?.gradingCriteria ?? []"
                 (onUpdateFeedback)="onUpdateFeedback($event)"
+                (onPendingFeedbackChange)="onPendingFeedbackChange($event)"
                 (onAcceptSuggestion)="removeSuggestion($event)"
                 (onDiscardSuggestion)="removeSuggestion($event)"
                 (onFileLoad)="highlightChangedLines($event)"

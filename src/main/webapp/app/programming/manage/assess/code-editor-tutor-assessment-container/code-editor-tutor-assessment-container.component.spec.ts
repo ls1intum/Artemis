@@ -1012,4 +1012,30 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         feedback.gradingInstruction = undefined;
         expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(false);
     });
+
+    it('should include pending inline instruction links in allAssessmentFeedbacks', () => {
+        const instruction = {
+            id: 9,
+            credits: 1,
+            feedback: 'ok',
+            gradingScale: 'good',
+            instructionDescription: 'desc',
+            usageCount: 1,
+        };
+        const pending = {
+            detailText: 'draft',
+            credits: 1,
+            reference: 'file:src/Main.java_line:3',
+            gradingInstruction: instruction,
+        } as Feedback;
+
+        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(false);
+
+        comp.onPendingFeedbackChange([pending]);
+        expect(comp.pendingReferencedFeedback()).toEqual([pending]);
+        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(true);
+
+        comp.onPendingFeedbackChange([]);
+        expect(comp.allAssessmentFeedbacks().some((item) => item.gradingInstruction?.id === 9)).toBe(false);
+    });
 });

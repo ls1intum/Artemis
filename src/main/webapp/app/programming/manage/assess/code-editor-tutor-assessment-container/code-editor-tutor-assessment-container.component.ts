@@ -143,6 +143,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // The inline feedback placed in the code. Signal-backed because the grading instruction panel counts these
     // feedbacks towards the usage limit of their instruction and has to follow every edit.
     readonly referencedFeedback = signal<Feedback[]>([]);
+    /**
+     * Unsaved new inline drafts that already link a grading instruction. Counted toward usage limits before save.
+     */
+    readonly pendingReferencedFeedback = signal<Feedback[]>([]);
     readonly automaticFeedback = signal<Feedback[]>([]);
     // all pending Athena feedback suggestions (neither accepted nor rejected yet)
     readonly feedbackSuggestions = signal<Feedback[]>([]);
@@ -151,9 +155,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /**
      * Full assessment feedback for the unreferenced-feedback score summary and instruction usage counts.
      * Fresh array each call so in-place nested edits (e.g. inline instruction link/unlink) still notify consumers.
+     * Includes {@link pendingReferencedFeedback} so finite usage limits cannot be bypassed before save.
      */
     allAssessmentFeedbacks(): Feedback[] {
-        return [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+        return [...this.referencedFeedback(), ...this.pendingReferencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
     }
     readonly getTotalMaxPoints = getTotalMaxPoints;
 
@@ -642,6 +647,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
+     * Unsaved new inline drafts with a grading instruction link. Included in {@link allAssessmentFeedbacks} for usage limits.
+     */
+    onPendingFeedbackChange(feedbacks: Feedback[]) {
+        this.pendingReferencedFeedback.set(feedbacks);
+    }
+
+    /**
      * Remove a feedback suggestion because it was accepted or discarded.
      * The actual feedback creation when accepting happens in code-editor-monaco-component/unreferenced-feedback because they have full control over the suggestion cards.
      * @param feedback Feedback suggestion that is removed
@@ -753,6 +765,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         this.unreferencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED));
         this.referencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL));
+        this.pendingReferencedFeedback.set([]);
         this.onFeedbackLoaded.emit();
     }
 

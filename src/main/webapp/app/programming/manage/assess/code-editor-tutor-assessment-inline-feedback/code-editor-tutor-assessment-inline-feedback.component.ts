@@ -94,6 +94,11 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     readonly onCancelFeedback = output<number>();
     readonly onDeleteFeedback = output<Feedback>();
     readonly onEditFeedback = output<number>();
+    /**
+     * Unsaved new inline cards are not in the parent's referenced list until save. Emit the draft (or `undefined`
+     * when unlinked) so instruction usage counts can include pending links.
+     */
+    readonly onPendingFeedbackChange = output<Feedback | undefined>();
 
     /**
      * Whether the feedback is rendered in read-only mode. Mirrors the original setter behavior: it is `true` whenever a
@@ -151,7 +156,13 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.currentFeedback.set(restored);
         this.oldFeedback.set(deepClone(restored));
         this.viewOnly.set(restored.type === this.MANUAL);
-        this.onCancelFeedback.emit(this.codeLine());
+        if (this.feedback()) {
+            // Existing card: push restored state so in-place link/unlink during edit reverts in usage counts.
+            this.onUpdateFeedback.emit(restored);
+        } else {
+            this.onPendingFeedbackChange.emit(undefined);
+            this.onCancelFeedback.emit(this.codeLine());
+        }
     }
 
     /** Whether the feedback awards, deducts or changes nothing — the widget's left accent stripe follows it. */
@@ -227,6 +238,24 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
         feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        this.notifyInstructionLinkChange(feedback);
+    }
+
+    /** Unlink via {@link GradingInstructionLinkIconComponent} — refresh parent usage counts. */
+    protected onInstructionLinkRemoved(): void {
+        this.notifyInstructionLinkChange(this.currentFeedback());
+    }
+
+    /**
+     * Existing cards live in the parent's referenced list: emit {@link onUpdateFeedback} so zoneless CD refreshes
+     * counts. New drafts are only local until save: emit {@link onPendingFeedbackChange} instead.
+     */
+    private notifyInstructionLinkChange(feedback: Feedback): void {
+        if (this.feedback()) {
+            this.onUpdateFeedback.emit(feedback);
+            return;
+        }
+        this.onPendingFeedbackChange.emit(feedback.gradingInstruction ? feedback : undefined);
     }
 
     /**

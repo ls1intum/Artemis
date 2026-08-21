@@ -68,7 +68,7 @@
                 } @else {
                     <!-- Only editable feedback offers to unlink its grading instruction. -->
                     @if (currentFeedback().gradingInstruction) {
-                        <jhi-grading-instruction-link-icon [feedback]="feedback" />
+                        <jhi-grading-instruction-link-icon [feedback]="feedback" (linkRemoved)="onInstructionLinkRemoved()" />
                     }
                 }
                 @if (!readOnly() && feedback.type === MANUAL) {
