@@ -14,8 +14,10 @@ describe('Iris Settings Service', () => {
         courseId: 1,
         settings: {
             enabled: true,
+            askUserModeEnabled: true,
             customInstructions: 'Test instructions',
             variant: 'default',
+            askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
             rateLimit: { requests: 100, timeframeHours: 24 },
         },
         effectiveRateLimit: { requests: 100, timeframeHours: 24 },
@@ -24,8 +26,10 @@ describe('Iris Settings Service', () => {
 
     const mockUpdateSettings: IrisCourseSettingsDTO = {
         enabled: false,
+        askUserModeEnabled: true,
         customInstructions: 'Updated instructions',
         variant: 'advanced',
+        askUserModeSettings: { minQuestions: 4, maxQuestions: 6, timeLimitQuestion: 30, timeLimitInClass: 20 },
         rateLimit: { requests: 200, timeframeHours: 48 },
     };
 

@@ -29,6 +29,18 @@ public class IrisChatSession extends IrisSession {
     @Column(name = "chat_mode")
     private IrisChatMode chatMode;
 
+    @JsonIgnore
+    @Column(name = "in_ask_user_mode_pipeline", nullable = false)
+    private boolean inAskUserModePipeline = false;
+
+    @JsonIgnore
+    @Column(name = "in_class_quiz", nullable = false)
+    private boolean inClassQuiz = false;
+
+    @JsonIgnore
+    @Column(name = "questions_asked", nullable = false)
+    private int questionsAsked = 0;
+
     public IrisChatSession() {
     }
 
@@ -84,5 +96,29 @@ public class IrisChatSession extends IrisSession {
 
     public void setMode(IrisChatMode chatMode) {
         this.chatMode = chatMode;
+    }
+
+    public boolean isInAskUserModePipeline() {
+        return inAskUserModePipeline;
+    }
+
+    public void setInAskUserModePipeline(boolean inAskUserModePipeline) {
+        this.inAskUserModePipeline = inAskUserModePipeline;
+    }
+
+    public boolean isInClassQuiz() {
+        return inClassQuiz;
+    }
+
+    public void setInClassQuiz(boolean inClassQuiz) {
+        this.inClassQuiz = inClassQuiz;
+    }
+
+    public int getQuestionsAsked() {
+        return questionsAsked;
+    }
+
+    public void setQuestionsAsked(int questionsAsked) {
+        this.questionsAsked = questionsAsked;
     }
 }

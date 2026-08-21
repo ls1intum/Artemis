@@ -87,7 +87,17 @@
         </ng-template>
         <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.iris'" [iconTemplate]="irisLogoTpl" [startsCollapsed]="irisPanelStartsCollapsed()">
             @defer (on idle) {
-                <jhi-iris-base-chatbot class="h-100" [layout]="'embedded'" [isChatHistoryAvailable]="false" />
+                <jhi-iris-base-chatbot
+                    class="h-100"
+                    [layout]="'embedded'"
+                    [isChatHistoryAvailable]="false"
+                    [quizActive]="quizActive()"
+                    [quizStarted]="quizStarted()"
+                    [timerExpiresAt]="timerExpiresAt()"
+                    [timeLimit]="timeLimit()"
+                    [showOnlyAskUserModeMessage]="showOnlyAskUserModeMessage()"
+                    (timerExpired)="handleAskUserTimerExpired()"
+                />
             }
         </ng-template>
     }

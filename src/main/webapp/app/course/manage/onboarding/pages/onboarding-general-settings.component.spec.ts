@@ -40,8 +40,24 @@ describe('OnboardingGeneralSettingsComponent', () => {
                 {
                     provide: IrisSettingsService,
                     useValue: {
-                        getCourseSettingsWithRateLimit: () => of({ settings: { enabled: true } }),
-                        updateCourseSettings: () => of({ body: { settings: { enabled: false } } }),
+                        getCourseSettingsWithRateLimit: () =>
+                            of({
+                                settings: {
+                                    enabled: true,
+                                    askUserModeEnabled: true,
+                                    askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                                },
+                            }),
+                        updateCourseSettings: () =>
+                            of({
+                                body: {
+                                    settings: {
+                                        enabled: false,
+                                        askUserModeEnabled: true,
+                                        askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                                    },
+                                },
+                            }),
                     },
                 },
                 MockProvider(DialogService),
@@ -81,7 +97,6 @@ describe('OnboardingGeneralSettingsComponent', () => {
     });
 
     it('should have semesters available', () => {
-        expect(comp.semesters).toBeDefined();
         expect(comp.semesters.length).toBeGreaterThan(0);
     });
 

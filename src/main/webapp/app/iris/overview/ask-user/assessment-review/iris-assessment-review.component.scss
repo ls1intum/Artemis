@@ -1,0 +1,20 @@
+.iris-assessment-review-table thead > tr > th:not(:last-child),
+.iris-assessment-review-table tbody > tr > td:not(:last-child) {
+    border-right: 10px solid var(--border-color);
+}
+
+.wrapped-content {
+    max-width: 410px;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    margin-right: auto;
+}
+
+.iris-verdict {
+    display: inline-block;
+    margin-top: 30px;
+    font-size: 20px;
+    font-weight: 600;
+}

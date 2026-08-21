@@ -224,9 +224,8 @@ class FilePathConverterTest {
     @Test
     void testGetStudentVersionSlidesFileSystemPathShouldThrowException() {
         // Path too short, missing attachmentVideoUnitId
-        Path invalidPath = Path.of("attachments", "attachment-unit", "student", "notes.pdf");
         assertThatExceptionOfType(FilePathParsingException.class)
-                .isThrownBy(() -> FilePathConverter.fileSystemPathForExternalUri((invalidPath.toUri()), FilePathType.STUDENT_VERSION_SLIDES))
+                .isThrownBy(() -> FilePathConverter.fileSystemPathForExternalUri(URI.create("attachments/attachment-unit/student/notes.pdf"), FilePathType.STUDENT_VERSION_SLIDES))
                 .withMessageContaining("attachmentVideoUnitId");
     }
 

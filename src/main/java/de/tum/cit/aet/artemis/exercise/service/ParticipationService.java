@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,9 +32,12 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -52,6 +56,8 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentDTO;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
@@ -108,11 +114,16 @@ public class ParticipationService {
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
+    private final ModuleFeatureService moduleFeatureService;
+
+    private final Optional<IrisSettingsApi> irisSettingsApi;
+
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
-            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
+            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ModuleFeatureService moduleFeatureService, Optional<IrisSettingsApi> irisSettingsApi) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -125,6 +136,8 @@ public class ParticipationService {
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.resultRepository = resultRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.moduleFeatureService = moduleFeatureService;
+        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
@@ -743,8 +756,7 @@ public class ParticipationService {
         // After the effective due date (respecting individual extensions), prefer the practice participation
         Optional<StudentParticipation> gradedParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
                 username, false);
-        ZonedDateTime effectiveDueDate = gradedParticipation.map(p -> p.getIndividualDueDate() != null ? p.getIndividualDueDate() : exercise.getDueDate())
-                .orElse(exercise.getDueDate());
+        ZonedDateTime effectiveDueDate = gradedParticipation.filter(p -> p.getIndividualDueDate() != null).map(Participation::getIndividualDueDate).orElse(exercise.getDueDate());
         if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
             Optional<StudentParticipation> practiceParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
                     username, true);
@@ -915,7 +927,7 @@ public class ParticipationService {
 
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(ids);
 
-        Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(p -> p.getId(), Function.identity()));
+        Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
         List<ParticipationManagementDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull).map(p -> mapToManagementDTO(p, submissionCountMap)).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
@@ -956,7 +968,7 @@ public class ParticipationService {
 
         Boolean lastResultIsManual = null;
         if (latestSubmission != null && !latestSubmission.getResults().isEmpty()) {
-            Result latestResult = latestSubmission.getResults().stream().filter(r -> r.getId() != null).max((r1, r2) -> Long.compare(r1.getId(), r2.getId())).orElse(null);
+            Result latestResult = latestSubmission.getResults().stream().filter(r -> r.getId() != null).max(Comparator.comparingLong(DomainObject::getId)).orElse(null);
             if (latestResult != null && latestResult.getAssessmentType() != null) {
                 lastResultIsManual = latestResult.getAssessmentType() != AssessmentType.AUTOMATIC && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA;
             }
@@ -970,7 +982,7 @@ public class ParticipationService {
         }
 
         int submissionCount = submissionCountMap.getOrDefault(participation.getId(), 0);
-        boolean testRun = Boolean.TRUE.equals(participation.isTestRun());
+        boolean testRun = participation.isTestRun();
 
         return new ParticipationManagementDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(), submissionCount,
                 participantName, participantIdentifier, studentId, studentLogin, teamId, teamStudents, testRun, participation.getPresentationScore(),
@@ -1003,8 +1015,27 @@ public class ParticipationService {
         }
 
         // Step 2: Load full entity data for those IDs
-        List<StudentParticipation> participations = teamMode ? studentParticipationRepository.findByIdsWithLatestSubmissionWithTeamInformation(ids)
-                : studentParticipationRepository.findByIdsWithLatestSubmission(ids);
+        boolean loadIrisAssessment = false;
+        List<StudentParticipation> participations;
+        if (teamMode) {
+            participations = studentParticipationRepository.findByIdsWithLatestSubmissionWithTeamInformation(ids);
+        }
+        else if (exercise.getExerciseType() == ExerciseType.PROGRAMMING && moduleFeatureService.isIrisEnabled()) {
+
+            loadIrisAssessment = irisSettingsApi.map(api -> api.isAskUserModeEnabledForExercise(exercise)).orElse(false);
+
+            if (loadIrisAssessment) {
+                participations = new ArrayList<>(programmingExerciseStudentParticipationRepository.findByIdsWithLatestSubmissionAndIrisAssessment(ids));
+            }
+            else {
+                participations = studentParticipationRepository.findByIdsWithLatestSubmission(ids);
+            }
+        }
+        else {
+            participations = studentParticipationRepository.findByIdsWithLatestSubmission(ids);
+        }
+
+        final boolean shouldMapIrisAssessment = loadIrisAssessment;
 
         // Load latest results with assessment notes
         Set<Long> submissionIds = participations.stream().flatMap(p -> p.getSubmissions().stream()).map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
@@ -1018,14 +1049,25 @@ public class ParticipationService {
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(ids);
 
         // Step 3: Map to DTOs, preserving the ID query order
-        Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(p -> p.getId(), Function.identity()));
+        Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
         final Map<Long, Result> finalResultMap = resultBySubmissionId;
-        List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull).map(p -> mapToDTO(p, submissionCountMap, finalResultMap)).toList();
+        List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
+                .map(p -> mapToDTO(p, submissionCountMap, finalResultMap, shouldMapIrisAssessment)).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
-    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId) {
+    /**
+     * Maps a participation and its related data to a {@link ParticipationScoreDTO}.
+     *
+     * @param participation           the participation to map
+     * @param submissionCountMap      a map of participation id to submission count
+     * @param resultBySubmissionId    a map of submission id to the latest result with assessment note
+     * @param shouldMapIrisAssessment whether the Iris assessment of the participation should be included in the resulting DTO
+     * @return the mapped {@link ParticipationScoreDTO}
+     */
+    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
+            boolean shouldMapIrisAssessment) {
         // Participant info
         String participantName;
         String participantIdentifier;
@@ -1076,12 +1118,14 @@ public class ParticipationService {
         // Programming participation info
         String buildPlanId = null;
         String repositoryUri = null;
+        IrisAssessmentDTO irisAssessment = null;
         if (participation instanceof ProgrammingExerciseStudentParticipation progParticipation) {
             buildPlanId = progParticipation.getBuildPlanId();
             repositoryUri = progParticipation.getRepositoryUri();
+            irisAssessment = shouldMapIrisAssessment ? IrisAssessmentDTO.of(progParticipation.getIrisAssessment()) : null;
         }
 
-        boolean testRun = Boolean.TRUE.equals(participation.isTestRun());
+        boolean testRun = participation.isTestRun();
         int submissionCount = submissionCountMap.getOrDefault(participation.getId(), 0);
 
         Integer testCaseCount = latestResult != null ? latestResult.getTestCaseCount() : null;
@@ -1090,7 +1134,7 @@ public class ParticipationService {
 
         return new ParticipationScoreDTO(participation.getId(), participation.getInitializationDate(), submissionCount, participantName, participantIdentifier, studentId, teamId,
                 resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri, testRun,
-                testCaseCount, passedTestCaseCount, codeIssueCount);
+                testCaseCount, passedTestCaseCount, codeIssueCount, irisAssessment);
     }
 
     /**
@@ -1120,4 +1164,5 @@ public class ParticipationService {
             }).filter(Objects::nonNull).toList();
         }
     }
+
 }

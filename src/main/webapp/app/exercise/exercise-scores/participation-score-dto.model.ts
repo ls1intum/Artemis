@@ -1,5 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { IrisAssessment } from 'app/iris/shared/entities/iris-assessment.model';
 
 export interface ParticipationScoreDTO {
     participationId: number;
@@ -24,4 +25,5 @@ export interface ParticipationScoreDTO {
     testCaseCount?: number;
     passedTestCaseCount?: number;
     codeIssueCount?: number;
+    irisAssessment?: IrisAssessment;
 }

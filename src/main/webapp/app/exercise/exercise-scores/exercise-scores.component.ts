@@ -1,14 +1,14 @@
 import { Component, OnDestroy, OnInit, TemplateRef, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
-import { PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { Subscription, forkJoin, map } from 'rxjs';
+import { Subscription, catchError, combineLatest, forkJoin, map, of, switchMap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -54,8 +54,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { IrisReviewAssessmentButtonComponent } from 'app/iris/overview/ask-user/shared/iris-assessment-button/iris-review-assessment-button.component';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 
 /**
  * Filter properties for a result
@@ -97,6 +100,7 @@ export enum FilterProp {
         FilterDropdownComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
+        IrisReviewAssessmentButtonComponent,
     ],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
@@ -121,6 +125,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private readonly profileService = inject(ProfileService);
     private readonly alertService = inject(AlertService);
     private readonly breakpointObserver = inject(BreakpointObserver);
+    private readonly irisSettingsService = inject(IrisSettingsService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     // Laptop and smaller: covers screens up to 1400px
     private static readonly LAPTOP_BREAKPOINT = '(max-width: 1400px)';
@@ -170,6 +176,31 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             }
         });
     });
+
+    private readonly irisAskUserContext = computed(() => ({
+        exercise: this.exercise(),
+        courseId: this.course()?.id,
+        irisModuleEnabled: this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS),
+    }));
+
+    readonly irisAskUserEnabled = toSignal(
+        combineLatest([toObservable(this.irisAskUserContext), this.featureToggleService.getFeatureToggleActive(FeatureToggle.AskUserMode)]).pipe(
+            switchMap(([{ exercise, courseId, irisModuleEnabled }, askUserModeFeatureEnabled]) => {
+                const shouldLoadIrisSettings =
+                    exercise?.type === ExerciseType.PROGRAMMING && !exercise.exerciseGroup && irisModuleEnabled && askUserModeFeatureEnabled && courseId !== undefined;
+
+                if (!shouldLoadIrisSettings) {
+                    return of(false);
+                }
+
+                return this.irisSettingsService.getCourseSettingsWithRateLimit(courseId).pipe(
+                    map((response) => response?.settings?.askUserModeEnabled ?? false),
+                    catchError(() => of(false)),
+                );
+            }),
+        ),
+        { initialValue: false },
+    );
 
     private lastLazyEvent: TableLazyLoadEvent | undefined;
     private currentLoadRequestId = 0;
@@ -454,6 +485,30 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             exercise: ex,
             submissionCount: dto.submissionCount,
             submissions: dto.submissionId ? [this.toSubmission(dto)] : [],
+        };
+    }
+
+    /**
+     * Narrows the currently loaded exercise to a ProgrammingExercise. Callers are only expected to invoke this
+     * when the exercise is known to be a programming exercise (e.g. rendering the Iris assessment review button).
+     */
+    toProgrammingExercise(): ProgrammingExercise {
+        return this.exercise() as ProgrammingExercise;
+    }
+
+    /**
+     * Builds a minimal ProgrammingExerciseStudentParticipation from the flat DTO, extending {@link toParticipation}
+     * with the programming-specific fields (exercise, Iris assessment) needed by the Iris assessment review button.
+     * @param dto The flat participation score DTO returned by the server
+     */
+    toProgrammingParticipation(dto: ParticipationScoreDTO): ProgrammingExerciseStudentParticipation {
+        const participation = this.toParticipation(dto);
+
+        return {
+            ...participation,
+            type: ParticipationType.PROGRAMMING,
+            exercise: this.toProgrammingExercise(),
+            irisAssessment: dto.irisAssessment,
         };
     }
 

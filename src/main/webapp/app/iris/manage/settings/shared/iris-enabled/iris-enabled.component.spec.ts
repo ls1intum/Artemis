@@ -22,8 +22,10 @@ describe('IrisEnabledComponent', () => {
 
     const mockSettings: IrisCourseSettingsDTO = {
         enabled: true,
+        askUserModeEnabled: true,
         customInstructions: 'Test instructions',
         variant: 'default',
+        askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
         rateLimit: { requests: 100, timeframeHours: 24 },
     };
 
@@ -55,11 +57,14 @@ describe('IrisEnabledComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should initialize', () => {
+    it('should initialize with loaded settings', () => {
         vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockResponse));
         componentRef.setInput('course', course);
         fixture.detectChanges();
-        expect(comp).toBeDefined();
+
+        expect(comp.settings()).toEqual(mockSettings);
+        expect(comp.isEnabled()).toBe(true);
+        expect(comp.isDisabled()).toBe(false);
     });
 
     describe('ngOnInit', () => {

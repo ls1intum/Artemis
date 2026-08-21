@@ -304,8 +304,9 @@ public class BuildJobGitService extends AbstractGitService {
         FileUtils.deleteDirectory(localPath.toFile());
         CloneCommand cloneCommand = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
         try (Git ignored = cloneCommand.call()) {
-            return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri, defaultBranch);
+            // Git instance automatically closed by try-with-resources
         }
+        return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri, defaultBranch);
     }
 
     /**

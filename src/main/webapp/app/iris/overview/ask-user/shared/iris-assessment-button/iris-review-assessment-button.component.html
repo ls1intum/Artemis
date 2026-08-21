@@ -1,0 +1,14 @@
+<button
+    tumUiButton
+    type="button"
+    [severity]="buttonSeverity()"
+    [size]="buttonSize()"
+    [jhiFeatureToggle]="FeatureToggle.AskUserMode"
+    [overwriteDisabled]="this.irisAssessment()?.verdict === undefined || this.irisAssessment()?.verdict === null"
+    [routerLink]="['/course-management', course().id, assessmentReviewPath(), irisAssessment()?.id, 'details']"
+>
+    <fa-icon [icon]="faBrain" />
+    <span class="md:inline" [class.hidden]="hideLabelMobile()">
+        {{ label() | artemisTranslate }}
+    </span>
+</button>

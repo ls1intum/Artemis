@@ -698,7 +698,7 @@ describe('AttachmentVideoUnitComponent', () => {
             // Set up required data
             component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
             fixture.componentRef.setInput('irisSettings', {
-                settings: { enabled: true },
+                settings: { enabled: true, askUserModeEnabled: true, askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 } },
             });
             component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
 
@@ -905,7 +905,7 @@ describe('AttachmentVideoUnitComponent', () => {
         it('openFullscreen: expands collapsed card before activating fullscreen', () => {
             component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
             fixture.componentRef.setInput('irisSettings', {
-                settings: { enabled: true },
+                settings: { enabled: true, askUserModeEnabled: true, askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 } },
             });
             component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
 
@@ -971,9 +971,8 @@ describe('AttachmentVideoUnitComponent', () => {
 
             const provider = component.contextProvider();
 
-            expect(provider).toBeDefined();
-            expect(provider.getCurrentPdfPage).toBeDefined();
-            expect(provider.getCurrentPdfPage!()).toBe(5);
+            expect(provider).toEqual(expect.objectContaining({ getCurrentPdfPage: expect.any(Function) }));
+            expect(provider.getCurrentPdfPage?.()).toBe(5);
         });
 
         it('contextProvider: getCurrentPdfPage returns undefined when no PDF viewer', () => {

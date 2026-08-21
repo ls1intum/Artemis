@@ -18,6 +18,8 @@ class IrisCourseSettingsTest {
         var dto = IrisCourseSettings.of(true, "  trimmed text  ", null, null, null);
 
         assertThat(dto.customInstructions()).isEqualTo("trimmed text");
+        assertThat(dto.askUserModeEnabled()).isTrue();
+        assertThat(dto.askUserModeSettings()).isEqualTo(IrisAskUserModeSettings.defaultSettings());
         assertThat(dto.variant()).isEqualTo(IrisPipelineVariant.DEFAULT);
         assertThat(dto.supportLevel()).isEqualTo(IrisSupportLevel.MODERATE);
         // null rateLimit is preserved (means "use defaults"), not converted to empty()
@@ -42,6 +44,8 @@ class IrisCourseSettingsTest {
         var deserialized = objectMapper.readValue(serialized, IrisCourseSettings.class);
 
         assertThat(deserialized.enabled()).isFalse();
+        assertThat(deserialized.askUserModeEnabled()).isTrue();
+        assertThat(deserialized.askUserModeSettings()).isEqualTo(IrisAskUserModeSettings.defaultSettings());
         assertThat(deserialized.customInstructions()).isEqualTo("trimmed text");
         assertThat(deserialized.variant()).isEqualTo(IrisPipelineVariant.ADVANCED);
         assertThat(deserialized.supportLevel()).isEqualTo(IrisSupportLevel.LOW);
@@ -53,6 +57,36 @@ class IrisCourseSettingsTest {
         var deserialized = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\"}", IrisCourseSettings.class);
 
         assertThat(deserialized.supportLevel()).isEqualTo(IrisSupportLevel.MODERATE);
+    }
+
+    @Test
+    void deserialization_withoutAskUserModeEnabled_defaultsToEnabled() throws JsonProcessingException {
+        var deserialized = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\"}", IrisCourseSettings.class);
+
+        assertThat(deserialized.askUserModeEnabled()).isTrue();
+    }
+
+    @Test
+    void deserialization_withoutAskUserModeSettings_defaultsToDefaultQuizSettings() throws JsonProcessingException {
+        var deserialized = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\"}", IrisCourseSettings.class);
+
+        assertThat(deserialized.askUserModeSettings()).isEqualTo(IrisAskUserModeSettings.defaultSettings());
+    }
+
+    @Test
+    void deserialization_withAskUserModeSettings_isPreserved() throws JsonProcessingException {
+        var deserialized = objectMapper.readValue(
+                "{\"enabled\":true,\"askUserModeSettings\":{\"minQuestions\":2,\"maxQuestions\":7,\"timeLimitQuestion\":45,\"timeLimitInClass\":20},\"variant\":\"default\"}",
+                IrisCourseSettings.class);
+
+        assertThat(deserialized.askUserModeSettings()).isEqualTo(new IrisAskUserModeSettings(2, 7, 45, 20));
+    }
+
+    @Test
+    void deserialization_withAskUserModeDisabled_isPreserved() throws JsonProcessingException {
+        var deserialized = objectMapper.readValue("{\"enabled\":true,\"askUserModeEnabled\":false,\"variant\":\"default\"}", IrisCourseSettings.class);
+
+        assertThat(deserialized.askUserModeEnabled()).isFalse();
     }
 
     @Test

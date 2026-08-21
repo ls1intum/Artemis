@@ -40,6 +40,7 @@
                 "rateMessageFailed": "Could not rate message. Please try again later.",
                 "irisDisabled": "Iris has been disabled for this exercise.",
                 "timeout": "The Artemis server has not sent a response yet. Please don't reload the page.",
+                "askUserQuizFailed": "An Iris error occurred. The quiz has been reset and can be started again.",
                 "emptyMessage": "You cannot submit empty messages.",
                 "forbidden": "Artemis is not configured to use Iris. (Invalid token)",
                 "internalPyrisError": "An internal error when communicating with the LLM occurred. Error message is: {{ pyrisErrorMessage }}.",
@@ -50,7 +51,8 @@
                 "technicalError": "There has been a technical error. Please contact Artemis Administrators if this error message persists.",
                 "irisNotAvailable": "Iris is not available. Please try again later!",
                 "rateLimitExceeded": "You have reached the maximum number of messages you can send to Iris in a {{ hours }} hour window. Please try again later!",
-                "aiUsageDeclined": "You explicitly declined the usage of AI. Accept the usage of AI in the settings to use Iris."
+                "aiUsageDeclined": "You explicitly declined the usage of AI. Accept the usage of AI in the settings to use Iris.",
+                "startAskUserFailed": "Could not start assessment of understanding."
             },
             "disclaimer": "Iris can make mistakes. Consider checking important information.",
             "disclaimerGPT": "ChatGPT can make mistakes. Consider checking important information.",
@@ -63,7 +65,10 @@
                 "copy": "Copy",
                 "goodResponse": "Good response",
                 "badResponse": "Bad response"
-            }
+            },
+            "onlyAskUserEnabled": "Exercise Chat is disabled. I only assess your understanding.",
+            "secondsLeft": "seconds left",
+            "timeLeft": "left"
         }
     }
 }

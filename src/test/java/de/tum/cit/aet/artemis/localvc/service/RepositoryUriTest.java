@@ -27,7 +27,7 @@ class RepositoryUriTest {
             // Assuming getters are available
             assertThat(uri.getURI()).isEqualTo(new URI(uriString)); // Checks if the URI is set correctly
             assertThat(uri.getProjectKey()).isEqualTo("key"); // Checks if the project key is extracted correctly
-            assertThat(uri.getLocalRepositoryPath("test").toString()).isEqualTo("test/key/key-repositoryslug.git"); // Checks if the repository slug is extracted correctly
+            assertThat(uri.getLocalRepositoryPath("test")).isEqualTo(Path.of("test", "key", "key-repositoryslug.git")); // Checks if the repository slug is extracted correctly
             assertThat(uri.getRepositoryTypeOrUserName()).isEqualTo("repositoryslug"); // Checks if the repository type or username is parsed correctly
             assertThat(uri.isPracticeRepository()).isFalse(); // Checks the practice repository flag
 

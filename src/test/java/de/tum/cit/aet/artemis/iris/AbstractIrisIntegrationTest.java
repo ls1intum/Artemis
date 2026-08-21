@@ -66,8 +66,8 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void enableIrisFor(Course course) {
         var current = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(),
-                IrisCourseSettings.of(true, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit()), true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, current.askUserModeEnabled(), current.askUserModeSettings(),
+                current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit()), true);
     }
 
     /**
@@ -77,8 +77,8 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void disableIrisFor(Course course) {
         var current = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(),
-                IrisCourseSettings.of(false, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit()), true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(false, current.askUserModeEnabled(), current.askUserModeSettings(),
+                current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit()), true);
     }
 
     /**
@@ -90,8 +90,8 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void configureCourseSettings(Course course, String customInstructions, IrisPipelineVariant variant) {
         var current = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(current.enabled(), customInstructions, variant, current.supportLevel(), current.rateLimit()),
-                true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(current.enabled(), current.askUserModeEnabled(), current.askUserModeSettings(),
+                customInstructions, variant, current.supportLevel(), current.rateLimit()), true);
     }
 
     /**
@@ -103,9 +103,8 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void configureCourseRateLimit(Course course, Integer requests, Integer hours) {
         var current = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(),
-                IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(), new IrisRateLimitConfiguration(requests, hours)),
-                true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(current.enabled(), current.askUserModeEnabled(), current.askUserModeSettings(),
+                current.customInstructions(), current.variant(), current.supportLevel(), new IrisRateLimitConfiguration(requests, hours)), true);
     }
 
     protected void activateIrisFor(Course course) {

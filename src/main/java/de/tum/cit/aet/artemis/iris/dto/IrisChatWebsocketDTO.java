@@ -32,12 +32,13 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
  * @param activities    current Pyris activity snapshot
  * @param activitySeq   monotonic sequence number for the activity snapshot
  * @param finalResult   whether a MESSAGE frame is the final answer for the run; false means intermediate
+ * @param event         an optional event string coming from the pyris pipeline
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessageResponseDTO message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo,
         @Nullable PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, String sessionTitle, List<String> suggestions, List<LLMRequest> tokens,
         List<IrisCitationMetaDTO> citationInfo, @Nullable String runId, @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisActivityDTO> activities,
-        @Nullable Integer activitySeq, @JsonProperty("final") @Nullable Boolean finalResult) {
+        @Nullable Integer activitySeq, @JsonProperty("final") @Nullable Boolean finalResult, @Nullable String event) {
 
     /**
      * Creates a new IrisWebsocketDTO instance with the given parameters
@@ -54,7 +55,7 @@ public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessageRes
      */
     public IrisChatWebsocketDTO(@Nullable IrisMessageResponseDTO message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, @Nullable PyrisRunState runState,
             @Nullable PyrisStatusErrorDTO error, String sessionTitle, List<String> suggestions, List<LLMRequest> tokens, List<IrisCitationMetaDTO> citationInfo) {
-        this(message, rateLimitInfo, runState, error, sessionTitle, suggestions, tokens, citationInfo, null, null, null, null, null, null);
+        this(message, rateLimitInfo, runState, error, sessionTitle, suggestions, tokens, citationInfo, null, null, null, null, null, null, null);
     }
 
     /**
@@ -74,11 +75,13 @@ public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessageRes
      * @param partialSeq    the monotonic sequence number of the partial response
      * @param activities    current Pyris activity snapshot
      * @param activitySeq   monotonic sequence number for the activity snapshot
+     * @param event         an optional event string coming from the pyris pipeline
      */
     public IrisChatWebsocketDTO(@Nullable IrisMessageResponseDTO message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, @Nullable PyrisRunState runState,
             @Nullable PyrisStatusErrorDTO error, String sessionTitle, List<String> suggestions, List<LLMRequest> tokens, List<IrisCitationMetaDTO> citationInfo,
-            @Nullable String runId, @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisActivityDTO> activities, @Nullable Integer activitySeq) {
-        this(message, rateLimitInfo, runState, error, sessionTitle, suggestions, tokens, citationInfo, runId, partialResult, partialSeq, activities, activitySeq, null);
+            @Nullable String runId, @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisActivityDTO> activities, @Nullable Integer activitySeq,
+            @Nullable String event) {
+        this(message, rateLimitInfo, runState, error, sessionTitle, suggestions, tokens, citationInfo, runId, partialResult, partialSeq, activities, activitySeq, null, event);
     }
 
     /**
@@ -103,9 +106,9 @@ public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessageRes
     public IrisChatWebsocketDTO(@Nullable IrisMessageResponseDTO message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, @Nullable PyrisRunState runState,
             @Nullable PyrisStatusErrorDTO error, String sessionTitle, List<String> suggestions, List<LLMRequest> tokens, List<IrisCitationMetaDTO> citationInfo,
             @Nullable String runId, @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisActivityDTO> activities, @Nullable Integer activitySeq,
-            @Nullable Boolean finalResult) {
+            @Nullable Boolean finalResult, @Nullable String event) {
         this(determineType(message, partialResult), message, rateLimitInfo, runState, error, sessionTitle, suggestions, tokens, citationInfo, runId, partialResult, partialSeq,
-                activities, activitySeq, finalResult);
+                activities, activitySeq, finalResult, event);
     }
 
     /**

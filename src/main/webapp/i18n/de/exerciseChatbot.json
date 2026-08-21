@@ -40,6 +40,7 @@
                 "rateMessageFailed": "Beim Bewerten der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
                 "irisDisabled": "Der Iris Chatbot wurde für diese Aufgabe ausgeschalten.",
                 "timeout": "Der Artemis-Server hat noch keine Antwort gesendet. Bitte lade die Seite nicht erneut.",
+                "askUserQuizFailed": "Bei Iris ist ein Fehler aufgetreten. Das Quiz wurde zurückgesetzt und kann neu gestartet werden.",
                 "emptyMessage": "Du kannst nicht leere Nachrichten abschicken.",
                 "forbidden": "Artemis ist nicht konfiguriert, um Iris zu verwenden. (Ungültiges Token)",
                 "internalPyrisError": "Ein interner Fehler beim Kommunizieren mit dem LLM ist aufgetreten. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
@@ -50,7 +51,8 @@
                 "technicalError": "Es ist ein technischer Fehler aufgetreten. Bitte wende dich an Artemis Administratoren sollte der Fehler weiterhin zu sehen sein.",
                 "irisNotAvailable": "Iris antwortet nicht. Bitte versuche es später!",
                 "rateLimitExceeded": "Du hast die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst, erreicht. Bitte versuche es später erneut!",
-                "aiUsageDeclined": "Du hast der Verwendung von AI explizit widersprochen. Stimme der Verwendung von AI-Tools in den Einstellungen zu, um Iris nutzen zu können."
+                "aiUsageDeclined": "Du hast der Verwendung von AI explizit widersprochen. Stimme der Verwendung von AI-Tools in den Einstellungen zu, um Iris nutzen zu können.",
+                "startAskUserFailed": "Die Verständnisüberprüfung konnte nicht gestartet werden."
             },
             "disclaimer": "Iris kann Fehler machen. Überprüfe wichtige Informationen.",
             "disclaimerGPT": "ChatGPT kann Fehler machen. Überprüfe wichtige Informationen.",
@@ -63,7 +65,10 @@
                 "copy": "Kopieren",
                 "goodResponse": "Gute Antwort",
                 "badResponse": "Schlechte Antwort"
-            }
+            },
+            "onlyAskUserEnabled": "Exercise Chat ist deaktiviert. Ich überprüfe nur dein Verständnis.",
+            "secondsLeft": "Sekunden übrig",
+            "timeLeft": "übrig"
         }
     }
 }

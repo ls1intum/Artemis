@@ -1,4 +1,5 @@
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
@@ -15,8 +16,10 @@ export interface IrisChatWebsocketDTO {
     activities?: IrisActivityItem[];
     activitySeq?: number;
     final?: boolean;
+    event?: IrisPipeEvent;
     rateLimitInfo?: IrisRateLimitInformation;
     suggestions?: string[];
+    tokens?: unknown[];
     sessionTitle?: string;
     citationInfo?: IrisCitationMetaDTO[];
     runId?: string;

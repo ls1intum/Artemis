@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -46,6 +47,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentAttentionDTO;
 
 /**
  * REST controller for managing courses by tutors, editors and instructors.
@@ -81,10 +84,12 @@ public class CourseManagementResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final Optional<IrisSettingsApi> irisSettingsApi;
+
     public CourseManagementResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, AssessmentDashboardService assessmentDashboardService,
             ExerciseRepository exerciseRepository, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService,
-            CourseLoadService courseLoadService) {
+            CourseLoadService courseLoadService, Optional<IrisSettingsApi> irisSettingsApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -96,6 +101,7 @@ public class CourseManagementResource {
         this.courseForUserGroupService = courseForUserGroupService;
         this.courseOverviewService = courseOverviewService;
         this.courseLoadService = courseLoadService;
+        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
@@ -328,6 +334,22 @@ public class CourseManagementResource {
         }));
 
         return ResponseEntity.ok(new CourseExistingExerciseDetailsDTO(alreadyTakenExerciseNames, alreadyTakenShortNames));
+    }
+
+    /**
+     * GET /courses/:courseId/assessment-attention-state : Returns whether the iris assessment of a course needs to be inspected.
+     * This is the case when at least one suspicious result has not been reviewed.
+     *
+     * @param courseId the id of the course to get the state from
+     * @return {@link IrisAssessmentAttentionDTO} with the corresponding boolean
+     */
+    @GetMapping("courses/{courseId}/assessment-attention-state")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<IrisAssessmentAttentionDTO> getAssessmentAttentionState(@PathVariable Long courseId) {
+        log.debug("REST request to get assessment state of Course : {}", courseId);
+
+        boolean needsAttention = irisSettingsApi.map(api -> api.isAssessmentAttentionNeededInCourse(courseId)).orElse(false);
+        return ResponseEntity.ok(new IrisAssessmentAttentionDTO(needsAttention));
     }
 
 }

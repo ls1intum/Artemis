@@ -29,9 +29,11 @@ describe('IrisSettingsUpdateComponent', () => {
 
     const mockSettings: IrisCourseSettingsDTO = {
         enabled: true,
+        askUserModeEnabled: true,
         customInstructions: 'Test instructions',
         variant: 'default',
         supportLevel: 'moderate',
+        askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
         rateLimit: { requests: 100, timeframeHours: 24 },
     };
 
@@ -77,8 +79,11 @@ describe('IrisSettingsUpdateComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).toBeDefined();
+    it('should initialize with default tab and idle state', () => {
+        expect(component.activeTab()).toBe('general');
+        expect(component.isLoading()).toBe(false);
+        expect(component.isSaving()).toBe(false);
+        expect(component.settings()).toBeUndefined();
     });
 
     describe('ngOnInit', () => {
@@ -103,7 +108,13 @@ describe('IrisSettingsUpdateComponent', () => {
         it('should handle null rateLimit from server', async () => {
             const nullRateLimitResponse: IrisCourseSettingsWithRateLimitDTO = {
                 courseId: 1,
-                settings: { enabled: true, variant: 'default', rateLimit: undefined as any },
+                settings: {
+                    enabled: true,
+                    askUserModeEnabled: true,
+                    variant: 'default',
+                    askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                    rateLimit: undefined as any,
+                },
                 effectiveRateLimit: { requests: 50, timeframeHours: 12 },
                 applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
             };
@@ -425,20 +436,20 @@ describe('IrisSettingsUpdateComponent', () => {
     describe('getCustomInstructionsLength', () => {
         it('should return length of custom instructions', () => {
             component.settings.set({ ...mockSettings, customInstructions: 'Test' });
-            expect(component.getCustomInstructionsLength()).toBe(4);
+            expect(component.customInstructionsLength()).toBe(4);
 
             component.settings.set({ ...mockSettings, customInstructions: 'Hello World' });
-            expect(component.getCustomInstructionsLength()).toBe(11);
+            expect(component.customInstructionsLength()).toBe(11);
         });
 
         it('should return 0 if custom instructions are undefined', () => {
             component.settings.set({ ...mockSettings, customInstructions: undefined });
-            expect(component.getCustomInstructionsLength()).toBe(0);
+            expect(component.customInstructionsLength()).toBe(0);
         });
 
         it('should return 0 if settings are undefined', () => {
             component.settings.set(undefined);
-            expect(component.getCustomInstructionsLength()).toBe(0);
+            expect(component.customInstructionsLength()).toBe(0);
         });
     });
 
@@ -556,7 +567,7 @@ describe('IrisSettingsUpdateComponent', () => {
             component.resetToDefault();
 
             const saved = updateSpy.mock.calls[0][1];
-            // mockSettings: variant 'default', rateLimit {100, 24} — must survive the reset
+            // mockSettings: variant 'default', rateLimit {100, 24} must survive the reset
             expect(saved.variant).toBe('default');
             expect(saved.rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
         });
@@ -593,7 +604,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
             component.resetToDefault();
 
-            // Idempotent click — no unnecessary network request
+            // Idempotent click, no unnecessary network request
             expect(updateSpy).not.toHaveBeenCalled();
         });
 
@@ -844,6 +855,57 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(component.rateLimitRequestsError()).toBe('artemisApp.iris.settings.rateLimitValidation.requestsNonNegative');
             expect(component.rateLimitTimeframeError()).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
             expect(component.isFormValid()).toBe(false);
+        });
+    });
+
+    describe('askUser mode settings', () => {
+        beforeEach(async () => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+        });
+
+        it('should update askUser mode quiz settings', async () => {
+            component.updateAskUserModeSetting('minQuestions', 4);
+            component.updateAskUserModeSetting('maxQuestions', 8);
+            component.updateAskUserModeSetting('timeLimitQuestion', 60);
+            component.updateAskUserModeSetting('timeLimitInClass', 20);
+
+            expect(component.settings()?.askUserModeSettings).toEqual({ minQuestions: 4, maxQuestions: 8, timeLimitQuestion: 60, timeLimitInClass: 20 });
+            expect(component.isDirty()).toBe(true);
+            expect(component.isFormValid()).toBe(true);
+        });
+
+        it('should reject invalid ask-user mode quiz settings while ask-user mode is enabled', async () => {
+            component.updateAskUserModeSetting('minQuestions', 6);
+            component.updateAskUserModeSetting('maxQuestions', 5);
+            component.updateAskUserModeSetting('timeLimitQuestion', 181);
+            component.updateAskUserModeSetting('timeLimitInClass', 31);
+
+            expect(component.askUserModeMinQuestionsError()).toBe('artemisApp.iris.settings.askUserModeSettings.validation.minQuestionsBeforeMaxQuestions');
+            expect(component.askUserModeMaxQuestionsError()).toBe('artemisApp.iris.settings.askUserModeSettings.validation.minQuestionsBeforeMaxQuestions');
+            expect(component.askUserModeQuestionTimeLimitError()).toBe('artemisApp.iris.settings.askUserModeSettings.validation.questionTimeLimitRange');
+            expect(component.askUserModeInClassTimeLimitError()).toBe('artemisApp.iris.settings.askUserModeSettings.validation.inClassTimeLimitRange');
+            expect(component.isFormValid()).toBe(false);
+        });
+
+        it('should reset hidden invalid askUser mode quiz settings before saving disabled askUser mode', async () => {
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+            component.settings.set(
+                Object.assign({}, component.settings()!, {
+                    askUserModeSettings: { minQuestions: 6, maxQuestions: 5, timeLimitQuestion: 181, timeLimitInClass: 31 },
+                }),
+            );
+            expect(component.isFormValid()).toBe(false);
+
+            component.setAskUserModeEnabled(false);
+            component.saveSettings();
+            await fixture.whenStable();
+
+            const savedSettings = updateSpy.mock.calls[0][1];
+            expect(savedSettings.askUserModeEnabled).toBe(false);
+            expect(savedSettings.askUserModeSettings).toEqual({ minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 });
+            expect(component.isFormValid()).toBe(true);
         });
     });
 

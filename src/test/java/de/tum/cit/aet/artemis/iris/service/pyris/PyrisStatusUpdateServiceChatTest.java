@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
+import de.tum.cit.aet.artemis.iris.service.session.IrisAskUserService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
@@ -32,8 +33,8 @@ class PyrisStatusUpdateServiceChatTest {
     void setUp() {
         pyrisJobService = mock(PyrisJobService.class);
         irisChatSessionService = mock(IrisChatSessionService.class);
-        service = new PyrisStatusUpdateService(pyrisJobService, irisChatSessionService, mock(IrisCompetencyGenerationService.class), mock(IrisTutorSuggestionSessionService.class),
-                mock(AutonomousTutorService.class), Optional.empty(), mock(IrisWebsocketService.class));
+        service = new PyrisStatusUpdateService(pyrisJobService, irisChatSessionService, mock(IrisAskUserService.class), mock(IrisCompetencyGenerationService.class),
+                mock(IrisTutorSuggestionSessionService.class), mock(AutonomousTutorService.class), Optional.empty(), mock(IrisWebsocketService.class));
     }
 
     @Test
@@ -44,7 +45,7 @@ class PyrisStatusUpdateServiceChatTest {
         service.handleStatusUpdate(job, statusUpdate);
 
         verify(irisChatSessionService).handlePartialStatusUpdate(job, statusUpdate);
-        verify(irisChatSessionService, never()).handleStatusUpdate(job, statusUpdate);
+        verify(irisChatSessionService, never()).handleStatusUpdate(job, statusUpdate, null);
         verifyNoInteractions(pyrisJobService);
     }
 
@@ -52,11 +53,11 @@ class PyrisStatusUpdateServiceChatTest {
     void nonPartialChatStatusUpdateUsesNormalResultPath() {
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
         var statusUpdate = new PyrisChatStatusUpdateDTO("result", PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null);
-        when(irisChatSessionService.handleStatusUpdate(job, statusUpdate)).thenReturn(job);
+        when(irisChatSessionService.handleStatusUpdate(job, statusUpdate, null)).thenReturn(job);
 
         service.handleStatusUpdate(job, statusUpdate);
 
-        verify(irisChatSessionService).handleStatusUpdate(job, statusUpdate);
+        verify(irisChatSessionService).handleStatusUpdate(job, statusUpdate, null);
         verify(irisChatSessionService, never()).handlePartialStatusUpdate(job, statusUpdate);
         verify(pyrisJobService).removeJob(job);
     }

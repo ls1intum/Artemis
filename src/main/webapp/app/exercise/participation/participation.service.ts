@@ -334,7 +334,7 @@ export class ParticipationService {
      * This method bundles recurring conversion steps for Participation EntityArrayResponses.
      * @param participationRes
      */
-    private processParticipationEntityArrayResponseType(participationRes: EntityArrayResponseType): EntityArrayResponseType {
+    public processParticipationEntityArrayResponseType(participationRes: EntityArrayResponseType): EntityArrayResponseType {
         this.convertParticipationResponseArrayDatesFromServer(participationRes);
         this.setAccessRightsParticipationEntityArrayResponseType(participationRes);
         return participationRes;

@@ -1,0 +1,58 @@
+<h2 class="mb-5">
+    <span>{{ course().title }} - {{ exercise().title }} - {{ assessment().student?.name }} ({{ assessment().student?.login }})</span>
+</h2>
+<div class="overflow-x-auto">
+    <table tumUiTable [size]="'small'" [striped]="true" class="iris-assessment-review-table">
+        <thead>
+            <tr>
+                <th scope="col" jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.question"></th>
+                <th scope="col" jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.answer"></th>
+                <th scope="col" jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.reasoning"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (row of rows(); track $index) {
+                <tr>
+                    <td>
+                        <div class="wrapped-content">{{ row.question }}</div>
+                    </td>
+                    <td>
+                        <div class="wrapped-content">{{ row.answer }}</div>
+                    </td>
+                    <td>
+                        <div class="wrapped-content">{{ row.reasoning }}</div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+@if (assessment() && assessment().verdict !== undefined && assessment().verdict !== null) {
+    <span class="iris-verdict">
+        {{ 'artemisApp.iris.assessmentReview.verdict.assessedAs' | artemisTranslate }}
+        {{ 'artemisApp.iris.assessmentReview.verdict.' + verdictTranslationSuffix() | artemisTranslate }}.
+    </span>
+}
+<div class="flex items-center gap-2 mt-3">
+    @if (course().isAtLeastEditor) {
+        <tum-ui-button
+            type="button"
+            severity="success"
+            size="small"
+            [icon]="faCheck"
+            [disabled]="assessment().verdictReview === IrisVerdictReview.ACCEPTED"
+            (clicked)="acceptAnswers()"
+        >
+            <span>{{ 'artemisApp.iris.assessmentReview.accept' | artemisTranslate }}</span>
+        </tum-ui-button>
+        <tum-ui-button type="button" severity="danger" size="small" [icon]="faX" [disabled]="assessment().verdictReview === IrisVerdictReview.REJECTED" (clicked)="rejectAnswers()">
+            <span>{{ 'artemisApp.iris.assessmentReview.reject' | artemisTranslate }}</span>
+        </tum-ui-button>
+    }
+    @if (assessment() && (assessment().verdictReview === IrisVerdictReview.ACCEPTED || assessment().verdictReview === IrisVerdictReview.REJECTED)) {
+        <span>
+            {{ 'artemisApp.iris.assessmentReview.review.reviewedAs' | artemisTranslate }}
+            {{ 'artemisApp.iris.assessmentReview.review.' + reviewTranslationSuffix() | artemisTranslate }}.
+        </span>
+    }
+</div>

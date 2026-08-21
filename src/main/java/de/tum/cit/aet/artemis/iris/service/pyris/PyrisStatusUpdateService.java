@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.iris.service.session.IrisAskUserService.ASK_USER_QUIZ_FAILED_ERROR_KEY;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -7,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -21,6 +24,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFa
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisJobExpiredEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
@@ -30,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
+import de.tum.cit.aet.artemis.iris.service.session.IrisAskUserService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
@@ -44,9 +50,15 @@ public class PyrisStatusUpdateService {
 
     private static final String GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC = "global-search-answer";
 
+    private static final PyrisStatusErrorDTO PYRIS_JOB_TIMEOUT_ERROR = new PyrisStatusErrorDTO("artemisApp.exerciseChatbot.errors.timeout", null);
+
+    private static final PyrisStatusErrorDTO ASK_USER_QUIZ_FAILED_ERROR = new PyrisStatusErrorDTO(ASK_USER_QUIZ_FAILED_ERROR_KEY, null);
+
     private final PyrisJobService pyrisJobService;
 
     private final IrisChatSessionService irisChatSessionService;
+
+    private final IrisAskUserService irisAskUserService;
 
     private final IrisCompetencyGenerationService competencyGenerationService;
 
@@ -58,11 +70,12 @@ public class PyrisStatusUpdateService {
 
     private final IrisWebsocketService irisWebsocketService;
 
-    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisCompetencyGenerationService competencyGenerationService,
-            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, AutonomousTutorService autonomousTutorService,
-            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService) {
+    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisAskUserService irisAskUserService,
+            IrisCompetencyGenerationService competencyGenerationService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService,
+            AutonomousTutorService autonomousTutorService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService) {
         this.pyrisJobService = pyrisJobService;
         this.irisChatSessionService = irisChatSessionService;
+        this.irisAskUserService = irisAskUserService;
         this.competencyGenerationService = competencyGenerationService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.autonomousTutorService = autonomousTutorService;
@@ -78,20 +91,46 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        handleStatusUpdate(job, statusUpdate, statusUpdate.event());
+    }
+
+    /**
+     * Handles a Pyris chat status update and forwards results/status changes to the websocket layer.
+     *
+     * @param job          the chat job that is updated
+     * @param statusUpdate the status update payload
+     * @param event        optional ask-user-mode event variant
+     */
+    public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate, String event) {
         var runState = resolveRunState(statusUpdate.runState(), job);
         var normalizedStatusUpdate = withRunState(statusUpdate, runState);
         if (statusUpdate.partialResult() != null && runState == PyrisRunState.RUNNING) {
             irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate);
             return;
         }
-        if (statusUpdate.partialResult() != null) {
+        if (statusUpdate.partialResult() != null && runState != PyrisRunState.FAILED) {
             removeJobIfTerminatedElseUpdate(runState, job);
             return;
         }
 
-        var updatedJob = irisChatSessionService.handleStatusUpdate(job, normalizedStatusUpdate);
+        normalizedStatusUpdate = withAskUserQuizFailureErrorIfReset(job, runState, normalizedStatusUpdate);
+        var updatedJob = irisChatSessionService.handleStatusUpdate(job, normalizedStatusUpdate, event);
+        var jobWasTracked = removeJobIfTerminatedElseUpdate(runState, updatedJob);
+        if (shouldHandleAskUserPipelineEvent(normalizedStatusUpdate, jobWasTracked)) {
+            irisAskUserService.handleStatusUpdate(updatedJob, normalizedStatusUpdate);
+        }
+    }
 
-        removeJobIfTerminatedElseUpdate(runState, updatedJob);
+    /**
+     * Converts an expired ask-user chat job into the same terminal failure flow used by Pyris callbacks.
+     *
+     * @param event the expired Pyris job event
+     */
+    @EventListener
+    public void handlePyrisJobExpiredEvent(PyrisJobExpiredEvent event) {
+        if (event.getEventObject() instanceof ChatJob job && job.isAskUserPipeline()) {
+            handleStatusUpdate(job, new PyrisChatStatusUpdateDTO(null, PyrisRunState.FAILED, PYRIS_JOB_TIMEOUT_ERROR, null, null, null, null, null));
+        }
     }
 
     /**
@@ -149,13 +188,26 @@ public class PyrisStatusUpdateService {
      * @param runState the run state of the status update
      * @param job      the job to remove or to update
      */
-    private void removeJobIfTerminatedElseUpdate(PyrisRunState runState, PyrisJob job) {
+    private boolean removeJobIfTerminatedElseUpdate(PyrisRunState runState, PyrisJob job) {
         if (runState.isTerminal()) {
-            pyrisJobService.removeJob(job);
+            return pyrisJobService.removeJob(job) != null;
         }
         else {
             pyrisJobService.updateJob(job);
+            return true;
         }
+    }
+
+    private boolean shouldHandleAskUserPipelineEvent(PyrisChatStatusUpdateDTO statusUpdate, boolean jobWasTracked) {
+        return jobWasTracked && statusUpdate.runState() == PyrisRunState.FINISHED && statusUpdate.result() != null && statusUpdate.event() != null
+                && !Boolean.FALSE.equals(statusUpdate.finalResult());
+    }
+
+    private PyrisChatStatusUpdateDTO withAskUserQuizFailureErrorIfReset(ChatJob job, PyrisRunState runState, PyrisChatStatusUpdateDTO statusUpdate) {
+        if (runState == PyrisRunState.FAILED && job.isAskUserPipeline() && irisAskUserService.resetAskUserPipelineAfterPyrisFailure(job)) {
+            return withError(statusUpdate, ASK_USER_QUIZ_FAILED_ERROR);
+        }
+        return statusUpdate;
     }
 
     /**
@@ -247,7 +299,16 @@ public class PyrisStatusUpdateService {
         }
         return new PyrisChatStatusUpdateDTO(statusUpdate.result(), runState, statusUpdate.error(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
                 statusUpdate.accessedMemories(), statusUpdate.createdMemories(), statusUpdate.partialResult(), statusUpdate.partialSeq(), statusUpdate.activities(),
-                statusUpdate.activitySeq(), statusUpdate.finalResult());
+                statusUpdate.activitySeq(), statusUpdate.finalResult(), statusUpdate.event(), statusUpdate.verdict());
+    }
+
+    private PyrisChatStatusUpdateDTO withError(PyrisChatStatusUpdateDTO statusUpdate, PyrisStatusErrorDTO error) {
+        if (statusUpdate.error() == error) {
+            return statusUpdate;
+        }
+        return new PyrisChatStatusUpdateDTO(statusUpdate.result(), statusUpdate.runState(), error, statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
+                statusUpdate.accessedMemories(), statusUpdate.createdMemories(), statusUpdate.partialResult(), statusUpdate.partialSeq(), statusUpdate.activities(),
+                statusUpdate.activitySeq(), statusUpdate.finalResult(), statusUpdate.event(), statusUpdate.verdict());
     }
 
     private PyrisCompetencyStatusUpdateDTO withRunState(PyrisCompetencyStatusUpdateDTO statusUpdate, PyrisRunState runState) {

@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.session.IrisAskUserService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatBasedFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisRateLimitedFeatureInterface;
@@ -41,16 +42,19 @@ public class IrisSessionService {
 
     private final IrisChatSessionService irisChatSessionService;
 
+    private final IrisAskUserService irisAskUserService;
+
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
 
     private final IrisChatSessionRepository irisChatSessionRepository;
 
     private final IrisSettingsService irisSettingsService;
 
-    public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService,
-            IrisChatSessionRepository irisChatSessionRepository, IrisSettingsService irisSettingsService) {
+    public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisAskUserService irisAskUserService,
+            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, IrisChatSessionRepository irisChatSessionRepository, IrisSettingsService irisSettingsService) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
+        this.irisAskUserService = irisAskUserService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
         this.irisSettingsService = irisSettingsService;
@@ -108,7 +112,12 @@ public class IrisSessionService {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
             if (session instanceof IrisChatSession chatSession) {
-                irisChatSessionService.requestAndHandleResponseWithAdditionalData(chatSession, uncommittedFiles, context);
+                if (chatSession.isInAskUserModePipeline()) {
+                    irisAskUserService.requestAndHandleResponse(chatSession);
+                }
+                else {
+                    irisChatSessionService.requestAndHandleResponseWithAdditionalData(chatSession, uncommittedFiles, context);
+                }
             }
             else {
                 chatWrapper.requestAndHandleResponse(wrapper.irisSession);
@@ -125,13 +134,14 @@ public class IrisSessionService {
      *
      * @param message The message to send
      * @param session The session to send the message for
+     * @param event   The optional event to forward with the websocket payload
      * @param <S>     The type of the session
      * @throws BadRequestException If the session type is invalid
      */
-    public <S extends IrisSession> void sendOverWebsocket(IrisMessage message, S session) {
+    public <S extends IrisSession> void sendOverWebsocket(IrisMessage message, S session, String event) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            chatWrapper.sendOverWebsocket(session, message);
+            chatWrapper.sendOverWebsocket(session, message, event);
         }
         else {
             throw new BadRequestException("Invalid Iris session type " + message.getSession().getClass().getSimpleName());

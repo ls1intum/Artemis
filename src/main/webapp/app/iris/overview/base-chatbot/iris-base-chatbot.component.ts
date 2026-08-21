@@ -77,6 +77,8 @@ import { formatDate } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import dayjs from 'dayjs/esm';
+import { QuizTimerBarComponent } from 'app/iris/overview/ask-user/quiz-timer-bar/quiz-timer-bar.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
@@ -95,6 +97,7 @@ import { IrisContextSwitchDividerComponent } from 'app/iris/overview/context-sel
 import { routeForContext } from 'app/iris/overview/context-selection/iris-context.util';
 import { IrisActivityItem, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { onError } from 'app/foundation/util/global.utils';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -140,6 +143,7 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
         AsPipe,
         MarkdownDirective,
         ChatHistoryItemComponent,
+        QuizTimerBarComponent,
         SearchFilterComponent,
         IrisCitationTextComponent,
         IrisMcqQuestionComponent,
@@ -302,7 +306,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.isLoading() ||
             !this.active() ||
             !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
-            this.awaitingAnswer(),
+            this.awaitingAnswer() ||
+            this.showOnlyAskUserModeMessage(),
     );
     readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
     readonly canShowSuggestions = computed(
@@ -363,6 +368,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly contextProvider = input<(() => IrisMessageContextDTO[]) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
+    readonly showOnlyAskUserModeMessage = input<boolean>(false);
+    readonly quizActive = input<boolean>(false);
+    readonly quizStarted = input<boolean>(false);
+    readonly timerExpiresAt = input<dayjs.Dayjs | undefined>(undefined);
+    readonly timeLimit = input<number | undefined>();
+    readonly timerExpired = output<void>();
 
     // ViewChilds
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
@@ -940,7 +951,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (!sessionId) {
             return;
         }
-        this.irisChatHttpService.saveMcqResponse(sessionId, message.id, { selectedIndex: event.selectedIndex, submitted: true }).subscribe();
+        this.saveMcqResponse(sessionId, message.id, { selectedIndex: event.selectedIndex, submitted: true });
     }
 
     onMcqResponseSaved(message: IrisMessage, response: McqResponseData): void {
@@ -951,7 +962,22 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (!sessionId) {
             return;
         }
-        this.irisChatHttpService.saveMcqResponse(sessionId, message.id, response).subscribe();
+        this.saveMcqResponse(sessionId, message.id, response);
+    }
+
+    /**
+     * Persists a student's answer to a multiple-choice question and reports any error via the alert service.
+     * @param sessionId The unique identifier of the chat session
+     * @param messageId The unique identifier of the message containing the question
+     * @param response The selected answer and its submission state
+     */
+    private saveMcqResponse(sessionId: number, messageId: number, response: McqResponseData): void {
+        this.irisChatHttpService
+            .saveMcqResponse(sessionId, messageId, response)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                error: (error) => onError(this.alertService, error),
+            });
     }
 
     copyMessage(message: IrisMessage, messageIndex?: number) {
@@ -1543,4 +1569,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 return undefined;
         }
     }
+
+    protected readonly ChatServiceMode = ChatServiceMode;
 }

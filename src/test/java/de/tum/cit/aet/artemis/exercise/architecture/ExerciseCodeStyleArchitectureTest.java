@@ -16,6 +16,9 @@ class ExerciseCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     protected int dtoNameEndingThreshold() {
-        return 9;
+        // 9 legacy non-DTO-named classes in exercise dto packages, plus ParticipationScoreSearchDTOTest and
+        // ParticipationSearchDTOTest: *DTOTest unit tests co-located with the DTOs they test, the same accepted
+        // pattern used by e.g. IrisAssessmentDTOTest (see IrisCodeStyleArchitectureTest).
+        return 11;
     }
 }

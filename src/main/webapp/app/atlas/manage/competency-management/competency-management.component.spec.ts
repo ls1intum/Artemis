@@ -147,7 +147,9 @@ describe('CompetencyManagementComponent', () => {
             courseId: 1,
             settings: {
                 enabled: true,
+                askUserModeEnabled: true,
                 variant: 'default',
+                askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
                 rateLimit: {},
             },
         } as IrisCourseSettingsWithRateLimitDTO;
@@ -297,8 +299,7 @@ describe('CompetencyManagementComponent', () => {
 
         component['openAgentChatModal']();
 
-        expect(capturedData).toBeDefined();
-        expect(typeof capturedData!['onCompetencyChanged']).toBe('function');
+        expect(capturedData).toEqual(expect.objectContaining({ onCompetencyChanged: expect.any(Function) }));
 
         const loadSpy = vi.spyOn(component as any, 'loadCourseCompetencies').mockResolvedValue(undefined);
         (capturedData!['onCompetencyChanged'] as () => void)();

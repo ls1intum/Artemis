@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.iris.dto.export.IrisChatSessionExportDTO;
 import de.tum.cit.aet.artemis.iris.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisAssessmentReviewService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 @Conditional(IrisEnabled.class)
@@ -28,11 +30,14 @@ public class IrisSettingsApi extends AbstractIrisApi {
 
     private final IrisChatSessionRepository irisChatSessionRepository;
 
-    public IrisSettingsApi(IrisSettingsService irisSettingsService, IrisCourseSettingsRepository irisCourseSettingsRepository,
-            IrisChatSessionRepository irisChatSessionRepository) {
+    private final IrisAssessmentReviewService irisAssessmentReviewService;
+
+    public IrisSettingsApi(IrisSettingsService irisSettingsService, IrisCourseSettingsRepository irisCourseSettingsRepository, IrisChatSessionRepository irisChatSessionRepository,
+            IrisAssessmentReviewService irisAssessmentReviewService) {
         this.irisSettingsService = irisSettingsService;
         this.irisCourseSettingsRepository = irisCourseSettingsRepository;
         this.irisChatSessionRepository = irisChatSessionRepository;
+        this.irisAssessmentReviewService = irisAssessmentReviewService;
     }
 
     public IrisCourseSettingsWithRateLimitDTO getSettingsForCourse(long courseId) {
@@ -41,6 +46,26 @@ public class IrisSettingsApi extends AbstractIrisApi {
 
     public boolean isIrisEnabledForCourse(long courseId) {
         return irisSettingsService.isEnabledForCourse(courseId);
+    }
+
+    /**
+     * Checks whether Iris and ask-user mode are enabled for the given exercise.
+     *
+     * @param exercise the exercise
+     * @return {@code true} if Iris and ask-user mode are enabled
+     */
+    public boolean isAskUserModeEnabledForExercise(Exercise exercise) {
+        return irisSettingsService.isAskUserModeEnabledForExercise(exercise);
+    }
+
+    /**
+     * Checks whether at least one unreviewed suspicious assessment exists in the course.
+     *
+     * @param courseId the ID of the course
+     * @return {@code true} if the assessment attention center needs to be shown for the course
+     */
+    public boolean isAssessmentAttentionNeededInCourse(long courseId) {
+        return irisAssessmentReviewService.assessmentAttentionNeededInCourse(courseId);
     }
 
     /**

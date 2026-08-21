@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, DeferBlockBehavior, DeferBlockState, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Data, Router } from '@angular/router';
+import { ActivatedRoute, Data, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
 import { MockProvider } from 'ng-mocks';
@@ -12,6 +12,7 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -20,7 +21,6 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('Course Management Detail Component', () => {
@@ -63,6 +63,7 @@ describe('Course Management Detail Component', () => {
         data: courseDataSubject.asObservable(),
         params: of({ courseId: course.id }),
         queryParams: of({}),
+        snapshot: { queryParamMap: convertToParamMap({}) },
     } as unknown as ActivatedRoute;
 
     beforeEach(async () => {
@@ -73,11 +74,16 @@ describe('Course Management Detail Component', () => {
                     provide: ActivatedRoute,
                     useValue: mockActivatedRoute,
                 },
-                MockProvider(CourseManagementService),
+                MockProvider(CourseManagementService, {
+                    getStatisticsData: () => of([]),
+                    getAssessmentAttentionState: () => of(new HttpResponse({ body: { needsAttention: false } })),
+                }),
                 MockProvider(OrganizationManagementService, {
                     getOrganizationsByCourse: () => of([]),
                 }),
-                MockProvider(IrisSettingsService),
+                MockProvider(IrisSettingsService, {
+                    refresh$: of(undefined),
+                }),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -106,18 +112,54 @@ describe('Course Management Detail Component', () => {
     });
 
     it('should make iris settings call when instructor', async () => {
+        // irisEnabled is computed once at construction time, so the profile mock must be in place before the component is (re-)created.
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: ['iris'] } as ProfileInfo);
-        courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true, onboardingDone: true } });
-        const irisSpy = vi
-            .spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit')
-            .mockReturnValue(of({ courseId: 123, settings: { enabled: true, variant: 'default', rateLimit: {} } } as IrisCourseSettingsWithRateLimitDTO));
+        fixture = TestBed.createComponent(CourseDetailComponent);
+        component = fixture.componentInstance;
+        courseDataSubject.next({ course: { ...course, isAtLeastTutor: true, isAtLeastInstructor: true, onboardingDone: true } });
+        const irisSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(
+            of({
+                courseId: 123,
+                settings: {
+                    enabled: true,
+                    askUserModeEnabled: true,
+                    variant: 'default',
+                    askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                    rateLimit: {},
+                },
+            } as IrisCourseSettingsWithRateLimitDTO),
+        );
         await component.ngOnInit();
-        expect(irisSpy).toHaveBeenCalledOnce();
+        TestBed.flushEffects();
+        expect(irisSpy).toHaveBeenCalledWith(123);
     });
 
-    it('should not make iris settings call when not instructor', async () => {
+    it('should make iris settings call when editor (but not instructor)', async () => {
+        // irisEnabled is computed once at construction time, so the profile mock must be in place before the component is (re-)created.
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: ['iris'] } as ProfileInfo);
-        courseDataSubject.next({ course: { ...course, isAtLeastEditor: true } });
+        fixture = TestBed.createComponent(CourseDetailComponent);
+        component = fixture.componentInstance;
+        courseDataSubject.next({ course: { ...course, isAtLeastTutor: true, isAtLeastEditor: true, onboardingDone: true } });
+        const irisSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(
+            of({
+                courseId: 123,
+                settings: {
+                    enabled: true,
+                    askUserModeEnabled: true,
+                    variant: 'default',
+                    askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                    rateLimit: {},
+                },
+            } as IrisCourseSettingsWithRateLimitDTO),
+        );
+        await component.ngOnInit();
+        TestBed.flushEffects();
+        expect(irisSpy).toHaveBeenCalledWith(123);
+    });
+
+    it('should not make iris settings call when not at least tutor', async () => {
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: ['iris'] } as ProfileInfo);
+        courseDataSubject.next({ course: { ...course, isAtLeastTutor: false } });
         const irisSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
         await component.ngOnInit();
         expect(irisSpy).not.toHaveBeenCalled();
@@ -129,8 +171,8 @@ describe('Course Management Detail Component', () => {
         await Promise.resolve();
         await Promise.resolve();
         expect(component.courseDTO()).toEqual(dtoMock);
-        // Course will have organizations added from the mocked service
-        const expectedCourse = Object.assign(new Course(), course, { organizations: [] });
+        // Course will have organizations added from the mocked service; setCourse() stores the route data as-is, it does not normalize it into a Course instance.
+        const expectedCourse = { ...course, organizations: [] };
         expect(component.course()).toEqual(expectedCourse);
         expect(registerSpy).toHaveBeenCalledOnce();
     });

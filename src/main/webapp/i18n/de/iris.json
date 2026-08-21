@@ -62,6 +62,24 @@
                 "irisDisabled": "Iris ist deaktiviert",
                 "enableSubtext": "Alle Studierenden dieses Kurses können Iris nutzen, wenn es aktiviert ist",
                 "disabledSubtext": "Iris ist für diesen Kurs inaktiv.",
+                "askUserModeEnabled": "Quiz-Modus ist aktiviert",
+                "askUserModeDisabled": "Quiz-Modus ist deaktiviert",
+                "askUserModeEnabledSubtext": "Studierende können den Quiz-Modus in Programmieraufgaben starten.",
+                "askUserModeDisabledSubtext": "Quiz-Modus-Steuerelemente werden für Studierende ausgeblendet.",
+                "askUserModeSettings": {
+                    "title": "Quiz-Modus-Quiz",
+                    "help": "Lege fest, wie viele Fragen Iris stellt und wie viel Zeit Studierende für Antworten haben.",
+                    "minQuestions": "Minimale Anzahl an Fragen",
+                    "maxQuestions": "Maximale Anzahl an Fragen",
+                    "timeLimitQuestion": "Zeit pro Frage in Sekunden",
+                    "timeLimitInClass": "Dauer des Präsenzquiz in Minuten",
+                    "validation": {
+                        "questionRange": "Fragenlimits müssen zwischen 1 und 10 liegen.",
+                        "minQuestionsBeforeMaxQuestions": "Die minimale Anzahl an Fragen darf die maximale Anzahl nicht überschreiten.",
+                        "questionTimeLimitRange": "Die Zeit pro Frage muss zwischen 1 und 180 Sekunden liegen.",
+                        "inClassTimeLimitRange": "Die Dauer des Präsenzquiz muss zwischen 1 und 30 Minuten liegen."
+                    }
+                },
                 "supportLevel": {
                     "title": "Unterstützungsniveau",
                     "help": "Niedrig fördert selbstständiges Problemlösen. Hoch bietet ausführliche Erklärungen, Analogien und Beispiele.",
@@ -141,6 +159,7 @@
                     },
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "tutorSuggestionSettings": "Tutor Vorschlag Einstellungen",
+                    "askUserSettings": "Quiz Einstellungen",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Build-Fehler überwachen",
                         "tooltip": "Wenn aktiviert, wird Iris proaktiv Hilfe-Nachrichten senden, wenn der Build einer Abbgabe fehlschlägt."
@@ -189,6 +208,20 @@
                         "title": "Benutzerdefinierte Anweisungen",
                         "description": "Benutzerdefinierte Anweisungen, die der KI beim Generieren von Antworten zur Verfügung gestellt werden.",
                         "placeholder": "Gib benutzerdefinierte Anweisungen für die KI ein (maximal 2048 Zeichen)"
+                    },
+                    "questionLimits": {
+                        "title": "Fragenlimits",
+                        "lowerLimit": "Minimale Anzahl an Fragen",
+                        "lowerLimitTooltip": "Die minimale Anzahl an Fragen, die Iris Studierenden stellen muss, bevor eine Einschätzung abgegeben wird.",
+                        "upperLimit": "Maximale Anzahl an Fragen",
+                        "upperLimitTooltip": "Die maximale Anzahl an Fragen, die Iris Studierenden stellen darf, bevor eine Einschätzung abgegeben wird."
+                    },
+                    "timeLimits": {
+                        "title": "Zeitlimits",
+                        "question": "Zeit pro Frage in Sekunden",
+                        "questionTooltip": "Die verfügbare Bearbeitungszeit pro Frage in Sekunden. Wird diese überschritten, gilt das Quiz als nicht bestanden.",
+                        "inClass": "Zeitfenster des Präsenzquiz in Minuten",
+                        "inClassTooltip": "Die Zeitspanne in Minuten, die den TeilnehmerInnen für die Bearbeitung des Präsenzquiz zur Verfügung steht. Die Zeitmessung beginnt, sobald der Instruktor das Quiz startet."
                     }
                 },
                 "title": "Iris Einstellungen"
@@ -303,6 +336,14 @@
             "controlCenter": {
                 "tooltip": "Aktiviere oder deaktiviere Iris für deinen Kurs. Um benutzerdefinierte Anweisungen zu konfigurieren, klicke auf die Schaltfläche 'Konfigurieren'."
             },
+            "assessmentAttentionCenter": {
+                "title": "Iris Bewertung",
+                "tooltip": "Hier wird gezeigt, ob Bewertungen von Iris überprüft werden müssen. Klicke auf den Knopf, um zur allgemeinen Übersicht der Bewertungen zu gelangen. Über den Präsenzquiz-Knopf kommst du zur Übersicht, in der du das Präsenzquiz starten und die Ergebnisse einsehen kannst.",
+                "state": {
+                    "needsAttention": "Nicht überprüfte auffällige Bewertungen",
+                    "nothingToDo": "Alle auffälligen Bewertungen überprüft"
+                }
+            },
             "chatHistory": {
                 "title": "Chats",
                 "newChat": "Neuer Chat",
@@ -394,6 +435,50 @@
                     "loadFailed": "Fehler beim Laden der Erinnerungen.",
                     "deleteFailed": "Fehler beim Löschen der Erinnerung.",
                     "detailsLoadFailed": "Fehler beim Laden der Erinnerungsdetails."
+                }
+            },
+            "assessmentInClassQuiz": {
+                "open": "Präsenzquiz",
+                "start": "Präsenzquiz starten",
+                "restart": "Präsenzquiz neu starten",
+                "warning": {
+                    "title": "Präsenzquiz vor Abgabefrist starten?",
+                    "message": "Wenn das Präsenzquiz vor Ablauf der Abgabefrist gestartet wird, können Studierende nach dem Quiz weiterhin neuen Code einreichen. Dadurch kann die spätere Abgabe von dem Code abweichen, auf dessen Grundlage Iris die Studierenden befragt hat.",
+                    "confirmText": "Möchtest du das Präsenzquiz trotzdem starten?",
+                    "start": "Quiz starten"
+                }
+            },
+            "assessmentReviewOverview": {
+                "title": "Iris Bewertungen",
+                "inClassTitle": "Iris Präsenzbewertungen",
+                "showMissingAssessment": "Fehlende Bewertung",
+                "showSuspicious": "Auffällig",
+                "showUnsuspicious": "Unauffällig",
+                "showRejected": "Abgelehnt",
+                "showAccepted": "Akzeptiert",
+                "showAll": "Kein Filter",
+                "nonZeroLatestScoreTooltip": "Es werden nur Aufgaben mit Teilnahmen angezeigt, deren letzte Abgabe eine Punktzahl größer als null erreicht hat.",
+                "inClassQuizTooltip": "Der Präsenzquiz-Knopf startet das Präsenzquiz; teilnehmen können nur Studierende, deren letzte Abgabe Punkte erreicht hat."
+            },
+            "assessmentReview": {
+                "title": "Iris Bewertungsergebnisse",
+                "details": "Details",
+                "qaExchange": {
+                    "question": "Frage",
+                    "answer": "Antwort",
+                    "reasoning": "Einschätzung"
+                },
+                "accept": "Antworten akzeptieren",
+                "reject": "Antworten ablehnen",
+                "verdict": {
+                    "assessedAs": "Iris bewertet diese Befragung als",
+                    "suspicious": "auffällig",
+                    "unsuspicious": "zufriedenstellend"
+                },
+                "review": {
+                    "reviewedAs": "Befragung wurde",
+                    "accepted": "akzeptiert",
+                    "rejected": "abgelehnt"
                 }
             }
         },

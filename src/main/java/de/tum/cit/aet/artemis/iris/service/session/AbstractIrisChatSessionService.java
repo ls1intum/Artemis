@@ -170,6 +170,18 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      * @return the same job record or a new job record with the same job id if changes were made
      */
     public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        return handleStatusUpdate(job, statusUpdate, statusUpdate.event());
+    }
+
+    /**
+     * Handles the status update of a tracked Iris chat job.
+     *
+     * @param job          the job that was executed
+     * @param statusUpdate the status update of the job
+     * @param event        optional ask-user-mode event variant
+     * @return the same job record or a new job record with the same job id if changes were made
+     */
+    public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, String event) {
         long handlingStart = System.nanoTime();
         // Only the result branch (saving the assistant message) needs the messages and contents;
         // the frequent intermediate status updates get away with a plain session load. Pyris blocks
@@ -181,7 +193,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
         TrackedSessionBasedPyrisJob updatedJob;
         if (statusUpdate.result() != null) {
-            updatedJob = Boolean.FALSE.equals(statusUpdate.finalResult()) ? handleIntermediateResultStatusUpdate(job, statusUpdate, session, sessionTitle)
+            updatedJob = Boolean.FALSE.equals(statusUpdate.finalResult()) ? handleIntermediateResultStatusUpdate(job, statusUpdate, session, sessionTitle, event)
                     : handleResultStatusUpdate(job, statusUpdate, session, sessionTitle);
         }
         else {
@@ -196,15 +208,15 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         return updatedJob;
     }
 
-    private TrackedSessionBasedPyrisJob handleIntermediateResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session,
-            String sessionTitle) {
+    private TrackedSessionBasedPyrisJob handleIntermediateResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session, String sessionTitle,
+            String event) {
         var message = new IrisMessage();
         for (var content : parseResultContents(statusUpdate.result())) {
             message.addContent(content);
         }
         message.setIntermediate(true);
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-        irisChatWebsocketService.sendMessage(session, savedMessage, PyrisRunState.RUNNING, statusUpdate.error(), sessionTitle, List.of(), job.jobId(), null, null, false);
+        irisChatWebsocketService.sendMessage(session, savedMessage, PyrisRunState.RUNNING, statusUpdate.error(), sessionTitle, List.of(), job.jobId(), null, null, false, event);
         return recordTokenUsage(session, job, statusUpdate, null);
     }
 
@@ -233,7 +245,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             var updatedJob = trackedJob.withAssistantMessageId(savedMessage.getId());
             pyrisJobService.updateJob(updatedJob);
             irisChatWebsocketService.sendMessage(session, savedMessage, PyrisRunState.RUNNING, statusUpdate.error(), sessionTitle, citationInfo, job.jobId(),
-                    statusUpdate.activities(), statusUpdate.activitySeq(), null);
+                    statusUpdate.activities(), statusUpdate.activitySeq(), statusUpdate.finalResult(), statusUpdate.event());
             updatedJob = recordTokenUsage(session, updatedJob, statusUpdate, savedMessage);
             pyrisJobService.updateJob(updatedJob);
             return updatedJob;
@@ -261,7 +273,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             });
         }
         irisChatWebsocketService.sendStatusUpdate(session, job.jobId(), statusUpdate.runState(), statusUpdate.error(), sessionTitle, statusUpdate.suggestions(),
-                statusUpdate.tokens(), statusUpdate.activities(), statusUpdate.activitySeq());
+                statusUpdate.tokens(), statusUpdate.activities(), statusUpdate.activitySeq(), statusUpdate.event());
     }
 
     private TrackedSessionBasedPyrisJob recordTokenUsage(S session, TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, IrisMessage savedMessage) {

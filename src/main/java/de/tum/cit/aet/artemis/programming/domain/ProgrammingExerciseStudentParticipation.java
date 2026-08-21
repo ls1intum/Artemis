@@ -1,17 +1,23 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.iris.domain.askuser.IrisAssessment;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 
 @Entity
@@ -28,6 +34,18 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     @Column(name = "branch")
     private String branch;
+
+    @Nullable
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JoinColumn(name = "iris_assessment_id", referencedColumnName = "id", unique = true)
+    @JsonIgnore
+    private IrisAssessment irisAssessment;
+
+    @Nullable
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JoinColumn(name = "iris_assessment_in_class_id", referencedColumnName = "id", unique = true)
+    @JsonIgnore
+    private IrisAssessment irisAssessmentInClass;
 
     public ProgrammingExerciseStudentParticipation() {
         // Default constructor
@@ -104,4 +122,21 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
                 + getIndividualDueDate() + "'" + ", presentationScore=" + getPresentationScore() + "}";
     }
 
+    @Nullable
+    public IrisAssessment getIrisAssessment() {
+        return irisAssessment;
+    }
+
+    public void setIrisAssessment(@Nullable IrisAssessment assessment) {
+        this.irisAssessment = assessment;
+    }
+
+    @Nullable
+    public IrisAssessment getIrisAssessmentInClass() {
+        return irisAssessmentInClass;
+    }
+
+    public void setIrisAssessmentInClass(@Nullable IrisAssessment irisAssessmentInClass) {
+        this.irisAssessmentInClass = irisAssessmentInClass;
+    }
 }

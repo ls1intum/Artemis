@@ -1,0 +1,27 @@
+@if (availableInClassQuiz(); as inClassQuiz) {
+    <span class="inline-flex items-center gap-1">
+        <button
+            tumUiButton
+            type="button"
+            (click)="startInClassQuiz()"
+            [id]="'start-in-class-quiz-' + exercise().id!"
+            [severity]="buttonSeverity()"
+            [size]="buttonSize()"
+            [jhiFeatureToggle]="FeatureToggle.AskUserMode"
+            [overwriteDisabled]="!canBeStarted()"
+        >
+            <fa-icon [icon]="faBrain" />
+            <span class="md:inline" [class.hidden]="hideLabelMobile()">
+                {{ buttonLabel() | artemisTranslate }}
+            </span>
+        </button>
+
+        <jhi-quiz-timer-bar
+            [open]="true"
+            [timeLimit]="inClassQuiz.timeLimit"
+            [timerExpiresAt]="inClassQuiz.timerExpiresAt"
+            [showProgress]="false"
+            (timerExpired)="handleTimerExpired()"
+        />
+    </span>
+}

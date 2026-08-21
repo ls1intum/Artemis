@@ -1,0 +1,22 @@
+<div class="iris-panel">
+    <div class="iris-header">
+        <div class="iris-title">
+            <fa-icon [icon]="faBrain" class="mr-2" size="lg" />
+            <span jhiTranslate="artemisApp.iris.assessmentAttentionCenter.title"></span>
+            <jhi-help-icon text="artemisApp.iris.assessmentAttentionCenter.tooltip" class="ml-1" />
+        </div>
+    </div>
+
+    <div class="iris-toggle">
+        <a tumUiButton size="small" class="flex-1" [severity]="needsAttention() ? 'danger' : 'success'" [routerLink]="reviewLink()">
+            <span
+                [jhiTranslate]="needsAttention() ? 'artemisApp.iris.assessmentAttentionCenter.state.needsAttention' : 'artemisApp.iris.assessmentAttentionCenter.state.nothingToDo'"
+            ></span>
+        </a>
+
+        <a tumUiButton size="small" class="flex-1" [routerLink]="inClassQuizLink()">
+            <fa-icon [icon]="faListAlt" [fixedWidth]="true" />
+            {{ 'artemisApp.iris.assessmentInClassQuiz.open' | artemisTranslate }}
+        </a>
+    </div>
+</div>

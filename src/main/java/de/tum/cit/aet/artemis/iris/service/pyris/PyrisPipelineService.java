@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.iris.service.session.IrisAskUserService.ASK_USER_QUIZ_FAILED_ERROR_KEY;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,13 +28,16 @@ import de.tum.cit.aet.artemis.course.service.CourseLoadService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisAskUserModeSettings;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.askuser.PyrisAskUserPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureDTO;
@@ -44,6 +49,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 /**
  * Service responsible for executing the various Pyris pipelines in a type-safe manner.
@@ -108,8 +115,9 @@ public class PyrisPipelineService {
      * @param jobToken      a unique job token for tracking the pipeline execution
      * @param dtoMapper     a function to create the concrete DTO type for this pipeline from the base DTO
      * @param statusUpdater a consumer to update the status of the pipeline execution
+     * @return true if Pyris accepted the pipeline execution, false otherwise
      */
-    public void executePipeline(String name, AiSelectionDecision aiSelection, String variant, String supportLevel, Optional<String> event, String jobToken,
+    public boolean executePipeline(String name, AiSelectionDecision aiSelection, String variant, String supportLevel, Optional<String> event, String jobToken,
             Function<PyrisPipelineExecutionDTO, Object> dtoMapper, PipelineStatusUpdater statusUpdater) {
         statusUpdater.accept(jobToken, PyrisRunState.RUNNING, null);
 
@@ -125,15 +133,27 @@ public class PyrisPipelineService {
                 long requestStart = System.nanoTime();
                 pyrisConnectorService.executePipeline(name, pipelineDto, event);
                 log.debug("Pyris {} pipeline run request accepted in {} ms", name, (System.nanoTime() - requestStart) / 1_000_000);
+                return true;
             }
             catch (PyrisConnectorException | IrisException e) {
                 log.error("Failed to execute {} pipeline", name, e);
                 statusUpdater.accept(jobToken, PyrisRunState.FAILED, new PyrisStatusErrorDTO("artemisApp.iris.error.internal", null));
+                removeJobIfExists(jobToken);
+                return false;
             }
         }
         catch (Exception e) {
             log.error("Failed to prepare {} pipeline execution", name, e);
             statusUpdater.accept(jobToken, PyrisRunState.FAILED, new PyrisStatusErrorDTO("artemisApp.iris.error.internal", null));
+            removeJobIfExists(jobToken);
+            return false;
+        }
+    }
+
+    private void removeJobIfExists(String jobToken) {
+        var job = pyrisJobService.getJob(jobToken);
+        if (job != null) {
+            pyrisJobService.removeJob(job);
         }
     }
 
@@ -262,6 +282,60 @@ public class PyrisPipelineService {
     public interface PipelineStatusUpdater {
 
         void accept(String runId, PyrisRunState runState, PyrisStatusErrorDTO error);
+    }
+
+    /**
+     * Execute the ask user pipeline for the given session.
+     * It provides specific data for the ask user pipeline, including:
+     * - The latest submission of the student
+     * - The programming exercise
+     * - The course the exercise is part of
+     * <p>
+     *
+     * @param variant             the variant of the pipeline
+     * @param latestSubmission    the latest submission of the student
+     * @param programmingExercise the programming exercise
+     * @param session             the chat session
+     * @param event               if this function triggers a pipeline execution due to a specific event, this can be used
+     * @param settings            ask-user-mode quiz settings
+     * @return true if Pyris accepted the pipeline execution, false otherwise
+     */
+    public boolean executeAskUserPipeline(String variant, ProgrammingSubmission latestSubmission, ProgrammingExercise programmingExercise, IrisChatSession session,
+            Optional<String> event, IrisAskUserModeSettings settings) {
+        var user = userRepository.findByIdElseThrow(session.getUserId());
+        var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        var jobToken = pyrisJobService.addAskUserChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId);
+
+        // @formatter:off
+        return executePipeline(
+            "ask-user",
+            user.getSelectedLLMUsage(),
+            variant,
+            "",
+            event,
+            jobToken,
+            executionDto -> new PyrisAskUserPipelineExecutionDTO(
+                IrisChatMode.PROGRAMMING_EXERCISE_CHAT,
+                pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
+                executionDto.settings(),
+                session.getTitle(),
+                pyrisDTOService.toPyrisUserDTOJustLangKey(user),
+                new PyrisCourseDTO(course),
+                pyrisDTOService.toPyrisProgrammingExerciseDTOWithoutSolutionAndTests(programmingExercise),
+                pyrisDTOService.toPyrisSubmissionDTO(latestSubmission),
+                settings.minQuestions(),
+                settings.maxQuestions(),
+                session.getQuestionsAsked()
+                ),
+            (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, quizErrorIfFailedDuringActiveQuiz(runState, error, session),
+                    event.orElse(null))
+        );
+        // @formatter:on
+    }
+
+    private PyrisStatusErrorDTO quizErrorIfFailedDuringActiveQuiz(PyrisRunState runState, PyrisStatusErrorDTO error, IrisChatSession session) {
+        return runState == PyrisRunState.FAILED && session.isInAskUserModePipeline() ? new PyrisStatusErrorDTO(ASK_USER_QUIZ_FAILED_ERROR_KEY, null) : error;
     }
 
     /**

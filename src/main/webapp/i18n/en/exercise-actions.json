@@ -78,6 +78,19 @@
             "mode": {
                 "practice": "Practice",
                 "graded": "Graded"
+            },
+            "askUser": {
+                "start": "Assess understanding",
+                "currently": "Quiz active",
+                "finished": "Quiz completed",
+                "noSubmission": "No submission"
+            },
+            "reviewIrisAssessment": {
+                "suspicious": "Suspicious",
+                "unsuspicious": "Unsuspicious",
+                "missing": "Missing assessment",
+                "accepted": "Accepted",
+                "rejected": "Rejected"
             }
         }
     }

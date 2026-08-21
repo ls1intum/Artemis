@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
         @JsonSubTypes.Type(value = IrisTextMessageContent.class, name = "text"),
         @JsonSubTypes.Type(value = IrisJsonMessageContent.class, name = "json"),
 })
-// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisMessageContent extends DomainObject {
 

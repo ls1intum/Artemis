@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisBuildLogEntryDTO;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -57,6 +59,31 @@ public class PyrisDTOService {
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
                 testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
+    }
+
+    /**
+     * Helper method to convert a ProgrammingExercise to a PyrisProgrammingExerciseDTO.
+     * This notably includes fetching the contents of the template, if they exist.
+     *
+     * @param exercise the programming exercise to convert
+     * @return the converted PyrisProgrammingExerciseDTO
+     */
+    public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseDTOWithoutSolutionAndTests(ProgrammingExercise exercise) {
+
+        Map<String, String> testsRepositoryContents = getRepositoryContents(exercise.getVcsTestRepositoryUri());
+
+        return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), null, null, testsRepositoryContents,
+                exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
+    }
+
+    /**
+     * Helper method to convert a User to a PyrisUserDTO.
+     *
+     * @param user the students
+     * @return the converted PyrisUserDTO
+     */
+    public PyrisUserDTO toPyrisUserDTOJustLangKey(User user) {
+        return new PyrisUserDTO(user.getId(), null, null, false, user.getLangKey());
     }
 
     /**

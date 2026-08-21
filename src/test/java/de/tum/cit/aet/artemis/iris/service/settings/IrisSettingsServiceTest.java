@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.settings;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
@@ -8,11 +9,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisAskUserModeSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
@@ -38,6 +41,8 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         var settings = irisSettingsService.getSettingsForCourse(course);
 
         assertThat(settings.enabled()).isTrue();
+        assertThat(settings.askUserModeEnabled()).isTrue();
+        assertThat(settings.askUserModeSettings()).isEqualTo(IrisAskUserModeSettings.defaultSettings());
         assertThat(settings.customInstructions()).isNull();
         assertThat(settings.variant()).isEqualTo(IrisPipelineVariant.DEFAULT);
         assertThat(settings.rateLimit()).isNull();
@@ -46,12 +51,15 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     @Test
     void getSettingsForCourse_returnsStoredSettings() {
         var customRateLimit = new IrisRateLimitConfiguration(12, 6);
-        var payload = IrisCourseSettings.of(false, "stored", IrisPipelineVariant.ADVANCED, IrisSupportLevel.MODERATE, customRateLimit);
+        var askUserModeSettings = new IrisAskUserModeSettings(2, 6, 40, 20);
+        var payload = IrisCourseSettings.of(false, false, askUserModeSettings, "stored", IrisPipelineVariant.ADVANCED, IrisSupportLevel.MODERATE, customRateLimit);
         irisSettingsService.updateCourseSettings(course.getId(), payload, true);
 
         var settings = irisSettingsService.getSettingsForCourse(course.getId());
 
         assertThat(settings.enabled()).isFalse();
+        assertThat(settings.askUserModeEnabled()).isFalse();
+        assertThat(settings.askUserModeSettings()).isEqualTo(askUserModeSettings);
         assertThat(settings.customInstructions()).isEqualTo("stored");
         assertThat(settings.variant()).isEqualTo(IrisPipelineVariant.ADVANCED);
         assertThat(settings.rateLimit()).isEqualTo(customRateLimit);
@@ -248,16 +256,234 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    void sanitizePayload_preservesAskUserModeEnabled() {
+        var payload = IrisCourseSettings.of(true, false, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        var sanitized = irisSettingsService.sanitizePayload(payload);
+
+        assertThat(sanitized.askUserModeEnabled()).isFalse();
+    }
+
+    @Test
+    void sanitizePayload_preservesAskUserModeSettings() {
+        var askUserModeSettings = new IrisAskUserModeSettings(2, 7, 45, 20);
+        var payload = IrisCourseSettings.of(true, true, askUserModeSettings, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        var sanitized = irisSettingsService.sanitizePayload(payload);
+
+        assertThat(sanitized.askUserModeSettings()).isEqualTo(askUserModeSettings);
+    }
+
+    @Test
+    void sanitizePayload_rejectsAskUserModeMinQuestionsGreaterThanMaxQuestions() {
+        var askUserModeSettings = new IrisAskUserModeSettings(7, 2, 45, 20);
+        var payload = IrisCourseSettings.of(true, true, askUserModeSettings, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        assertThatThrownBy(() -> irisSettingsService.sanitizePayload(payload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Minimum questions must not exceed maximum questions");
+    }
+
+    @Test
+    void updateCourseSettings_asInstructor_canChangeAskUserModeSettings() {
+        enableIrisFor(course);
+        var current = irisSettingsService.getSettingsForCourse(course.getId());
+        var askUserModeSettings = new IrisAskUserModeSettings(2, 6, 45, 20);
+        var payload = IrisCourseSettings.of(current.enabled(), current.askUserModeEnabled(), askUserModeSettings, current.customInstructions(), current.variant(),
+                current.supportLevel(), current.rateLimit());
+
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), payload, false);
+
+        assertThat(dto.settings().askUserModeSettings()).isEqualTo(askUserModeSettings);
+        assertThat(irisSettingsService.getSettingsForCourse(course.getId()).askUserModeSettings()).isEqualTo(askUserModeSettings);
+    }
+
+    @Test
+    void updateCourseSettings_asInstructor_canChangeAskUserModeEnabled() {
+        enableIrisFor(course);
+        var current = irisSettingsService.getSettingsForCourse(course.getId());
+        var payload = IrisCourseSettings.of(current.enabled(), false, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit());
+
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), payload, false);
+
+        assertThat(dto.settings().askUserModeEnabled()).isFalse();
+        assertThat(irisSettingsService.getSettingsForCourse(course.getId()).askUserModeEnabled()).isFalse();
+    }
+
+    @Test
     void updateCourseSettings_asInstructor_canChangeSupportLevel() {
         enableIrisFor(course);
         var current = irisSettingsService.getSettingsForCourse(course.getId());
-        var payload = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), IrisSupportLevel.LOW, current.rateLimit());
+        var payload = IrisCourseSettings.of(current.enabled(), current.askUserModeEnabled(), current.customInstructions(), current.variant(), IrisSupportLevel.LOW,
+                current.rateLimit());
 
         // isAdmin = false: support level is intentionally instructor-editable, so this must not throw
         var dto = irisSettingsService.updateCourseSettings(course.getId(), payload, false);
 
         assertThat(dto.settings().supportLevel()).isEqualTo(IrisSupportLevel.LOW);
         assertThat(irisSettingsService.getSettingsForCourse(course.getId()).supportLevel()).isEqualTo(IrisSupportLevel.LOW);
+    }
+
+    @Test
+    void getSettingsForExercise_returnsCourseLevelSettings() {
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        configureCourseSettings(course, "exercise instructions", IrisPipelineVariant.ADVANCED);
+
+        var settings = irisSettingsService.getSettingsForExercise(exercise);
+
+        assertThat(settings.customInstructions()).isEqualTo("exercise instructions");
+        assertThat(settings.variant()).isEqualTo(IrisPipelineVariant.ADVANCED);
+    }
+
+    @Test
+    void getSettingsForExercise_throwsOnNullExercise() {
+        assertThatThrownBy(() -> irisSettingsService.getSettingsForExercise(null)).isInstanceOf(NullPointerException.class).hasMessageContaining("exercise must not be null");
+    }
+
+    @Test
+    void isExerciseChatEnabledForExercise_reflectsCourseLevelEnabledFlag() {
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
+        assertThat(irisSettingsService.isExerciseChatEnabledForExercise(exercise)).isTrue();
+
+        disableIrisFor(course);
+
+        assertThat(irisSettingsService.isExerciseChatEnabledForExercise(exercise)).isFalse();
+    }
+
+    @Test
+    void isAskUserModeEnabledForExercise_requiresBothIrisAndAskUserModeEnabled() {
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
+        assertThat(irisSettingsService.isAskUserModeEnabledForExercise(exercise)).isTrue();
+
+        var current = irisSettingsService.getSettingsForCourse(course.getId());
+        irisSettingsService.updateCourseSettings(course.getId(),
+                IrisCourseSettings.of(current.enabled(), false, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit()), true);
+
+        assertThat(irisSettingsService.isAskUserModeEnabledForExercise(exercise)).isFalse();
+    }
+
+    @Test
+    void isAskUserModeEnabledForExercise_isFalseWhenIrisDisabledEvenIfAskUserModeEnabled() {
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        disableIrisFor(course);
+
+        assertThat(irisSettingsService.isAskUserModeEnabledForExercise(exercise)).isFalse();
+    }
+
+    @Test
+    void ensureExerciseChatEnabledForExerciseOrElseThrow_doesNotThrowWhenEnabled() {
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
+        assertThatCode(() -> irisSettingsService.ensureExerciseChatEnabledForExerciseOrElseThrow(exercise)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void ensureExerciseChatEnabledForExerciseOrElseThrow_throwsWhenDisabled() {
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        disableIrisFor(course);
+
+        assertThatThrownBy(() -> irisSettingsService.ensureExerciseChatEnabledForExerciseOrElseThrow(exercise)).isInstanceOf(AccessForbiddenAlertException.class)
+                .hasMessageContaining("Iris is disabled for exercise " + exercise.getId());
+    }
+
+    @Test
+    void ensureAskUserModeEnabledForExerciseOrElseThrow_doesNotThrowWhenEnabled() {
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
+        assertThatCode(() -> irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void ensureAskUserModeEnabledForExerciseOrElseThrow_throwsWhenAskUserModeDisabled() {
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        var current = irisSettingsService.getSettingsForCourse(course.getId());
+        irisSettingsService.updateCourseSettings(course.getId(),
+                IrisCourseSettings.of(current.enabled(), false, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit()), true);
+
+        assertThatThrownBy(() -> irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise)).isInstanceOf(AccessForbiddenAlertException.class)
+                .hasMessageContaining("Iris ask-user mode is disabled for exercise " + exercise.getId());
+    }
+
+    @Test
+    void sanitizePayload_rejectsAskUserModeMinQuestionsBelowOne() {
+        var askUserModeSettings = new IrisAskUserModeSettings(0, 5, 45, 20);
+        var payload = IrisCourseSettings.of(true, true, askUserModeSettings, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        assertThatThrownBy(() -> irisSettingsService.sanitizePayload(payload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Ask-user mode question limits must be greater than 0");
+    }
+
+    @Test
+    void sanitizePayload_rejectsAskUserModeMaxQuestionsBelowOne() {
+        var askUserModeSettings = new IrisAskUserModeSettings(1, 0, 45, 20);
+        var payload = IrisCourseSettings.of(true, true, askUserModeSettings, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        assertThatThrownBy(() -> irisSettingsService.sanitizePayload(payload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Ask-user mode question limits must be greater than 0");
+    }
+
+    @Test
+    void sanitizePayload_rejectsAskUserModeMinQuestionsAboveLimit() {
+        var askUserModeSettings = new IrisAskUserModeSettings(11, 11, 45, 20);
+        var payload = IrisCourseSettings.of(true, true, askUserModeSettings, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        assertThatThrownBy(() -> irisSettingsService.sanitizePayload(payload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Ask-user mode question limits are too high");
+    }
+
+    @Test
+    void sanitizePayload_rejectsAskUserModeMaxQuestionsAboveLimit() {
+        var askUserModeSettings = new IrisAskUserModeSettings(1, 11, 45, 20);
+        var payload = IrisCourseSettings.of(true, true, askUserModeSettings, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        assertThatThrownBy(() -> irisSettingsService.sanitizePayload(payload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Ask-user mode question limits are too high");
+    }
+
+    @Test
+    void sanitizePayload_rejectsAskUserModeQuestionTimeLimitBelowOne() {
+        var askUserModeSettings = new IrisAskUserModeSettings(1, 5, 0, 20);
+        var payload = IrisCourseSettings.of(true, true, askUserModeSettings, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        assertThatThrownBy(() -> irisSettingsService.sanitizePayload(payload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Ask-user mode question time limit is invalid");
+    }
+
+    @Test
+    void sanitizePayload_rejectsAskUserModeQuestionTimeLimitAboveMax() {
+        var askUserModeSettings = new IrisAskUserModeSettings(1, 5, 181, 20);
+        var payload = IrisCourseSettings.of(true, true, askUserModeSettings, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        assertThatThrownBy(() -> irisSettingsService.sanitizePayload(payload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Ask-user mode question time limit is invalid");
+    }
+
+    @Test
+    void sanitizePayload_rejectsAskUserModeInClassTimeLimitBelowOne() {
+        var askUserModeSettings = new IrisAskUserModeSettings(1, 5, 45, 0);
+        var payload = IrisCourseSettings.of(true, true, askUserModeSettings, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        assertThatThrownBy(() -> irisSettingsService.sanitizePayload(payload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Ask-user mode in-class quiz time limit is invalid");
+    }
+
+    @Test
+    void sanitizePayload_rejectsAskUserModeInClassTimeLimitAboveMax() {
+        var askUserModeSettings = new IrisAskUserModeSettings(1, 5, 45, 31);
+        var payload = IrisCourseSettings.of(true, true, askUserModeSettings, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        assertThatThrownBy(() -> irisSettingsService.sanitizePayload(payload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Ask-user mode in-class quiz time limit is invalid");
+    }
+
+    @Test
+    void sanitizePayload_defaultsAskUserModeSettingsWhenNull() {
+        var payload = IrisCourseSettings.of(true, true, null, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        var sanitized = irisSettingsService.sanitizePayload(payload);
+
+        assertThat(sanitized.askUserModeSettings()).isEqualTo(IrisAskUserModeSettings.defaultSettings());
     }
 
     @Test
@@ -355,6 +581,8 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         var settings = irisSettingsService.getSettingsForCourseOrThrow(course.getId());
 
         assertThat(settings.enabled()).isTrue();
+        assertThat(settings.askUserModeEnabled()).isTrue();
+        assertThat(settings.askUserModeSettings()).isEqualTo(IrisAskUserModeSettings.defaultSettings());
         assertThat(settings.customInstructions()).isNull();
         assertThat(settings.variant()).isEqualTo(IrisPipelineVariant.DEFAULT);
         assertThat(settings.rateLimit()).isNull();

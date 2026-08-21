@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, PROFILE_LTI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Subscription } from 'rxjs';
+import { Subscription, catchError, combineLatest, of, startWith, switchMap } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
@@ -25,7 +25,7 @@ import {
     faTimes,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -36,10 +36,10 @@ import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-cha
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
 import { QuickActionsComponent } from 'app/course/manage/quick-actions/quick-actions.component';
 import { ControlCenterComponent } from 'app/course/manage/control-center/control-center.component';
+import { IrisAssessmentAttentionCenterComponent } from 'app/course/manage/iris-assessment-attention-center/iris-assessment-attention-center.component';
 import { OnboardingExploreComponent } from 'app/course/manage/onboarding/pages/onboarding-explore.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -62,12 +62,13 @@ export enum DoughnutChartType {
         DetailOverviewListComponent,
         QuickActionsComponent,
         ControlCenterComponent,
+        IrisAssessmentAttentionCenterComponent,
         OnboardingExploreComponent,
         FaIconComponent,
         TranslateDirective,
     ],
 })
-export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
+export class CourseDetailComponent implements OnInit, OnDestroy {
     protected readonly DoughnutChartType = DoughnutChartType;
     protected readonly FeatureToggle = FeatureToggle;
 
@@ -89,98 +90,99 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     private organizationService = inject(OrganizationManagementService);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
-    private profileService = inject(ProfileService);
+    private readonly profileService = inject(ProfileService);
     private accountService = inject(AccountService);
-    private irisSettingsService = inject(IrisSettingsService);
-    private router = inject(Router);
+    private readonly irisSettingsService = inject(IrisSettingsService);
     private markdownService = inject(ArtemisMarkdownService);
-    private destroyRef = inject(DestroyRef);
-
-    private readonly exploreSection = viewChild<ElementRef>('exploreSection');
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     readonly courseDTO = signal<CourseManagementDetailViewDto | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
-    readonly fromOnboarding = signal(false);
 
     readonly courseDetailSections = signal<DetailOverviewSection[]>([]);
 
     readonly messagingEnabled = signal(false);
     readonly communicationEnabled = signal(false);
-    readonly irisEnabled = signal(false);
-    readonly irisChatEnabled = signal(false);
+
+    readonly irisEnabled = signal(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
+
+    // Keep the settings reactive so the assessment attention box updates after changes in the control center.
+    private readonly irisSettings = toSignal(
+        combineLatest([toObservable(this.course), this.irisSettingsService.refresh$.pipe(startWith(undefined))]).pipe(
+            switchMap(([course]) => {
+                if (!this.irisEnabled() || !course?.isAtLeastTutor || course.id === undefined) {
+                    return of(undefined);
+                }
+
+                return this.irisSettingsService.getCourseSettingsWithRateLimit(course.id).pipe(
+                    catchError((error: HttpErrorResponse) => {
+                        onError(this.alertService, error);
+                        return of(undefined);
+                    }),
+                );
+            }),
+        ),
+        { initialValue: undefined },
+    );
+
+    private readonly askUserModeFeatureEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.AskUserMode), { initialValue: false });
+
+    readonly irisChatEnabled = computed(() => this.irisSettings()?.settings?.enabled ?? false);
+    readonly irisAskUserModeEnabled = computed(() => this.askUserModeFeatureEnabled() && (this.irisSettings()?.settings?.askUserModeEnabled ?? false));
+
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
     readonly isHyperionEnabled = signal(false);
     readonly isAtlasEnabled = signal(false);
+    readonly fromOnboarding = signal(false);
 
     readonly isAdmin = signal(false);
 
     private eventSubscription?: Subscription;
-    private paramSub?: Subscription;
+    paramSub?: Subscription;
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
      */
-    ngOnInit() {
-        this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
+    async ngOnInit() {
+        this.ltiEnabled.set(this.profileService.isProfileActive(PROFILE_LTI));
         this.isAthenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
         this.isHyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
         this.isAtlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
-        this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
+        this.fromOnboarding.set(this.route.snapshot.queryParamMap.get('fromOnboarding') === 'true');
 
-        this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            if (params['fromOnboarding'] === 'true') {
-                this.fromOnboarding.set(true);
-                void this.router.navigate([], { queryParams: {}, replaceUrl: true });
-            }
-        });
-
-        this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ course }) => {
+        this.route.data.subscribe(({ course }) => {
             if (course) {
-                if (course.onboardingDone !== true && course.isAtLeastInstructor && !this.accountService.isAdmin()) {
-                    void this.router.navigate(['/course-management', course.id, 'onboarding'], { replaceUrl: true });
-                    return;
-                }
-                this.course.set(course);
-                this.messagingEnabled.set(!!course.courseInformationSharingConfiguration?.includes('MESSAGING'));
-                this.communicationEnabled.set(!!course.courseInformationSharingConfiguration?.includes('COMMUNICATION'));
-                this.fetchOrganizations(course.id);
-                this.fetchIrisSettings(course);
+                this.setCourse(course);
             }
             this.isAdmin.set(this.accountService.isAdmin());
             this.getCourseDetailSections();
         });
         this.paramSub = this.route.params.subscribe((params) => {
-            const courseId = params['courseId'];
-            this.fetchCourseStatistics(courseId);
-            this.registerChangeInCourses(courseId);
+            const courseId = Number(params['courseId']);
+            if (!Number.isNaN(courseId)) {
+                this.fetchCourseStatistics(courseId);
+                this.registerChangeInCourses(courseId);
+            }
         });
     }
 
-    ngAfterViewInit() {
-        if (this.fromOnboarding()) {
-            setTimeout(() => {
-                this.exploreSection()?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
-        }
-    }
-
     getGeneralDetailSection(): DetailOverviewSection {
-        const currentCourse = this.course();
+        const course = this.requireCourse();
         const generalDetails: Detail[] = [
-            { type: DetailType.Text, title: 'artemisApp.course.title', data: { text: currentCourse?.title } },
-            { type: DetailType.Text, title: 'artemisApp.course.shortName', data: { text: currentCourse?.shortName } },
-            { type: DetailType.Date, title: 'artemisApp.course.startDate', data: { date: currentCourse?.startDate } },
-            { type: DetailType.Date, title: 'artemisApp.course.endDate', data: { date: currentCourse?.endDate } },
-            { type: DetailType.Text, title: 'artemisApp.course.semester', data: { text: currentCourse?.semester } },
+            { type: DetailType.Text, title: 'artemisApp.course.title', data: { text: course.title } },
+            { type: DetailType.Text, title: 'artemisApp.course.shortName', data: { text: course.shortName } },
+            { type: DetailType.Date, title: 'artemisApp.course.startDate', data: { date: course.startDate } },
+            { type: DetailType.Date, title: 'artemisApp.course.endDate', data: { date: course.endDate } },
+            { type: DetailType.Text, title: 'artemisApp.course.semester', data: { text: course.semester } },
         ];
 
-        if (currentCourse?.organizations?.length) {
+        if (course.organizations?.length) {
             // insert detail after shortName
             generalDetails.splice(2, 0, {
                 type: DetailType.Text,
                 title: 'artemisApp.course.organizations',
-                data: { text: currentCourse.organizations.map((orga) => orga.name).join(', ') },
+                data: { text: course.organizations.map((orga) => orga.name).join(', ') },
             });
         }
         return {
@@ -190,33 +192,33 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     getComplaintsDetails(): Detail[] {
-        const currentCourse = this.course();
-        if (currentCourse?.complaintsEnabled) {
+        const course = this.requireCourse();
+        if (course.complaintsEnabled) {
             return [
                 {
                     type: DetailType.Text,
                     title: 'artemisApp.course.maxComplaints.title',
-                    data: { text: currentCourse.maxComplaints },
+                    data: { text: course.maxComplaints },
                 },
                 {
                     type: DetailType.Text,
                     title: 'artemisApp.course.maxTeamComplaints.title',
-                    data: { text: currentCourse.maxTeamComplaints },
+                    data: { text: course.maxTeamComplaints },
                 },
                 {
                     type: DetailType.Text,
                     title: 'artemisApp.course.maxComplaintTimeDays.title',
-                    data: { text: currentCourse.maxComplaintTimeDays },
+                    data: { text: course.maxComplaintTimeDays },
                 },
                 {
                     type: DetailType.Text,
                     title: 'artemisApp.course.maxComplaintTextLimit.title',
-                    data: { text: currentCourse.maxComplaintTextLimit },
+                    data: { text: course.maxComplaintTextLimit },
                 },
                 {
                     type: DetailType.Text,
                     title: 'artemisApp.course.maxComplaintResponseTextLimit.title',
-                    data: { text: currentCourse.maxComplaintResponseTextLimit },
+                    data: { text: course.maxComplaintResponseTextLimit },
                 },
             ];
         }
@@ -224,20 +226,20 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     getAthenaDetails(): Detail[] {
-        const currentCourse = this.course();
+        const course = this.requireCourse();
         const athenaDetails: Detail[] = [];
         if (this.isAthenaEnabled()) {
             athenaDetails.push({
                 type: DetailType.Boolean,
                 title: 'artemisApp.course.restrictedAthenaModulesAccess.label',
-                data: { boolean: currentCourse?.restrictedAthenaModulesAccess },
+                data: { boolean: course.restrictedAthenaModulesAccess },
             });
         }
         return athenaDetails;
     }
 
     getModeDetailSection(): DetailOverviewSection {
-        const currentCourse = this.course();
+        const course = this.requireCourse();
         const complaintsDetails = this.getComplaintsDetails();
         const athenaDetails = this.getAthenaDetails();
 
@@ -246,42 +248,42 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
                 type: DetailType.Text,
                 title: 'artemisApp.course.maxPoints.title',
                 titleHelpText: 'artemisApp.course.maxPoints.info',
-                data: { text: currentCourse?.maxPoints },
+                data: { text: course.maxPoints },
             },
             {
                 type: DetailType.Text,
                 title: 'artemisApp.course.accuracyOfScores.title',
                 titleHelpText: 'artemisApp.course.accuracyOfScores.info',
-                data: { text: currentCourse?.accuracyOfScores },
+                data: { text: course.accuracyOfScores },
             },
             {
                 type: DetailType.Text,
                 title: 'artemisApp.course.defaultProgrammingLanguage',
-                data: { text: currentCourse?.defaultProgrammingLanguage },
+                data: { text: course.defaultProgrammingLanguage },
             },
             {
                 type: DetailType.Boolean,
                 title: 'artemisApp.course.testCourse.title',
-                data: { boolean: currentCourse?.testCourse },
+                data: { boolean: course.testCourse },
             },
             ...complaintsDetails,
             ...athenaDetails,
         ];
 
         // inserting optional details in reversed order, so that no index calculation is needed
-        if (currentCourse?.requestMoreFeedbackEnabled) {
+        if (course.requestMoreFeedbackEnabled) {
             // insert detail after the complaintDetails
             details.splice(4 + complaintsDetails.length, 0, {
                 type: DetailType.Text,
                 title: 'artemisApp.course.maxRequestMoreFeedbackTimeDays.title',
-                data: { text: currentCourse.maxRequestMoreFeedbackTimeDays },
+                data: { text: course.maxRequestMoreFeedbackTimeDays },
             });
         }
 
         details.splice(4, 0, {
             type: DetailType.Text,
             title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
-            data: { text: currentCourse?.timeZone },
+            data: { text: course.timeZone },
         });
 
         if (this.ltiEnabled()) {
@@ -289,7 +291,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
             details.splice(4, 0, {
                 type: DetailType.Boolean,
                 title: 'artemisApp.course.onlineCourse.title',
-                data: { boolean: currentCourse?.onlineCourse },
+                data: { boolean: course.onlineCourse },
             });
         }
 
@@ -300,30 +302,30 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     getEnrollmentDetailSection(): DetailOverviewSection {
-        const currentCourse = this.course();
+        const course = this.requireCourse();
         const enrollmentDetails: Detail[] = [
-            { type: DetailType.Boolean, title: 'artemisApp.course.enrollmentEnabled.title', data: { boolean: currentCourse?.enrollmentEnabled } },
-            { type: DetailType.Boolean, title: 'artemisApp.course.unenrollmentEnabled.title', data: { boolean: currentCourse?.unenrollmentEnabled } },
+            { type: DetailType.Boolean, title: 'artemisApp.course.enrollmentEnabled.title', data: { boolean: course.enrollmentEnabled } },
+            { type: DetailType.Boolean, title: 'artemisApp.course.unenrollmentEnabled.title', data: { boolean: course.unenrollmentEnabled } },
         ];
 
-        if (currentCourse?.enrollmentEnabled) {
+        if (course.enrollmentEnabled) {
             // insert enrollment details after enrollmentEnabled detail
             enrollmentDetails.splice(
                 1,
                 0,
-                { type: DetailType.Date, title: 'artemisApp.course.enrollmentStartDate', data: { date: currentCourse.enrollmentStartDate } },
-                { type: DetailType.Date, title: 'artemisApp.course.enrollmentEndDate', data: { date: currentCourse.enrollmentEndDate } },
+                { type: DetailType.Date, title: 'artemisApp.course.enrollmentStartDate', data: { date: course.enrollmentStartDate } },
+                { type: DetailType.Date, title: 'artemisApp.course.enrollmentEndDate', data: { date: course.enrollmentEndDate } },
                 {
                     type: DetailType.Markdown,
                     title: 'artemisApp.course.enrollmentConfirmationMessage',
-                    data: { innerHtml: this.markdownService.safeHtmlForMarkdown(currentCourse.enrollmentConfirmationMessage) },
+                    data: { innerHtml: this.markdownService.safeHtmlForMarkdown(course.enrollmentConfirmationMessage) },
                 },
             );
         }
 
-        if (currentCourse?.unenrollmentEnabled) {
+        if (course.unenrollmentEnabled) {
             // insert unenrollment detail after unenrollmentEnabled detail
-            enrollmentDetails.push({ type: DetailType.Date, title: 'artemisApp.course.unenrollmentEndDate', data: { date: currentCourse.unenrollmentEndDate } });
+            enrollmentDetails.push({ type: DetailType.Date, title: 'artemisApp.course.unenrollmentEndDate', data: { date: course.unenrollmentEndDate } });
         }
         return {
             headline: 'artemisApp.course.detail.sections.enrollment',
@@ -332,7 +334,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     getMessagingDetailSection(): DetailOverviewSection {
-        const currentCourse = this.course();
+        const course = this.requireCourse();
         return {
             headline: 'artemisApp.course.detail.sections.messaging',
             details: [
@@ -341,13 +343,17 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
                 {
                     type: DetailType.Markdown,
                     title: 'artemisApp.course.courseCommunicationSetting.messagingEnabled.codeOfConduct',
-                    data: { innerHtml: this.markdownService.safeHtmlForMarkdown(currentCourse?.courseInformationSharingMessagingCodeOfConduct) },
+                    data: { innerHtml: this.markdownService.safeHtmlForMarkdown(course.courseInformationSharingMessagingCodeOfConduct) },
                 },
             ],
         };
     }
 
     getCourseDetailSections() {
+        if (!this.course()) {
+            this.courseDetailSections.set([]);
+            return;
+        }
         const generalSection = this.getGeneralDetailSection();
         const modeSection = this.getModeDetailSection();
         const enrollmentSection = this.getEnrollmentDetailSection();
@@ -359,12 +365,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
      * Subscribe to changes in courses and reload the course after a change.
      */
     registerChangeInCourses(courseId: number) {
-        if (this.eventSubscription) {
-            this.eventManager.destroy(this.eventSubscription);
-        }
         this.eventSubscription = this.eventManager.subscribe('courseListModification', () => {
             this.courseManagementService.find(courseId).subscribe((courseResponse) => {
-                this.course.set(courseResponse.body!);
+                this.setCourse(courseResponse.body!);
                 this.getCourseDetailSections();
             });
             this.fetchCourseStatistics(courseId);
@@ -379,7 +382,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
             this.paramSub.unsubscribe();
         }
         if (this.eventSubscription) {
-            this.eventManager?.destroy(this.eventSubscription);
+            this.eventManager.destroy(this.eventSubscription);
         }
     }
 
@@ -395,21 +398,40 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         });
     }
 
-    private fetchIrisSettings(course: Course) {
-        if (this.irisEnabled() && course.isAtLeastInstructor) {
-            this.irisSettingsService.getCourseSettingsWithRateLimit(course.id!).subscribe((irisSettings) => {
-                this.irisChatEnabled.set(irisSettings?.settings?.enabled ?? false);
-            });
+    private fetchOrganizations(courseId: number) {
+        this.organizationService.getOrganizationsByCourse(courseId).subscribe((organizations) => {
+            const course = this.course();
+            if (!course) {
+                return;
+            }
+            this.course.set({ ...course, organizations });
+            this.getCourseDetailSections();
+        });
+    }
+
+    /**
+     * Sets the given course as the current course, derives the messaging/communication flags from it,
+     * and triggers loading its organizations.
+     * @param course The course to set as the current course
+     */
+    private setCourse(course: Course) {
+        this.course.set(course);
+        this.messagingEnabled.set(!!course.courseInformationSharingConfiguration?.includes('MESSAGING'));
+        this.communicationEnabled.set(!!course.courseInformationSharingConfiguration?.includes('COMMUNICATION'));
+        if (course.id !== undefined) {
+            this.fetchOrganizations(course.id);
         }
     }
 
-    private fetchOrganizations(courseId: number) {
-        this.organizationService.getOrganizationsByCourse(courseId).subscribe((organizations) => {
-            const currentCourse = this.course();
-            if (currentCourse) {
-                this.course.set(hydrate(new Course(), currentCourse, { organizations }));
-                this.getCourseDetailSections();
-            }
-        });
+    /**
+     * Returns the currently loaded course, throwing if it has not been loaded yet.
+     * @returns The currently loaded course
+     */
+    private requireCourse(): Course {
+        const course = this.course();
+        if (!course) {
+            throw new Error('Course detail sections cannot be created before the course is loaded.');
+        }
+        return course;
     }
 }

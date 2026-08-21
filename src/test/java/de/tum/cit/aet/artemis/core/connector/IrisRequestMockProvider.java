@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.askuser.PyrisAskUserPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
@@ -120,6 +121,10 @@ public class IrisRequestMockProvider {
 
     public void mockProgrammingExerciseChatResponse(Consumer<PyrisChatPipelineExecutionDTO> responseConsumer) {
         mockPostRequest("/chat/run", PyrisChatPipelineExecutionDTO.class, responseConsumer);
+    }
+
+    public void mockAskUserResponse(Consumer<PyrisAskUserPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/ask-user/run", PyrisAskUserPipelineExecutionDTO.class, responseConsumer);
     }
 
     public void mockProgrammingExerciseChatResponseExpectingSubmissionId(Consumer<PyrisChatPipelineExecutionDTO> responseConsumer, long submissionId) {

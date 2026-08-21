@@ -12,7 +12,7 @@ import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/componen
 class ResizeObserverMock {
     static instances: ResizeObserverMock[] = [];
 
-    constructor() {
+    constructor(readonly callback: ResizeObserverCallback) {
         ResizeObserverMock.instances.push(this);
     }
 
@@ -290,6 +290,81 @@ describe('ResizablePanelsComponent', () => {
         createFixture(false, true);
 
         expect(ResizeObserverMock.instances.some((instance) => instance.observe.mock.calls.some(([target]) => target === document.documentElement))).toBe(true);
+    });
+
+    it('flips isNarrow based on the observed width and the collapse breakpoint', () => {
+        const component = createFixture();
+        const hostElement = fixture.debugElement.query(By.css('jhi-resizable-panels')).nativeElement;
+        const observer = ResizeObserverMock.instances.find((instance) => instance.observe.mock.calls.some(([target]) => target === hostElement))!;
+
+        observer.callback([{ contentRect: { width: 500 } } as ResizeObserverEntry], observer as unknown as ResizeObserver);
+        expect(component.isNarrow()).toBe(true);
+
+        observer.callback([{ contentRect: { width: 1000 } } as ResizeObserverEntry], observer as unknown as ResizeObserver);
+        expect(component.isNarrow()).toBe(false);
+    });
+
+    it('setActiveRight updates the active right tab and ignores an undefined value', () => {
+        const component = createFixture();
+
+        component.setActiveRight(1);
+        expect(component.activeRightIndex()).toBe(1);
+
+        component.setActiveRight(undefined);
+        expect(component.activeRightIndex()).toBe(1);
+    });
+
+    it('setActiveSingle updates the active single tab and ignores an undefined value', () => {
+        const component = createFixture();
+        component['_isNarrow'].set(true);
+
+        component.setActiveSingle(2);
+        expect(component.activeSingleIndex()).toBe(2);
+
+        component.setActiveSingle(undefined);
+        expect(component.activeSingleIndex()).toBe(2);
+    });
+
+    describe('activatePanel', () => {
+        it('is a no-op for an out-of-range index', () => {
+            const component = createFixture();
+            const expandSpy = vi.spyOn(component, 'expandRightPanel');
+
+            component.activatePanel(-1);
+            component.activatePanel(3);
+
+            expect(expandSpy).not.toHaveBeenCalled();
+            expect(component.activeSingleIndex()).toBe(0);
+        });
+
+        it('switches the single visible panel in narrow mode instead of touching the split', () => {
+            const component = createFixture();
+            component['_isNarrow'].set(true);
+            const expandSpy = vi.spyOn(component, 'expandRightPanel');
+
+            component.activatePanel(2);
+
+            expect(component.activeSingleIndex()).toBe(2);
+            expect(expandSpy).not.toHaveBeenCalled();
+        });
+
+        it('expands the corresponding right panel in wide mode', () => {
+            const component = createFixture();
+
+            component.activatePanel(2);
+
+            expect(component.isRightPanelCollapsed()).toBe(false);
+            expect(component.activeRightIndex()).toBe(1);
+        });
+
+        it('does nothing for the left panel index in wide mode', () => {
+            const component = createFixture();
+            const expandSpy = vi.spyOn(component, 'expandRightPanel');
+
+            component.activatePanel(0);
+
+            expect(expandSpy).not.toHaveBeenCalled();
+        });
     });
 
     // Regression coverage for #13187: CDK drag-and-drop only auto-scrolls containers registered with the ScrollDispatcher.

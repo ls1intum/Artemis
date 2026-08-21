@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisAskUserModeSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
@@ -43,6 +44,8 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
         assertThat(response).isNotNull();
         assertThat(response.settings().enabled()).isTrue();
+        assertThat(response.settings().askUserModeEnabled()).isTrue();
+        assertThat(response.settings().askUserModeSettings()).isEqualTo(IrisAskUserModeSettings.defaultSettings());
     }
 
     @Test
@@ -118,6 +121,55 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         // Verify persistence
         var saved = irisSettingsService.getSettingsForCourse(course1);
         assertThat(saved.customInstructions()).isEqualTo("Custom instructions for this course");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseSettings_asInstructor_toggleAskUserMode() throws Exception {
+        enableIrisFor(course1);
+
+        var current = irisSettingsService.getSettingsForCourse(course1);
+        var update = IrisCourseSettings.of(current.enabled(), false, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit());
+
+        var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
+
+        assertThat(response).isNotNull();
+        assertThat(response.settings().askUserModeEnabled()).isFalse();
+
+        var saved = irisSettingsService.getSettingsForCourse(course1);
+        assertThat(saved.askUserModeEnabled()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseSettings_asInstructor_updateAskUserModeSettings() throws Exception {
+        enableIrisFor(course1);
+
+        var current = irisSettingsService.getSettingsForCourse(course1);
+        var askUserModeSettings = new IrisAskUserModeSettings(2, 6, 45, 20);
+        var update = IrisCourseSettings.of(current.enabled(), current.askUserModeEnabled(), askUserModeSettings, current.customInstructions(), current.variant(),
+                current.supportLevel(), current.rateLimit());
+
+        var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
+
+        assertThat(response).isNotNull();
+        assertThat(response.settings().askUserModeSettings()).isEqualTo(askUserModeSettings);
+
+        var saved = irisSettingsService.getSettingsForCourse(course1);
+        assertThat(saved.askUserModeSettings()).isEqualTo(askUserModeSettings);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseSettings_asInstructor_rejectsInvalidAskUserModeSettings() throws Exception {
+        enableIrisFor(course1);
+
+        var current = irisSettingsService.getSettingsForCourse(course1);
+        var askUserModeSettings = new IrisAskUserModeSettings(8, 3, 45, 20);
+        var update = IrisCourseSettings.of(current.enabled(), current.askUserModeEnabled(), askUserModeSettings, current.customInstructions(), current.variant(),
+                current.supportLevel(), current.rateLimit());
+
+        request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

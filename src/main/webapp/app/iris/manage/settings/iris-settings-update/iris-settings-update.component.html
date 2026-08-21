@@ -28,7 +28,7 @@
             </p-tablist>
 
             <p-tabpanels>
-                <!-- ── GENERAL TAB ── -->
+                <!-- GENERAL TAB -->
                 <p-tabpanel value="general">
                     <div class="iris-general-panel">
                         <!-- Enable/Disable toggle row (auto-saves) -->
@@ -51,8 +51,126 @@
                         </div>
 
                         @if (settingsValue.enabled) {
-                            <!-- Cards revealed when Iris is enabled — slide/fade in as a group -->
+                            <!-- Cards revealed when Iris is enabled. -->
                             <div class="iris-enabled-cards">
+                                <div class="iris-toggle-row">
+                                    <p-toggleswitch
+                                        inputId="iris-ask-user-mode-toggle"
+                                        [ngModel]="settingsValue.askUserModeEnabled"
+                                        (ngModelChange)="setAskUserModeEnabled($event)"
+                                        [ariaLabel]="
+                                            (settingsValue.askUserModeEnabled ? 'artemisApp.iris.settings.askUserModeEnabled' : 'artemisApp.iris.settings.askUserModeDisabled')
+                                                | artemisTranslate
+                                        "
+                                    />
+                                    <label for="iris-ask-user-mode-toggle">
+                                        @if (settingsValue.askUserModeEnabled) {
+                                            <span jhiTranslate="artemisApp.iris.settings.askUserModeEnabled"></span>
+                                            <small class="iris-card-subtitle block text-muted-color" jhiTranslate="artemisApp.iris.settings.askUserModeEnabledSubtext"></small>
+                                        } @else {
+                                            <span jhiTranslate="artemisApp.iris.settings.askUserModeDisabled"></span>
+                                            <small class="iris-card-subtitle block text-muted-color" jhiTranslate="artemisApp.iris.settings.askUserModeDisabledSubtext"></small>
+                                        }
+                                    </label>
+                                </div>
+
+                                @if (settingsValue.askUserModeEnabled) {
+                                    <div class="iris-card">
+                                        <h6 class="iris-card-title" jhiTranslate="artemisApp.iris.settings.askUserModeSettings.title"></h6>
+                                        <small class="iris-card-subtitle text-muted-color" jhiTranslate="artemisApp.iris.settings.askUserModeSettings.help"></small>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                            <div>
+                                                <label
+                                                    for="askUserModeMinQuestions"
+                                                    class="block mb-1"
+                                                    jhiTranslate="artemisApp.iris.settings.askUserModeSettings.minQuestions"
+                                                ></label>
+                                                <p-inputnumber
+                                                    inputId="askUserModeMinQuestions"
+                                                    [fluid]="true"
+                                                    [ngModel]="settingsValue.askUserModeSettings.minQuestions"
+                                                    (ngModelChange)="updateAskUserModeSetting('minQuestions', $event)"
+                                                    [min]="1"
+                                                    [max]="ASK_USER_MODE_MAX_QUESTIONS"
+                                                    [invalid]="!!askUserModeMinQuestionsError()"
+                                                />
+                                                @if (askUserModeMinQuestionsError(); as error) {
+                                                    <div class="text-state-danger text-sm mt-1">
+                                                        <span [jhiTranslate]="error"></span>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <div>
+                                                <label
+                                                    for="askUserModeMaxQuestions"
+                                                    class="block mb-1"
+                                                    jhiTranslate="artemisApp.iris.settings.askUserModeSettings.maxQuestions"
+                                                ></label>
+                                                <p-inputnumber
+                                                    inputId="askUserModeMaxQuestions"
+                                                    [fluid]="true"
+                                                    [ngModel]="settingsValue.askUserModeSettings.maxQuestions"
+                                                    (ngModelChange)="updateAskUserModeSetting('maxQuestions', $event)"
+                                                    [min]="1"
+                                                    [max]="ASK_USER_MODE_MAX_QUESTIONS"
+                                                    [invalid]="!!askUserModeMaxQuestionsError()"
+                                                />
+                                                @if (askUserModeMaxQuestionsError(); as error) {
+                                                    <div class="text-state-danger text-sm mt-1">
+                                                        <span [jhiTranslate]="error"></span>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <div>
+                                                <label
+                                                    for="askUserModeQuestionTimeLimit"
+                                                    class="block mb-1"
+                                                    jhiTranslate="artemisApp.iris.settings.askUserModeSettings.timeLimitQuestion"
+                                                ></label>
+                                                <p-inputnumber
+                                                    inputId="askUserModeQuestionTimeLimit"
+                                                    [fluid]="true"
+                                                    [ngModel]="settingsValue.askUserModeSettings.timeLimitQuestion"
+                                                    (ngModelChange)="updateAskUserModeSetting('timeLimitQuestion', $event)"
+                                                    [min]="1"
+                                                    [max]="ASK_USER_MODE_QUESTION_TIME_LIMIT_MAX"
+                                                    [invalid]="!!askUserModeQuestionTimeLimitError()"
+                                                />
+                                                @if (askUserModeQuestionTimeLimitError(); as error) {
+                                                    <div class="text-state-danger text-sm mt-1">
+                                                        <span [jhiTranslate]="error"></span>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <div>
+                                                <label
+                                                    for="askUserModeInClassTimeLimit"
+                                                    class="block mb-1"
+                                                    jhiTranslate="artemisApp.iris.settings.askUserModeSettings.timeLimitInClass"
+                                                ></label>
+                                                <p-inputnumber
+                                                    inputId="askUserModeInClassTimeLimit"
+                                                    [fluid]="true"
+                                                    [ngModel]="settingsValue.askUserModeSettings.timeLimitInClass"
+                                                    (ngModelChange)="updateAskUserModeSetting('timeLimitInClass', $event)"
+                                                    [min]="1"
+                                                    [max]="ASK_USER_MODE_IN_CLASS_TIME_LIMIT_MAX"
+                                                    [invalid]="!!askUserModeInClassTimeLimitError()"
+                                                />
+                                                @if (askUserModeInClassTimeLimitError(); as error) {
+                                                    <div class="text-state-danger text-sm mt-1">
+                                                        <span [jhiTranslate]="error"></span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
                                 <!-- Support Level card -->
                                 <div class="iris-card">
                                     <h6 class="iris-card-title" jhiTranslate="artemisApp.iris.settings.supportLevel.title"></h6>
@@ -159,7 +277,7 @@
                                         placeholder="{{ 'artemisApp.iris.settings.additionalGuidelinesPlaceholder' | artemisTranslate }}"
                                     ></textarea>
                                     <div class="flex justify-end">
-                                        <small class="text-sm text-muted-color"> {{ getCustomInstructionsLength() }} / {{ CUSTOM_INSTRUCTIONS_MAX_LENGTH }} </small>
+                                        <small class="text-sm text-muted-color"> {{ customInstructionsLength() }} / {{ CUSTOM_INSTRUCTIONS_MAX_LENGTH }} </small>
                                     </div>
                                 </div>
 
@@ -197,7 +315,7 @@
                     </div>
                 </p-tabpanel>
 
-                <!-- ── ADMIN TAB ── -->
+                <!-- ADMIN TAB -->
                 @if (isAdmin()) {
                     <p-tabpanel value="admin">
                         <div class="admin-section">

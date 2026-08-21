@@ -165,12 +165,12 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         verify(irisMessageService, times(1)).saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.LLM));
         verify(irisChatWebsocketService, times(1)).sendMessage(eq(session), any(IrisMessage.class), eq(PyrisRunState.RUNNING), isNull(), eq("Locked title"), anyList(), eq("run-1"),
-                isNull(), isNull(), isNull());
+                isNull(), isNull(), isNull(), isNull());
         verify(llmTokenUsageService, times(1)).saveLLMTokenUsage(eq(tokens), eq(LLMServiceType.IRIS), any());
         verify(llmTokenUsageService, never()).appendRequestsToTrace(anyList(), any());
 
         verify(irisChatWebsocketService, times(1)).sendStatusUpdate(eq(session), eq("run-1"), eq(PyrisRunState.RUNNING), isNull(), eq("Locked title"), eq(List.of("suggestion")),
-                eq(tokens), isNull(), isNull());
+                eq(tokens), isNull(), isNull(), isNull());
         verify(irisMessageRepository).findById(100L);
         verify(irisMessageRepository).save(savedAssistantMessage);
         assertThat(savedAssistantMessage.getCreatedMemories()).containsExactly(createdMemory);
@@ -210,7 +210,7 @@ class IrisChatSessionServiceStatusUpdateTest {
         assertThat(IrisMessageResponseDTO.of(savedMessage).activities()).containsExactly(activity);
         assertThat(updatedJob.assistantMessageId()).isEqualTo(101L);
         verify(irisChatWebsocketService).sendMessage(eq(session), eq(savedMessage), eq(PyrisRunState.RUNNING), isNull(), isNull(), anyList(), eq("run-1"), eq(List.of(activity)),
-                eq(3), isNull());
+                eq(3), isNull(), isNull());
     }
 
     @Test
@@ -245,6 +245,6 @@ class IrisChatSessionServiceStatusUpdateTest {
         assertThat(IrisMessageResponseDTO.of(savedMessage).finalResult()).isFalse();
 
         verify(irisChatWebsocketService).sendMessage(eq(session), eq(savedMessage), eq(PyrisRunState.RUNNING), isNull(), isNull(), anyList(), eq("run-1"), isNull(), isNull(),
-                eq(false));
+                eq(false), isNull());
     }
 }

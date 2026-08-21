@@ -12,11 +12,21 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { IrisStartInClassQuizButtonComponent } from 'app/iris/overview/ask-user/start-in-class-quiz-button/start-in-class-quiz-button.component';
+import { IrisStartQuizButtonComponent } from 'app/iris/overview/ask-user/start-quiz-button/start-quiz-button.component';
 
 @Component({
     selector: 'jhi-exercise-header',
     templateUrl: './exercise-header.component.html',
-    imports: [FaIconComponent, ExerciseHeadersInformationComponent, ExerciseHeaderActionsComponent, ParticipationModeToggleComponent, CourseSidebarToggleButtonComponent],
+    imports: [
+        FaIconComponent,
+        ExerciseHeadersInformationComponent,
+        ExerciseHeaderActionsComponent,
+        ParticipationModeToggleComponent,
+        CourseSidebarToggleButtonComponent,
+        IrisStartInClassQuizButtonComponent,
+        IrisStartQuizButtonComponent,
+    ],
 })
 export class ExerciseHeaderComponent {
     readonly exercise = input.required<Exercise>();
@@ -32,6 +42,7 @@ export class ExerciseHeaderComponent {
     readonly participationMode = model<ParticipationMode>('graded');
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
+    readonly irisAskUserModeEnabled = input<boolean>(false);
     readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
     readonly quizLiveHeaderInfo = input<QuizLiveHeaderInfo>();
     readonly showSidebarToggle = input<boolean>(false);
@@ -117,4 +128,6 @@ export class ExerciseHeaderComponent {
             this.participationMode.set('practice');
         }
     }
+
+    protected readonly ExerciseType = ExerciseType;
 }

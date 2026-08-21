@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 
@@ -51,6 +52,9 @@ public class IrisMessageService {
         message.setSentAt(ZonedDateTime.now());
         message.setSession(session);
         message.getContent().forEach(content -> content.setMessage(message));
+        if (session instanceof IrisChatSession chatSession) {
+            message.setInAskUserMode(chatSession.isInAskUserModePipeline());
+        }
 
         session.getMessages().add(message);
         // saveAndFlush so the cascaded message has its generated id; the returned managed entity

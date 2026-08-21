@@ -57,6 +57,7 @@ public class IrisResource {
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
         this.pyrisWebhookService = pyrisWebhookService;
+
     }
 
     /**
@@ -102,5 +103,4 @@ public class IrisResource {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
     }
-
 }

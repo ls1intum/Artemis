@@ -1,0 +1,26 @@
+<div class="p-5">
+    <div class="warning">
+        <div>
+            <fa-icon class="text-state-warning mr-1" [icon]="faExclamationTriangle" />
+            <span jhiTranslate="artemisApp.iris.assessmentInClassQuiz.warning.title"></span>
+        </div>
+        <ul class="warning-problem">
+            <li class="warning-problem-element">
+                <span jhiTranslate="artemisApp.iris.assessmentInClassQuiz.warning.message"></span>
+            </li>
+        </ul>
+    </div>
+    <div class="edit-modal-footer-content">
+        <div class="warning"><span jhiTranslate="artemisApp.iris.assessmentInClassQuiz.warning.confirmText"></span></div>
+        <div class="flex items-center gap-2">
+            <button tumUiButton type="button" severity="secondary" id="cancel-button" (click)="cancel()">
+                <fa-icon [icon]="faBan" />
+                <span jhiTranslate="entity.action.cancel"></span>
+            </button>
+            <button tumUiButton type="button" id="start-in-class-quiz-button" (click)="startQuiz()">
+                <fa-icon [icon]="faCheck" />
+                <span jhiTranslate="artemisApp.iris.assessmentInClassQuiz.warning.start"></span>
+            </button>
+        </div>
+    </div>
+</div>

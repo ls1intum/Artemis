@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -34,6 +34,7 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask-user.service';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -61,11 +62,15 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
     ],
 })
 export class ExerciseSplitPanelComponent {
+    private static readonly IRIS_PANEL_LABEL = 'artemisApp.courseOverview.exerciseDetails.iris';
+
     private readonly chatService = inject(IrisChatService);
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly childrenOutletContexts = inject(ChildrenOutletContexts);
+    private readonly askUserService = inject(IrisAskUserService);
+    private readonly resizablePanels = viewChild(ResizablePanelsComponent);
     // Tracks whether a quiz batch is started / the quiz has ended, from the server-provided exercise data.
     // Updated via effect (safe for required inputs) rather than computed (would throw NG0950 during early init).
     private readonly _quizBatchStarted = signal(false);
@@ -77,6 +82,7 @@ export class ExerciseSplitPanelComponent {
     private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
     private quizPracticeParticipationSubscription: { unsubscribe(): void } | undefined;
     private liveQuizResultSubscription: { unsubscribe(): void } | undefined;
+    private handledIrisPanelActivationSequence = 0;
 
     readonly quizSubmitted = output<QuizSubmission>();
     readonly quizPracticeParticipationChanged = output<StudentParticipation>();
@@ -99,6 +105,7 @@ export class ExerciseSplitPanelComponent {
     readonly exercise = input.required<Exercise>();
     readonly studentParticipation = input<StudentParticipation>();
     readonly irisEnabled = input<boolean>(false);
+    readonly irisAskUserModeEnabled = input<boolean>(false);
     readonly courseId = input.required<number>();
     readonly gradedStudentParticipation = input<StudentParticipation>();
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
@@ -107,6 +114,19 @@ export class ExerciseSplitPanelComponent {
     readonly allowComplaintsForAutomaticAssessments = input<boolean>(false);
     readonly exampleSolutionInfo = input<ExampleSolutionInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
+
+    // Ask-user mode data
+    protected readonly quizActive = computed(() => this.askUserService.quizActive());
+    protected readonly quizStarted = computed(() => this.askUserService.quizStarted());
+    protected readonly timerExpiresAt = computed(() => this.askUserService.timerExpiresAt());
+    protected readonly timeLimit = computed(() => this.askUserService.timeLimit());
+    protected readonly showOnlyAskUserModeMessage = computed(() => this.askUserService.showOnlyAskUserModeMessage());
+    /**
+     * Handles expiry of the ask-user mode quiz timer by clearing the associated timer state.
+     */
+    protected handleAskUserTimerExpired() {
+        this.askUserService.clearAskUserTimerState();
+    }
 
     /**
      * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route
@@ -228,6 +248,27 @@ export class ExerciseSplitPanelComponent {
             }
         });
         effect(() => {
+            const request = this.askUserService.irisPanelActivationRequest();
+            const resizablePanels = this.resizablePanels();
+            const panelCount = resizablePanels?.panels().length ?? 0;
+            if (
+                !request ||
+                request.sequence === this.handledIrisPanelActivationSequence ||
+                !resizablePanels ||
+                panelCount === 0 ||
+                this.exercise().id !== request.exerciseId ||
+                !this.showIris()
+            ) {
+                return;
+            }
+
+            untracked(() => {
+                if (this.activateIrisPanel(resizablePanels)) {
+                    this.handledIrisPanelActivationSequence = request.sequence;
+                }
+            });
+        });
+        effect(() => {
             // Depend ONLY on the stable target identity, so object-reference churn (e.g. an incoming result that
             // replaces the participation object but keeps its id) does not re-run this navigation. The imperative
             // navigation runs untracked so it cannot add the exercise/participation objects as dependencies — that
@@ -262,6 +303,21 @@ export class ExerciseSplitPanelComponent {
                 }
             });
         });
+    }
+
+    /**
+     * Activates the Iris panel within the resizable panel group, identified by its label.
+     * @param resizablePanels The resizable panels component containing the Iris panel
+     * @returns Whether the Iris panel was found and activated
+     */
+    private activateIrisPanel(resizablePanels: ResizablePanelsComponent): boolean {
+        const irisPanelIndex = resizablePanels.panels().findIndex((panel) => panel.label() === ExerciseSplitPanelComponent.IRIS_PANEL_LABEL);
+        if (irisPanelIndex < 0) {
+            return false;
+        }
+
+        resizablePanels.activatePanel(irisPanelIndex);
+        return true;
     }
 
     readonly canSubmit = computed(() => {

@@ -176,9 +176,10 @@ public class GitRepositoryExportService {
      * @throws IOException     if IO operations fail
      */
     public InputStreamResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
-        Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
-        byte[] zipData = createInMemoryZipArchive(repository);
-        return createZipInputStreamResource(zipData, filename);
+        try (Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false)) {
+            byte[] zipData = createInMemoryZipArchive(repository);
+            return createZipInputStreamResource(zipData, filename);
+        }
     }
 
     /**
@@ -192,9 +193,10 @@ public class GitRepositoryExportService {
      * @throws IOException if IO operations fail
      */
     public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws IOException {
-        Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
-        byte[] zipData = InMemoryRepositoryBuilder.buildZip(repository);
-        return createZipInputStreamResource(zipData, filename);
+        try (Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false)) {
+            byte[] zipData = InMemoryRepositoryBuilder.buildZip(repository);
+            return createZipInputStreamResource(zipData, filename);
+        }
     }
 
     /**

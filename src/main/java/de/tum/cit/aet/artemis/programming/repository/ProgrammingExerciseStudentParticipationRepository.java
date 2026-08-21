@@ -21,6 +21,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjectionDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
@@ -81,6 +82,31 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
+
+    @EntityGraph(type = LOAD, attributePaths = { "student", "exercise", "irisAssessment" })
+    Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentById(long participationId);
+
+    @EntityGraph(type = LOAD, attributePaths = "irisAssessment")
+    Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
+
+    @EntityGraph(type = LOAD, attributePaths = "irisAssessmentInClass")
+    Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentInClassByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
+
+    /**
+     * Loads the participation with the Iris assessment eagerly fetched, choosing between the regular and the in-class assessment
+     * depending on the {@code inClass} flag.
+     *
+     * @param exerciseId the id of the exercise
+     * @param username   the login of the student
+     * @param inClass    whether the in-class Iris assessment should be loaded instead of the regular one
+     * @param testRun    whether the participation is a test run participation
+     * @return the participation with the corresponding Iris assessment eagerly fetched, if found
+     */
+    default Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean inClass,
+            boolean testRun) {
+        return inClass ? findWithIrisAssessmentInClassByExerciseIdAndStudentLoginAndTestRun(exerciseId, username, testRun)
+                : findWithIrisAssessmentByExerciseIdAndStudentLoginAndTestRun(exerciseId, username, testRun);
+    }
 
     List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
 
@@ -201,6 +227,326 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = "team.students")
     Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);
 
+    /**
+     * Finds the ids of all in-class Iris assessments that belong to participations of the given exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the ids of the in-class Iris assessments linked to participations of the exercise
+     */
+    @Query("""
+            SELECT assessment.id
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN participation.irisAssessmentInClass assessment
+            WHERE participation.exercise.id = :exerciseId
+            """)
+    Set<Long> findIrisAssessmentInClassIdsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Removes the reference to the in-class Iris assessment from all participations of the given exercise, without deleting the assessments themselves.
+     * Used to detach in-class assessments from their participations, e.g. before a new in-class quiz run.
+     *
+     * @param exerciseId the id of the exercise for which the in-class Iris assessment references should be unset
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExerciseStudentParticipation participation
+            SET participation.irisAssessmentInClass = NULL
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.irisAssessmentInClass IS NOT NULL
+            """)
+    void unsetIrisAssessmentInClassByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Finds in-class Iris assessment participation projections for participations whose latest result has a positive score.
+     *
+     * @param exerciseId the exercise id
+     * @return matching participation projections
+     */
+    default Set<IrisAssessmentProgrammingStudentParticipationProjectionDTO> findAllNonPracticeIrisAssessmentInClassParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
+            long exerciseId) {
+        var participationIds = findParticipationIdsWithLatestResultScoreGreaterThanZeroAndNotPractice(exerciseId);
+        if (participationIds.isEmpty()) {
+            return Set.of();
+        }
+        return findAllIrisAssessmentInClassParticipationProjectionsByIdIn(participationIds);
+    }
+
+    /**
+     * Resolves the ids of non-practice participations of the given exercise whose latest submission's latest result has a positive score.
+     * Chains three queries (latest submission ids, latest result ids, participation ids), short-circuiting with an empty set as soon as one step yields no results.
+     *
+     * @param exerciseId the exercise id
+     * @return the ids of the matching participations
+     */
+    default Set<Long> findParticipationIdsWithLatestResultScoreGreaterThanZeroAndNotPractice(long exerciseId) {
+        var latestSubmissionIds = findLatestSubmissionIdsByExerciseId(exerciseId);
+        if (latestSubmissionIds.isEmpty()) {
+            return Set.of();
+        }
+
+        var latestResultIds = findLatestResultIdsBySubmissionIds(latestSubmissionIds);
+        if (latestResultIds.isEmpty()) {
+            return Set.of();
+        }
+
+        return findParticipationIdsByResultIdsAndScoreGreaterThanZeroAndNotPractice(latestResultIds);
+    }
+
+    /**
+     * Finds the ids of the latest submission per non-team participation of the given exercise, restricted to submissions whose latest result has a positive score
+     * and for which no strictly newer submission (by submission date, falling back to id) with a positive-score latest result exists.
+     *
+     * @param exerciseId the exercise id
+     * @return the ids of the qualifying latest submissions
+     */
+    @Query("""
+            SELECT submission.id
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN participation.submissions submission
+                JOIN submission.results latestResult
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student IS NOT NULL
+                AND latestResult.id = (
+                    SELECT MAX(result.id)
+                    FROM Result result
+                    WHERE result.submission.id = submission.id
+                )
+                AND latestResult.score > 0
+                AND NOT EXISTS (
+                    SELECT newerSubmission.id
+                    FROM ProgrammingSubmission newerSubmission
+                        JOIN newerSubmission.results newerLatestResult
+                    WHERE newerSubmission.participation.id = participation.id
+                        AND ((submission.submissionDate IS NOT NULL AND newerSubmission.submissionDate IS NOT NULL AND newerSubmission.submissionDate > submission.submissionDate)
+                            OR ((submission.submissionDate IS NULL OR newerSubmission.submissionDate IS NULL OR newerSubmission.submissionDate = submission.submissionDate)
+                                AND newerSubmission.id > submission.id))
+                        AND newerLatestResult.id = (
+                            SELECT MAX(newerResult.id)
+                            FROM Result newerResult
+                            WHERE newerResult.submission.id = newerSubmission.id
+                        )
+                        AND newerLatestResult.score > 0
+                )
+            """)
+    Set<Long> findLatestSubmissionIdsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Finds, for each of the given submissions, the id of its latest result.
+     *
+     * @param submissionIds the ids of the submissions
+     * @return the ids of the latest result per submission
+     */
+    @Query("""
+            SELECT MAX(result.id)
+            FROM Result result
+            WHERE result.submission.id IN :submissionIds
+            GROUP BY result.submission.id
+            """)
+    Set<Long> findLatestResultIdsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
+
+    /**
+     * Finds the ids of the (non-practice) participations whose result, among the given result ids, has a positive score.
+     *
+     * @param resultIds the ids of the results to filter on
+     * @return the ids of the matching non-practice participations
+     */
+    @Query("""
+            SELECT result.submission.participation.id
+            FROM Result result
+            WHERE result.id IN :resultIds
+                AND result.score > 0
+                AND result.submission.participation.testRun = FALSE
+            """)
+    Set<Long> findParticipationIdsByResultIdsAndScoreGreaterThanZeroAndNotPractice(@Param("resultIds") Set<Long> resultIds);
+
+    /**
+     * Loads Iris assessment participation projections for the given participation ids, joined with their (optional) regular Iris assessment.
+     *
+     * @param participationIds the ids of the participations to project
+     * @return the projections for the matching participations
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjectionDTO(
+                participation.id,
+                participation.exercise.id,
+                participation.repositoryUri,
+                participation.buildPlanId,
+                student.login,
+                student.firstName,
+                student.lastName,
+                assessment.id,
+                assessment.verdict,
+                assessment.verdictReview
+            )
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN participation.student student
+                LEFT JOIN participation.irisAssessment assessment
+            WHERE participation.id IN :participationIds
+            """)
+    Set<IrisAssessmentProgrammingStudentParticipationProjectionDTO> findAllIrisAssessmentParticipationProjectionsByIdIn(@Param("participationIds") Set<Long> participationIds);
+
+    /**
+     * Loads Iris assessment participation projections for the given participation ids, joined with their (optional) in-class Iris assessment.
+     *
+     * @param participationIds the ids of the participations to project
+     * @return the projections for the matching participations
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjectionDTO(
+                participation.id,
+                participation.exercise.id,
+                participation.repositoryUri,
+                participation.buildPlanId,
+                student.login,
+                student.firstName,
+                student.lastName,
+                assessment.id,
+                assessment.verdict,
+                assessment.verdictReview
+            )
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN participation.student student
+                LEFT JOIN participation.irisAssessmentInClass assessment
+            WHERE participation.id IN :participationIds
+            """)
+    Set<IrisAssessmentProgrammingStudentParticipationProjectionDTO> findAllIrisAssessmentInClassParticipationProjectionsByIdIn(
+            @Param("participationIds") Set<Long> participationIds);
+
+    /**
+     * Searches, paginates and filters non-practice participation ids of a course's programming exercises for the Iris assessment review overview.
+     * <p>
+     * A participation is only included if its latest submission's latest result has a positive score (see the {@code EXISTS} subquery, mirroring the logic of
+     * {@link #findLatestSubmissionIdsByExerciseId(long)}). The result is further restricted by an optional student name/login search pattern and, if any verdict
+     * filter is selected, by the Iris verdict/verdict-review of either the regular or the in-class Iris assessment, depending on {@code inClass}.
+     *
+     * @param courseId             the id of the course whose participations are searched
+     * @param searchPattern        a lower-cased {@code LIKE} pattern matched against the student's login or full name, or {@code null} to disable the name filter
+     * @param inClass              whether the in-class Iris assessment (instead of the regular one) should be used for the verdict filters
+     * @param hasSelectedFilter    whether at least one of the verdict filters below is active; if {@code false}, no verdict filtering is applied
+     * @param acceptedSelected     whether to include participations whose relevant assessment verdict review is {@code ACCEPTED}
+     * @param rejectedSelected     whether to include participations whose relevant assessment verdict review is {@code REJECTED}
+     * @param unsuspiciousSelected whether to include participations whose relevant assessment verdict is {@code UNSUSPICIOUS} and not yet reviewed
+     * @param suspiciousSelected   whether to include participations whose relevant assessment verdict is {@code SUSPICIOUS} and not yet reviewed
+     * @param missingSelected      whether to include participations that have no relevant assessment (or no verdict) yet
+     * @param pageable             the pagination and sorting information
+     * @return a page of matching participation ids, ordered by exercise title and student name
+     */
+    @Query(value = """
+            SELECT participation.id
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN participation.student student
+                LEFT JOIN participation.irisAssessment assessment
+                LEFT JOIN participation.irisAssessmentInClass inClassAssessment
+            WHERE participation.exercise.course.id = :courseId
+                AND (participation.testRun IS NULL OR participation.testRun = FALSE)
+                AND (:searchPattern IS NULL
+                    OR LOWER(student.login) LIKE :searchPattern ESCAPE '\\'
+                    OR LOWER(CONCAT(CONCAT(COALESCE(student.firstName, ''), ' '), COALESCE(student.lastName, ''))) LIKE :searchPattern ESCAPE '\\')
+                AND EXISTS (
+                    SELECT submission.id
+                    FROM ProgrammingSubmission submission
+                        JOIN submission.results latestResult
+                    WHERE submission.participation.id = participation.id
+                        AND latestResult.id = (
+                            SELECT MAX(result.id)
+                            FROM Result result
+                            WHERE result.submission.id = submission.id
+                        )
+                        AND latestResult.score > 0
+                        AND NOT EXISTS (
+                            SELECT newerSubmission.id
+                            FROM ProgrammingSubmission newerSubmission
+                                JOIN newerSubmission.results newerLatestResult
+                            WHERE newerSubmission.participation.id = participation.id
+                                AND ((submission.submissionDate IS NOT NULL AND newerSubmission.submissionDate IS NOT NULL AND newerSubmission.submissionDate > submission.submissionDate)
+                                    OR ((submission.submissionDate IS NULL OR newerSubmission.submissionDate IS NULL OR newerSubmission.submissionDate = submission.submissionDate)
+                                        AND newerSubmission.id > submission.id))
+                                AND newerLatestResult.id = (
+                                    SELECT MAX(newerResult.id)
+                                    FROM Result newerResult
+                                    WHERE newerResult.submission.id = newerSubmission.id
+                                )
+                                AND newerLatestResult.score > 0
+                        )
+                )
+                AND (:hasSelectedFilter = FALSE
+                    OR (:acceptedSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)
+                            OR (:inClass = TRUE AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)))
+                    OR (:rejectedSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)
+                            OR (:inClass = TRUE AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)))
+                    OR (:unsuspiciousSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND assessment.verdictReview IS NULL)
+                            OR (:inClass = TRUE AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
+                    OR (:suspiciousSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND assessment.verdictReview IS NULL)
+                            OR (:inClass = TRUE AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
+                    OR (:missingSelected = TRUE
+                        AND ((:inClass = FALSE AND (assessment.id IS NULL OR assessment.verdict IS NULL))
+                            OR (:inClass = TRUE AND (inClassAssessment.id IS NULL OR inClassAssessment.verdict IS NULL)))))
+            ORDER BY participation.exercise.title ASC, student.lastName ASC, student.firstName ASC, participation.id ASC
+            """, countQuery = """
+            SELECT COUNT(participation.id)
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN participation.student student
+                LEFT JOIN participation.irisAssessment assessment
+                LEFT JOIN participation.irisAssessmentInClass inClassAssessment
+            WHERE participation.exercise.course.id = :courseId
+                AND (participation.testRun IS NULL OR participation.testRun = FALSE)
+                AND (:searchPattern IS NULL
+                    OR LOWER(student.login) LIKE :searchPattern ESCAPE '\\'
+                    OR LOWER(CONCAT(CONCAT(COALESCE(student.firstName, ''), ' '), COALESCE(student.lastName, ''))) LIKE :searchPattern ESCAPE '\\')
+                AND EXISTS (
+                    SELECT submission.id
+                    FROM ProgrammingSubmission submission
+                        JOIN submission.results latestResult
+                    WHERE submission.participation.id = participation.id
+                        AND latestResult.id = (
+                            SELECT MAX(result.id)
+                            FROM Result result
+                            WHERE result.submission.id = submission.id
+                        )
+                        AND latestResult.score > 0
+                        AND NOT EXISTS (
+                            SELECT newerSubmission.id
+                            FROM ProgrammingSubmission newerSubmission
+                                JOIN newerSubmission.results newerLatestResult
+                            WHERE newerSubmission.participation.id = participation.id
+                                AND ((submission.submissionDate IS NOT NULL AND newerSubmission.submissionDate IS NOT NULL AND newerSubmission.submissionDate > submission.submissionDate)
+                                    OR ((submission.submissionDate IS NULL OR newerSubmission.submissionDate IS NULL OR newerSubmission.submissionDate = submission.submissionDate)
+                                        AND newerSubmission.id > submission.id))
+                                AND newerLatestResult.id = (
+                                    SELECT MAX(newerResult.id)
+                                    FROM Result newerResult
+                                    WHERE newerResult.submission.id = newerSubmission.id
+                                )
+                                AND newerLatestResult.score > 0
+                        )
+                )
+                AND (:hasSelectedFilter = FALSE
+                    OR (:acceptedSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)
+                            OR (:inClass = TRUE AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)))
+                    OR (:rejectedSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)
+                            OR (:inClass = TRUE AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)))
+                    OR (:unsuspiciousSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND assessment.verdictReview IS NULL)
+                            OR (:inClass = TRUE AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
+                    OR (:suspiciousSelected = TRUE
+                        AND ((:inClass = FALSE AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND assessment.verdictReview IS NULL)
+                            OR (:inClass = TRUE AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
+                    OR (:missingSelected = TRUE
+                        AND ((:inClass = FALSE AND (assessment.id IS NULL OR assessment.verdict IS NULL))
+                            OR (:inClass = TRUE AND (inClassAssessment.id IS NULL OR inClassAssessment.verdict IS NULL)))))
+            """)
+    Page<Long> findIrisAssessmentReviewParticipationIds(@Param("courseId") long courseId, @Param("searchPattern") String searchPattern, @Param("inClass") boolean inClass,
+            @Param("hasSelectedFilter") boolean hasSelectedFilter, @Param("acceptedSelected") boolean acceptedSelected, @Param("rejectedSelected") boolean rejectedSelected,
+            @Param("unsuspiciousSelected") boolean unsuspiciousSelected, @Param("suspiciousSelected") boolean suspiciousSelected, @Param("missingSelected") boolean missingSelected,
+            Pageable pageable);
+
     default Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(long participationId) {
         return findByIdWithAllResultsAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
@@ -264,4 +610,28 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             WHERE p.id IN :participationIds
             """)
     Set<ProgrammingExerciseStudentParticipation> findByIdsWithEagerSubmissions(@Param("participationIds") Collection<Long> participationIds);
+
+    /**
+     * Load participations by their IDs with the latest submission (individual mode).
+     * Used as the data-loading step after the paginated ID query.
+     *
+     * @param ids the participation IDs to load
+     * @return participations with student and latest submission eagerly fetched
+     */
+    @Query("""
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.student
+                LEFT JOIN FETCH p.irisAssessment
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results
+            WHERE p.id IN :ids
+                AND (s.id IS NULL
+                    OR s.id = (
+                        SELECT MAX(s2.id)
+                        FROM Submission s2
+                        WHERE s2.participation = p
+                    ))
+            """)
+    List<ProgrammingExerciseStudentParticipation> findByIdsWithLatestSubmissionAndIrisAssessment(@Param("ids") Collection<Long> ids);
 }

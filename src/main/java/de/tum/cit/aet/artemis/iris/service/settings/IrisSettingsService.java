@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.iris.service.settings;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ASK_USER_MODE_MAX_QUESTION_LIMIT;
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ASK_USER_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX;
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ASK_USER_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX;
+
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +15,9 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisAskUserModeSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsEntity;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
@@ -65,6 +71,17 @@ public class IrisSettingsService {
     }
 
     /**
+     * Returns the course-level Iris settings for the course an exercise belongs to.
+     *
+     * @param exercise the exercise
+     * @return settings DTO (defaults if no custom settings exist)
+     */
+    public IrisCourseSettings getSettingsForExercise(Exercise exercise) {
+        Objects.requireNonNull(exercise, "exercise must not be null");
+        return getSettingsForCourse(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+    }
+
+    /**
      * Returns the Iris settings mapped to a DTO for REST responses.
      *
      * @param courseId the course id
@@ -111,7 +128,7 @@ public class IrisSettingsService {
 
     /**
      * Validates that non-admin users are not trying to change restricted settings.
-     * Instructors can only modify enabled status and custom instructions; variant and rate limits are admin-only.
+     * Instructors can only modify enabled status, ask-user mode, ask-user-mode quiz settings, support level and custom instructions; variant and rate limits are admin-only.
      *
      * @param request the requested new settings
      * @param current the current settings
@@ -149,6 +166,27 @@ public class IrisSettingsService {
     }
 
     /**
+     * Checks whether Iris exercise chat is enabled for the course an exercise belongs to.
+     *
+     * @param exercise the exercise
+     * @return {@code true} if the course-level Iris switch is enabled
+     */
+    public boolean isExerciseChatEnabledForExercise(Exercise exercise) {
+        return getSettingsForExercise(exercise).enabled();
+    }
+
+    /**
+     * Checks whether Iris ask-user mode is enabled for the course an exercise belongs to.
+     *
+     * @param exercise the exercise
+     * @return {@code true} if Iris and ask-user mode are enabled
+     */
+    public boolean isAskUserModeEnabledForExercise(Exercise exercise) {
+        var settings = getSettingsForExercise(exercise);
+        return settings.enabled() && settings.askUserModeEnabled();
+    }
+
+    /**
      * Ensures Iris is enabled for the supplied course, otherwise throws an access exception.
      *
      * @param course the course
@@ -156,6 +194,28 @@ public class IrisSettingsService {
     public void ensureEnabledForCourseOrElseThrow(Course course) {
         if (!isEnabledForCourse(course)) {
             throw new AccessForbiddenAlertException("Iris is disabled for course " + course.getId(), "Iris", "iris.course_disabled");
+        }
+    }
+
+    /**
+     * Ensures Iris exercise chat is enabled for the supplied exercise's course, otherwise throws an access exception.
+     *
+     * @param exercise the exercise
+     */
+    public void ensureExerciseChatEnabledForExerciseOrElseThrow(Exercise exercise) {
+        if (!isExerciseChatEnabledForExercise(exercise)) {
+            throw new AccessForbiddenAlertException("Iris is disabled for exercise " + exercise.getId(), "Iris", "iris.exercise_chat_disabled");
+        }
+    }
+
+    /**
+     * Ensures Iris ask-user mode is enabled for the supplied exercise's course, otherwise throws an access exception.
+     *
+     * @param exercise the exercise
+     */
+    public void ensureAskUserModeEnabledForExerciseOrElseThrow(Exercise exercise) {
+        if (!isAskUserModeEnabledForExercise(exercise)) {
+            throw new AccessForbiddenAlertException("Iris ask-user mode is disabled for exercise " + exercise.getId(), "Iris", "iris.ask_user_mode_disabled");
         }
     }
 
@@ -176,7 +236,7 @@ public class IrisSettingsService {
      * Interprets the configured values as follows:
      * - (-1, -1) = unlimited (returns null, null)
      * - Not set / both 0 with old config = unlimited (returns null, null)
-     * - Otherwise: requests < 0 → 0 (blocking), timeframe < 1 → 1 (minimum 1 hour)
+     * - Otherwise: requests < 0 becomes 0 (blocking), timeframe < 1 becomes 1 (minimum 1 hour)
      *
      * @return the default rate limit configuration from application properties
      */
@@ -186,7 +246,7 @@ public class IrisSettingsService {
             return new IrisRateLimitConfiguration(null, null);
         }
 
-        // Sanitize: requests < 0 → 0 (blocking), timeframe < 1 → 1 (minimum)
+        // Sanitize: requests < 0 becomes 0 (blocking), timeframe < 1 becomes 1 (minimum)
         int requests = Math.max(configuredDefaultRateLimit, 0);
         int timeframe = Math.max(configuredDefaultTimeframeHours, 1);
 
@@ -209,7 +269,36 @@ public class IrisSettingsService {
             return IrisCourseSettings.defaultSettings();
         }
         var sanitizedRateLimit = sanitizeRateLimit(payload.rateLimit());
-        return IrisCourseSettings.of(payload.enabled(), payload.customInstructions(), payload.variant(), payload.supportLevel(), sanitizedRateLimit);
+        var sanitizedAskUserModeSettings = sanitizeAskUserModeSettings(payload.askUserModeSettings());
+        return IrisCourseSettings.of(payload.enabled(), payload.askUserModeEnabled(), sanitizedAskUserModeSettings, payload.customInstructions(), payload.variant(),
+                payload.supportLevel(), sanitizedRateLimit);
+    }
+
+    /**
+     * Sanitizes ask-user mode settings, falling back to the defaults when {@code null} and validating the configured limits.
+     *
+     * @param askUserModeSettings incoming ask-user mode settings (nullable)
+     * @return the sanitized ask-user mode settings
+     * @throws BadRequestAlertException if the question limits or time limits are invalid
+     */
+    private IrisAskUserModeSettings sanitizeAskUserModeSettings(IrisAskUserModeSettings askUserModeSettings) {
+        var settings = Objects.requireNonNullElse(askUserModeSettings, IrisAskUserModeSettings.defaultSettings());
+        if (settings.minQuestions() < 1 || settings.maxQuestions() < 1) {
+            throw new BadRequestAlertException("Ask-user mode question limits must be greater than 0", "IrisSettings", "irisAskUserModeQuestionsInvalid");
+        }
+        if (settings.minQuestions() > IRIS_ASK_USER_MODE_MAX_QUESTION_LIMIT || settings.maxQuestions() > IRIS_ASK_USER_MODE_MAX_QUESTION_LIMIT) {
+            throw new BadRequestAlertException("Ask-user mode question limits are too high", "IrisSettings", "irisAskUserModeQuestionsInvalid");
+        }
+        if (settings.minQuestions() > settings.maxQuestions()) {
+            throw new BadRequestAlertException("Minimum questions must not exceed maximum questions", "IrisSettings", "irisAskUserModeQuestionsInvalid");
+        }
+        if (settings.timeLimitQuestion() < 1 || settings.timeLimitQuestion() > IRIS_ASK_USER_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX) {
+            throw new BadRequestAlertException("Ask-user mode question time limit is invalid", "IrisSettings", "irisAskUserModeQuestionTimeLimitInvalid");
+        }
+        if (settings.timeLimitInClass() < 1 || settings.timeLimitInClass() > IRIS_ASK_USER_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX) {
+            throw new BadRequestAlertException("Ask-user mode in-class quiz time limit is invalid", "IrisSettings", "irisAskUserModeInClassTimeLimitInvalid");
+        }
+        return settings;
     }
 
     private IrisRateLimitConfiguration sanitizeRateLimit(IrisRateLimitConfiguration rateLimit) {

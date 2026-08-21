@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +40,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -590,6 +592,29 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void createMessage_usesAskUserPipelineWhenAskUserModeIsActive() throws Exception {
+            IrisChatSession session = createProgrammingSession(programmingExercise, "student1");
+            session.setInAskUserModePipeline(true);
+            session.setQuestionsAsked(2);
+            irisChatSessionRepository.save(session);
+
+            irisRequestMockProvider.mockAskUserResponse(dto -> {
+                assertThat(dto.programmingExercise()).isNotNull();
+                assertThat(dto.questionsAsked()).isEqualTo(2);
+                assertThat(dto.chatHistory()).hasSize(1);
+                pipelineDone.set(true);
+            });
+
+            IrisMessageRequestDTO requestDto = buildTextRequestDto(session, Map.of());
+            var response = request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+
+            assertThat(response.id()).isNotNull();
+            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).getLast().getInAskUserMode()).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void createMessage_preservesJsonContentPayload() throws Exception {
             IrisChatSession session = createProgrammingSession(programmingExercise, "student1");
             mockChatResponse(_ -> {
@@ -679,7 +704,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             String assignmentSlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
             ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(reloaded,
                     TEST_PREFIX + "student1");
-            participationUtilService.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
+            var submission = participationUtilService.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
+            participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), submission);
             studentParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s.git").formatted(projectKey, assignmentSlug));
             studentParticipation.setBranch(defaultBranch);
             programmingExerciseStudentParticipationRepository.save(studentParticipation);

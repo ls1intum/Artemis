@@ -78,6 +78,19 @@
             "mode": {
                 "practice": "Übung",
                 "graded": "Bewertet"
+            },
+            "askUser": {
+                "start": "Verständnis prüfen",
+                "currently": "Quiz läuft",
+                "finished": "Quiz abgeschlossen",
+                "noSubmission": "Keine Abgabe"
+            },
+            "reviewIrisAssessment": {
+                "suspicious": "Auffällig",
+                "unsuspicious": "Unauffällig",
+                "missing": "Überprüfung fehlt",
+                "accepted": "Akzeptiert",
+                "rejected": "Abgelehnt"
             }
         }
     }

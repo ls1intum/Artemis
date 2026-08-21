@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjectionDTO;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -139,6 +140,32 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
         String url = "/api/programming/participations/" + modelingSubmission.getParticipation().getId() + "/trigger-build";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, new HttpHeaders());
+    }
+
+    @Test
+    void getLatestSubmissionWithPositiveScoreIgnoresNewerSubmissionWithoutResult() {
+        String login = TEST_PREFIX + "student2";
+        exercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.saveAndFlush(exercise);
+
+        ProgrammingSubmission olderSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        olderSubmission.setSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        olderSubmission = programmingExerciseUtilService.addProgrammingSubmission(exercise, olderSubmission, login);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(9), olderSubmission);
+
+        ProgrammingSubmission newerSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        newerSubmission.setSubmissionDate(ZonedDateTime.now().minusMinutes(1));
+        newerSubmission = programmingExerciseUtilService.addProgrammingSubmission(exercise, newerSubmission, login);
+
+        var latestSubmission = submissionRepository.findLatestSubmissionWithEagerResultsAndFeedbacksAndBuildLogsBeforeExerciseDueDateAndResultScoreGreaterThanZeroByParticipationId(
+                newerSubmission.getParticipation().getId());
+
+        assertThat(latestSubmission).isPresent();
+        assertThat(latestSubmission.orElseThrow().getId()).isEqualTo(olderSubmission.getId());
+
+        var participationProjections = participationRepository
+                .findAllNonPracticeIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(exercise.getId());
+        assertThat(participationProjections.stream().map(IrisAssessmentProgrammingStudentParticipationProjectionDTO::id)).contains(newerSubmission.getParticipation().getId());
     }
 
     @Test

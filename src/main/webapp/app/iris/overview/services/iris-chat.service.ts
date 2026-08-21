@@ -28,6 +28,7 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 
 export { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 export type { SessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -81,13 +82,15 @@ export class IrisChatService implements OnDestroy {
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject<IrisMessage[]>([]);
     newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject<IrisMessage | undefined>(undefined);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
-    runInfo: BehaviorSubject<IrisRunInfo | undefined> = new BehaviorSubject<IrisRunInfo | undefined>(undefined);
-    activities: BehaviorSubject<IrisActivityItem[]> = new BehaviorSubject<IrisActivityItem[]>([]);
     suggestions: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
-    citationInfo: BehaviorSubject<IrisCitationMetaDTO[]> = new BehaviorSubject<IrisCitationMetaDTO[]>([]);
-    liveAssistantDraft: BehaviorSubject<IrisLiveAssistantDraft | undefined> = new BehaviorSubject<IrisLiveAssistantDraft | undefined>(undefined);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject<IrisErrorMessageKey | undefined>(undefined);
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject<IrisSessionDTO[]>([]);
+    runInfo: BehaviorSubject<IrisRunInfo | undefined> = new BehaviorSubject<IrisRunInfo | undefined>(undefined);
+    activities: BehaviorSubject<IrisActivityItem[]> = new BehaviorSubject<IrisActivityItem[]>([]);
+    citationInfo: BehaviorSubject<IrisCitationMetaDTO[]> = new BehaviorSubject<IrisCitationMetaDTO[]>([]);
+    liveAssistantDraft: BehaviorSubject<IrisLiveAssistantDraft | undefined> = new BehaviorSubject<IrisLiveAssistantDraft | undefined>(undefined);
+    latestEvent: Subject<IrisPipeEvent | undefined> = new Subject<IrisPipeEvent | undefined>();
+    stopTimer$ = new Subject<void>();
 
     // Flips to true once the first session-load attempt has produced a result (success OR
     // error). Until then, `messages` still holds its empty initial value, so subscribers
@@ -627,6 +630,28 @@ export class IrisChatService implements OnDestroy {
         this.suggestions.next(suggestions);
     }
 
+    /**
+     * Closes the current chat session and starts a fresh course session, then reloads the session list.
+     * @returns A promise that resolves once the new session has been created and the session list reloaded
+     */
+    public clearChat(): Promise<void> {
+        this.close();
+        return new Promise((resolve) => {
+            this.createCourseSession().subscribe({
+                next: (session) => {
+                    this.handleNewSession().next?.(session);
+                },
+                error: (err) => {
+                    this.handleNewSession().error?.(err);
+                },
+                complete: () => {
+                    this.loadChatSessions();
+                    resolve();
+                },
+            });
+        });
+    }
+
     private handleWebsocketMessage(payload: IrisChatWebsocketDTO) {
         if (payload.rateLimitInfo) {
             this.irisStatusService.handleRateLimitInfo(payload.rateLimitInfo);
@@ -647,10 +672,15 @@ export class IrisChatService implements OnDestroy {
             const merged = this.mergeCitationInfo(this.citationInfo.getValue(), payload.citationInfo);
             this.citationInfo.next(merged);
         }
-        this.applyRunState(payload);
+        const isCurrentRunPayload = !payload.runId || payload.runId === this.currentRunId;
+        if (isCurrentRunPayload) {
+            this.applyRunState(payload);
+        }
         switch (payload.type) {
             case IrisChatWebsocketPayloadType.MESSAGE:
                 this.handleMessageWebsocketPayload(payload);
+                this.applyPipeEvent(payload);
+                this.stopQuizTimer(payload);
                 break;
             case IrisChatWebsocketPayloadType.PARTIAL:
                 this.handlePartialWebsocketMessage(payload);
@@ -661,6 +691,28 @@ export class IrisChatService implements OnDestroy {
                     this.suggestions.next(payload.suggestions);
                 }
                 break;
+        }
+    }
+
+    /**
+     * Publishes the ask-user pipe event carried by a websocket payload, if any.
+     * @param payload The incoming chat websocket payload
+     */
+    private applyPipeEvent(payload: IrisChatWebsocketDTO): void {
+        if (!payload.event) {
+            return;
+        }
+        this.latestEvent.next(payload.event);
+    }
+
+    /**
+     * Stops the running ask-user-mode quiz timer once the user sends a message.
+     * @param payload The incoming chat websocket payload
+     */
+    private stopQuizTimer(payload: IrisChatWebsocketDTO): void {
+        // Stop chat timer when user sends a message
+        if (payload.message?.sender === IrisSender.USER) {
+            this.stopTimer$.next();
         }
     }
 
@@ -680,7 +732,7 @@ export class IrisChatService implements OnDestroy {
             this.closePendingRunGeneration();
         }
         if (this.currentRunId && runId !== this.currentRunId) {
-            return false;
+            return this.isAskUserMessagePayload(payload);
         }
 
         const terminalState = this.terminalRunStateByRunId.get(runId);
@@ -688,6 +740,16 @@ export class IrisChatService implements OnDestroy {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Determines whether a payload is an ask-user-mode message carrying a pipe event, in which case
+     * it should be applied even though it belongs to a run other than the current one.
+     * @param payload The incoming chat websocket payload
+     * @returns Whether the payload is an ask-user-mode message payload
+     */
+    private isAskUserMessagePayload(payload: IrisChatWebsocketDTO): boolean {
+        return payload.type === IrisChatWebsocketPayloadType.MESSAGE && !!payload.event;
     }
 
     private applyRunState(payload: IrisChatWebsocketDTO): void {
@@ -713,6 +775,7 @@ export class IrisChatService implements OnDestroy {
 
     private handleMessageWebsocketPayload(payload: IrisChatWebsocketDTO): void {
         const isIntermediateMessage = this.isIntermediateMessagePayload(payload);
+        const isCurrentRunMessage = !payload.runId || payload.runId === this.currentRunId;
         if (payload.runId && !isIntermediateMessage) {
             this.finalizedRunIds.add(payload.runId);
             this.lastSeenPartialSeqByRunId.delete(payload.runId);
@@ -722,10 +785,12 @@ export class IrisChatService implements OnDestroy {
         const isNewMessage = payload.message?.id === undefined || !this.messages.getValue().some((existing) => existing.id === payload.message!.id);
         if (payload.message?.sender === IrisSender.LLM) {
             if (!isIntermediateMessage && isNewMessage) {
-                this.markAnswerArrived(payload.runId);
+                if (isCurrentRunMessage) {
+                    this.markAnswerArrived(payload.runId);
+                }
                 this.numNewMessages.next(this.numNewMessages.getValue() + 1);
             }
-            if (payload.runId && !isIntermediateMessage) {
+            if (payload.runId && !isIntermediateMessage && isCurrentRunMessage) {
                 this.activities.next([]);
             }
         }
@@ -781,6 +846,7 @@ export class IrisChatService implements OnDestroy {
     private openPendingRunGeneration(): void {
         this.runInfo.next(undefined);
         this.activities.next([]);
+        this.currentRunId = undefined;
         this.pendingRunGeneration.set(true);
     }
 
@@ -1063,6 +1129,14 @@ export class IrisChatService implements OnDestroy {
 
     public availableChatSessions(): Observable<IrisSessionDTO[]> {
         return this.chatSessions.asObservable();
+    }
+
+    /**
+     * Observable stream of the latest ask-user-mode pipe event received for the active session.
+     * @returns Observable emitting the latest pipe event
+     */
+    public currentLatestEvent(): Observable<IrisPipeEvent | undefined> {
+        return this.latestEvent.asObservable();
     }
 
     /**

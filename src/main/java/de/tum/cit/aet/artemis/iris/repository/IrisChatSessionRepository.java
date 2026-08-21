@@ -5,6 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO;
@@ -69,7 +71,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     // Session lookup by entity (exercise, lecture, or course)
     // -------------------------------------------------------------------------
 
-    List<IrisChatSession> findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(Long entityId, IrisChatMode chatMode, Long userId, Pageable pageable);
+    List<IrisChatSession> findByEntityIdAndChatModeAndUserIdOrderByCreationDateDescIdDesc(Long entityId, IrisChatMode chatMode, Long userId, Pageable pageable);
 
     /**
      * Finds the latest chat sessions for the given entity and chat mode, with messages eagerly loaded.
@@ -82,11 +84,42 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
      * @return list of sessions with messages
      */
     default List<IrisChatSession> findLatestByEntityIdAndChatModeAndUserIdWithMessages(Long entityId, IrisChatMode chatMode, Long userId, Pageable pageable) {
-        List<Long> ids = findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(entityId, chatMode, userId, pageable).stream().map(DomainObject::getId).toList();
+
+        List<Long> ids = findByEntityIdAndChatModeAndUserIdOrderByCreationDateDescIdDesc(entityId, chatMode, userId, pageable).stream().map(DomainObject::getId).toList();
+
         if (ids.isEmpty()) {
             return List.of();
         }
-        return findSessionsWithMessagesByIdIn(ids);
+
+        var sessionsById = findSessionsWithMessagesByIdIn(ids).stream().collect(Collectors.toMap(IrisChatSession::getId, session -> session));
+
+        // Restore the order from the first sorted query
+        return ids.stream().map(sessionsById::get).filter(session -> session != null).toList();
+    }
+
+    /**
+     * Finds the latest completed ask-user-mode chat session for a programming exercise and user.
+     *
+     * @param exerciseId the programming exercise id, stored as {@code entityId}
+     * @param userId     the user id
+     * @param inClass    whether the finished session must be an in-class quiz session
+     * @return the latest finished ask-user-mode session
+     * @throws EntityNotFoundException if no finished ask-user-mode session exists
+     */
+    default IrisChatSession findLatestFinishedAskUserModeSessionByExerciseIdAndUserIdAndInClassQuizElseThrow(long exerciseId, long userId, boolean inClass)
+            throws EntityNotFoundException {
+
+        var result = findLatestByEntityIdAndChatModeAndUserIdWithMessages(exerciseId, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, userId, Pageable.unpaged()).stream()
+                .filter(session -> !session.isInAskUserModePipeline()).filter(session -> session.isInClassQuiz() == inClass)
+                .filter(session -> session.getMessages().stream().anyMatch(message -> Boolean.TRUE.equals(message.getInAskUserMode()))).findFirst();
+
+        if (result.isEmpty()) {
+            var sessionType = inClass ? "finished in-class ask-user-mode session" : "finished regular ask-user-mode session";
+
+            throw new EntityNotFoundException("Iris Chat Session: no " + sessionType + " found");
+        }
+
+        return result.get();
     }
 
     // -------------------------------------------------------------------------
