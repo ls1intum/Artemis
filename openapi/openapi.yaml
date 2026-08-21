@@ -709,6 +709,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
+  /api/hyperion/courses/{courseId}/assessment-criteria/generate:
+    post:
+      tags: [hyperion-assessment-criteria-generation]
+      operationId: generateAssessmentCriteria
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AssessmentCriteriaGenerationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AssessmentCriteriaGenerationResponse'}
   /api/hyperion/courses/{courseId}/quiz-exercises/refine-question:
     post:
       tags: [hyperion-quiz-question-generation]
@@ -1456,6 +1476,60 @@ components:
         applied: {type: boolean, description: Whether the action was successfully
             applied}
         summary: {type: string, description: Short summary of what was changed}
+    AssessmentCriteriaGenerationRequest:
+      type: object
+      description: Context used to generate structured assessment criteria
+      properties:
+        problemStatement: {type: string, description: Current problem statement,
+          maxLength: 50000, minLength: 1}
+        maxPoints: {type: number, format: double, description: Maximum regular score,
+          exclusiveMinimum: 0}
+        bonusPoints: {type: number, format: double, description: Maximum bonus score,
+          minimum: 0}
+        gradingInstructions: {type: string, description: General assessment instructions,
+          maxLength: 50000, minLength: 0}
+        exampleSolution: {type: string, description: Current example solution, if
+            available, maxLength: 200000, minLength: 0}
+        additionalContext: {type: string, description: Optional exercise-specific
+            context appended to the default prompt, maxLength: 200000, minLength: 0}
+      required: [bonusPoints, maxPoints, problemStatement]
+    AssessmentCriteriaGenerationResponse:
+      type: object
+      description: Generated structured assessment criteria
+      properties:
+        criteria:
+          type: array
+          description: Ordered generated criteria
+          items: {$ref: '#/components/schemas/GeneratedAssessmentCriterion'}
+          minItems: 1
+      required: [criteria]
+    GeneratedAssessmentCriterion:
+      type: object
+      description: Generated structured assessment criterion
+      properties:
+        title: {type: string, description: Criterion title, maxLength: 255, minLength: 1}
+        bonus: {type: boolean, description: Whether the criterion awards bonus points}
+        structuredGradingInstructions:
+          type: array
+          description: Full-credit, partial-credit, and no-credit instructions, in that order
+          items: {$ref: '#/components/schemas/GeneratedAssessmentInstruction'}
+          minItems: 3
+          maxItems: 3
+      required: [bonus, structuredGradingInstructions, title]
+    GeneratedAssessmentInstruction:
+      type: object
+      description: Generated structured grading instruction
+      properties:
+        credits: {type: number, format: double, description: Nonnegative credits awarded,
+          minimum: 0}
+        gradingScale: {type: string, description: Grading scale label, maxLength: 255,
+          minLength: 1}
+        instructionDescription: {type: string, description: Assessment instruction,
+          minLength: 1}
+        feedback: {type: string, description: Suggested feedback, minLength: 1}
+        usageCount: {type: integer, format: int32, description: Maximum number of uses,
+          minimum: 0}
+      required: [credits, feedback, gradingScale, instructionDescription, usageCount]
     ShortAnswerSubmittedAnswerFromStudent:
       required: [questionId, submittedTexts, type]
       type: object
