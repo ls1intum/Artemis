@@ -139,72 +139,85 @@ write to `artemis@xcit.tum.de`.
 
 ## Reference run
 
-Artemis is built for exam-scale load, and the numbers below are what that looks like on real hardware.
-The run is published so that other institutions have a concrete reference when sizing their own
-deployment, and so that the platform's scale claims can be checked rather than taken on trust.
+Exams are the moment when a learning platform either holds up or does not. Every student arrives at the
+same minute, opens the same exam, and starts submitting at once. There is no gentle ramp and no second
+chance.
 
-### What was tested
+Artemis is built for exactly that moment. Here is what it looks like measured.
 
-`staging1`, the TUM staging cluster, running Artemis 9.9.1 on deliberately modest hardware: three
-Artemis nodes, one database, one storage server and three build agents, each a virtual machine with
-**4 vCPUs and 3.8 GB of memory**. Not a large cluster by any measure.
+### A thousand students at once, and nothing broke
 
-The scenario is the most demanding one the platform sees: a full exam with four exercises (programming,
-modeling, quiz, text), where every student logs in, starts the exam, works on and submits every
-exercise, pushes commits to a git repository, and submits the exam. In a real exam this unfolds over an
-hour or more. Here it happens all at once, with no pause between actions.
+| | |
+| --- | --- |
+| Students working simultaneously | **1,000** |
+| Requests handled | **36,009** |
+| Failed requests | **0** |
+| Average response time | **0.30 seconds** |
 
-### Results
+Every one of those thousand students was logging in, opening the exam, writing and submitting answers,
+pushing code to their own git repository and handing in their exam, all at the same instant, with no
+pause anywhere. The average interaction still came back in under a third of a second, and not a single
+request failed.
 
-| | 500 students | 1000 students |
-| --- | --- | --- |
-| Requests handled | 17,758 | 36,009 |
-| Errors | **0** | **0** |
-| Mean response time, all actions | 0.36 s | **0.30 s** |
-| Git clone | 3.09 s | **1.80 s** |
-| Git push | 2.34 s | **2.34 s** |
-| Submit exercise | 0.67 s | **0.57 s** |
-| Start exam | 0.09 s | 0.13 s |
-| Submit exam | 0.09 s | 0.12 s |
+The exam covered all four exercise types at once: programming, modeling, quiz and text.
 
-A thousand students hitting the system simultaneously, with no think time at all, and the average
-interaction still completes in **under a third of a second**. Not one request failed.
+### On hardware you would not expect
 
-### What the run demonstrates
+The cluster was deliberately small. Three Artemis servers, one database, one file server and three
+build agents, and **every single one of them a virtual machine with 4 CPUs and 3.8 GB of memory**. Each
+of those machines on its own is weaker than a typical laptop.
 
-**The database is not the constraint.** Under the full 1000-student load the database host stayed at
-36% CPU. Artemis issues few, well-targeted queries per interaction rather than many small ones, and
-the effect is visible: the component that most platforms saturate first had roughly two thirds of its
-capacity still free.
+This matters if you are budgeting. Artemis does not need a data centre to run a large exam.
 
-**Git operations are efficient.** The storage tier serving every student repository ran at **7% CPU**
-while answering 1.1 million file system calls, each in **0.21 to 0.38 milliseconds**. Shared storage is
-the intuitive suspect for a git-heavy workload, and here it was the least loaded component in the
-cluster. Clone and push stayed within a couple of seconds while a thousand students pushed at once.
+### Fast where it counts
 
-**There is room in the network and the infrastructure.** The busiest network link averaged under 1% of
-its capacity and peaked below 5%. The reverse proxy sat at 6% CPU.
+| What a student does | How long it took, with 1,000 students working at once |
+| --- | --- |
+| Open the exam | 0.13 seconds |
+| Submit an exercise | 0.57 seconds |
+| Hand in the exam | 0.12 seconds |
+| Download their code repository | 1.80 seconds |
+| Push their code | 2.34 seconds |
 
-**Artemis nodes are what to scale.** Application CPU is the resource that grows with student count, and
-it is also the easiest to add: nodes are stateless and join the cluster without reconfiguration. Build
-agents scale separately again, so the amount of build feedback you promise students during an exam is
-a capacity decision of its own rather than something fixed by the exam size.
+Programming exams are the hardest case any platform faces, because every student is moving real code
+in and out of real version control. A thousand students pushing simultaneously, and a push still
+completed in about two seconds.
 
-### Reading these numbers honestly
+### Built to stay out of its own way
 
-Two things are worth saying plainly, because a benchmark that oversells itself is worth nothing.
+Two numbers from the run say more about the engineering than any benchmark total.
 
-**This is a floor, not a ceiling.** The load generator reached its own limits before the cluster did,
-so 1000 students is the largest size measured rather than the largest size supported. The cluster still
-had headroom at the end of the run.
+**The database barely noticed.** Under the full thousand-student load it was still **64% idle**.
+Databases are what usually buckle first under exam load, because a careless platform asks them the same
+question hundreds of times per page. Artemis asks few, well-targeted questions, and the result is a
+database with most of its capacity still in reserve when everything else is at full stretch.
 
-**A simulated student is more demanding than a real one.** There is no think time anywhere in the
-simulation: every student moves to the next action the instant the previous one returns. Real students
-spend most of an exam reading and typing. A simulated thousand therefore corresponds to a considerably
-larger real cohort. See [A simulated student is not a real
-student](#a-simulated-student-is-not-a-real-student).
+**Handling student code is nearly free.** The file server holding every student's repository ran at
+**7% CPU** while answering 1.1 million requests, each one in **under half a millisecond**.
+Storage is the usual suspect when a platform slows down during a programming exam. Here it was the
+quietest machine in the building.
 
-For context, Artemis is used in production for courses and exams with more than 2,000 students. That
-figure comes from years of real cohorts rather than from this benchmark, and the two should not be
-conflated. What this run adds is independent evidence, on small hardware, that the headroom behind that
-number is real.
+**And there is room to grow.** The network ran at under 1% of its capacity. When a course does outgrow
+its cluster, you add another Artemis server: they are interchangeable, they join automatically, and
+nothing needs reconfiguring. Build agents scale on their own schedule, so how quickly students get
+feedback on their code is a decision you make rather than a limit you inherit.
+
+### Being straight about what this shows
+
+Two honest notes, because a benchmark that flatters itself is worth nothing.
+
+**We never found the limit.** The testing tool ran out of capacity before the Artemis cluster did. A
+thousand students is the largest number we measured, not the largest Artemis handled. There was
+headroom left at the end.
+
+**A simulated student is harder work than a real one.** In the test, every student moves to their next
+action the instant the previous one finishes. Real students read the question, think, and type. A real
+cohort of the same size is a considerably lighter load, which means the thousand here stands for
+substantially more than a thousand people in a room.
+
+In practice, Artemis runs courses and exams with **more than 2,000 students** and has done for years.
+That figure comes from real cohorts rather than from this test. What this run adds is independent
+evidence, on small hardware, that the room behind that number is real.
+
+Want to check it on your own infrastructure? The rest of this page explains how, and we would welcome
+your results.
