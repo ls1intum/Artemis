@@ -145,6 +145,37 @@ class SvgSanitizerTest {
     }
 
     @Test
+    void shouldStripImageSetWithBareStringFromStyleAttribute() {
+        // image-set takes a bare string as its source, so there is no url( token for the reference scan to find. The
+        // fetch is real: verified issuing a request in Chromium, Firefox and WebKit alike.
+        String result = SvgSanitizer.sanitize(wrapSvg("<rect width=\"10\" height=\"10\" style=\"background-image:image-set('http://evil.com/track.png' 1x)\"/>"));
+
+        assertThat(result).isNotNull().doesNotContain("evil.com").doesNotContain("image-set");
+    }
+
+    @Test
+    void shouldStripPrefixedImageSetFromStyleAttribute() {
+        String result = SvgSanitizer.sanitize(wrapSvg("<rect width=\"10\" height=\"10\" style=\"background-image:-webkit-image-set('http://evil.com/x.png' 1x)\"/>"));
+
+        assertThat(result).isNotNull().doesNotContain("evil.com");
+    }
+
+    @Test
+    void shouldStripImageSetFromStyleElement() {
+        String result = SvgSanitizer.sanitize(wrapSvg("<style>.a{background-image:image-set('http://evil.com/x.png' 1x)}</style><rect width=\"10\" height=\"10\"/>"));
+
+        assertThat(result).isNotNull().doesNotContain("evil.com");
+    }
+
+    @Test
+    void shouldPreserveAQuotedFontFamilyWhichPlantUmlEmits() {
+        // The rule rejects image-producing functions by name, not every declaration that happens to contain a string.
+        String result = SvgSanitizer.sanitize(wrapSvg("<text style=\"font-family:'Helvetica Neue',sans-serif\">x</text>"));
+
+        assertThat(result).isNotNull().contains("Helvetica Neue");
+    }
+
+    @Test
     void shouldRejectCssCommentObfuscatedExpression() {
         // ex/**/pression(...) would bypass a naive `expression(` match if comments are not stripped first.
         String result = SvgSanitizer.sanitize(wrapSvg("<style>rect { width: ex/**/pression(alert(1)); }</style><rect width=\"10\" height=\"10\"/>"));

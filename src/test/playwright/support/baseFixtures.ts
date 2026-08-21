@@ -168,7 +168,11 @@ const test = baseTest.extend<
                 }
             });
 
-            const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';
+            // `page.coverage` is a Chromium-only API in Playwright and is `null` everywhere else, so the browser
+            // has to be part of the condition: without it, every test in a Firefox or WebKit project dies in this
+            // fixture before it runs a single assertion. The cross-engine project (see playwright.config.ts) is
+            // what exposed that.
+            const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off' && page.context().browser()?.browserType().name() === 'chromium';
 
             if (coverageEnabled) {
                 await page.coverage.startJSCoverage({

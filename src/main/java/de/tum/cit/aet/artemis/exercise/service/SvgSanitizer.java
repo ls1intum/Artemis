@@ -66,6 +66,15 @@ public final class SvgSanitizer {
     /** Dangerous CSS patterns anywhere in a style value or {@code <style>} block. */
     private static final Pattern DANGEROUS_CSS_PATTERN = Pattern.compile("expression\\s*\\(|@import|(-moz-binding)", Pattern.CASE_INSENSITIVE);
 
+    /**
+     * CSS functions that fetch an image without ever writing {@code url(}.
+     * <p>
+     * {@code image-set("https://attacker/x" 1x)} takes a bare string as its source and really is fetched; verified in Chromium, Firefox and WebKit alike. The
+     * {@link #URL_REFERENCE_PATTERN} scan below cannot see it, because there is no {@code url(} token to find, so these functions are rejected by name instead.
+     * None of them occurs in PlantUML output, so rejecting the declaration outright costs nothing that should have been there.
+     */
+    private static final Pattern IMAGE_FUNCTION_PATTERN = Pattern.compile("(^|[^a-z-])(-webkit-)?(image-set|cross-fade|image|element|paint)\\s*\\(", Pattern.CASE_INSENSITIVE);
+
     /** Matches {@code /* ... *}{@code /} CSS comments, non-greedy, across lines. */
     private static final Pattern CSS_COMMENT_PATTERN = Pattern.compile("/\\*[\\s\\S]*?\\*/");
 
@@ -186,7 +195,7 @@ public final class SvgSanitizer {
             return true;
         }
         String withoutComments = CSS_COMMENT_PATTERN.matcher(css).replaceAll("");
-        if (DANGEROUS_CSS_PATTERN.matcher(withoutComments).find()) {
+        if (DANGEROUS_CSS_PATTERN.matcher(withoutComments).find() || IMAGE_FUNCTION_PATTERN.matcher(withoutComments).find()) {
             return false;
         }
         // PlantUML never emits CSS escape sequences; treat them as an obfuscation attempt.
@@ -201,7 +210,12 @@ public final class SvgSanitizer {
         while (urlMatcher.find()) {
             int parenOpen = css.indexOf('(', urlMatcher.start());
             int parenClose = css.indexOf(')', parenOpen);
-            if (parenClose > parenOpen) {
+            if (parenClose <= parenOpen) {
+                // An unterminated url( is not a value any legitimate declaration contains, and refusing to reason
+                // about where it ends is safer than skipping it.
+                return true;
+            }
+            {
                 String urlValue = css.substring(parenOpen + 1, parenClose).strip();
                 if ((urlValue.startsWith("'") && urlValue.endsWith("'")) || (urlValue.startsWith("\"") && urlValue.endsWith("\""))) {
                     urlValue = urlValue.substring(1, urlValue.length() - 1).strip();
