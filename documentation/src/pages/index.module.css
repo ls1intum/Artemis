@@ -284,18 +284,24 @@
     transition: opacity 180ms ease;
 }
 
-.secondaryLink:first-child::before {
+/* The strip is a two-column grid; the hover wash of the outer column bleeds to the viewport edge. */
+.secondaryLink:nth-child(odd)::before {
     left: calc(100% - 50vw);
 }
 
-.secondaryLink:last-child::before {
+.secondaryLink:nth-child(even)::before {
     right: calc(100% - 50vw);
 }
 
-.secondaryLink + .secondaryLink {
+.secondaryLink:nth-child(even) {
     padding-right: 0;
     padding-left: 2rem;
     border-left: 1px solid #dce7ee;
+}
+
+/* Second and later rows are separated from the row above. */
+.secondaryLink:nth-child(n + 3) {
+    border-top: 1px solid #dce7ee;
 }
 
 .secondaryLink:hover {
@@ -403,7 +409,7 @@
     }
 
     .secondaryLink,
-    .secondaryLink + .secondaryLink {
+    .secondaryLink:nth-child(even) {
         padding: 1.25rem 0 1.4rem;
         border-left: 0;
     }
@@ -412,8 +418,8 @@
         border-top: 1px solid #dce7ee;
     }
 
-    .secondaryLink:first-child::before,
-    .secondaryLink:last-child::before {
+    .secondaryLink:nth-child(odd)::before,
+    .secondaryLink:nth-child(even)::before {
         right: calc((100vw - 100%) / -2);
         left: calc((100vw - 100%) / -2);
     }
@@ -516,7 +522,8 @@
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.14);
 }
 
-:global([data-theme='dark']) .secondaryLink + .secondaryLink {
+:global([data-theme='dark']) .secondaryLink:nth-child(even),
+:global([data-theme='dark']) .secondaryLink:nth-child(n + 3) {
     border-color: rgba(152, 198, 234, 0.22);
 }
 
