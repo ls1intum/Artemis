@@ -26,6 +26,7 @@ import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercis
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { UMLModel } from '@tumaet/apollon';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { validateStrictDateSequence } from 'app/exercise/util/exercise.utils';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -97,29 +98,21 @@ export class ExerciseService {
     }
 
     hasStartDateError(exercise: Exercise) {
-        return exercise.startDate && exercise.releaseDate && !dayjs(exercise.startDate).isAfter(exercise.releaseDate);
+        return !validateStrictDateSequence([exercise.releaseDate], exercise.startDate, [exercise.dueDate, exercise.assessmentDueDate, exercise.exampleSolutionPublicationDate]);
     }
 
     hasDueDateError(exercise: Exercise) {
-        const relevantDateBefore = exercise.startDate ?? exercise.releaseDate;
-        return relevantDateBefore && exercise.dueDate && !dayjs(exercise.dueDate).isAfter(relevantDateBefore);
+        return !validateStrictDateSequence([exercise.releaseDate, exercise.startDate], exercise.dueDate, [exercise.assessmentDueDate, exercise.exampleSolutionPublicationDate]);
     }
 
-    private hasAssessmentDueDateError(exercise: Exercise) {
-        if (!exercise.assessmentDueDate) {
-            return false;
-        }
-
-        return !exercise.dueDate || !dayjs(exercise.assessmentDueDate).isAfter(exercise.dueDate);
+    hasAssessmentDueDateError(exercise: Exercise) {
+        if (!exercise.assessmentDueDate) return false;
+        if (!exercise.dueDate) return true;
+        return !validateStrictDateSequence([exercise.releaseDate, exercise.startDate, exercise.dueDate], exercise.assessmentDueDate, [exercise.exampleSolutionPublicationDate]);
     }
 
     hasExampleSolutionPublicationDateError(exercise: Exercise) {
-        if (exercise.exampleSolutionPublicationDate) {
-            const previousDate = exercise.assessmentDueDate ?? exercise.dueDate ?? exercise.startDate ?? exercise.releaseDate;
-            const publicationDate = dayjs(exercise.exampleSolutionPublicationDate);
-            return previousDate !== undefined && !publicationDate.isAfter(previousDate);
-        }
-        return false;
+        return !validateStrictDateSequence([exercise.releaseDate, exercise.startDate, exercise.dueDate, exercise.assessmentDueDate], exercise.exampleSolutionPublicationDate, []);
     }
 
     /**
