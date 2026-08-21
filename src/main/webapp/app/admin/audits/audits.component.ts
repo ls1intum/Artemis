@@ -79,6 +79,13 @@ export class AuditsComponent implements OnInit {
      */
     readonly logType = signal<AuditLogType>(AuditLogType.GENERAL);
 
+    /** The tabs rendered above the table, in display order. */
+    readonly logTypeTabs: readonly { value: AuditLogType; labelKey: string }[] = [
+        { value: AuditLogType.GENERAL, labelKey: 'audits.logType.general' },
+        { value: AuditLogType.SECURITY, labelKey: 'audits.logType.security' },
+        { value: AuditLogType.APPLICATION, labelKey: 'audits.logType.application' },
+    ];
+
     /** Date range filter - from date */
     readonly fromDate = signal('');
 
@@ -117,8 +124,6 @@ export class AuditsComponent implements OnInit {
 
     protected readonly faSort = faSort;
     protected readonly DateTimePickerType = DateTimePickerType;
-    /** Exposed so the template can name the three tab values without repeating their string literals. */
-    protected readonly AuditLogType = AuditLogType;
 
     ngOnInit(): void {
         this.toDate.set(this.today());

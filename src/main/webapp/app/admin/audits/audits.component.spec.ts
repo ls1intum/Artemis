@@ -332,6 +332,10 @@ describe('AuditsComponent', () => {
     });
 
     describe('audit log tabs', () => {
+        it('offers exactly the three audit logs as tabs, in a stable order', () => {
+            expect(comp.logTypeTabs.map((tab) => tab.value)).toEqual([AuditLogType.GENERAL, AuditLogType.SECURITY, AuditLogType.APPLICATION]);
+        });
+
         it('defaults to the general log and sends it with the query', () => {
             comp.ngOnInit();
 
