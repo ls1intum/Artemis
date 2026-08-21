@@ -284,6 +284,36 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
         }
     }
 
+    @Test
+    void validateDates_strictlyOrderedProgrammingExerciseDates_doesNotThrow() {
+        ZonedDateTime releaseDate = ZonedDateTime.now();
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setReleaseDate(releaseDate);
+        programmingExercise.setStartDate(releaseDate.plusHours(1));
+        programmingExercise.setDueDate(releaseDate.plusHours(2));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(releaseDate.plusHours(3));
+        programmingExercise.setAssessmentDueDate(releaseDate.plusHours(4));
+        programmingExercise.setExampleSolutionPublicationDate(releaseDate.plusHours(5));
+
+        assertThatNoException().isThrownBy(programmingExercise::validateDates);
+    }
+
+    @Test
+    void validateDates_invalidProgrammingExerciseBuildAndTestDate_throws() {
+        ZonedDateTime releaseDate = ZonedDateTime.now();
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setReleaseDate(releaseDate);
+        programmingExercise.setDueDate(releaseDate.plusHours(2));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(programmingExercise.getDueDate());
+
+        assertThatThrownBy(programmingExercise::validateDates).hasMessageContaining("The exercise dates are not valid");
+
+        programmingExercise.setDueDate(null);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(releaseDate.plusHours(2));
+
+        assertThatThrownBy(programmingExercise::validateDates).hasMessageContaining("The exercise dates are not valid");
+    }
+
     private void setStrictlyOrderedDates(ZonedDateTime releaseDate) {
         exercise.setReleaseDate(releaseDate);
         exercise.setStartDate(releaseDate.plusHours(1));

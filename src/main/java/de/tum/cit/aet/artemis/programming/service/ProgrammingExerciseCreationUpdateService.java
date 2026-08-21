@@ -423,7 +423,6 @@ public class ProgrammingExerciseCreationUpdateService {
         // Apply the DTO values to the existing exercise
         timelineUpdateDTO.applyTo(programmingExercise);
 
-        programmingExercise.validateDates();
         if (automaticAfterDueDateService.isPresent()) {
             try {
                 final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
@@ -434,6 +433,7 @@ public class ProgrammingExerciseCreationUpdateService {
                         "invalidBuildPlanConfiguration");
             }
         }
+        programmingExercise.validateDates();
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExerciseCreationScheduleService.scheduleOperations(savedProgrammingExercise.getId());

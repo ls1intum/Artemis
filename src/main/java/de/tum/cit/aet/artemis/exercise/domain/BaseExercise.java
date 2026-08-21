@@ -194,54 +194,6 @@ public abstract class BaseExercise extends DomainObject {
     public abstract boolean isExamExercise();
 
     /**
-     * This method is used to validate the assessmentDueDate of an exercise. An assessmentDueDate is valid if it is strictly after the releaseDate, startDate, and dueDate if
-     * present. A given assessmentDueDate is invalid without an according dueDate.
-     *
-     * @return true if there is no assessmentDueDateError
-     */
-    protected static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
-        if (assessmentDueDate == null) {
-            return true;
-        }
-        // There cannot be an assessmentDueDate without dueDate
-        if (dueDate == null) {
-            return false;
-        }
-        return isStrictlyBeforeIfBothSet(releaseDate, assessmentDueDate) && isStrictlyBeforeIfBothSet(startDate, assessmentDueDate)
-                && isStrictlyBeforeIfBothSet(dueDate, assessmentDueDate);
-    }
-
-    /**
-     * This method is used to validate the exampleSolutionPublicationDate of an exercise. An exampleSolutionPublicationDate is valid if it is strictly after the releaseDate,
-     * startDate, dueDate, and assessmentDueDate if present.
-     * Any given exampleSolutionPublicationDate is valid if releaseDate, startDate, dueDate, and assessmentDueDate are not set. exampleSolutionPublicationDate is valid if it is
-     * not set.
-     *
-     * @return true if there is no exampleSolutionPublicationDateError
-     */
-    protected static boolean isValidExampleSolutionPublicationDate(ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
-            ZonedDateTime exampleSolutionPublicationDate) {
-        if (exampleSolutionPublicationDate == null) {
-            return true;
-        }
-
-        return isStrictlyBeforeIfBothSet(releaseDate, exampleSolutionPublicationDate) && isStrictlyBeforeIfBothSet(startDate, exampleSolutionPublicationDate)
-                && isStrictlyBeforeIfBothSet(dueDate, exampleSolutionPublicationDate) && isStrictlyBeforeIfBothSet(assessmentDueDate, exampleSolutionPublicationDate);
-    }
-
-    /**
-     * This method is used to validate if the previousDate is strictly before the laterDate. Unset dates do not violate the ordering.
-     *
-     * @return true if the previousDate is valid
-     */
-    protected static boolean isStrictlyBeforeIfBothSet(ZonedDateTime previousDate, ZonedDateTime laterDate) {
-        if (previousDate == null || laterDate == null) {
-            return true;
-        }
-        return previousDate.isBefore(laterDate);
-    }
-
-    /**
      * a helper method to get the exercise title in a sanitized form (i.e. usable in file names)
      * exercise abc?+# -> exercise_abc
      *

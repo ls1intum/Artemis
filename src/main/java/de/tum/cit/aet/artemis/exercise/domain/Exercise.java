@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -877,22 +878,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         if (!areDatesValid) {
             throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
         }
-    }
-
-    boolean validateStrictDateSequence(List<ZonedDateTime> shouldPrecede, ZonedDateTime dateToValidate, List<ZonedDateTime> shouldFollow) {
-        for (ZonedDateTime precedingDate : shouldPrecede) {
-            if (!isStrictlyBeforeIfBothSet(precedingDate, dateToValidate)) {
-                return false;
-            }
-        }
-
-        for (ZonedDateTime followingDate : shouldFollow) {
-            if (!isStrictlyBeforeIfBothSet(dateToValidate, followingDate)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private boolean validateAssessmentDueDate() {
