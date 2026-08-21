@@ -144,6 +144,12 @@ public class IrisStruggleInterventionService {
         var p = prepared.trigger();
         CompletableFuture.runAsync(() -> sendToPyris(p, signal, uncommittedFiles)).exceptionally(e -> {
             log.error("Error sending struggle intervention to Iris for exercise {} user {}", p.exerciseId(), p.userId(), e);
+            // The endpoint already answered 202, so the client is waiting on a terminal frame that no callback will
+            // ever deliver for this run. Notify BEFORE releasing, so the slot is still ours while the frame goes out.
+            var reserved = pyrisJobService.getJob(p.jobToken());
+            if (reserved instanceof StruggleInterventionJob struggleJob) {
+                emitTerminalCompletion(struggleJob);
+            }
             pyrisJobService.releaseStruggleInFlightJob(p.jobToken(), p.userId(), p.exerciseId());
             return null;
         });
@@ -408,6 +414,40 @@ public class IrisStruggleInterventionService {
             // progress resolved=false: quiet (slot stays TAKEN, no offer posted, no outcome).
             irisChatWebsocketService.sendStruggleEvent(user,
                     new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, null, null, null, null, null, episodeId, false, null, null));
+        }
+    }
+
+    /**
+     * Emit the terminal completion frame for a run that ended without a decision, so the client's in-flight
+     * request always clears. Every other terminal path already guarantees this: {@code handleDecision} emits a
+     * {@code silent} frame on each drop, and {@code handleConfirmClose} emits a bare completion on each early
+     * return. Without this, a Pyris {@code FAILED} run or a post-202 dispatch failure leaves the client waiting
+     * until its own timeout.
+     *
+     * <p>
+     * The frame shape follows the intent, mirroring the two families above: {@code decide} (and the legacy null
+     * intent) completes as {@code action="silent"}, while {@code confirm_close} completes as
+     * {@code resolved=false} - a failed close must not read as "the episode is resolved".
+     *
+     * @param job the struggle-intervention job whose run ended without a decision
+     */
+    public void emitTerminalCompletion(StruggleInterventionJob job) {
+        try {
+            var user = userRepository.findByIdElseThrow(job.userId());
+            String episodeId = job.episodeId();
+            if ("confirm_close".equals(job.intent())) {
+                irisChatWebsocketService.sendStruggleEvent(user,
+                        new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, null, null, null, null, null, episodeId, false, null, null));
+            }
+            else {
+                irisChatWebsocketService.sendStruggleEvent(user,
+                        new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, null, episodeId, null, null, null));
+            }
+        }
+        catch (Exception e) {
+            // Never let the completion frame break the caller's cleanup: the marker release in the finally block
+            // matters more than the notification, and a missing frame degrades to the client's own timeout.
+            log.warn("Could not emit terminal completion for struggle job {} exercise {} user {}", job.jobId(), job.exerciseId(), job.userId(), e);
         }
     }
 

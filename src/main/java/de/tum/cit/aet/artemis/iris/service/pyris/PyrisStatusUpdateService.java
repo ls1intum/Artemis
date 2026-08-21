@@ -96,6 +96,29 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update received
      */
     public void handleStatusUpdate(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
+        // Serialize per job id and re-read the map entry under the lock. The resource authenticates the callback by
+        // reading the job BEFORE this method, so two genuinely concurrent callbacks can both hold the same job object
+        // and would otherwise both remove it and both run the handler, persisting and pushing the decision twice.
+        // Re-reading here is what actually claims the callback; locking around the stale argument would not.
+        pyrisJobService.runWithJobLock(job.jobId(), () -> {
+            if (!(pyrisJobService.getJob(job.jobId()) instanceof StruggleInterventionJob claimed)) {
+                // Another callback already claimed and removed this job (or it expired). Dropping is correct: the
+                // winner owns the terminal side effects and the marker release.
+                log.debug("Skipping struggle status update for job {} because the job is no longer in the map", job.jobId());
+                return null;
+            }
+            handleClaimedStatusUpdate(claimed, statusUpdate);
+            return null;
+        });
+    }
+
+    /**
+     * The body of {@link #handleStatusUpdate}, running under the job lock on a job re-read from the map.
+     *
+     * @param job          the struggle-intervention job, freshly read under the lock
+     * @param statusUpdate the status update received
+     */
+    private void handleClaimedStatusUpdate(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
         String intent = job.intent();
         if ("confirm_close".equals(intent)) {
             // confirm_close: the terminal frame carries resolved != null (action stays null on this mode). Gate on it
@@ -110,7 +133,9 @@ public class PyrisStatusUpdateService {
                 }
             }
             else if (statusUpdate.runState() != null && removeJobIfTerminatedElseUpdate(statusUpdate.runState(), job)) {
-                // Error frame (terminal run state, no resolved field): the job left the map, so release the marker now.
+                // Error frame (terminal run state, no resolved field): the run ended without a close decision, so the
+                // client's in-flight confirm_close only clears if we complete it here. Emit before releasing.
+                irisStruggleInterventionService.emitTerminalCompletion(job);
                 pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
             }
             // else: non-terminal intermediate frame -> job kept alive (updateJob), marker held for the terminal frame.
@@ -133,6 +158,9 @@ public class PyrisStatusUpdateService {
             // The null guard is essential and deliberately does NOT reuse resolveRunState (which maps a missing
             // run state to FAILED): a frame without a run state must not drop the job before the real decision
             // callback arrives, which would silently lose the intervention.
+            // The run produced no decision, so complete the client's in-flight decide here; every other drop path in
+            // handleDecision already emits a silent frame for exactly this reason.
+            irisStruggleInterventionService.emitTerminalCompletion(job);
             pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
         }
     }

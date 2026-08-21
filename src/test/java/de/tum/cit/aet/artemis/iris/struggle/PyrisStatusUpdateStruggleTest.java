@@ -8,9 +8,11 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,6 +64,13 @@ class PyrisStatusUpdateStruggleTest {
         service = new PyrisStatusUpdateService(pyrisJobService, mock(IrisChatSessionService.class), mock(IrisCompetencyGenerationService.class),
                 mock(IrisTutorSuggestionSessionService.class), mock(AutonomousTutorService.class), Optional.<ProcessingStateCallbackApi>empty(), mock(IrisWebsocketService.class),
                 irisStruggleInterventionService);
+
+        // The struggle handler claims the callback under the job lock: it runs the body inside runWithJobLock and
+        // re-reads the map entry, dropping the callback when the job is already gone. Both are collaborator calls,
+        // so the mock has to model them - run the supplier inline, and hand the job back by id.
+        when(pyrisJobService.runWithJobLock(anyString(), any())).thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+        when(pyrisJobService.getJob("t")).thenReturn(job);
+        when(pyrisJobService.getJob("cc")).thenReturn(confirmCloseJob);
     }
 
     @Test
@@ -74,6 +83,21 @@ class PyrisStatusUpdateStruggleTest {
         inOrder.verify(pyrisJobService).removeJob(job);                                 // remove the JOB-MAP entry FIRST so the trailing duplicate 403s
         inOrder.verify(irisStruggleInterventionService).handleDecision(job, update);
         inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("t", 3L, 42L);    // marker freed only AFTER handleDecision (jobId, userId, exerciseId)
+    }
+
+    @Test
+    void duplicateCallback_whoseJobIsAlreadyClaimed_isDropped() {
+        // The resource authenticates a callback by reading the job BEFORE the handler runs, so a genuinely
+        // concurrent duplicate can enter with the same job object. Under the lock the re-read finds nothing,
+        // which is what stops the decision from being persisted and pushed twice.
+        when(pyrisJobService.getJob("t")).thenReturn(null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
+
+        service.handleStatusUpdate(job, update);
+
+        verify(irisStruggleInterventionService, never()).handleDecision(any(), any());
+        verify(pyrisJobService, never()).removeJob(any());
+        verify(pyrisJobService, never()).releaseStruggleInFlightMarker(anyString(), anyLong(), anyLong());
     }
 
     @Test
@@ -96,6 +120,8 @@ class PyrisStatusUpdateStruggleTest {
 
         verify(irisStruggleInterventionService, never()).handleDecision(any(), any());
         verify(pyrisJobService).removeJob(job);
+        // The run ended with no decision, so the client's in-flight decide only clears via the completion frame.
+        verify(irisStruggleInterventionService).emitTerminalCompletion(job);
         verify(pyrisJobService).releaseStruggleInFlightMarker("t", 3L, 42L);
     }
 
@@ -155,6 +181,8 @@ class PyrisStatusUpdateStruggleTest {
 
         verify(irisStruggleInterventionService, never()).handleConfirmClose(any(), any());
         verify(pyrisJobService).removeJob(confirmCloseJob);
+        // Same guarantee on the close mode: a failed run completes the client rather than leaving it in flight.
+        verify(irisStruggleInterventionService).emitTerminalCompletion(confirmCloseJob);
         verify(pyrisJobService).releaseStruggleInFlightMarker("cc", 3L, 42L);
     }
 
