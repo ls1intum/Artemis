@@ -15,8 +15,16 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
  * Matches on core nodes, and on build agents that reach the core cluster through Hazelcast.
  *
  * <p>
- * Used for Eureka service discovery, which every core node needs regardless of which distributed data provider is
- * configured, while a Redis build agent does not register at all (see {@link RedisBuildAgentDiscoveryEnvironmentPostProcessor}).
+ * Used for the Eureka client. A Redis build agent does not register at all (see
+ * {@link RedisBuildAgentDiscoveryEnvironmentPostProcessor}); a core node still does, whichever provider is configured.
+ *
+ * <p>
+ * That is deliberate but not load-bearing: the only code that <em>reads</em> the registry is Hazelcast member
+ * discovery, so on a Redis deployment the registration has no consumer and the JHipster registry could be dropped
+ * from the topology entirely. Narrowing this condition is left out of the change that introduced it, because it
+ * removes a service from every Redis deployment rather than merely rewiring one inside the application.
+ *
+ * <p>
  * For the Hazelcast beans themselves use {@link HazelcastDistributedDataCondition}: those must not load when another
  * provider is selected, otherwise a Redis deployment still runs a second distributed system.
  */
