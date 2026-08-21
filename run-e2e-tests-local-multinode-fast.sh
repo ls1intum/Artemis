@@ -398,8 +398,14 @@ echo -e "${GREEN}Using WAR: $WAR_FILE${NC}"
 # =============================================================================
 if [ "$SKIP_UP" = false ]; then
     echo ""
-    echo -e "${BLUE}Step 2: Starting infra containers (postgres, jhipster-registry, activemq-broker)...${NC}"
-    docker compose "${COMPOSE_ARGS[@]}" up -d postgres jhipster-registry activemq-broker "${MIDDLEWARE_SERVICES[@]}"
+    echo -e "${BLUE}Step 2: Starting infra containers (postgres, activemq-broker, and the registry only on Hazelcast)...${NC}"
+    # The JHipster registry exists to locate Hazelcast members, so a Redis stack does not start it at all. Running it
+    # anyway would hide the very thing worth proving here: that a Redis deployment needs no service registry.
+    INFRA_SERVICES=(postgres activemq-broker)
+    if [ "$MIDDLEWARE" != "redis" ]; then
+        INFRA_SERVICES+=(jhipster-registry)
+    fi
+    docker compose "${COMPOSE_ARGS[@]}" up -d "${INFRA_SERVICES[@]}" "${MIDDLEWARE_SERVICES[@]}"
 
     echo "Waiting for Postgres..."
     TIMEOUT=120; ELAPSED=0
@@ -409,13 +415,17 @@ if [ "$SKIP_UP" = false ]; then
     done
     echo -e "${GREEN}Postgres ready (${ELAPSED}s)${NC}"
 
-    echo "Waiting for Eureka registry..."
-    TIMEOUT=180; ELAPSED=0
-    until curl -sf http://localhost:8761/actuator/health >/dev/null 2>&1; do
-        [ $ELAPSED -ge $TIMEOUT ] && { echo -e "${RED}Eureka not ready after ${TIMEOUT}s${NC}"; exit 1; }
-        sleep 2; ELAPSED=$((ELAPSED + 2))
-    done
-    echo -e "${GREEN}Eureka ready (${ELAPSED}s)${NC}"
+    if [ "$MIDDLEWARE" = "redis" ]; then
+        echo -e "${GREEN}No Eureka registry on Redis — nothing reads it once Hazelcast is out of the picture.${NC}"
+    else
+        echo "Waiting for Eureka registry..."
+        TIMEOUT=180; ELAPSED=0
+        until curl -sf http://localhost:8761/actuator/health >/dev/null 2>&1; do
+            [ $ELAPSED -ge $TIMEOUT ] && { echo -e "${RED}Eureka not ready after ${TIMEOUT}s${NC}"; exit 1; }
+            sleep 2; ELAPSED=$((ELAPSED + 2))
+        done
+        echo -e "${GREEN}Eureka ready (${ELAPSED}s)${NC}"
+    fi
 else
     echo ""
     echo -e "${YELLOW}Step 2: Skipping infra (--skip-up). Assuming postgres/eureka/activemq are running.${NC}"
@@ -605,11 +615,11 @@ for n in 1 2 3; do
     # Without this, node-N+1 forms a solo Hazelcast cluster because its initial registry fetch did
     # not yet include node-N (cache lag), and Hazelcast does not auto-merge two existing clusters.
     #
-    # node-3 is a build agent without the `core` profile, and on Redis it deliberately never registers with Eureka
-    # (RedisBuildAgentDiscoveryEnvironmentPostProcessor turns discovery off): it reaches the cluster through Redis
-    # instead. Waiting for it would burn the full timeout and then continue anyway, so skip it.
-    if [ "$MIDDLEWARE" = "redis" ] && [ "$n" = "3" ]; then
-        echo "node-3 does not register with Eureka on Redis (discovery is disabled on Redis build agents) — skipping."
+    # None of that applies on Redis: no node registers with Eureka there (RedisDiscoveryEnvironmentPostProcessor
+    # turns discovery off everywhere), because the registry only ever existed to locate Hazelcast members. Nodes
+    # find each other through the distributed node registry, which Step 4b waits for instead.
+    if [ "$MIDDLEWARE" = "redis" ]; then
+        echo "node-${n} does not register with Eureka on Redis (discovery is off; the cluster forms through Redis) — skipping."
     else
         wait_for_eureka_registration "Artemis:${n}"
     fi
