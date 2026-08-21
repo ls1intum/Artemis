@@ -1,7 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_IDENTIFIER,
+    Feedback,
+} from 'app/assessment/shared/entities/feedback.model';
 import { By } from '@angular/platform-browser';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { vi } from 'vitest';
@@ -371,6 +376,26 @@ describe('UnifiedFeedbackComponent', () => {
         component.feedbackDetail.set('');
         fixture.detectChanges();
         expect(component.canDismissWithoutConfirm()).toBe(true);
+    });
+
+    it('should require confirmation to dismiss a zero-credit grading-instruction feedback even without free-form text', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', { gradingInstruction: { id: 1, credits: 0, feedback: 'Rubric text' } } as Feedback);
+        component.feedbackCredits.set(0);
+        component.feedbackDetail.set('');
+        component.feedbackTitle.set('');
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(false);
+    });
+
+    it('should require confirmation to dismiss a persisted zero-credit feedback even without free-form text', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', { id: 1 } as Feedback);
+        component.feedbackCredits.set(0);
+        component.feedbackDetail.set('');
+        component.feedbackTitle.set('');
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(false);
     });
 
     it('should emit onDelete directly when dismissal needs no confirmation', () => {

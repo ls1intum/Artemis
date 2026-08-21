@@ -209,7 +209,14 @@ export class UnifiedFeedbackComponent {
 
     readonly defaultTitlePlaceholder = computed(() => this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]));
 
-    readonly canDismissWithoutConfirm = computed(() => (this.feedbackCredits() ?? 0) === 0 && (this.feedbackDetail() ?? '').length === 0 && this.displayTitle().length === 0);
+    readonly canDismissWithoutConfirm = computed(
+        () =>
+            (this.feedbackCredits() ?? 0) === 0 &&
+            (this.feedbackDetail() ?? '').length === 0 &&
+            this.displayTitle().length === 0 &&
+            !this.feedback()?.gradingInstruction &&
+            !this.feedback()?.id,
+    );
 
     readonly detailPlaceholder = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackCommentPlaceholder'));
     readonly isDetailMissing = computed(() => this.editable() && !this.feedback()?.reference && !this.feedbackDetail());

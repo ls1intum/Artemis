@@ -68,8 +68,6 @@ describe('TextBlockFeedbackEditorComponent', () => {
         fixture = TestBed.createComponent(TextBlockFeedbackEditorComponent);
         component = fixture.componentInstance;
         const feedback = Feedback.forText(textBlock);
-        feedback.gradingInstruction = new GradingInstruction();
-        feedback.gradingInstruction.usageCount = 0;
         fixture.componentRef.setInput('textBlock', textBlock);
         fixture.componentRef.setInput('feedback', feedback);
         compiled = fixture.debugElement.nativeElement;
