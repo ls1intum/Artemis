@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, input, linkedSignal, output, viewChild } from '@angular/core';
+import { Component, ElementRef, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -107,9 +107,11 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     readonly viewOnly = linkedSignal<boolean>(() => !!this.feedback());
 
     /**
-     * Snapshot of the feedback used to restore state when the user cancels an edit. Reset whenever the input changes.
+     * Edit-start snapshot for Cancel. Independent of {@link feedback}: emitting {@link onUpdateFeedback} mid-edit
+     * (e.g. instruction drop after a detached point change) updates the parent list and would otherwise reset a
+     * linked snapshot to the dirty draft, so Cancel could no longer restore the original.
      */
-    readonly oldFeedback = linkedSignal<Feedback>(() => deepClone(this.feedback() ?? new Feedback()));
+    readonly oldFeedback = signal<Feedback>(new Feedback());
 
     /**
      * Criterion title for instruction-linked feedback, else suggestion title. Method (not computed): drop/unlink
@@ -144,6 +146,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
             feedback.positive = true;
         }
         this.currentFeedback.set(feedback);
+        // Align cancel snapshot with the saved card so a later edit/cancel pair is coherent if editFeedback is skipped.
+        this.oldFeedback.set(deepClone(feedback));
         this.onUpdateFeedback.emit(feedback);
     }
 

@@ -203,6 +203,54 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.viewOnly()).toBe(true);
     });
 
+    it('should restore the edit-start snapshot after point edit, instruction drop, and cancel', () => {
+        const existing = {
+            type: FeedbackType.MANUAL,
+            credits: 1,
+            detailText: 'note',
+            reference: `file:${fileName}_line:${codeLine}`,
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', existing);
+        fixture.detectChanges();
+        comp.editFeedback(codeLine);
+        comp['stepCredits'](0.5);
+
+        const instruction: GradingInstruction = {
+            id: 1,
+            credits: 2,
+            feedback: 'test',
+            gradingScale: 'good',
+            instructionDescription: 'description',
+            usageCount: 0,
+        };
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback: Feedback) => {
+            feedback.gradingInstruction = instruction;
+            feedback.credits = instruction.credits;
+        });
+
+        // Parent (Monaco) writes the emitted draft back into the feedback input — must not overwrite the cancel snapshot.
+        comp.onUpdateFeedback.subscribe((draft) => {
+            fixture.componentRef.setInput('feedback', draft);
+            fixture.detectChanges();
+        });
+
+        comp.updateFeedbackOnDrop(new Event(''));
+        expect(comp.currentFeedback().gradingInstruction).toEqual(instruction);
+        expect(comp.currentFeedback().credits).toBe(2);
+
+        const restoredEmits: Feedback[] = [];
+        comp.onUpdateFeedback.subscribe((feedback) => restoredEmits.push(feedback));
+        comp.cancelFeedback();
+
+        expect(restoredEmits).toHaveLength(1);
+        expect(restoredEmits[0].credits).toBe(1);
+        expect(restoredEmits[0].gradingInstruction).toBeUndefined();
+        expect(restoredEmits[0].detailText).toBe('note');
+        expect(comp.currentFeedback().credits).toBe(1);
+        expect(comp.currentFeedback().gradingInstruction).toBeUndefined();
+        expect(comp.viewOnly()).toBe(true);
+    });
+
     it('should count feedback with one credit as positive', () => {
         const feedbackWithCredit = new Feedback();
         feedbackWithCredit.credits = 1;
