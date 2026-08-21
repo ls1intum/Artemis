@@ -21,6 +21,12 @@ import { contentSecurityPolicy } from 'app/programming/shared/instructions-rende
  * KaTeX and highlight.js run last and in the parent rather than inside the frame. Both are pure string
  * producers (`renderToString`, `highlight().value`), so they need no live document, and keeping them here
  * means the frame needs no library and no second script.
+ *
+ * The three `innerHTML` assignments below are marked for the static analysers, and the reason is stronger than
+ * the usual "the value is trusted": every one of them writes into a `DOMParser` document, which is inert. It is
+ * attached to nothing, so no script in it can run and no resource in it is fetched, and the markup only ever
+ * leaves as a string that goes into the sandboxed frame. The values are KaTeX's own output and highlight.js'
+ * output over text read back from `textContent`, both of which escape what they emit.
  */
 
 /** The `data-*` attributes the server writes that carry information about the viewer rather than the statement. */
@@ -291,6 +297,7 @@ export function renderFormulas(root: Element): void {
     root.querySelectorAll<HTMLElement>('.katex-formula').forEach((element) => {
         const formula = element.getAttribute('data-formula') ?? '';
         try {
+            // nosemgrep -- KaTeX output over an inert DOMParser document; see the note below
             element.innerHTML = katex.renderToString(formula, {
                 displayMode: element.getAttribute('data-display-mode') === 'true',
                 throwOnError: false,
@@ -324,8 +331,10 @@ export function highlightCodeBlocks(root: Element): void {
             // `code` comes from `textContent`, so it is text rather than markup, and highlight.js escapes it
             // again on the way out; its output is `<span class="hljs-*">` around escaped source and nothing else.
             if (!language) {
+                // nosemgrep -- highlight.js output over text read from textContent, on an inert document
                 element.innerHTML = hljs.highlightAuto(code).value;
             } else if (hljs.getLanguage(language)) {
+                // nosemgrep -- highlight.js output over text read from textContent, on an inert document
                 element.innerHTML = hljs.highlight(code, { language, ignoreIllegals: true }).value;
             }
             // Unknown language: the legacy pipeline emits the escaped source, which is what the server already
