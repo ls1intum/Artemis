@@ -141,18 +141,24 @@ public class User extends AbstractAuditingEntity implements Participant {
     private boolean deleted = false; // default value
 
     /**
-     * When the user last logged in. Set on every successful authentication and used as the activity signal for the
-     * data-privacy not-enrolled-user cleanup (a real login signal, unlike the auditing {@code lastModifiedDate}, which is
-     * bumped by any write to the user row such as group synchronization).
+     * No longer read or written by anything; the activity timestamps live in {@code user_activity}.
+     * <p>
+     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
+     *
+     * @deprecated superseded by {@code user_activity}
      */
+    @Deprecated(forRemoval = true)
     @Column(name = "last_login_date")
     private Instant lastLoginDate;
 
     /**
-     * When the data-privacy cleanup warned the user that their (not-enrolled, inactive) account will be deleted after a
-     * grace period. Stays {@code null} until the user has been warned; cleared if the user becomes active or enrolled
-     * again. Anchors the grace period to the real warning so an account is never deleted without prior notice.
+     * No longer read or written by anything; the activity timestamps live in {@code user_activity}.
+     * <p>
+     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
+     *
+     * @deprecated superseded by {@code user_activity}
      */
+    @Deprecated(forRemoval = true)
     @Column(name = "deletion_warning_sent_date")
     private Instant deletionWarningSentDate;
 
