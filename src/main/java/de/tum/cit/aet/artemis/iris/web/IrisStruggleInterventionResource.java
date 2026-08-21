@@ -78,7 +78,7 @@ public class IrisStruggleInterventionResource {
      *
      * @param exerciseId the programming exercise id (session scope)
      * @param episodeId  the client-allocated episode UUID
-     * @param body       the hint text, level tag, and client idempotency key
+     * @param body       the reveal request; only its client idempotency key is read, the hint text is not trusted
      * @return {@code 200 OK} with the persisted {@link IrisMessageResponseDTO} ({@code id} + {@code proactiveEpisodeId})
      */
     @PostMapping("exercises/{exerciseId}/episodes/{episodeId}/reveal")
@@ -87,7 +87,7 @@ public class IrisStruggleInterventionResource {
     public ResponseEntity<IrisMessageResponseDTO> revealAmbient(@PathVariable long exerciseId, @PathVariable String episodeId, @RequestBody RevealAmbientRequestDTO body) {
         var user = userRepository.getUserWithAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
-        var dto = struggleInterventionService.revealAmbient(user, exerciseId, episodeId, body.hintText(), body.level(), body.clientMessageId());
+        var dto = struggleInterventionService.revealAmbient(user, exerciseId, episodeId, body.clientMessageId());
         return ResponseEntity.ok(dto);
     }
 

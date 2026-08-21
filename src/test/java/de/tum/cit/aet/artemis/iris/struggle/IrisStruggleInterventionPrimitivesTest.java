@@ -158,7 +158,7 @@ class IrisStruggleInterventionPrimitivesTest {
             return m;
         });
 
-        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "Re-check the loop.", "ambient", "cid-1");
+        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "cid-1");
 
         assertThat(dto.id()).isEqualTo(101L);
         assertThat(dto.proactiveEpisodeId()).isEqualTo("ep-1");
@@ -176,7 +176,7 @@ class IrisStruggleInterventionPrimitivesTest {
         existingMessage.setProactiveEpisodeId("ep-1");
         when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("cid-1", USER_ID)).thenReturn(Optional.of(existingMessage));
 
-        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "Re-check the loop.", "ambient", "cid-1");
+        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "cid-1");
 
         assertThat(dto.id()).isEqualTo(101L);
         // No new row created
@@ -196,7 +196,7 @@ class IrisStruggleInterventionPrimitivesTest {
                 .thenReturn(Optional.of(concurrentRow)); // re-select after IntegrityViolation
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("unique constraint violation"));
 
-        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "Re-check the loop.", "ambient", "cid-1");
+        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "cid-1");
 
         assertThat(dto.id()).isEqualTo(202L);
     }
@@ -214,7 +214,7 @@ class IrisStruggleInterventionPrimitivesTest {
             return m;
         });
 
-        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "Same text as escalation.", "ambient", "cid-reveal");
+        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "cid-reveal");
 
         assertThat(dto.id()).isEqualTo(303L);
         verify(irisMessageService).saveMessage(argThat(m -> "cid-reveal".equals(m.getProactiveClientMessageId())), any(), any());
@@ -233,14 +233,14 @@ class IrisStruggleInterventionPrimitivesTest {
         when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("foreign-cid", USER_ID)).thenReturn(Optional.empty());
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("global unique violation"));
 
-        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1", "victim hint", "ambient", "foreign-cid")).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1", "foreign-cid")).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void revealAmbient_blankClientMessageId_throwsBadRequest() {
         // The idempotency key is mandatory: a null/blank clientMessageId cannot dedupe (NULLs are not unique in SQL).
-        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1", "Re-check the loop.", "ambient", "  ")).isInstanceOf(BadRequestException.class);
-        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1", "Re-check the loop.", "ambient", null)).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1", "  ")).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1", null)).isInstanceOf(BadRequestException.class);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
     }
 

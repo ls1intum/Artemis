@@ -5,9 +5,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * Request body for {@code POST exercises/{exerciseId}/episodes/{episodeId}/reveal}.
  *
- * @param hintText        the previously-hidden ambient hint text to persist
- * @param level           the intervention level tag (e.g. {@code "ambient"}, {@code "stale"}) - accepted for
- *                            future use but not stored as a separate column in the current schema
+ * @param hintText        the client's copy of the ambient hint. Accepted so the wire format stays stable, but
+ *                            deliberately never read: the reveal persists the text Artemis recorded when it offered
+ *                            the hint, so a caller cannot author an assistant message
+ * @param level           the intervention level tag (e.g. {@code "ambient"}, {@code "stale"}). Accepted for wire
+ *                            stability, not read and not stored as a separate column
  * @param clientMessageId the client-generated UUID that serves as the idempotency key for this reveal
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

@@ -566,12 +566,10 @@ public class IrisStruggleInterventionService {
      * @param user            the student performing the reveal
      * @param exerciseId      the programming exercise id (session scope)
      * @param episodeId       the client-allocated episode UUID to stamp on the row
-     * @param hintText        the hint text to persist as message content
-     * @param level           the intervention level tag; accepted for future use, not stored as a separate column
      * @param clientMessageId the client-generated UUID that serves as the unique idempotency key
      * @return the persisted message as a DTO (id + proactiveEpisodeId visible to the client for reconciliation)
      */
-    public IrisMessageResponseDTO revealAmbient(User user, long exerciseId, String episodeId, String hintText, String level, String clientMessageId) {
+    public IrisMessageResponseDTO revealAmbient(User user, long exerciseId, String episodeId, String clientMessageId) {
         // The clientMessageId is the idempotency key: it MUST be present and non-blank, otherwise the unique index
         // cannot dedupe (NULLs are not unique in SQL) and a lost-response retry would create duplicate rows.
         if (clientMessageId == null || clientMessageId.isBlank()) {
