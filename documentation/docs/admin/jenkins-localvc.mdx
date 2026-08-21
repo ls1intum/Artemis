@@ -148,8 +148,8 @@ The following steps describe how to deploy a pre-configured version of the Jenki
 1. You can now first build and deploy Jenkins, then you can also start the other services which weren't started yet:
 
    ```bash
-   JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d jenkins
-   docker compose -f docker/<Jenkins setup to be launched>.yml up -d
+   JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker compose --env-file .env -f docker/<Jenkins setup to be launched>.yml up --build -d jenkins
+   docker compose --env-file .env -f docker/<Jenkins setup to be launched>.yml up -d
    ```
 
    Jenkins is then reachable under http://localhost:8082/, and you can log in using the credentials specified in `jenkins-casc-config-localvc.yml` (defaults to `artemis_admin` as both username and password).
@@ -456,7 +456,7 @@ In order to upgrade Jenkins to a newer version, you need to rebuild the Docker i
 2. If you're using `docker compose`, you can simply use the following command and skip the next steps.
 
    ```bash
-   docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d
+   docker compose --env-file .env -f docker/<Jenkins setup to be launched>.yml up --build -d
    ```
 
 3. Build the new Docker image:

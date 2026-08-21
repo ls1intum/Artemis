@@ -1,28 +1,25 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
@@ -44,10 +41,13 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 @Conditional(IrisEnabled.class)
 public class PyrisJobService {
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     @Nullable
-    private IMap<String, PyrisJob> jobMap;
+    private DistributedMap<String, PyrisJob> jobMap;
+
+    @Nullable
+    private DistributedMap<String, String> struggleInFlightMap;
 
     @Value("${server.url}")
     private String serverUrl;
@@ -61,43 +61,42 @@ public class PyrisJobService {
     @Value("${artemis.iris.jobs.ingestion.timeout:10800}")
     private int ingestionJobTimeout; // in seconds (default 3h: covers transcription + ingestion of long lectures)
 
-    public PyrisJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    public PyrisJobService(DistributedDataProvider distributedDataProvider) {
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
-     * Initializes the PyrisJobService by configuring the Hazelcast map for Pyris jobs.
-     * Sets the time-to-live for the map entries to the specified jobTimeout value.
-     */
-    @PostConstruct
-    public void init() {
-        var mapConfig = hazelcastInstance.getConfig().getMapConfig("pyris-job-map");
-        mapConfig.setTimeToLiveSeconds(jobTimeout);
-        // Crash self-heal backstop: a reservation whose run never completes (node crash) expires with the job TTL.
-        hazelcastInstance.getConfig().getMapConfig("struggle-inflight-map").setTimeToLiveSeconds(jobTimeout);
-    }
-
-    /**
-     * Lazy init: Retrieves the Hazelcast map that stores Pyris jobs.
-     * If the map is not initialized, it initializes it.
+     * Lazy init: retrieves the distributed map that stores Pyris jobs.
      *
-     * @return the IMap containing Pyris jobs
+     * <p>
+     * The entry lifetime is requested here rather than configured on the backend, because a map-level TTL is not
+     * expressible on every provider and would silently not apply on some of them.
+     *
+     * @return the map containing Pyris jobs
      */
-    private IMap<String, PyrisJob> getPyrisJobMap() {
+    private DistributedMap<String, PyrisJob> getPyrisJobMap() {
         if (this.jobMap == null) {
-            this.jobMap = this.hazelcastInstance.getMap("pyris-job-map");
+            this.jobMap = this.distributedDataProvider.getExpiringMap("pyris-job-map", Duration.ofSeconds(jobTimeout));
         }
         return this.jobMap;
     }
 
     /**
-     * Retrieves the Hazelcast map that holds the single-flight in-flight markers for struggle-intervention runs,
-     * keyed by {@link #struggleInFlightKey(long, long)} (value = the reserving job token).
+     * Lazy init: retrieves the distributed map that holds the single-flight in-flight markers for
+     * struggle-intervention runs, keyed by {@link #struggleInFlightKey(long, long)} (value = the reserving job token).
      *
-     * @return the IMap of {@code (userId:exerciseId) -> token} reservations
+     * <p>
+     * The entry lifetime is a crash self-heal backstop: a reservation whose run never completes (node crash) expires
+     * with the job TTL. Like the job map, the lifetime is requested here rather than configured on the backend,
+     * because a map-level TTL is not expressible on every provider.
+     *
+     * @return the map of {@code (userId:exerciseId) -> token} reservations
      */
-    private IMap<String, String> getStruggleInFlightMap() {
-        return hazelcastInstance.getMap("struggle-inflight-map");
+    private DistributedMap<String, String> getStruggleInFlightMap() {
+        if (this.struggleInFlightMap == null) {
+            this.struggleInFlightMap = this.distributedDataProvider.getExpiringMap("struggle-inflight-map", Duration.ofSeconds(jobTimeout));
+        }
+        return this.struggleInFlightMap;
     }
 
     private static String struggleInFlightKey(long userId, long exerciseId) {
@@ -175,7 +174,7 @@ public class PyrisJobService {
             @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode) {
         var token = generateJobIdToken();
         var key = struggleInFlightKey(userId, exerciseId);
-        String existing = getStruggleInFlightMap().putIfAbsent(key, token, jobTimeout, TimeUnit.SECONDS);
+        String existing = getStruggleInFlightMap().putIfAbsent(key, token, Duration.ofSeconds(jobTimeout));
         if (existing != null) {
             return Optional.empty();
         }
@@ -227,7 +226,7 @@ public class PyrisJobService {
         map.lock(key);
         try {
             if (token.equals(map.get(key))) {
-                map.put(key, token, jobTimeout, TimeUnit.SECONDS);
+                map.put(key, token, Duration.ofSeconds(jobTimeout));
             }
         }
         finally {
@@ -306,7 +305,7 @@ public class PyrisJobService {
     public String addLectureIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
         var token = generateJobIdToken();
         var job = new LectureIngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
-        getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
+        getPyrisJobMap().put(token, job, Duration.ofSeconds(ingestionJobTimeout));
         return token;
     }
 
@@ -320,7 +319,7 @@ public class PyrisJobService {
     public String addFaqIngestionWebhookJob(long courseId, long faqId) {
         var token = generateJobIdToken();
         var job = new FaqIngestionWebhookJob(token, courseId, faqId);
-        getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
+        getPyrisJobMap().put(token, job, Duration.ofSeconds(ingestionJobTimeout));
         return token;
     }
 
@@ -341,11 +340,11 @@ public class PyrisJobService {
      */
     public void updateJob(PyrisJob job) {
         int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob) ? ingestionJobTimeout : jobTimeout;
-        getPyrisJobMap().put(job.jobId(), job, ttl, TimeUnit.SECONDS);
+        getPyrisJobMap().put(job.jobId(), job, Duration.ofSeconds(ttl));
     }
 
     /**
-     * Runs the supplied action while holding the Hazelcast lock for the given Pyris job id.
+     * Runs the supplied action while holding the distributed lock for the given Pyris job id.
      *
      * @param jobId    the job id whose map entry should be locked
      * @param supplier the action to run under the lock

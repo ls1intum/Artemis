@@ -1,0 +1,127 @@
+---
+id: intro
+title: About Artemis
+sidebar_label: About Artemis
+slug: /
+description: What Artemis is, who develops it, and how research shapes the platform.
+---
+
+# About Artemis
+
+**Artemis is an open-source platform for interactive learning with individual feedback.**
+
+Artemis enables universities to provide scalable, interactive learning experiences with individual
+feedback, authentic assessment, adaptive learning, and responsible AI support. It is developed in
+public under the [MIT license](https://github.com/ls1intum/Artemis/blob/develop/LICENSE) and is
+operated by each institution on its own infrastructure.
+
+This section is written for people who evaluate, adopt, fund, study, or contribute to Artemis. If you
+are looking for task-oriented guides instead, start with the
+[student](/student/intro), [instructor](/instructor/intro), [developer](/developer/intro), or
+[administrator](/admin/intro) documentation.
+
+## Mission
+
+Artemis exists to make interactive learning practical at university scale. Large courses tend to
+force a choice between meaningful feedback and the number of students who can receive it. Artemis is
+built to remove that trade-off: exercises are interactive, feedback is automated where automation is
+appropriate, and human assessment is supported where human judgement is required.
+
+## What makes Artemis distinctive
+
+Artemis is organized around four ideas rather than around a catalog of course-management features.
+
+### Interactive learning
+
+Students participate actively instead of consuming content. Programming, modeling, text, quiz, and
+file-upload exercises are first-class objects in the platform, and lectures link directly to the
+exercises and competencies they prepare for.
+
+### Individual feedback
+
+Feedback is part of the learning loop, not an afterthought. Programming submissions are built,
+tested, and analyzed automatically; quizzes are evaluated on submission; text and modeling exercises
+combine manual assessment with feedback suggestions. Students can ask for more feedback or file a
+complaint, and assessments can be rated.
+
+### Authentic assessment
+
+Coursework and examinations use the same exercise types students already worked with. The
+[exam mode](/instructor/exams/intro) adds exercise variants per student, test runs for instructors,
+integrated [plagiarism checks](/instructor/assessment-grading/plagiarism-check), a structured student
+review workflow, and grade keys with export for university systems.
+
+### Adaptive and AI-supported learning
+
+Competencies, learning paths, and learning analytics let courses adapt to individual progress.
+AI-assisted capabilities such as Iris, Athena, and Hyperion are optional, configuration-gated
+integrations that keep instructors and tutors in control of assessment decisions. The
+[Artemis Intelligence overview](/admin/artemis-intelligence) documents which capability is native to
+Artemis, which is an external service, and where the boundaries are.
+
+### Open digital infrastructure
+
+Artemis is open source, institutionally deployable, extensible, and developed in public. Institutions
+run their own instances, decide which integrations to enable, and can inspect and change every part of
+the platform.
+
+## Scope and non-goals
+
+Artemis is a learning platform for interactive exercises, assessment, and examinations. It is not a
+general-purpose learning management system and deliberately does not try to cover every use case of
+one. Artemis currently does not provide SCORM, xAPI, or cmi5 content packages, H5P authoring,
+ePortfolios, multi-level curriculum management, or built-in video conferencing. The
+[platform comparison](/compare) states this side by side with other systems.
+
+Institutions that need those capabilities can run Artemis alongside an existing system and connect the
+two through [LTI](/instructor/integrations/lti-configuration).
+
+## Who develops Artemis
+
+Artemis is an open-source project initiated and primarily maintained by the Applied Education
+Technologies (AET) group at the Technical University of Munich (TUM), with contributions from a
+growing community of universities, students, and individual developers.
+
+Applied Education Technologies, Boltzmannstrasse 3, 85748 Garching bei München, Germany.
+
+Artemis is not a separate legal entity, and there is no separate Artemis organization, association,
+or foundation. Development happens at TUM under the MIT license; every Artemis instance is deployed
+and operated by the institution that runs it, which remains responsible for its own operation and for
+its own compliance obligations.
+
+- [Project governance](./governance) describes who decides what, and how changes reach `develop`.
+- [Adoption](./adoption) lists the institutions that use or evaluate Artemis.
+- [Community](./community) lists the channels that actually exist today.
+
+## Research-driven development
+
+Artemis grew out of research on interactive learning and has been an education research platform ever
+since. New capabilities usually follow the same loop:
+
+1. **Research.** A question about teaching, feedback, or assessment at scale is identified, often
+   directly from running large courses.
+2. **Prototype.** The idea is implemented in Artemis, frequently as part of a thesis or a university
+   course project.
+3. **Evaluation.** The prototype is used in real courses and evaluated with the students and
+   instructors who work with it.
+4. **Open-source product.** What holds up is hardened, reviewed, documented, and released as part of
+   Artemis for every institution to use.
+
+The [publications page](/publications) lists the peer-reviewed work that came out of this loop. If
+you reference Artemis in your own work, please use the citation metadata in
+[`CITATION.cff`](https://github.com/ls1intum/Artemis/blob/develop/CITATION.cff).
+
+## Where to go next
+
+| I want to know | Read |
+| --- | --- |
+| How to see Artemis running without setting anything up | [Try Artemis](./try) |
+| How security, privacy, accessibility, and AI data processing are approached | [Trust and transparency](./trust) |
+| How decisions are made and who reviews changes | [Project governance](./governance) |
+| What the team is exploring, planning, and building | [Roadmap](./roadmap) |
+| Which versions are supported and what upgrades look like | [Release and support policy](./releases) |
+| How open-source development actually works here | [Open-source development](/developer/open-source) |
+| Where Artemis is used | [Adoption](./adoption) |
+| How to reach the project | [Community](./community) |
+| How Artemis compares with other platforms | [Platform comparison](/compare) |
+| What research backs the platform | [Publications](/publications) |

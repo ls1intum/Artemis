@@ -1,107 +1,144 @@
 package de.tum.cit.aet.artemis.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-import com.hazelcast.spring.cache.HazelcastCacheManager;
+import org.springframework.cache.Cache;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.cache.support.NoOpCacheManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 
-@ExtendWith(MockitoExtension.class)
+/**
+ * Exercises cache invalidation against the cache that Spring actually writes to.
+ *
+ * <p>
+ * The cache manager used here is a {@link ConcurrentMapCacheManager}, because its {@code getNativeCache()} exposes a
+ * {@link java.util.concurrent.ConcurrentMap}, the same shape Hazelcast's {@code IMap} presents. That is what the prefix
+ * scan needs, so this models the production store faithfully without starting Hazelcast.
+ *
+ * <p>
+ * Seeding and asserting both go through the Spring {@link Cache} API on purpose. An earlier version used the distributed
+ * data provider's map instead, which passed while production was broken: {@code @Cacheable} resolves against the primary
+ * {@code RoutingCacheManager}, which serves these caches from the Hazelcast-backed manager on every core node no matter
+ * which provider is configured, so invalidating the provider's map was a no-op under the Redis and Local providers. The
+ * service no longer takes a {@code DistributedDataProvider} at all, which makes that mismatch structurally impossible
+ * rather than merely tested for.
+ */
 class CourseNotificationCacheServiceTest {
 
     private CourseNotificationCacheService courseNotificationCacheService;
 
-    @Mock
-    private HazelcastInstance hazelcastInstance;
-
-    @Mock
-    private IMap<Object, Object> cacheMap;
+    private ConcurrentMapCacheManager cacheManager;
 
     private static final String CACHE_NAME = CourseNotificationCacheService.USER_COURSE_NOTIFICATION_CACHE;
+
+    private static final String SETTINGS_CACHE_NAME = CourseNotificationCacheService.USER_COURSE_NOTIFICATION_SETTING_SPECIFICATION_CACHE;
 
     private static final long COURSE_ID = 123L;
 
     @BeforeEach
     void setUp() {
-        HazelcastCacheManager realHazelcastCacheManager = new HazelcastCacheManager(hazelcastInstance);
+        cacheManager = new ConcurrentMapCacheManager(CACHE_NAME, SETTINGS_CACHE_NAME);
+        courseNotificationCacheService = new CourseNotificationCacheService(cacheManager);
+    }
 
-        courseNotificationCacheService = new CourseNotificationCacheService(realHazelcastCacheManager);
+    /**
+     * @return the keys currently held by the notification cache, read through the store backing the Spring cache
+     */
+    private Set<Object> cachedKeys() {
+        Cache cache = cacheManager.getCache(CACHE_NAME);
+        return new HashSet<>(((Map<?, ?>) cache.getNativeCache()).keySet());
+    }
+
+    /**
+     * Seeds the paging and count entries a user would have cached for a course, through the Spring cache API.
+     *
+     * @param userId   the user id
+     * @param courseId the course id
+     */
+    private void seedCacheEntries(Long userId, long courseId) {
+        Cache cache = cacheManager.getCache(CACHE_NAME);
+        cache.put("user_course_notification_" + userId + "_" + courseId + "_page0", "cached");
+        cache.put("user_course_notification_" + userId + "_" + courseId + "_page1", "cached");
+        cache.put("user_course_notification_count_" + userId + "_" + courseId, "cached");
     }
 
     @Test
     void shouldInvalidateCacheForUserWhenCacheIsSet() {
-        when(hazelcastInstance.getMap(anyString())).thenReturn(cacheMap);
-
         User user = createUserWithId(1L);
-        Set<User> users = Set.of(user);
-        Set<Object> cacheKeys = createMockCacheKeys(user.getId(), COURSE_ID);
-        when(cacheMap.keySet()).thenReturn(cacheKeys);
+        seedCacheEntries(user.getId(), COURSE_ID);
 
-        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(users, COURSE_ID);
+        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(Set.of(user), COURSE_ID);
 
-        Awaitility.await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(hazelcastInstance, times(2)).getMap(CACHE_NAME);
-
-            ArgumentCaptor<Object> keyCaptor = ArgumentCaptor.forClass(Object.class);
-            verify(cacheMap, atLeastOnce()).delete(keyCaptor.capture());
-
-            assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.toString().startsWith("user_course_notification_1_123"));
-
-            assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.toString().equals("user_course_notification_count_1_123"));
-        });
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(cachedKeys()).isEmpty());
     }
 
     @Test
     void shouldInvalidateCacheForMultipleUsersWhenAllUsersHaveCachedEntries() {
-        when(hazelcastInstance.getMap(anyString())).thenReturn(cacheMap);
-
         User user1 = createUserWithId(1L);
         User user2 = createUserWithId(2L);
-        Set<User> users = Set.of(user1, user2);
+        seedCacheEntries(user1.getId(), COURSE_ID);
+        seedCacheEntries(user2.getId(), COURSE_ID);
 
-        Set<Object> cacheKeys = new HashSet<>();
-        cacheKeys.addAll(createMockCacheKeys(user1.getId(), COURSE_ID));
-        cacheKeys.addAll(createMockCacheKeys(user2.getId(), COURSE_ID));
-        when(cacheMap.keySet()).thenReturn(cacheKeys);
+        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(Set.of(user1, user2), COURSE_ID);
 
-        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(users, COURSE_ID);
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(cachedKeys()).isEmpty());
+    }
 
-        Awaitility.await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(hazelcastInstance, times(4)).getMap(CACHE_NAME);
+    /**
+     * Guards against the prefix scan being too greedy: entries for an unrelated course must survive.
+     */
+    @Test
+    void shouldKeepEntriesOfOtherCoursesAndUsers() {
+        User user = createUserWithId(1L);
+        seedCacheEntries(user.getId(), COURSE_ID);
+        seedCacheEntries(user.getId(), 999L);
+        seedCacheEntries(2L, COURSE_ID);
 
-            ArgumentCaptor<Object> keyCaptor = ArgumentCaptor.forClass(Object.class);
-            verify(cacheMap, atLeast(4)).delete(keyCaptor.capture());
+        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(Set.of(user), COURSE_ID);
 
-            assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.toString().startsWith("user_course_notification_1_123"))
-                    .anyMatch(key -> key.toString().startsWith("user_course_notification_2_123")).anyMatch(key -> key.toString().equals("user_course_notification_count_1_123"))
-                    .anyMatch(key -> key.toString().equals("user_course_notification_count_2_123"));
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(cachedKeys()).noneMatch(key -> key.toString().contains("_1_" + COURSE_ID));
+            assertThat(cachedKeys()).anyMatch(key -> key.toString().contains("_1_999"));
+            assertThat(cachedKeys()).anyMatch(key -> key.toString().contains("_2_" + COURSE_ID));
         });
+    }
+
+    @Test
+    void shouldInvalidateTheSettingSpecificationEntryOfTheGivenUserOnly() {
+        Cache settings = cacheManager.getCache(SETTINGS_CACHE_NAME);
+        settings.put("setting_specifications_1_" + COURSE_ID, "cached");
+        settings.put("setting_specifications_2_" + COURSE_ID, "cached");
+
+        courseNotificationCacheService.invalidateCourseNotificationSettingSpecificationCacheForUser(1L, COURSE_ID);
+
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(settings.get("setting_specifications_1_" + COURSE_ID)).isNull();
+            assertThat(settings.get("setting_specifications_2_" + COURSE_ID)).isNotNull();
+        });
+    }
+
+    @Test
+    void shouldClearTheWholeNotificationCache() {
+        seedCacheEntries(1L, COURSE_ID);
+        seedCacheEntries(2L, 999L);
+
+        courseNotificationCacheService.clearCourseNotificationCache();
+
+        assertThat(cachedKeys()).isEmpty();
     }
 
     @Test
@@ -117,66 +154,50 @@ class CourseNotificationCacheServiceTest {
 
     @Test
     void shouldHandleEmptyUserSetWhenInvalidatingCache() {
-        Set<User> emptyUsers = new HashSet<>();
+        User untouched = createUserWithId(1L);
+        seedCacheEntries(untouched.getId(), COURSE_ID);
 
-        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(emptyUsers, COURSE_ID);
+        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(new HashSet<>(), COURSE_ID);
 
-        Awaitility.await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(hazelcastInstance, never()).getMap(anyString());
-            verify(cacheMap, never()).delete(any());
-        });
+        Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> assertThat(cachedKeys()).hasSize(3));
     }
 
     @ParameterizedTest
     @ValueSource(longs = { 0L, 1L, 999L })
     void shouldInvalidateCacheForDifferentCourseIdsWhenUserHasId(long courseId) {
-        when(hazelcastInstance.getMap(anyString())).thenReturn(cacheMap);
         User user = createUserWithId(1L);
-        Set<User> users = Set.of(user);
-        Set<Object> cacheKeys = createMockCacheKeys(user.getId(), courseId);
-        when(cacheMap.keySet()).thenReturn(cacheKeys);
+        seedCacheEntries(user.getId(), courseId);
 
-        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(users, courseId);
+        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(Set.of(user), courseId);
 
-        Awaitility.await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(hazelcastInstance, times(2)).getMap(CACHE_NAME);
-
-            ArgumentCaptor<Object> keyCaptor = ArgumentCaptor.forClass(Object.class);
-            verify(cacheMap, atLeastOnce()).delete(keyCaptor.capture());
-
-            assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.toString().contains("_" + courseId));
-        });
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(cachedKeys()).isEmpty());
     }
 
+    /**
+     * The exact-key eviction works on any cache manager. The prefix scan needs an enumerable store, so a cache whose
+     * native store does not expose keys must degrade to a logged warning rather than throw on a notification path.
+     */
     @Test
-    void shouldHandleExceptionsWhenDeletingCacheEntries() {
-        when(hazelcastInstance.getMap(anyString())).thenReturn(cacheMap);
-        User user = createUserWithId(1L);
-        Set<User> users = Set.of(user);
-        Set<Object> cacheKeys = createMockCacheKeys(user.getId(), COURSE_ID);
-        when(cacheMap.keySet()).thenReturn(cacheKeys);
+    void shouldNotFailWhenTheBackingStoreDoesNotExposeItsKeys() {
+        var service = new CourseNotificationCacheService(new CaffeineCacheManager(CACHE_NAME));
 
-        doThrow(new ClassCastException("Test exception")).when(cacheMap).delete(any());
+        assertThatCode(() -> service.invalidateCourseNotificationCacheForUsers(Set.of(createUserWithId(1L)), COURSE_ID)).doesNotThrowAnyException();
+    }
 
-        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(users, COURSE_ID);
+    /**
+     * A cache the manager does not know must not blow up either; there is nothing to invalidate.
+     */
+    @Test
+    void shouldNotFailWhenTheCacheIsNotConfigured() {
+        var service = new CourseNotificationCacheService(new NoOpCacheManager());
 
-        Awaitility.await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(hazelcastInstance, times(2)).getMap(CACHE_NAME);
-            verify(cacheMap, atLeastOnce()).delete(any());
-        });
+        assertThatCode(() -> service.invalidateCourseNotificationCacheForUsers(Set.of(createUserWithId(1L)), COURSE_ID)).doesNotThrowAnyException();
+        assertThatCode(service::clearCourseNotificationCache).doesNotThrowAnyException();
     }
 
     private User createUserWithId(Long id) {
         User user = new User();
         user.setId(id);
         return user;
-    }
-
-    private Set<Object> createMockCacheKeys(Long userId, Long courseId) {
-        Set<Object> keys = new HashSet<>();
-        keys.add("user_course_notification_" + userId + "_" + courseId + "_page0");
-        keys.add("user_course_notification_" + userId + "_" + courseId + "_page1");
-        keys.add("user_course_notification_count_" + userId + "_" + courseId);
-        return keys;
     }
 }

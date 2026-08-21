@@ -25,18 +25,31 @@ import dockerStructure from './assets/artemis-docker-file-structure.drawio.png';
 
 2. Check that all local network ports used by Docker Compose are free (e.g. you haven't started a local MySQL server when you would like to start a Docker Compose instance of MySQL).
 
-3. Run `docker compose pull && docker compose up` in the directory `docker/`
+3. From the **repository root**, run:
+
+   ```bash
+   docker compose --env-file .env -f docker/docker-compose.yml pull
+   docker compose --env-file .env -f docker/docker-compose.yml up
+   ```
 
 4. Open the Artemis instance in your browser at https://localhost
 
-5. Run `docker compose down` in the directory `docker/` to stop and remove the docker containers
+5. Run `docker compose --env-file .env -f docker/docker-compose.yml down` to stop and remove the docker containers
 
-<Callout variant={CalloutVariant.info}>
-    The first `docker compose pull` command is just necessary the first time as an extra step; otherwise, Artemis will be built from source as you don't already have an Artemis Image locally. For Arm-based Macs, Dev boards, etc., you will have to build the Artemis Docker Image first, as we currently do not distribute Docker Images for these architectures.
+<Callout variant={CalloutVariant.warning}>
+    **Always pass `--env-file .env` and run from the repository root.** The Compose files take their image versions (`MYSQL_IMAGE`, `POSTGRES_VERSION`, `POSTGRES_IMAGE_VARIANT`, ...) from the `.env` file in the repository root, but Compose looks for `.env` next to the first `-f` file, which is `docker/`. Without `--env-file .env` those variables are unset: the MySQL setups fail immediately with *"service mysql has neither an image nor a build context specified"*, and the PostgreSQL setups resolve to an image tag of `postgres:` and fail later, when pulling. Every script in this repository (`run-e2e-tests-local*.sh`) passes `--env-file .env` for the same reason.
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-    `docker-compose.yml` mirrors the production setup, so it needs a signing key and an admin password of your own before it starts — see [Other Docker Compose Setups](#other-docker-compose-setups) below. If you would rather not configure anything, `docker compose -f docker/artemis-dev-postgres.yml up` starts as it is.
+    The first `docker compose pull` is only needed once; otherwise Artemis is built from source because you do not have the image locally yet. Published images cover `linux/amd64` and `linux/arm64`, so Apple Silicon and other Arm hosts pull a prebuilt image rather than building one.
+</Callout>
+
+<Callout variant={CalloutVariant.tip}>
+    Just want to look at Artemis without configuring anything? [Try Artemis](/about/try) has a single command that starts a self-contained instance **including working programming exercises**.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+    `docker-compose.yml` mirrors the production setup, so it needs a signing key and an admin password of your own before it starts. See [Other Docker Compose Setups](#other-docker-compose-setups) below. If you would rather not configure anything, `docker compose --env-file .env -f docker/artemis-dev-postgres.yml up` starts as it is.
 </Callout>
 
 ---
@@ -55,6 +68,8 @@ In the directory `docker/` you can find the following *docker compose* files for
 
 - `artemis-dev-mysql.yml`: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
 - `artemis-dev-postgres.yml`: **Artemis-Dev-Postgres** Setup containing the development build of Artemis and a PostgreSQL DB
+- `artemis-dev-local-vc-local-ci-postgres.yml`: **Artemis-Dev-LocalVC-LocalCI-Postgres** Setup adding the integrated code lifecycle (LocalVC, LocalCI, and a build agent) on top of the dev build, so that programming exercises work. This is the setup behind [Try Artemis](/about/try)
+- `artemis-dev-local-vc-local-ci-mysql.yml`: the same with a MySQL DB
 - `artemis-prod-mysql.yml`: **Artemis-Prod-MySQL** Setup containing the production build of Artemis and a MySQL DB
 - `artemis-prod-postgres.yml`: **Artemis-Prod-Postgres** Setup containing the production build of Artemis and a PostgreSQL DB
 - `monitoring.yml`: **Prometheus-Grafana** Setup containing a Prometheus and Grafana instance
@@ -62,14 +77,14 @@ In the directory `docker/` you can find the following *docker compose* files for
 - `nginx.yml`: **Nginx** Setup containing a preconfigured Nginx instance
 - `postgres.yml`: **Postgres** Setup containing a PostgreSQL DB instance
 
-Example command to run such setups:
+Example command to run such setups, from the repository root:
 
 ```bash
-docker compose -f docker/artemis-dev-postgres.yml up
+docker compose --env-file .env -f docker/artemis-dev-postgres.yml up
 ```
 
 <Callout variant={CalloutVariant.info}>
-    There is also a single `docker-compose.yml` in the directory `docker/` which mirrors the setup of `artemis-prod-mysql.yml`. If the documentation just mentions to run `docker compose` without a `-f <file.yml>` argument, it's assumed you are running the command from the `docker/` directory.
+    There is also a single `docker-compose.yml` in the directory `docker/` which mirrors the setup of `artemis-prod-mysql.yml`. Always select it explicitly with `--env-file .env -f docker/docker-compose.yml` from the repository root; a bare `docker compose` run inside `docker/` does not find the root `.env`.
 </Callout>
 
 ### Credentials for the Prod Setups
@@ -99,7 +114,7 @@ services:
 ```
 
 ```bash
-docker compose -f docker/artemis-prod-postgres.yml -f docker/local-secrets.yml up
+docker compose --env-file .env -f docker/artemis-prod-postgres.yml -f docker/local-secrets.yml up
 ```
 
 The `docker/test-server-*.yml` setups take a full replacement for `prod.env` through `ARTEMIS_ENV_FILE`, so there you point that variable at your own copy of `prod.env` rather than at a file that only holds the credentials. See [Security](/admin/production-setup/security) for the properties that are validated. If you just want a running Artemis without configuring anything, use one of the dev setups.
@@ -129,17 +144,17 @@ When running Artemis from IntelliJ or via `./gradlew bootRun`, start only the in
 
 ```bash
 # Email testing only
-docker compose -f docker/mailpit.yml up
+docker compose --env-file .env -f docker/mailpit.yml up
 
 # SAML2 testing only
-docker compose -f docker/saml-test.yml up
+docker compose --env-file .env -f docker/saml-test.yml up
 
 # Both services
-docker compose -f docker/local-development.yml up
+docker compose --env-file .env -f docker/local-development.yml up
 
 # Or selectively from the combined file
-docker compose -f docker/local-development.yml up mailpit
-docker compose -f docker/local-development.yml up keycloak
+docker compose --env-file .env -f docker/local-development.yml up mailpit
+docker compose --env-file .env -f docker/local-development.yml up keycloak
 ```
 
 Then configure Artemis to connect to these services via `application-local.yml`. See the dedicated setup guides for detailed instructions:
@@ -189,7 +204,7 @@ Container and volume names are prepended with `artemis-` in order to not interfe
 ## Get a Shell into the Containers
 
 <Callout variant={CalloutVariant.info}>
-    To keep the documentation short, we will use the standard form of `docker compose COMMAND` from this point on. You can use the following commands also with the `-f docker/<setup to be launched>.yml` argument pointing to a specific setup.
+    To keep the documentation short, we will use the short form of `docker compose COMMAND` from this point on. In practice, prefix each of them with `--env-file .env -f docker/<setup to be launched>.yml` from the repository root, so that Compose finds the image versions and the right setup.
 </Callout>
 
 - **app container:**
