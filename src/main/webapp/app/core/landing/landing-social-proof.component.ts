@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
 
@@ -6,7 +8,7 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
     selector: 'jhi-landing-social-proof',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe],
+    imports: [ArtemisTranslatePipe, FaIconComponent],
     styles: `
         :host {
             display: block;
@@ -26,6 +28,27 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
             color: var(--text-body-secondary);
             line-height: 1.6;
             text-align: center;
+            margin: 0;
+        }
+
+        .social-proof-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-dark, var(--primary));
+            text-decoration: none;
+        }
+
+        .social-proof-link:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        .social-proof-link:focus-visible {
+            outline: 2px solid var(--primary-dark, var(--primary));
+            outline-offset: 2px;
         }
 
         .marquee-container {
@@ -87,7 +110,7 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
     `,
     template: `
         <section class="social-proof" [attr.aria-label]="'landing.socialProof.universitiesAria' | artemisTranslate">
-            <p class="social-proof-title">{{ 'landing.socialProof.title' | artemisTranslate }}</p>
+            <h2 class="social-proof-title">{{ 'landing.socialProof.title' | artemisTranslate }}</h2>
             <div class="marquee-container">
                 <div class="marquee-track">
                     @for (logo of logos; track logo.name) {
@@ -119,9 +142,16 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
                     }
                 </div>
             </div>
+            <a class="social-proof-link" href="https://docs.artemis.tum.de/about/adoption" target="_blank" rel="noopener">
+                {{ 'landing.socialProof.cta' | artemisTranslate }}
+                <fa-icon [icon]="faArrowUpRightFromSquare" />
+                <span class="visually-hidden">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
+            </a>
         </section>
     `,
 })
 export class LandingSocialProofComponent {
+    protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
+
     logos = UNIVERSITY_LOGOS;
 }

@@ -24,3 +24,125 @@ For each action, the tool measures the time it takes to complete the action and 
 Additionally, the tool can be connected to Prometheus to collect and visualize workload metrics.
 
 For more information on how to set up and use the Benchmarking Tool, please refer to the <a href="https://github.com/ls1intum/Artemis-Benchmarking?tab=readme-ov-file#readme">README</a>.
+
+## Running a comparable scale test
+
+A benchmark number is only useful if someone else can reproduce it. Record the following alongside any
+result, so that two runs can be compared and so that a number keeps its meaning after the hardware or
+the release changes:
+
+| What | Why it matters |
+| --- | --- |
+| Artemis version | Performance characteristics change between releases. |
+| Deployment topology | Number of Artemis nodes, number of build agents, and whether a load balancer sits in front. |
+| Hardware per node | vCPUs, memory, disk type. A number without hardware is not a number. |
+| Database | PostgreSQL or MySQL, version, and whether it runs on its own host. |
+| Scenario | Exam or course, number of simulated students, exercise types, and the ramp-up profile. |
+| Result | Response time percentiles (median, p95, p99) per action, error rate, and the observed limit. |
+| Observed bottleneck | What saturated first: CPU, database connections, build agents, network. |
+
+The most informative result is not the largest number the setup survived, but the point at which a
+percentile started to degrade and which resource caused it.
+
+## Benchmark scenarios
+
+A single large number answers almost nothing. What an operator needs to know is **where the response
+time starts to degrade and which resource caused it**, so the runs below form a ladder: each one keeps
+the exam shape fixed and changes only the number of simulated students.
+
+The tool's exam contains four exercises (one programming, one modeling, one quiz, one text). Each
+simulated student logs in, fetches and starts the exam, submits each exercise, pushes commits for the
+programming exercise, and submits the exam.
+
+### A simulated student is not a real student
+
+Read this before choosing a size, because it decides what the numbers mean. The simulation is a
+closed-loop maximum-throughput test, not a scaled-down exam:
+
+- **There is no think time.** The only pause inside a student's exam is a tenth of a second before each
+  push. A real exam spreads the same work over an hour or more.
+- **The default push count is high.** The form defaults to 8 to 15 commits and pushes per student, and
+  every push is a build. At the sizes below that is tens of thousands of builds.
+
+Together these make a simulated student far more demanding than a real one, so a run of N simulated
+students corresponds to a considerably larger real cohort. Treat the student count as a load setting,
+not as a headcount.
+
+Two consequences for how a ladder is run:
+
+- **Keep the pushes low**, one or two per student, or the build queue rather than Artemis becomes the
+  thing being measured. Estimate the drain as `students x pushes / concurrent build slots x build time`
+  before committing to a maintenance window.
+- **Client concurrency is capped** at ten threads per CPU of the machine running the tool, so above that
+  many students a larger run adds duration and accumulated state rather than more simultaneous users.
+  Record the tool host's CPU count with the result, or two runs are not comparable.
+
+### The ladder
+
+Start with a smoke test that is not reported: ten students, one push each. It proves the users, the
+admin or instructor rights, the build agents and the git path work, and it gives the first real
+measurement of build time, which every duration estimate depends on.
+
+Then hold the exam shape, the push range and the repository access mix fixed, and change only the
+student count:
+
+| # | Students | Purpose |
+| --- | --- | --- |
+| S1 | 100 | Baseline. Every later run is compared against these percentiles. |
+| S2 | 200 | First check that nothing degrades when the volume doubles. |
+| S3 | 500 | Where queueing usually becomes visible. |
+| S4 | 1000 | The decision point: read the metrics here before going further. |
+
+Extend to 1500 and then 2000 **only if S4 leaves headroom**. Decide from S4's numbers rather than
+planning it in advance: if a percentile is already bending, or the build queue has not drained inside
+the window, a larger run costs hours and answers nothing.
+
+Hold the repository access mix fixed across the whole ladder. The tool draws it per student from four
+percentages that must add up to 100 (online IDE, password, participation token, and SSH), so record
+all four alongside the result. Note that SSH clones bypass any rate limiting a reverse proxy applies
+to git over HTTP, which makes an all-SSH mix a poor choice for a first run against an unfamiliar
+deployment.
+
+### Two variations at the target size
+
+Run these at whichever of S3 or S4 turned out to be the interesting one. They separate causes that the
+ladder alone cannot distinguish:
+
+| Variation | Change | What it isolates |
+| --- | --- | --- |
+| Online editor | Online IDE share set to 100% | Moves programming traffic off git clone and push and onto the REST and WebSocket path, separating version control cost from application cost. |
+| No programming exercise | Exam with only modeling, quiz, and text | Removes the build agents and the git server from the picture, so the remaining latency is attributable to Artemis and the database. |
+
+Keep everything else identical between a run and its variation, or the comparison is worthless.
+
+### Reading a run
+
+Compare the per-action figures the tool reports (authentication, get and start student exam, submit
+exercise, submit exam, clone, push) across the ladder rather than the totals. The action that degrades
+first names the bottleneck:
+
+- **Clone and push degrade first**: the git server or its storage.
+- **Submit exercise degrades first**: Artemis or the database.
+- **Authentication degrades first**: the identity provider, or connection pool exhaustion.
+- **Builds per minute plateaus while push stays flat**: build agent capacity. That is expected, and is a
+  capacity-planning input rather than a defect.
+
+Enable the tool's Prometheus integration for these runs. Without it a result describes symptoms; with it
+the same result names the saturated resource.
+
+## Publishing a result
+
+Scale claims about Artemis should be traceable to a run described this way. If you have run a
+benchmark on your own deployment, please consider contributing the result: it helps other institutions
+size their infrastructure, and it turns a claim into evidence. Open a pull request against this page or
+write to `artemis@xcit.tum.de`.
+
+{/*
+TODO(maintainers): publish the TUM reference run here (topology, hardware, scenario, percentiles).
+Artemis states "used for courses and online exams with more than 2,000 students" in the README, the
+landing page, and the platform comparison. That claim is about real cohorts, and the evidence for it
+is operational history rather than a benchmark rung, so word whatever lands here in terms of what the
+run actually showed (the largest size that held its percentiles, and what saturated first) instead of
+tying it to a target number. A simulated 1,000 is already a harder test than a real 2,000; see "A
+simulated student is not a real student" above.
+*/}
