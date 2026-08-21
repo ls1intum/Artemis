@@ -214,8 +214,11 @@ export class ProgrammingExerciseInstructionSsrContentComponent implements OnDest
         // Only offered while the index still exists: a shorter statement would otherwise focus nothing and, worse,
         // silently move the reader somewhere they never were.
         const focusIndex = this.lastFocusedTaskIndex !== undefined && this.lastFocusedTaskIndex < tasks.length ? this.lastFocusedTaskIndex : undefined;
-        // The frame has an opaque origin, so there is no origin to address it by; it validates that the message
-        // came from its parent instead.
+        // The frame has an opaque origin, so there is no origin to address it by: a targetOrigin other than `*`
+        // would never match and the message would simply be dropped. The frame validates that the message came
+        // from its parent instead. Nothing sensitive travels this way either, only task indices and labels that
+        // are already rendered in the statement.
+        // nosemgrep -- wildcard targetOrigin is forced by the sandboxed frame's opaque origin; see above
         contentWindow.postMessage({ type: 'interactive', tasks: payload, focusIndex }, '*');
     }
 

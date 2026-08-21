@@ -428,11 +428,19 @@ export function assembleFrameDocument(serverDocument: string, locale: string, un
 
     // The policy is the first element in the head, before any stylesheet or script, because a policy only
     // governs what the parser sees after it.
+    //
+    // The document is built as a string rather than through the DOM because `srcdoc` is a string by definition,
+    // so the "HTML in a template literal with interpolated variables" shape is unavoidable here. Every hole in it
+    // is already closed: `escapeAttribute` for the attribute values, DOMPurify output for the fragment, the
+    // server's own document-level stylesheets for `styles`, and hex tokens from `randomToken`.
     const srcdoc =
+        // nosemgrep -- interpolations are escaped attribute values; see the note above
         `<!DOCTYPE html><html lang="${escapeAttribute(locale)}"><head><meta charset="UTF-8">` +
+        // nosemgrep -- interpolations are escaped attribute values; see the note above
         `<meta http-equiv="Content-Security-Policy" content="${escapeAttribute(contentSecurityPolicy(nonce, assetOrigin))}">` +
         `<meta name="viewport" content="width=device-width, initial-scale=1.0">` +
         `${styles}</head><body class="${escapeAttribute(bodyClass)}">${sanitizedFragment.outerHTML}` +
+        // nosemgrep -- the nonce is a hex token from `randomToken`, the script a module constant; see the note above
         `<script nonce="${nonce}">${script}</script></body></html>`;
 
     const linkTargets = [...new Set([...sanitizedFragment.querySelectorAll('a[href]')].map((anchor) => anchor.getAttribute('href') ?? ''))];
