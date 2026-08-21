@@ -347,12 +347,14 @@ public class BuildAgentDockerService {
          * time elapsed first. Unlike {@link #awaitCompletion(long, java.util.concurrent.TimeUnit)} it never closes the
          * pull stream, so it is safe to call repeatedly while the pull is still running.
          *
+         * Public so that the shared docker mock in {@code DockerClientTestService} (a different package) can stub it.
+         *
          * @param timeout the maximum time to wait
          * @param unit    the unit of {@code timeout}
          * @return {@code true} if the pull finished within the given time
          * @throws InterruptedException if interrupted while waiting
          */
-        boolean awaitFinished(long timeout, TimeUnit unit) throws InterruptedException {
+        public boolean awaitFinished(long timeout, TimeUnit unit) throws InterruptedException {
             return pullFinished.await(timeout, unit);
         }
 
