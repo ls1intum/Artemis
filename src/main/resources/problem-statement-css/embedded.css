@@ -443,3 +443,230 @@ i.fa.artemis-icon-no-result {
     outline: 2px solid var(--link-color, #3e8acc);
     outline-offset: 2px;
 }
+
+/*
+ * highlight.js palette for the rendered problem statement.
+ *
+ * It lives here rather than in the Angular component because the statement is rendered inside a sandboxed
+ * iframe, a separate document that no application stylesheet reaches into. This file already ships with that
+ * document, so the palette belongs with it. Importing the two stock highlight.js themes is no alternative:
+ * they declare the same global `.hljs-*` selectors, so whichever is imported last would win for every code
+ * block regardless of the active mode. Hence one set of rules driven by custom properties, with the Visual
+ * Studio values bound below and the Monokai values bound in dark-mode.css.
+ *
+ * Only the token colours and the two font variations are reproduced. The block chrome the stock themes also
+ * carry (background, padding, overflow) is deliberately left out: `pre` and `code` are already styled above,
+ * and painting a theme background on top of that would fight with it.
+ */
+
+.hljs-addition {
+    color: var(--hljs-addition, inherit);
+}
+
+.hljs-attr {
+    color: var(--hljs-attr, inherit);
+}
+
+.hljs-attribute {
+    color: var(--hljs-attribute, inherit);
+}
+
+.hljs-built_in {
+    color: var(--hljs-built_in, inherit);
+}
+
+.hljs-bullet {
+    color: var(--hljs-bullet, inherit);
+}
+
+.hljs-code {
+    color: var(--hljs-code, inherit);
+}
+
+.hljs-comment {
+    color: var(--hljs-comment, inherit);
+}
+
+.hljs-deletion {
+    color: var(--hljs-deletion, inherit);
+}
+
+.hljs-doctag {
+    color: var(--hljs-doctag, inherit);
+}
+
+.hljs-emphasis {
+    color: var(--hljs-emphasis, inherit);
+}
+
+.hljs-keyword {
+    color: var(--hljs-keyword, inherit);
+}
+
+.hljs-link {
+    color: var(--hljs-link, inherit);
+}
+
+.hljs-literal {
+    color: var(--hljs-literal, inherit);
+}
+
+.hljs-meta {
+    color: var(--hljs-meta, inherit);
+}
+
+.hljs-name {
+    color: var(--hljs-name, inherit);
+}
+
+.hljs-number {
+    color: var(--hljs-number, inherit);
+}
+
+.hljs-quote {
+    color: var(--hljs-quote, inherit);
+}
+
+.hljs-regexp {
+    color: var(--hljs-regexp, inherit);
+}
+
+.hljs-section {
+    color: var(--hljs-section, inherit);
+}
+
+.hljs-selector-attr {
+    color: var(--hljs-selector-attr, inherit);
+}
+
+.hljs-selector-id {
+    color: var(--hljs-selector-id, inherit);
+}
+
+.hljs-selector-pseudo {
+    color: var(--hljs-selector-pseudo, inherit);
+}
+
+.hljs-selector-tag {
+    color: var(--hljs-selector-tag, inherit);
+}
+
+.hljs-string {
+    color: var(--hljs-string, inherit);
+}
+
+.hljs-strong {
+    color: var(--hljs-strong, inherit);
+}
+
+.hljs-subst {
+    color: var(--hljs-subst, inherit);
+}
+
+.hljs-symbol {
+    color: var(--hljs-symbol, inherit);
+}
+
+.hljs-tag {
+    color: var(--hljs-tag, inherit);
+}
+
+.hljs-template-tag {
+    color: var(--hljs-template-tag, inherit);
+}
+
+.hljs-template-variable {
+    color: var(--hljs-template-variable, inherit);
+}
+
+.hljs-title {
+    color: var(--hljs-title, inherit);
+}
+
+.hljs-type {
+    color: var(--hljs-type, inherit);
+}
+
+.hljs-variable {
+    color: var(--hljs-variable, inherit);
+}
+
+/* Monokai's own rule for a class name, which highlight.js emits as `hljs-title class_`. Its (0,2,0)
+ * specificity beats the generated `.hljs-title` rule whichever palette is active, so the Visual Studio side
+ * has to bind `--hljs-class-title` as well (to its plain title colour, since vs.css has no `.class_` rule at
+ * all). Leaving it unbound there would drop the colour of every class name in light mode. */
+.hljs-title.class_,
+.hljs-class .hljs-title {
+    color: var(--hljs-class-title, inherit);
+}
+
+.hljs-emphasis {
+    font-style: var(--hljs-emphasis-style, inherit);
+}
+
+.hljs-strong {
+    font-weight: var(--hljs-strong-weight, inherit);
+}
+
+/* Monokai renders this group bold, Visual Studio renders none of it bold. */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-doctag,
+.hljs-title,
+.hljs-section,
+.hljs-type,
+.hljs-selector-id {
+    font-weight: var(--hljs-bold-weight, inherit);
+}
+
+/* Visual Studio palette, transcribed from highlight.js/styles/vs.css. */
+.artemis-problem-statement {
+    --hljs-comment: #008000;
+    --hljs-quote: #008000;
+    --hljs-variable: #008000;
+    --hljs-keyword: #00f;
+    --hljs-selector-tag: #00f;
+    --hljs-built_in: #00f;
+    --hljs-name: #00f;
+    --hljs-tag: #00f;
+    --hljs-string: #a31515;
+    --hljs-title: #a31515;
+    --hljs-class-title: #a31515;
+    --hljs-section: #a31515;
+    --hljs-attribute: #a31515;
+    --hljs-literal: #a31515;
+    --hljs-template-tag: #a31515;
+    --hljs-template-variable: #a31515;
+    --hljs-type: #a31515;
+    --hljs-addition: #a31515;
+    --hljs-deletion: #2b91af;
+    --hljs-selector-attr: #2b91af;
+    --hljs-selector-pseudo: #2b91af;
+    --hljs-meta: #2b91af;
+    --hljs-doctag: #808080;
+    --hljs-attr: #f00;
+    --hljs-symbol: #00b0e8;
+    --hljs-bullet: #00b0e8;
+    --hljs-link: #00b0e8;
+    --hljs-emphasis-style: italic;
+    --hljs-strong-weight: bold;
+}
+
+/*
+ * A task the client has declared interactive.
+ *
+ * The rule above keys the default cursor off the absence of `data-feedback`, and the Angular client strips that
+ * attribute before the markup enters its sandboxed frame, because it carries the student's own feedback. This
+ * class is how that client says "this one is still clickable"; the standalone consumer keeps using the
+ * attribute and never sets it.
+ */
+.artemis-task--interactive {
+    cursor: pointer;
+}
+
+/* Stands in for an image that could not be shown, carrying its alt text. */
+.artemis-image-unavailable {
+    font-style: italic;
+    color: var(--secondary, #6c757d);
+}

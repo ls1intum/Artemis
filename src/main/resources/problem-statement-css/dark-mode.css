@@ -74,3 +74,47 @@ body.artemis-ssr-body--dark {
     --artemis-modal-subtle-border: rgba(255, 255, 255, 0.1);
     --artemis-modal-bar-track: rgba(255, 255, 255, 0.1);
 }
+
+/* Monokai palette, transcribed from highlight.js/styles/monokai.css; the light values it overrides are bound
+ * in embedded.css, which is always emitted before this file. */
+.artemis-problem-statement--dark {
+    --hljs-tag: #f92672;
+    --hljs-keyword: #f92672;
+    --hljs-selector-tag: #f92672;
+    --hljs-literal: #f92672;
+    --hljs-strong: #f92672;
+    --hljs-number: #f92672;
+    --hljs-name: #f92672;
+    --hljs-code: #66d9ef;
+    --hljs-attribute: #bf79db;
+    --hljs-attr: #bf79db;
+    --hljs-symbol: #bf79db;
+    --hljs-regexp: #bf79db;
+    --hljs-link: #bf79db;
+    --hljs-string: #a6e22e;
+    --hljs-bullet: #a6e22e;
+    --hljs-subst: #a6e22e;
+    --hljs-title: #a6e22e;
+    --hljs-section: #a6e22e;
+    --hljs-emphasis: #a6e22e;
+    --hljs-type: #a6e22e;
+    --hljs-built_in: #a6e22e;
+    --hljs-selector-attr: #a6e22e;
+    --hljs-selector-pseudo: #a6e22e;
+    --hljs-addition: #a6e22e;
+    --hljs-variable: #a6e22e;
+    --hljs-template-tag: #a6e22e;
+    --hljs-template-variable: #a6e22e;
+    --hljs-class-title: #fff;
+    --hljs-comment: #75715e;
+    --hljs-quote: #75715e;
+    --hljs-deletion: #75715e;
+    --hljs-meta: #75715e;
+    --hljs-bold-weight: bold;
+
+    /* Monokai styles these three not at all, so the Visual Studio bindings have to be released rather than
+     * overwritten: an unbound property falls back to `inherit` in the generated rules. */
+    --hljs-doctag: initial;
+    --hljs-emphasis-style: initial;
+    --hljs-strong-weight: initial;
+}

@@ -96,7 +96,7 @@ public class ProblemStatementRenderingService {
      * sanitization/escaping. The value itself does not need to follow strict semver; any distinct string is
      * enough to invalidate the cache.
      */
-    private static final String RENDERER_VERSION = "1.3.0";
+    private static final String RENDERER_VERSION = "1.4.0";
 
     /**
      * KaTeX is served from the client's own copy, the one declared in {@code package.json} and copied out of

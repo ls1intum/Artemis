@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -73,7 +74,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("<h1>Hello</h1>");
         assertThat(result.html()).contains("<strong>bold</strong>");
         assertThat(result.html()).contains("artemis-problem-statement");
-        assertThat(result.rendererVersion()).isEqualTo("1.3.0");
+        assertThat(result.rendererVersion()).isEqualTo("1.4.0");
         assertThat(result.contentHash()).isNotBlank();
         assertThat(result.interactiveScript()).isNotNull();
     }
@@ -856,6 +857,22 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(status).as("the KaTeX assets must not be behind authentication").isIn(HttpStatus.OK.value(), HttpStatus.NOT_FOUND.value());
     }
 
+    @Test
+    void shouldAllowAnonymousCrossOriginReadsOfKatexResources() throws Exception {
+        // The Angular client shows the statement inside a sandboxed iframe, which the browser gives an opaque origin. A
+        // stylesheet may be fetched cross-origin without CORS, but the @font-face rules inside katex.min.css may not:
+        // font fetches are always CORS-aware, so without this header every formula falls back to a system font.
+        //
+        // "null" is the literal Origin a sandboxed frame sends, so it is the case that actually matters here.
+        var response = request.performMvcRequest(get("/assets/katex/katex.min.css").header(HttpHeaders.ORIGIN, "null")).andReturn().getResponse();
+
+        // As above, a missing client build is an acceptable outcome; a served asset without the header is not.
+        if (response.getStatus() == HttpStatus.OK.value()) {
+            assertThat(response.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).as("the KaTeX assets must be readable from an opaque origin").isEqualTo("*");
+            assertThat(response.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS)).as("public assets must never be fetched with credentials").isNull();
+        }
+    }
+
     // --- Interactive toggle ---
 
     @Test
@@ -1290,7 +1307,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result1 = request.postWithResponseBody(POST_URL, body1, RenderedProblemStatementDTO.class, HttpStatus.OK);
         RenderedProblemStatementDTO result2 = request.postWithResponseBody(POST_URL, body2, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result1.rendererVersion()).isEqualTo("1.3.0");
+        assertThat(result1.rendererVersion()).isEqualTo("1.4.0");
         assertThat(result2.rendererVersion()).isEqualTo(result1.rendererVersion());
     }
 
@@ -1303,7 +1320,9 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         // f0d658433ea3ce51e37b7e76c21dc7739d18dd56c168ecb1cc35dcd40cc00634 is the content hash this exact request
         // produced under renderer version "1.0.0" (captured before the bump to "1.1.0" that added this test, and
-        // still distinct under "1.3.0", which moved the feedback payload onto the container). The
+        // still distinct under "1.3.0", which moved the feedback payload onto the container; "1.4.0" added the
+        // highlight.js palette to the embedded stylesheet, which the sandboxed frame needs because no application
+        // stylesheet reaches into it). The
         // renderer version is folded into the content hash precisely so that a stale client-cached rendering does
         // not survive a semantic change to the renderer; this pins that a version bump actually changes the hash
         // for byte-for-byte identical input, rather than only changing the reported version string. If this
