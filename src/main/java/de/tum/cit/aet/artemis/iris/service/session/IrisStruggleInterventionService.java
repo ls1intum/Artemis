@@ -302,24 +302,10 @@ public class IrisStruggleInterventionService {
                     irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId));
                     break;
                 }
-                // Persist the message with bounded retry on transient DB failures (spec §12).
-                IrisMessage saved = null;
-                for (int attempt = 0; attempt < PERSIST_MAX_ATTEMPTS; attempt++) {
-                    try {
-                        saved = saveProactiveMessage(session, result, episodeId);
-                        break;
-                    }
-                    catch (TransientDataAccessException ex) {
-                        log.warn("Transient persist failure attempt {}/{} for exercise={} user={}", attempt + 1, PERSIST_MAX_ATTEMPTS, job.exerciseId(), job.userId(), ex);
-                    }
-                    catch (DataAccessException ex) {
-                        // Non-transient failure (e.g. DataIntegrityViolationException): no point retrying.
-                        // saved stays null; the active control event below is still emitted with messageId=null
-                        // so the client's in-flight decide always clears (finding 1 fix).
-                        log.warn("Permanent persist failure for exercise={} user={}", job.exerciseId(), job.userId(), ex);
-                        break;
-                    }
-                }
+                // Persist the message with bounded retry on transient DB failures (spec §12). A null result means
+                // the message was dropped; the active control event below is still emitted with messageId=null so
+                // the client's in-flight decide always clears (finding 1 fix).
+                IrisMessage saved = saveProactiveMessageWithRetry(session, user, job.exerciseId(), result, episodeId);
                 if (saved != null) {
                     irisChatWebsocketService.sendMessage(session, saved, terminalRunStateOf(statusUpdate), statusUpdate.error());
                 }
@@ -766,15 +752,37 @@ public class IrisStruggleInterventionService {
         if (session == null) {
             return null;
         }
-        // Bounded retry on transient DB failures, mirroring handleDecision's active path (spec §12). On a permanent
-        // DataAccessException (or once the transient retries are exhausted) the message is dropped and null is
-        // returned rather than propagating: the confirm_close caller then still emits its completion
-        // frame (with messageId=null) so the client's in-flight slot always clears (finding 2 fix) instead of the
-        // exception bubbling up and leaving the single-flight slot stuck.
+        // On a permanent DataAccessException (or once the transient retries are exhausted) the message is dropped and
+        // null is returned rather than propagating: the confirm_close caller then still emits its completion frame
+        // (with messageId=null) so the client's in-flight slot always clears (finding 2 fix) instead of the exception
+        // bubbling up and leaving the single-flight slot stuck.
+        var saved = saveProactiveMessageWithRetry(session, user, exerciseId, result, episodeId);
+        return saved == null ? null : new PersistedProactive(session, saved);
+    }
+
+    /**
+     * Persist an origin-tagged proactive message into an already-resolved session, with bounded retry on transient
+     * DB failures (spec §12). Returns null when the message could not be persisted: on a permanent
+     * {@link DataAccessException} (retrying cannot help) or once the transient attempts are exhausted.
+     *
+     * <p>
+     * Deliberately never propagates a persistence failure. Both callers have to emit their completion frame with
+     * {@code messageId=null} afterwards, so the client's in-flight slot always clears; an exception escaping here
+     * would strand it. The session is taken as a parameter rather than resolved, because the active path still
+     * needs the session id for that frame even when the message itself was dropped.
+     *
+     * @param session    the already-resolved exercise-chat session to persist into
+     * @param user       the student the proactive message belongs to (logging scope)
+     * @param exerciseId the programming exercise id the message is bound to (logging scope)
+     * @param result     the proactive message text returned by the gate
+     * @param episodeId  the client-allocated episode UUID; stamped on the persisted message when non-null
+     * @return the saved message, or null if it could not be persisted
+     */
+    @Nullable
+    private IrisMessage saveProactiveMessageWithRetry(IrisChatSession session, User user, long exerciseId, String result, @Nullable String episodeId) {
         for (int attempt = 0; attempt < PERSIST_MAX_ATTEMPTS; attempt++) {
             try {
-                var saved = saveProactiveMessage(session, result, episodeId);
-                return new PersistedProactive(session, saved);
+                return saveProactiveMessage(session, result, episodeId);
             }
             catch (TransientDataAccessException ex) {
                 log.warn("Transient proactive persist failure attempt {}/{} for exercise={} user={}", attempt + 1, PERSIST_MAX_ATTEMPTS, exerciseId, user.getId(), ex);
