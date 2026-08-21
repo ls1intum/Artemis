@@ -246,7 +246,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore.set(this.computeTotalScore(this.assessments));
         this.isLoading.set(false);
 
-        this.loadFeedbackSuggestions();
+        if (this.isFeedbackSuggestionsEnabled) {
+            this.loadFeedbackSuggestions();
+        }
 
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission!);
     }
