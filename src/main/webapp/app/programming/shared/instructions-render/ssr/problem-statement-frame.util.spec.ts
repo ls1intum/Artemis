@@ -13,6 +13,13 @@ const assemble = (body: string, options?: { katex?: boolean; dark?: boolean }) =
 /** The assembled frame, parsed so its markup can be inspected the way a browser would see it. */
 const frameOf = (body: string, options?: { katex?: boolean; dark?: boolean }): Document => new DOMParser().parseFromString(assemble(body, options).srcdoc, 'text/html');
 
+/**
+ * The statement markup alone. Assertions about what the statement does or does not contain have to use this
+ * rather than the whole body: the body also holds the frame script, whose 32-character hex generation token
+ * contains any given two-digit string often enough to make such an assertion fail at random.
+ */
+const statementOf = (document_: Document): string => document_.querySelector('.artemis-problem-statement')?.outerHTML ?? '';
+
 const cspOf = (document_: Document): string => document_.querySelector('meta[http-equiv="Content-Security-Policy"]')?.getAttribute('content') ?? '';
 
 describe('problem statement frame assembly', () => {
@@ -80,7 +87,7 @@ describe('problem statement frame assembly', () => {
             const frame = new DOMParser().parseFromString(assembleFrameDocument(server, 'en', 'Image unavailable').srcdoc, 'text/html');
 
             expect(frame.querySelectorAll('[data-feedback]')).toHaveLength(0);
-            expect(frame.body.innerHTML).not.toContain('testA');
+            expect(statementOf(frame)).not.toContain('testA');
         });
 
         it('strips the result summary, which carries score, points and commit metadata', () => {
@@ -89,7 +96,7 @@ describe('problem statement frame assembly', () => {
             const frame = new DOMParser().parseFromString(assembleFrameDocument(server, 'en', 'Image unavailable').srcdoc, 'text/html');
 
             expect(frame.querySelectorAll('[data-result]')).toHaveLength(0);
-            expect(frame.body.innerHTML).not.toContain('42');
+            expect(statementOf(frame)).not.toContain('42');
         });
 
         it('keeps the task metadata the client itself needs', () => {
