@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.dto;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.Hibernate;
 
@@ -50,7 +51,8 @@ public record ProgrammingSubmissionWithResultsDTO(Long id, String submissionExer
         List<ResultDTO> resultDTOs = null;
         // Hibernate.isInitialized(null) is true, so the null check has to stand next to it.
         if (submission.getResults() != null && Hibernate.isInitialized(submission.getResults())) {
-            resultDTOs = submission.getResults().stream().map(ResultDTO::ofNested).toList();
+            // @OrderColumn gaps hydrate as null list elements.
+            resultDTOs = submission.getResults().stream().filter(Objects::nonNull).map(ResultDTO::ofNested).toList();
         }
         return of(submission, resultDTOs);
     }
