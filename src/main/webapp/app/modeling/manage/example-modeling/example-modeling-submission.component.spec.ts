@@ -530,6 +530,29 @@ describe('Example Modeling Submission Component', () => {
         expect(comp.invalidError()).toBeUndefined();
     });
 
+    it('should respect structured grading instruction usageCount when scoring', () => {
+        // A five-point instruction limited to one use: applying it twice must still score five, or the header
+        // disagrees with what the server will persist.
+        const limitedInstruction = { id: 1, credits: 5, usageCount: 1 };
+        const first = { ...mockFeedbackWithReference, credits: 5, gradingInstruction: limitedInstruction } as Feedback;
+        const second = { ...mockFeedbackWithoutReference, credits: 5, gradingInstruction: limitedInstruction } as Feedback;
+
+        comp.exercise.set({ ...exercise, maxPoints: 30 } as ModelingExercise);
+        comp.referencedFeedback.set([first]);
+        comp.unreferencedFeedback.set([second]);
+
+        expect(comp.assessmentsAreValid()).toBe(true);
+        expect(comp.totalScore()).toBe(5);
+    });
+
+    it('should cap the total score at the exercise maximum', () => {
+        comp.exercise.set({ ...exercise, maxPoints: 10, bonusPoints: 0 } as ModelingExercise);
+        comp.referencedFeedback.set([{ ...mockFeedbackWithReference, credits: 8 } as Feedback]);
+        comp.unreferencedFeedback.set([{ ...mockFeedbackWithoutReference, credits: 5 } as Feedback]);
+
+        expect(comp.totalScore()).toBe(10);
+    });
+
     describe('practice assessment (toComplete)', () => {
         const solutionReferenced = { id: 2, type: FeedbackType.MANUAL, reference: 'ref-solution', referenceId: 'element-solution', credits: 5 } as Feedback;
         const solutionUnreferenced = { id: 1, type: FeedbackType.MANUAL_UNREFERENCED, credits: 3 } as Feedback;

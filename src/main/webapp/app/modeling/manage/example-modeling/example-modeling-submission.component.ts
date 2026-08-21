@@ -16,7 +16,8 @@ import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { catchError, concatMap, map, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { parseJson } from 'app/foundation/util/json.util';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -73,6 +74,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private tutorParticipationService = inject(TutorParticipationService);
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -160,8 +162,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             return { valid: false, error: 'The score field must be a number and can not be empty!' };
         }
 
-        const creditsTotalScore = credits.reduce((sum, credit) => sum! + credit!, 0)!;
-        return { valid: true, totalScore: getPositiveAndCappedTotalScore(creditsTotalScore, getTotalMaxPoints(this.exercise())) };
+        // Never sum the raw credits: a structured grading instruction only counts up to its `usageCount`, so a
+        // limited instruction applied twice must still score once. The canonical scorer also caps and floors the
+        // total, which is why no further clamping happens here.
+        return { valid: true, totalScore: this.structuredGradingCriterionService.computeAssessmentScore(feedbacks, getTotalMaxPoints(this.exercise())).total };
     });
 
     readonly assessmentsAreValid = computed(() => this.scoreState().valid);
