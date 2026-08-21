@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
-import de.tum.cit.aet.artemis.athena.service.AthenaScheduleService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
@@ -58,7 +56,6 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
-import de.tum.cit.aet.artemis.notification.service.NotificationScheduleService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
@@ -185,22 +182,6 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private ResultTestRepository resultTestRepository;
-
-    /**
-     * {@link NotificationScheduleService} and {@link AthenaScheduleService} each scan every exercise with an
-     * upcoming release, assessment or due date exactly once, a fixed delay after application startup, on a shared
-     * scheduler thread. This fixture takes long enough to build (20 exercises) that its measured request reliably
-     * lands inside that fixed window, and either scan's queries land on the same process-wide Hibernate
-     * {@link Statistics} this test reads, misattributing their queries to the request being profiled here. Mocking
-     * both out removes that source of flakiness; see also the {@code participantScoreScheduleService.shutdown()}
-     * call in {@link #shouldNotHydrateTheExerciseEntityGraph()} for the same problem with a third scanner that
-     * cannot simply be mocked away because its real behaviour drives this fixture's own setup.
-     */
-    @MockitoBean
-    private NotificationScheduleService notificationScheduleService;
-
-    @MockitoBean
-    private AthenaScheduleService athenaScheduleService;
 
     private Course course;
 
