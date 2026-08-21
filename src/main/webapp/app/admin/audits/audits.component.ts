@@ -18,9 +18,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TumUiMessageComponent, TumUiPaginatorComponent, TumUiTableDirective } from '@tumaet/ui-angular';
+import { TumUiMessageComponent, TumUiPaginatorComponent, TumUiTabComponent, TumUiTabListComponent, TumUiTableDirective, TumUiTabsComponent } from '@tumaet/ui-angular';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
-import { TabsModule } from 'primeng/tabs';
 
 /**
  * Admin component for viewing system audit logs.
@@ -43,7 +42,9 @@ import { TabsModule } from 'primeng/tabs';
         TumUiMessageComponent,
         TumUiTableDirective,
         FormDateTimePickerComponent,
-        TabsModule,
+        TumUiTabsComponent,
+        TumUiTabListComponent,
+        TumUiTabComponent,
     ],
 })
 export class AuditsComponent implements OnInit {
@@ -166,8 +167,8 @@ export class AuditsComponent implements OnInit {
     /**
      * Switches to another audit log. Resets to the first page, because page numbers do not carry over between logs.
      *
-     * @param value the selected tab value, as emitted by the PrimeNG tabs component. Its emitted type includes
-     *                  `undefined`, which is ignored here: only a value matching a known log triggers a switch.
+     * @param value the selected tab value, as emitted by the tabs component. Its emitted type includes `undefined`,
+     *                  which is ignored here: only a value matching a known log triggers a switch.
      */
     onLogTypeChange(value: string | number | undefined): void {
         const selected = value as AuditLogType;

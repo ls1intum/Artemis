@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.admin.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -172,19 +173,19 @@ class AutomaticAuditEventCleanupServiceTest {
 
     private Instant captureCutoff(PersistenceAuditEventRepository repository) {
         ArgumentCaptor<Instant> captor = ArgumentCaptor.forClass(Instant.class);
-        verify(repository, org.mockito.Mockito.atLeastOnce()).findExpiredIds(captor.capture(), any(Pageable.class));
+        verify(repository, atLeastOnce()).findExpiredIds(captor.capture(), any(Pageable.class));
         return captor.getValue();
     }
 
     private Instant captureCutoff(SecurityAuditEventRepository repository) {
         ArgumentCaptor<Instant> captor = ArgumentCaptor.forClass(Instant.class);
-        verify(repository, org.mockito.Mockito.atLeastOnce()).findExpiredIds(captor.capture(), any(Pageable.class));
+        verify(repository, atLeastOnce()).findExpiredIds(captor.capture(), any(Pageable.class));
         return captor.getValue();
     }
 
     private Instant captureCutoff(ApplicationAuditEventRepository repository) {
         ArgumentCaptor<Instant> captor = ArgumentCaptor.forClass(Instant.class);
-        verify(repository, org.mockito.Mockito.atLeastOnce()).findExpiredIds(captor.capture(), any(Pageable.class));
+        verify(repository, atLeastOnce()).findExpiredIds(captor.capture(), any(Pageable.class));
         return captor.getValue();
     }
 

@@ -79,8 +79,8 @@ public class CustomAuditEventRepository implements AuditEventRepository {
      * <p>
      * A given event type lives in exactly one log, so a type filter is answered from the log the classifier assigns it
      * to. Without a type filter every log has to be searched, because the caller cannot know which one holds the event.
-     * Callers are Spring Boot's actuator {@code auditevents} endpoint and {@code IrisChatSessionResource}; the admin
-     * audit view instead reads one specific log through {@code AuditEventService}.
+     * The only caller is Spring Boot's actuator {@code auditevents} endpoint; the admin audit view reads one specific log
+     * through {@code AuditEventService} instead, and every other collaborator only writes through {@link #add(AuditEvent)}.
      */
     @Override
     public List<AuditEvent> find(String principal, Instant after, String type) {

@@ -138,7 +138,9 @@
         </createIndex>
     </changeSet>
 
-    <!-- The general log had no index on event_date alone; its nightly pruning needs one. -->
+    <!-- The nightly pruning needs an index on event_date alone. 20260803160000_changelog.xml adds the same index; both
+         sides are guarded by "not indexExists", so whichever runs first creates it and the other is marked as ran. Kept
+         here so this changelog does not depend on the other one having been applied. -->
     <changeSet id="20260803140000-09-index-persistent-audit-event-date" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -172,10 +174,9 @@
         widened either period beyond the defaults should prune with its own settings and review this migration before
         upgrading.
 
-    This is not the primary pruning mechanism. AutomaticAuditEventCleanupService prunes in capped batches every night, and
-    supporting_scripts/database/prune_audit_events.sql drains a large backlog in one maintenance window; running either
-    beforehand leaves this step with little or nothing to do. On an instance upgrading from a version without that job it is
-    a single large delete, so the table size is worth checking before the upgrade.
+    This is not the primary pruning mechanism. AutomaticAuditEventCleanupService prunes in capped batches every night, so
+    on an instance that has already run it this step has little or nothing left to do. On an instance upgrading from a
+    version without that job it is a single large delete, so the table size is worth checking before the upgrade.
 
     Children are deleted before parents, because jhi_persistent_audit_evt_data's foreign key is ON DELETE RESTRICT.
 
@@ -248,9 +249,11 @@
     <!-- ===================================================================== -->
     <!--
     The event_id values are carried over unchanged, which keeps the child rows joinable without an id mapping and keeps
-    any externally noted event id meaningful. The type lists below must stay in sync with AuditEventConstants:
+    any externally noted event id meaningful. The type lists below are a copy of AuditEventConstants as of this migration:
     GENERAL_EVENT_TYPES stays behind, SECURITY_EVENT_TYPES moves to security_audit_event, and everything else - including
-    rows with a NULL type - moves to application_audit_event, matching AuditEventTypeClassifier's default.
+    rows with a NULL type - moves to application_audit_event, matching AuditEventTypeClassifier's default. They are a
+    snapshot, not a duplicate to maintain: a type added to those sets later is routed correctly by the classifier from the
+    start, so only rows already written under the old routing would ever need a changeset of their own.
 
     Parents are inserted before children, and the old rows are deleted children-first, because
     jhi_persistent_audit_evt_data's foreign key is ON DELETE RESTRICT.
@@ -300,19 +303,28 @@
         </sql>
     </changeSet>
 
+    <!--
+    Deletes exactly the rows the two changesets above copied, identified by their event id rather than by repeating the
+    type lists. Event ids were carried over unchanged and were unique within the one original table, so an id present in
+    security_audit_event or application_audit_event can only be the row that was copied from here, and a login row's id
+    can never appear in either.
+
+    Matching on what was copied rather than on the type also matters during a rolling upgrade: nodes still running the
+    previous version keep writing every type into this table while the migration runs, and a row inserted after the
+    copying steps must be left alone rather than deleted uncopied. It leaves such a row in the general log on the shorter
+    retention, which is the recoverable outcome; deleting it would not be. It also makes this changeset repeatable, since
+    re-running it finds nothing new to delete.
+    -->
     <changeSet id="20260803140000-12-delete-migrated-rows-from-general-log" author="krusche">
         <sql>
             DELETE FROM jhi_persistent_audit_evt_data
-            WHERE event_id IN (
-                SELECT event_id FROM jhi_persistent_audit_event
-                WHERE event_type IS NULL
-                   OR event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS')
-            );
+            WHERE event_id IN (SELECT event_id FROM security_audit_event)
+               OR event_id IN (SELECT event_id FROM application_audit_event);
         </sql>
         <sql>
             DELETE FROM jhi_persistent_audit_event
-            WHERE event_type IS NULL
-               OR event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS');
+            WHERE event_id IN (SELECT event_id FROM security_audit_event)
+               OR event_id IN (SELECT event_id FROM application_audit_event);
         </sql>
     </changeSet>
 

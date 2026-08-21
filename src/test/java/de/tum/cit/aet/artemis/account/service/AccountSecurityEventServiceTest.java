@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSW
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.SECURITY_EVENT_TYPES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -76,7 +77,8 @@ class AccountSecurityEventServiceTest {
         AuditEvent event = capturedAuditEvent();
         assertThat(event.getType()).isEqualTo(PASSWORD_RESET_REQUESTED);
         assertThat(event.getPrincipal()).isEqualTo("ab12cde");
-        assertThat(event.getData()).containsEntry("category", "ACCOUNT_SECURITY");
+        // The table the row lands in already says it is a security event, so nothing is recorded alongside it.
+        assertThat(event.getData()).isEmpty();
         // The reset mail itself is the notification; a second message would only add noise.
         verify(mailSendingService, never()).buildAndSendAsync(any(), anyString(), anyString(), anyMap());
     }
@@ -90,8 +92,7 @@ class AccountSecurityEventServiceTest {
         assertThat(event.getPrincipal()).isEqualTo("anonymous");
         // Unauthenticated free-form input must not reach the audit table: the recorded data is limited to the fixed
         // reason describing why the request was rejected, and carries nothing derived from what the caller submitted.
-        assertThat(event.getData()).containsOnlyKeys("reason", "category");
-        assertThat(event.getData()).containsEntry("reason", "unknown-identifier");
+        assertThat(event.getData()).containsExactly(entry("reason", "unknown-identifier"));
     }
 
     @Test

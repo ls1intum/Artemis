@@ -78,7 +78,10 @@ public class AuditEventConstants {
      * Failed logins belong here too: they are part of the login record and are the highest-volume type of all, so the
      * five-year retention of the other logs would be the wrong trade for them.
      * <p>
-     * Keep in sync with the event type lists in {@code 20260803140000_changelog.xml}, which migrates existing rows.
+     * {@code 20260803140000_changelog.xml} moved the pre-existing rows into the three tables using a copy of this set.
+     * That copy is a snapshot of the migration, not a duplicate to maintain: a type added here later is routed correctly
+     * from the start by {@link AuditEventTypeClassifier}, and only rows already written under the old routing would need
+     * a changeset of their own.
      */
     public static final Set<String> GENERAL_EVENT_TYPES = Set.of(AUTHENTICATION_SUCCESS, AUTHENTICATION_PASSKEY_SUCCESS, SAML2_AUTHENTICATION_SUCCESS, AUTHENTICATION_FAILURE,
             LOGOUT_SUCCESS);
@@ -94,17 +97,11 @@ public class AuditEventConstants {
      * precisely what such an investigation asks about. Without them a password change would land in the application
      * log, where the admin view's security filter would not show it.
      * <p>
-     * Keep in sync with the event type lists in {@code 20260803140000_changelog.xml}, which migrates existing rows.
+     * See {@link #GENERAL_EVENT_TYPES} on the relationship to the type lists in {@code 20260803140000_changelog.xml}.
      */
     public static final Set<String> SECURITY_EVENT_TYPES = Set.of(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED, ACCOUNT_EMAIL_CHANGED,
             ACCOUNT_REGISTERED, SAML2_ACCOUNT_CREATE, AUTHENTICATION_SWITCH, Constants.CHANGE_OWN_PASSWORD, Constants.COMPLETE_PASSWORD_RESET, Constants.ADMIN_CHANGE_USER_PASSWORD,
             Constants.REVOKE_OWN_CREDENTIALS);
-
-    /**
-     * @deprecated use {@link #SECURITY_EVENT_TYPES}. Retained as an alias so existing references keep compiling.
-     */
-    @Deprecated
-    public static final Set<String> ACCOUNT_SECURITY_EVENT_TYPES = SECURITY_EVENT_TYPES;
 
     /**
      * Utility class, should not be instantiated.

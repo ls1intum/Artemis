@@ -2,15 +2,15 @@
     <h5 *adminTitleBarTitle id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
     <!-- One tab per audit log. Each log is a separate table with its own retention period, so switching tabs queries a
          different, much smaller table instead of filtering one large one. -->
-    <p-tabs class="mb-4" [value]="logType()" (valueChange)="onLogTypeChange($event)" data-testid="audits-log-type-tabs">
-        <p-tablist>
+    <tum-ui-tabs class="mb-4" [value]="logType()" (valueChange)="onLogTypeChange($event)" data-testid="audits-log-type-tabs">
+        <tum-ui-tab-list>
             @for (tab of logTypeTabs; track tab.value) {
-                <p-tab [value]="tab.value" [attr.data-testid]="'audits-log-type-tab-' + tab.value">
+                <tum-ui-tab [value]="tab.value" [attr.data-testid]="'audits-log-type-tab-' + tab.value">
                     <span [jhiTranslate]="tab.labelKey"></span>
-                </p-tab>
+                </tum-ui-tab>
             }
-        </p-tablist>
-    </p-tabs>
+        </tum-ui-tab-list>
+    </tum-ui-tabs>
     <h4 class="mb-3" jhiTranslate="audits.filter.title"></h4>
     <div class="mb-4 flex flex-wrap items-start gap-4" data-testid="audits-date-filter">
         <div class="flex flex-col gap-2">

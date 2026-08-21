@@ -7,7 +7,6 @@ import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSW
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_REQUEST_REJECTED;
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -123,14 +122,13 @@ public class AccountSecurityEventService {
     }
 
     /**
-     * Writes an audit event, tagging it so that account-security events can be told apart from the
-     * automatic authentication events without hard-coding the type list at every read site.
+     * Writes an audit event. No category is recorded alongside it: every type this service emits is classified as a
+     * security event, so {@code CustomAuditEventRepository} routes the row into {@code security_audit_event} and the
+     * table it lives in already says what an extra data entry would.
      */
     private void addAuditEvent(String principal, String type, Map<String, Object> data) {
         try {
-            Map<String, Object> eventData = new HashMap<>(data);
-            eventData.put("category", "ACCOUNT_SECURITY");
-            auditEventRepository.add(new AuditEvent(Instant.now(), principal, type, eventData));
+            auditEventRepository.add(new AuditEvent(Instant.now(), principal, type, data));
         }
         catch (Exception e) {
             // Never let an audit failure break the account operation that triggered it.
