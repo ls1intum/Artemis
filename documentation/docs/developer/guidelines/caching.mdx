@@ -156,7 +156,7 @@ Multi-node correctness is not optional. If you cannot articulate, in code review
 
 The L2 ban does **not** apply to:
 
-* **Local in-memory caches inside a single bean** for ephemeral per-node state (e.g. `HyperionPromptTemplateService`, `HyperionChecklistService`, `RateLimitService`, `AeolusTemplateService`, `BuildScriptProviderService`). These are single-node and do not have multi-node coherence concerns. They are typically `ConcurrentHashMap` instances populated lazily and either never invalidated or invalidated explicitly by their owner.
+* **Local in-memory caches inside a single bean** for ephemeral per-node state (e.g. `HyperionPromptTemplateService`, `HyperionChecklistService`, `RateLimitService`, `BuildScriptProviderService`). These are single-node and do not have multi-node coherence concerns. They are typically `ConcurrentHashMap` instances populated lazily and either never invalidated or invalidated explicitly by their owner.
 * **Hazelcast distributed objects (`IMap`, `ISet`, `ICountDownLatch`) used for cross-node coordination** (`CourseNotificationCacheService`, `AtlasAgentSessionCacheService`, `PlagiarismCacheService`, rate-limit buckets via Bucket4j-Hazelcast). These are not "caches" in the Hibernate L2 sense; they are explicit distributed data structures with explicit semantics.
 * **Spring `@Cacheable`** as documented above.
 
