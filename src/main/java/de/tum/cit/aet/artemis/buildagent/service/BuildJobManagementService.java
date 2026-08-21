@@ -222,7 +222,7 @@ public class BuildJobManagementService {
         distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
             if (!isInitialConnection) {
                 // This is a reconnection - reset the initialized flag so listeners are re-registered
-                log.info("Hazelcast client reconnected to cluster. Re-initializing BuildJobManagementService listeners.");
+                log.info("Reconnected to the distributed data provider. Re-initializing BuildJobManagementService listeners.");
                 initialized.set(false);
             }
             boolean initSucceeded = tryInitialize();
@@ -235,7 +235,8 @@ public class BuildJobManagementService {
         // If already connected, tryInitialize was called by the listener above.
         // If not connected yet, schedule periodic retries as a fallback.
         if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
-            log.info("Hazelcast client not yet connected to cluster. Scheduling periodic initialization retries every {} seconds.", CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
+            log.info("Not connected to the distributed data provider yet. Scheduling periodic initialization retries every {} seconds.",
+                    CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
             scheduleConnectionRetryIfNeeded();
         }
     }
@@ -277,7 +278,7 @@ public class BuildJobManagementService {
         }
 
         if (!distributedDataAccessService.isConnectedToCluster()) {
-            log.debug("Cannot initialize BuildJobManagementService: not connected to Hazelcast cluster yet");
+            log.debug("Cannot initialize BuildJobManagementService: not connected to the distributed data provider yet");
             return false;
         }
 
