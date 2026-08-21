@@ -1,0 +1,60 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis-Dev-Local_VC-Local_CI-Postgres Setup
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis with the integrated code lifecycle (LocalVC + LocalCI + a build agent) and a PostgreSQL
+# database. This is the setup behind https://docs.artemis.tum.de/about/try: unlike the plain dev
+# setups it can run programming exercises, because Artemis hosts the git repositories itself and the
+# build agent executes the tests in Docker containers.
+#
+# The build agent needs the host's Docker socket to start those containers. `group_add` must name a
+# group that may read /var/run/docker.sock inside the container, because the image runs as the
+# unprivileged `artemis` user:
+#   * Docker Desktop (macOS, Windows): the bind-mounted socket is owned by 0:0, so the default 0 works.
+#   * Linux with a native daemon: the socket is owned by root:docker, so pass the host's docker gid:
+#       ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3) docker compose ...
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    artemis-app:
+        extends:
+            file: ./artemis.yml
+            service: artemis-app
+        # just add this linux workaround for docker compose in a development version of artemis as developers
+        # might want to access external services on the docker host
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        group_add:
+            - "${ARTEMIS_DOCKER_GROUP_ID:-0}"
+        ports:
+            - "8080:8080"
+            - "7921:7921" # Git SSH access to the integrated version control
+            # Java Remote Debugging. Bound to loopback on purpose, unlike the other dev setups: this
+            # file is the documented trial setup, so it will be run on cloud VMs, and JDWP grants
+            # unauthenticated code execution in the JVM to anyone who can reach the port.
+            - "127.0.0.1:5005:5005"
+        # expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "5005"
+        env_file:
+            - ./artemis/config/dev-local-vc-local-ci.env
+            - ./artemis/config/postgres.env
+        depends_on:
+            postgres:
+                condition: service_healthy
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+    postgres:
+        extends:
+            file: ./postgres.yml
+            service: postgres
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+
+volumes:
+    artemis-postgres-data:
+        name: artemis-postgres-data
+    artemis-data:
+        name: artemis-data

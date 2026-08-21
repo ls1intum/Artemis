@@ -18,6 +18,19 @@
     font-size: 16px;
 }
 
+.heroNote {
+    max-width: 62rem;
+    margin: 12px auto 0;
+    font-size: 14px;
+    line-height: 1.5;
+    opacity: 0.85;
+}
+
+.heroNote a {
+    color: white;
+    text-decoration: underline;
+}
+
 /* Highlight Cards */
 .highlightGrid {
     display: grid;
