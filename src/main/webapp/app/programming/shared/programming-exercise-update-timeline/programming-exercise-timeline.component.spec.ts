@@ -169,10 +169,12 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dueDate')).toBe(false);
     });
 
-    it('should show the group notice, disable group-managed dates, and keep the programming-specific build-and-test date editable', () => {
+    it('should show the group notice, disable group-managed dates, and keep the programming-specific build-and-test date editable', async () => {
         createTestComponent();
         fixture.componentRef.setInput('exercisePartOfExerciseGroup', true);
         const editGroupDatesSpy = vi.spyOn(component.editGroupDates, 'emit');
+        fixture.detectChanges();
+        await fixture.whenStable();
         fixture.detectChanges();
 
         const buildAndTestItem = component.timelineItems().find((item) => item.labelStringKey === 'artemisApp.exercise.dateForRunningTestsAfterDueDate');
@@ -180,12 +182,20 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         const controls = fixture.debugElement.query(By.css('[data-testid="assessment-layout"]'));
         const notice = controls.query(By.directive(ExerciseGroupDateNoticeComponent));
         const assessmentSection = controls.query(By.css('[data-testid="assessment-section"]'));
+        const exampleSolutionPublicationDateToggle: HTMLInputElement = fixture.nativeElement.querySelector('#exampleSolutionPublicationDateEnabled');
 
         expect(controls.nativeElement.firstElementChild).toBe(notice.nativeElement);
         expect(controls.nativeElement.lastElementChild).toBe(assessmentSection.nativeElement);
         expect(buildAndTestItem?.disabled).toBeFalsy();
         expect(groupManagedItems.length).toBeGreaterThan(0);
         expect(groupManagedItems.every((item) => item.disabled)).toBe(true);
+        expect(exampleSolutionPublicationDateToggle.disabled).toBe(true);
+
+        exampleSolutionPublicationDateToggle.click();
+        fixture.detectChanges();
+
+        expect(component.isDatePickerForExampleSolutionPublicationDateVisible()).toBe(true);
+        expect(component.exampleSolutionPublicationDate()).toEqual(exampleSolutionPublicationDate);
 
         notice.componentInstance.editGroupDates.emit();
 

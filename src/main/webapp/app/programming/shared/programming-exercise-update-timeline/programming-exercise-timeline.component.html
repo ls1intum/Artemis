@@ -66,6 +66,7 @@
                         class="form-check-input"
                         name="exampleSolutionPublicationDateEnabled"
                         [(ngModel)]="isDatePickerForExampleSolutionPublicationDateVisible"
+                        [disabled]="exercisePartOfExerciseGroup()"
                         id="exampleSolutionPublicationDateEnabled"
                     />
                     <label
