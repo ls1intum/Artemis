@@ -3,136 +3,29 @@
 }
 
 /*
- * highlight.js palette for the server-rendered problem statement.
+ * The statement lives in a sandboxed iframe, which is a separate document: none of this application's styles
+ * reach into it, and the highlight.js palette that used to live in this file has moved to the server's own
+ * problem-statement stylesheet, which already ships with the document and already knows dark from light.
  *
- * The statement lives in this component's shadow root, and the global themes that normally supply these colours
- * (theme-default.scss imports highlight.js/styles/vs.css, theme-dark.scss imports monokai.css) do not cross a shadow
- * boundary. Importing both stock files here is no alternative: they declare the same global `.hljs-*` selectors, so
- * the later import would simply win for every code block regardless of the active theme. Hence a single set of rules
- * driven by custom properties, with the Visual Studio values bound on the statement container and the Monokai values
- * on the dark container variant the server emits (ProblemStatementRenderingService.java:224).
- *
- * Only the token colours and the two font variations are reproduced. The block chrome the stock themes also carry
- * (background, padding, overflow) is left out on purpose: the server's own stylesheet already styles `pre` and
- * `code` for both modes, and painting the theme background on top of it would fight with that.
+ * Only the box itself is styled here.
  */
-
-// Every `.hljs-*` class that either stock theme colours. The rules are generated from this list so that no token can
-// end up wired differently from the others.
-$hljs-tokens:
-    addition, attr, attribute, built_in, bullet, code, comment, deletion, doctag, emphasis, keyword, link, literal, meta, name, number, quote, regexp, section, selector-attr,
-    selector-id, selector-pseudo, selector-tag, string, strong, subst, symbol, tag, template-tag, template-variable, title, type, variable;
-
-@each $token in $hljs-tokens {
-    .hljs-#{$token} {
-        // An unbound property falls through to `inherit`, which is exactly how a stock theme leaves a token it does
-        // not colour: it keeps the colour of the enclosing token or of the code block itself.
-        color: var(--hljs-#{$token}, inherit);
-    }
-}
-
-// Monokai's own rule for a class name, which highlight.js emits as `hljs-title class_`. Its (0,2,0) specificity beats
-// the generated `.hljs-title` rule no matter which palette is active, so the Visual Studio palette has to bind
-// `--hljs-class-title` as well (to its plain title colour, since vs.css has no `.class_` rule at all). Leaving it
-// unbound there would drop the colour of every class name in light mode.
-.hljs-title.class_,
-.hljs-class .hljs-title {
-    color: var(--hljs-class-title, inherit);
-}
-
-.hljs-emphasis {
-    font-style: var(--hljs-emphasis-style, inherit);
-}
-
-.hljs-strong {
-    font-weight: var(--hljs-strong-weight, inherit);
-}
-
-// Monokai renders this group bold, Visual Studio renders none of it bold.
-.hljs-keyword,
-.hljs-selector-tag,
-.hljs-literal,
-.hljs-doctag,
-.hljs-title,
-.hljs-section,
-.hljs-type,
-.hljs-selector-id {
-    font-weight: var(--hljs-bold-weight, inherit);
-}
-
-// Visual Studio palette, transcribed from highlight.js/styles/vs.css.
-.artemis-problem-statement {
-    --hljs-comment: #008000;
-    --hljs-quote: #008000;
-    --hljs-variable: #008000;
-    --hljs-keyword: #00f;
-    --hljs-selector-tag: #00f;
-    --hljs-built_in: #00f;
-    --hljs-name: #00f;
-    --hljs-tag: #00f;
-    --hljs-string: #a31515;
-    --hljs-title: #a31515;
-    --hljs-class-title: #a31515;
-    --hljs-section: #a31515;
-    --hljs-attribute: #a31515;
-    --hljs-literal: #a31515;
-    --hljs-template-tag: #a31515;
-    --hljs-template-variable: #a31515;
-    --hljs-type: #a31515;
-    --hljs-addition: #a31515;
-    --hljs-deletion: #2b91af;
-    --hljs-selector-attr: #2b91af;
-    --hljs-selector-pseudo: #2b91af;
-    --hljs-meta: #2b91af;
-    --hljs-doctag: #808080;
-    --hljs-attr: #f00;
-    --hljs-symbol: #00b0e8;
-    --hljs-bullet: #00b0e8;
-    --hljs-link: #00b0e8;
-    --hljs-emphasis-style: italic;
-    --hljs-strong-weight: bold;
-}
-
-// Monokai palette, transcribed from highlight.js/styles/monokai.css. The server puts both classes on the same
-// element, so these declarations override the ones above purely by coming later.
-.artemis-problem-statement--dark {
-    --hljs-tag: #f92672;
-    --hljs-keyword: #f92672;
-    --hljs-selector-tag: #f92672;
-    --hljs-literal: #f92672;
-    --hljs-strong: #f92672;
-    --hljs-number: #f92672;
-    --hljs-name: #f92672;
-    --hljs-code: #66d9ef;
-    --hljs-attribute: #bf79db;
-    --hljs-attr: #bf79db;
-    --hljs-symbol: #bf79db;
-    --hljs-regexp: #bf79db;
-    --hljs-link: #bf79db;
-    --hljs-string: #a6e22e;
-    --hljs-bullet: #a6e22e;
-    --hljs-subst: #a6e22e;
-    --hljs-title: #a6e22e;
-    --hljs-section: #a6e22e;
-    --hljs-emphasis: #a6e22e;
-    --hljs-type: #a6e22e;
-    --hljs-built_in: #a6e22e;
-    --hljs-selector-attr: #a6e22e;
-    --hljs-selector-pseudo: #a6e22e;
-    --hljs-addition: #a6e22e;
-    --hljs-variable: #a6e22e;
-    --hljs-template-tag: #a6e22e;
-    --hljs-template-variable: #a6e22e;
-    --hljs-class-title: #fff;
-    --hljs-comment: #75715e;
-    --hljs-quote: #75715e;
-    --hljs-deletion: #75715e;
-    --hljs-meta: #75715e;
-    --hljs-bold-weight: bold;
-
-    // Monokai styles these three not at all, so the Visual Studio bindings have to be released rather than
-    // overwritten: an unbound property falls back to `inherit` in the rules above.
-    --hljs-doctag: initial;
-    --hljs-emphasis-style: initial;
-    --hljs-strong-weight: initial;
+.artemis-statement-frame {
+    display: block;
+    width: 100%;
+    border: 0;
+    /*
+     * Starts collapsed, not at the browser's default 150px: the frame reports its content height as soon as its
+     * script runs, and a default-sized box would make the pane jump on every render before that happens.
+     */
+    height: 0;
+    /*
+     * The frame paints its own background through `body.artemis-ssr-body`, so the element behind it must not
+     * paint a second, differently-themed one.
+     */
+    background: transparent;
+    /*
+     * The frame is sized to its content on every host, so it never scrolls internally. The exception is a
+     * document past the height clamp, which is a hostile height rather than a long statement.
+     */
+    overflow: hidden;
 }

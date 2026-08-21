@@ -14,7 +14,8 @@ import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/pro
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
+import { highlightCodeBlocks, renderFormulas, sanitizeFragment } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame.util';
+import { interactiveMessage, runFrameScript } from 'test/helpers/problem-statement-frame.helper';
 import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -531,14 +532,26 @@ describe('problem statement rendering parity', () => {
         return distinctRefs.map((ref, index) => ({ id: index + 1, testName: ref }) as ProgrammingExerciseTestCase);
     };
 
-    /** The fixture's statement fragment, rendered through the shadow-root content component the app actually uses. */
+    /**
+     * The fixture's statement fragment after the passes the app runs over it before it reaches the frame.
+     *
+     * Deliberately stops short of the frame-specific steps (stripping `data-feedback` / `data-result`, rewriting
+     * same-origin images): those are about what the sandbox may see, not about whether the two renderers agree,
+     * and the canonicalizers below read the feedback payload to recover a task's test names.
+     */
     const afterClientRendering = (serverHtml: string): string => {
-        // The same fragment the app hands the component (programming-exercise-instruction-ssr.component.ts).
+        // The same fragment the app hands the assembler (programming-exercise-instruction-ssr.component.ts).
         const fragment = new DOMParser().parseFromString(serverHtml, 'text/html').querySelector('.artemis-problem-statement');
-        const fixture = TestBed.createComponent(ProgrammingExerciseInstructionSsrContentComponent);
-        fixture.componentRef.setInput('html', fragment?.outerHTML ?? '');
-        fixture.detectChanges();
-        return (fixture.nativeElement as HTMLElement).shadowRoot?.innerHTML ?? '';
+        if (!fragment) {
+            return '';
+        }
+        const sanitized = new DOMParser().parseFromString(sanitizeFragment(fragment.outerHTML), 'text/html').querySelector('.artemis-problem-statement');
+        if (!sanitized) {
+            return '';
+        }
+        renderFormulas(sanitized);
+        highlightCodeBlocks(sanitized);
+        return sanitized.outerHTML;
     };
 
     /** The legacy engine's status per task, in document order, translated into the server's vocabulary. */
@@ -944,14 +957,17 @@ describe('problem statement rendering: deliberate divergences from the legacy ta
     const renderedTaskSpan = (name: string, testIds: string) =>
         `<span class="artemis-task artemis-task-success" data-task-name="${name}" data-test-ids="${testIds}" data-test-status="success">${name}</span>`;
 
-    /** The statement fragment rendered through the shadow-root content component, with interactivity switched on. */
-    const renderSsrContent = (body: string, tasks: SsrTask[]): ShadowRoot => {
-        const fixture = TestBed.createComponent(ProgrammingExerciseInstructionSsrContentComponent);
-        fixture.componentRef.setInput('html', `<div class="artemis-problem-statement">${body}</div>`);
-        fixture.componentRef.setInput('tasks', tasks);
-        fixture.componentRef.setInput('interactive', true);
-        fixture.detectChanges();
-        return (fixture.nativeElement as HTMLElement).shadowRoot!;
+    /**
+     * The statement fragment inside the sandboxed frame, with interactivity switched on.
+     *
+     * Runs the real frame script against the markup, then sends it the same `interactive` message the content
+     * component sends, so what is asserted below is the shipped behaviour rather than a stand-in for it. The
+     * parent only ever names tasks that carry test ids, which is the gate this divergence is about.
+     */
+    const renderSsrContent = (body: string, tasks: SsrTask[]): Document => {
+        const harness = runFrameScript(`<div class="artemis-problem-statement">${body}</div>`);
+        harness.sendFromParent(interactiveMessage(tasks.filter((task) => task.testIds.length).map((task) => ({ index: task.index, label: `${task.taskName}: ${task.status}` }))));
+        return harness.document;
     };
 
     const ssrTask = (index: number, taskName: string, testIds: number[]): SsrTask => ({
@@ -1034,8 +1050,8 @@ describe('problem statement rendering: deliberate divergences from the legacy ta
         // then gates `role` / `tabindex` on `task.testIds.length` (content component) and drops the activation in
         // `ProgrammingExerciseInstructionSsrComponent.openTaskFeedback`. Two tasks with an identical green presentation
         // therefore end up one clickable and one inert, decided purely by how their tests were referenced.
-        const shadowRoot = renderSsrContent(renderedTaskSpan('ById', '1') + renderedTaskSpan('ByName', ''), [ssrTask(0, 'ById', [1]), ssrTask(1, 'ByName', [])]);
-        const rendered = [...shadowRoot.querySelectorAll('.artemis-task')];
+        const frameDocument = renderSsrContent(renderedTaskSpan('ById', '1') + renderedTaskSpan('ByName', ''), [ssrTask(0, 'ById', [1]), ssrTask(1, 'ByName', [])]);
+        const rendered = [...frameDocument.querySelectorAll('.artemis-task')];
 
         expect(rendered.map((element) => element.getAttribute('data-test-status'))).toEqual(['success', 'success']);
         expect(rendered.map((element) => element.getAttribute('role'))).toEqual(['button', null]);

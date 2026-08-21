@@ -331,6 +331,8 @@
                 "renderRejected": "Die Aufgabenstellung konnte nicht gerendert werden, da die Aufgabendaten zu groß oder inkonsistent sind.",
                 "renderRateLimited": "Zu viele Anfragen. Bitte kurz warten und neu laden.",
                 "renderStale": "Es wird die zuletzt geladene Version angezeigt; die Aktualisierung konnte nicht abgerufen werden.",
+                "frameTitle": "Aufgabenstellung",
+                "imageUnavailable": "Bild nicht verfügbar",
                 "taskStatus": {
                     "success": "alle Tests bestanden",
                     "fail": "Tests fehlgeschlagen",

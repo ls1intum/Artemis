@@ -1,5 +1,4 @@
 import { Component, DestroyRef, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import DOMPurify from 'dompurify';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { EMPTY, Observable, Subject, Subscription, catchError, filter, map, of, switchMap } from 'rxjs';
@@ -18,13 +17,8 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProblemStatementSsrRenderService } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr-render.service';
 import { ProblemStatementResultHydrationService } from 'app/programming/shared/instructions-render/ssr/problem-statement-result-hydration.service';
-import {
-    ProblemStatementRenderRequest,
-    RenderedProblemStatement,
-    SSR_TASK_STATUSES,
-    SsrTask,
-    SsrTaskStatus,
-} from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
+import { ProblemStatementRenderRequest, RenderedProblemStatement, SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
+import { assembleFrameDocument } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame.util';
 import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
 import { ProgrammingExerciseInstructionSsrStepWizardComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-step-wizard.component';
 
@@ -40,6 +34,9 @@ import { ProgrammingExerciseInstructionSsrStepWizardComponent } from 'app/progra
  * live updates. This is pre-existing websocket policy that is accepted here rather than special-cased.
  */
 export type SsrLiveUpdates = 'none' | 'personal' | 'shared';
+
+/** Prefix of every translation key this component and its frame use. */
+const TRANSLATION_BASE = 'artemisApp.programmingExercise.problemStatement.';
 
 /**
  * Identity of the exercise and participation a render belongs to.
@@ -70,9 +67,9 @@ interface RenderEnvelope {
  * Read-only problem statement rendered by the server.
  *
  * This component owns the state: hydration of the effective result, the render request lifecycle, the failure states
- * and the feedback dialog. It deliberately uses **default** encapsulation so its chrome (spinner, banners) is styled
- * by the application's global CSS. The server-rendered markup itself lives in the shadow-DOM child component, which is
- * the only thing that may sit behind a shadow boundary (see its class comment).
+ * and the feedback dialog. The server-rendered markup itself never touches this document: it is assembled into a
+ * self-contained document by `assembleFrameDocument` and handed to the child component, which puts it in a sandboxed
+ * iframe. That is what makes a sanitizer bypass unable to reach the application (see the child's class comment).
  */
 @Component({
     selector: 'jhi-programming-exercise-instruction-ssr',
@@ -112,7 +109,12 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
 
     readonly onNoInstructionsAvailable = output<void>();
 
-    readonly renderedHtml = signal<string | undefined>(undefined);
+    /** The sandboxed document currently on screen; `undefined` while nothing has been rendered. */
+    readonly frameSrcdoc = signal<string | undefined>(undefined);
+    /** Token of that document, so the frame's messages can be told apart from a superseded frame's. */
+    readonly frameGeneration = signal('');
+    /** The hrefs in that document; the frame may only ask for one of these to be opened. */
+    readonly linkTargets = signal<readonly string[]>([]);
     readonly tasks = signal<SsrTask[]>([]);
     readonly isLoading = signal(false);
     readonly isRefreshing = signal(false);
@@ -120,10 +122,9 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     readonly refreshFailed = signal(false);
     readonly errorStatus = signal<number | undefined>(undefined);
 
-    readonly errorMessageKey = computed(() => {
-        const base = 'artemisApp.programmingExercise.problemStatement.';
-        return base + (this.errorStatus() === 429 ? 'renderRateLimited' : this.errorStatus() === 422 ? 'renderRejected' : 'renderFailed');
-    });
+    readonly errorMessageKey = computed(
+        () => TRANSLATION_BASE + (this.errorStatus() === 429 ? 'renderRateLimited' : this.errorStatus() === 422 ? 'renderRejected' : 'renderFailed'),
+    );
 
     readonly faCircleNotch = faCircleNotch;
 
@@ -174,7 +175,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
                     // errorStatus describes the last *render* (HTTP) error. A hydration failure must not inherit it,
                     // or the banner would claim e.g. rate limiting for an entirely unrelated failure.
                     this.errorStatus.set(undefined);
-                    if (this.renderedHtml() === undefined) {
+                    if (this.frameSrcdoc() === undefined) {
                         this.initialLoadFailed.set(true);
                     } else {
                         this.refreshFailed.set(true);
@@ -330,7 +331,9 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             this.initialLoadFailed.set(false);
             this.refreshFailed.set(false);
             this.errorStatus.set(undefined);
-            this.renderedHtml.set(undefined);
+            this.frameSrcdoc.set(undefined);
+            this.frameGeneration.set('');
+            this.linkTargets.set([]);
             this.tasks.set([]);
             // Cleared alongside the html: otherwise a statement that goes blank and later returns to a previously
             // rendered value would hit the render cache, match the retained hash, and stay blank forever.
@@ -357,7 +360,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
      * whatever the error described, so a spinner next to a stale failure banner is a state the user must never see.
      */
     private enterPendingState(): void {
-        const hasContent = this.renderedHtml() !== undefined;
+        const hasContent = this.frameSrcdoc() !== undefined;
         this.isLoading.set(!hasContent);
         this.isRefreshing.set(hasContent);
         this.initialLoadFailed.set(false);
@@ -387,9 +390,11 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             return;
         }
         this.contentHash = rendered.contentHash;
-        const { html, tasks } = this.extractRenderableHtml(rendered.html);
-        this.renderedHtml.set(html);
-        this.tasks.set(tasks);
+        const frame = assembleFrameDocument(rendered.html, this.locale(), this.translateService.instant(TRANSLATION_BASE + 'imageUnavailable'));
+        this.frameSrcdoc.set(frame.srcdoc);
+        this.frameGeneration.set(frame.generation);
+        this.linkTargets.set(frame.linkTargets);
+        this.tasks.set(frame.tasks);
     }
 
     private applyError(error: HttpErrorResponse): void {
@@ -397,58 +402,11 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         this.isRefreshing.set(false);
         this.errorStatus.set(error.status);
         // Never blank an already rendered statement because a refresh failed: show a stale hint instead.
-        if (this.renderedHtml() === undefined) {
+        if (this.frameSrcdoc() === undefined) {
             this.initialLoadFailed.set(true);
         } else {
             this.refreshFailed.set(true);
         }
-    }
-
-    /**
-     * Parses the returned document, keeps only the problem-statement fragment plus its stylesheets, and drops every
-     * script (the endpoint still appends KaTeX scripts even with includeJs=false; KaTeX runs from Angular instead).
-     *
-     * The server prepends the stylesheet and the KaTeX link to the fragment inside the body, so both head and body
-     * must be searched. Querying the head alone would silently drop all CSS.
-     *
-     * The fragment is sanitized here even though the server already sanitized it, because the server's jsoup safelist
-     * does not cover all of it: PlantUML diagrams and alert icons are injected *after* that safelist, since it strips
-     * SVG, and are guarded only by `SvgSanitizer`, which denies known-dangerous constructs rather than allowing known-
-     * safe ones. This pass puts every byte that reaches the DOM through one allowlist, which is what the legacy
-     * pipeline did in the browser before this renderer existed. The application CSP is no backstop: it carries
-     * `unsafe-inline`.
-     *
-     * Only the fragment goes through it. The stylesheets are classpath resources plus the configured server URL, none
-     * of it derived from the statement, and DOMPurify would strip the KaTeX `<link>` because no sanitizer allows a
-     * stylesheet reference by default. Default configuration otherwise: it preserves the whole server vocabulary
-     * (task spans, inline SVG, `data-*`, alerts, tables, code blocks), which the specs pin against the corpus.
-     */
-    private extractRenderableHtml(document_: string): { html: string; tasks: SsrTask[] } {
-        const parsed = new DOMParser().parseFromString(document_, 'text/html');
-        parsed.querySelectorAll('script').forEach((script) => script.remove());
-
-        const styles = [...parsed.querySelectorAll('style, link[rel="stylesheet"]')].map((node) => node.outerHTML).join('');
-        const fragment = parsed.querySelector('.artemis-problem-statement');
-        const tasks = [...(fragment?.querySelectorAll('.artemis-task') ?? [])].map((element, index) => ({
-            index,
-            taskName: element.getAttribute('data-task-name') ?? '',
-            testIds: (element.getAttribute('data-test-ids') ?? '')
-                .split(',')
-                .filter((value) => value.length > 0)
-                .map((value) => Number(value)),
-            status: this.parseStatus(element.getAttribute('data-test-status')),
-            authoredCount: Number(element.getAttribute('data-authored-count') ?? '0'),
-            notExecutedCount: Number(element.getAttribute('data-not-executed-count') ?? '0'),
-        }));
-        return { html: styles + (fragment ? DOMPurify.sanitize(fragment.outerHTML) : ''), tasks };
-    }
-
-    /**
-     * Narrows the server's `data-test-status` to the known vocabulary. An unknown value can only come from a server
-     * that emits a status this client does not know yet; it degrades to the neutral "no result" circle.
-     */
-    private parseStatus(value: string | null): SsrTaskStatus {
-        return SSR_TASK_STATUSES.find((status) => status === value) ?? 'no-result';
     }
 
     /** Handles a task activation reported by the content component, identified by its document position. */

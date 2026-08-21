@@ -1,296 +1,434 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import katex from 'katex';
-import { compile } from 'sass';
-import hljs from 'app/foundation/util/highlight-languages.util';
-import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
-import { SsrTask, SsrTaskStatus } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { FRAME_PROTOCOL_VERSION, INTERACTIVE_TASK_CLASS } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame-script';
+import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
+import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
+import { runFrameScript } from 'test/helpers/problem-statement-frame.helper';
 
-// jsdom cannot lay out math, so KaTeX is mocked. The mock still writes into the passed element so the spec can assert
-// that the component handed the live placeholder node (and not, say, a detached copy) to the renderer.
-vi.mock('katex', () => ({
-    default: {
-        render: vi.fn((formula: string, element: HTMLElement) => {
-            element.innerHTML = `<span class="katex">${formula}</span>`;
-        }),
-    },
-}));
+const GENERATION = 'generation-1';
 
-const taskSpan = (name: string, testIds: string) => `<span class="artemis-task" data-task-name="${name}" data-test-ids="${testIds}">${name}</span>`;
-
-const task = (index: number, taskName: string, testIds: number[], status: SsrTaskStatus = 'success'): SsrTask => ({
+const task = (index: number, testIds: number[] = [1]): SsrTask => ({
     index,
-    taskName,
+    taskName: `Task ${index}`,
     testIds,
-    status,
-    authoredCount: testIds.length,
+    status: 'success',
+    authoredCount: 1,
     notExecutedCount: 0,
 });
 
-const codeBlock = (code: string, language?: string) =>
-    `<div class="artemis-problem-statement"><pre><code${language ? ` class="language-${language}"` : ''}>${code}</code></pre></div>`;
-
 /**
- * Spied rather than stubbed: the assertions are about which branch the component takes, while the markup assertions
- * still look at the real highlighting. Created through a factory so the spy types can be inferred: naming
- * `typeof hljs.highlight` in an annotation resolves to that method's deprecated overload.
+ * jsdom implements neither iframe sandboxing nor layout, so what the frame *is* cannot be asserted here; that is
+ * what the Playwright specs are for, and they run in three engines because the guarantees differ per engine.
+ * What can be asserted here is every decision on either side of the boundary: what the component sends, what it
+ * accepts back, and what the real frame script does with it.
  */
-const spyOnHighlighting = () => ({ highlight: vi.spyOn(hljs, 'highlight'), highlightAuto: vi.spyOn(hljs, 'highlightAuto') });
-
 describe('ProgrammingExerciseInstructionSsrContentComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInstructionSsrContentComponent>;
-    let highlight: ReturnType<typeof spyOnHighlighting>['highlight'];
-    let highlightAuto: ReturnType<typeof spyOnHighlighting>['highlightAuto'];
+    let comp: ProgrammingExerciseInstructionSsrContentComponent;
 
-    afterEach(() => {
-        highlight.mockRestore();
-        highlightAuto.mockRestore();
-    });
+    const frame = (): HTMLIFrameElement => fixture.nativeElement.querySelector('iframe');
 
-    beforeEach(async () => {
-        vi.mocked(katex.render).mockClear();
-        ({ highlight, highlightAuto } = spyOnHighlighting());
-        await TestBed.configureTestingModule({
-            imports: [ProgrammingExerciseInstructionSsrContentComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
-        fixture = TestBed.createComponent(ProgrammingExerciseInstructionSsrContentComponent);
-    });
+    /** Everything the component has told its frame. */
+    let posted: Record<string, unknown>[];
 
-    const shadowRoot = (): ShadowRoot => fixture.nativeElement.shadowRoot;
-    const taskElements = () => shadowRoot().querySelectorAll<HTMLElement>('.artemis-task');
-
-    const render = (html: string, tasks: SsrTask[], interactive = false) => {
-        fixture.componentRef.setInput('html', html);
-        fixture.componentRef.setInput('tasks', tasks);
-        fixture.componentRef.setInput('interactive', interactive);
-        fixture.detectChanges();
+    /** Delivers a message as if the component's own frame had sent it. */
+    const sendFromFrame = (data: Record<string, unknown>, overrides: { source?: unknown } = {}): void => {
+        window.dispatchEvent(
+            new MessageEvent('message', {
+                data: { v: FRAME_PROTOCOL_VERSION, gen: GENERATION, ...data },
+                source: (overrides.source ?? frame().contentWindow) as MessageEventSource,
+            }),
+        );
     };
 
-    it('injects the server html into a real shadow root', () => {
-        render(`<style>.artemis-task{color:red}</style><div class="artemis-problem-statement">${taskSpan('A', '1')}</div>`, [task(0, 'A', [1])]);
+    /** Announces the frame as loaded, which is what makes the component start talking to it. */
+    const announceReady = (): void => sendFromFrame({ type: 'ready' });
 
-        expect(shadowRoot()).toBeTruthy();
-        // The server's own stylesheet must land inside the shadow root, which is the whole point of the encapsulation.
-        expect(shadowRoot().querySelector('style')).toBeTruthy();
-        expect(shadowRoot().querySelector('.artemis-task')?.textContent).toBe('A');
-        // The markup must not leak into the light DOM.
-        expect(fixture.nativeElement.querySelector('.artemis-task')).toBeNull();
-    });
-
-    it('renders the inert katex placeholders emitted by the server', () => {
-        render(`<div class="artemis-problem-statement"><span class="katex-formula" data-formula="a^2" data-display-mode="false"></span></div>`, []);
-
-        const placeholder = shadowRoot().querySelector('.katex-formula')!;
-        expect(katex.render).toHaveBeenCalledOnce();
-        expect(vi.mocked(katex.render).mock.calls[0][0]).toBe('a^2');
-        expect(vi.mocked(katex.render).mock.calls[0][1]).toBe(placeholder);
-        expect(vi.mocked(katex.render).mock.calls[0][2]?.displayMode).toBe(false);
-        expect(placeholder.innerHTML).toContain('katex');
-    });
-
-    it('passes the display mode through for a block formula', () => {
-        render(`<div class="artemis-problem-statement"><span class="katex-formula" data-formula="b^2" data-display-mode="true"></span></div>`, []);
-
-        expect(vi.mocked(katex.render).mock.calls[0][2]?.displayMode).toBe(true);
-    });
-
-    it('marks tasks as interactive only when a feedback dialog can be opened', () => {
-        const tasks = [task(0, 'A', [1])];
-        render(`<div class="artemis-problem-statement">${taskSpan('A', '1')}</div>`, tasks);
-
-        const nonInteractive = taskElements()[0];
-        expect(nonInteractive.getAttribute('role')).toBeNull();
-        expect(nonInteractive.getAttribute('tabindex')).toBeNull();
-        // ARIA prohibits aria-label on role=generic, so a non-interactive task must not carry one.
-        expect(nonInteractive.getAttribute('aria-label')).toBeNull();
-
-        render(`<div class="artemis-problem-statement">${taskSpan('A', '1')}${taskSpan('B', '2')}</div>`, [task(0, 'A', [1]), task(1, 'B', [2])], true);
-
-        const interactive = taskElements()[0];
-        expect(interactive.getAttribute('role')).toBe('button');
-        expect(interactive.getAttribute('tabindex')).toBe('0');
-        expect(interactive.getAttribute('aria-label')).toBe('A: artemisApp.programmingExercise.problemStatement.taskStatus.success');
-    });
-
-    it('leaves a task without test ids non-interactive', () => {
-        render(`<div class="artemis-problem-statement">${taskSpan('A', '')}</div>`, [task(0, 'A', [])], true);
-
-        expect(taskElements()[0].getAttribute('role')).toBeNull();
-    });
-
-    it('re-applies the accessibility attributes when only the interactivity changes', () => {
-        const html = `<div class="artemis-problem-statement">${taskSpan('A', '1')}</div>`;
-        const tasks = [task(0, 'A', [1])];
-        render(html, tasks);
-        const before = taskElements()[0];
-        expect(before.getAttribute('role')).toBeNull();
-
-        // Same html: the DOM is deliberately not replaced, but the gating changed and must take effect anyway.
-        fixture.componentRef.setInput('interactive', true);
+    beforeEach(() => {
+        TestBed.configureTestingModule({ providers: [{ provide: TranslateService, useClass: MockTranslateService }] });
+        fixture = TestBed.createComponent(ProgrammingExerciseInstructionSsrContentComponent);
+        comp = fixture.componentInstance;
+        fixture.componentRef.setInput('srcdoc', '<!DOCTYPE html><html><body><span class="artemis-task">A</span></body></html>');
+        fixture.componentRef.setInput('generation', GENERATION);
         fixture.detectChanges();
-
-        expect(taskElements()[0]).toBe(before);
-        expect(before.getAttribute('role')).toBe('button');
-        expect(before.getAttribute('aria-label')).toBe('A: artemisApp.programmingExercise.problemStatement.taskStatus.success');
-        // Unchanged html must not re-run the formula pass.
-        expect(katex.render).not.toHaveBeenCalled();
-    });
-
-    it('restores focus to the task at the same index after a re-render', () => {
-        render(`<div class="artemis-problem-statement">${taskSpan('A', '1')}${taskSpan('B', '2')}</div>`, [task(0, 'A', [1]), task(1, 'B', [2])], true);
-
-        const secondTask = taskElements()[1];
-        secondTask.focus();
-        expect(shadowRoot().activeElement).toBe(secondTask);
-
-        render(`<div class="artemis-problem-statement">${taskSpan('A', '1')}${taskSpan('B', '2')}<!-- rerender --></div>`, [task(0, 'A', [1]), task(1, 'B', [2])], true);
-
-        const reRenderedSecondTask = taskElements()[1];
-        expect(reRenderedSecondTask).not.toBe(secondTask);
-        expect(shadowRoot().activeElement).toBe(reRenderedSecondTask);
-    });
-
-    it('emits the document position of a clicked task, not its name', () => {
-        const activated: number[] = [];
-        fixture.componentInstance.taskActivated.subscribe((index) => activated.push(index));
-        // Two tasks with the same name but different test ids.
-        render(`<div class="artemis-problem-statement">${taskSpan('A', '1')}${taskSpan('A', '2,3')}</div>`, [task(0, 'A', [1]), task(1, 'A', [2, 3])], true);
-
-        taskElements()[1].dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
-
-        expect(activated).toEqual([1]);
-    });
-
-    it('emits on keyboard activation of a task', () => {
-        const activated: number[] = [];
-        fixture.componentInstance.taskActivated.subscribe((index) => activated.push(index));
-        render(`<div class="artemis-problem-statement">${taskSpan('A', '1')}</div>`, [task(0, 'A', [1])], true);
-
-        taskElements()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true }));
-
-        expect(activated).toEqual([0]);
-    });
-
-    it('does not emit an activation while the tasks are not interactive', () => {
-        const activated: number[] = [];
-        fixture.componentInstance.taskActivated.subscribe((index) => activated.push(index));
-        render(`<div class="artemis-problem-statement">${taskSpan('A', '1')}</div>`, [task(0, 'A', [1])]);
-
-        // Retained markup stays clickable in the browser no matter what role and tabindex say, so the emission
-        // itself has to be gated: after a context change the statement on screen belongs to other inputs.
-        taskElements()[0].dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
-
-        expect(activated).toEqual([]);
-    });
-
-    it('ignores activations outside a task', () => {
-        const activated: number[] = [];
-        fixture.componentInstance.taskActivated.subscribe((index) => activated.push(index));
-        render(`<div class="artemis-problem-statement"><p id="prose">text</p>${taskSpan('A', '1')}</div>`, [task(0, 'A', [1])], true);
-
-        shadowRoot()
-            .querySelector('#prose')!
-            .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
-
-        expect(activated).toEqual([]);
-    });
-
-    it('highlights a code block whose language is registered', () => {
-        render(codeBlock('class Example {}', 'java'), []);
-
-        const code = shadowRoot().querySelector('pre code')!;
-        expect(code.classList.contains('hljs')).toBe(true);
-        expect(code.querySelectorAll('span[class^="hljs-"]').length).toBeGreaterThan(0);
-        // The highlighting only wraps the source, it never rewrites it.
-        expect(code.textContent).toBe('class Example {}');
-        expect(highlight).toHaveBeenCalledOnce();
-        expect(highlight.mock.calls[0][1]).toEqual({ language: 'java', ignoreIllegals: true });
-        expect(highlightAuto).not.toHaveBeenCalled();
-    });
-
-    it('leaves a code block with an unregistered language escaped, but still marks it', () => {
-        // Mirrors markdown.conversion.util.ts:42-44: an explicit language highlight.js does not know falls back to the
-        // escaped source, and gets the `hljs` class anyway. `hljs.highlightElement()` would auto-detect here instead.
-        render(codeBlock('if (a &lt; b) {}', 'brainfuck'), []);
-
-        const code = shadowRoot().querySelector('pre code')!;
-        expect(code.classList.contains('hljs')).toBe(true);
-        expect(code.innerHTML).toBe('if (a &lt; b) {}');
-        expect(code.querySelectorAll('span')).toHaveLength(0);
-        expect(highlight).not.toHaveBeenCalled();
-        expect(highlightAuto).not.toHaveBeenCalled();
-    });
-
-    it('auto-detects the language of a code block that declares none', () => {
-        render(codeBlock('SELECT name FROM student;'), []);
-
-        const code = shadowRoot().querySelector('pre code')!;
-        expect(highlightAuto).toHaveBeenCalledExactlyOnceWith('SELECT name FROM student;');
-        expect(highlight).not.toHaveBeenCalled();
-        expect(code.classList.contains('hljs')).toBe(true);
-    });
-
-    it('does not highlight a code block twice when the pass runs again over retained markup', () => {
-        render(codeBlock('class Example {}', 'java'), []);
-        const code = shadowRoot().querySelector('pre code')!;
-        const highlighted = code.innerHTML;
-        expect(code.getAttribute('data-highlighted')).toBe('true');
-        expect(shadowRoot().querySelectorAll('pre code:not([data-highlighted])')).toHaveLength(0);
-
-        // Invoked directly because no public path reaches the pass twice today: `applyToDom` returns early while the
-        // html is unchanged. The marker is what makes idempotence a property of the pass itself instead of a
-        // consequence of that early return, so this test has to drive the pass, not the input. Re-highlighting would
-        // nest a second layer of token spans inside the first.
-        fixture.componentInstance['highlightCodeBlocks'](shadowRoot().querySelector<HTMLElement>('.artemis-problem-statement-host')!);
-
-        expect(shadowRoot().querySelector('pre code')).toBe(code);
-        expect(code.innerHTML).toBe(highlighted);
-        expect(highlight).toHaveBeenCalledOnce();
-    });
-
-    it('keeps the rest of the statement working when a code block fails to highlight', () => {
-        highlight.mockImplementation(() => {
-            throw new Error('grammar exploded');
+        posted = [];
+        vi.spyOn(frame().contentWindow!, 'postMessage').mockImplementation((message) => {
+            posted.push(message as Record<string, unknown>);
         });
-        render(`<div class="artemis-problem-statement">${taskSpan('A', '1')}<pre><code class="language-java">class Example {}</code></pre></div>`, [task(0, 'A', [1])], true);
-
-        // Degrades to the plain source, exactly like the formula pass degrades to the plain formula.
-        expect(shadowRoot().querySelector('pre code')!.textContent).toBe('class Example {}');
-        // The failure must not cost the statement its accessibility attributes, which are applied after this pass.
-        expect(taskElements()[0].getAttribute('role')).toBe('button');
     });
 
-    it('binds the visual studio palette on the statement container and the monokai palette on its dark variant', () => {
-        // jsdom applies neither a shadow root's stylesheets nor var() substitution, so the component's stylesheet is
-        // compiled and exercised in the light dom instead. That still covers what can actually go wrong here: which
-        // palette a container resolves to, and whether a token the dark palette does not style is released rather
-        // than left at its light value.
-        const style = document.createElement('style');
-        style.textContent = compile('src/main/webapp/app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component.scss').css;
-        document.head.appendChild(style);
-        const containers = document.createElement('div');
-        containers.innerHTML = '<div id="light" class="artemis-problem-statement"></div><div id="dark" class="artemis-problem-statement artemis-problem-statement--dark"></div>';
-        document.body.appendChild(containers);
+    afterEach(() => vi.restoreAllMocks());
 
-        const light = getComputedStyle(document.getElementById('light')!);
-        const dark = getComputedStyle(document.getElementById('dark')!);
-        expect(style.textContent).toContain('color: var(--hljs-keyword, inherit)');
-        expect(light.getPropertyValue('--hljs-keyword')).toBe('#00f');
-        expect(dark.getPropertyValue('--hljs-keyword')).toBe('#f92672');
-        // Monokai gives doctag no colour of its own, and both classes sit on the same element, so the dark palette has
-        // to release the binding instead of overwriting it. An empty computed value is what `initial` resolves to, and
-        // it is what makes the token rule fall through to its `inherit` fallback.
-        expect(light.getPropertyValue('--hljs-doctag')).toBe('#808080');
-        expect(dark.getPropertyValue('--hljs-doctag')).toBe('');
-        // `hljs-title class_` is what highlight.js emits for a class name, and Monokai's rule for it outranks the
-        // generic title rule in both palettes. Visual Studio has no such rule, so its class names have to keep the
-        // title colour rather than fall through to `inherit`.
-        expect(light.getPropertyValue('--hljs-class-title')).toBe('#a31515');
-        expect(dark.getPropertyValue('--hljs-class-title')).toBe('#fff');
+    describe('the sandbox, which is the whole point of the frame', () => {
+        it('permits scripts and nothing else', () => {
+            // Any addition here is a security decision. `allow-same-origin` in particular would hand the statement
+            // back the cookies, storage and parent DOM this component exists to keep it away from.
+            expect(frame().getAttribute('sandbox')).toBe('allow-scripts');
+        });
 
-        style.remove();
-        containers.remove();
+        it('carries the same sandbox the browser tests assert, which they cannot read out of the template', () => {
+            // Angular forbids binding `sandbox`, so the template holds a literal and the browser tests import the
+            // constant. This is what keeps the two from drifting apart unnoticed.
+            expect(frame().getAttribute('sandbox')).toBe(comp.expectedSandbox);
+        });
+
+        it('grants no browser features and sends no referrer', () => {
+            expect(frame().getAttribute('allow')).toBe('');
+            expect(frame().getAttribute('referrerpolicy')).toBe('no-referrer');
+        });
+
+        it('hands the document to the element byte for byte', () => {
+            // The regression this exists for: bound as `[attr.srcdoc]`, Angular's sanitizer treats the value as an
+            // HTML security context and reduces a full document to a few characters, dropping the `<meta>` policy
+            // and the nonced script. Every string-level assertion still passed, and the isolation was simply gone.
+            // Only an assertion against the element itself catches that.
+            const document_ =
+                '<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src \'none\'"></head><body><p>x</p><script nonce="abc">window.x=1;</script></body></html>';
+            fixture.componentRef.setInput('srcdoc', document_);
+            fixture.detectChanges();
+
+            expect(frame().srcdoc).toBe(document_);
+        });
+
+        it('is named, so it is reachable for a screen reader', () => {
+            expect(frame().getAttribute('title')).toBeTruthy();
+        });
+    });
+
+    describe('what it accepts from the frame', () => {
+        it('ignores a message from a window that is not its frame', () => {
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            fixture.componentRef.setInput('interactive', true);
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
+
+            sendFromFrame({ type: 'task', index: 0 }, { source: window });
+
+            expect(activated).not.toHaveBeenCalled();
+        });
+
+        it('ignores a message carrying a superseded generation', () => {
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
+
+            window.dispatchEvent(
+                new MessageEvent('message', { data: { v: FRAME_PROTOCOL_VERSION, gen: 'an-older-frame', type: 'task', index: 0 }, source: frame().contentWindow }),
+            );
+
+            expect(activated).not.toHaveBeenCalled();
+        });
+
+        it('ignores a message from a protocol it does not speak', () => {
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
+
+            window.dispatchEvent(new MessageEvent('message', { data: { v: 99, gen: GENERATION, type: 'task', index: 0 }, source: frame().contentWindow }));
+
+            expect(activated).not.toHaveBeenCalled();
+        });
+
+        it('refuses an activation for a task it does not currently offer', () => {
+            // A bounds check alone would let a hostile frame ask for a task the reader is not being offered.
+            fixture.componentRef.setInput('tasks', [task(0), task(1, [])]);
+            fixture.componentRef.setInput('interactive', true);
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
+
+            sendFromFrame({ type: 'task', index: 1 });
+
+            expect(activated).not.toHaveBeenCalled();
+        });
+
+        it('refuses an activation while no feedback dialog can be opened at all', () => {
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            fixture.componentRef.setInput('interactive', false);
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
+
+            sendFromFrame({ type: 'task', index: 0 });
+
+            expect(activated).not.toHaveBeenCalled();
+        });
+
+        it('emits the position of an activated task', () => {
+            fixture.componentRef.setInput('interactive', true);
+            fixture.componentRef.setInput('tasks', [task(0), task(1)]);
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
+
+            sendFromFrame({ type: 'task', index: 1 });
+
+            expect(activated).toHaveBeenCalledWith(1);
+        });
+
+        it.each([
+            { case: 'an index past the end', index: 5 },
+            { case: 'a negative index', index: -1 },
+            { case: 'a fractional index', index: 0.5 },
+            { case: 'something that is not a number', index: '0' },
+        ])('drops a task activation with $case', ({ index }) => {
+            fixture.componentRef.setInput('interactive', true);
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
+
+            sendFromFrame({ type: 'task', index });
+
+            expect(activated).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('height', () => {
+        it('sizes the frame to the height it reports', () => {
+            sendFromFrame({ type: 'height', px: 842 });
+
+            expect(frame().style.height).toBe('842px');
+        });
+
+        it('clamps a height that is hostile rather than long', () => {
+            sendFromFrame({ type: 'height', px: 10_000_000 });
+
+            expect(frame().style.height).toBe('50000px');
+        });
+
+        it.each([
+            { case: 'not a number', px: 'tall' },
+            { case: 'infinite', px: Number.POSITIVE_INFINITY },
+            { case: 'NaN', px: Number.NaN },
+            { case: 'negative', px: -100 },
+            { case: 'zero', px: 0 },
+        ])('ignores a height that is $case', ({ px }) => {
+            sendFromFrame({ type: 'height', px });
+
+            expect(frame().style.height).toBe('');
+        });
+
+        it('starts collapsed rather than at the browser default, so the pane does not jump', () => {
+            expect(frame().style.height).toBe('');
+        });
+    });
+
+    describe('links', () => {
+        it('opens a link that is in the statement, without handing over the opener', () => {
+            const open = vi.spyOn(window, 'open').mockReturnValue(null);
+            fixture.componentRef.setInput('linkTargets', ['https://example.org/docs']);
+
+            sendFromFrame({ type: 'link', href: 'https://example.org/docs' });
+
+            expect(open).toHaveBeenCalledWith('https://example.org/docs', '_blank', 'noopener,noreferrer');
+        });
+
+        it('refuses a link the statement does not contain', () => {
+            const open = vi.spyOn(window, 'open').mockReturnValue(null);
+            fixture.componentRef.setInput('linkTargets', ['https://example.org/docs']);
+
+            sendFromFrame({ type: 'link', href: 'https://evil.example/steal' });
+
+            expect(open).not.toHaveBeenCalled();
+        });
+
+        it('refuses a javascript url even when the statement contains it', () => {
+            const open = vi.spyOn(window, 'open').mockReturnValue(null);
+            fixture.componentRef.setInput('linkTargets', ['javascript:alert(1)']);
+
+            sendFromFrame({ type: 'link', href: 'javascript:alert(1)' });
+
+            expect(open).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('what it tells the frame', () => {
+        it('says nothing until the frame reports that it is loaded', () => {
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            fixture.componentRef.setInput('interactive', true);
+            fixture.detectChanges();
+
+            expect(posted).toHaveLength(0);
+        });
+
+        it('names the interactive tasks with their labels already translated', () => {
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            fixture.componentRef.setInput('interactive', true);
+            fixture.detectChanges();
+
+            announceReady();
+
+            expect(posted.at(-1)).toMatchObject({ type: 'interactive', tasks: [{ index: 0, label: expect.stringContaining('Task 0') }] });
+        });
+
+        it('names no task while a feedback dialog cannot be opened', () => {
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            fixture.componentRef.setInput('interactive', false);
+            fixture.detectChanges();
+
+            announceReady();
+
+            expect(posted.at(-1)).toMatchObject({ tasks: [] });
+        });
+
+        it('leaves out a task that has no test ids, because there is no feedback to show', () => {
+            fixture.componentRef.setInput('tasks', [task(0, []), task(1, [2])]);
+            fixture.componentRef.setInput('interactive', true);
+            fixture.detectChanges();
+
+            announceReady();
+
+            expect((posted.at(-1)?.tasks as { index: number }[]).map((entry) => entry.index)).toEqual([1]);
+        });
+
+        it('updates the gating without reloading the frame when only the interactivity changes', () => {
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            fixture.componentRef.setInput('interactive', false);
+            fixture.detectChanges();
+            announceReady();
+            const srcdocBefore = frame().srcdoc;
+
+            fixture.componentRef.setInput('interactive', true);
+            fixture.detectChanges();
+
+            expect(frame().srcdoc).toBe(srcdocBefore);
+            expect((posted.at(-1)?.tasks as unknown[]).length).toBe(1);
+        });
+
+        it('hands the focused task back after the document is replaced', () => {
+            fixture.componentRef.setInput('tasks', [task(0), task(1)]);
+            fixture.componentRef.setInput('interactive', true);
+            fixture.detectChanges();
+            announceReady();
+            sendFromFrame({ type: 'focus', index: 1 });
+
+            // A result arrives, the statement is re-rendered, and the new document announces itself.
+            announceReady();
+
+            expect(posted.at(-1)).toMatchObject({ focusIndex: 1 });
+        });
+
+        it('does not offer a focus index the new statement no longer has', () => {
+            fixture.componentRef.setInput('tasks', [task(0), task(1)]);
+            fixture.componentRef.setInput('interactive', true);
+            fixture.detectChanges();
+            announceReady();
+            sendFromFrame({ type: 'focus', index: 1 });
+
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            fixture.detectChanges();
+            announceReady();
+
+            expect(posted.at(-1)?.focusIndex).toBeUndefined();
+        });
+    });
+});
+
+/**
+ * The other half of the contract, executed as the string that actually ships rather than a stand-in for it.
+ */
+describe('the sandboxed frame script', () => {
+    const statement = (body: string) => `<div class="artemis-problem-statement">${body}</div>`;
+    const taskSpan = (name: string) => `<span class="artemis-task" data-task-name="${name}">${name}</span>`;
+
+    it('announces itself so the parent knows when it may start talking', () => {
+        const harness = runFrameScript(statement('<p>x</p>'));
+
+        expect(harness.posted.map((message) => message.type)).toContain('ready');
+    });
+
+    it('stamps every message with the generation it was built for', () => {
+        const harness = runFrameScript(statement('<p>x</p>'));
+
+        expect(harness.posted.every((message) => message.gen === 'test-generation')).toBe(true);
+    });
+
+    it('marks a named task as a button and leaves the others alone', () => {
+        const harness = runFrameScript(statement(taskSpan('A') + taskSpan('B')));
+
+        harness.sendFromParent({ type: 'interactive', tasks: [{ index: 0, label: 'A: all tests passing' }] });
+
+        const [first, second] = [...harness.document.querySelectorAll('.artemis-task')];
+        expect(first.getAttribute('role')).toBe('button');
+        expect(first.getAttribute('tabindex')).toBe('0');
+        expect(first.getAttribute('aria-label')).toBe('A: all tests passing');
+        expect(first.classList.contains(INTERACTIVE_TASK_CLASS)).toBe(true);
+        expect(second.getAttribute('role')).toBeNull();
+        expect(second.classList.contains(INTERACTIVE_TASK_CLASS)).toBe(false);
+    });
+
+    it('takes the button role away again when the parent stops naming the task', () => {
+        const harness = runFrameScript(statement(taskSpan('A')));
+        harness.sendFromParent({ type: 'interactive', tasks: [{ index: 0, label: 'A' }] });
+
+        harness.sendFromParent({ type: 'interactive', tasks: [] });
+
+        const element = harness.document.querySelector('.artemis-task')!;
+        expect(element.getAttribute('role')).toBeNull();
+        expect(element.getAttribute('aria-label')).toBeNull();
+        expect(element.classList.contains(INTERACTIVE_TASK_CLASS)).toBe(false);
+    });
+
+    it('ignores a message from anyone other than its parent', () => {
+        const harness = runFrameScript(statement(taskSpan('A')));
+
+        harness.sendFromStranger({ type: 'interactive', tasks: [{ index: 0, label: 'A' }] });
+
+        expect(harness.document.querySelector('.artemis-task')?.getAttribute('role')).toBeNull();
+    });
+
+    it('reports the position of a clicked task, not its name, because names are not unique', () => {
+        const harness = runFrameScript(statement(taskSpan('Same') + taskSpan('Same')));
+
+        harness.document.querySelectorAll('.artemis-task')[1].dispatchEvent(new harness.view.MouseEvent('click', { bubbles: true }));
+
+        expect(harness.posted.at(-1)).toMatchObject({ type: 'task', index: 1 });
+    });
+
+    it('reports a click on something inside a task, not only on the task itself', () => {
+        const harness = runFrameScript(statement('<span class="artemis-task"><em>nested</em></span>'));
+
+        harness.document.querySelector('em')!.dispatchEvent(new harness.view.MouseEvent('click', { bubbles: true }));
+
+        expect(harness.posted.at(-1)).toMatchObject({ type: 'task', index: 0 });
+    });
+
+    it('reports nothing for a click outside any task', () => {
+        const harness = runFrameScript(statement('<p id="plain">text</p>'));
+        const before = harness.posted.length;
+
+        harness.document.querySelector('#plain')!.dispatchEvent(new harness.view.MouseEvent('click', { bubbles: true }));
+
+        expect(harness.posted).toHaveLength(before);
+    });
+
+    it('hands a clicked link to the parent instead of navigating itself out of existence', () => {
+        const harness = runFrameScript(statement('<a href="https://example.org/docs">docs</a>'));
+
+        harness.document.querySelector('a')!.dispatchEvent(new harness.view.MouseEvent('click', { bubbles: true }));
+
+        expect(harness.posted.at(-1)).toMatchObject({ type: 'link', href: 'https://example.org/docs' });
+    });
+
+    it('treats a link inside a task as the task, since that is what the reader is pointing at', () => {
+        const harness = runFrameScript(statement('<span class="artemis-task"><a href="https://example.org">A</a></span>'));
+
+        harness.document.querySelector('a')!.dispatchEvent(new harness.view.MouseEvent('click', { bubbles: true }));
+
+        expect(harness.posted.at(-1)).toMatchObject({ type: 'task', index: 0 });
+    });
+
+    it('reports the focused task so the parent can restore it after a re-render', () => {
+        const harness = runFrameScript(statement(taskSpan('A') + taskSpan('B')));
+
+        harness.document.querySelectorAll('.artemis-task')[1].dispatchEvent(new harness.view.FocusEvent('focusin', { bubbles: true }));
+
+        expect(harness.posted.at(-1)).toMatchObject({ type: 'focus', index: 1 });
+    });
+
+    it('focuses the task the parent asks it to', () => {
+        const harness = runFrameScript(statement(taskSpan('A') + taskSpan('B')));
+
+        harness.sendFromParent({ type: 'interactive', tasks: [{ index: 1, label: 'B' }], focusIndex: 1 });
+
+        expect(harness.document.activeElement).toBe(harness.document.querySelectorAll('.artemis-task')[1]);
     });
 });

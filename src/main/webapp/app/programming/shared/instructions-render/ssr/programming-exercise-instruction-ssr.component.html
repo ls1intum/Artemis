@@ -14,9 +14,11 @@
 }
 <div class="ssr-scroll-area">
     <jhi-programming-exercise-instruction-ssr-content
-        [html]="renderedHtml()"
+        [srcdoc]="frameSrcdoc()"
+        [generation]="frameGeneration()"
         [tasks]="tasks()"
         [interactive]="canOpenFeedback()"
+        [linkTargets]="linkTargets()"
         [attr.aria-busy]="isRefreshing()"
         (taskActivated)="onTaskActivated($event)"
     />

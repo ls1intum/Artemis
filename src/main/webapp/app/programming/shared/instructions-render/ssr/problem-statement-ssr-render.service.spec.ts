@@ -87,7 +87,9 @@ describe('ProblemStatementSsrRenderService', () => {
             expect(req.request.body.testResults).toBeNull();
             expect(req.request.body.includeJs).toBe(false);
             expect(req.request.body.includeCss).toBe(true);
-            expect(req.request.body.inlineImages).toBe(false);
+            // The statement is displayed in a sandboxed frame whose requests carry no credentials, so an
+            // Artemis-hosted image can only render if the server inlines it as a data URI.
+            expect(req.request.body.inlineImages).toBe(true);
             expect(req.request.body.allTestsPassed).toBe(false);
             req.flush({ html: '<p>Hi</p>', contentHash: 'abc', rendererVersion: '1.1.0' });
 

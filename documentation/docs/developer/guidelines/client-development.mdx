@@ -518,6 +518,35 @@ Do one of these:
 - `else` goes on the same line from the closing curly brace.
 - Use 4 spaces per indentation.
 
+### Rendering untrusted markup
+
+Markup the application did not author itself is rendered inside a **sandboxed iframe**, never into this document. The
+server-side problem statement renderer is the case this exists for: a problem statement is authored by course staff,
+passes a jsoup safelist on the server and DOMPurify in the browser, and is then put into a frame that makes a bypass of
+either one harmless rather than merely unlikely.
+
+The rules, all of them load-bearing:
+
+- The frame's `sandbox` is **`allow-scripts` and nothing else**. Adding `allow-same-origin` hands the markup back the
+  cookies, the storage and the parent DOM the frame exists to keep it away from, and voids every other guarantee here.
+  Angular refuses to let `sandbox` be a binding at all (NG0910), so it is always a static attribute.
+- The frame carries **its own CSP** with a per-render nonce, written as a `<meta http-equiv>` as the first element in
+  its `<head>`. This is not defence in depth. A `srcdoc` document inherits the embedder's policy, and the application
+  policy carries `'unsafe-inline'`, so the inherited one stops nothing; and the sandbox alone is not enough in every
+  engine (WebKit sends the `SameSite=Lax` JWT cookie from a sandboxed opaque-origin frame, where Chromium and Firefox
+  send none). `connect-src 'none'`, `default-src 'none'` and the absent `'unsafe-eval'` are what close that.
+- **Nothing about the viewer goes into the frame.** Attributes describing the reader's own results are stripped before
+  assembly, because observable data is the only thing worth exfiltrating.
+- **No same-origin URL may remain** in the frame's markup. A request from an opaque origin carries no credentials, so
+  an authenticated asset would not load anyway; it is inlined by the server or replaced by its alt text.
+- The frame talks to the application only over `postMessage`, over a small closed protocol with a per-render
+  generation token, and the parent bounds-checks everything it accepts.
+
+Because these guarantees differ between engines, the tests that assert them run in Chromium, Firefox **and** WebKit,
+under the `@cross-engine` tag in the Playwright configuration. jsdom implements neither sandboxing nor CSP, so a Vitest
+spec would report all of them as passing whatever the code did. See
+`app/programming/shared/instructions-render/ssr/problem-statement-frame-policy.ts`.
+
 ### Cloning objects
 
 Copy objects with the helpers in `app/foundation/util/deep-clone.util` (thin wrappers over lodash `cloneDeep`). **Never** use `structuredClone()`, object spread (`{ ...obj }`), or `Object.assign` on an object — enforced in production client code by `localRules/prefer-deep-clone`.
@@ -525,7 +554,7 @@ Copy objects with the helpers in `app/foundation/util/deep-clone.util` (thin wra
 | Helper                       | Replaces                                           | Use for                                                    |
 | ---------------------------- | -------------------------------------------------- | ---------------------------------------------------------- |
 | `deepClone(x)`               | `{ ...x }`, `Object.assign({}, x)`                 | A plain copy                                               |
-| `cloneWith(x, { a, b })`     | `{ ...x, a, b }`, `Object.assign({}, x, { a, b })` | A copy with some fields changed, as one expression          |
+| `cloneWith(x, { a, b })`     | `{ ...x, a, b }`, `Object.assign({}, x, { a, b })` | A copy with some fields changed, as one expression         |
 | `hydrate(new Course(), dto)` | `Object.assign(new Course(), dto)`                 | Giving a parsed server DTO a prototype so its methods work |
 
 `cloneWith` deep-clones its **source** and applies the **overrides by reference**, exactly as object spread does — so
@@ -627,7 +656,7 @@ Two things worth knowing when you do clone:
   cloned that way looks alive yet is disconnected from the original's subscribers.
 
 `equal: () => false` also only reaches consumers that read the signal in the **declaring component's own** template. If
-the object is passed to a child `input()`, the child is *not* notified: Angular compares a property binding with
+the object is passed to a child `input()`, the child is _not_ notified: Angular compares a property binding with
 `Object.is` before it reaches the input, so the same reference never arrives, and an input signal does not inherit the
 producer's `equal`. When a child binds the whole object, hand it a new top-level reference built field by field —
 `Exam.withSameValues` and `StudentExam.withSameValues` do exactly that.
