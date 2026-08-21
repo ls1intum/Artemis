@@ -11,10 +11,14 @@
     .re-evaluate-button {
         display: inline-block;
         padding: 4px;
-        cursor: pointer;
+        cursor: default;
 
-        &:hover {
-            color: blue;
+        &:not(:disabled) {
+            cursor: pointer;
+
+            &:hover {
+                color: blue;
+            }
         }
     }
 
@@ -54,5 +58,20 @@
 
     .criterion-title-row {
         background-color: var(--edit-sqi-criterion-title-row-background);
+    }
+}
+
+.assessment-criteria-generation {
+    &__tooltip-trigger {
+        display: inline-flex;
+    }
+
+    &__controls {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        width: 100%;
+        margin-bottom: 0.25rem;
+        gap: 0.25rem;
     }
 }

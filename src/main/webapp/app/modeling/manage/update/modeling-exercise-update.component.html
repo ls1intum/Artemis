@@ -78,7 +78,7 @@
             <jhi-modeling-editor
                 [diagramType]="modelingExercise.diagramType"
                 [umlModel]="exampleSolution()"
-                (onModelChanged)="calculateFormSectionStatus()"
+                (onModelChanged)="onModelChanged($event)"
                 [withExplanation]="false"
                 [scrollLock]="true"
             />
@@ -176,7 +176,14 @@
         </div>
         <div class="form-group" (keydown)="onMarkdownEditorKeydown($event)">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="modelingExercise" />
+            <jhi-grading-instructions-details
+                id="gradingInstructions"
+                [exercise]="modelingExercise"
+                [editable]="!isSaving()"
+                [synchronizeExercise]="synchronizeForAssessmentCriteriaGeneration"
+                [additionalGenerationContext]="assessmentCriteriaAdditionalContext"
+                (criteriaGenerated)="editForm.form.markAsDirty()"
+            />
         </div>
     </div>
     <jhi-form-footer

@@ -56,6 +56,8 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
     exercisePartOfExerciseGroup = input<boolean>(false);
     editGroupDates = output<void>();
+    editable = input(true);
+    criteriaGenerated = output<void>();
 
     submissionPolicyUpdateComponent = viewChild(SubmissionPolicyUpdateComponent);
     lifecycleComponent = viewChild(ProgrammingExerciseTimelineComponent);

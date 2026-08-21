@@ -21,7 +21,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { UMLDiagramType } from '@tumaet/apollon';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -100,7 +100,7 @@ class StubModelingEditorComponent {
     scrollLock = input<boolean>(false);
     resizeOptions = input<unknown>();
     withExplanation = input<boolean>(false);
-    onModelChanged = output<unknown>();
+    onModelChanged = output<UMLModel>();
     apollonEditor = { nextRender: Promise.resolve() };
 
     getCurrentModel() {
@@ -379,6 +379,36 @@ describe('ModelingExerciseUpdateComponent', () => {
                 expect(service.update).toHaveBeenCalledWith(expect.objectContaining({ id: 123 }), {});
                 expect(refreshSpy).toHaveBeenCalledOnce();
                 expect(comp.isSaving()).toBe(false);
+            });
+
+            it('should synchronize the current unsaved model for assessment criteria generation', () => {
+                const currentModel = { elements: { unsaved: true }, relationships: {}, version: '3.0.0' };
+                Object.defineProperty(comp, 'modelingEditor', { value: () => ({ getCurrentModel: () => currentModel }) });
+
+                comp.synchronizeForAssessmentCriteriaGeneration();
+
+                expect(comp.modelingExercise.exampleSolutionModel).toBe(JSON.stringify(currentModel));
+            });
+
+            it('should synchronize live diagram changes for assessment criteria context', () => {
+                const changedModel = { elements: { changed: true }, relationships: {}, version: '3.0.0' } as unknown as UMLModel;
+                const statusSpy = vi.spyOn(comp, 'calculateFormSectionStatus');
+
+                comp.onModelChanged(changedModel);
+
+                expect(comp.modelingExercise.exampleSolutionModel).toBe(JSON.stringify(changedModel));
+                expect(statusSpy).toHaveBeenCalled();
+            });
+
+            it('should provide all modeling-specific assessment criteria context', () => {
+                comp.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
+                comp.modelingExercise.exampleSolutionModel = '{"elements":{"class":{}}}';
+                comp.modelingExercise.exampleSolutionExplanation = 'The classes use inheritance.';
+
+                const context = comp.assessmentCriteriaAdditionalContext();
+                expect(context).toContain('Diagram type:\nClassDiagram');
+                expect(context).toContain('Serialized example solution model:\n{"elements":{"class":{}}}');
+                expect(context).toContain('Example solution explanation:\nThe classes use inheritance.');
             });
 
             it('should show backend error alert and reset saving state on save error', async () => {
