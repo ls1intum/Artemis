@@ -54,6 +54,8 @@ import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
+import de.tum.cit.aet.artemis.lti.domain.UserLti;
+import de.tum.cit.aet.artemis.lti.repository.UserLtiRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
@@ -88,6 +90,10 @@ public class UserTestService {
 
     @Autowired
     private UserVcsAccessTokenService userVcsAccessTokenService;
+
+    // Optional: the repository only exists where LTI is enabled, and this helper is shared with test classes that run without it.
+    @Autowired(required = false)
+    private UserLtiRepository userLtiRepository;
 
     @Autowired
     private TeamUtilService teamUtilService;
@@ -611,7 +617,7 @@ public class UserTestService {
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
-        repoUser.setLtiCreated(true);
+        markCreatedByLtiLaunch(repoUser);
         userTestRepository.save(repoUser);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
@@ -633,7 +639,7 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
-        user.setLtiCreated(true);
+        markCreatedByLtiLaunch(user);
         userTestRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
@@ -1041,5 +1047,16 @@ public class UserTestService {
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(admin.getLogin()).doesNotContain(user1.getLogin(), user2.getLogin());
         }
+    }
+
+    /**
+     * Marks the account as created by an LTI launch. The marker is a row in {@code user_lti} rather than a column on the
+     * user, so it cannot be set by mutating the entity.
+     *
+     * @param user the account to mark
+     */
+    private void markCreatedByLtiLaunch(User user) {
+        userTestRepository.save(user);
+        userLtiRepository.save(new UserLti(user.getId(), true));
     }
 }

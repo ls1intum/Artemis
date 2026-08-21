@@ -1,0 +1,50 @@
+package de.tum.cit.aet.artemis.lti.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+/**
+ * Marks an account that an LTI launch provisioned, rather than one that reached Artemis by any other route.
+ * <p>
+ * State the lti module owns, so it lives here rather than as a column on the account module's central table, where only
+ * three of 34,354 accounts set it. A row exists only for an account the launch created, so the absence of a row means
+ * "not launch-created".
+ */
+@Entity
+@Table(name = "user_lti")
+public class UserLti {
+
+    @Id
+    @Column(name = "user_id")
+    private long userId;
+
+    @Column(name = "created_by_launch", nullable = false)
+    private boolean createdByLaunch = false;
+
+    public UserLti() {
+        // needed by Hibernate
+    }
+
+    public UserLti(long userId, boolean createdByLaunch) {
+        this.userId = userId;
+        this.createdByLaunch = createdByLaunch;
+    }
+
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
+    public boolean isCreatedByLaunch() {
+        return createdByLaunch;
+    }
+
+    public void setCreatedByLaunch(boolean createdByLaunch) {
+        this.createdByLaunch = createdByLaunch;
+    }
+}

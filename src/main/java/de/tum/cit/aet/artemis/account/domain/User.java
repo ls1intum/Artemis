@@ -224,6 +224,15 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<UserCourseRole> courseRoles = new HashSet<>();
 
+    /**
+     * No longer read or written by anything. The launch marker lives in {@code user_lti}; the lti module owns it.
+     * <p>
+     * Kept mapped so that nodes still running the previous version keep working through a rolling deployment. The field
+     * and the column are dropped together by the follow-up that removes the column.
+     *
+     * @deprecated superseded by {@code user_lti}
+     */
+    @Deprecated(forRemoval = true)
     @Column(name = "lti_created", nullable = false)
     private boolean ltiCreated = false; // default value
 

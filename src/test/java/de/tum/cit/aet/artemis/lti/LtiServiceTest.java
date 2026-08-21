@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.lti.repository.UserLtiRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -63,6 +64,9 @@ class LtiServiceTest {
     @Mock
     private JWTCookieService jwtCookieService;
 
+    @Mock
+    private UserLtiRepository userLtiRepository;
+
     private Exercise exercise;
 
     private LtiService ltiService;
@@ -77,7 +81,8 @@ class LtiServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService);
+        ltiService = new LtiService(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService,
+                userLtiRepository);
         Course course = new Course();
         course.setId(100L);
         onlineCourseConfiguration = new OnlineCourseConfiguration();
@@ -85,6 +90,8 @@ class LtiServiceTest {
         exercise = new TextExercise();
         exercise.setCourse(course);
         user = new User();
+        // The launch marker is a row keyed on the user id, so the fixture needs one.
+        user.setId(1L);
         user.setLogin("login");
         user.setPassword("password");
         user.setLtiCreated(true);
@@ -95,7 +102,7 @@ class LtiServiceTest {
         if (closeable != null) {
             closeable.close();
         }
-        reset(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService);
+        reset(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService, userLtiRepository);
     }
 
     @Test
@@ -226,14 +233,15 @@ class LtiServiceTest {
 
     @Test
     void isLtiCreatedUser() {
-        user.setLtiCreated(true);
+        when(userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrue(user.getId())).thenReturn(true);
 
         assertThat(ltiService.isLtiCreatedUser(user)).isTrue();
     }
 
     @Test
     void isNotLtiCreatedUser() {
-        user.setLtiCreated(false);
+        // No row at all, which is how an account that no launch created is represented.
+        when(userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrue(user.getId())).thenReturn(false);
 
         assertThat(ltiService.isLtiCreatedUser(user)).isFalse();
     }

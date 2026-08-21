@@ -38,6 +38,8 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
+import de.tum.cit.aet.artemis.lti.domain.UserLti;
+import de.tum.cit.aet.artemis.lti.repository.UserLtiRepository;
 
 @Lazy
 @Service
@@ -63,9 +65,12 @@ public class LtiService {
 
     private final JWTCookieService jwtCookieService;
 
+    private final UserLtiRepository userLtiRepository;
+
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, JWTCookieService jwtCookieService) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, JWTCookieService jwtCookieService, UserLtiRepository userLtiRepository) {
         this.userCreationService = userCreationService;
+        this.userLtiRepository = userLtiRepository;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
         this.authorityService = authorityService;
@@ -134,7 +139,9 @@ public class LtiService {
         final var user = userRepository.findOneByLogin(login).orElseGet(() -> {
             var password = RandomUtil.generatePassword();
             final User newUser = userCreationService.createUser(login, password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
-            newUser.setLtiCreated(true);
+            // Marked in user_lti rather than on the user row, which the lti module does not own.
+            userRepository.save(newUser);
+            userLtiRepository.save(new UserLti(newUser.getId(), true));
             newUser.setActivationKey(null);
             userRepository.save(newUser);
 
@@ -200,7 +207,10 @@ public class LtiService {
      * @return true if the user was created as part of an LTI launch
      */
     public boolean isLtiCreatedUser(User user) {
-        return user.isLtiCreated();
+        // Null-checked because the marker is now a row keyed on the user id: an account that has not been persisted cannot
+        // have one. Reading the former boolean column was safe for a transient user, so without this the extraction would
+        // turn a harmless call into a NullPointerException.
+        return user.getId() != null && userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrue(user.getId());
     }
 
     /**
