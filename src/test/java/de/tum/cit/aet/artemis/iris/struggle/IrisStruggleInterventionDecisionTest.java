@@ -250,7 +250,11 @@ class IrisStruggleInterventionDecisionTest {
         var update = new PyrisStruggleInterventionStatusUpdateDTO("", "active", 0.9, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
         service.handleDecision(job, update);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
-        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
+        // The confidence has to survive the empty-result path too: the client logs it for the eval (spec §12) even
+        // when nothing is surfaced. It was dropped here while every other silent frame forwarded it, which is the
+        // kind of slip a fourteen-field positional constructor invites - hence the silentDecide factory.
+        verify(irisChatWebsocketService).sendStruggleEvent(any(),
+                argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action()) && Double.valueOf(0.9).equals(e.confidence())));
     }
 
     @Test

@@ -31,4 +31,32 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record StruggleInterventionEventDTO(long exerciseId, String kind, @Nullable String action, @Nullable String message, @Nullable Long sessionId, @Nullable Long messageId,
         @Nullable String anchorFile, @Nullable Integer anchorLine, @Nullable String inlineHint, @Nullable Double confidence, @Nullable String episodeId, @Nullable Boolean resolved,
         @Nullable String closingSentence, @Nullable String episodeLabel) {
+
+    /**
+     * The noop completion frame for a {@code decide} run that surfaces nothing, so the client's in-flight decide
+     * clears. Fourteen positional fields, most of them nullable and adjacent, are easy to shift by one without the
+     * compiler noticing - which is exactly what happened to the empty-result frame, where a {@code null} sat in the
+     * {@code confidence} slot and the client silently lost the value it logs for the eval (spec §12).
+     *
+     * @param exerciseId the exercise the run belongs to
+     * @param confidence the gate confidence, forwarded for the client eval log; null when no decision produced one
+     * @param episodeId  the client-allocated episode id, or null when the run carried none
+     * @return the silent completion event
+     */
+    public static StruggleInterventionEventDTO silentDecide(long exerciseId, @Nullable Double confidence, @Nullable String episodeId) {
+        return new StruggleInterventionEventDTO(exerciseId, "decide", "silent", null, null, null, null, null, null, confidence, episodeId, null, null, null);
+    }
+
+    /**
+     * The bare completion frame for a {@code confirm_close} run that resolved nothing, the close-mode counterpart to
+     * {@link #silentDecide}. {@code resolved=false} rather than null: a run that ended without resolving must not
+     * read as a resolved episode.
+     *
+     * @param exerciseId the exercise the run belongs to
+     * @param episodeId  the client-allocated episode id, or null when the run carried none
+     * @return the unresolved completion event
+     */
+    public static StruggleInterventionEventDTO unresolvedClose(long exerciseId, @Nullable String episodeId) {
+        return new StruggleInterventionEventDTO(exerciseId, "confirm_close", null, null, null, null, null, null, null, null, episodeId, false, null, null);
+    }
 }

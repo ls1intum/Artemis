@@ -281,9 +281,9 @@ public class IrisStruggleInterventionService {
         String result = statusUpdate.result();
 
         if (result == null || result.isEmpty()) {
-            // Nothing to surface; always emit a completion frame so the client's in-flight decide clears.
-            irisChatWebsocketService.sendStruggleEvent(user,
-                    new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, null, episodeId, null, null, null));
+            // Nothing to surface; always emit a completion frame so the client's in-flight decide clears. The
+            // confidence still travels: the client logs it for the eval (spec §12) even when nothing is shown.
+            irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId));
             return;
         }
 
@@ -291,8 +291,7 @@ public class IrisStruggleInterventionService {
             case "active" -> {
                 // Skip if this episode is already terminal (late escalation arriving after the student dismissed).
                 if (episodeId != null && isEpisodeTerminal(episodeId, user.getId())) {
-                    irisChatWebsocketService.sendStruggleEvent(user,
-                            new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, confidence, episodeId, null, null, null));
+                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId));
                     break;
                 }
                 // Resolve the exercise-chat session; drop defensively if not exercise-bound.
@@ -300,8 +299,7 @@ public class IrisStruggleInterventionService {
                 if (session == null) {
                     // Structural mismatch: resolved session is not exercise-bound. Emit a silent completion frame
                     // so the client's in-flight decide always clears (finding 2 fix).
-                    irisChatWebsocketService.sendStruggleEvent(user,
-                            new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, confidence, episodeId, null, null, null));
+                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId));
                     break;
                 }
                 // Persist the message with bounded retry on transient DB failures (spec §12).
@@ -338,8 +336,7 @@ public class IrisStruggleInterventionService {
                 if (session == null) {
                     // Structural mismatch: resolved session is not exercise-bound. A null-session ambient
                     // pointer is unrevealable by the client; emit a silent completion frame instead (finding 3 fix).
-                    irisChatWebsocketService.sendStruggleEvent(user,
-                            new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, confidence, episodeId, null, null, null));
+                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId));
                     break;
                 }
                 // Record what we are about to offer BEFORE telling the client about it, so a reveal that races the
@@ -353,8 +350,7 @@ public class IrisStruggleInterventionService {
             }
             default -> {
                 // silent (or downgraded): emit a noop completion frame so the client's in-flight decide always clears.
-                irisChatWebsocketService.sendStruggleEvent(user,
-                        new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, confidence, episodeId, null, null, null));
+                irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId));
             }
         }
     }
@@ -540,12 +536,10 @@ public class IrisStruggleInterventionService {
             var user = userRepository.findByIdElseThrow(job.userId());
             String episodeId = job.episodeId();
             if ("confirm_close".equals(job.intent())) {
-                irisChatWebsocketService.sendStruggleEvent(user,
-                        new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, null, null, null, null, null, episodeId, false, null, null));
+                irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId));
             }
             else {
-                irisChatWebsocketService.sendStruggleEvent(user,
-                        new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, null, episodeId, null, null, null));
+                irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), null, episodeId));
             }
         }
         catch (Exception e) {
