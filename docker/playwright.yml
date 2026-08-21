@@ -43,7 +43,7 @@ services:
           pnpm install --frozen-lockfile &&
           pnpm run playwright:setup &&
           rm -f ./test-reports/results.xml ./test-reports/results-*.xml &&
-          pnpm run playwright:test:filtered
+          pnpm run playwright:test
           '
         volumes:
             - ..:/app/artemis
