@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -22,6 +25,55 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private PyrisJobService pyrisJobService;
+
+    @Test
+    void keepAliveRefreshExtendsTheMarkerSoALongRunKeepsItsSlot() {
+        long courseId = 9010L;
+        long userId = 9110L;
+        long exerciseId = 9210L;
+
+        // The reservation passes jobTimeout explicitly as a per-entry TTL, so shrinking the map config alone would
+        // change nothing; shrink the field the reservation actually reads. Without the refresh this reproduces:
+        // the marker expires while updateJob keeps the job alive, and the pair becomes reservable mid-run.
+        Object previousTimeout = ReflectionTestUtils.getField(pyrisJobService, "jobTimeout");
+        ReflectionTestUtils.setField(pyrisJobService, "jobTimeout", 2);
+        try {
+            String token = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null, null).orElseThrow();
+
+            // Keep the run alive across more than one TTL the way a stream of non-terminal callbacks does.
+            for (int i = 0; i < 8; i++) {
+                var job = pyrisJobService.getJob(token);
+                assertThat(job).as("the job must stay alive while it is being refreshed").isNotNull();
+                pyrisJobService.updateJob(job);
+                pyrisJobService.refreshStruggleInFlightMarker(token, userId, exerciseId);
+                await().pollDelay(Duration.ofMillis(400)).atMost(Duration.ofSeconds(2)).until(() -> true);
+            }
+
+            assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null, null))
+                    .as("the pair must stay reserved for the whole run, otherwise a second trigger duplicates the session and bubble").isEmpty();
+        }
+        finally {
+            ReflectionTestUtils.setField(pyrisJobService, "jobTimeout", previousTimeout);
+        }
+    }
+
+    @Test
+    void staleMarkerRefreshCannotResurrectANewerReservation() {
+        long courseId = 9011L;
+        long userId = 9111L;
+        long exerciseId = 9211L;
+
+        String stale = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null, null).orElseThrow();
+        pyrisJobService.releaseStruggleInFlightMarker(stale, userId, exerciseId);
+        String current = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null, null).orElseThrow();
+
+        // A late keep-alive from the finished run must not extend, or re-take, the slot the newer run now holds.
+        pyrisJobService.refreshStruggleInFlightMarker(stale, userId, exerciseId);
+
+        pyrisJobService.releaseStruggleInFlightMarker(current, userId, exerciseId);
+        assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null, null))
+                .as("releasing the current holder must free the pair; a stale refresh must not have kept it alive").isPresent();
+    }
 
     @Test
     void secondReservationForSamePairWhilePendingIsSkipped() {

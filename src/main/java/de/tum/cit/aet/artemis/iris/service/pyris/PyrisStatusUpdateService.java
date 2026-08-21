@@ -252,6 +252,12 @@ public class PyrisStatusUpdateService {
         }
         else {
             pyrisJobService.updateJob(job);
+            if (job instanceof StruggleInterventionJob struggleJob) {
+                // The job entry just got a fresh TTL; the in-flight reservation would otherwise keep its original
+                // one and expire under a long-running run, letting a second trigger reserve the same pair while
+                // this one is still going. Keep the two lifetimes together.
+                pyrisJobService.refreshStruggleInFlightMarker(struggleJob.jobId(), struggleJob.userId(), struggleJob.exerciseId());
+            }
         }
         return isDone;   // lets the struggle overload release the in-flight marker on a terminal non-decision callback
     }

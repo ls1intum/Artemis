@@ -204,6 +204,38 @@ public class PyrisJobService {
     }
 
     /**
+     * Extend the in-flight reservation for a run that is still alive, token-conditionally.
+     *
+     * <p>
+     * The reservation gets its TTL once, when the slot is taken, while {@link #updateJob} refreshes only the job
+     * entry on every non-terminal callback. A run whose keep-alive frames span longer than {@code jobTimeout}
+     * therefore outlives its own marker, and a second trigger for the same {@code (userId, exerciseId)} can reserve
+     * the slot while the first run is still in flight - producing exactly the duplicate session and bubble the
+     * single-flight guard exists to prevent.
+     *
+     * <p>
+     * The re-put is conditional on the stored value still being THIS token, so a refresh arriving late cannot
+     * resurrect a reservation that has already been released and retaken by a newer run.
+     *
+     * @param token      the reserving job token
+     * @param userId     the struggling student
+     * @param exerciseId the exercise the student is struggling on
+     */
+    public void refreshStruggleInFlightMarker(String token, long userId, long exerciseId) {
+        var key = struggleInFlightKey(userId, exerciseId);
+        var map = getStruggleInFlightMap();
+        map.lock(key);
+        try {
+            if (token.equals(map.get(key))) {
+                map.put(key, token, jobTimeout, TimeUnit.SECONDS);
+            }
+        }
+        finally {
+            map.unlock(key);
+        }
+    }
+
+    /**
      * Release ONLY the in-flight marker (token-conditional), leaving the job map untouched. Called on the terminal
      * callback AFTER {@code handleDecision} has finished (Task 12): the job-map entry was already removed up front
      * (so the trailing-duplicate callback 403s), but the marker must outlive the session-materialization + persist
