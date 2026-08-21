@@ -34,7 +34,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
         const feedback = this.feedback();
         if (feedback.id && feedback.hasLongFeedbackText) {
             const detailText = await this.feedbackService.getLongFeedbackText(feedback.id);
-            const updatedFeedback = cloneWith(feedback, { detailText });
+            const updatedFeedback = cloneWith(feedback, { detailText, hasLongFeedbackText: false });
             this.feedback.set(updatedFeedback);
             this.onFeedbackChange.emit(updatedFeedback);
         }

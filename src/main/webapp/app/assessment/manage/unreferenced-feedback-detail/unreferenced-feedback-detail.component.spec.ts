@@ -41,6 +41,26 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(getLongFeedbackTextSpy).toHaveBeenCalledWith(feedbackId);
     });
 
+    it('should clear hasLongFeedbackText on the hydrated clone so a remount does not refetch indefinitely', async () => {
+        const feedbackId = 42;
+        const exampleText = 'This is a long feedback text';
+
+        fixture.componentRef.setInput('feedback', { id: feedbackId, hasLongFeedbackText: true } as Feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        const getLongFeedbackTextSpy = vi.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue(exampleText);
+
+        await comp.loadLongFeedback();
+
+        expect(comp.feedback().hasLongFeedbackText).toBeFalsy();
+        expect(comp.feedback().detailText).toBe(exampleText);
+
+        // Simulate the parent remounting the component with the hydrated feedback it just received.
+        fixture.componentRef.setInput('feedback', comp.feedback());
+        await comp.loadLongFeedback();
+
+        expect(getLongFeedbackTextSpy).toHaveBeenCalledOnce();
+    });
+
     it('should update feedback with SGI and emit to parent', () => {
         const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
         const feedback = {
