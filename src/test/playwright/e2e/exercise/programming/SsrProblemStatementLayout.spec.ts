@@ -98,4 +98,37 @@ test.describe('SSR problem statement layout', { tag: '@sequential' }, () => {
         const wizardInsideScrollArea = await scrollArea.locator('jhi-programming-exercise-instruction-ssr-step-wizard').count();
         expect(wizardInsideScrollArea, 'the step wizard is inside the scroll area and would scroll away').toBe(0);
     });
+
+    test('toggle ON: the statement is isolated in a sandboxed frame', async ({ login, page }) => {
+        // Asserted against the frame the application actually built, not one the test assembled. That distinction
+        // is the point: bound as `[attr.srcdoc]`, Angular's sanitizer silently reduced the document to a few
+        // characters, dropping the policy and the script, while every unit assertion about the string still
+        // passed. Only reading the element back catches a regression of that shape.
+        await login(admin);
+        await setSsrToggle(page, true);
+
+        await login(studentOne, `/courses/${course.id}/exercises/${programmingExercise.id}`);
+
+        const frame = page.locator('jhi-programming-exercise-instruction-ssr-content iframe');
+        await expect(frame).toBeVisible({ timeout: 60_000 });
+
+        // No allow-same-origin: this single attribute is what denies the statement the cookies, the storage and
+        // the parent DOM.
+        expect(await frame.getAttribute('sandbox')).toBe('allow-scripts');
+
+        const document_ = await frame.evaluate((element) => (element as HTMLIFrameElement).srcdoc);
+        const nonce = /<script nonce="([0-9a-f]{32})">/.exec(document_)?.[1];
+
+        expect(nonce, 'the frame carries no nonced script, so it cannot report its height either').toBeDefined();
+        expect(document_).toContain(`script-src 'nonce-${nonce}'`);
+        expect(document_).toContain("default-src 'none'");
+        expect(document_).toContain("connect-src 'none'");
+        // The statement itself made it in, so the assertions above are about a real document.
+        expect(document_).toContain('artemis-problem-statement');
+
+        // And the frame really did size itself, which only happens if its script ran.
+        await expect(async () => {
+            expect((await frame.boundingBox())!.height).toBeGreaterThan(200);
+        }).toPass({ timeout: 30_000 });
+    });
 });
