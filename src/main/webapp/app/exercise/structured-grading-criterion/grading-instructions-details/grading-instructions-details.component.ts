@@ -16,7 +16,7 @@ import {
 } from '@angular/core';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { isEqual } from 'lodash-es';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
@@ -137,7 +137,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             disabledReason = 'artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement';
         } else if (exercise.maxPoints === undefined || !Number.isFinite(exercise.maxPoints) || exercise.maxPoints <= 0) {
             disabledReason = 'artemisApp.exercise.assessmentCriteriaGeneration.disabledMaxPoints';
-        } else if (exercise.bonusPoints !== undefined && (!Number.isFinite(exercise.bonusPoints) || exercise.bonusPoints < 0)) {
+        } else if (
+            exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY &&
+            exercise.bonusPoints !== undefined &&
+            (!Number.isFinite(exercise.bonusPoints) || exercise.bonusPoints < 0)
+        ) {
             disabledReason = 'artemisApp.exercise.assessmentCriteriaGeneration.disabledBonusPoints';
         }
         this.generationState.set({ canShowButton, disabledReason });

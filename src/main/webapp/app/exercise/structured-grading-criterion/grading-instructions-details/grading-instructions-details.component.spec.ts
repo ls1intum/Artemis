@@ -114,6 +114,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         });
 
         it('should gate generation for invalid bonus points and re-enable it for valid values', () => {
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
             for (const bonusPoints of [-1, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
                 exercise.bonusPoints = bonusPoints;
                 component.ngDoCheck();
@@ -127,6 +128,23 @@ describe('GradingInstructionsDetailsComponent', () => {
 
             expect(component.isGenerationDisabled()).toBe(false);
             expect(component.generationDisabledReason()).toBeUndefined();
+        });
+
+        it('should allow generation after switching to a mode that ignores stale invalid bonus points', () => {
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.bonusPoints = -1;
+            component.ngDoCheck();
+            expect(component.isGenerationDisabled()).toBe(true);
+
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
+            component.ngDoCheck();
+            generationService.generate.mockReturnValue(of([]));
+
+            component.generateAssessmentCriteria();
+
+            expect(component.isGenerationDisabled()).toBe(false);
+            expect(component.generationDisabledReason()).toBeUndefined();
+            expect(generationService.generate).toHaveBeenCalledOnce();
         });
 
         it('should expose the disabled reason without shifting the layout or showing a pointer cursor', () => {
