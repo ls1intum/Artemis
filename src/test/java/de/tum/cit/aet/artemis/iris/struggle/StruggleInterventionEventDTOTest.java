@@ -23,9 +23,9 @@ class StruggleInterventionEventDTOTest {
         assertThat(node.get("kind").asText()).isEqualTo("decide");
         assertThat(node.get("action").asText()).isEqualTo("ambient");
         assertThat(node.get("message").asText()).contains("logic");
-        assertThat(node.hasNonNull("sessionId")).isFalse();
-        assertThat(node.hasNonNull("messageId")).isFalse();
-        assertThat(node.hasNonNull("episodeId")).isFalse();
+        assertThat(node.has("sessionId")).isFalse();
+        assertThat(node.has("messageId")).isFalse();
+        assertThat(node.has("episodeId")).isFalse();
         // confidence is forwarded for the client eval log (§12) on both ambient and active.
         assertThat(node.get("confidence").asDouble()).isEqualTo(0.7);
     }
@@ -49,10 +49,10 @@ class StruggleInterventionEventDTOTest {
         JsonNode node = mapper.valueToTree(event);
         assertThat(node.get("kind").asText()).isEqualTo("decide");
         assertThat(node.get("action").asText()).isEqualTo("silent");
-        assertThat(node.hasNonNull("message")).isFalse();
-        assertThat(node.hasNonNull("sessionId")).isFalse();
-        assertThat(node.hasNonNull("messageId")).isFalse();
-        assertThat(node.hasNonNull("episodeId")).isFalse();
+        assertThat(node.has("message")).isFalse();
+        assertThat(node.has("sessionId")).isFalse();
+        assertThat(node.has("messageId")).isFalse();
+        assertThat(node.has("episodeId")).isFalse();
     }
 
     @Test

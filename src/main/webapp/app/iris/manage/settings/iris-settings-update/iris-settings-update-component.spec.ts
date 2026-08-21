@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
 import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -425,7 +426,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
     describe('updateProactiveStruggleEnabled', () => {
         it('updateProactiveStruggleEnabled sets the flag on the settings signal', () => {
-            component.settings.set({ ...mockSettings, proactiveStruggleEnabled: false });
+            component.settings.set(cloneWith(mockSettings, { proactiveStruggleEnabled: false }));
             component.updateProactiveStruggleEnabled(true);
             expect(component.settings()?.proactiveStruggleEnabled).toBe(true);
         });
@@ -440,7 +441,7 @@ describe('IrisSettingsUpdateComponent', () => {
             const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
 
             // A non-admin tries to flip the proactive flag on.
-            component.settings.set({ ...component.settings()!, proactiveStruggleEnabled: true });
+            component.settings.set(cloneWith(component.settings()!, { proactiveStruggleEnabled: true }));
             component.saveSettings();
             await fixture.whenStable();
 

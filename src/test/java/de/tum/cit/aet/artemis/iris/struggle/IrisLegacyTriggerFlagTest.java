@@ -50,6 +50,8 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  */
 class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
 
+    private Object previousLegacyBuildTriggersEnabled;
+
     private static final String TEST_PREFIX = "legacytrigger";
 
     @Autowired
@@ -127,13 +129,16 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         // A @TestPropertySource would fork a second Spring context, which shuts down the named-singleton Hazelcast
         // instance and breaks every later Hazelcast-using test in the slice; ReflectionTestUtils is the established
         // Artemis pattern for toggling a @Value flag without a context fork.
+        previousLegacyBuildTriggersEnabled = ReflectionTestUtils.getField(irisChatSessionService, "legacyBuildTriggersEnabled");
         ReflectionTestUtils.setField(irisChatSessionService, "legacyBuildTriggersEnabled", false);
     }
 
     @AfterEach
     void restoreLegacyTriggerFlag() {
-        // Restore the default so the shared application context is not polluted for subsequent tests.
-        ReflectionTestUtils.setField(irisChatSessionService, "legacyBuildTriggersEnabled", true);
+        // Restore what was actually configured, not a hardcoded true: the property default may change, and a
+        // profile could set it differently, in which case writing true would silently alter the shared context
+        // for every later test in the slice.
+        ReflectionTestUtils.setField(irisChatSessionService, "legacyBuildTriggersEnabled", previousLegacyBuildTriggersEnabled);
     }
 
     private Result createFailingSubmission(ProgrammingExerciseStudentParticipation studentParticipation) {

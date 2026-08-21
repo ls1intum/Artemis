@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
@@ -177,7 +178,11 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
         long userId = 9107L;
         long exerciseId = 9207L;
 
-        // No reservation for this pair: a scoped cancel is an idempotent noop (no exception).
-        pyrisJobService.removeStruggleJobIfTokenMatches(userId, exerciseId, "tok-A");
+        // No reservation for this pair: a scoped cancel is an idempotent noop. Assert both halves of that claim -
+        // it must not throw, and it must leave the pair reservable - rather than relying on the absence of an
+        // exception, which would also "pass" if the call silently took the slot.
+        assertThatCode(() -> pyrisJobService.removeStruggleJobIfTokenMatches(userId, exerciseId, "tok-A")).doesNotThrowAnyException();
+        assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(9007L, userId, exerciseId, null, null, null, null, null))
+                .as("a noop cancel must not have consumed the slot").isPresent();
     }
 }
