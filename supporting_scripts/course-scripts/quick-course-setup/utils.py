@@ -25,10 +25,19 @@ def get_active_profiles(session: requests.Session) -> List[str]:
     try:
         response: requests.Response = session.get(url, timeout=30)
         response.raise_for_status()
-        return list(response.json().get("activeProfiles") or [])
+        profiles: List[str] = list(response.json().get("activeProfiles") or [])
     except (requests.RequestException, ValueError) as error:
-        logging.warning(f"Could not read the active profiles from {url}: {error}")
-        return []
+        # Deliberately fatal rather than returning an empty list. An empty list reads as "not LocalCI",
+        # so the caller would send a Jenkins build script to a LocalCI server, which rejects it and
+        # creates nothing. Failing here says why, instead of failing later with a confusing 400.
+        raise RuntimeError(f"Could not read the active profiles from {url}: {error}") from error
+
+    if not profiles:
+        raise RuntimeError(
+            f"{url} reported no active profiles, so the continuous integration system cannot be determined. "
+            "Refusing to create exercises rather than guessing at the build configuration."
+        )
+    return profiles
 
 def is_local_ci(session: requests.Session) -> bool:
     """Whether the target server runs the integrated continuous integration (LocalCI)."""

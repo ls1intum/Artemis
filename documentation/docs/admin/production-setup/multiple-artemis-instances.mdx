@@ -723,7 +723,8 @@ The E2E runner scripts (`run-e2e-tests-local-multinode.sh` and its variants) do 
 
 1. When running the Artemis container on a Unix system, you will have to give the user running in the container
     permission to access the Docker socket by adding them to the docker group. You can find the group ID of the docker
-    group by running `getent group docker | cut -d: -f3`. Afterwards, create a new file `docker/.env` with the following content:
+    group by running `getent group docker | cut -d: -f3`. Afterwards, add the following line to the `.env` file in the
+    repository root, which is the file the start command below loads:
 
     ```bash
     DOCKER_GROUP_ID=<REPLACE_WITH_DOCKER_GROUP_ID_OF_YOUR_SYSTEM>

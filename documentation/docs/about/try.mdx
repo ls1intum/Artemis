@@ -24,11 +24,17 @@ both `amd64` and `arm64`, so Apple Silicon pulls a prebuilt image rather than bu
 ```bash
 git clone https://github.com/ls1intum/Artemis.git
 cd Artemis
+# Linux with a native Docker daemon only: the build agent needs your host's docker group to reach the
+# Docker socket. Compose resolves this when it creates the container, so it has to be set beforehand.
+export ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3)
 docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.yml pull
 docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.yml up
 ```
 
 Then open **http://localhost:8080** and sign in as `artemis_admin` / `artemis_admin`.
+
+Docker Desktop on macOS and Windows needs no docker group, so the `export` line is harmless there and
+can be skipped.
 
 <Callout variant={CalloutVariant.warning}>
     Run Compose **from the repository root** and keep `--env-file .env`. The Compose files read image
@@ -36,15 +42,6 @@ Then open **http://localhost:8080** and sign in as `artemis_admin` / `artemis_ad
     first `-f` file, which is `docker/`, not the root. Without it the images resolve to blanks and the
     project either fails to start or fails to pull.
 </Callout>
-
-On **Linux with a native Docker daemon**, the build agent needs your host's docker group to reach the
-Docker socket:
-
-```bash
-export ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3)
-```
-
-Docker Desktop on macOS and Windows needs nothing extra.
 
 To stop, press `Ctrl+C`. To remove the containers and the database volume as well:
 

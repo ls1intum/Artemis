@@ -58,15 +58,18 @@ A complete Artemis with **working programming exercises**, from the repository r
 published images for `amd64` and `arm64`:
 
 ```shell
+# Linux with a native Docker daemon only: the build agent needs your host's docker group to reach the
+# Docker socket, and Compose resolves it when it creates the container, so set it first.
+export ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3)
 docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.yml pull
 docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.yml up
 ```
 
 Then open [http://localhost:8080](http://localhost:8080) and sign in as `artemis_admin` / `artemis_admin`.
 This includes the integrated code lifecycle, so Artemis hosts the git repositories and a build agent
-runs the tests. See [Try Artemis](https://docs.artemis.tum.de/about/try) for what it leaves out, the
-one extra step on Linux, and how to get a hosted trial instead. The TUM instance is at
-https://artemis.tum.de.
+runs the tests. Docker Desktop on macOS and Windows needs no docker group, so the `export` line is
+harmless there and can be skipped. See [Try Artemis](https://docs.artemis.tum.de/about/try) for what it
+leaves out and how to get a hosted trial instead. The TUM instance is at https://artemis.tum.de.
 
 ## Key capabilities
 

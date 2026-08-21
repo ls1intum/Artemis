@@ -50,20 +50,52 @@ A single large number answers almost nothing. What an operator needs to know is 
 time starts to degrade and which resource caused it**, so the runs below form a ladder: each one keeps
 the exam shape fixed and changes only the number of simulated students.
 
-The tool's exam contains four exercises (one programming, one modeling, one quiz, one text), and each
-simulated student logs in, fetches and starts the exam, submits each exercise several times, pushes
-commits for the programming exercise, and submits the exam.
+The tool's exam contains four exercises (one programming, one modeling, one quiz, one text). Each
+simulated student logs in, fetches and starts the exam, submits each exercise, pushes commits for the
+programming exercise, and submits the exam.
+
+### A simulated student is not a real student
+
+Read this before choosing a size, because it decides what the numbers mean. The simulation is a
+closed-loop maximum-throughput test, not a scaled-down exam:
+
+- **There is no think time.** The only pause inside a student's exam is a tenth of a second before each
+  push. A real exam spreads the same work over an hour or more.
+- **The default push count is high.** The form defaults to 8 to 15 commits and pushes per student, and
+  every push is a build. At the sizes below that is tens of thousands of builds.
+
+Together these make a simulated student far more demanding than a real one, so a run of N simulated
+students corresponds to a considerably larger real cohort. Treat the student count as a load setting,
+not as a headcount.
+
+Two consequences for how a ladder is run:
+
+- **Keep the pushes low**, one or two per student, or the build queue rather than Artemis becomes the
+  thing being measured. Estimate the drain as `students x pushes / concurrent build slots x build time`
+  before committing to a maintenance window.
+- **Client concurrency is capped** at ten threads per CPU of the machine running the tool, so above that
+  many students a larger run adds duration and accumulated state rather than more simultaneous users.
+  Record the tool host's CPU count with the result, or two runs are not comparable.
 
 ### The ladder
 
-| # | Students | Mode | Purpose |
-| --- | --- | --- | --- |
-| S0 | 10 | `CREATE_COURSE_AND_EXAM` | Smoke test. Proves the wiring, the users, and the build agents work before anything larger is attempted. |
-| S1 | 100 | `CREATE_COURSE_AND_EXAM` | Baseline. Every later run is compared against these percentiles. |
-| S2 | 500 | `CREATE_COURSE_AND_EXAM` | First point where queueing usually becomes visible. |
-| S3 | 1000 | `CREATE_COURSE_AND_EXAM` | Realistic large course. |
-| S4 | 2000 | `CREATE_COURSE_AND_EXAM` | The size Artemis is publicly described as handling. This is the run that substantiates that claim. |
-| S5 | 3000+ | `CREATE_COURSE_AND_EXAM` | Only if S4 stays comfortable. Finds the actual limit rather than confirming a target. |
+Start with a smoke test that is not reported: ten students, one push each. It proves the users, the
+admin or instructor rights, the build agents and the git path work, and it gives the first real
+measurement of build time, which every duration estimate depends on.
+
+Then hold the exam shape, the push range and the repository access mix fixed, and change only the
+student count:
+
+| # | Students | Purpose |
+| --- | --- | --- |
+| S1 | 100 | Baseline. Every later run is compared against these percentiles. |
+| S2 | 200 | First check that nothing degrades when the volume doubles. |
+| S3 | 500 | Where queueing usually becomes visible. |
+| S4 | 1000 | The decision point: read the metrics here before going further. |
+
+Extend to 1500 and then 2000 **only if S4 leaves headroom**. Decide from S4's numbers rather than
+planning it in advance: if a percentile is already bending, or the build queue has not drained inside
+the window, a larger run costs hours and answers nothing.
 
 Hold the repository access mix fixed across the whole ladder. The tool draws it per student from four
 percentages that must add up to 100 (online IDE, password, participation token, and SSH), so record
@@ -107,7 +139,10 @@ write to `artemis@xcit.tum.de`.
 
 {/*
 TODO(maintainers): publish the TUM reference run here (topology, hardware, scenario, percentiles).
-Artemis currently states "used for courses and online exams with more than 2,000 students" in the
-README, the landing page, and the platform comparison; a documented run is what turns that from a
-claim into something a reader can check.
+Artemis states "used for courses and online exams with more than 2,000 students" in the README, the
+landing page, and the platform comparison. That claim is about real cohorts, and the evidence for it
+is operational history rather than a benchmark rung, so word whatever lands here in terms of what the
+run actually showed (the largest size that held its percentiles, and what saturated first) instead of
+tying it to a target number. A simulated 1,000 is already a harder test than a real 2,000; see "A
+simulated student is not a real student" above.
 */}

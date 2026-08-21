@@ -56,7 +56,9 @@ def create_programming_exercise(session: Session, course_id: int, server_url: st
             "buildConfig": build_config,
         }
 
-        response = session.post(url, json=default_programming_exercise, headers=headers)
+        # Provisioning a programming exercise creates repositories and a build plan, so the read timeout is
+        # generous; the point is that a hung server ends the run with an error rather than blocking forever.
+        response = session.post(url, json=default_programming_exercise, headers=headers, timeout=(10, 120))
 
         if response.status_code == 201:
             logging.info(f"Created programming exercise {default_programming_exercise['title']} successfully")
