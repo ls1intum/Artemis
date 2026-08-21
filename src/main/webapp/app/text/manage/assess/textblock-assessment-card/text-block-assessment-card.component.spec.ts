@@ -143,8 +143,9 @@ describe('TextblockAssessmentCardComponent', () => {
     });
 
     it('should delete feedback when the dismiss icon is clicked via a real DOM click (regression: click must not bubble into select())', () => {
-        component.textBlockRef().initFeedback();
-        fixture.changeDetectorRef.detectChanges();
+        const textBlockRef = component.textBlockRef();
+        textBlockRef.initFeedback();
+        reapplyTextBlockRef(textBlockRef);
 
         const dismissIcon = fixture.debugElement.nativeElement.querySelector('#dismiss-icon') as HTMLButtonElement;
         expect(dismissIcon).toBeTruthy();

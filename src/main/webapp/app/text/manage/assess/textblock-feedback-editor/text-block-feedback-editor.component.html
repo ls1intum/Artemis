@@ -15,6 +15,7 @@
     (keydown.escape)="escKeyup()"
     (drop)="connectFeedbackWithInstruction($event)"
     (dragover)="$event.preventDefault()"
+    (focusin)="onFocus.emit()"
 >
     @if (criteria(); as criteriaList) {
         @if (criteriaList.length > 0) {
