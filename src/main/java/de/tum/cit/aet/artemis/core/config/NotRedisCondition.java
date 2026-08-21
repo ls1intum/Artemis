@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
 import static de.tum.cit.aet.artemis.core.config.Constants.REDIS;
 
 import org.springframework.context.annotation.Condition;
@@ -11,7 +10,6 @@ public class NotRedisCondition implements Condition {
 
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        String dataStoreConfig = context.getEnvironment().getProperty("artemis.continuous-integration.data-store", HAZELCAST);
-        return !dataStoreConfig.equalsIgnoreCase(REDIS);
+        return !DistributedDataProviderResolver.isProvider(context.getEnvironment(), REDIS);
     }
 }
