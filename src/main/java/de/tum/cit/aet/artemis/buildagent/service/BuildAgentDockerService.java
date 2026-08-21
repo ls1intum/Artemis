@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
@@ -90,8 +91,11 @@ public class BuildAgentDockerService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentDockerService.class);
 
-    /** How often a running pull is re-examined while waiting, short enough to notice a stall promptly. */
-    private static final int PULL_PROGRESS_POLL_INTERVAL_SECONDS = 5;
+    /**
+     * How often a running pull is re-examined while waiting, short enough to notice a stall promptly and long enough to
+     * keep the polling overhead negligible over a multi-minute pull. Not final so tests can shorten it.
+     */
+    private long pullProgressPollIntervalMillis = TimeUnit.SECONDS.toMillis(5);
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
@@ -292,6 +296,19 @@ public class BuildAgentDockerService {
         private final AtomicLong progressCount = new AtomicLong();
 
         /**
+         * Signals that the pull has finished, whether it completed or failed. Counted down from {@link #close()}, which
+         * docker-java invokes on both {@code onComplete} and {@code onError}.
+         * <p>
+         * The build thread waits on this rather than on {@link #awaitCompletion(long, java.util.concurrent.TimeUnit)}.
+         * That method is meant to be called once, after the pull has finished: on every call it runs {@code throwFirstError()}
+         * and closes the pull stream in its {@code finally} block. Calling it in a polling loop therefore both aborts a
+         * healthy pull after the first timed-out slice and, because a pull still in progress has no success response yet,
+         * throws {@code "Could not pull image"} the moment a slice elapses. This latch lets the wait be sliced for stall
+         * detection without triggering either.
+         */
+        private final CountDownLatch pullFinished = new CountDownLatch(1);
+
+        /**
          * How many updates the daemon has reported so far.
          *
          * @return the number of progress updates received for this pull
@@ -313,6 +330,41 @@ public class BuildAgentDockerService {
             String msg = "~~~~~~~~~~~~~~~~~~~~ Pull image complete ~~~~~~~~~~~~~~~~~~~~";
             log.debug(msg);
             super.onComplete();
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                super.close();
+            }
+            finally {
+                pullFinished.countDown();
+            }
+        }
+
+        /**
+         * Waits up to the given time for the pull to finish, returning {@code true} once it has and {@code false} if the
+         * time elapsed first. Unlike {@link #awaitCompletion(long, java.util.concurrent.TimeUnit)} it never closes the
+         * pull stream, so it is safe to call repeatedly while the pull is still running.
+         *
+         * @param timeout the maximum time to wait
+         * @param unit    the unit of {@code timeout}
+         * @return {@code true} if the pull finished within the given time
+         * @throws InterruptedException if interrupted while waiting
+         */
+        boolean awaitFinished(long timeout, TimeUnit unit) throws InterruptedException {
+            return pullFinished.await(timeout, unit);
+        }
+
+        /**
+         * Re-throws a pull failure once the pull has finished, mirroring what
+         * {@link #awaitCompletion(long, java.util.concurrent.TimeUnit)} did through {@code throwFirstError()}: a pull that
+         * reported an error, or whose final response does not indicate success, fails the build rather than being treated
+         * as a successful pull. Must only be called after {@link #awaitFinished(long, java.util.concurrent.TimeUnit)}
+         * reported completion, so the final response is available.
+         */
+        void throwIfPullFailed() {
+            throwFirstError();
         }
     }
 
@@ -452,8 +504,12 @@ public class BuildAgentDockerService {
      * Waits for a Docker image pull to finish, aborting it once {@code artemis.continuous-integration.image-pull-timeout-seconds} has elapsed.
      * <p>
      * Without a timeout a pull that stops making progress, for example because a configured registry mirror silently drops packets, blocks the build thread forever.
-     * The timed {@code awaitCompletion} keeps the error handling of the untimed one: it still calls {@code throwFirstError()}, so a pull that fails rather than stalls
-     * propagates its exception exactly as before, and it closes the callback itself, so the stalled pull is aborted rather than left running in the background.
+     * <p>
+     * The wait must not be sliced with docker-java's {@code awaitCompletion(timeout, unit)}: that method is built to be called once, after the pull has finished, and on
+     * every call it runs {@code throwFirstError()} and closes the pull stream in its {@code finally} block. Used in a loop it aborts a healthy pull after the first
+     * timed-out slice and throws {@code "Could not pull image"} as soon as a slice elapses, because a pull still in progress has no success response yet. The wait is
+     * therefore sliced on the callback's own completion signal instead, and {@link MyPullImageResultCallback#throwIfPullFailed()} surfaces a genuine pull failure once the
+     * pull has actually finished, exactly as {@code awaitCompletion} used to.
      *
      * @param callback     the callback of the running pull command
      * @param imageName    the name of the Docker image being pulled
@@ -463,7 +519,7 @@ public class BuildAgentDockerService {
      * @throws LocalCIException     if the pull does not finish within the configured timeout
      */
     private void awaitPullCompletion(MyPullImageResultCallback callback, String imageName, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) throws InterruptedException {
-        final long pollIntervalNanos = TimeUnit.SECONDS.toNanos(PULL_PROGRESS_POLL_INTERVAL_SECONDS);
+        final long pollIntervalNanos = TimeUnit.MILLISECONDS.toNanos(pullProgressPollIntervalMillis);
         final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(imagePullTimeoutSeconds);
         final long stallNanos = TimeUnit.SECONDS.toNanos(imagePullStallTimeoutSeconds);
         long lastProgressAtNanos = System.nanoTime();
@@ -474,7 +530,8 @@ public class BuildAgentDockerService {
             // timeout shorter than the poll interval is honoured just as precisely as a longer one.
             long nowNanos = System.nanoTime();
             long sliceNanos = Math.max(0, Math.min(pollIntervalNanos, Math.min(lastProgressAtNanos + stallNanos - nowNanos, deadlineNanos - nowNanos)));
-            if (callback.awaitCompletion(sliceNanos, TimeUnit.NANOSECONDS)) {
+            if (callback.awaitFinished(sliceNanos, TimeUnit.NANOSECONDS)) {
+                callback.throwIfPullFailed();
                 return;
             }
             long progressCount = callback.progressCount();
