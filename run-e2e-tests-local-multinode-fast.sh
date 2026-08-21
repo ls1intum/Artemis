@@ -133,7 +133,10 @@ check_port_available() {
     local port=$1
     local service_name=$2
     local listeners
-    listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+    # `+c 0` asks for the untruncated command name. Without it lsof caps COMMAND at nine characters, so
+    # `com.docker.backend` arrives as `com.docke`, the Docker check below never matches, and the guard kills
+    # the very process it exists to protect.
+    listeners=$(lsof +c 0 -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
     if [ -n "$listeners" ]; then
         # A port published by a container is held by Docker's own forwarder, not by a leftover JVM. Killing
         # that process takes Docker Desktop down with it, which then fails this run at the next compose call
