@@ -104,6 +104,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { APOLLON_FULLSCREEN_FRAME_CLASS } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
 
 function createV4ModelWithNodes(): UMLModel {
     const v3Model = deepClone(testClassDiagram as any);
@@ -495,6 +496,67 @@ describe('ModelingAssessmentComponent', () => {
     it('should ignore handleFeedback when resultFeedbacks is undefined', () => {
         (comp as any).handleFeedback();
         expect(comp.referencedFeedbacks).toEqual([]);
+    });
+    /*
+     * Regression: subtree fullscreen would make this component the fullscreen element, and a browser paints nothing
+     * outside the fullscreen subtree. The Apollon popovers this canvas enables render through a Base UI portal under
+     * <body>, so they would disappear the moment the reader went fullscreen. The frame is therefore promoted to
+     * <body> and the fullscreen element is the document root, exactly as in ModelingEditorComponent.
+     */
+    it('should take the document root fullscreen with its frame promoted to the body, so body-portaled popups stay visible', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const frame = fixture.nativeElement.querySelector('.modeling-assessment') as HTMLElement;
+        const originalParent = frame.parentNode;
+        let fullscreenElement: Element | null = null;
+        const originalFullscreenElement = Object.getOwnPropertyDescriptor(document, 'fullscreenElement');
+        const originalExitFullscreen = Object.getOwnPropertyDescriptor(document, 'exitFullscreen');
+        const originalRequestFullscreen = Object.getOwnPropertyDescriptor(document.documentElement, 'requestFullscreen');
+        const requestFullscreen = vi.fn(async () => {
+            fullscreenElement = document.documentElement;
+        });
+        const exitFullscreen = vi.fn(async () => {
+            fullscreenElement = null;
+        });
+        Object.defineProperty(document.documentElement, 'requestFullscreen', { configurable: true, value: requestFullscreen });
+        Object.defineProperty(document, 'fullscreenElement', { configurable: true, get: () => fullscreenElement });
+        Object.defineProperty(document, 'exitFullscreen', { configurable: true, value: exitFullscreen });
+
+        try {
+            await comp.toggleFullscreen();
+            comp['onFullscreenChange']();
+
+            expect(requestFullscreen).toHaveBeenCalledOnce();
+            expect(comp.fullscreenActive()).toBe(true);
+            expect(frame.parentNode).toBe(document.body);
+            expect(frame.classList.contains(APOLLON_FULLSCREEN_FRAME_CLASS)).toBe(true);
+
+            await comp.toggleFullscreen();
+            expect(exitFullscreen).toHaveBeenCalledOnce();
+            comp['onFullscreenChange']();
+
+            expect(comp.fullscreenActive()).toBe(false);
+            expect(frame.parentNode).toBe(originalParent);
+            expect(frame.classList.contains(APOLLON_FULLSCREEN_FRAME_CLASS)).toBe(false);
+        } finally {
+            comp['restoreFullscreenPresentation']();
+            if (originalFullscreenElement) {
+                Object.defineProperty(document, 'fullscreenElement', originalFullscreenElement);
+            } else {
+                Reflect.deleteProperty(document, 'fullscreenElement');
+            }
+            if (originalExitFullscreen) {
+                Object.defineProperty(document, 'exitFullscreen', originalExitFullscreen);
+            } else {
+                Reflect.deleteProperty(document, 'exitFullscreen');
+            }
+            if (originalRequestFullscreen) {
+                Object.defineProperty(document.documentElement, 'requestFullscreen', originalRequestFullscreen);
+            } else {
+                Reflect.deleteProperty(document.documentElement, 'requestFullscreen');
+            }
+        }
     });
 });
 

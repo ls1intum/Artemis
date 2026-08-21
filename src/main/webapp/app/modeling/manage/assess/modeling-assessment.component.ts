@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, computed, contentChild, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, computed, contentChild, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { captureException } from '@sentry/angular';
 import {
@@ -33,6 +33,7 @@ import { ModelingAssessmentPanelDirective } from 'app/modeling/manage/assess/mod
 import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
 import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { APOLLON_FULLSCREEN_FRAME_CLASS, FullscreenPresentationService } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -53,6 +54,12 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly translateService = inject(TranslateService);
+    private readonly fullscreenPresentation = inject(FullscreenPresentationService);
+
+    private readonly assessmentFrame = viewChild<ElementRef<HTMLElement>>('assessmentFrame');
+    private readonly fullscreenSupported = document.fullscreenEnabled !== false;
+    /** Public so a host can render the control in its own chrome cluster. */
+    readonly fullscreenActive = signal(false);
 
     private readonly topLeftRegion = viewChild<ElementRef<HTMLElement>>('topLeftRegion');
     private readonly topRightRegion = viewChild<ElementRef<HTMLElement>>('topRightRegion');
@@ -182,6 +189,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     ngOnDestroy() {
+        const ownsFullscreen = this.fullscreenPresentation.owns(this.assessmentFrame()?.nativeElement) && document.fullscreenElement === document.documentElement;
+        this.restoreFullscreenPresentation();
+        if (ownsFullscreen) {
+            void document.exitFullscreen().catch(captureException);
+        }
         this.chromeResizeObserver?.disconnect();
         this.panelResizeObserver?.disconnect();
         if (this.fitViewFrame !== undefined) {
@@ -342,6 +354,80 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             this.hasFramedForPanelInset = true;
             this.scheduleFitView();
         }
+    }
+
+    /**
+     * Document-root fullscreen, not subtree fullscreen on this component.
+     *
+     * The assessed canvas enables Apollon popups, and those render through a Base UI portal under `<body>`. A browser
+     * paints nothing outside the fullscreen subtree, so making this component the fullscreen element would hide every
+     * popup the reader opens. Promoting the frame to `<body>` and taking `<html>` fullscreen keeps the portals inside.
+     * This mirrors {@link ModelingEditorComponent#toggleFullscreen}.
+     */
+    async toggleFullscreen(): Promise<void> {
+        const assessmentFrame = this.assessmentFrame()?.nativeElement;
+        if (!assessmentFrame || !this.fullscreenSupported) {
+            return;
+        }
+
+        if (this.fullscreenActive()) {
+            try {
+                await document.exitFullscreen();
+            } catch (error) {
+                captureException(error);
+            }
+            return;
+        }
+
+        if (document.fullscreenElement) {
+            return;
+        }
+
+        if (!this.prepareFullscreenPresentation(assessmentFrame)) {
+            return;
+        }
+        try {
+            await document.documentElement.requestFullscreen();
+        } catch (error) {
+            this.restoreFullscreenPresentation();
+            captureException(error);
+        }
+    }
+
+    @HostListener('document:fullscreenchange')
+    protected onFullscreenChange(): void {
+        const ownsPresentation = this.fullscreenPresentation.owns(this.assessmentFrame()?.nativeElement);
+        const ownsFullscreen = ownsPresentation && document.fullscreenElement === document.documentElement;
+        if (ownsFullscreen) {
+            this.fullscreenActive.set(true);
+        } else if (ownsPresentation) {
+            this.restoreFullscreenPresentation();
+        }
+
+        if (ownsPresentation) {
+            this.scheduleFitView();
+            this.scheduleChromePlacement();
+        }
+    }
+
+    private prepareFullscreenPresentation(assessmentFrame: HTMLElement): boolean {
+        if (!this.fullscreenPresentation.promote(assessmentFrame)) {
+            return false;
+        }
+        this.fullscreenActive.set(true);
+        assessmentFrame.classList.add('modeling-assessment--fullscreen', APOLLON_FULLSCREEN_FRAME_CLASS);
+        return true;
+    }
+
+    private restoreFullscreenPresentation(): void {
+        const assessmentFrame = this.assessmentFrame()?.nativeElement;
+        if (!this.fullscreenPresentation.owns(assessmentFrame)) {
+            return;
+        }
+
+        this.fullscreenPresentation.restore();
+        assessmentFrame?.classList.remove('modeling-assessment--fullscreen', APOLLON_FULLSCREEN_FRAME_CLASS);
+        this.fullscreenActive.set(false);
     }
 
     /** Two frames out: the overlay engine measures a region on the frame after it resizes, so refitting sooner uses the previous inset. */

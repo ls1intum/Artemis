@@ -28,7 +28,6 @@ import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-subm
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
@@ -154,7 +153,6 @@ describe('ModelingSubmissionComponent', () => {
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(TeamSubmissionSyncComponent),
                 MockComponent(ModelingAssessmentComponent),
-                MockComponent(FullscreenComponent),
                 MockComponent(AdditionalFeedbackComponent),
                 MockComponent(RatingComponent),
                 MockComponent(ComplaintsStudentViewComponent),

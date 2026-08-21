@@ -5,7 +5,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Params, RouterModule } from '@angular/router';
 import { type CollaborationUser, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
@@ -26,7 +26,6 @@ import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-subm
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -150,7 +149,6 @@ describe('ModelingSubmissionComponent', () => {
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(TeamSubmissionSyncComponent),
                 MockComponent(ModelingAssessmentComponent),
-                MockComponent(FullscreenComponent),
                 MockComponent(UnifiedFeedbackComponent),
                 MockComponent(RatingComponent),
                 MockComponent(ComplaintsStudentViewComponent),
@@ -874,5 +872,62 @@ describe('ModelingSubmissionComponent', () => {
             expect(result?.id).toBe(expectedSortedResults[index].id);
             expect(result?.completionDate?.isSame(expectedSortedResults[index].completionDate)).toBe(true);
         });
+    });
+    // Regression: the graded and the practice participation are both `participate/:participationId` on the same route,
+    // so switching between them only re-emits the route params and reuses this component. A result is assigned only
+    // when the loaded submission carries one, so without an explicit reset the practice attempt kept the graded result
+    // and opened on its assessment instead of on the editor.
+    it('should open the editor when switching from the assessed graded participation to a practice participation', () => {
+        const params = new BehaviorSubject<Params>({ courseId: 5, exerciseId: 22, participationId: 5 });
+        createModelingSubmissionComponent({ params: params.asObservable() } as any as ActivatedRoute);
+
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 22;
+        exercise.dueDate = dayjs().subtract(2, 'days');
+        exercise.assessmentDueDate = dayjs().subtract(1, 'day');
+        exercise.teamMode = false;
+
+        const gradedParticipation = new StudentParticipation();
+        gradedParticipation.id = 5;
+        gradedParticipation.exercise = exercise;
+        gradedParticipation.initializationDate = dayjs().subtract(5, 'days');
+
+        const gradedResult = new Result();
+        gradedResult.id = 30;
+        gradedResult.score = 42;
+        gradedResult.completionDate = dayjs().subtract(1, 'hour');
+        gradedResult.assessmentType = AssessmentType.MANUAL;
+        gradedResult.feedbacks = [];
+
+        const gradedSubmission = new ModelingSubmission();
+        gradedSubmission.id = 20;
+        gradedSubmission.submitted = true;
+        gradedSubmission.participation = gradedParticipation;
+        gradedSubmission.results = [gradedResult];
+
+        const practiceParticipation = new StudentParticipation();
+        practiceParticipation.id = 9;
+        practiceParticipation.exercise = exercise;
+        practiceParticipation.testRun = true;
+        practiceParticipation.initializationDate = dayjs();
+
+        const practiceSubmission = new ModelingSubmission();
+        practiceSubmission.id = 99;
+        practiceSubmission.submitted = false;
+        practiceSubmission.participation = practiceParticipation;
+
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockImplementation((participationId: number) =>
+            of(participationId === 9 ? practiceSubmission : gradedSubmission),
+        );
+
+        comp.ngOnInit();
+        expect(comp.result()?.id).toBe(30);
+
+        params.next({ courseId: 5, exerciseId: 22, participationId: 9 });
+
+        expect(comp.participation().id).toBe(9);
+        expect(comp.result()).toBeUndefined();
+        expect(comp.assessmentResult()).toBeUndefined();
+        expect(comp['shouldShowLiveEditor']()).toBe(true);
     });
 });

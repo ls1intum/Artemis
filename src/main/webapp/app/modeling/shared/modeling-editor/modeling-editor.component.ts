@@ -38,7 +38,7 @@ import {
     measureRailDisclosureMaxHeight,
     synchronizeResizeObserverTargets,
 } from 'app/modeling/shared/modeling-editor/apollon-chrome-placement';
-import { FullscreenPresentationService } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
+import { APOLLON_FULLSCREEN_FRAME_CLASS, FullscreenPresentationService } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
 import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
 import { ModelingEditorHelpComponent } from 'app/modeling/shared/modeling-editor/modeling-editor-help.component';
 import { ModelingEditorBottomCenterDirective } from 'app/modeling/shared/modeling-editor/modeling-editor-bottom-center.directive';
@@ -554,7 +554,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         this.fullscreenActive.set(true);
         this.problemStatementVisible.set(!!this.problemStatement()?.trim());
         this.apollonEditor?.setScrollLock(false);
-        editorFrame.classList.add('modeling-editor__frame--fullscreen');
+        editorFrame.classList.add('modeling-editor__frame--fullscreen', APOLLON_FULLSCREEN_FRAME_CLASS);
         return true;
     }
 
@@ -571,7 +571,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         }
 
         this.fullscreenPresentation.restore();
-        editorFrame?.classList.remove('modeling-editor__frame--fullscreen');
+        editorFrame?.classList.remove('modeling-editor__frame--fullscreen', APOLLON_FULLSCREEN_FRAME_CLASS);
         this.fullscreenActive.set(false);
         this.apollonEditor?.setScrollLock(this.scrollLock());
     }

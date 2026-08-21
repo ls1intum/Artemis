@@ -11,7 +11,7 @@
                 @if (!submission() || submission().submitted || !isExamSummary()) {
                     <div class="modeling-submission-content w-100">
                         <div class="submission-container d-flex flex-column w-100">
-                            <jhi-fullscreen #fullscreenHost [showButton]="shouldShowLiveEditor() ? false : !isFeedbackView() && !assessmentResult()">
+                            <div class="modeling-submission-surface">
                                 @if (shouldShowLiveEditor()) {
                                     <div class="modeling-submission-editor-tile">
                                         <jhi-modeling-editor
@@ -43,6 +43,7 @@
                                         @if (((!isActive || (result() && !isAutomaticResult)) && (!isLate() || submission().submitted)) || isFeedbackView()) {
                                             <div class="modeling-submission-assessment-layout__canvas">
                                                 <jhi-modeling-assessment
+                                                    #assessmentCanvas
                                                     [umlModel]="umlModel()"
                                                     [resultFeedbacks]="assessmentResult()?.feedbacks || []"
                                                     [diagramType]="modelingExercise().diagramType!"
@@ -57,24 +58,24 @@
                                                         <button
                                                             type="button"
                                                             class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
-                                                            (click)="fullscreenHost.toggleFullscreen()"
+                                                            (click)="assessmentCanvas.toggleFullscreen()"
                                                             [attr.aria-label]="
-                                                                (fullscreenHost.fullscreenActive()
+                                                                (assessmentCanvas.fullscreenActive()
                                                                     ? 'artemisApp.modelingEditor.fullscreen.exitButtonText'
                                                                     : 'artemisApp.modelingEditor.fullscreen.enterButtonText'
                                                                 ) | artemisTranslate
                                                             "
                                                             [title]="
-                                                                (fullscreenHost.fullscreenActive()
+                                                                (assessmentCanvas.fullscreenActive()
                                                                     ? 'artemisApp.modelingEditor.fullscreen.exitButtonText'
                                                                     : 'artemisApp.modelingEditor.fullscreen.enterButtonText'
                                                                 ) | artemisTranslate
                                                             "
                                                         >
-                                                            <fa-icon [icon]="fullscreenHost.fullscreenActive() ? faExitFullscreen : faEnterFullscreen" />
+                                                            <fa-icon [icon]="assessmentCanvas.fullscreenActive() ? faExitFullscreen : faEnterFullscreen" />
                                                             <span
                                                                 [jhiTranslate]="
-                                                                    fullscreenHost.fullscreenActive()
+                                                                    assessmentCanvas.fullscreenActive()
                                                                         ? 'artemisApp.modelingEditor.fullscreen.exitButtonText'
                                                                         : 'artemisApp.modelingEditor.fullscreen.enterButtonText'
                                                                 "
@@ -154,7 +155,7 @@
                                         }
                                     </div>
                                 }
-                            </jhi-fullscreen>
+                            </div>
                         </div>
 
                         @if (showComplaintSection() && shouldShowLiveEditor()) {

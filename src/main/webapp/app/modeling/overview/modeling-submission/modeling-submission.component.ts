@@ -30,7 +30,6 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -63,7 +62,6 @@ const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
     styleUrls: ['./modeling-submission.component.scss'],
     imports: [
         ResizeableContainerComponent,
-        FullscreenComponent,
         ModelingEditorComponent,
         FaIconComponent,
         TeamSubmissionSyncComponent,
@@ -177,6 +175,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly isChanged = signal(false);
     readonly retryStarted = signal(false);
     autoSaveInterval?: number;
+    private teamSyncInterval?: number;
     readonly autoSaveTimer = signal(0);
 
     explanation = '';
@@ -366,10 +365,35 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.updateModelAndExplanation();
     }
 
+    /**
+     * Drops everything that describes the previously loaded submission.
+     *
+     * This component is reused across participation switches — the graded and the practice participation are both
+     * `participate/:participationId` on the same route, so Angular only re-emits the params instead of re-creating the
+     * component. Every signal below is written under a condition further down (a result is only assigned when the
+     * submission actually carries one), so without this reset the practice attempt would inherit the graded result and
+     * open on its assessment instead of on the editor.
+     */
+    private resetSubmissionScopedState(): void {
+        this.result.set(undefined);
+        this.assessmentResult.set(undefined);
+        this.resultWithComplaint.set(undefined);
+        this.assessmentsNames.set({});
+        this.totalScore = 0;
+        this.selectedElementIds = [];
+        this.selectedElementIdsSignal.set([]);
+        this.previewedFeedbackReferenceId.set(undefined);
+        this.retryStarted.set(false);
+        this.isChanged.set(false);
+        this.isSaving.set(false);
+    }
+
     private updateModelingSubmission(modelingSubmission: ModelingSubmission): void {
         if (!modelingSubmission) {
             this.alertService.error('artemisApp.apollonDiagram.submission.noSubmission');
         }
+
+        this.resetSubmissionScopedState();
 
         if (this.isFeedbackView() && this.submissionId && this.sortedSubmissionHistory()) {
             const matchingSubmission = this.sortedSubmissionHistory().find((submission) => submission.id === this.submissionId);
@@ -469,6 +493,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private subscribeToWebsockets(): void {
+        // Reached again on every participation switch, so the channels of the previous participation have to go first.
+        this.automaticSubmissionSubscription?.unsubscribe();
+        this.automaticSubmissionSubscription = undefined;
+        this.manualResultUpdateListener?.unsubscribe();
+        this.manualResultUpdateListener = undefined;
+        this.athenaResultUpdateListener?.unsubscribe();
+        this.athenaResultUpdateListener = undefined;
+
         if (this.submission() && this.submission().id) {
             if (this.submission().submitted) {
                 this.subscribeToNewResultsWebsocket();
@@ -548,6 +580,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private setAutoSaveTimer(): void {
+        // A participation switch runs the setup again; a second timer would save the same diagram twice per tick.
+        clearInterval(this.autoSaveInterval);
         this.autoSaveTimer.set(0);
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer.update((timer) => timer + 1);
@@ -559,6 +593,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private setupSubmissionStreamForTeam(): void {
+        // Same reuse caveat as the autosave timer: without clearing, each navigation adds another sync loop.
+        clearInterval(this.teamSyncInterval);
         const teamSyncInterval = window.setInterval(() => {
             this.isChanged.set(!this.canDeactivate());
             if (this.isChanged()) {
@@ -566,6 +602,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.submissionChange.next(this.submission());
             }
         }, AUTOSAVE_TEAM_EXERCISE_INTERVAL);
+        this.teamSyncInterval = teamSyncInterval;
 
         this.cleanup(() => clearInterval(teamSyncInterval));
     }

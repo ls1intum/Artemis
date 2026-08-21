@@ -58,7 +58,8 @@ jhi-modeling-assessment {
     }
 }
 
-jhi-fullscreen {
+/* The surface the left panel hands to the editor or to the assessed canvas; both size themselves to it. */
+.modeling-submission-surface {
     display: block;
     min-height: 0;
     flex: 1 1 auto;
