@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
 
 /**
  * REST controller for managing {@link IrisMessage}.
@@ -76,8 +77,11 @@ public class IrisMessageResource {
 
     private final ObjectMapper objectMapper;
 
+    private final IrisStruggleInterventionService irisStruggleInterventionService;
+
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisChatSessionService irisChatSessionService,
-            IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository, ObjectMapper objectMapper) {
+            IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository, ObjectMapper objectMapper,
+            IrisStruggleInterventionService irisStruggleInterventionService) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisChatSessionService = irisChatSessionService;
@@ -85,6 +89,7 @@ public class IrisMessageResource {
         this.irisMessageRepository = irisMessageRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.irisStruggleInterventionService = irisStruggleInterventionService;
     }
 
     /**
@@ -258,8 +263,18 @@ public class IrisMessageResource {
         if (message.getSender() != IrisMessageSender.LLM || message.getOrigin() != IrisMessageOrigin.PROACTIVE_STRUGGLE) {
             throw new BadRequestException("You can only set a proactive outcome on a proactive Iris message");
         }
-        message.setProactiveOutcome(outcome);
-        return ResponseEntity.ok(IrisMessageResponseDTO.of(irisMessageRepository.save(message)));
+        // First-terminal-wins, exactly as the episode-scoped endpoint enforces it: a delayed or retried request must
+        // not replace an outcome that already stands, or DISMISSED could silently become RECOVERED and the history
+        // sent to Pyris would misreport what the student did. The episode-wide guard runs first where the row carries
+        // an episode, so a second row cannot establish a competing outcome for the same episode.
+        var episodeId = message.getProactiveEpisodeId();
+        if (episodeId != null && !episodeId.isBlank()) {
+            irisStruggleInterventionService.writeEpisodeOutcome(episodeId, outcome, message.getSession().getUserId());
+        }
+        else {
+            irisMessageRepository.setProactiveOutcomeIfNull(message.getId(), outcome);
+        }
+        return ResponseEntity.ok(IrisMessageResponseDTO.of(irisMessageRepository.findByIdElseThrow(messageId)));
     }
 
     /**

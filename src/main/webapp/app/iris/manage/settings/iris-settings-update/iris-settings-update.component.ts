@@ -455,9 +455,12 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         });
 
         if (!this.isAdmin()) {
-            // Non-admins cannot change variant or rate limits — restore the originals.
+            // Non-admins cannot change variant, rate limits or the proactive-struggle flag — restore the originals.
+            // saveSettings() restores all three; leaving the flag out here let an auto-save on the enabled toggle
+            // write back whatever the signal happened to hold.
             settingsToSave.variant = originalSettingsValue.variant;
             settingsToSave.rateLimit = originalSettingsValue.rateLimit;
+            settingsToSave.proactiveStruggleEnabled = originalSettingsValue.proactiveStruggleEnabled;
         } else if (this.isFormValid()) {
             // Admin with a valid rate-limit form: reconstruct rateLimit from the current form fields.
             settingsToSave.rateLimit = this.buildRateLimitForSave();

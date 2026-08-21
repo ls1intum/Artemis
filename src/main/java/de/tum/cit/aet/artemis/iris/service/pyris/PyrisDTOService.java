@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
@@ -96,7 +97,11 @@ public class PyrisDTOService {
         Map<String, String> committedFiles = getFilteredRepositoryContents(participation);
         Map<String, String> mergedRepository = new HashMap<>(committedFiles);
         mergedRepository.putAll(uncommittedFiles); // This overwrites any files with same path
-        var submittedRepository = buildSubmittedRepository(committedFiles, uncommittedFiles, participation.getProgrammingExercise().getProgrammingLanguage());
+        // getFilteredRepositoryContents tolerates a null participation and returns an empty map, but the language
+        // lookup below dereferences it, so a submission without one would NPE here instead of degrading to
+        // "no committed code readable" like every other unreadable-repository case.
+        var programmingLanguage = participation != null ? participation.getProgrammingExercise().getProgrammingLanguage() : null;
+        var submittedRepository = buildSubmittedRepository(committedFiles, uncommittedFiles, programmingLanguage);
         // submittedRepositoryAvailable = we actually read the submitted repo (non-empty committed set). Lets Pyris
         // tell "no code changed since the submission" apart from "the submitted code could not be read" (both would
         // otherwise be an empty submittedRepository, e.g. on a repository-fetch failure).
@@ -213,18 +218,19 @@ public class PyrisDTOService {
      * first text content prefixed with {@code tag}, every other content mapped verbatim (mirrors PyrisMessageDTO.of).
      */
     private static PyrisMessageDTO annotatedProactiveDTO(IrisMessage m, String tag) {
-        boolean[] prefixed = { false };
-        var contents = m.getContent().stream().<PyrisMessageContentBaseDTO>map(c -> {
+        // Null-safe like IrisMessageResponseDTO.of: a transient or malformed message can carry no content list.
+        var rawContents = m.getContent() == null ? List.<IrisMessageContent>of() : m.getContent();
+        List<PyrisMessageContentBaseDTO> contents = new ArrayList<>();
+        boolean prefixed = false;
+        for (var c : rawContents) {
             if (c instanceof IrisTextMessageContent text) {
-                String body = (!prefixed[0] ? tag : "") + text.getContentAsString();
-                prefixed[0] = true;
-                return new PyrisTextMessageContentDTO(body);
+                contents.add(new PyrisTextMessageContentDTO((prefixed ? "" : tag) + text.getContentAsString()));
+                prefixed = true;
             }
-            if (c instanceof IrisJsonMessageContent json) {
-                return new PyrisJsonMessageContentDTO(json.getContentAsString());
+            else if (c instanceof IrisJsonMessageContent json) {
+                contents.add(new PyrisJsonMessageContentDTO(json.getContentAsString()));
             }
-            return null;
-        }).filter(Objects::nonNull).toList();
+        }
         return new PyrisMessageDTO(m.getId(), toInstant(m.getSentAt()), m.getSender(), contents);
     }
 
