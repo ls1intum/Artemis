@@ -19,6 +19,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -143,6 +146,35 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         storedExampleSubmission = exampleSubmissionRepository.findBySubmissionId(returnedUpdatedExampleSubmission.getSubmission().getId());
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
         assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
+    }
+
+    /**
+     * The example-submission edit page loads the exercise from the modeling detail endpoint and echoes that response
+     * verbatim as {@code exampleSubmission.exercise} in its save PUT. The detail response embeds the exercise's example
+     * submissions, so the echoed JSON must stay deserializable into the entity graph - in particular the nested
+     * polymorphic {@link Submission} needs its {@code submissionExerciseType} discriminator on the wire.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateExampleModelingSubmission_acceptsEchoedExerciseDetailResponse() throws Exception {
+        exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, true);
+        ExampleSubmission created = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
+                ExampleSubmission.class, HttpStatus.OK);
+
+        String exerciseDetailJson = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, String.class);
+
+        ObjectMapper mapper = request.getObjectMapper();
+        ObjectNode body = mapper.createObjectNode();
+        body.put("id", created.getId());
+        body.put("usedForTutorial", false);
+        body.set("exercise", mapper.readTree(exerciseDetailJson));
+        body.set("submission", mapper.valueToTree(created.getSubmission()));
+
+        ExampleSubmission updated = request.putWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", body, ExampleSubmission.class,
+                HttpStatus.OK);
+
+        assertThat(updated.getId()).isEqualTo(created.getId());
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(updated.getSubmission().getId(), validModel);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

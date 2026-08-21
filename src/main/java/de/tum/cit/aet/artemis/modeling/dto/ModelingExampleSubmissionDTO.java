@@ -6,6 +6,7 @@ import java.util.List;
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
@@ -38,6 +39,19 @@ public record ModelingExampleSubmissionDTO(Long id, boolean usedForTutorial, Exa
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExampleModelingSubmissionDTO(Long id, String model, String explanationText, Boolean submitted, List<ResultDTO> results) implements Serializable {
+
+        /**
+         * The example-submission edit page echoes the exercise detail response back into its save PUT, where this
+         * projection is deserialized into the abstract {@link de.tum.cit.aet.artemis.exercise.domain.Submission}.
+         * That type resolves its subtype from this discriminator, so it must stay on the wire (the entity payload
+         * carried it via {@code @JsonTypeInfo}); without it the PUT fails as unreadable.
+         *
+         * @return the constant submission type discriminator
+         */
+        @JsonProperty("submissionExerciseType")
+        public String submissionExerciseType() {
+            return "modeling";
+        }
     }
 
     /**
