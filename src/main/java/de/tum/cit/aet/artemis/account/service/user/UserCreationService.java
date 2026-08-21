@@ -13,7 +13,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Lazy;
@@ -42,13 +41,6 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 public class UserCreationService {
 
     private static final Logger log = LoggerFactory.getLogger(UserCreationService.class);
-
-    /**
-     * Duplicated from {@link de.tum.cit.aet.artemis.account.service.AccountService} on purpose: that service already depends on this one, so injecting it here
-     * would create a circular dependency. {@link UserManagementInfoContributor} reads the same property the same way.
-     */
-    @Value("${artemis.user-management.registration.enabled:#{null}}")
-    private Optional<Boolean> registrationEnabled;
 
     private final UserRepository userRepository;
 
@@ -119,13 +111,16 @@ public class UserCreationService {
         }
         newUser.setImageUrl(imageUrl);
         newUser.setLangKey(langKey);
-        // Only create the user unactivated when they can actually activate themselves, which needs both an internal account and the
-        // self-registration feature. The activation key is redeemable exclusively through GET /activate, and both that endpoint and the
-        // mail carrying the key are gated behind artemis.user-management.registration.enabled. An externally managed (LDAP/SAML) user
-        // therefore never receives a key and could never redeem one, so creating them unactivated left behind accounts that nothing
-        // could ever activate - which stayed invisible only because the LDAP provider did not yet check `activated`, until the
-        // git authentication paths started enforcing it and locked those users out of their repositories.
-        if (isInternal && isRegistrationEnabled()) {
+        // An externally managed account is created activated. The activation key is redeemable exclusively through GET /activate, so an
+        // account that authenticates against an external directory never receives one and could never redeem it; creating such an
+        // account unactivated left behind accounts that nothing could ever activate. That stayed invisible only while the LDAP provider
+        // did not check `activated`, until the git authentication paths started enforcing it and locked those users out of their
+        // repositories.
+        //
+        // Internal accounts keep the existing behaviour. Narrowing this further - to internal accounts on an instance that actually has
+        // self-registration enabled - is a separate change, because the LTI launch is the only caller that creates an internal account
+        // here and it reads `activated` as its own "already initialised" marker.
+        if (isInternal) {
             newUser.setActivated(false);
             newUser.setActivationKey(RandomUtil.generateActivationKey());
         }
@@ -148,15 +143,6 @@ public class UserCreationService {
         newUser = saveUser(newUser);
         log.debug("Created user: {}", newUser);
         return newUser;
-    }
-
-    /**
-     * The self-registration feature is only enabled when artemis.user-management.registration.enabled is explicitly set to true. A missing entry means disabled.
-     *
-     * @return whether users can register themselves in this instance
-     */
-    private boolean isRegistrationEnabled() {
-        return registrationEnabled.isPresent() && registrationEnabled.get();
     }
 
     /**
@@ -400,28 +386,17 @@ public class UserCreationService {
     }
 
     /**
-     * Generates a fresh password for an LTI-provisioned account and marks it as initialised, so the launch can hand the
-     * password over exactly once. The returned value is the only place the plaintext exists - what is stored is the hash.
-     * <p>
-     * The password is hashed before the update is attempted, so a hashing failure leaves the account untouched, and the
-     * store and the marker move together in one conditional statement - see
-     * {@link UserRepository#initializeLtiPassword(long, String)} for why neither a plain save nor a separate claim is
-     * sufficient. An empty result means the account was not eligible, in which case nothing was written.
-     * <p>
-     * Writes {@link User#isLtiInitialized()} rather than {@code activated}, which this used to set: that both overloaded a
-     * flag meaning only "may authenticate" and let a deactivated account re-enable itself through the endpoint.
+     * Sets for the provided user a random password and ends the initialization process.
      *
-     * @param user the account to initialise
-     * @return the newly created password in plain text, or empty if the account was not eligible
+     * @param user the user to update
+     * @return the newly created password
      */
-    public Optional<String> initializeLtiPasswordAndReturn(User user) {
+    public String setRandomPasswordAndReturn(User user) {
         String newPassword = RandomUtil.generatePassword();
-        String passwordHash = passwordService.hashPassword(newPassword);
-        if (userRepository.initializeLtiPassword(user.getId(), passwordHash) == 0) {
-            log.debug("LTI initialization for user {} was not applied; the account is not eligible any more", user.getLogin());
-            return Optional.empty();
-        }
-        return Optional.of(newPassword);
+        user.setPassword(passwordService.hashPassword(newPassword));
+        user.setActivated(true);
+        userRepository.save(user);
+        return newPassword;
     }
 
 }

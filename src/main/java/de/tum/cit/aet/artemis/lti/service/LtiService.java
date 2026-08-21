@@ -95,7 +95,6 @@ public class LtiService {
             log.info("User is already signed in. Checking if email matches the one provided in the launch.");
             User user = userRepository.getUser();
             if (email.equalsIgnoreCase(user.getEmail())) { // 1. Case: User is already signed in and email matches the one provided in the launch
-                ensureAccountIsUsable(user);
                 log.info("User is already signed in and email matches the one provided in the launch. No further action required.");
                 return;
             }
@@ -112,7 +111,6 @@ public class LtiService {
             if (trustExternalLTISystems) {
                 log.info("Trusting external LTI system. Authenticating user with email: {}", email);
                 User user = userRepository.findOneWithAuthoritiesByEmail(email).orElseThrow();
-                ensureAccountIsUsable(user);
                 SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities()));
                 return;
             }
@@ -137,10 +135,6 @@ public class LtiService {
             var password = RandomUtil.generatePassword();
             final User newUser = userCreationService.createUser(login, password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
             newUser.setLtiCreated(true);
-            // An LTI user is provisioned by the launch, not by self-registration: they never receive an activation mail and so can never redeem an activation
-            // key. State it explicitly here rather than relying on the factory default, which does create an unactivated user on an instance that has
-            // self-registration enabled. Clearing the key alone used to leave the account stuck at activated = false with no way to ever activate it.
-            newUser.setActivated(true);
             newUser.setActivationKey(null);
             userRepository.save(newUser);
 
@@ -148,9 +142,6 @@ public class LtiService {
             return newUser;
 
         });
-
-        // Covers the account that already existed under this login. A user this method just created is activated by construction.
-        ensureAccountIsUsable(user);
 
         log.info("createNewUserFromLaunchRequest: {}", user);
 
@@ -185,50 +176,21 @@ public class LtiService {
 
     /**
      * Build the response for the LTI launch to include the necessary query params and the JWT cookie.
-     * <p>
-     * Adds {@code ?initialize} while the account still needs to be shown the Artemis password generated for it, which the
-     * client turns into the initialisation dialog. Keyed on {@link User#isLtiInitialized()} rather than on
-     * {@link User#getActivated()}: an LTI account is provisioned by this launch rather than registered by its owner, so it
-     * is created ready to use and the flag would never be false.
      *
      * @param uriComponentsBuilder the uri builder to add the query params to
      * @param response             the response to add the JWT cookie to
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         User user = userRepository.getUser();
-        // Guarded here too, not only where the launch resolves the account: this is the point at which the login cookie is
-        // minted, so checking it here holds no matter which launch variant populated the security context.
-        ensureAccountIsUsable(user);
 
-        // Keyed on the LTI initialisation marker rather than on `activated`, which the account now always has: an LTI
-        // account is provisioned by this launch rather than registered by its owner, so it is created ready to use.
-        if (user.isLtiCreated() && !user.isLtiInitialized()) {
-            log.info("LTI user has not been initialized yet. Adding initialize parameter to query.");
+        if (!user.getActivated()) {
+            log.info("User is not activated. Adding initialize parameter to query.");
             uriComponentsBuilder.queryParam("initialize", "");
         }
 
         log.info("Add/Update JWT cookie so the user will be logged in.");
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-    }
-
-    /**
-     * Refuses a launch for an account that may not authenticate, so that a launch cannot become a way around an
-     * administrator's decision.
-     * <p>
-     * The launch establishes a session by writing the security context directly instead of going through an
-     * {@link org.springframework.security.authentication.AuthenticationProvider}, so it does not inherit the account-state
-     * check that the internal, SAML2, OIDC and passkey providers each perform, and that both git paths perform. Without this
-     * a deactivated or soft-deleted account could still be signed in through the LMS.
-     *
-     * @param user the account the launch resolved to
-     * @throws InternalAuthenticationServiceException if the account is deactivated or soft-deleted
-     */
-    private void ensureAccountIsUsable(User user) {
-        if (!user.getActivated() || user.isDeleted()) {
-            log.warn("LTI launch for user {} whose account is deactivated or deleted", user.getLogin());
-            throw new InternalAuthenticationServiceException("Account is not active");
-        }
     }
 
     /**

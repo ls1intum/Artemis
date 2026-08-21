@@ -218,17 +218,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "lti_created", nullable = false)
     private boolean ltiCreated = false; // default value
 
-    /**
-     * Whether an LTI-provisioned account has already been shown the Artemis password generated for it, so that the
-     * launch offers that dialog exactly once.
-     * <p>
-     * Deliberately separate from {@link #activated}: the LTI flow used to read "not activated" as "not yet
-     * initialised", which only worked while the launch created accounts unactivated. It must not - see
-     * {@link #activated} - so the flow needs a marker of its own.
-     */
-    @Column(name = "lti_initialized", nullable = false)
-    private boolean ltiInitialized = false; // default value
-
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private final Set<SavedPost> savedPosts = new HashSet<>();
 
@@ -500,14 +489,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setLtiCreated(boolean ltiCreated) {
         this.ltiCreated = ltiCreated;
-    }
-
-    public boolean isLtiInitialized() {
-        return ltiInitialized;
-    }
-
-    public void setLtiInitialized(boolean ltiInitialized) {
-        this.ltiInitialized = ltiInitialized;
     }
 
     public Set<Authority> getAuthorities() {

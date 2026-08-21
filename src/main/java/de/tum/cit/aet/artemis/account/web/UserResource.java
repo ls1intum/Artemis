@@ -117,14 +117,7 @@ public class UserResource {
     }
 
     /**
-     * Hands an LTI-provisioned user the Artemis password generated for them, so they can also sign in outside the LMS. The
-     * launch created the account with a random password nobody has seen, so a fresh one is generated here and returned once.
-     * <p>
-     * This endpoint deliberately never changes {@code activated}, and refuses to act on an account that is not activated. It
-     * used to activate the caller when the account was external or not LTI-created, which was a workaround for external
-     * accounts being created unactivated. They no longer are, so the only way to reach this endpoint unactivated is for an
-     * administrator to have deactivated the account - and reversing that is an administrator's decision, not the account
-     * holder's.
+     * Initialises users that are flagged as such and are LTI users by setting a new password that gets returned
      *
      * @return The ResponseEntity with a status 200 (Ok) and either an empty password or the newly created password
      */
@@ -132,17 +125,17 @@ public class UserResource {
     @EnforceAtLeastStudent
     public ResponseEntity<UserInitializationDTO> initializeUser() {
         User user = userRepository.findOneWithAuthoritiesByLogin(SecurityUtils.getCurrentUserLogin().orElseThrow()).orElseThrow();
-        // getActivated() is part of the condition, not just isLtiInitialized(): a deactivated account must not be handed a working
-        // credential, and an account can still hold a session issued before it was deactivated.
-        boolean isUninitialisedLtiUser = user.getActivated() && user.isInternal() && !user.isLtiInitialized() && ltiApi.isPresent() && ltiApi.get().isLtiCreatedUser(user);
-        if (!isUninitialisedLtiUser) {
+        if (user.getActivated()) {
+            return ResponseEntity.ok().body(new UserInitializationDTO(null));
+        }
+        if ((ltiApi.isPresent() && !ltiApi.get().isLtiCreatedUser(user)) || !user.isInternal()) {
+            user.setActivated(true);
+            userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
 
-        // The condition above is a plain read and only spares an ineligible caller the cost of hashing a password. The
-        // authority is the conditional update inside this call, which re-checks the same account state in the statement that
-        // writes, so a password is returned only when that statement actually applied.
-        return ResponseEntity.ok().body(new UserInitializationDTO(userCreationService.initializeLtiPasswordAndReturn(user).orElse(null)));
+        String result = userCreationService.setRandomPasswordAndReturn(user);
+        return ResponseEntity.ok().body(new UserInitializationDTO(result));
     }
 
     /**

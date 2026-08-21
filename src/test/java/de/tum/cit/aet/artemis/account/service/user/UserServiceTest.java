@@ -226,8 +226,8 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         String login = TEST_PREFIX + "ext_activated";
         User user = userCreationService.createUser(login, null, "External", "User", "ext_activated@example.com", null, null, "en", false);
 
-        // Registration is enabled in the test configuration, so this also pins down that the flag alone does not decide: an external
-        // user never receives an activation mail and could never redeem a key, so they must not be left waiting for one.
+        // An externally managed account never receives an activation mail and could never redeem a key, so it must not be
+        // left waiting for one.
         assertThat(user.getActivated()).as("external user is created activated").isTrue();
         assertThat(user.getActivationKey()).as("external user gets no activation key").isNull();
 
@@ -239,33 +239,14 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     }
 
     @Test
-    void testCreateUser_internalUser_isUnactivatedWhileRegistrationIsEnabled() {
+    void testCreateUser_internalUser_keepsAwaitingActivation() {
         String login = TEST_PREFIX + "int_unactivated";
         User user = userCreationService.createUser(login, "password123", "Internal", "User", "int_unactivated@example.com", null, null, "en", true);
 
-        assertThat(user.getActivated()).as("internal user activates themselves while registration is enabled").isFalse();
+        assertThat(user.getActivated()).as("internal user still awaits activation").isFalse();
         assertThat(user.getActivationKey()).as("internal user needs a key to activate with").isNotNull();
 
         userRepository.delete(userRepository.findOneByLogin(login).orElseThrow());
-    }
-
-    @Test
-    void testCreateUser_internalUser_isActivatedWhenRegistrationIsDisabled() {
-        Object originalRegistrationEnabled = ReflectionTestUtils.getField(userCreationService, "registrationEnabled");
-        ReflectionTestUtils.setField(userCreationService, "registrationEnabled", Optional.of(false));
-        String login = TEST_PREFIX + "int_no_registration";
-        try {
-            User user = userCreationService.createUser(login, "password123", "Internal", "User", "int_no_registration@example.com", null, null, "en", true);
-
-            // With self-registration disabled, GET /activate answers 403 and no activation mail is ever sent, so an unactivated
-            // account would be one nothing could ever activate.
-            assertThat(user.getActivated()).as("internal user is created activated when nobody could activate them").isTrue();
-            assertThat(user.getActivationKey()).isNull();
-        }
-        finally {
-            ReflectionTestUtils.setField(userCreationService, "registrationEnabled", originalRegistrationEnabled);
-            userRepository.findOneByLogin(login).ifPresent(userRepository::delete);
-        }
     }
 
     @Test

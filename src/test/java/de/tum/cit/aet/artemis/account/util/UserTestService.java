@@ -606,10 +606,8 @@ public class UserTestService {
         User repoUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         repoUser.setPassword(password);
         repoUser.setInternal(true);
-        // An LTI account is created activated; what marks it as still needing its password is ltiInitialized.
-        repoUser.setActivated(true);
+        repoUser.setActivated(false);
         repoUser.setLtiCreated(true);
-        repoUser.setLtiInitialized(false);
         userTestRepository.save(repoUser);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
@@ -620,47 +618,23 @@ public class UserTestService {
 
         assertThat(passwordService.checkPasswordMatch(dto.password(), currentUser.getPassword())).isTrue();
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
-        assertThat(currentUser.isLtiInitialized()).as("marked initialized so the launch offers the dialog only once").isTrue();
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
     }
 
     // Test
-    public void initializeUserDeactivated() throws Exception {
-        String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        user.setPassword(password);
-        user.setInternal(true);
-        user.setLtiCreated(true);
-        user.setLtiInitialized(false);
-        // Deactivated by an administrator, but still holding a session issued before that.
-        user.setActivated(false);
-        userTestRepository.save(user);
-
-        UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
-
-        assertThat(dto.password()).as("a deactivated account is not handed a working credential").isNull();
-
-        User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(currentUser.getPassword()).as("the password is left untouched").isEqualTo(password);
-        assertThat(currentUser.getActivated()).as("initialization must not activate an account").isFalse();
-        assertThat(currentUser.isLtiInitialized()).as("and must not consume the initialization either").isFalse();
-    }
-
-    // Test
-    public void initializeUserAlreadyInitialized() throws Exception {
+    public void initializeUserWithoutFlag() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
         user.setLtiCreated(true);
-        user.setLtiInitialized(true);
         userTestRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
-        assertThat(dto.password()).as("an already initialized account is not handed a second password").isNull();
+        assertThat(dto.password()).isNull();
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -683,9 +657,7 @@ public class UserTestService {
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        // The only way an account that is not LTI-created reaches this endpoint deactivated is an administrator having
-        // deactivated it, and this endpoint must not undo that.
-        assertThat(currentUser.getActivated()).as("initialization must not activate an account").isFalse();
+        assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
     }
 
@@ -705,9 +677,7 @@ public class UserTestService {
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        // Same for an externally managed account: it has no Artemis password to initialize, and only an administrator
-        // may reverse a deactivation.
-        assertThat(currentUser.getActivated()).as("initialization must not activate an account").isFalse();
+        assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isFalse();
     }
 

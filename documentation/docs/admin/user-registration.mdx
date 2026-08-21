@@ -35,7 +35,7 @@ Several paths create accounts. The important column is the last one — see
 | First login through SAML2 | External | Yes |
 | First login through OIDC | External | Yes |
 | Course member import, exam registration, admin user import (resolved against LDAP) | External | Yes |
-| LTI launch | Internal | Yes |
+| LTI launch | Internal | No — activated when the launch hands over the generated password |
 | Admin *Create User* form | As selected | Yes |
 | `internal-admin` bootstrap on startup | Internal | Yes |
 | Iris bot account | Internal | Yes |
@@ -49,17 +49,8 @@ happens first. Both must therefore produce an account in the same state — an i
 never logged in has to be able to use their repositories straight away.
 :::
 
-An LTI launch additionally offers the account holder the Artemis password generated for them, so they can
-also sign in outside the LMS. Whether that dialog is still owed is tracked by its own `lti_initialized`
-column rather than by `activated`, so the account is usable from the first launch and the dialog is still
-shown exactly once.
-
-:::note
-Before that column existed, the launch created the account unactivated and the dialog activated it. An
-account whose owner closed the launch before finishing therefore stayed unactivated. The upgrade activates
-those accounts so they can launch again, distinguishing them from administrative deactivations by whether
-the row has ever been written by an authenticated principal. The dialog is still owed afterwards.
-:::
+An LTI launch creates the account unactivated and activates it when it hands the account holder the
+Artemis password generated for them, so they can also sign in outside the LMS.
 
 ## Importing users
 
@@ -100,21 +91,22 @@ directory cannot be resolved, since Artemis has nothing else to look the person 
 - every authentication provider: `ArtemisInternalAuthenticationProvider`, `LdapAuthenticationProvider`,
   `SAML2Service`, `OIDCService`, and the passkey provider
 - git over HTTPS (`LocalVCServletService`) and git over SSH (`GitPublickeyAuthenticatorService`)
-- the LTI launch, which establishes a session directly rather than through a provider
 
-An account is created unactivated **only when its own owner is expected to activate it**, which
-requires two conditions at the same time:
+An account is created unactivated **only when its own owner is expected to activate it**, which means the
+account must be **internal**. The activation key is redeemable only through `GET /activate`, so an
+externally managed account — which authenticates against the external directory — is never sent an
+activation mail and cannot redeem a key. Creating one unactivated therefore yields an account that
+*nothing* can ever activate. Historically such an account could still pass web login on an LDAP-only
+instance, because the LDAP provider was the one provider that did not consult the flag while git and every
+other provider refused it. That gap is now closed, so an account in this state cannot authenticate at all.
 
-1. the account is **internal**, and
-2. **self-registration is enabled** (`artemis.user-management.registration.enabled: true`).
-
-Both conditions are necessary because the activation key is redeemable only through `GET /activate`,
-and both that endpoint and the mail carrying the key are gated behind the registration property. An
-externally managed account is never sent an activation mail and cannot redeem a key, so creating one
-unactivated yields an account that *nothing* can ever activate. Historically such an account could still
-pass web login on an LDAP-only instance, because the LDAP provider was the one provider that did not
-consult the flag while git and every other provider refused it. That gap is now closed, so an account in
-this state cannot authenticate at all.
+:::note
+`GET /activate` and the mail carrying the key are both gated behind
+`artemis.user-management.registration.enabled`, so on an instance with self-registration disabled even an
+internal account has no way to redeem a key. Narrowing account creation to match is a separate change: the
+LTI launch is the only path that creates an internal account through this factory, and it reads `activated`
+as its own record of whether the password dialog is still owed.
+:::
 
 Consequently there are exactly three reasons for `activated = false`:
 
@@ -146,10 +138,8 @@ activated, so the timer applies only to self-registration — no other provision
   the admin edit form — write a `DEACTIVATE_USER` entry to the audit log naming the administrator who did
   it and the account affected; activation is recorded as `ACTIVATE_USER` the same way. These are kept far
   longer than login records.
-- Nothing lets an account holder reverse a deactivation, and no route hands a deactivated account a fresh
-  credential. An LTI launch refuses a deactivated or soft-deleted account as well, because the launch
-  establishes a session directly rather than through an authentication provider and so does not otherwise
-  inherit that check. Only an administrator can activate an account again.
+- Nothing lets an account holder reverse a deactivation through an authentication provider. Only an
+  administrator can activate an account again.
 - **Soft deletion** sets `is_deleted`, anonymises the personal fields, and revokes credentials, while
   preserving the rows that reference the account.
 
@@ -274,8 +264,8 @@ not yet consult the flag, since it now does; on such a version web login succeed
 refused. Check `activated` for the account and activate it if it was never meant to be off.
 
 **A user reports they cannot sign in at all after being deactivated.**
-That is the intended effect: deactivation refuses authentication everywhere — including through an LTI
-launch — and revokes the account's tokens, SSH keys and passkeys. Only an administrator can activate the
+That is the intended effect: deactivation refuses authentication through every provider and revokes the
+account's tokens, SSH keys and passkeys. Only an administrator can activate the
 account again, and the revoked credentials have to be created anew afterwards.
 
 **A newly registered account disappeared.**

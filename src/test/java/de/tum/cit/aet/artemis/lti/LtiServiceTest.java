@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,7 +24,6 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -90,8 +88,6 @@ class LtiServiceTest {
         user.setLogin("login");
         user.setPassword("password");
         user.setLtiCreated(true);
-        // A usable account by default; the tests that exercise the account-state guard set this to false explicitly.
-        user.setActivated(true);
     }
 
     @AfterEach
@@ -105,10 +101,7 @@ class LtiServiceTest {
     @Test
     void addLtiQueryParamsNewUser() {
         when(userRepository.getUser()).thenReturn(user);
-        // Activated, as an LTI-provisioned account now always is: the dialog is offered on the initialisation marker.
-        user.setActivated(true);
-        user.setLtiCreated(true);
-        user.setLtiInitialized(false);
+        user.setActivated(false);
         when(jwtCookieService.buildLoginCookie(true)).thenReturn(mock(ResponseCookie.class));
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
@@ -129,8 +122,6 @@ class LtiServiceTest {
     void addLtiQueryParamsExistingUser() {
         when(userRepository.getUser()).thenReturn(user);
         user.setActivated(true);
-        user.setLtiCreated(true);
-        user.setLtiInitialized(true);
         when(jwtCookieService.buildLoginCookie(true)).thenReturn(mock(ResponseCookie.class));
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
@@ -145,38 +136,6 @@ class LtiServiceTest {
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         assertThat(initialize).isNull();
-    }
-
-    @Test
-    void addLtiQueryParamsNonLtiUserGetsNoDialog() {
-        when(userRepository.getUser()).thenReturn(user);
-        // An account the launch did not create has no generated Artemis password to hand over. The dialog used to be
-        // offered purely because the account was not activated, and initializing it then activated it.
-        user.setActivated(true);
-        user.setLtiCreated(false);
-        when(jwtCookieService.buildLoginCookie(true)).thenReturn(mock(ResponseCookie.class));
-
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
-        ltiService.buildLtiResponse(uriComponentsBuilder, mock(HttpServletResponse.class));
-
-        assertThat(uriComponentsBuilder.build().getQueryParams().getFirst("initialize")).isNull();
-    }
-
-    /**
-     * buildLtiResponse is where the login cookie is minted, so the guard has to hold here as well as where the launch
-     * resolves the account - otherwise a launch variant that populates the security context by another route could still
-     * hand a deactivated account a session.
-     */
-    @Test
-    void buildLtiResponse_deactivatedUser_mintsNoCookie() {
-        user.setActivated(false);
-        when(userRepository.getUser()).thenReturn(user);
-
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        assertThatExceptionOfType(InternalAuthenticationServiceException.class).isThrownBy(() -> ltiService.buildLtiResponse(UriComponentsBuilder.newInstance(), response));
-
-        verify(jwtCookieService, never()).buildLoginCookie(anyBoolean());
-        verify(response, never()).addHeader(any(), any());
     }
 
     @Test
@@ -254,96 +213,6 @@ class LtiServiceTest {
 
         assertThatExceptionOfType(InternalAuthenticationServiceException.class)
                 .isThrownBy(() -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser()));
-    }
-
-    @Test
-    void authenticateLtiUser_newUserIsCreatedActivated() {
-        SecurityContextHolder.getContext().setAuthentication(null);
-
-        User unactivatedUser = new User();
-        unactivatedUser.setLogin("username");
-        unactivatedUser.setPassword("password");
-        // What the factory returns on an instance that has self-registration enabled.
-        unactivatedUser.setActivated(false);
-        unactivatedUser.setActivationKey("activation-key");
-
-        when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.empty());
-        when(userRepository.findOneByEmailIgnoreCase("email")).thenReturn(Optional.empty());
-        when(userRepository.findOneByLogin("username")).thenReturn(Optional.empty());
-        when(userCreationService.createUser(any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(unactivatedUser);
-
-        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false);
-
-        ArgumentCaptor<User> savedUser = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(savedUser.capture());
-        // An LTI user is provisioned by the launch and never receives an activation mail, so leaving them unactivated would produce an
-        // account that can never authenticate outside the launch - it would be rejected by password login and by git authentication.
-        assertThat(savedUser.getValue().getActivated()).as("LTI user is activated").isTrue();
-        assertThat(savedUser.getValue().getActivationKey()).as("LTI user keeps no activation key").isNull();
-        assertThat(savedUser.getValue().isLtiCreated()).isTrue();
-    }
-
-    /**
-     * The launch writes the security context directly rather than going through an AuthenticationProvider, so it does not
-     * inherit the account-state check the providers perform. Without an explicit one, a launch would be a way around an
-     * administrator's deactivation.
-     */
-    @Test
-    void authenticateLtiUser_deactivatedExistingUser_isRefused() {
-        SecurityContextHolder.getContext().setAuthentication(null);
-        user.setActivated(false);
-
-        when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.empty());
-        when(userRepository.findOneByEmailIgnoreCase("email")).thenReturn(Optional.empty());
-        when(userRepository.findOneByLogin("username")).thenReturn(Optional.of(user));
-
-        assertThatExceptionOfType(InternalAuthenticationServiceException.class)
-                .isThrownBy(() -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false));
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).as("no session is established").isNull();
-    }
-
-    @Test
-    void authenticateLtiUser_softDeletedExistingUser_isRefused() {
-        SecurityContextHolder.getContext().setAuthentication(null);
-        user.setActivated(true);
-        user.setDeleted(true);
-
-        when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.empty());
-        when(userRepository.findOneByEmailIgnoreCase("email")).thenReturn(Optional.empty());
-        when(userRepository.findOneByLogin("username")).thenReturn(Optional.of(user));
-
-        assertThatExceptionOfType(InternalAuthenticationServiceException.class)
-                .isThrownBy(() -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false));
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).as("no session is established").isNull();
-    }
-
-    @Test
-    void authenticateLtiUser_deactivatedUserOnTrustedSystem_isRefused() {
-        SecurityContextHolder.getContext().setAuthentication(null);
-        ReflectionTestUtils.setField(ltiService, "trustExternalLTISystems", true);
-        user.setActivated(false);
-
-        when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.of("username"));
-        when(userRepository.findOneWithAuthoritiesByEmail("email")).thenReturn(Optional.of(user));
-
-        assertThatExceptionOfType(InternalAuthenticationServiceException.class)
-                .isThrownBy(() -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false));
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).as("no session is established").isNull();
-    }
-
-    @Test
-    void authenticateLtiUser_activatedExistingUser_isSignedIn() {
-        SecurityContextHolder.getContext().setAuthentication(null);
-        user.setActivated(true);
-
-        when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.empty());
-        when(userRepository.findOneByEmailIgnoreCase("email")).thenReturn(Optional.empty());
-        when(userRepository.findOneByLogin("username")).thenReturn(Optional.of(user));
-
-        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false);
-
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
-        assertThat(SecurityContextHolder.getContext().getAuthentication().getPrincipal()).isEqualTo(user.getLogin());
     }
 
     @Test
