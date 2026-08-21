@@ -135,6 +135,46 @@ class FileUtilUnitTest {
         assertThatNoException().isThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath));
     }
 
+    @Test
+    void resolveWithinDirectoryShouldReturnContainedPath() {
+        Path baseDirectory = Path.of("/tmp/artemis/files/temp");
+        assertThat(FileUtil.resolveWithinDirectoryElseThrow(baseDirectory, "Temp_42_lecture.pdf")).isEqualTo(baseDirectory.resolve("Temp_42_lecture.pdf"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "../../../etc/passwd", "..", "../sibling.pdf", "sub/../../escape.pdf", "/etc/passwd" })
+    void resolveWithinDirectoryShouldRejectEscapingFilenames(String filename) {
+        Path baseDirectory = Path.of("/tmp/artemis/files/temp");
+        assertThatThrownBy(() -> FileUtil.resolveWithinDirectoryElseThrow(baseDirectory, filename)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid filename");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "   " })
+    void resolveWithinDirectoryShouldRejectBlankFilenames(String filename) {
+        assertThatThrownBy(() -> FileUtil.resolveWithinDirectoryElseThrow(Path.of("/tmp/artemis/files/temp"), filename)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must not be blank");
+    }
+
+    @Test
+    void resolveWithinDirectoryShouldRejectSiblingDirectorySharingNamePrefix() {
+        // "temp-evil" shares a character prefix with "temp" but is a different directory, so a character-wise
+        // comparison would wrongly accept it. Path.startsWith() compares elements, which is why this throws.
+        assertThatThrownBy(() -> FileUtil.resolveWithinDirectoryElseThrow(Path.of("/tmp/artemis/files/temp"), "../temp-evil/file.pdf")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid filename");
+    }
+
+    @Test
+    void resolveWithinDirectoryShouldContainEverySanitizedFilename() {
+        // The guard has to accept whatever sanitizeFilename() produces, otherwise it would reject legitimate uploads.
+        Path baseDirectory = Path.of("/tmp/artemis/files/temp");
+        for (String hostile : List.of("../../etc/passwd", "..\\..\\windows\\system32", "/absolute/path.pdf", "..", "....//....//x.pdf")) {
+            String sanitized = "Temp_1_" + FileUtil.sanitizeFilename(hostile);
+            assertThatNoException().isThrownBy(() -> FileUtil.resolveWithinDirectoryElseThrow(baseDirectory, sanitized));
+            assertThat(FileUtil.resolveWithinDirectoryElseThrow(baseDirectory, sanitized).getParent()).isEqualTo(baseDirectory);
+        }
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "folder/file.txt", "folder/subfolder/file.pdf", "file.docx", "safe_name-123.txt" })
     void testSanitizeFilePath_ValidPaths(String filePath) {

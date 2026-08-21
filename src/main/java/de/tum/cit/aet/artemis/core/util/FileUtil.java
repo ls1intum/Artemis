@@ -281,6 +281,35 @@ public class FileUtil {
     }
 
     /**
+     * Resolves a single filename against a base directory and guarantees that the result stays inside that directory.
+     *
+     * <p>
+     * {@link #sanitizeFilename(String)} already replaces every path separator, so a sanitised name cannot traverse on
+     * its own. This method adds the containment check at the point of use, which is what makes the guarantee local and
+     * checkable: the resolved path is normalised and compared against the normalised base directory, so a caller that
+     * forgets to sanitise — or a future change that loosens the sanitiser — fails loudly instead of quietly reading or
+     * writing an arbitrary file.
+     *
+     * @param baseDirectory the directory the resolved path has to stay within
+     * @param filename      the single filename to resolve against {@code baseDirectory}
+     * @return the resolved, normalised path, guaranteed to lie inside {@code baseDirectory}
+     * @throws IllegalArgumentException if the filename is blank or escapes {@code baseDirectory}
+     */
+    @NonNull
+    public static Path resolveWithinDirectoryElseThrow(@NonNull Path baseDirectory, @NonNull String filename) {
+        if (filename.isBlank()) {
+            throw new IllegalArgumentException("Invalid filename: must not be blank.");
+        }
+        Path normalisedBaseDirectory = baseDirectory.normalize();
+        Path resolvedPath = normalisedBaseDirectory.resolve(filename).normalize();
+        // startsWith() compares path elements, not characters, so a sibling directory sharing a name prefix cannot pass.
+        if (!resolvedPath.startsWith(normalisedBaseDirectory) || resolvedPath.equals(normalisedBaseDirectory)) {
+            throw new IllegalArgumentException("Invalid filename '%s': the resolved path escapes the expected directory.".formatted(filename));
+        }
+        return resolvedPath;
+    }
+
+    /**
      * Sanitizes a file path by checking for invalid characters or path traversal.
      *
      * @param filePath the file path to sanitize

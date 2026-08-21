@@ -244,7 +244,7 @@ public class LectureUnitProcessingService {
     public String saveTempFileForProcessing(long lectureId, MultipartFile file, int minutesUntilDeletion) throws IOException {
         String prefix = "Temp_" + lectureId + "_";
         String sanitisedFilename = FileUtil.checkAndSanitizeFilename(file.getOriginalFilename());
-        Path filePath = FilePathConverter.getTempFilePath().resolve(FileUtil.generateFilename(prefix, sanitisedFilename, false));
+        Path filePath = FileUtil.resolveWithinDirectoryElseThrow(FilePathConverter.getTempFilePath(), FileUtil.generateFilename(prefix, sanitisedFilename, false));
         FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
         fileService.schedulePathForDeletion(filePath, minutesUntilDeletion);
         return filePath.getFileName().toString().substring(prefix.length());
@@ -259,7 +259,9 @@ public class LectureUnitProcessingService {
      */
     public Path getPathForTempFilename(long lectureId, String filename) {
         String fullFilename = "Temp_" + lectureId + "_" + FileUtil.sanitizeFilename(filename);
-        return FilePathConverter.getTempFilePath().resolve(fullFilename);
+        // The filename reaches this method straight from a path variable. Sanitising it already removes every path
+        // separator, but the containment check is what proves the result cannot leave the temp directory.
+        return FileUtil.resolveWithinDirectoryElseThrow(FilePathConverter.getTempFilePath(), fullFilename);
     }
 
     /**
