@@ -197,6 +197,36 @@ public class AsyncConfiguration implements AsyncConfigurer {
         return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 
+    /**
+     * Executor for queueing a continuous integration build after a push (see {@code AsyncBuildTriggerService}).
+     * <p>
+     * Queueing a build is not part of what a git push has to wait for: the push has already written its objects, and
+     * nothing in the response depends on the build job existing. It was measured as effectively the whole latency of a
+     * push under exam load, so it runs here instead of on the request thread.
+     * <p>
+     * Saturation runs the task on the calling thread rather than discarding it. A dropped build means a student's commit
+     * is never graded, so the worst acceptable outcome is being as slow as before.
+     * <p>
+     * In the {@code test} profile it is a {@link SyncTaskExecutor}, so tests that push and then assert on the resulting
+     * build job stay deterministic.
+     *
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated pool that falls back to the
+     *         caller when saturated
+     */
+    @Bean("buildTriggerExecutor")
+    public Executor buildTriggerExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(8);
+        executor.setMaxPoolSize(16);
+        executor.setQueueCapacity(1000);
+        executor.setThreadNamePrefix("build-trigger-");
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return new SimpleAsyncUncaughtExceptionHandler();

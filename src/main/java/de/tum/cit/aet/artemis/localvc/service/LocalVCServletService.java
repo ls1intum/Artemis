@@ -1030,8 +1030,9 @@ public class LocalVCServletService {
 
             Commit commit = extractCommitInfo(commitHash, repository);
 
-            // Process push to any repository other than the test repository.
-            processNewPushToRepository(participation, commit, user);
+            // Process push to any repository other than the test repository. The repository type is passed on so the build
+            // trigger can reuse the hash this push already carries instead of reading it back off the repository.
+            processNewPushToRepository(participation, commit, user, repositoryType);
 
             // For push the correct commitHash is only available here, therefore the preliminary value is overwritten
             String finalCommitHash = commitHash;
@@ -1169,13 +1170,13 @@ public class LocalVCServletService {
      * @param user          the user who pushed the commit, used for logging and access control
      * @throws VersionControlException if the commit belongs to the wrong branch (i.e. not the default branch of the participation)
      */
-    private void processNewPushToRepository(ProgrammingExerciseParticipation participation, Commit commit, User user) {
+    private void processNewPushToRepository(ProgrammingExerciseParticipation participation, Commit commit, User user, RepositoryType pushedRepositoryType) {
         // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
         // Therefore, a mock auth object has to be created.
         SecurityUtils.setAuthorizationObject();
         ProgrammingSubmission submission;
         try {
-            submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit, user);
+            submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit, user, pushedRepositoryType);
         }
         catch (EntityNotFoundException | IllegalStateException | IllegalArgumentException e) {
             throw new VersionControlException("Could not process submission for participation: " + e.getMessage(), e);
