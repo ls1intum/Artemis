@@ -311,6 +311,31 @@ student typing a password instead was **58% slower**, because verifying a passwo
 expensive and it dominated everything else on the Artemis servers. If you benchmark your own
 deployment, record the authentication mix alongside the result, or two numbers will not be comparable.
 
+### What a single small machine can do
+
+Not every installation is a cluster, so it is worth knowing where the floor is. The measurements below
+come from one virtual machine with **4 CPUs and 3.8 GB of memory** running everything at once: Artemis,
+the build agent, PostgreSQL and the reverse proxy.
+
+| Simultaneous students | Average response | Submit an exercise | Download a repository |
+| --- | --- | --- | --- |
+| 50 | 0.42 s | 1.05 s | 0.88 s |
+| **100** | **0.65 s** | 1.78 s | 1.69 s |
+| 200 | 1.13 s | 2.69 s | 3.47 s |
+
+Every one of those runs completed with **zero failed requests**.
+
+**An exam with 100 simultaneous students works on this hardware.** At that size the average interaction
+comes back in two thirds of a second and submitting an exercise takes under two seconds, which a
+student in an exam would not notice. Remember also that the simulation is harsher than the real thing:
+it gives students no thinking time at all, so a real cohort of the same size is a lighter load than
+this. An institution running a course rather than a faculty can start here.
+
+Beyond that the machine runs out. At 200 students response times roughly double again, and memory is
+what binds rather than processor: the machine is already using swap at 50 students and has exhausted it
+by 200. Adding memory helps this configuration more than adding cores would, and splitting the
+database onto its own machine helps more than either.
+
 ## Scaling an installation
 
 Artemis has two kinds of node, and they scale different things. Treating them as one pool is the most
