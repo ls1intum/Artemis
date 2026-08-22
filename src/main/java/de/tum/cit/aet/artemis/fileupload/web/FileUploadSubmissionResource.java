@@ -117,7 +117,10 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     private ResponseEntity<FileUploadSubmissionDTO> handleFileUploadSubmission(long exerciseId, FileUploadSubmissionInputDTO fileUploadSubmissionInput, MultipartFile file) {
         long start = System.currentTimeMillis();
         checkFileLength(file);
-        final var user = userRepository.getUserWithAuthorities();
+        // Course roles are loaded with the user so the course-membership checks on this path (the submission
+        // allowance check and the detail filtering) resolve in memory instead of each issuing its own query. This
+        // is the autosave path, so it runs repeatedly per student per exercise.
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
         final var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionInput.toEntity();
 

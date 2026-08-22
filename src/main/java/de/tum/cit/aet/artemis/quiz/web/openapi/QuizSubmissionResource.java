@@ -234,7 +234,10 @@ public class QuizSubmissionResource {
         log.debug("REST request to submit QuizSubmission for exam for exercise {}", exerciseId);
 
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
-        User user = userRepository.getUserWithAuthorities();
+        // Course roles are loaded with the user so the course-membership checks on this path (the submission
+        // allowance check and the detail filtering) resolve in memory instead of each issuing its own query. This
+        // is the autosave path, so it runs repeatedly per student per exercise.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         QuizSubmission quizSubmission = quizSubmissionService.buildSubmissionFromLiveClientDTO(submissionDTO, quizExercise);
 

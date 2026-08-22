@@ -33,11 +33,11 @@ public class SubmissionVersionService {
 
     private final ObjectMapper objectMapper;
 
-    private final SubmissionVersionAsyncWriter submissionVersionAsyncWriter;
+    private final AsyncSubmissionVersionService asyncSubmissionVersionService;
 
     public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRepository userRepository, ObjectMapper objectMapper,
-            SubmissionVersionAsyncWriter submissionVersionAsyncWriter) {
-        this.submissionVersionAsyncWriter = submissionVersionAsyncWriter;
+            AsyncSubmissionVersionService asyncSubmissionVersionService) {
+        this.asyncSubmissionVersionService = asyncSubmissionVersionService;
         this.submissionVersionRepository = submissionVersionRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
@@ -97,7 +97,7 @@ public class SubmissionVersionService {
         long submissionId = submission.getId();
         long userId = user.getId();
         String content = getSubmissionContent(submission);
-        submissionVersionAsyncWriter.write(submissionId, userId, content);
+        asyncSubmissionVersionService.write(submissionId, userId, content);
     }
 
     private SubmissionVersion updateExistingVersion(SubmissionVersion version, Submission submission) {

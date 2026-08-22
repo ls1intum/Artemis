@@ -26,9 +26,9 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-public class SubmissionVersionAsyncWriter {
+public class AsyncSubmissionVersionService {
 
-    private static final Logger log = LoggerFactory.getLogger(SubmissionVersionAsyncWriter.class);
+    private static final Logger log = LoggerFactory.getLogger(AsyncSubmissionVersionService.class);
 
     private final SubmissionVersionRepository submissionVersionRepository;
 
@@ -36,7 +36,7 @@ public class SubmissionVersionAsyncWriter {
 
     private final UserRepository userRepository;
 
-    public SubmissionVersionAsyncWriter(SubmissionVersionRepository submissionVersionRepository, SubmissionRepository submissionRepository, UserRepository userRepository) {
+    public AsyncSubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, SubmissionRepository submissionRepository, UserRepository userRepository) {
         this.submissionVersionRepository = submissionVersionRepository;
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;

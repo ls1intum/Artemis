@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -53,10 +52,10 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository,
-            ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository,
-            FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
+            ExerciseDateService exerciseDateService, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
+            Optional<AthenaApi> athenaApi) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi);
         this.textSubmissionRepository = textSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
         this.exerciseDateService = exerciseDateService;
@@ -115,11 +114,22 @@ public class TextSubmissionService extends SubmissionService {
 
         if (participation.getInitializationState() != InitializationState.FINISHED) {
             participation.setInitializationState(InitializationState.FINISHED);
-            studentParticipationRepository.save(participation);
+            // The participation was loaded from the database, so its row exists and only this one column changed. Saving
+            // the detached entity would merge it, reading the row back before writing it.
+            studentParticipationRepository.updateInitializationState(participation.getId(), InitializationState.FINISHED);
         }
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         textSubmission.setResults(new ArrayList<>());
-        textSubmission = textSubmissionRepository.save(textSubmission);
+        if (textSubmission.getId() != null) {
+            // Autosave of an existing submission: only the client-editable fields changed, and the row is already there.
+            // Saving the detached entity would merge it, which reads the submission and its whole eager association graph
+            // back before writing it.
+            textSubmissionRepository.updateExistingSubmission(textSubmission.getId(), textSubmission.getText(), textSubmission.getLanguage(), textSubmission.isSubmitted(),
+                    textSubmission.getSubmissionDate(), textSubmission.getType());
+        }
+        else {
+            textSubmission = textSubmissionRepository.save(textSubmission);
+        }
 
         // versioning of submission
         try {
@@ -127,7 +137,7 @@ public class TextSubmissionService extends SubmissionService {
                 submissionVersionService.saveVersionForTeam(textSubmission, user);
             }
             else if (textExercise.isExamExercise()) {
-                submissionVersionService.saveVersionForIndividual(textSubmission, user);
+                submissionVersionService.saveVersionForIndividualAsync(textSubmission, user);
             }
         }
         catch (Exception ex) {

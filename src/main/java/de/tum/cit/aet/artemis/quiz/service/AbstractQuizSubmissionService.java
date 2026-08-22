@@ -60,7 +60,7 @@ public abstract class AbstractQuizSubmissionService<T extends QuizSubmission> {
 
         // versioning of submission
         try {
-            submissionVersionService.saveVersionForIndividual(quizSubmission, user);
+            submissionVersionService.saveVersionForIndividualAsync(quizSubmission, user);
         }
         catch (Exception ex) {
             log.error("Quiz submission version could not be saved", ex);

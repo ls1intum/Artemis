@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -91,10 +92,13 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final ExerciseDateService exerciseDateService;
 
+    private final ResultRepository resultRepository;
+
     public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
-            Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService) {
+            Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService,
+            ResultRepository resultRepository) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -107,6 +111,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.examSubmissionApi = examSubmissionApi;
         this.plagiarismAccessApi = plagiarismAccessApi;
         this.exerciseDateService = exerciseDateService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -148,8 +153,10 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // The request DTO no longer carries results, so reconstruct the Athena-result fork signal from the persisted
         // submission: if the existing submission already has a result (e.g. Athena auto-feedback), autosave must create a
         // fresh submission instead of overwriting the result-bearing one.
-        boolean existingSubmissionHasResults = textSubmissionRepository.findWithEagerResultsAssessorById(textSubmissionDTO.id()).map(existing -> !existing.getResults().isEmpty())
-                .orElse(false);
+        // Only the existence of a result matters here, so ask for exactly that instead of loading the submission with its
+        // results and their assessors (this is the autosave path, so it runs repeatedly per student per exercise).
+        // ModelingSubmissionService already uses the same narrow check.
+        boolean existingSubmissionHasResults = resultRepository.existsBySubmissionId(textSubmissionDTO.id());
         return handleTextSubmission(exerciseId, textSubmission, existingSubmissionHasResults);
     }
 
@@ -177,7 +184,10 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     @NonNull
     private ResponseEntity<TextSubmissionResponseDTO> handleTextSubmission(long exerciseId, TextSubmission textSubmission, boolean forceNewSubmission) {
         long start = System.currentTimeMillis();
-        final var user = userRepository.getUserWithAuthorities();
+        // Course roles are loaded with the user so the course-membership checks on this path (the submission
+        // allowance check and the detail filtering) resolve in memory instead of each issuing its own query. This
+        // is the autosave path, so it runs repeatedly per student per exercise.
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.isExamExercise()) {

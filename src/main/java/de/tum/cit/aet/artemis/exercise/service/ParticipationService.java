@@ -149,6 +149,9 @@ public class ParticipationService {
 
         StudentParticipation participation;
         Optional<StudentParticipation> optionalStudentParticipation = Optional.empty();
+        // Remember the persisted state so the terminal save below can be skipped when this call changed nothing.
+        InitializationState persistedState = null;
+        ZonedDateTime persistedInitializationDate = null;
 
         // In case of a test exam we don't try to find an existing participation, because students can participate multiple times
         // Instead, all previous participations are marked as finished and a new one is created
@@ -158,16 +161,20 @@ public class ParticipationService {
             participation = createNewParticipation(exercise, participant);
             participation.setAttempt(participations.size());
             participations.add(participation);
+            // NOTE: saveAll rather than a bulk modifying UPDATE plus a save: the new participation has to be persisted in
+            // the same call, and callers read lazy associations off the instance this method returns.
             studentParticipationRepository.saveAll(participations);
         }
 
         // All other cases, i.e. normal exercises, and regular exam exercises
         else {
             optionalStudentParticipation = findOneGradedByExerciseAndParticipant(exercise, participant);
+            persistedState = optionalStudentParticipation.map(StudentParticipation::getInitializationState).orElse(null);
+            persistedInitializationDate = optionalStudentParticipation.map(StudentParticipation::getInitializationDate).orElse(null);
             if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
                 // In case there is already a practice participation, set it to inactive
                 optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
-                studentParticipationRepository.saveAndFlush(optionalStudentParticipation.get());
+                studentParticipationRepository.updateInitializationState(optionalStudentParticipation.get().getId(), InitializationState.INACTIVE);
 
                 optionalStudentParticipation = findOneGradedByExerciseAndParticipant(exercise, participant);
             }
@@ -182,9 +189,7 @@ public class ParticipationService {
             }
         }
 
-        if (exercise instanceof ProgrammingExercise) {
-            // we need to fetch the programming exercise again to get the template participation because we need the repository uri for the copy operation
-            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(exercise.getId());
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
             participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
         }
         // for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
@@ -208,6 +213,19 @@ public class ParticipationService {
         if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
             participation.setInitializationDate(ZonedDateTime.now());
         }
+        // Starting an exercise whose participation already exists and is fully set up is the normal case in an exam: the
+        // participations are generated up front, and the client posts to this endpoint on every (re)entry. Saving then
+        // writes back the values just read, and because the entity is detached (there is no transaction spanning the load
+        // and the save) Spring Data routes it through merge, which is a SELECT followed by an UPDATE. Skip both when this
+        // call did not actually change anything.
+        boolean unchanged = participation.getId() != null && participation.getInitializationState() == persistedState
+                && Objects.equals(participation.getInitializationDate(), persistedInitializationDate);
+        if (unchanged) {
+            return participation;
+        }
+        // NOTE: deliberately NOT narrowed to a modifying UPDATE of those two columns. saveAndFlush returns a merged
+        // instance whose lazy associations callers go on to read (StudentExamService#setUpTestExamExerciseParticipationsAndSubmissions
+        // reads the submissions of what this method returns); returning the detached instance instead breaks them.
         return studentParticipationRepository.saveAndFlush(participation);
     }
 
@@ -249,10 +267,52 @@ public class ParticipationService {
      * @return started participation
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
-        // Step 1a) create the student repository (based on the template repository)
-        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exercise), participation);
+        // The template participation and the build config are only needed to resolve the source repository and its branch,
+        // and copyRepository skips both entirely once the participation has its own repository. Loading them lazily keeps
+        // the common path free of a query it never reads: exam participations are prepared up front, so every student who
+        // (re)starts an exam exercise takes the already-copied branch.
+        Supplier<ProgrammingExercise> exerciseWithTemplateAndBuildConfig = memoize(
+                () -> programmingExerciseRepository.findByIdWithTemplateParticipationAndBuildConfigElseThrow(exercise.getId()));
+        // Step 1a) create the student repository (based on the template repository). The template uri and the branch both
+        // come out of that single memoized load, so the branch no longer needs a query of its own either.
+        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateAndBuildConfig.get()),
+                () -> branchOf(exerciseWithTemplateAndBuildConfig.get()), participation);
 
         return startProgrammingParticipation(participation);
+    }
+
+    /**
+     * Reads the branch off an exercise whose build config was loaded eagerly, so the caller does not need a separate
+     * {@code findBranchByExerciseId} query.
+     *
+     * @param exerciseWithBuildConfig a programming exercise loaded together with its build config
+     * @return the configured branch, or null if the exercise has no build config
+     */
+    private static String branchOf(ProgrammingExercise exerciseWithBuildConfig) {
+        return exerciseWithBuildConfig.getBuildConfig() != null ? exerciseWithBuildConfig.getBuildConfig().getBranch() : null;
+    }
+
+    /**
+     * Wraps a supplier so that it is evaluated at most once. Used where a lazily loaded entity is read more than once
+     * inside the same branch and must not turn into two queries.
+     *
+     * @param delegate the supplier to evaluate at most once
+     * @param <T>      the supplied type
+     * @return a supplier that caches the first result
+     */
+    private static <T> Supplier<T> memoize(Supplier<T> delegate) {
+        return new Supplier<>() {
+
+            private T value;
+
+            @Override
+            public T get() {
+                if (value == null) {
+                    value = delegate.get();
+                }
+                return value;
+            }
+        };
     }
 
     /**
@@ -333,10 +393,12 @@ public class ParticipationService {
         // Step 1a) create the student repository (based on the template repository or graded participation)
         if (useGradedParticipation && optionalGradedStudentParticipation.isPresent()
                 && optionalGradedStudentParticipation.get() instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
-            participation = copyRepository(exercise, programmingExerciseStudentParticipation::getVcsRepositoryUri, participation);
+            participation = copyRepository(exercise, programmingExerciseStudentParticipation::getVcsRepositoryUri,
+                    () -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()), participation);
         }
         else {
-            participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exercise), participation);
+            participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exercise), () -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()),
+                    participation);
         }
 
         // For practice mode 1 is always set. For more information see Participation.class
@@ -468,7 +530,8 @@ public class ParticipationService {
             // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
             programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case they want to further participate after the due date)
-            programmingParticipation = copyRepository(programmingExercise, () -> resolveTemplateRepositoryUri(programmingExercise), programmingParticipation);
+            programmingParticipation = copyRepository(programmingExercise, () -> resolveTemplateRepositoryUri(programmingExercise),
+                    () -> programmingExerciseRepository.findBranchByExerciseId(programmingExercise.getId()), programmingParticipation);
             programmingParticipation = configureRepository(programmingParticipation);
             participation = programmingParticipation;
         }
@@ -514,11 +577,12 @@ public class ParticipationService {
         else {
             participation.setInitializationState(InitializationState.INITIALIZED);
         }
-        participation = programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         if (participation.getInitializationDate() == null) {
             // only set the date if it was not set before (which should NOT be the case)
             participation.setInitializationDate(ZonedDateTime.now());
         }
+        // Set both fields before persisting: saving twice in a row wrote the same detached entity through merge twice,
+        // which cost two SELECTs and two UPDATEs for what is one row change.
         return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
     }
 
@@ -533,7 +597,7 @@ public class ParticipationService {
      * @return the updated participation
      */
     private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, Supplier<LocalVCRepositoryUri> sourceUriSupplier,
-            ProgrammingExerciseStudentParticipation participation) {
+            Supplier<String> templateBranchSupplier, ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
             LocalVCRepositoryUri sourceUri = sourceUriSupplier.get();
@@ -547,7 +611,7 @@ public class ParticipationService {
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceUri);
             VersionControlService vcs = versionControlService.orElseThrow();
-            String templateBranch = programmingExerciseRepository.findBranchByExerciseId(programmingExercise.getId());
+            String templateBranch = templateBranchSupplier.get();
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
             var newRepoUri = vcs.copyRepositoryWithoutHistory(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt());
             // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)

@@ -48,8 +48,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Repository
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation" })
-    Optional<ProgrammingExercise> findWithTemplateParticipationById(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "buildConfig" })
+    Optional<ProgrammingExercise> findWithTemplateParticipationAndBuildConfigById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
             "submissionPolicy" })
@@ -848,15 +848,17 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id, including template participation.
+     * Find a programming exercise by its id, including its template participation and its build config. Prefer this over
+     * calling a template-participation loader and {@link #findBranchByExerciseId} in sequence: both read the same
+     * exercise, so one query answers what used to take two.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NonNull
-    default ProgrammingExercise findByIdWithTemplateParticipationElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithTemplateParticipationById(programmingExerciseId), programmingExerciseId);
+    default ProgrammingExercise findByIdWithTemplateParticipationAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithTemplateParticipationAndBuildConfigById(programmingExerciseId), programmingExerciseId);
     }
 
     /**

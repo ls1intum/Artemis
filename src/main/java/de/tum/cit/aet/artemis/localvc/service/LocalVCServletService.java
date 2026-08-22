@@ -462,7 +462,12 @@ public class LocalVCServletService {
         String username = usernameAndPassword.username();
         String passwordOrToken = usernameAndPassword.password();
 
-        User user = userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
+        // Load the course roles and authorities together with the user. Authorization below runs four course-role checks
+        // for this user and this course (one in checkAccessToStaffRepository, three in checkAccessRepositoryElseThrow).
+        // Without the roles, each of them falls back to its own EXISTS query; without the authorities, each of them also
+        // re-reads the whole user row through AuthorizationCheckService#loadUserIfNeeded, because User#authorities is
+        // lazy. That is eight extra queries on the single hottest path of an exam, all answerable from this one load.
+        User user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(username).orElseThrow(LocalVCAuthException::new);
 
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, passwordOrToken);

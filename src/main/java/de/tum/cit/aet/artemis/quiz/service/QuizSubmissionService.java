@@ -420,7 +420,12 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      */
     @Override
     protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
-        quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
+        // For exam submissions the participation was already resolved (and its ownership implicitly established) by
+        // ExamSubmissionService#preventMultipleSubmissions a few frames up. Looking it up again would repeat the same
+        // row read on every quiz save.
+        if (!(quizSubmission.getParticipation() instanceof StudentParticipation)) {
+            quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
+        }
         var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;
