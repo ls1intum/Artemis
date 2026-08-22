@@ -8,7 +8,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -36,7 +36,6 @@ const question = {
     id: 1,
     spots: [answerSpot],
     text: 'Test Question',
-    quizQuestionStatistic: questionStatistic,
     solutions: [shortAnswerSolution],
     correctMappings: [shortAnswerMapping],
 } as ShortAnswerQuestion;
@@ -46,11 +45,13 @@ let quizExercise = {
     started: true,
     course,
     quizQuestions: [question],
+    questionId: 1,
+    statistic: questionStatistic,
     adjustedDueDate: undefined,
     numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
     studentAssignedTeamIdComputed: false,
     secondCorrectionEnabled: true,
-} as QuizExercise;
+} as QuizQuestionStatisticResponse;
 
 describe('QuizExercise Short Answer Question Statistic Component', () => {
     let comp: ShortAnswerQuestionStatisticComponent;
@@ -81,7 +82,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
                 comp = fixture.componentInstance;
                 quizService = TestBed.inject(QuizExerciseService);
                 accountService = TestBed.inject(AccountService);
-                quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindSpy = vi.spyOn(quizService, 'findQuestionStatistic').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
@@ -91,11 +92,13 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             started: true,
             course,
             quizQuestions: [question],
+            questionId: 1,
+            statistic: questionStatistic,
             adjustedDueDate: undefined,
             numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
             studentAssignedTeamIdComputed: false,
             secondCorrectionEnabled: true,
-        } as QuizExercise;
+        } as QuizQuestionStatisticResponse;
     });
 
     describe('onInit', () => {
@@ -107,7 +110,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.ngOnInit();
 
             expect(accountSpy).toHaveBeenCalledTimes(2);
-            expect(quizServiceFindSpy).toHaveBeenCalledWith(4);
+            expect(quizServiceFindSpy).toHaveBeenCalledWith(4, 1);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
             expect(comp.websocketChannelForData).toBe('/topic/statistic/4');
         });

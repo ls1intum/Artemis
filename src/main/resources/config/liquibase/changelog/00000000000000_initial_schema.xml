@@ -727,9 +727,6 @@
             <column name="is_visible_before_start" type="boolean"/>
             <column name="allowed_number_of_attempts" type="int"/>
             <column name="randomize_question_order" type="boolean"/>
-            <column name="quiz_point_statistic_id" type="bigint">
-                <constraints unique="true"/>
-            </column>
             <column name="max_points" type="double">
                 <constraints nullable="false"/>
             </column>
@@ -1716,7 +1713,6 @@
             <column name="scoring_type" type="varchar(255)"/>
             <column name="exercise_id" type="bigint"/>
             <column name="quiz_questions_order" type="bigint"/>
-            <column name="quiz_question_statistic_id" type="bigint"/>
             <column name="invalid" type="boolean"/>
             <column defaultValueNumeric="85" name="similarity_value" type="int">
                 <constraints nullable="false"/>
@@ -1746,36 +1742,6 @@
             <column name="due_date" type="datetime(3)">
                 <constraints nullable="false"/>
             </column>
-        </createTable>
-        <createTable tableName="quiz_statistic">
-            <column name="discriminator" type="varchar(31)">
-                <constraints nullable="false"/>
-            </column>
-            <column autoIncrement="true" name="id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-            <column name="participants_rated" type="int"/>
-            <column name="participants_unrated" type="int"/>
-            <column name="rated_correct_counter" type="int"/>
-            <column name="un_rated_correct_counter" type="int"/>
-        </createTable>
-        <createTable tableName="quiz_statistic_counter">
-            <column name="discriminator" type="varchar(31)">
-                <constraints nullable="false"/>
-            </column>
-            <column autoIncrement="true" name="id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-            <column name="rated_counter" type="int"/>
-            <column name="un_rated_counter" type="int"/>
-            <column name="points" type="double"/>
-            <column name="drag_and_drop_question_statistic_id" type="bigint"/>
-            <column name="drop_location_id" type="bigint"/>
-            <column name="quiz_point_statistic_id" type="bigint"/>
-            <column name="answer_id" type="bigint"/>
-            <column name="multiple_choice_question_statistic_id" type="bigint"/>
-            <column name="short_answer_question_statistic_id" type="bigint"/>
-            <column name="spot_id" type="bigint"/>
         </createTable>
         <createTable tableName="quiz_training_leaderboard">
             <column autoIncrement="true" name="id" type="bigint">
@@ -2554,9 +2520,6 @@
             <column name="course_id"/>
             <column name="due_date"/>
         </createIndex>
-        <createIndex indexName="FK11jgyics37wyibhhpp866exa8" tableName="quiz_statistic_counter">
-            <column name="drag_and_drop_question_statistic_id"/>
-        </createIndex>
         <createIndex indexName="FK1903cc755394da0466c4ec0934" tableName="competency_user">
             <column name="user_id"/>
         </createIndex>
@@ -2592,9 +2555,6 @@
         </createIndex>
         <createIndex indexName="FK2kwul05ckvpi145gc0bmf7obh" tableName="short_answer_spot">
             <column name="question_id"/>
-        </createIndex>
-        <createIndex indexName="FK3bqk45run356e20sqmf3sak1o" tableName="quiz_statistic_counter">
-            <column name="quiz_point_statistic_id"/>
         </createIndex>
         <createIndex indexName="idx_chat_memory_conversation_id" tableName="spring_ai_chat_memory">
             <column name="conversation_id"/>
@@ -2777,9 +2737,6 @@
         <createIndex indexName="FKgdd6qiyjtlrjgf2dsse32r8y5" tableName="answer_post">
             <column name="author_id"/>
         </createIndex>
-        <createIndex indexName="FKhascwjyvee25c0k3tay04ghog" tableName="quiz_statistic_counter">
-            <column name="short_answer_question_statistic_id"/>
-        </createIndex>
         <createIndex indexName="FKiub3ue9adasdas24v9ns656n" tableName="grade_step">
             <column name="grading_scale_id"/>
         </createIndex>
@@ -2822,9 +2779,6 @@
         <createIndex indexName="FKnfyuy63doxihtl3pu8rnm46n4" tableName="user_organization">
             <column name="user_id"/>
         </createIndex>
-        <createIndex indexName="FKoh69hhnfcimvw7i1cwhepvt5g" tableName="quiz_statistic_counter">
-            <column name="multiple_choice_question_statistic_id"/>
-        </createIndex>
         <createIndex indexName="FKpkb6e1yjqhma5tgvabb9smyv4" tableName="short_answer_submitted_text">
             <column name="spot_id"/>
         </createIndex>
@@ -2858,18 +2812,6 @@
         </createIndex>
         <createIndex indexName="UC_EXERCISEUBMISSION_POLICY_ID_COL" tableName="exercise" unique="true">
             <column name="submission_policy_id"/>
-        </createIndex>
-        <createIndex indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL" tableName="quiz_question" unique="true">
-            <column name="quiz_question_statistic_id"/>
-        </createIndex>
-        <createIndex indexName="UC_STATISTIC_COUNTERANSWER_ID_COL" tableName="quiz_statistic_counter" unique="true">
-            <column name="answer_id"/>
-        </createIndex>
-        <createIndex indexName="UC_STATISTIC_COUNTERDROP_LOCATION_ID_COL" tableName="quiz_statistic_counter" unique="true">
-            <column name="drop_location_id"/>
-        </createIndex>
-        <createIndex indexName="UC_STATISTIC_COUNTERSPOT_ID_COL" tableName="quiz_statistic_counter" unique="true">
-            <column name="spot_id"/>
         </createIndex>
         <createIndex indexName="UC_TEAM_ASSIGNMENT_CONFIG_EXERCISE_ID_COL" tableName="team_assignment_config" unique="true">
             <column name="exercise_id"/>
@@ -3446,11 +3388,8 @@
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="quiz_question_progress" constraintName="fk_quiz_question_progress_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="quiz_question_id" baseTableName="quiz_question_progress" constraintName="fk_quiz_question_progress_quiz_question" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="quiz_question" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="quiz_question_progress" constraintName="fk_quiz_question_progress_user" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="drag_and_drop_question_statistic_id" baseTableName="quiz_statistic_counter" constraintName="FK11jgyics37wyibhhpp866exa8" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_statistic" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="competency_user" constraintName="FK1903cc755394da0466c4ec0934" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="lecture_unit_user" constraintName="FK1af36a86bcc816f7ce70a9ef1" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="quiz_point_statistic_id" baseTableName="exercise" constraintName="FK1kyxexi1uqeu8pw3vcbulfi42" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_statistic" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="drop_location_id" baseTableName="quiz_statistic_counter" constraintName="FK2bses6ev8komaj0jw4gcyl8te" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="drop_location" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="quiz_training_leaderboard" constraintName="fk_quiz_training_leaderboard_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="quiz_training_leaderboard" constraintName="fk_quiz_training_leaderboard_user" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="result" constraintName="fk_result_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
@@ -3463,7 +3402,6 @@
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="review_comment_thread_group" constraintName="fk_comment_thread_group_exercise" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="short_answer_spot" constraintName="FK2kwul05ckvpi145gc0bmf7obh" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_question" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="competency_lecture_unit" constraintName="FK34nd0arw9mr0ei8quno6u4sw3" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="quiz_point_statistic_id" baseTableName="quiz_statistic_counter" constraintName="FK3bqk45run356e20sqmf3sak1o" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_statistic" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="slide" constraintName="fk_slide_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="student_exam_exercise" constraintName="FK48u8v93a8nmwv58c7eyjp25nt" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="short_answer_mapping" constraintName="FK4ehrp6xueea0pyiiidtuouc0s" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_question" validate="true"/>
@@ -3535,10 +3473,8 @@
         <addForeignKeyConstraint baseColumnNames="post_id" baseTableName="answer_post" constraintName="FKfe9vnvra5xx2kulv4h27seksa" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="post" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="answer_option" constraintName="FKfqeqisl0e28xp3yn9bmlgkhej" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_question" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="submission_id" baseTableName="submitted_answer" constraintName="FKfwgc3a5vd0cxt5jsvvxm2tstf" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="submission" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="answer_id" baseTableName="quiz_statistic_counter" constraintName="FKg7hjug3wu6icklf6gbiqs4n18" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="answer_option" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="answer_post" constraintName="FKgdd6qiyjtlrjgf2dsse32r8y5" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="result_id" baseTableName="complaint" constraintName="FKgyh851bnmsti3b0tmvtdf1y97" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="result" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="short_answer_question_statistic_id" baseTableName="quiz_statistic_counter" constraintName="FKhascwjyvee25c0k3tay04ghog" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_statistic" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="grading_scale_id" baseTableName="grade_step" constraintName="FKiub3ue9adasdas24v9ns656n" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="grading_scale" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="grading_scale" constraintName="FKiub3ue9adasdas2789ns656n" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="exam" constraintName="FKiub3ue9cklcyyra24v9ns656n" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
@@ -3553,9 +3489,6 @@
         <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="student_exam" constraintName="FKm3tx9n7w4hpjyu130hp3bueh7" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="tutor_participation_id" baseTableName="tutor_participation_trained_example_submissions" constraintName="FKmjdonimu07r4di2f49qpuajhs" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="tutor_participation" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_organization" constraintName="FKnfyuy63doxihtl3pu8rnm46n4" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="multiple_choice_question_statistic_id" baseTableName="quiz_statistic_counter" constraintName="FKoh69hhnfcimvw7i1cwhepvt5g" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_statistic" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="quiz_question_statistic_id" baseTableName="quiz_question" constraintName="FKoi0sqphft8m7f92qa7ui8i3ac" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_statistic" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="spot_id" baseTableName="quiz_statistic_counter" constraintName="FKoqgu1clyd02qbo86silw1uhmk" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="short_answer_spot" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="spot_id" baseTableName="short_answer_submitted_text" constraintName="FKpkb6e1yjqhma5tgvabb9smyv4" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="short_answer_spot" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="exercise_categories" constraintName="FKqdemq87pe28lexkg6kh73vueg" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="complaint_id" baseTableName="complaint_response" constraintName="FKrwjscojfvjqea2hl24gvl5yvb" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="complaint" validate="true"/>

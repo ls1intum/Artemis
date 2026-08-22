@@ -8,7 +8,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -29,9 +29,9 @@ const dropLocation2 = { id: 2, posX: 0, invalid: false, tempID: 2 } as DropLocat
 const dropLocationCounter1 = { dropLocationId: 1, ratedCounter: 0, unRatedCounter: 0 } as DropLocationCounter;
 const dropLocationCounter2 = { dropLocationId: 2, ratedCounter: 0, unRatedCounter: 0 } as DropLocationCounter;
 const questionStatistic = { dropLocationCounters: [dropLocationCounter1, dropLocationCounter2] } as DragAndDropQuestionStatistic;
-const question = { id: 1, dropLocations: [dropLocation1, dropLocation2], quizQuestionStatistic: questionStatistic } as DragAndDropQuestion;
+const question = { id: 1, dropLocations: [dropLocation1, dropLocation2] } as DragAndDropQuestion;
 const course = { id: 2 } as Course;
-let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
+let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question], questionId: 1, statistic: questionStatistic } as QuizQuestionStatisticResponse;
 
 describe('QuizExercise Drag And Drop Question Statistic Component', () => {
     let comp: DragAndDropQuestionStatisticComponent;
@@ -62,12 +62,12 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
                 comp = fixture.componentInstance;
                 quizService = TestBed.inject(QuizExerciseService);
                 accountService = TestBed.inject(AccountService);
-                quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindSpy = vi.spyOn(quizService, 'findQuestionStatistic').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
     afterEach(() => {
-        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
+        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question], questionId: 1, statistic: questionStatistic } as QuizQuestionStatisticResponse;
     });
 
     describe('onInit', () => {
@@ -79,7 +79,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
             comp.ngOnInit();
 
             expect(accountSpy).toHaveBeenCalledTimes(2);
-            expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
+            expect(quizServiceFindSpy).toHaveBeenCalledWith(42, 1);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
             expect(comp.websocketChannelForData).toBe('/topic/statistic/42');
         });

@@ -20,7 +20,7 @@ public interface QuizExerciseTestRepository extends QuizExerciseRepository {
      * @return the quiz exercise entity
      */
     @Nullable
-    default QuizExercise findOneWithQuestionsAndStatistics(Long quizExerciseId) {
-        return findWithEagerQuestionsAndStatisticsById(quizExerciseId).orElse(null);
+    default QuizExercise findOneWithQuestionsAndCategoriesAndBatches(Long quizExerciseId) {
+        return findWithEagerQuestionsAndCategoriesAndBatchesById(quizExerciseId).orElse(null);
     }
 }
