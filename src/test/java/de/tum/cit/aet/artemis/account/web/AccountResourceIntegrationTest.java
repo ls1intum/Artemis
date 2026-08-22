@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO.LoginMethod;
 import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
@@ -58,6 +59,9 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private UserRecoveryKeyService userRecoveryKeyService;
+
+    @Autowired
+    private UserAiPreferenceService userAiPreferenceService;
 
     @Autowired
     private LoginOptionsService loginOptionsService;
@@ -619,30 +623,28 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void acceptExternalLLMUsageSuccessful() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setSelectedLLMUsageTimestamp(null);
-        userTestRepository.save(user);
+        userUtilService.clearAiSelectionDecision(user);
 
         SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.CLOUD_AI);
         request.put("/api/account/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getSelectedLLMUsageTimestamp()).isNotNull();
+        assertThat(userAiPreferenceService.findDecisionDate(updatedUser.get().getId())).isNotNull();
     }
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void selectNoAIUsageSuccessful() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setSelectedLLMUsageTimestamp(null);
-        userTestRepository.save(user);
+        userUtilService.clearAiSelectionDecision(user);
 
         SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.NO_AI);
         request.put("/api/account/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getSelectedLLMUsageTimestamp()).isNotNull();
+        assertThat(userAiPreferenceService.findDecisionDate(updatedUser.get().getId())).isNotNull();
     }
 
     @Test
@@ -651,7 +653,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // Create user in repo with existing timestamp
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         ZonedDateTime originalTimestamp = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
-        user.setSelectedLLMUsageTimestamp(originalTimestamp);
+        userUtilService.setAiSelectionDecisionDate(user, originalTimestamp);
         userTestRepository.save(user);
 
         request.put("/api/account/users/select-llm-usage", null, HttpStatus.BAD_REQUEST);
@@ -660,7 +662,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         Optional<User> unchangedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(unchangedUser).isPresent();
 
-        ZonedDateTime actualTimestamp = unchangedUser.get().getSelectedLLMUsageTimestamp();
+        ZonedDateTime actualTimestamp = userAiPreferenceService.findDecisionDate(unchangedUser.get().getId());
         assertThat(actualTimestamp).isNotNull();
         assertThat(actualTimestamp.truncatedTo(ChronoUnit.MILLIS)).isEqualTo(originalTimestamp);
     }

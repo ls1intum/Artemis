@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -101,9 +102,11 @@ public class PublicAccountResource {
 
     private final UserRecoveryKeyService userRecoveryKeyService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
             Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
-            UserVcsAccessTokenService userVcsAccessTokenService, UserRecoveryKeyService userRecoveryKeyService) {
+            UserVcsAccessTokenService userVcsAccessTokenService, UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
@@ -113,6 +116,7 @@ public class PublicAccountResource {
         this.loginOptionsService = loginOptionsService;
         this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.userRecoveryKeyService = userRecoveryKeyService;
+        this.userAiPreferenceService = userAiPreferenceService;
     }
 
     /**
@@ -237,6 +241,9 @@ public class PublicAccountResource {
     private UserDTO getUserDTO(User user, boolean shouldPromptUserToSetupPasskey, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved) {
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
+        userDTO.setSelectedLLMUsage(userAiPreferenceService.findDecision(user.getId()));
+        userDTO.setSelectedLLMUsageTimestamp(userAiPreferenceService.findDecisionDate(user.getId()));
+        userDTO.setMemirisEnabled(userAiPreferenceService.isMemirisEnabled(user.getId()));
         userDTO.setVcsAccessToken(userVcsAccessTokenService.findToken(user.getId()));
         userDTO.setVcsAccessTokenExpiryDate(userVcsAccessTokenService.findExpiryDate(user.getId()));
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);

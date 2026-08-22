@@ -31,6 +31,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
@@ -80,8 +81,12 @@ public class UserResource {
 
     private final AuditEventRepository auditEventRepository;
 
-    public UserResource(AuditEventRepository auditEventRepository, UserRepository userRepository, UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
+    private final UserAiPreferenceService userAiPreferenceService;
+
+    public UserResource(AuditEventRepository auditEventRepository, UserRepository userRepository, UserCreationService userCreationService, Optional<LtiApi> ltiApi,
+            UserAiPreferenceService userAiPreferenceService) {
         this.userRepository = userRepository;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.ltiApi = ltiApi;
         this.userCreationService = userCreationService;
         this.auditEventRepository = auditEventRepository;
@@ -110,7 +115,7 @@ public class UserResource {
             user.setLastModifiedDate(null);
             user.setCreatedBy(null);
             user.setCreatedDate(null);
-            user.setSelectedLLMUsage(null);
+            // The decision is not part of a user search result; it lives in user_ai_preference and is not loaded here.
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -161,8 +166,8 @@ public class UserResource {
         if (selectedLLMUsage == null) {
             throw new IllegalArgumentException("LLM selection decision cannot be null");
         }
-        AiSelectionDecision before = user.getSelectedLLMUsage();
-        userRepository.updateSelectedLLMUsage(user.getId(), selectedLLMUsage, hasSelectedTimestamp);
+        AiSelectionDecision before = userAiPreferenceService.findDecision(user.getId());
+        userAiPreferenceService.recordDecision(user.getId(), selectedLLMUsage, hasSelectedTimestamp);
         var auditEvent = new AuditEvent(user.getLogin(), Constants.AI_SELECTION_DECISION, "before=" + before + ";after=" + selectedLLMUsage + ";at=" + hasSelectedTimestamp);
         auditEventRepository.add(auditEvent);
         return ResponseEntity.ok().build();

@@ -54,7 +54,6 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -171,13 +170,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String imageUrl;
 
     /**
-     * One-time key a user redeems through {@code GET /activate} to activate their own account. Only ever set together with
-     * {@code activated = false} on an internal account while self-registration is enabled - see {@link #activated} for why
-     * an externally managed account must never be given one, and for how the key's presence tells an account awaiting
-     * activation apart from one an admin deactivated.
-     */
-    /**
-     * No longer read or written by anything; the recovery keys live in {@code user_recovery_key}.
+     * No longer read or written by anything; the recovery keys live in {@code user_recovery_key}, which documents the
+     * invariant this key carries.
      * <p>
      * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
      *
@@ -238,10 +232,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String vcsAccessToken = null;
 
     /**
-     * The expiry date of the VCS access token.
-     * This is used for checking if an access token needs to be renewed.
-     */
-    /**
+     * The expiry date of the VCS access token, used to decide whether the token needs renewing.
+     *
      * @deprecated superseded by {@code user_vcs_access_token}; see {@link #vcsAccessToken}
      */
     @Deprecated(forRemoval = true)
@@ -305,16 +297,40 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
+    /**
+     * No longer read or written by anything; the AI preferences live in {@code user_ai_preference}.
+     * <p>
+     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
+     *
+     * @deprecated superseded by {@code user_ai_preference}
+     */
     @Nullable
     @Enumerated(EnumType.STRING)
+    @Deprecated(forRemoval = true)
     @Column(name = "ai_selection_decision")
     private AiSelectionDecision aiSelectionDecision = null;
 
+    /**
+     * No longer read or written by anything; the AI preferences live in {@code user_ai_preference}.
+     * <p>
+     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
+     *
+     * @deprecated superseded by {@code user_ai_preference}
+     */
     @Nullable
+    @Deprecated(forRemoval = true)
     @Column(name = "ai_selection_decision_date")
     private ZonedDateTime aiSelectionDecisionDate = null;
 
+    /**
+     * No longer read or written by anything; the AI preferences live in {@code user_ai_preference}.
+     * <p>
+     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
+     *
+     * @deprecated superseded by {@code user_ai_preference}
+     */
     @NonNull
+    @Deprecated(forRemoval = true)
     @Column(name = "memiris_enabled", nullable = false)
     private boolean memirisEnabled = true;
 
@@ -702,26 +718,12 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.aiSelectionDecisionDate = aiSelectionDecisionDate;
     }
 
-    public boolean hasOptedIntoLLMUsage() {
-        return aiSelectionDecision != null && aiSelectionDecision != AiSelectionDecision.NO_AI;
-    }
-
     public AiSelectionDecision getSelectedLLMUsage() {
         return aiSelectionDecision;
     }
 
     public void setSelectedLLMUsage(@Nullable AiSelectionDecision aiSelectionDecision) {
         this.aiSelectionDecision = aiSelectionDecision;
-    }
-
-    /**
-     * Checks if the user has selected to use AI.
-     * If not, an {@link AccessForbiddenException} is thrown.
-     */
-    public void hasOptedIntoLLMUsageElseThrow() {
-        if (!hasOptedIntoLLMUsage()) {
-            throw new AccessForbiddenException("The user has not selected to use AI.");
-        }
     }
 
     public LearnerProfile getLearnerProfile() {

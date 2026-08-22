@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.account.service.AccountService;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
@@ -68,6 +69,8 @@ public class AccountResource {
 
     private final UserVcsAccessTokenService userVcsAccessTokenService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final UserService userService;
 
     private final AccountService accountService;
@@ -82,8 +85,9 @@ public class AccountResource {
 
     public AccountResource(UserRepository userRepository, UserService userService, AccountService accountService, FileService fileService,
             AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
-            UserVcsAccessTokenService userVcsAccessTokenService) {
+            UserVcsAccessTokenService userVcsAccessTokenService, UserAiPreferenceService userAiPreferenceService) {
         this.userRepository = userRepository;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.userService = userService;
         this.accountService = accountService;
@@ -296,7 +300,7 @@ public class AccountResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> setMemirisEnabled(@RequestBody boolean memirisEnabled) {
         User user = userRepository.getUser();
-        userRepository.updateMemirisEnabled(user.getId(), memirisEnabled);
+        userAiPreferenceService.setMemirisEnabled(user.getId(), memirisEnabled);
         return ResponseEntity.ok().build();
     }
 }

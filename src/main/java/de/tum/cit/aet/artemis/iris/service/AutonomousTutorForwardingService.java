@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -34,12 +35,16 @@ public class AutonomousTutorForwardingService {
 
     private final FeatureToggleService featureToggleService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final IrisSettingsService irisSettingsService;
 
     private final PyrisPipelineService pyrisPipelineService;
 
-    public AutonomousTutorForwardingService(FeatureToggleService featureToggleService, IrisSettingsService irisSettingsService, PyrisPipelineService pyrisPipelineService) {
+    public AutonomousTutorForwardingService(FeatureToggleService featureToggleService, IrisSettingsService irisSettingsService, PyrisPipelineService pyrisPipelineService,
+            UserAiPreferenceService userAiPreferenceService) {
         this.featureToggleService = featureToggleService;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.irisSettingsService = irisSettingsService;
         this.pyrisPipelineService = pyrisPipelineService;
     }
@@ -84,7 +89,7 @@ public class AutonomousTutorForwardingService {
             return;
         }
 
-        if (AiSelectionDecision.NO_AI.equals(author.getSelectedLLMUsage())) {
+        if (AiSelectionDecision.NO_AI.equals(userAiPreferenceService.findDecision(author.getId()))) {
             log.debug("User {} opted out of AI, skipping autonomous tutor forwarding for post {}", author.getId(), post.getId());
             return;
         }
@@ -94,8 +99,10 @@ public class AutonomousTutorForwardingService {
         String supportLevel = settings.supportLevel().jsonValue();
         log.debug("Forwarding post {} to autonomous tutor pipeline (variant={})", post.getId(), variant);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, author.getSelectedLLMUsage(), new PyrisPostDTO(post), course, toPyrisUserDTO(author), null, null,
-                null, (runId, runState, error) -> {
+        // One query for every answer author, rather than one per answer while the DTO is assembled.
+        var decisions = userAiPreferenceService.findDecisions(answerAuthorIds(post));
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, userAiPreferenceService.findDecision(author.getId()), new PyrisPostDTO(post, decisions), course,
+                toPyrisUserDTO(author), null, null, null, (runId, runState, error) -> {
                 });
     }
 
@@ -140,13 +147,13 @@ public class AutonomousTutorForwardingService {
             return;
         }
 
-        if (AiSelectionDecision.NO_AI.equals(author.getSelectedLLMUsage())) {
+        if (AiSelectionDecision.NO_AI.equals(userAiPreferenceService.findDecision(author.getId()))) {
             log.debug("User {} opted out of AI, skipping autonomous tutor forwarding for answer post {}", author.getId(), answerPost.getId());
             return;
         }
 
         User parentAuthor = parentPost.getAuthor();
-        if (AiSelectionDecision.NO_AI.equals(parentAuthor.getSelectedLLMUsage())) {
+        if (AiSelectionDecision.NO_AI.equals(userAiPreferenceService.findDecision(parentAuthor.getId()))) {
             log.debug("Parent post {} author opted out of AI, skipping autonomous tutor forwarding for answer post {}", parentPost.getId(), answerPost.getId());
             return;
         }
@@ -156,12 +163,21 @@ public class AutonomousTutorForwardingService {
         String supportLevel = settings.supportLevel().jsonValue();
         log.debug("Forwarding answer post {} (thread {}) to autonomous tutor pipeline (variant={})", answerPost.getId(), parentPost.getId(), variant);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, author.getSelectedLLMUsage(), new PyrisPostDTO(parentPost), course, toPyrisUserDTO(author), null,
-                null, null, (runId, runState, error) -> {
+        var decisions = userAiPreferenceService.findDecisions(answerAuthorIds(parentPost));
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, userAiPreferenceService.findDecision(author.getId()), new PyrisPostDTO(parentPost, decisions),
+                course, toPyrisUserDTO(author), null, null, null, (runId, runState, error) -> {
                 });
     }
 
+    /**
+     * The ids of the authors of a post's answers, so their decisions load in one query instead of one per answer.
+     */
+    private static java.util.Set<Long> answerAuthorIds(Post post) {
+        return post.getAnswers().stream().map(answer -> answer.getAuthor() == null ? null : answer.getAuthor().getId()).filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+    }
+
     private PyrisUserDTO toPyrisUserDTO(User user) {
-        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && user.isMemirisEnabled());
+        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && userAiPreferenceService.isMemirisEnabled(user.getId()));
     }
 }

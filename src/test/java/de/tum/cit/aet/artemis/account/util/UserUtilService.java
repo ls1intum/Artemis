@@ -25,9 +25,11 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
@@ -83,6 +85,9 @@ public class UserUtilService {
 
     @Autowired
     private UserVcsAccessTokenService userVcsAccessTokenService;
+
+    @Autowired
+    private UserAiPreferenceService userAiPreferenceService;
 
     @Autowired
     private CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
@@ -198,7 +203,9 @@ public class UserUtilService {
      */
     public User setRegistrationNumberOfUserAndSave(User user, String registrationNumber) {
         user.setRegistrationNumber(registrationNumber);
-        return userTestRepository.save(user);
+        User saved = userTestRepository.save(user);
+        seedDefaultAiPreference(saved);
+        return saved;
     }
 
     /**
@@ -387,6 +394,7 @@ public class UserUtilService {
             userCourseRoleTestRepository.deleteAllInBulk();
             log.debug("Save {} users to database...", usersToAdd.size());
             usersToAdd = new ArrayList<>(userTestRepository.saveAllOrUpdate(usersToAdd));
+            usersToAdd.forEach(this::seedDefaultAiPreference);
             log.debug("Save {} users to database. Done", usersToAdd.size());
         }
 
@@ -691,5 +699,63 @@ public class UserUtilService {
         userVM.setLangKey(Constants.DEFAULT_LANGUAGE);
         userVM.setAuthorities(Set.of(Role.STUDENT.getAuthority()));
         return userVM;
+    }
+
+    /**
+     * Records an account's LLM usage decision. The preference lives in {@code user_ai_preference}, keyed on the user id,
+     * so it cannot be set by mutating an unsaved user the way the former column allowed.
+     *
+     * @param user     the account, which must already be saved
+     * @param decision the decision to record, or null to record only a timestamp
+     */
+    public void setAiSelectionDecision(User user, AiSelectionDecision decision) {
+        if (decision == null) {
+            return;
+        }
+        userAiPreferenceService.recordDecision(user.getId(), decision, ZonedDateTime.now());
+    }
+
+    /**
+     * Records when an account made its LLM usage decision, keeping whatever decision is already stored.
+     *
+     * @param user the account, which must already be saved
+     * @param when the timestamp to record
+     */
+    public void setAiSelectionDecisionDate(User user, ZonedDateTime when) {
+        AiSelectionDecision existing = userAiPreferenceService.findDecision(user.getId());
+        userAiPreferenceService.recordDecision(user.getId(), existing != null ? existing : AiSelectionDecision.CLOUD_AI, when);
+    }
+
+    /**
+     * Turns Memiris on or off for an account.
+     *
+     * @param user    the account, which must already be saved
+     * @param enabled whether Memiris may remember anything
+     */
+    public void setMemirisEnabled(User user, boolean enabled) {
+        userAiPreferenceService.setMemirisEnabled(user.getId(), enabled);
+    }
+
+    /**
+     * Records the AI decision that UserFactory used to set directly on the generated user. It cannot be set before the
+     * save any more, because the preference is a row keyed on the user id, so it is applied here instead - the many Iris
+     * and Athena tests that rely on the fixture default therefore keep working unchanged.
+     *
+     * @param user a saved account
+     */
+    private void seedDefaultAiPreference(User user) {
+        if (user.getId() != null) {
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
+        }
+    }
+
+    /**
+     * Removes an account's recorded LLM usage decision, which the fixture seeds by default. Needed by tests that assert
+     * the behaviour for an account that has not decided yet: clearing the former column in memory used to be enough.
+     *
+     * @param user the account, which must already be saved
+     */
+    public void clearAiSelectionDecision(User user) {
+        userAiPreferenceService.clearDecision(user.getId());
     }
 }

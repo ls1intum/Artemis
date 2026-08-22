@@ -26,16 +26,28 @@ public class UserRecoveryKey {
     @Column(name = "user_id")
     private long userId;
 
+    /**
+     * One-time key a user redeems through {@code GET /activate} to activate their own account. Only ever set while
+     * {@link User#activated} is false on an internal account and self-registration is enabled - see that field for why an
+     * externally managed account must never be given one, and for how the key's presence tells an account awaiting
+     * activation apart from one an admin deactivated.
+     */
     @Nullable
     @JsonIgnore
     @Column(name = "activation_key", length = 20)
     private String activationKey = null;
 
+    /**
+     * One-time key a user redeems to set a new password, issued by a password reset request and cleared once used.
+     */
     @Nullable
     @JsonIgnore
     @Column(name = "reset_key", length = 20)
     private String resetKey = null;
 
+    /**
+     * When the outstanding reset key was issued, against which its expiry is checked.
+     */
     @Nullable
     @Column(name = "reset_date")
     private Instant resetDate = null;
