@@ -3132,7 +3132,7 @@ components:
         feedback: {type: string, description: Suggested feedback, minLength: 1}
         usageCount: {type: integer, format: int32, description: Maximum number of
             uses, minimum: 0}
-      required: [feedback, gradingScale, instructionDescription]
+      required: [credits, feedback, gradingScale, instructionDescription, usageCount]
     TutorialGroupFreePeriod:
       type: object
       properties:
@@ -3903,7 +3903,7 @@ components:
           items: {$ref: '#/components/schemas/GeneratedAssessmentInstruction'}
           maxItems: 3
           minItems: 3
-      required: [title]
+      required: [bonus, structuredGradingInstructions, title]
     QuizExerciseReEvaluate:
       type: object
       properties:

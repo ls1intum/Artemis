@@ -17,7 +17,7 @@ export interface GeneratedAssessmentCriterion {
     /** Criterion title */
     title: string;
     /** Whether the criterion awards bonus points */
-    bonus?: boolean;
+    bonus: boolean;
     /** Full-credit, partial-credit, and no-credit instructions, in that order */
-    structuredGradingInstructions?: Array<GeneratedAssessmentInstruction>;
+    structuredGradingInstructions: Array<GeneratedAssessmentInstruction>;
 }
