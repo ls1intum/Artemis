@@ -22,6 +22,34 @@ const audienceDestinations: AudienceDestination[] = [
     { role: 'administrator', title: 'Administrator', description: 'Run Artemis', to: '/admin/intro' },
 ];
 
+interface QualityClaim {
+    label: string;
+    headline: string;
+    detail: string;
+}
+
+// Performance, user experience and sustainability are core quality requirements rather than
+// incidental properties, so they get stated on the landing page instead of only in the admin
+// documentation. Every figure here comes from the published reference run, and the strip links to it
+// so the claim can be checked rather than taken on trust.
+const qualityClaims: QualityClaim[] = [
+    {
+        label: 'Performance',
+        headline: '0.45s average',
+        detail: 'Across 72,024 requests while 2,000 students sat a full exam, with zero failed requests.',
+    },
+    {
+        label: 'User experience',
+        headline: 'Fast where it counts',
+        detail: 'Opening an exam takes 0.23s and handing one in 0.29s, because waiting on a page during an exam costs exam time.',
+    },
+    {
+        label: 'Sustainability',
+        headline: 'Small footprint',
+        detail: 'That exam ran on eight virtual machines with four CPUs each, every one weaker than a typical laptop.',
+    },
+];
+
 interface ProjectDestination {
     title: string;
     description: string;
@@ -112,6 +140,27 @@ function HomepageContent(): ReactNode {
                             ))}
                         </nav>
                     </div>
+                </div>
+            </section>
+
+            <section className={styles.qualityStrip} aria-labelledby="homepage-quality-title">
+                <div className="container">
+                    <Heading as="h2" id="homepage-quality-title" className={styles.qualityTitle}>
+                        Built for speed, measured in the open
+                    </Heading>
+                    <ul className={styles.qualityGrid}>
+                        {qualityClaims.map((claim) => (
+                            <li key={claim.label} className={styles.qualityCard}>
+                                <span className={styles.qualityLabel}>{claim.label}</span>
+                                <strong className={styles.qualityHeadline}>{claim.headline}</strong>
+                                <span className={styles.qualityDetail}>{claim.detail}</span>
+                            </li>
+                        ))}
+                    </ul>
+                    <Link to="/admin/benchmarking-tool#reference-run" className={styles.qualityLink}>
+                        See the full reference run
+                        <ArrowIcon />
+                    </Link>
                 </div>
             </section>
 
