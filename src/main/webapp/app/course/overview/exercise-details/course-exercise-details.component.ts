@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
 import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -240,6 +240,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faAngleUp = faAngleUp;
 
     ngOnInit() {
+        // Keeps the mode in step with the participation in the URL for navigations that do not reload the exercise.
+        // Angular reuses this component when only the child participation changes - switching between graded and
+        // practice does that, and so does going back afterwards - and `loadExercise()` does not run then, so the mode
+        // would go on describing a participation the editor no longer shows.
+        this.router.events
+            .pipe(
+                filter((event) => event instanceof NavigationEnd),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(() => this.syncModeWithRoutedParticipation());
+
         const courseIdParams$ = this.route.parent?.parent?.params;
         const exerciseIdParams$ = this.route.params;
         if (courseIdParams$) {
@@ -263,9 +274,63 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Selects the mode of the participation the URL addresses, e.g. practice for
+     * `/courses/1/exercises/programming-exercises/2/code-editor/680` with 680 being the practice participation.
+     * <p>
+     * The routed participation is what the student asked to see, so it decides the mode. Without this the mode fell
+     * back to `graded` on every load, and {@link ExerciseSplitPanelComponent} then redirected the embedded editor from
+     * the practice participation in the URL to the graded one — after the due date a read-only repository. Starting the
+     * practice mode routes to the practice participation, so this is also what keeps the practice mode selected across
+     * a reload (issue #12780).
+     * <p>
+     * Both modes are selected from the URL, not just practice: going back after a switch leaves the editor on the other
+     * participation, and a mode that only ever moved towards practice would then describe the wrong one. A routed id
+     * that belongs to neither participation (not loaded yet) leaves the mode untouched.
+     */
+    private syncModeWithRoutedParticipation(): void {
+        const routedParticipationId = this.routedParticipationId();
+        if (routedParticipationId === undefined) {
+            return;
+        }
+        if (routedParticipationId === this.practiceStudentParticipation()?.id) {
+            this.participationMode.set('practice');
+        } else if (routedParticipationId === this.gradedStudentParticipation()?.id) {
+            this.participationMode.set('graded');
+        }
+    }
+
+    /**
+     * The participation id in the URL, read from the child route and, while that route is not activated yet, from the
+     * URL itself.
+     * <p>
+     * Both are needed. Angular activates a child route only after this component has initialised, so during the first
+     * pass `route.firstChild` is still empty, and reading it alone left the mode on `graded` until the details
+     * response arrived - by which time the split panel had redirected the editor to the graded participation and the
+     * URL no longer named the one the student had asked for. The URL of the running navigation is what covers that
+     * first pass; the child route covers every later evaluation.
+     */
+    private routedParticipationId(): number | undefined {
+        const fromChildRoute = this.route.firstChild?.snapshot.paramMap.get('participationId');
+        if (fromChildRoute) {
+            return Number(fromChildRoute);
+        }
+        // While a navigation is in flight - which is exactly when this component is being created for the editor route
+        // - `router.url` still holds the URL being left. The target is only in the navigation itself.
+        const navigationUrl = this.router.getCurrentNavigation?.()?.finalUrl?.toString() ?? this.router.url;
+        const fromUrl = /\/(?:code-editor|participate)\/(\d+)/.exec(navigationUrl);
+        return fromUrl ? Number(fromUrl[1]) : undefined;
+    }
+
     loadExercise() {
         this.participationMode.set('graded');
         this._studentParticipations.set(this.participationWebsocketService.getParticipationsForExercise(this.exerciseId));
+        // Evaluated here as well as after the details arrive, because it has to be settled before the first change
+        // detection: ExerciseSplitPanelComponent routes the embedded editor to the active participation as soon as it
+        // runs, so a mode derived only from the response would arrive after that redirect had already replaced the
+        // practice participation in the URL with the graded one, and the redirect is what the mode is then read back
+        // from. The locally known participations already contain the practice one right after it was started.
+        this.syncModeWithRoutedParticipation();
         this._resultWithComplaint.set(
             getFirstResultWithComplaintFromResults(
                 this.gradedStudentParticipation()?.submissions?.flatMap((submission) => (submission.results ?? []).filter((result): result is Result => result !== undefined)),
@@ -276,6 +341,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (!this.gradedStudentParticipation() && this.practiceStudentParticipation()) {
                 this.participationMode.set('practice');
             }
+            // Re-evaluated now that the participations are known: before the response the routed id could not be
+            // matched to one of them yet.
+            this.syncModeWithRoutedParticipation();
             this.loadComplaintAndLatestRatedResult();
         });
     }
@@ -545,10 +613,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const course = this.courseStorageService.getCourse(this.courseId);
         const cachedExercise = course?.exercises?.find((exercise) => exercise.id === exerciseId);
         if (course && cachedExercise) {
+            // Mutated in place, and the same course object re-stored: the sidebar card renders this very exercise
+            // object, so replacing it with a copy would leave the card bound to the pre-update one.
             cachedExercise.studentParticipations = this._studentParticipations();
-            // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
-            // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
-            this.courseStorageService.updateCourse(course, this.courseStorageService.isCourseFullyLoaded(this.courseId));
+            this.courseStorageService.updateCourse(course);
         }
     }
 

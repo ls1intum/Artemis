@@ -13,6 +13,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface OnlineUnitFormData {
     name?: string;
@@ -137,7 +138,7 @@ export class OnlineUnitFormComponent {
     }
 
     submitForm() {
-        const onlineUnitFormData: OnlineUnitFormData = { ...this.form.value };
+        const onlineUnitFormData: OnlineUnitFormData = deepClone(this.form.value);
         this.formSubmitted.emit(onlineUnitFormData);
     }
 

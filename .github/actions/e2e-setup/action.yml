@@ -62,6 +62,13 @@ runs:
       shell: bash
       run: .ci/E2E-tests/cleanup.sh
 
+    # Must run after the cleanup (which stops containers but leaves images) and before the tests, so
+    # no build job ever races a multi-gigabyte on-demand pull. See the script header for the failure
+    # this prevents.
+    - name: Pre-pull exercise images
+      shell: bash
+      run: .ci/E2E-tests/prepull-exercise-images.sh
+
     - name: Clean old test results
       shell: bash
       run: |
