@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,6 +166,34 @@ public class AsyncConfiguration implements AsyncConfigurer {
         executor.setThreadNamePrefix("vcs-access-log-");
         executor.setRejectedExecutionHandler((runnable, pool) -> log
                 .warn("Dropping a version control access log write: the executor is saturated ({} queued). The git operation itself is unaffected.", pool.getQueue().size()));
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
+     * Executor for writing submission versions (see {@code SubmissionVersionService}).
+     * <p>
+     * A version is a full copy of the submission content, several kilobytes of {@code longtext}, and nothing in the
+     * request reads it back. Writing it on the request thread put the slowest statement in the submit path directly in
+     * front of the student, so it moves off the request and the student sees the submission acknowledged sooner.
+     * <p>
+     * Unlike the access log executor, saturation here runs the task on the calling thread rather than discarding it. A
+     * submission version is the student's own work, so the worst acceptable outcome is being as slow as before, never
+     * losing it. The queue is bounded so that a backlog cannot grow without limit before that fallback engages.
+     *
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated pool that falls back to the
+     *         caller when saturated
+     */
+    @Bean("submissionVersionExecutor")
+    public Executor submissionVersionExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(8);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("submission-version-");
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 
