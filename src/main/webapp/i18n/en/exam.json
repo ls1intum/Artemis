@@ -498,7 +498,7 @@
                 "text": "Exam Texts",
                 "examSolutions": "Exam Solutions"
             },
-            "title": "Exam Management",
+            "title": "Exams",
             "createExam": "Create a new exam",
             "importExam": "Import an exam",
             "editExam": "Edit an existing exam",

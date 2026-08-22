@@ -1,19 +1,12 @@
 @if (course()) {
-    <div class="flex">
+    <div class="flex h-full w-full">
         <div [class.sidebar-collapsed]="isCollapsed()">
-            <jhi-sidebar
-                [showSidebarToggle]="true"
-                [isSidebarCollapsed]="isCollapsed()"
-                (toggleSidebar)="toggleSidebar()"
-                [pageTitle]="pageTitle()"
-                [sidebarData]="sidebarData"
-                [collapseState]="collapseState"
-                [sidebarItemAlwaysShow]="sidebarItemAlwaysShow"
-            />
+            <jhi-exam-management-navigation-sidebar [isCollapsed]="isCollapsed()" [pageTitle]="pageTitle()" (toggleSidebar)="toggleSidebar()" />
         </div>
-        <div class="module-bg rounded-3 p-3 scrollable-content">
-            <jhi-course-title-bar-title id="course-page-heading" title="artemisApp.exam.overview.realExamsHeading" />
-            <jhi-documentation-button [type]="documentationType" />
+        <div class="module-bg rounded-md p-3 scrollable-content">
+            @if (isCollapsed()) {
+                <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
+            }
             @if (course().isAtLeastInstructor) {
                 <a class="btn btn-sm btn-primary me-1" (click)="openImportModal()">
                     <fa-icon [icon]="faFileImport" />

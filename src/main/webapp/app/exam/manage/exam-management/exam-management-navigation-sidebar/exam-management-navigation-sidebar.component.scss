@@ -1,0 +1,21 @@
+@import 'src/main/webapp/content/scss/artemis-mixins';
+
+:host {
+    display: flex;
+    height: 100%;
+}
+
+.sidebar-wrap {
+    display: flex;
+}
+
+.sidebar {
+    background-color: var(--module-bg);
+}
+
+// hide sidebar when printing webpage
+@media print {
+    .hide-on_print {
+        display: none !important;
+    }
+}

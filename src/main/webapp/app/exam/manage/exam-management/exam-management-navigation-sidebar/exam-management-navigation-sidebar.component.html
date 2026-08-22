@@ -1,0 +1,22 @@
+<div class="sidebar-wrap">
+    <div class="flex sidebar rounded-md px-2 sidebar-width hide-on_print">
+        <div class="w-full bg-module">
+            <div class="sidebar-content">
+                <div class="flex items-center justify-between gap-2 py-2">
+                    <div class="flex items-center">
+                        @if (pageTitle()) {
+                            <jhi-course-title-bar-title [title]="pageTitle()" />
+                        }
+                        <jhi-documentation-button [type]="documentationType" />
+                    </div>
+                    @if (!isCollapsed()) {
+                        <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+                    }
+                </div>
+                <!-- body start -->
+
+                <!-- body end -->
+            </div>
+        </div>
+    </div>
+</div>

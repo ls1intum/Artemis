@@ -18,15 +18,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExamImportComponent, ExamImportDialogData } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ExamStatusComponent } from '../exam-status/exam-status.component';
-import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { PageTitleView, SidebarView } from 'app/course/shared/sidebar-view.interface';
-import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
-import { CollapseState, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
+import { ExamManagementNavigationSidebarComponent } from 'app/exam/manage/exam-management/exam-management-navigation-sidebar/exam-management-navigation-sidebar.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -34,14 +32,13 @@ import { CollapseState, SidebarData, SidebarItemShowAlways } from 'app/foundatio
     styleUrls: ['./exam-management.component.scss'],
     imports: [
         TranslateDirective,
-        DocumentationButtonComponent,
         FaIconComponent,
         RouterLink,
         SortDirective,
         SortByDirective,
         ExamStatusComponent,
-        CourseTitleBarTitleComponent,
-        SidebarComponent,
+        ExamManagementNavigationSidebarComponent,
+        CourseSidebarToggleButtonComponent,
     ],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, PageTitleView {
@@ -60,38 +57,17 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, 
     readonly course = signal<Course>(undefined!);
     readonly exams = signal<Exam[]>(undefined!);
 
-    // current sidebar test start
-    readonly sidebarData: SidebarData = {
-        groupByCategory: false,
-        sidebarType: 'default',
-        storageId: 'examManagement',
-        ungroupedData: [],
-    };
-
-    readonly collapseState: CollapseState = {
-        real: false,
-        test: false,
-        attempt: false,
-    };
-
-    readonly sidebarItemAlwaysShow: SidebarItemShowAlways = {
-        real: true,
-        test: true,
-        attempt: true,
-    };
-
     // SidebarView / PageTitleView requirements
     readonly isCollapsed = signal<boolean>(false);
     readonly pageTitle = signal<string>('');
 
     toggleSidebar(): void {
-        this.isCollapsed.set(!this.isCollapsed());
+        this.isCollapsed.update((state) => !state);
     }
 
     setPageTitle(pageTitle: string): void {
         this.pageTitle.set(pageTitle);
     }
-    // current sidebar test end
 
     predicate: string;
     ascending: boolean;
