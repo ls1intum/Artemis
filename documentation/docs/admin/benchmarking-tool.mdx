@@ -224,87 +224,156 @@ behind that number is real.
 Want to check it on your own infrastructure? The rest of this page explains how, and we would welcome
 your results.
 
-## Results across three deployments
+## Results across two clusters
 
-The section above reports the headline run. This one reports all three deployments we measured, so you
-can see how the numbers move with the size and shape of the installation. It is written for someone
-sizing an installation rather than for a performance engineer, so the metrics stay deliberately
-high-level: how much hardware, how many students, how long the work took, and what ran out first.
+The section above reports the headline run. This one reports both clusters we measured in more detail,
+so you can see what the load actually did to each machine. It is written for someone sizing an
+installation rather than for a performance engineer, so the metrics stay high-level: how much hardware,
+how many students, how long the work took, and what ran out first.
 
-All three runs used the same scenario and the same load generator, so the numbers are comparable with
-each other. Every student logs in, opens the exam, submits all four exercise types, pushes code to
-their own git repository, and hands the exam in, with no pause between actions.
+Both runs used the same scenario, the same load generator and the same student count, so they are
+comparable with each other. Every student logs in, opens the exam, submits all four exercise types,
+pushes code to their own git repository, and hands the exam in, with no pause between actions.
 
 ### What was tested
 
-| | staging1 | staging2 | test server |
-| --- | --- | --- | --- |
-| Shape | Multi-node | Multi-node | Single machine |
-| Machines | 8 | 8 | 1 |
-| CPUs in total | 32 | 32 | **4** |
-| Memory in total | 30 GB | 30 GB | **3.8 GB** |
-| Artemis servers | 3 | 3 | 1 (also runs the build agent) |
-| Build agents | 3 separate machines | 3 separate machines | shared with the Artemis server |
-| Database | MySQL, own machine | MySQL, own machine | PostgreSQL, same machine |
-| Coordination between servers | Hazelcast | Redis | not applicable |
-| Repository storage | shared network storage | shared network storage | local disk |
-| Simulated students | 2,000 | 2,000 | 500 |
+| | staging1 | staging2 |
+| --- | --- | --- |
+| Virtual machines | 11 | 11 |
+| CPUs in total | 44 | 44 |
+| Memory in total | 41.5 GB | 41.5 GB |
+| Artemis servers | 3 | 3 |
+| Build agent machines | 3 | 3 |
+| Concurrent builds | 6 | 9 |
+| Database | MySQL, own machine | MySQL, own machine |
+| Coordination between servers | Hazelcast | Redis |
+| Repository storage | shared network storage | shared network storage |
+| Simulated students | 2,000 | 2,000 |
 
-Every machine in the two multi-node clusters is a virtual machine with 4 CPUs and 3.8 GB of memory. The
-test server is a single virtual machine of exactly the same size, running everything at once.
+Every machine is a virtual machine with 4 CPUs and 3.8 GB of memory. The clusters get their capacity
+from having eleven of them rather than from any machine being large.
 
 ### What happened
 
-| | staging1 | staging2 | test server |
-| --- | --- | --- | --- |
-| Students | 2,000 | 2,000 | 500 |
-| Requests handled | 72,024 | 70,197 | 28,411 |
-| Failed requests | 0 | 0 | 0 |
-| Average response time | 0.45 s | **0.30 s** | 2.73 s |
-| Open the exam | 0.23 s | 0.29 s | 0.82 s |
-| Submit an exercise | 0.75 s | **0.31 s** | 19.6 s |
-| Download a code repository | 2.04 s | **0.98 s** | 5.47 s |
-| Push code | 3.11 s | 4.27 s | 14.1 s |
-| Time to work through the exam | 3 minutes | **2.5 minutes** | 13 minutes |
-| Busiest resource at the end | Artemis servers, 87% CPU | Artemis servers, 77% CPU | everything, see below |
+| Action | staging1 | staging2 |
+| --- | --- | --- |
+| Load the exam | 0.14 s | **0.11 s** |
+| Open the exam | 0.23 s | 0.29 s |
+| Submit an exercise | 0.75 s | **0.31 s** |
+| Hand in the exam | 0.29 s | **0.23 s** |
+| Download a code repository | 2.04 s | **0.98 s** |
+| Push code | 3.11 s | 4.27 s |
+| Everything else | 0.27 s | **0.13 s** |
+| **Average across all actions** | **0.45 s** | **0.30 s** |
+| Requests handled | 72,024 | 70,197 |
+| Time to work through the exam | 3 minutes | 2.5 minutes |
 
-### Reading the table
+### Where the load landed
 
-**The two clusters both had room left.** On staging1 the busiest Artemis server finished at 87% CPU and
-on staging2 at 77%, and in both cases the supporting machines were far quieter: the database at
-roughly half its capacity, the file server holding every student repository around a tenth, the network
-at a few percent. Neither run was pushed to failure, so both figures are a floor rather than a ceiling.
+| Machine | staging1 | staging2 |
+| --- | --- | --- |
+| Busiest Artemis server | 87% CPU | 77% CPU |
+| Other two Artemis servers | 66%, 60% | 42%, 43% |
+| Database | 47% CPU | 47% CPU |
+| Repository storage | 11% CPU | 12% CPU |
+| Coordination service | not measured separately | 10% CPU |
+| Reverse proxy | 11% CPU | 8% CPU |
+| Busiest network link | under 5% of capacity | under 5% of capacity |
 
-**staging2 was faster across the board**, at 0.30 seconds average against 0.45. Two things differ
-between the clusters, so the credit cannot be assigned cleanly: staging2 coordinates its servers
-through Redis rather than Hazelcast, and it was also running a newer Artemis version. What can be said
-is that the coordination layer itself was never a limit. Redis peaked at 10% CPU and 44 MB of memory,
-with no evicted keys, while serving 2,500 commands per second.
+### Reading the results
 
-**The single machine reached its limit, and that is the useful part.** 500 students on one 4 CPU
-machine that also hosts the database and the build agent saturated everything at once: processor at
-96%, memory at 96% with 8 MB free, swap entirely full, and a quarter of all processor time spent
-waiting for the disk. Nothing failed and every student finished, but submitting an exercise took 19.6
-seconds. This is what an undersized deployment looks like before it breaks, and it is why the number
-that matters is not "how many students" on its own but "how many students on how much hardware".
+**Both clusters had room left.** The busiest Artemis server finished at 87% and 77%, and everything
+behind it was far quieter: the database at under half, the storage holding every student repository
+around a tenth, the network at a few percent. Neither run was driven to failure, so both are floors
+rather than ceilings.
 
-### What this means for sizing
+**The supporting services are not where capacity goes.** This is the most transferable result on the
+page. Storage, coordination and the proxy together never exceeded 12% on either cluster, while the
+Artemis servers approached saturation. Capacity planning should follow that asymmetry.
 
-- **Separate the database and the build agents from the Artemis servers.** The single machine did not
-  run out of any one thing, it ran out of everything, because the three workloads competed. Splitting
-  them is what turns 500 students on 4 CPUs into 2,000 students on 32.
-- **Scale the Artemis servers first.** They were the busiest component in both clusters and they are
-  interchangeable: add another and it joins automatically.
-- **Do not size the storage tier from the git traffic.** It was the least loaded machine in both
-  clusters, even while every student cloned and pushed.
-- **Size the build agents from the feedback you promise**, not from the exam size. A maximum-throughput
-  simulation queues builds far faster than any agent pool drains them, which is expected and is a
-  capacity decision of its own.
+**staging2 was faster on almost every action**, and the difference is large: submitting an exercise
+took 0.31 s against 0.75 s, and downloading a repository 0.98 s against 2.04 s. Two things differ
+between the clusters, so the credit cannot be assigned cleanly: staging2 coordinates through Redis
+rather than Hazelcast, and it was running a newer Artemis version. What can be said is that the
+coordination layer was never the constraint on either cluster, since Redis peaked at 10% CPU and 44 MB
+of memory with no evicted keys while handling 2,500 commands per second.
+
+**Pushing code was the one action that got slower**, and that result is not yet clean: during the
+staging2 run a number of pushes failed server-side and were not retried, so both the 4.27 s figure and
+the lower push count reflect a fault rather than a capacity limit. It is being investigated separately.
+Treat the push row as provisional.
 
 ### How the students authenticated
 
-All three runs had every student use a repository access token, which is what Artemis hands out through
-the Code button and what most students use. This matters more than it sounds: an earlier run with every
+Both runs had every student use a repository access token, which is what Artemis hands out through the
+Code button and what most students use. This matters more than it sounds: an earlier run with every
 student typing a password instead was **58% slower**, because verifying a password is deliberately
 expensive and it dominated everything else on the Artemis servers. If you benchmark your own
 deployment, record the authentication mix alongside the result, or two numbers will not be comparable.
+
+## Scaling an installation
+
+Artemis has two kinds of node, and they scale different things. Treating them as one pool is the most
+common sizing mistake, because it leads to buying the wrong hardware for the problem you actually have.
+
+**Artemis core nodes carry simultaneous users.** Every student who is logged in, opening an exam,
+submitting an answer or pushing code is served by a core node. These are what run out during the peak,
+and in both measured clusters they were the busiest machines by a wide margin while everything behind
+them stayed under half loaded. Add core nodes, or make them larger, when the peak is what hurts.
+
+**Build agent nodes decide how long students wait for feedback.** They do not affect whether the exam
+works, only how quickly a student sees the result of a push. A queue that drains slowly is visible and
+annoying, but it degrades gracefully: students carry on working and results arrive later.
+
+That separation is a budget lever, and a legitimate one. An institution can reasonably decide to spend
+on core nodes so that two thousand students all submit smoothly, and to run a modest number of build
+agents so that feedback during the exam takes minutes rather than seconds. The reverse, plenty of build
+agents behind too few core nodes, buys nothing: students cannot reach the exam to generate builds in
+the first place.
+
+### One large core node or several small ones
+
+Several small nodes are usually the better choice at the same total cost:
+
+- They fail independently. Losing one of three during an exam costs a third of capacity, not all of it.
+- They can be added without downtime. A new node joins the cluster automatically.
+- Artemis distributes requests across them evenly, and the measurements show that working: on both
+  clusters the load spread across all three, with the busiest node ahead of the others but not alone.
+
+A single larger node is simpler to run and avoids needing shared storage and a coordination service, so
+it is a reasonable choice for a small installation. It becomes a liability once exams matter, because
+there is no headroom when it is saturated and no redundancy when it fails.
+
+### A starting point for sizing
+
+The figures below are a **rough starting point, not a validated model**. They are extrapolated from
+measurements on two clusters of identical shape, which is not enough variety to fit a curve to. Treat
+them as the configuration to benchmark first, then measure your own peak and adjust.
+
+| Role | Suggested unit | Rule of thumb |
+| --- | --- | --- |
+| Artemis core node | 4 CPUs, 4 GB memory | one per **500** simultaneous users |
+| Build agent node | 4 CPUs, 4 GB memory | one per **100** simultaneous users, for prompt feedback |
+| Database | 4 CPUs, 8 GB memory | one, sized by dataset rather than by user count |
+| Repository storage | 4 CPUs, 4 GB memory | one |
+| Reverse proxy | 2 CPUs, 2 GB memory | one |
+
+Worked example for an exam with 1,000 students taking a programming exam at once: two core nodes, ten
+build agents if you want feedback within the exam, or three or four if students can wait until
+afterwards. That difference, six or seven machines, is the budget lever described above.
+
+Two adjustments worth making to the units:
+
+- **Memory before CPUs on core nodes.** At 4 CPUs and 3.8 GB the measured nodes were tight on memory
+  well before they were tight on processor, and they swapped under load. 4 GB is the practical minimum
+  and more helps more than extra cores would.
+- **Size the database by data, not by students.** It stayed under half loaded at 2,000 students on both
+  clusters. What it needs is enough memory to hold the working set, since a database that pages its
+  cache to disk is slower than a smaller cache that fits.
+
+### What not to spend on
+
+The supporting services were never close to a limit in any measurement: repository storage around a
+tenth of one machine, the coordination service a tenth, the reverse proxy under an eighth, and the
+busiest network link under 5% of its capacity. Give them a machine each and move on. Additional
+capacity there does not buy performance, and the measurements are unambiguous about that.
