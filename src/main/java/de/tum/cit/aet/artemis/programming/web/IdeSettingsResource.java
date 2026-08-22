@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ide.Ide;
@@ -82,7 +81,7 @@ public class IdeSettingsResource {
         long userId = userRepository.getUserIdElseThrow();
         var ideMappings = userIdeMappingRepository.findAllByUserId(userId);
         List<IdeMappingDTO> ideRecords = ideMappings.stream().map(ideMapping -> new IdeMappingDTO(ideMapping.getProgrammingLanguage(), ideMapping.getIde())).toList();
-        log.debug("Successfully queried IDEs of user {}", SecurityUtils.getCurrentUserLogin().orElse("unknown"));
+        log.debug("Successfully queried IDEs of user {}", userRepository.getCurrentUserLogin());
 
         return ResponseEntity.ok(ideRecords);
     }

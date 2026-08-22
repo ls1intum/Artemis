@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -713,7 +712,7 @@ public class StudentExamResource {
 
         // Only the login is used, for the audit event and the log line, and the login is already in the security
         // context. Loading the user read a row of roughly sixty columns to obtain a value we were holding already.
-        String instructorLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
+        String instructorLogin = userRepository.getCurrentUserLogin();
         log.info("REST request to start exercises for student exams of exam {}", examId);
         AuditEvent auditEvent = new AuditEvent(instructorLogin, Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructorLogin);
         auditEventRepository.add(auditEvent);
@@ -831,7 +830,7 @@ public class StudentExamResource {
     public ResponseEntity<StudentExamDTO> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         // Only the login is used, for the audit event and the log line, and the login is already in the security
         // context. Loading the user read a row of roughly sixty columns to obtain a value we were holding already.
-        String instructorLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
+        String instructorLogin = userRepository.getCurrentUserLogin();
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
         StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
@@ -870,7 +869,7 @@ public class StudentExamResource {
     public ResponseEntity<StudentExamDTO> unsubmitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         // Only the login is used, for the audit event and the log line, and the login is already in the security
         // context. Loading the user read a row of roughly sixty columns to obtain a value we were holding already.
-        String instructorLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
+        String instructorLogin = userRepository.getCurrentUserLogin();
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
