@@ -137,6 +137,37 @@ public class AsyncConfiguration implements AsyncConfigurer {
         return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 
+    /**
+     * Executor for the version control access log writes (see {@code VcsAccessLogService}).
+     * <p>
+     * These run on their own pool, and one that discards rather than rejects, because of how the writes are reached.
+     * A git push submits the log write from the request thread, so a rejection is thrown at the push, not at the
+     * logging: benchmarking a 2000 student exam produced 399 failed pushes this way, each one a student's commit lost
+     * to a rejected bookkeeping task. Access logging must never be able to do that.
+     * <p>
+     * The queue is deliberately short. A long queue on a small pool is worse than a short one, because it delays the
+     * point at which the pool is allowed to grow while letting a backlog build that is already stale by the time it
+     * drains. When even that is full the entry is dropped with a warning, which loses an audit record but keeps the
+     * push working. That is the right way round: the log describes the push, so it cannot be worth more than the push.
+     *
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated pool that discards on
+     *         saturation
+     */
+    @Bean("vcsAccessLogExecutor")
+    public Executor vcsAccessLogExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(8);
+        executor.setQueueCapacity(1000);
+        executor.setThreadNamePrefix("vcs-access-log-");
+        executor.setRejectedExecutionHandler((runnable, pool) -> log
+                .warn("Dropping a version control access log write: the executor is saturated ({} queued). The git operation itself is unaffected.", pool.getQueue().size()));
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return new SimpleAsyncUncaughtExceptionHandler();
