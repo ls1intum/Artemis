@@ -25,6 +25,7 @@ import { ExamStatusComponent } from '../exam-status/exam-status.component';
 import { PageTitleView, SidebarView } from 'app/course/shared/sidebar-view.interface';
 import { ExamManagementNavigationSidebarComponent } from 'app/exam/manage/exam-management/exam-management-navigation-sidebar/exam-management-navigation-sidebar.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { TumUiButtonComponent, TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -39,6 +40,8 @@ import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sid
         ExamStatusComponent,
         ExamManagementNavigationSidebarComponent,
         CourseSidebarToggleButtonComponent,
+        TumUiButtonDirective,
+        TumUiButtonComponent,
     ],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, PageTitleView {

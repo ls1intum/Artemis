@@ -2,7 +2,6 @@
     min-width: 150px;
 }
 
-// override calculation which takes into account a header which was removed on this page
-.scrollable-content {
-    height: auto;
+.exam-management-header {
+    margin-bottom: var(--spacing-divider);
 }
