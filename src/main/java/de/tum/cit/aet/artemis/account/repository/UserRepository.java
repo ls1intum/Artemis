@@ -41,7 +41,6 @@ import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.dto.AuthenticatedUserDTO;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
@@ -1134,33 +1133,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return existing user object by current user login
      */
     @NonNull
-    /**
-     * Find the identity of a user by login, without loading the entity.
-     *
-     * @param login the login to look up
-     * @return the user's id and login, empty if no such non-deleted user exists
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.account.dto.AuthenticatedUserDTO(user.id, user.login)
-            FROM User user
-            WHERE user.login = :login AND user.deleted = FALSE
-            """)
-    Optional<AuthenticatedUserDTO> findIdentityByLogin(@Param("login") String login);
-
-    /**
-     * Get the identity of the currently logged-in user, without loading the entity.
-     * <p>
-     * Use this wherever only the id or login is needed. It reads two columns instead of the whole row, and nothing
-     * enters the persistence context to be dirty-checked afterwards.
-     *
-     * @return the current user's id and login
-     */
-    @NonNull
-    default AuthenticatedUserDTO getCurrentUserIdentity() {
-        String login = getCurrentUserLogin();
-        return findIdentityByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
-    }
-
     default User getUser() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneByLogin(currentUserLogin));
