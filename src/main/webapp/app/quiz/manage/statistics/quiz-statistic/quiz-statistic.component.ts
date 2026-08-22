@@ -1,10 +1,8 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { TooltipItem } from 'chart.js';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
@@ -16,6 +14,7 @@ import { ChartModule } from 'primeng/chart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 @Component({
     selector: 'jhi-quiz-statistic',
@@ -30,7 +29,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
     private quizExerciseService = inject(QuizExerciseService);
     private websocketService = inject(WebsocketService);
 
-    readonly quizExercise = signal<QuizExercise>(undefined!);
+    readonly quizExercise = signal<QuizStatisticsOverviewResponse>(undefined!);
 
     label: string[] = [];
     backgroundColor: string[] = [];
@@ -60,7 +59,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
             if (this.accountService.isAtLeastTutor()) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
+                this.quizExerciseService.findStatisticsOverview(params['exerciseId']).subscribe((res) => {
                     this.loadQuizSuccess(res.body!);
                 });
             }
@@ -69,9 +68,9 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.websocketSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe(() => {
+            this.websocketSubscription = this.websocketService.subscribe<number>(this.websocketChannelForData).subscribe(() => {
                 if (this.accountService.isAtLeastTutor()) {
-                    this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
+                    this.quizExerciseService.findStatisticsOverview(params['exerciseId']).subscribe((res) => {
                         this.loadQuizSuccess(res.body!);
                     });
                 }
@@ -89,7 +88,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
      *
      * @param quiz the quizExercise, which this quiz-statistic presents.
      */
-    loadQuizSuccess(quiz: QuizExercise) {
+    loadQuizSuccess(quiz: QuizStatisticsOverviewResponse) {
         // if the Student finds a way to the Website -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
             void this.router.navigate(['/courses']);
@@ -114,7 +113,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         // set data based on the CorrectCounters in the QuestionStatistics
         for (let i = 0; i < this.quizExercise().quizQuestions!.length; i++) {
             const question = this.quizExercise().quizQuestions![i];
-            const statistic = question.quizQuestionStatistic!;
+            const statistic = question.statistic;
             const ratedCounter = statistic.ratedCorrectCounter!;
             const unratedCounter = statistic.unRatedCorrectCounter!;
             this.label.push(i + 1 + '.');
@@ -155,7 +154,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
      * updates the chart by setting the data set and re-calculating the height
      */
     loadDataInDiagram(): void {
-        this.setData(this.quizExercise().quizPointStatistic!);
+        this.setData({ participantsRated: this.quizExercise().participantsRated, participantsUnrated: this.quizExercise().participantsUnrated });
         this.updateChartData();
         this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
     }

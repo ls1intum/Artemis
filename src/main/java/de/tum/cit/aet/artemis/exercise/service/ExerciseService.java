@@ -383,7 +383,7 @@ public class ExerciseService {
             // only necessary for team exercises
             setAssignedTeamIdForExerciseAndUser(exercise, user);
 
-            // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
+            // Filter out questions so users cannot see which answer options are correct.
             if (exercise instanceof QuizExercise quizExercise) {
                 quizExercise.filterSensitiveInformation();
 

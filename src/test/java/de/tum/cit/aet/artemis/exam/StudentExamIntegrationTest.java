@@ -1884,7 +1884,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             case QuizExercise quizExercise -> {
                 assertThat(quizExercise.getQuizQuestions()).hasSize(3);
                 quizExercise.getQuizQuestions().forEach(quizQuestion -> {
-                    assertThat(quizQuestion.getQuizQuestionStatistic()).isNull();
                     assertThat(quizQuestion.getExplanation()).isNull();
                     switch (quizQuestion) {
                         case MultipleChoiceQuestion mcQuestion -> mcQuestion.getAnswerOptions().forEach(answerOption -> {
@@ -2110,7 +2109,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     }
                     if (question != null) {
                         assertThat(question.getExplanation()).isNull();
-                        assertThat(question.getQuizQuestionStatistic()).isNull();
                         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
                             ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNull());
                             assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isEmpty();
@@ -2169,7 +2167,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     QuizQuestion question = submittedAnswer.getQuizQuestion();
                     if (question != null) {
                         assertThat(question.getExplanation()).isNotNull();
-                        assertThat(question.getQuizQuestionStatistic()).isNull();
                         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
                             ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNotNull());
                             assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isNotEmpty();

@@ -63,14 +63,16 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
             """)
     List<QuizExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
-    Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "categories", "quizBatches" })
+    Optional<QuizExercise> findWithEagerQuestionsAndCategoriesAndBatchesById(Long quizExerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizBatches" })
+    Optional<QuizExercise> findWithEagerQuestionsAndBatchesById(Long quizExerciseId);
 
     // exerciseVariantGroup is LAZY, and QuizExerciseWithoutQuestionsDTO reads its title/maxPoints/dates, so it must be
     // loaded here — otherwise the DTO mapping would trigger a proxy initialization outside the session.
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "competencyLinks.competency",
-            "quizBatches", "gradingCriteria", "exerciseVariantGroup" })
-    Optional<QuizExercise> findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(Long quizExerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "categories", "competencyLinks.competency", "quizBatches", "gradingCriteria", "exerciseVariantGroup" })
+    Optional<QuizExercise> findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(Long quizExerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
@@ -172,14 +174,25 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
         return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
     }
 
+    /**
+     * Get one quiz exercise by id and eagerly load questions and batches.
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the entity
+     */
     @NonNull
-    default QuizExercise findByIdWithQuestionsAndStatisticsElseThrow(Long quizExerciseId) {
-        return getValueElseThrow(findWithEagerQuestionsAndStatisticsById(quizExerciseId), quizExerciseId);
+    default QuizExercise findByIdWithQuestionsAndBatchesElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsAndBatchesById(quizExerciseId), quizExerciseId);
     }
 
     @NonNull
-    default QuizExercise findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(Long quizExerciseId) {
-        return getValueElseThrow(findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId), quizExerciseId);
+    default QuizExercise findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsAndCategoriesAndBatchesById(quizExerciseId), quizExerciseId);
+    }
+
+    @NonNull
+    default QuizExercise findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(Long quizExerciseId) {
+        return getValueElseThrow(findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId), quizExerciseId);
     }
 
     /**

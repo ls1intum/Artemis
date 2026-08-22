@@ -7,7 +7,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -36,7 +36,8 @@ let quizExercise = {
     quizStarted: true,
     course,
     quizQuestions: [question],
-} as QuizExercise;
+    statistic: { pointCounters } as QuizPointStatistic,
+} as QuizPointStatisticsResponse;
 
 describe('QuizExercise Point Statistic Component', () => {
     let comp: QuizPointStatisticComponent;
@@ -73,12 +74,12 @@ describe('QuizExercise Point Statistic Component', () => {
         accountService = TestBed.inject(AccountService);
         router = TestBed.inject(Router);
         translateService = TestBed.inject(TranslateService);
-        quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        quizServiceFindSpy = vi.spyOn(quizService, 'findPointStatistic').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
+        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question], statistic: { pointCounters } } as QuizPointStatisticsResponse;
     });
 
     describe('onInit', () => {
@@ -91,8 +92,8 @@ describe('QuizExercise Point Statistic Component', () => {
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
             comp.quizExercise.set(quizExercise);
-            comp.quizExercise().quizPointStatistic = new QuizPointStatistic();
-            comp.quizExercise().quizPointStatistic!.pointCounters = pointCounters;
+            comp.quizExercise().statistic = new QuizPointStatistic();
+            comp.quizExercise().statistic.pointCounters = pointCounters;
 
             // call
             comp.ngOnInit();
@@ -164,8 +165,8 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should call router if called by student', () => {
             // setup
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-            quizExercise.quizPointStatistic = new QuizPointStatistic();
-            quizExercise.quizPointStatistic.pointCounters = pointCounters;
+            quizExercise.statistic = new QuizPointStatistic();
+            quizExercise.statistic.pointCounters = pointCounters;
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -177,8 +178,8 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should load the quiz', () => {
             // setup
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            quizExercise.quizPointStatistic = new QuizPointStatistic();
-            quizExercise.quizPointStatistic.pointCounters = pointCounters;
+            quizExercise.statistic = new QuizPointStatistic();
+            quizExercise.statistic.pointCounters = pointCounters;
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -248,21 +249,6 @@ describe('QuizExercise Point Statistic Component', () => {
 
             expect(routerMock).toHaveBeenCalledOnce();
             expect(routerMock).toHaveBeenCalledWith(['courses']);
-        });
-    });
-
-    describe('recalculate', () => {
-        it('should recalculate', () => {
-            const recalculateMock = vi.spyOn(quizService, 'recalculate').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
-            const loadQuizSucessMock = vi.spyOn(comp, 'loadQuizSuccess').mockImplementation(() => {});
-            comp.quizExercise.set(quizExercise);
-
-            comp.recalculate();
-
-            expect(recalculateMock).toHaveBeenCalledOnce();
-            expect(recalculateMock).toHaveBeenCalledWith(42);
-            expect(loadQuizSucessMock).toHaveBeenCalledOnce();
-            expect(loadQuizSucessMock).toHaveBeenCalledWith(quizExercise);
         });
     });
 

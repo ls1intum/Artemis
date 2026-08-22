@@ -197,6 +197,7 @@
     <!-- exercise.quiz_point_statistic_id -->
     <changeSet id="20260728220917-14-add-uk-exercise-quiz-point-statistic" author="krusche">
         <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="quiz_point_statistic_id"/>
             <not><indexExists tableName="exercise" indexName="uk_exercise_quiz_point_statistic"/></not>
         </preConditions>
         <addUniqueConstraint tableName="exercise" columnNames="quiz_point_statistic_id"

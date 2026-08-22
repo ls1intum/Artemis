@@ -8,7 +8,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -22,7 +22,7 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
-let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
+let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizStatisticsOverviewResponse;
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 
@@ -65,7 +65,7 @@ describe('QuizStatisticComponent', () => {
             comp.ngOnDestroy();
         }
         vi.clearAllMocks();
-        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
+        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizStatisticsOverviewResponse;
     });
 
     describe('onInit', () => {
@@ -76,7 +76,7 @@ describe('QuizStatisticComponent', () => {
             fixture = TestBed.createComponent(QuizStatisticComponent);
             comp = fixture.componentInstance;
             // Re-setup the quizServiceFindSpy after clearing
-            quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
         });
 
         it('should call functions on Init', async () => {
@@ -84,10 +84,10 @@ describe('QuizStatisticComponent', () => {
             const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
             vi.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { statistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { statistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            quizExercise.participantsRated = 42;
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
 
             // call
@@ -119,17 +119,17 @@ describe('QuizStatisticComponent', () => {
             // Create component for these tests
             fixture = TestBed.createComponent(QuizStatisticComponent);
             comp = fixture.componentInstance;
-            quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
         });
 
         it('should set data', () => {
             // setup
             const loadDataSpy = vi.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { statistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { statistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            quizExercise.participantsRated = 42;
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
 
             // call
@@ -144,10 +144,10 @@ describe('QuizStatisticComponent', () => {
         it('should call navigate to courses if called by student', () => {
             // setup
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { statistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { statistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            quizExercise.participantsRated = 42;
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
             const routerSpy = vi.spyOn(router, 'navigate');
 
@@ -164,14 +164,14 @@ describe('QuizStatisticComponent', () => {
             // Create component for these tests
             fixture = TestBed.createComponent(QuizStatisticComponent);
             comp = fixture.componentInstance;
-            quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
         });
 
         it('should return MaxScore by looping over scores', () => {
             // setup
             quizExercise.quizQuestions = [
-                { points: 1, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { statistic: quizQuestionStatOne, points: 1, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { statistic: quizQuestionStatTwo, points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             comp.quizExercise.set(quizExercise);
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
@@ -210,10 +210,10 @@ describe('QuizStatisticComponent', () => {
         it('should use values of quizExercise and rated data', () => {
             // setup
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { statistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { statistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            quizExercise.participantsRated = 42;
             comp.quizExercise.set(quizExercise);
             // setup
             const updateChartSpy = vi.spyOn(comp, 'loadDataInDiagram');
@@ -234,10 +234,10 @@ describe('QuizStatisticComponent', () => {
         it('should use values of quizExercise and unrated data', () => {
             // setup
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { statistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { statistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            quizExercise.participantsRated = 42;
             comp.quizExercise.set(quizExercise);
             comp.rated = false;
             comp.maxScore = 1;
@@ -254,7 +254,7 @@ describe('QuizStatisticComponent', () => {
             // setup
             const updateChartSpy = vi.spyOn(comp, 'loadDataInDiagram');
             quizExercise.quizQuestions = [];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            quizExercise.participantsRated = 42;
             comp.rated = true;
             comp.maxScore = 1;
             comp.quizExercise.set(quizExercise);

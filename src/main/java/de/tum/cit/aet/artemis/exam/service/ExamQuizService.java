@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,7 +24,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
-import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
+import de.tum.cit.aet.artemis.quiz.service.QuizStatisticsService;
 
 @Conditional(ExamEnabled.class)
 @Lazy
@@ -34,7 +35,7 @@ public class ExamQuizService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final QuizStatisticService quizStatisticService;
+    private final QuizStatisticsService quizStatisticsService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -47,13 +48,13 @@ public class ExamQuizService {
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
     public ExamQuizService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            QuizExerciseRepository quizExerciseRepository, QuizStatisticService quizStatisticService, QuizSubmissionRepository quizSubmissionRepository,
+            QuizExerciseRepository quizExerciseRepository, QuizStatisticsService quizStatisticsService, QuizSubmissionRepository quizSubmissionRepository,
             SubmittedAnswerRepository submittedAnswerRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.quizStatisticService = quizStatisticService;
+        this.quizStatisticsService = quizStatisticsService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
     }
@@ -74,6 +75,7 @@ public class ExamQuizService {
                 .flatMap(exercise -> exercise.getStudentParticipations().stream().filter(participation -> participation.getExercise() instanceof QuizExercise))
                 .collect(Collectors.toSet());
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
+        Set<Long> changedQuizIds = new HashSet<>();
         for (final var participation : participations) {
             var quizExercise = (QuizExercise) participation.getExercise();
             final var optionalExistingSubmission = participation.findLatestSubmission();
@@ -124,12 +126,11 @@ public class ExamQuizService {
                     resultRepository.save(result);
                 }
                 if (studentExam.isTestExam()) {
-                    // In case of an test exam, the quiz statistic should also be updated
-                    var quizExercise1 = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
-                    quizStatisticService.updateStatistics(Set.of(result), quizExercise1);
+                    changedQuizIds.add(quizExercise.getId());
                 }
                 submissionRepository.save(quizSubmission);
             }
         }
+        changedQuizIds.forEach(quizStatisticsService::notifyStatisticsChanged);
     }
 }

@@ -21,6 +21,7 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subscription } from 'rxjs';
 import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
+import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -38,7 +39,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
     readonly round = round;
 
-    readonly quizExercise = signal<QuizExercise>(undefined!);
+    readonly quizExercise = signal<QuizPointStatisticsResponse>(undefined!);
     quizPointStatistic!: QuizPointStatistic; // set in loadQuizSuccess()/loadNewData() before the chart is rendered
 
     labels: string[] = [];
@@ -60,7 +61,6 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
     // Icons
     faSync = faSync;
-
     ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
             this.setAxisLabels('showStatistic.quizPointStatistic.xAxes', 'showStatistic.quizPointStatistic.yAxes');
@@ -68,7 +68,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
             if (this.accountService.isAtLeastTutor()) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
+                this.quizExerciseService.findPointStatistic(params['exerciseId']).subscribe((res) => {
                     this.loadQuizSuccess(res.body!);
                 });
             }
@@ -82,16 +82,18 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
                 // quizExercise channel => react to changes made to quizExercise (e.g. start date)
                 this.quizExerciseSubscription = this.websocketService.subscribe<QuizExercise>(this.quizExerciseChannel).subscribe((quiz: QuizExercise) => {
                     if (this.waitingForQuizStart && params['exerciseId'] === quiz.id) {
-                        this.loadQuizSuccess(quiz);
+                        this.quizExerciseService.findPointStatistic(params['exerciseId']).subscribe((res) => {
+                            this.loadQuizSuccess(res.body!);
+                        });
                     }
                 });
             }
 
-            // ask for new Data if the websocket for new statistical data was notified
-            this.quizDataSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe((quiz: QuizExercise) => {
-                if (quiz.quizPointStatistic) {
-                    this.loadNewData(quiz.quizPointStatistic);
-                }
+            // A statistics notification carries no counters; reload only this page's on-demand data.
+            this.quizDataSubscription = this.websocketService.subscribe<number>(this.websocketChannelForData).subscribe(() => {
+                this.quizExerciseService.findPointStatistic(params['exerciseId']).subscribe((res) => {
+                    this.loadQuizSuccess(res.body!);
+                });
             });
         });
 
@@ -161,7 +163,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      *
      * @param quizExercise the quizExercise, which this quiz-point-statistic presents.
      */
-    loadQuizSuccess(quizExercise: QuizExercise) {
+    loadQuizSuccess(quizExercise: QuizPointStatisticsResponse) {
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
@@ -169,7 +171,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         }
         this.quizExercise.set(quizExercise);
         this.waitingForQuizStart = !this.quizExercise().quizStarted;
-        this.quizPointStatistic = this.quizExercise().quizPointStatistic!;
+        this.quizPointStatistic = quizExercise.statistic;
         this.maxScore.set(calculateMaxScore(this.quizExercise()));
 
         this.loadData();
@@ -224,17 +226,6 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
     protected override formatTooltipLabel(item: TooltipItem<'bar'>): string {
         return this.tooltipLine('artemisApp.showStatistic.tooltip.pointRange', item.parsed.y ?? 0);
-    }
-
-    /**
-     *
-     * Recalculate the complete statistic on the server in case something went wrong with it
-     *
-     */
-    recalculate() {
-        this.quizExerciseService.recalculate(this.quizExercise().id!).subscribe((res) => {
-            this.loadQuizSuccess(res.body!);
-        });
     }
 
     /**

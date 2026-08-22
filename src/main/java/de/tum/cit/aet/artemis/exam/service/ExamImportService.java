@@ -460,7 +460,7 @@ public class ExamImportService {
                     case QUIZ -> {
                         // Use a query that eagerly loads quiz questions, grading criteria, and other needed associations
                         final Optional<QuizExercise> optionalOriginalQuizExercise = quizExerciseRepository
-                                .findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(sourceExerciseId);
+                                .findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(sourceExerciseId);
                         if (optionalOriginalQuizExercise.isEmpty()) {
                             yield Optional.empty();
                         }

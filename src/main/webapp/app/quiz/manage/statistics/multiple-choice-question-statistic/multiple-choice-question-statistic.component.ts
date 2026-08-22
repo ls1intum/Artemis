@@ -4,7 +4,7 @@ import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.s
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { MultipleChoiceQuestionStatistic } from 'app/quiz/shared/entities/multiple-choice-question-statistic.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { QuestionStatisticComponent, blueColor, greenColor, redColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -31,7 +31,7 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
     faCheckCircle = faCheckCircle;
     faTimesCircle = faTimesCircle;
 
-    loadQuiz(quiz: QuizExercise, refresh: boolean) {
+    loadQuiz(quiz: QuizQuestionStatisticResponse, refresh: boolean) {
         const updatedQuestion = super.loadQuizCommon(quiz);
         if (!updatedQuestion) {
             return;

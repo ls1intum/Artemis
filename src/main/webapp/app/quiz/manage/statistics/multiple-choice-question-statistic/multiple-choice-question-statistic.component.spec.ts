@@ -8,7 +8,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
@@ -29,9 +29,9 @@ const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };
 const answerOption1 = { id: 5 } as AnswerOption;
 const answerCounter = { answerId: answerOption1.id } as AnswerCounter;
 const questionStatistic = { answerCounters: [answerCounter] } as MultipleChoiceQuestionStatistic;
-const question = { id: 1, answerOptions: [answerOption1], quizQuestionStatistic: questionStatistic } as MultipleChoiceQuestion;
+const question = { id: 1, answerOptions: [answerOption1] } as MultipleChoiceQuestion;
 const course = { id: 3 } as Course;
-let quizExercise = { id: 22, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
+let quizExercise = { id: 22, quizStarted: true, course, quizQuestions: [question], questionId: 1, statistic: questionStatistic } as QuizQuestionStatisticResponse;
 
 describe('QuizExercise Multiple Choice Question Statistic Component', () => {
     let comp: MultipleChoiceQuestionStatisticComponent;
@@ -64,13 +64,13 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
                 comp = fixture.componentInstance;
                 quizService = TestBed.inject(QuizExerciseService);
                 accountService = TestBed.inject(AccountService);
-                quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindSpy = vi.spyOn(quizService, 'findQuestionStatistic').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
                 router = TestBed.inject(Router);
             });
     });
 
     afterEach(() => {
-        quizExercise = { id: 22, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
+        quizExercise = { id: 22, quizStarted: true, course, quizQuestions: [question], questionId: 1, statistic: questionStatistic } as QuizQuestionStatisticResponse;
     });
 
     describe('onInit', () => {
@@ -82,7 +82,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             comp.ngOnInit();
 
             expect(accountSpy).toHaveBeenCalledTimes(2);
-            expect(quizServiceFindSpy).toHaveBeenCalledWith(22);
+            expect(quizServiceFindSpy).toHaveBeenCalledWith(22, 1);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
             expect(comp.websocketChannelForData).toBe('/topic/statistic/22');
         });
@@ -169,7 +169,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
         it('should navigate back if the quiz does not contain any questions', () => {
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const navigateByUrlMock = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
-            const emptyQuizExercise = new QuizExercise(undefined, undefined);
+            const emptyQuizExercise = { questionId: 1, statistic: questionStatistic, quizQuestions: [] } as QuizQuestionStatisticResponse;
 
             const result = comp.loadQuizCommon(emptyQuizExercise);
 

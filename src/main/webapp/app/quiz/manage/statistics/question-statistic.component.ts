@@ -1,6 +1,5 @@
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-statistic.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -11,6 +10,7 @@ import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { TooltipItem } from 'chart.js';
 import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
+import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 export const redColor = '#d9534f';
 export const greenColor = '#5cb85c';
@@ -34,7 +34,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     // A signal so that setting it after the (async) quiz load schedules zoneless change detection.
     // As a plain field the initial load would not render until an unrelated event (e.g. a click),
     // because the `@if (quizExercise())` guard keeps the chart (the only other signal consumer) out of the DOM.
-    readonly quizExercise = signal<QuizExercise>(undefined!); // set in loadQuizCommon() before it is read
+    readonly quizExercise = signal<QuizQuestionStatisticResponse>(undefined!); // set in loadQuizCommon() before it is read
     questionIdParam!: number; // set in ngOnInit() from the route params
     sub?: Subscription;
 
@@ -64,16 +64,18 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
             this.questionIdParam = +params['questionId'];
             // use different REST-call if the User is a Student
             if (this.accountService.isAtLeastTutor()) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
+                this.quizExerciseService.findQuestionStatistic(params['exerciseId'], this.questionIdParam).subscribe((res) => {
                     this.loadQuiz(res.body!, false);
                 });
             }
 
             // subscribe websocket for new statistical data
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            // ask for new Data if the websocket for new statistical data was notified
-            this.statisticSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe((quiz: QuizExercise) => {
-                this.loadQuiz(quiz, true);
+            // A statistics notification carries no counters; reload only the selected question.
+            this.statisticSubscription = this.websocketService.subscribe<number>(this.websocketChannelForData).subscribe(() => {
+                this.quizExerciseService.findQuestionStatistic(params['exerciseId'], this.questionIdParam).subscribe((res) => {
+                    this.loadQuiz(res.body!, true);
+                });
             });
         });
     }
@@ -135,9 +137,9 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
      * @param quiz the quizExercise, which the selected question is part of.
      * @param refresh true if method is called from Websocket
      */
-    abstract loadQuiz(quiz: QuizExercise, refresh: boolean): void;
+    abstract loadQuiz(quiz: QuizQuestionStatisticResponse, refresh: boolean): void;
 
-    loadQuizCommon(quiz: QuizExercise) {
+    loadQuizCommon(quiz: QuizQuestionStatisticResponse) {
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
@@ -152,7 +154,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
             return undefined;
         }
         this.question = updatedQuestion;
-        this.questionStatistic = updatedQuestion.quizQuestionStatistic!;
+        this.questionStatistic = quiz.statistic;
         return updatedQuestion;
     }
 

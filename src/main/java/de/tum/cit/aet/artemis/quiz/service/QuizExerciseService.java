@@ -78,7 +78,6 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
@@ -124,7 +123,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<QuizScheduleService> quizScheduleService;
 
-    private final QuizStatisticService quizStatisticService;
+    private final QuizStatisticsService quizStatisticsService;
 
     private final QuizBatchService quizBatchService;
 
@@ -149,7 +148,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private final Optional<ExamDateApi> examDateApi;
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
-            InstanceMessageSendService instanceMessageSendService, Optional<QuizScheduleService> quizScheduleService, QuizStatisticService quizStatisticService,
+            InstanceMessageSendService instanceMessageSendService, Optional<QuizScheduleService> quizScheduleService, QuizStatisticsService quizStatisticsService,
             QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, ExerciseService exerciseService, UserRepository userRepository,
             QuizBatchRepository quizBatchRepository, ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService,
             Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService,
@@ -160,7 +159,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizScheduleService = quizScheduleService;
-        this.quizStatisticService = quizStatisticService;
+        this.quizStatisticsService = quizStatisticsService;
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.exerciseService = exerciseService;
@@ -620,9 +619,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     /**
      * @param quizExerciseDTO      the changed quiz exercise from the client
-     * @param originalQuizExercise the original quiz exercise (with statistics)
+     * @param originalQuizExercise the original quiz exercise
      * @param files                the files that were uploaded
-     * @return the updated quiz exercise with the changed statistics
+     * @return the updated quiz exercise
      */
     public QuizExercise reEvaluate(QuizExerciseReEvaluateDTO quizExerciseDTO, QuizExercise originalQuizExercise, @NonNull List<MultipartFile> files) throws IOException {
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalQuizExercise);
@@ -639,20 +638,19 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         QuizExercise savedQuizExercise = save(originalQuizExercise);
 
         if (questionsChanged) {
-            savedQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(savedQuizExercise.getId());
-            quizStatisticService.recalculateStatistics(savedQuizExercise);
+            quizStatisticsService.notifyStatisticsChanged(savedQuizExercise.getId());
         }
-        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(savedQuizExercise.getId());
+        return quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(savedQuizExercise.getId());
     }
 
     /**
-     * Reset a QuizExercise to its original state, delete statistics and cleanup the schedule service.
+     * Reset a QuizExercise to its original state and clean up the schedule service.
      *
      * @param exerciseId id of the exercise to reset
      */
     public void resetExercise(Long exerciseId) {
         // fetch exercise again to make sure we have an updated version
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndBatchesElseThrow(exerciseId);
 
         if (!quizExercise.isExamExercise()) {
             // do not set the release date of exam exercises
@@ -668,8 +666,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // in case the quiz has not yet started or the quiz is currently running, we have to clean up
         instanceMessageSendService.sendQuizExerciseStartSchedule(savedQuizExercise.getId());
 
-        // clean up the statistics
-        quizStatisticService.recalculateStatistics(savedQuizExercise);
     }
 
     /**
@@ -1056,16 +1052,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     public QuizExercise save(QuizExercise quizExercise) {
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
 
-        // create a quizPointStatistic if it does not yet exist
-        if (quizExercise.getQuizPointStatistic() == null) {
-            QuizPointStatistic quizPointStatistic = new QuizPointStatistic();
-            quizExercise.setQuizPointStatistic(quizPointStatistic);
-            quizPointStatistic.setQuiz(quizExercise);
-        }
-
-        // make sure the pointers in the statistics are correct
-        quizExercise.recalculatePointCounters();
-
         QuizExercise savedQuizExercise = super.save(quizExercise);
 
         if (savedQuizExercise.isCourseExercise()) {
@@ -1228,20 +1214,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         quizExercise.setIncludedInOverallScore(updateQuizExerciseDTO.includedInOverallScore());
 
         if (updateQuizExerciseDTO.quizQuestions() != null) {
-            // Build a map of existing questions by ID so we can preserve statistics
-            Map<Long, QuizQuestion> existingQuestionsById = quizExercise.getQuizQuestions().stream().filter(q -> q.getId() != null)
-                    .collect(Collectors.toMap(QuizQuestion::getId, Function.identity()));
-
-            // Convert DTOs to new entities to avoid detached entity issues
-            List<QuizQuestion> newQuestions = new ArrayList<>(updateQuizExerciseDTO.quizQuestions().stream().map(dto -> {
-                QuizQuestion newQuestion = dto.toDomainObject();
-                // For existing questions, preserve statistics from the managed entity
-                if (newQuestion.getId() != null && existingQuestionsById.containsKey(newQuestion.getId())) {
-                    QuizQuestion existingQuestion = existingQuestionsById.get(newQuestion.getId());
-                    newQuestion.setQuizQuestionStatistic(existingQuestion.getQuizQuestionStatistic());
-                }
-                return newQuestion;
-            }).toList());
+            // Convert DTOs to new entities to avoid detached entity issues.
+            List<QuizQuestion> newQuestions = new ArrayList<>(updateQuizExerciseDTO.quizQuestions().stream().map(dto -> dto.toDomainObject()).toList());
             quizExercise.setQuizQuestions(newQuestions);
         }
         else {
@@ -1266,7 +1240,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
         copy.setExerciseGroup(quizExercise.getExerciseGroup());
         copy.setQuizQuestions(new ArrayList<>(quizExercise.getQuizQuestions()));
-        copy.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
         copy.setCompetencyLinks(new HashSet<>(quizExercise.getCompetencyLinks()));
         copy.setQuizBatches(new HashSet<>(quizExercise.getQuizBatches()));
         copy.setGradingCriteria(new HashSet<>(quizExercise.getGradingCriteria()));

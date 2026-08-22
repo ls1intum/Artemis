@@ -2878,8 +2878,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExerciseGroupsToExistingExam_preservesAllContent() throws Exception {
-        // Regression guard for the import-exercise-group path (which binds full request entities), where a quiz previously
-        // failed to import because of a detached QuizPointStatistic. Verify every exercise type preserves its content here.
+        // Regression guard for the import-exercise-group path (which binds full request entities). Verify every
+        // exercise type preserves its content here.
         Exam sourceExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         Exam targetExam = examUtilService.addExam(course1);
         examUtilService.addExamChannel(targetExam, "import-eg-content");
@@ -2909,7 +2909,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
             case TextExercise text -> textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(text.getId());
             case ModelingExercise modeling -> modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(modeling.getId());
             case FileUploadExercise fileUpload -> fileUploadExerciseRepository.findWithGradingCriteriaByIdElseThrow(fileUpload.getId());
-            case QuizExercise quiz -> quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quiz.getId());
+            case QuizExercise quiz -> quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quiz.getId());
             default -> exercise;
         };
     }

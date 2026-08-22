@@ -2,12 +2,10 @@ package de.tum.cit.aet.artemis.quiz.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.quiz.domain.QuizStatisticCounter;
-
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizStatisticCounterDTO(Long id, Integer ratedCounter, Integer unRatedCounter) {
 
-    public static QuizStatisticCounterDTO of(QuizStatisticCounter quizStatisticCounter) {
-        return new QuizStatisticCounterDTO(quizStatisticCounter.getId(), quizStatisticCounter.getRatedCounter(), quizStatisticCounter.getUnRatedCounter());
+    public static QuizStatisticCounterDTO of(long[] counters) {
+        return new QuizStatisticCounterDTO(null, Math.toIntExact(counters[0]), Math.toIntExact(counters[1]));
     }
 }

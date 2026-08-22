@@ -99,7 +99,6 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
@@ -1830,7 +1829,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(8), quizMode, course);
         quizExercise.addQuestion(QuizExerciseFactory.createShortAnswerQuestion());
         quizExercise.setDuration(600);
-        quizExercise.setQuizPointStatistic(new QuizPointStatistic());
         quizExercise = exerciseRepository.save(quizExercise);
 
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().getFirst();

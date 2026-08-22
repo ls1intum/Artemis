@@ -5,8 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -14,7 +12,6 @@ import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -27,7 +24,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -83,7 +79,7 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
         verifyNoInteractions(lti13Service);
 
         // End the quiz right now
-        quizExercise = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizExercise = quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(quizExercise.getId());
         assertThat(quizExercise).isNotNull();
         quizExercise.setDueDate(ZonedDateTime.now());
         exerciseRepository.saveAndFlush(quizExercise);
@@ -91,37 +87,6 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
         quizSubmissionService.calculateAllResults(quizExercise.getId());
 
         await().atMost(2, SECONDS).untilAsserted(() -> lti13Service.onNewResult(any()));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testLtiReevaluateStatistics() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        QuizExercise quizExercise = createQuizExercise(ZonedDateTime.now().plusHours(5));
-        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
-        quizExercise.setDueDate(ZonedDateTime.now().minusHours(2));
-
-        var now = ZonedDateTime.now();
-
-        // generate submissions for each student
-        int numberOfParticipants = 10;
-        userUtilService.addStudents(TEST_PREFIX, 2, 14);
-
-        for (int i = 1; i <= numberOfParticipants; i++) {
-            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i, true, now.minusHours(3));
-            participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
-            participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
-        }
-
-        // calculate statistics
-        QuizExercise quizExerciseWithRecalculatedStatistics = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK,
-                QuizExercise.class);
-
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
-
-        verify(lti13Service, times(10)).onNewResult(any());
-
     }
 
     private QuizExercise createSimpleQuizExercise(ZonedDateTime releaseDate, int duration) {
@@ -139,7 +104,7 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
 
         QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise);
         assertThat(quizExerciseServer).isNotNull();
-        QuizExercise quizExerciseDatabase = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
+        QuizExercise quizExerciseDatabase = quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(quizExerciseServer.getId());
         assertThat(quizExerciseServer).isNotNull();
         assertThat(quizExerciseDatabase).isNotNull();
 

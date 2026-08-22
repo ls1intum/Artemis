@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.UpdateQuizExerciseDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
@@ -112,9 +112,8 @@ public class QuizExerciseCreationUpdateResource {
      */
     @PostMapping(value = "exercise-groups/{exerciseGroupId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<QuizExerciseWithStatisticsDTO> createExamQuizExercise(@PathVariable Long exerciseGroupId,
-            @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO, @RequestPart(value = "files", required = false) List<MultipartFile> files)
-            throws IOException, URISyntaxException {
+    public ResponseEntity<QuizExerciseDetailsDTO> createExamQuizExercise(@PathVariable Long exerciseGroupId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
         log.info("REST request to create QuizExercise : {} in exam exercise group {}", quizExerciseDTO, exerciseGroupId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
         // Competency links are passed separately for proper two-phase persistence
@@ -133,7 +132,7 @@ public class QuizExerciseCreationUpdateResource {
 
         QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, true, quizExerciseDTO.competencyLinks());
         exerciseVersionService.createExerciseVersion(result);
-        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
+        QuizExerciseDetailsDTO resultDTO = QuizExerciseDetailsDTO.of(result);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(resultDTO);
     }
@@ -155,9 +154,8 @@ public class QuizExerciseCreationUpdateResource {
      */
     @PostMapping(value = "courses/{courseId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<QuizExerciseWithStatisticsDTO> createCourseQuizExercise(@PathVariable Long courseId,
-            @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO, @RequestPart(value = "files", required = false) List<MultipartFile> files)
-            throws IOException, URISyntaxException {
+    public ResponseEntity<QuizExerciseDetailsDTO> createCourseQuizExercise(@PathVariable Long courseId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
         log.info("REST request to create QuizExercise : {} in course {}", quizExerciseDTO, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
@@ -173,7 +171,7 @@ public class QuizExerciseCreationUpdateResource {
 
         exerciseVersionService.createExerciseVersion(result);
 
-        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
+        QuizExerciseDetailsDTO resultDTO = QuizExerciseDetailsDTO.of(result);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(resultDTO);
     }
@@ -197,11 +195,11 @@ public class QuizExerciseCreationUpdateResource {
      */
     @PutMapping(value = "quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<QuizExerciseWithStatisticsDTO> updateQuizExercise(@PathVariable Long exerciseId,
-            @RequestPart("exercise") @Valid UpdateQuizExerciseDTO updateQuizExerciseDTO, @RequestPart(value = "files", required = false) List<MultipartFile> files,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws IOException {
+    public ResponseEntity<QuizExerciseDetailsDTO> updateQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") @Valid UpdateQuizExerciseDTO updateQuizExerciseDTO,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
+            throws IOException {
         log.info("REST request to update quiz exercise : {}", exerciseId);
-        QuizExercise quizBase = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(exerciseId);
+        QuizExercise quizBase = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(exerciseId);
 
         // Capture original competency IDs before mergeDTOIntoDomainObject() mutates the entity (L1 cache)
         Set<Long> originalCompetencyIds = quizBase.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
@@ -221,7 +219,7 @@ public class QuizExerciseCreationUpdateResource {
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");
         exerciseVersionService.createExerciseVersion(result);
 
-        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
+        QuizExerciseDetailsDTO resultDTO = QuizExerciseDetailsDTO.of(result);
 
         return ResponseEntity.ok(resultDTO);
     }

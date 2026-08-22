@@ -55,7 +55,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -255,7 +254,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
                     case FileUploadExercise fileUploadExercise -> assertFileUploadExercise(fileUploadExercise, "png", null);
                     case ModelingExercise modelingExercise -> assertModelingExercise(modelingExercise, DiagramType.ClassDiagram, null, null);
                     case ProgrammingExercise programmingExerciseExercise -> assertProgrammingExercise(programmingExerciseExercise, true, null, null, null, null, null);
-                    case QuizExercise quizExercise -> assertQuizExercise(quizExercise, 120, 1, null, List.of());
+                    case QuizExercise quizExercise -> assertQuizExercise(quizExercise, 120, 1, List.of());
                     case TextExercise textExercise -> assertThat(textExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
                     default -> {
                     }
@@ -326,10 +325,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         assertEqualOrNull(exercise.getSolutionBuildPlanId(), solutionBuildPlanId, "Solution build plan id");
     }
 
-    private void assertQuizExercise(QuizExercise exercise, int duration, int allowedNumberOfAttempts, QuizPointStatistic quizPointStatistic, List<QuizQuestion> quizQuestions) {
+    private void assertQuizExercise(QuizExercise exercise, int duration, int allowedNumberOfAttempts, List<QuizQuestion> quizQuestions) {
         assertThat(exercise.getDuration()).as("Duration was set correctly").isEqualTo(duration);
         assertThat(exercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(allowedNumberOfAttempts);
-        assertEqualOrNull(exercise.getQuizPointStatistic(), quizPointStatistic, "Quiz point statistic");
         assertEqualOrNull(exercise.getQuizQuestions(), quizQuestions, "Quiz questions");
     }
 
@@ -404,7 +402,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
                     assertThat(programmingExerciseExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(2);
                 }
                 else if (exerciseWithDetails instanceof QuizExercise quizExercise) {
-                    assertQuizExercise(quizExercise, 120, 1, null, List.of());
+                    assertQuizExercise(quizExercise, 120, 1, List.of());
                     assertThat(quizExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
                 }
                 else if (exerciseWithDetails instanceof TextExercise textExercise) {
