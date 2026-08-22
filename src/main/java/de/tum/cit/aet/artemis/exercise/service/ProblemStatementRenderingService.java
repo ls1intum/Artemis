@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
@@ -96,7 +97,7 @@ public class ProblemStatementRenderingService {
      * sanitization/escaping. The value itself does not need to follow strict semver; any distinct string is
      * enough to invalidate the cache.
      */
-    private static final String RENDERER_VERSION = "1.4.0";
+    private static final String RENDERER_VERSION = "1.5.0";
 
     /**
      * KaTeX is served from the client's own copy, the one declared in {@code package.json} and copied out of
@@ -158,9 +159,27 @@ public class ProblemStatementRenderingService {
      */
     private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>[^()]*(?:\\([^()]*\\)[^()]*){0,100})\\)");
 
+    /**
+     * Start of the marker that stands in for a diagram between extraction and re-injection.
+     * <p>
+     * It is plain HTML because it has to survive {@link Jsoup#clean}, and {@code data-svg-index} is on the span
+     * safelist so that it does. That is exactly why the marker alone cannot identify a diagram: an author can write
+     * the same span into their markdown, it passes the safelist unchanged, and the injection pass would then hand
+     * every copy the same SVG. One diagram plus a markdown body full of markers turns a 100 KB request into tens of
+     * megabytes and walks straight past {@link #MAX_PLANTUML_DIAGRAMS}, which is the limit that is supposed to bound
+     * this. The per-render token appended below is what makes the marker unforgeable: the author writes their
+     * markdown before it exists, so a forged span simply fails to match and stays the inert empty span it looks
+     * like. Same principle as the null byte in {@link #CODE_BLOCK_PLACEHOLDER_PREFIX}, which the request DTO rejects
+     * in markdown for the same reason.
+     */
     private static final String SVG_PLACEHOLDER_PREFIX = "<span class=\"artemis-svg-placeholder\" data-svg-index=\"";
 
     private static final String SVG_PLACEHOLDER_SUFFIX = "\"></span>";
+
+    /** Bytes of randomness per render token, matching the 128 bits the frame nonce and generation use. Never stored. */
+    private static final int PLACEHOLDER_TOKEN_BYTES = 16;
+
+    private static final SecureRandom PLACEHOLDER_RANDOM = new SecureRandom();
 
     private static final Safelist HTML_SAFELIST = buildSafelist();
 
@@ -231,9 +250,11 @@ public class ProblemStatementRenderingService {
         List<String> codeBlocks = new ArrayList<>();
         String processed = maskCodeBlocks(markdown, codeBlocks);
 
-        // 2. Extract PlantUML diagrams. The sanitized SVG is held out and re-injected after CommonMark.
+        // 2. Extract PlantUML diagrams. The sanitized SVG is held out and re-injected after CommonMark. The token
+        // ties the two halves together across the sanitizer, so only a marker this render wrote is ever replaced.
+        String placeholderToken = randomPlaceholderToken();
         List<String> inlineSvgs = new ArrayList<>();
-        processed = extractPlantUmlDiagrams(processed, inlineSvgs, testResults, darkMode, allTestsPassed);
+        processed = extractPlantUmlDiagrams(processed, inlineSvgs, testResults, darkMode, allTestsPassed, placeholderToken);
 
         // 3. Normalize math notation, then extract formulas (still while code blocks are masked).
         processed = MathFormulaExtractor.applyCompatibility(processed);
@@ -270,7 +291,9 @@ public class ProblemStatementRenderingService {
 
         // 8. Inject the earlier PlantUML SVGs and the GitHub-alert octicons (jsoup's HTML safelist would strip
         // any SVG, so both are injected afterwards).
-        html = IndexedPlaceholders.replaceAll(html, SVG_PLACEHOLDER_PREFIX, SVG_PLACEHOLDER_SUFFIX, inlineSvgs.size(), inlineSvgs::get);
+        // A marker that does not carry this render's token was written by the author, not by step 2, and is left
+        // exactly as it is. The token is gone from the output either way, so the content hash stays stable.
+        html = IndexedPlaceholders.replaceAll(html, SVG_PLACEHOLDER_PREFIX + placeholderToken + "-", SVG_PLACEHOLDER_SUFFIX, inlineSvgs.size(), inlineSvgs::get);
         html = GitHubAlertExtension.injectIcons(html);
 
         String containerClass = darkMode ? "artemis-problem-statement artemis-problem-statement--dark" : "artemis-problem-statement";
@@ -314,7 +337,7 @@ public class ProblemStatementRenderingService {
     }
 
     private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode,
-            boolean allTestsPassed) {
+            boolean allTestsPassed, String placeholderToken) {
         StringBuilder sb = new StringBuilder();
         int diagramIndex = 0;
         int copiedUpTo = 0;
@@ -364,8 +387,8 @@ public class ProblemStatementRenderingService {
             }
             inlineSvgs.add(inlineSvg);
 
-            sb.append("<div class=\"artemis-diagram\" data-diagram-id=\"").append(diagramId).append("\">").append(SVG_PLACEHOLDER_PREFIX).append(diagramIndex)
-                    .append(SVG_PLACEHOLDER_SUFFIX).append("</div>");
+            sb.append("<div class=\"artemis-diagram\" data-diagram-id=\"").append(diagramId).append("\">").append(SVG_PLACEHOLDER_PREFIX).append(placeholderToken).append('-')
+                    .append(diagramIndex).append(SVG_PLACEHOLDER_SUFFIX).append("</div>");
             diagramIndex++;
         }
         sb.append(markdown, copiedUpTo, markdown.length());
@@ -805,6 +828,21 @@ public class ProblemStatementRenderingService {
         catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);
         }
+    }
+
+    /**
+     * A fresh token for this render's diagram markers, as lowercase hex.
+     * <p>
+     * Hex so it needs no escaping inside the attribute it lives in, and so it cannot terminate the marker early.
+     * It does not have to stay secret after the response is written; it only has to be unknowable to whoever wrote
+     * the markdown, which is guaranteed because it is drawn after the request arrives.
+     *
+     * @return the token, without separators
+     */
+    private static String randomPlaceholderToken() {
+        byte[] bytes = new byte[PLACEHOLDER_TOKEN_BYTES];
+        PLACEHOLDER_RANDOM.nextBytes(bytes);
+        return HexFormat.of().formatHex(bytes);
     }
 
     private static String computeHash(String input) {

@@ -74,7 +74,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("<h1>Hello</h1>");
         assertThat(result.html()).contains("<strong>bold</strong>");
         assertThat(result.html()).contains("artemis-problem-statement");
-        assertThat(result.rendererVersion()).isEqualTo("1.4.0");
+        assertThat(result.rendererVersion()).isEqualTo("1.5.0");
         assertThat(result.contentHash()).isNotBlank();
         assertThat(result.interactiveScript()).isNotNull();
     }
@@ -805,6 +805,19 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldBoundTheSizeAFormulaMayAskForInTheShippedScript() throws Exception {
+        // KaTeX leaves maxSize at Infinity, so `\rule{1000000000em}{1000000000em}` asks the consumer for a box no
+        // engine can lay out. The sandboxed frame sets the bound in its own render call, but a consumer that asks
+        // for the document with JavaScript (the default) gets this script instead, and it is the only limit it has.
+        var body = new ProblemStatementRenderRequestDTO("Area is $$\\int_0^1 x\\,dx$$", null, null, "en", false, true, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("maxSize: 100").contains("maxExpand: 1000");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotShipKatexWhenTheCallerAsksForNoJavaScript() throws Exception {
         // KaTeX is JavaScript, so includeJs=false has to exclude it too. Before, the scripts were emitted whenever the
         // statement contained math, whatever the caller asked for.
@@ -1126,6 +1139,39 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("Diagram limit exceeded");
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotInjectDiagramIntoAnAuthoredPlaceholder() throws Exception {
+        // The diagram marker is plain HTML and `data-svg-index` is on the span safelist, so an author can write the
+        // marker into their own markdown and it reaches the injection pass unchanged. Without the per-render token
+        // every copy would be handed the same SVG, which multiplies one diagram into as many copies as fit in the
+        // request and walks straight past the diagram limit asserted above.
+        String forged = "<span class=\"artemis-svg-placeholder\" data-svg-index=\"0\"></span>";
+        String markdown = "@startuml\n!pragma layout smetana\nclass A\n@enduml\n\n" + forged.repeat(50);
+        var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, true, null, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // The one real diagram still renders, and the forged markers stay the inert empty spans they look like.
+        assertThat(StringUtils.countOccurrencesOf(result.html(), "<svg")).isEqualTo(1);
+        assertThat(result.html()).contains("data-svg-index=\"0\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldKeepTheContentHashStableAcrossRendersDespiteThePerRenderToken() throws Exception {
+        // The token is drawn fresh per request, so it must not survive into the output: the marker it belongs to is
+        // replaced by the diagram before the hash is taken. If it ever leaked, every render of the same markdown
+        // would produce a different ETag and the client cache would never hit.
+        var body = new ProblemStatementRenderRequestDTO("@startuml\n!pragma layout smetana\nclass A\n@enduml", null, null, "en", false, true, null, null);
+
+        RenderedProblemStatementDTO first = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+        RenderedProblemStatementDTO second = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(first.contentHash()).isEqualTo(second.contentHash());
+        assertThat(first.html()).doesNotContain("artemis-svg-placeholder");
+    }
+
     // --- Code block masking ---
 
     @Test
@@ -1307,7 +1353,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result1 = request.postWithResponseBody(POST_URL, body1, RenderedProblemStatementDTO.class, HttpStatus.OK);
         RenderedProblemStatementDTO result2 = request.postWithResponseBody(POST_URL, body2, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result1.rendererVersion()).isEqualTo("1.4.0");
+        assertThat(result1.rendererVersion()).isEqualTo("1.5.0");
         assertThat(result2.rendererVersion()).isEqualTo(result1.rendererVersion());
     }
 
@@ -1322,7 +1368,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         // produced under renderer version "1.0.0" (captured before the bump to "1.1.0" that added this test, and
         // still distinct under "1.3.0", which moved the feedback payload onto the container; "1.4.0" added the
         // highlight.js palette to the embedded stylesheet, which the sandboxed frame needs because no application
-        // stylesheet reaches into it). The
+        // stylesheet reaches into it; "1.5.0" made the diagram placeholder unforgeable and bounded the size a
+        // formula may ask for in the interactive script). The
         // renderer version is folded into the content hash precisely so that a stale client-cached rendering does
         // not survive a semantic change to the renderer; this pins that a version bump actually changes the hash
         // for byte-for-byte identical input, rather than only changing the reported version string. If this
@@ -1499,6 +1546,25 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         assertThat(result.html()).contains("<div class=\"markdown-alert markdown-alert-warning\">");
         assertThat(result.html()).contains(">Warning</p>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldExpandAForgedAlertIconOnlyToOneOfTheFixedIcons() throws Exception {
+        // The alert icon marker is forgeable in the same way the diagram marker was, and unlike that one it is left
+        // that way on purpose. This pins the two properties that make the exception safe, so that a later change to
+        // either is caught here rather than reasoned about again: the marker can only select one of five fixed,
+        // server-owned octicons, and it consumes no bounded resource. An author who writes the marker gets exactly
+        // what writing "> [!NOTE]" already gives them, which they may do as often as their markdown allows.
+        String forged = "<span class=\"markdown-alert-icon\" data-alert-type=\"note\"></span>";
+        String unknown = "<span class=\"markdown-alert-icon\" data-alert-type=\"attacker\"></span>";
+        var body = new ProblemStatementRenderRequestDTO(forged.repeat(3) + unknown, null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // Three known markers become three copies of the one fixed icon; a type outside the set stays inert markup.
+        assertThat(StringUtils.countOccurrencesOf(result.html(), "octicon-info")).isEqualTo(3);
+        assertThat(result.html()).contains("data-alert-type=\"attacker\"").doesNotContain("<svg class=\"octicon octicon-alert");
     }
 
     @Test

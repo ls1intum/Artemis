@@ -166,6 +166,18 @@ describe('problem statement frame assembly', () => {
                 false,
             );
         });
+
+        it('denies a template, whose children no later pass can reach', () => {
+            // A template's children live in a separate document fragment, so `rewriteSameOriginImages` walks past
+            // them: neither `querySelectorAll('*')` nor `querySelectorAll('img')` descends into `content`. Measured
+            // in all three engines the markup survived, and Firefox went on to fetch the image. Denying the element
+            // is the only place this can be closed, which is why it is asserted rather than assumed.
+            const frame = frameOf('<template><img src="/api/core/files/markdown/x.png"><img src="https://img.example.org/a.png"></template>');
+
+            expect(frame.querySelector('template')).toBeNull();
+            expect(statementOf(frame)).not.toContain('/api/core/files');
+            expect(statementOf(frame)).not.toContain('img.example.org');
+        });
     });
 
     describe('url references, which are the exfiltration channel a CSS bypass would use', () => {
@@ -311,6 +323,18 @@ describe('problem statement frame assembly', () => {
             // throwOnError is off, so KaTeX renders an error node rather than throwing; either way the reader is
             // never shown an empty placeholder.
             expect(frame.querySelector('.katex-formula')?.textContent).not.toBe('');
+        });
+
+        it('caps the size a formula may ask for, which KaTeX itself leaves unbounded', () => {
+            const frame = frameOf('<span class="katex-formula" data-formula="\\rule{1000000000em}{1000000000em}" data-display-mode="false"></span>');
+            const sizes = [...(frame.querySelector('.katex-formula')?.querySelectorAll<HTMLElement>('[style*="em"]') ?? [])].flatMap((element) =>
+                [...element.getAttribute('style')!.matchAll(/([\d.]+)em/g)].map((match) => Number(match[1])),
+            );
+
+            // maxSize defaults to Infinity, so without the cap this renders a box of a billion ems and the frame
+            // asks the application to lay out something no engine can afford.
+            expect(sizes.length).toBeGreaterThan(0);
+            expect(Math.max(...sizes)).toBeLessThanOrEqual(100);
         });
 
         it('highlights a code block whose language is registered', () => {

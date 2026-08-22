@@ -50,6 +50,13 @@ const URL_BEARING_SVG_ATTRIBUTES = ['fill', 'stroke', 'filter', 'clip-path', 'ma
  * The second group cannot be produced by the renderer at all: jsoup's `Safelist.relaxed()` permits none of them.
  * They are listed because each one is a fetch or a submission that the image rewriting below would not catch, and
  * forbidding an element the server can never emit costs nothing.
+ *
+ * `template` is in that second group for a reason the others do not share, and it is the one element here that a
+ * later pass genuinely cannot cover. Its children live in a separate document fragment, so neither
+ * `querySelectorAll('*')` nor `querySelectorAll('img')` in `rewriteSameOriginImages` ever reaches them: a
+ * `<template><img src="https://…"></template>` walks straight through the URL rewriting untouched. Measured in all
+ * three engines, the markup survives in every one of them and Firefox goes on to fetch the image. Denying the
+ * element is what closes that, because there is no way to reach inside it from the passes that follow.
  */
 const DENIED_ELEMENTS = [
     'script',
@@ -71,6 +78,7 @@ const DENIED_ELEMENTS = [
     'object',
     'embed',
     'iframe',
+    'template',
 ];
 
 /**
@@ -99,6 +107,12 @@ const DANGEROUS_CSS = /expression\s*\(|@import|-moz-binding/i;
 const IMAGE_FUNCTIONS = /(^|[^a-z-])(-webkit-)?(image-set|cross-fade|image|element|paint)\s*\(/i;
 
 const URL_REFERENCE = /url\s*\(/gi;
+
+/** Largest explicitly authored dimension a formula may ask for, in ems. See the KaTeX options in `renderFormulas`. */
+const MAX_FORMULA_SIZE_EM = 100;
+
+/** Macro expansions a single formula may perform. KaTeX's own default, pinned here rather than inherited. */
+const MAX_FORMULA_MACRO_EXPANSIONS = 1000;
 
 /** Marks a code block that has already been highlighted, so a second pass over retained markup is a no-op. */
 const HIGHLIGHTED_MARKER = 'data-highlighted';
@@ -302,6 +316,13 @@ export function renderFormulas(root: Element): void {
                 displayMode: element.getAttribute('data-display-mode') === 'true',
                 throwOnError: false,
                 output: 'html',
+                // KaTeX defaults this to Infinity, which lets `\rule{1000000000em}{1000000000em}` ask the frame
+                // for a box no layout engine can afford. Nothing legitimate approaches this bound: the largest
+                // size a real statement uses is a few ems, and the cap only clips explicitly authored dimensions.
+                maxSize: MAX_FORMULA_SIZE_EM,
+                // Likewise explicit rather than implied. It is KaTeX's own default, but it is the limit that stops
+                // a macro from expanding into an exponential blowup, so it should not rest on a library default.
+                maxExpand: MAX_FORMULA_MACRO_EXPANSIONS,
             });
         } catch {
             element.textContent = formula;
