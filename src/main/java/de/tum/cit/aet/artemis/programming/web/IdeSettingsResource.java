@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ide.Ide;
@@ -76,12 +77,12 @@ public class IdeSettingsResource {
     @GetMapping("ide-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<List<IdeMappingDTO>> getIdesOfUser() {
-        User user = userRepository.getUser();
-        log.debug("REST request to get IDEs of user {}", user.getLogin());
-
-        var ideMappings = userIdeMappingRepository.findAllByUserId(user.getId());
+        // Only the id is needed to look the mappings up, and the login for a debug line is already in the security
+        // context. Loading the user entity here read a row of roughly sixty columns to obtain one of them.
+        long userId = userRepository.getUserIdElseThrow();
+        var ideMappings = userIdeMappingRepository.findAllByUserId(userId);
         List<IdeMappingDTO> ideRecords = ideMappings.stream().map(ideMapping -> new IdeMappingDTO(ideMapping.getProgrammingLanguage(), ideMapping.getIde())).toList();
-        log.debug("Successfully queried IDEs of user {}", user.getLogin());
+        log.debug("Successfully queried IDEs of user {}", SecurityUtils.getCurrentUserLogin().orElse("unknown"));
 
         return ResponseEntity.ok(ideRecords);
     }
