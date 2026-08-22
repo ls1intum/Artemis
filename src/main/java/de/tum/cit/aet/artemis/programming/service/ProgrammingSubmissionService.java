@@ -159,13 +159,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
         asyncBuildTriggerService.triggerBuild(participation, commit.commitHash(), triggeredByPushTo);
 
         // There can't be two submissions for the same participation and commitHash!
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository
-                .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), commit.commitHash());
-        if (programmingSubmission != null) {
+        if (programmingSubmissionRepository.existsByParticipationIdAndCommitHash(participation.getId(), commit.commitHash())) {
             throw new IllegalStateException("Submission for participation id " + participation.getId() + " and commitHash " + commit.commitHash() + " already exists!");
         }
 
-        programmingSubmission = new ProgrammingSubmission();
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setCommitHash(commit.commitHash());
         log.info("Create new programmingSubmission with commitHash: {} for participation: {}", commit.commitHash(), participation.getId());
 

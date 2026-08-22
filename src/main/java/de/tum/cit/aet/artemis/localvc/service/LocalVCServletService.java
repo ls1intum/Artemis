@@ -775,7 +775,10 @@ public class LocalVCServletService {
     public User getUserByAuthHeader(String authorizationHeader) throws LocalVCAuthException {
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
         String username = usernameAndPassword.username();
-        return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
+        // This user is handed to the push hooks, and the submission handling behind them checks whether the pusher is an
+        // instructor. Loading the course roles and authorities here keeps that check in memory; without them it re-reads
+        // the whole user row (User#authorities is lazy) and then issues its own membership query, on every push.
+        return userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(username).orElseThrow(LocalVCAuthException::new);
     }
 
     /**
