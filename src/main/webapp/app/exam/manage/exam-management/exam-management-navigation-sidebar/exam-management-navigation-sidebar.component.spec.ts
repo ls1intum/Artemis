@@ -6,6 +6,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 
 describe('ExamManagementNavigationSidebarComponent', () => {
     let component: ExamManagementNavigationSidebarComponent;
@@ -14,11 +15,15 @@ describe('ExamManagementNavigationSidebarComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ExamManagementNavigationSidebarComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamManagementNavigationSidebarComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('exams', [
+            { id: 1, title: 'Exam 1' },
+            { id: 2, title: 'Exam 2' },
+        ]);
     });
 
     it('should create', () => {
@@ -83,5 +88,13 @@ describe('ExamManagementNavigationSidebarComponent', () => {
 
     it('should have documentationType set to Exams', () => {
         expect(component.documentationType).toBe('Exams');
+    });
+
+    it('should toggle exam expansion state', () => {
+        expect(component.expandedExams().has(1)).toBe(false);
+        component.toggleExam(1);
+        expect(component.expandedExams().has(1)).toBe(true);
+        component.toggleExam(1);
+        expect(component.expandedExams().has(1)).toBe(false);
     });
 });

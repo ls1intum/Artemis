@@ -13,9 +13,72 @@
                         <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
                     }
                 </div>
-                <!-- body start -->
-
-                <!-- body end -->
+                <div class="scrollable-content">
+                    @for (exam of exams(); track exam.id; let first = $first) {
+                        <div class="pointer">
+                            @if (first) {
+                                <hr />
+                            }
+                            <div class="accordion-header flex items-center justify-between bg-module px-1 py-2" (click)="toggleExam(exam.id!)">
+                                <div class="truncate">
+                                    {{ exam.title }}
+                                </div>
+                                <div class="icon-container">
+                                    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="expandedExams().has(exam.id!)" />
+                                </div>
+                            </div>
+                            <div [ngbCollapse]="!expandedExams().has(exam.id!)" class="bg-module">
+                                @if (course().isAtLeastInstructor) {
+                                    <div class="flex flex-col pl-4 pr-1">
+                                        <jhi-sidebar-subpage-item
+                                            [subjectId]="exam.id"
+                                            subpage="exercise-groups"
+                                            [icon]="faListAlt"
+                                            [title]="'artemisApp.examManagement.exerciseGroups' | artemisTranslate"
+                                        />
+                                        <jhi-sidebar-subpage-item
+                                            [subjectId]="exam.id"
+                                            subpage="students"
+                                            [icon]="faUser"
+                                            [title]="'artemisApp.examManagement.students' | artemisTranslate"
+                                        />
+                                        <jhi-sidebar-subpage-item
+                                            [subjectId]="exam.id"
+                                            subpage="test-runs"
+                                            [icon]="faFlaskVial"
+                                            [title]="'artemisApp.examManagement.testRun.testRun' | artemisTranslate"
+                                        />
+                                        @if (!exam.testExam) {
+                                            <jhi-sidebar-subpage-item
+                                                [subjectId]="exam.id"
+                                                subpage="assessment-dashboard"
+                                                [icon]="faThList"
+                                                [title]="'artemisApp.examManagement.assessmentDashboard' | artemisTranslate"
+                                            />
+                                            <jhi-sidebar-subpage-item
+                                                [subjectId]="exam.id"
+                                                subpage="grading"
+                                                [icon]="faClipboard"
+                                                [title]="'artemisApp.examManagement.gradingSystem' | artemisTranslate"
+                                            />
+                                        }
+                                        <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="scores" [icon]="faEye" [title]="'entity.action.scores' | artemisTranslate" />
+                                        <jhi-sidebar-subpage-item
+                                            [subjectId]="exam.id"
+                                            subpage="plagiarism-cases"
+                                            [icon]="faHeartBroken"
+                                            [title]="'artemisApp.plagiarism.cases.plagiarismCases' | artemisTranslate"
+                                        />
+                                        <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="edit" [icon]="faWrench" [title]="'entity.action.edit' | artemisTranslate" />
+                                    </div>
+                                } @else {
+                                    <span> Restricted </span>
+                                }
+                            </div>
+                            <hr />
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     </div>

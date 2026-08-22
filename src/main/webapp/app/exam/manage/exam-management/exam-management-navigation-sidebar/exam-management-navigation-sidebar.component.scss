@@ -19,3 +19,18 @@
         display: none !important;
     }
 }
+
+hr {
+    all: unset;
+    display: block;
+    border-top: 1px solid var(--bs-border-color);
+    transition: border-color 0.2s ease;
+}
+
+.accordion-header {
+    transition: background-color 0.15s ease-in-out;
+
+    &:hover {
+        background-color: var(--link-item-bg);
+    }
+}

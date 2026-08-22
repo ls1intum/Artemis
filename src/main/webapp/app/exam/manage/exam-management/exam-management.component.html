@@ -1,7 +1,13 @@
 @if (course()) {
     <div class="flex h-full w-full">
         <div [class.sidebar-collapsed]="isCollapsed()">
-            <jhi-exam-management-navigation-sidebar [isCollapsed]="isCollapsed()" [pageTitle]="pageTitle()" (toggleSidebar)="toggleSidebar()" />
+            <jhi-exam-management-navigation-sidebar
+                [isCollapsed]="isCollapsed()"
+                [pageTitle]="pageTitle()"
+                [exams]="exams()"
+                [course]="course()"
+                (toggleSidebar)="toggleSidebar()"
+            />
         </div>
         <div class="module-bg rounded-md p-3 scrollable-content">
             @if (isCollapsed()) {
