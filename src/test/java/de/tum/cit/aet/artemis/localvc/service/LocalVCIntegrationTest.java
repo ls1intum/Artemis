@@ -53,11 +53,19 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     private static final String TEST_PREFIX = "localvcint";
 
-    // Measured baseline for one authenticated git request (a clone or push is two of these). Upper bound, so a
-    // new query fails the build.
-    private static final int GIT_AUTH_QUERY_COUNT = 11;
+    // Measured baselines for one authenticated git request; a clone or a push is two of these. Upper bounds, so a new
+    // query fails the build.
+    //
+    // The participation-token counts are the ones that matter for exam load: that is what students use. Password
+    // authentication is more expensive because it falls through to the authentication manager, which re-reads the user,
+    // writes an audit event and stamps the last login date. It is measured too so that path cannot rot unnoticed.
+    private static final int GIT_AUTH_QUERY_COUNT = 8;
 
-    private static final int GIT_PUSH_AUTH_QUERY_COUNT = 11;
+    private static final int GIT_PUSH_AUTH_QUERY_COUNT = 8;
+
+    private static final int GIT_TOKEN_AUTH_QUERY_COUNT = 5;
+
+    private static final int GIT_TOKEN_PUSH_QUERY_COUNT = 5;
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -151,6 +159,45 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
             return null;
         }).hasBeenCalledAtMostTimes(GIT_AUTH_QUERY_COUNT);
+    }
+
+    /**
+     * The case the exam simulation actually drives: a participation-scoped token belonging to the repository's own
+     * student. Password authentication takes a different and more expensive route (it reaches the authentication
+     * manager, which re-reads the user, writes an audit event and stamps the last login date), so it is not
+     * representative of exam load.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitRequestWithParticipationTokenQueryCount() throws Exception {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        var token = localVCLocalCITestService.getParticipationVcsAccessToken(student, participation.getId()).getVcsAccessToken();
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + token).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_TOKEN_AUTH_QUERY_COUNT);
+    }
+
+    /**
+     * The push counterpart of the participation-token fetch above.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitPushWithParticipationTokenQueryCount() throws Exception {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        var token = localVCLocalCITestService.getParticipationVcsAccessToken(student, participation.getId()).getVcsAccessToken();
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + token).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-receive-pack");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_TOKEN_PUSH_QUERY_COUNT);
     }
 
     /**

@@ -3895,28 +3895,28 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // exam start: user with course roles, student exam with exercises, mark started, submission policies, quiz
         // questions, participations with latest submission and result, submitted answers, exam session insert + count
-        private final int CONDUCTION_QUERY_COUNT = 14;
+        private final int CONDUCTION_QUERY_COUNT = 8;
 
         // starting an exercise whose participation was already generated: exercise, user, student-exam working time
         // projection, existing participation, and the terminal save
-        private final int START_PARTICIPATION_QUERY_COUNT = 8;
+        private final int START_PARTICIPATION_QUERY_COUNT = 7;
 
         // text autosave: result-exists probe, user with course roles, exercise, submission-gate projection, exam,
         // participations (twice, see below), scalar ownership check, participation state update, submission update,
         // plus the four statements of the submission-version write that only run on this thread under test
-        private final int TEXT_AUTOSAVE_QUERY_COUNT = 17;
+        private final int TEXT_AUTOSAVE_QUERY_COUNT = 14;
 
-        private final int MODELING_AUTOSAVE_QUERY_COUNT = 17;
+        private final int MODELING_AUTOSAVE_QUERY_COUNT = 14;
 
         // the quiz path additionally loads the quiz exercise with its question tree to re-resolve the submitted answers,
         // and its submission save stays a merge because it cascades to the submitted answers. It must NOT contain an
         // update of quiz_question: a student's submission may never write a shared question row (see
         // QuizQuestionContent#haveEqualPersistedForm), and this count is what keeps that write from coming back.
-        private final int QUIZ_SUBMISSION_QUERY_COUNT = 19;
+        private final int QUIZ_SUBMISSION_QUERY_COUNT = 17;
 
         // exam summary: user with course roles, student exam with its exercises' groups, exam, quiz questions,
         // participations with latest submission and result, submitted answers
-        private final int SUMMARY_QUERY_COUNT = 15;
+        private final int SUMMARY_QUERY_COUNT = 9;
 
         private TextExercise textExercise;
 

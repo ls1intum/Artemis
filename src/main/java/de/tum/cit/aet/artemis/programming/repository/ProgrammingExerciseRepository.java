@@ -177,7 +177,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     List<ProgrammingExercise> findAllWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesByCourseId(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
+    // course is an eager @ManyToOne, so fetching it here saves the secondary select that git authorization would
+    // otherwise pay on every request when it reads the course for its role checks
+    @EntityGraph(type = LOAD, attributePaths = { "submissionPolicy", "course" })
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
 
     @EntityGraph(type = LOAD, attributePaths = "buildConfig")

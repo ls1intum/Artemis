@@ -71,7 +71,11 @@ public class TextSubmissionService extends SubmissionService {
      */
     public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise exercise, User user) {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
-        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
+        // Reuse the participation the exam multiple-submission guard already resolved, when it left one on the
+        // submission. It only does so for a single, non test run participation of an exam exercise, which is exactly the
+        // case where this lookup would return the same row. Every other case still resolves it here.
+        final var optionalParticipation = textSubmission.getParticipation() instanceof StudentParticipation alreadyResolved ? Optional.of(alreadyResolved)
+                : participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }

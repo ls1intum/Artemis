@@ -440,6 +440,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.exercise ex
                 LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
                 LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
                 AND p.student.login = :username
@@ -468,6 +471,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH p.exercise ex
                 LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
                 LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
                 AND p.student.login = :username
@@ -656,6 +662,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH p.exercise ex
                 LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
                 LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
@@ -1050,6 +1059,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH p.exercise ex
                 LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
                 LEFT JOIN FETCH p.student
             WHERE p.testRun = FALSE
                 AND p.student.id = :studentId

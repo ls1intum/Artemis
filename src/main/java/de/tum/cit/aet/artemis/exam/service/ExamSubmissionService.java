@@ -179,11 +179,13 @@ public class ExamSubmissionService {
                 // is invoked the existing submission will be updated.
                 submission.setId(existingSubmission.getId());
             }
-            if (participations.size() == 1) {
-                // Hand the resolved participation to the caller on the submission, so the per-type save does not have to
-                // look up the same row again. Only for the unambiguous case: with several participations the callers'
-                // own lookup decides (and reports) which one applies, and that is left untouched.
-                submission.setParticipation(participations.getFirst());
+            StudentParticipation resolved = participations.getFirst();
+            // Hand the resolved participation to the caller on the submission, so the per-type save does not look the
+            // same row up again. Two cases are deliberately left to the caller's own lookup rather than reused here:
+            // several participations, where that lookup decides (and reports) which one applies, and a test run, where
+            // the lookup filters on testRun = FALSE and would therefore select a different participation than this one.
+            if (participations.size() == 1 && !resolved.isTestRun()) {
+                submission.setParticipation(resolved);
             }
         }
 

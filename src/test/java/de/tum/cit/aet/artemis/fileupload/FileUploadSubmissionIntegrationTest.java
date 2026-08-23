@@ -66,7 +66,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     private FileUploadSubmission lateFileUploadSubmission;
 
     // Measured baseline for the file upload submit endpoint; upper bound, so a new query fails the build.
-    private static final int FILE_UPLOAD_SUBMIT_QUERY_COUNT = 11;
+    private static final int FILE_UPLOAD_SUBMIT_QUERY_COUNT = 9;
 
     private final MockMultipartFile validFile = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
 

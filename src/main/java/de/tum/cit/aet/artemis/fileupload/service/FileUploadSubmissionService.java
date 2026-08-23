@@ -84,7 +84,11 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user)
             throws IOException, EmptyFileException {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
-        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
+        // Reuse the participation the exam multiple-submission guard already resolved, when it left one on the
+        // submission. It only does so for a single, non test run participation of an exam exercise, which is exactly the
+        // case where this lookup would return the same row. Every other case still resolves it here.
+        final var optionalParticipation = fileUploadSubmission.getParticipation() instanceof StudentParticipation alreadyResolved ? Optional.of(alreadyResolved)
+                : participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
@@ -157,8 +161,9 @@ public class FileUploadSubmissionService extends SubmissionService {
         // Note: we save before the new file path is set to potentially remove the old file on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         fileUploadSubmission.setFilePath(newFilePath.toString());
-        // Note: we save again so that the new file is stored on the file system
-        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
+        // Note: the path is written on its own so that the new file is recorded. Only this column changed and the row
+        // exists, so it is an update rather than a save, which would read the submission back first.
+        fileUploadSubmissionRepository.updateFilePath(fileUploadSubmission.getId(), fileUploadSubmission.getFilePath());
 
         return fileUploadSubmission;
     }

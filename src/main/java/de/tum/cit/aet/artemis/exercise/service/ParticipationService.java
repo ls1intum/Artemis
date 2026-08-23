@@ -149,9 +149,12 @@ public class ParticipationService {
 
         StudentParticipation participation;
         Optional<StudentParticipation> optionalStudentParticipation = Optional.empty();
-        // Remember the persisted state so the terminal save below can be skipped when this call changed nothing.
+        // Remember the persisted state so the terminal save below can be skipped when this call changed nothing, and
+        // whether the participation came from a load that fetched its submissions, which decides whether the instance
+        // can be handed back without a merge.
         InitializationState persistedState = null;
         ZonedDateTime persistedInitializationDate = null;
+        boolean loadedWithSubmissions = false;
 
         // In case of a test exam we don't try to find an existing participation, because students can participate multiple times
         // Instead, all previous participations are marked as finished and a new one is created
@@ -171,6 +174,7 @@ public class ParticipationService {
             optionalStudentParticipation = findOneGradedByExerciseAndParticipant(exercise, participant);
             persistedState = optionalStudentParticipation.map(StudentParticipation::getInitializationState).orElse(null);
             persistedInitializationDate = optionalStudentParticipation.map(StudentParticipation::getInitializationDate).orElse(null);
+            loadedWithSubmissions = optionalStudentParticipation.isPresent();
             if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
                 // In case there is already a practice participation, set it to inactive
                 optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
@@ -223,9 +227,18 @@ public class ParticipationService {
         if (unchanged) {
             return participation;
         }
-        // NOTE: deliberately NOT narrowed to a modifying UPDATE of those two columns. saveAndFlush returns a merged
-        // instance whose lazy associations callers go on to read (StudentExamService#setUpTestExamExerciseParticipationsAndSubmissions
-        // reads the submissions of what this method returns); returning the detached instance instead breaks them.
+        // Only the initialization state and the initialization date can differ from the persisted row here: every other
+        // field written above (repository uri, branch, build plan id) was persisted by the step that set it. Writing
+        // those two columns directly avoids the read that saving a detached entity performs before its write.
+        //
+        // Restricted to a participation that was loaded by findOneGradedByExerciseAndParticipant, which fetches the
+        // submissions. Callers read those off the instance this method returns
+        // (StudentExamService#setUpTestExamExerciseParticipationsAndSubmissions does), and only that instance is safe to
+        // hand back without going through a merge. A newly created participation still needs a real insert.
+        if (loadedWithSubmissions && participation.getId() != null) {
+            studentParticipationRepository.updateInitializationStateAndDate(participation.getId(), participation.getInitializationState(), participation.getInitializationDate());
+            return participation;
+        }
         return studentParticipationRepository.saveAndFlush(participation);
     }
 
